@@ -177,8 +177,8 @@ class Class {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.36: type = struct_type {} [template]
-// CHECK:STDOUT:   %.37: <witness> = complete_type_witness %.36 [template]
+// CHECK:STDOUT:   %.30: type = struct_type {} [template]
+// CHECK:STDOUT:   %.31: <witness> = complete_type_witness %.30 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -213,7 +213,7 @@ class Class {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.36 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.30 [template = constants.%.31]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

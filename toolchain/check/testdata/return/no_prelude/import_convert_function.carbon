@@ -187,7 +187,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc13_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -245,7 +244,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_32.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(i32, @impl.%.loc14) {
+// CHECK:STDOUT: specific @Convert.1(i32, constants.%.6) {
 // CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
 // CHECK:STDOUT:   %Self => constants.%.6
@@ -378,7 +377,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %import_ref.6 = import_ref Core//default, inst+44, unloaded
 // CHECK:STDOUT:   %import_ref.8: type = import_ref Core//default, inst+63, loaded [template = Core.IntLiteral]
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Core//default, inst+68, loaded [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Core//default, inst+92, loaded [template = constants.%.16]
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Core//default, inst+91, loaded [template = constants.%.16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -561,7 +560,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.3, constants.%C.3 [symbolic = constants.%.21]
 // CHECK:STDOUT:   %.loc10_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.22]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -583,7 +581,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.4, constants.%C.4 [symbolic = constants.%.27]
 // CHECK:STDOUT:   %.loc11_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.28]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -605,7 +602,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.5, constants.%C.5 [symbolic = constants.%.32]
 // CHECK:STDOUT:   %.loc12_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.33]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -627,7 +623,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.6, constants.%C.6 [symbolic = constants.%.37]
 // CHECK:STDOUT:   %.loc13_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.38]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -649,7 +644,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.7, constants.%C.7 [symbolic = constants.%.42]
 // CHECK:STDOUT:   %.loc14_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.43]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -671,7 +665,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.8, constants.%C.8 [symbolic = constants.%.47]
 // CHECK:STDOUT:   %.loc15_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.48]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -693,7 +686,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.9, constants.%C.9 [symbolic = constants.%.52]
 // CHECK:STDOUT:   %.loc16_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.53]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -715,7 +707,6 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_65: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value constants.%C.10, constants.%C.10 [symbolic = constants.%.57]
 // CHECK:STDOUT:   %.loc17_33: <witness> = interface_witness (%Convert.decl) [template = constants.%.58]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -913,7 +904,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.2 => constants.%.20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.2.%.loc10_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.21) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.21
@@ -927,7 +918,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.3.%.loc11_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.27) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.27
@@ -941,7 +932,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.4.%.loc12_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.32) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.32
@@ -955,7 +946,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.5.%.loc13_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.37) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.37
@@ -969,7 +960,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.6.%.loc14_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.42) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.42
@@ -983,7 +974,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.7.%.loc15_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.47) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.47
@@ -997,7 +988,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.8.%.loc16_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.52) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.52
@@ -1011,7 +1002,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, @impl.9.%.loc17_65) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.57) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.57
@@ -1149,31 +1140,31 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %import_ref.12 = import_ref Core//default, inst+44, unloaded
 // CHECK:STDOUT:   %import_ref.14: type = import_ref Core//default, inst+63, loaded [template = Core.IntLiteral]
 // CHECK:STDOUT:   %import_ref.15: type = import_ref Core//default, inst+68, loaded [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %import_ref.16: <witness> = import_ref Core//default, inst+92, loaded [template = constants.%.15]
+// CHECK:STDOUT:   %import_ref.16: <witness> = import_ref Core//default, inst+91, loaded [template = constants.%.15]
 // CHECK:STDOUT:   %import_ref.17: type = import_ref P//library, inst+147, loaded [template = constants.%C.3]
 // CHECK:STDOUT:   %import_ref.18: type = import_ref P//library, inst+152, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref P//library, inst+174, loaded [template = constants.%.28]
-// CHECK:STDOUT:   %import_ref.20: type = import_ref P//library, inst+191, loaded [template = constants.%C.4]
-// CHECK:STDOUT:   %import_ref.21: type = import_ref P//library, inst+196, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref P//library, inst+213, loaded [template = constants.%.31]
-// CHECK:STDOUT:   %import_ref.23: type = import_ref P//library, inst+229, loaded [template = constants.%C.5]
-// CHECK:STDOUT:   %import_ref.24: type = import_ref P//library, inst+234, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.25: <witness> = import_ref P//library, inst+251, loaded [template = constants.%.34]
-// CHECK:STDOUT:   %import_ref.26: type = import_ref P//library, inst+267, loaded [template = constants.%C.6]
-// CHECK:STDOUT:   %import_ref.27: type = import_ref P//library, inst+272, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.28: <witness> = import_ref P//library, inst+289, loaded [template = constants.%.37]
-// CHECK:STDOUT:   %import_ref.29: type = import_ref P//library, inst+305, loaded [template = constants.%C.7]
-// CHECK:STDOUT:   %import_ref.30: type = import_ref P//library, inst+310, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.31: <witness> = import_ref P//library, inst+327, loaded [template = constants.%.40]
-// CHECK:STDOUT:   %import_ref.32: type = import_ref P//library, inst+343, loaded [template = constants.%C.8]
-// CHECK:STDOUT:   %import_ref.33: type = import_ref P//library, inst+348, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.34: <witness> = import_ref P//library, inst+365, loaded [template = constants.%.43]
-// CHECK:STDOUT:   %import_ref.35: type = import_ref P//library, inst+381, loaded [template = constants.%C.9]
-// CHECK:STDOUT:   %import_ref.36: type = import_ref P//library, inst+386, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.37: <witness> = import_ref P//library, inst+403, loaded [template = constants.%.46]
-// CHECK:STDOUT:   %import_ref.38: type = import_ref P//library, inst+419, loaded [template = constants.%C.10]
-// CHECK:STDOUT:   %import_ref.39: type = import_ref P//library, inst+424, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref P//library, inst+441, loaded [template = constants.%.49]
+// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref P//library, inst+173, loaded [template = constants.%.28]
+// CHECK:STDOUT:   %import_ref.20: type = import_ref P//library, inst+190, loaded [template = constants.%C.4]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref P//library, inst+195, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref P//library, inst+211, loaded [template = constants.%.31]
+// CHECK:STDOUT:   %import_ref.23: type = import_ref P//library, inst+227, loaded [template = constants.%C.5]
+// CHECK:STDOUT:   %import_ref.24: type = import_ref P//library, inst+232, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.25: <witness> = import_ref P//library, inst+248, loaded [template = constants.%.34]
+// CHECK:STDOUT:   %import_ref.26: type = import_ref P//library, inst+264, loaded [template = constants.%C.6]
+// CHECK:STDOUT:   %import_ref.27: type = import_ref P//library, inst+269, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.28: <witness> = import_ref P//library, inst+285, loaded [template = constants.%.37]
+// CHECK:STDOUT:   %import_ref.29: type = import_ref P//library, inst+301, loaded [template = constants.%C.7]
+// CHECK:STDOUT:   %import_ref.30: type = import_ref P//library, inst+306, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.31: <witness> = import_ref P//library, inst+322, loaded [template = constants.%.40]
+// CHECK:STDOUT:   %import_ref.32: type = import_ref P//library, inst+338, loaded [template = constants.%C.8]
+// CHECK:STDOUT:   %import_ref.33: type = import_ref P//library, inst+343, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.34: <witness> = import_ref P//library, inst+359, loaded [template = constants.%.43]
+// CHECK:STDOUT:   %import_ref.35: type = import_ref P//library, inst+375, loaded [template = constants.%C.9]
+// CHECK:STDOUT:   %import_ref.36: type = import_ref P//library, inst+380, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.37: <witness> = import_ref P//library, inst+396, loaded [template = constants.%.46]
+// CHECK:STDOUT:   %import_ref.38: type = import_ref P//library, inst+412, loaded [template = constants.%C.10]
+// CHECK:STDOUT:   %import_ref.39: type = import_ref P//library, inst+417, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref P//library, inst+433, loaded [template = constants.%.49]
 // CHECK:STDOUT:   %import_ref.41: %Make.type = import_ref P//library, inst+48, loaded [template = constants.%Make]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

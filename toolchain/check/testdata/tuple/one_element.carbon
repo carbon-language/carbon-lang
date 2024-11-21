@@ -23,10 +23,10 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.37: i32 = int_value 4 [template]
-// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.37) [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.31: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.31) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,10 +65,10 @@ var y: (i32,) = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_18: Core.IntLiteral = int_value 4 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc11_20.1: %tuple.type.3 = tuple_literal (%.loc11_18)
-// CHECK:STDOUT:   %.loc11_20.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc11_20.3: <bound method> = bound_method %.loc11_18, %.loc11_20.2 [template = constants.%.36]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_20.3(%.loc11_18) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc11_20.4: init i32 = converted %.loc11_18, %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc11_20.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc11_20.3: <bound method> = bound_method %.loc11_18, %.loc11_20.2 [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc11_20.3(%.loc11_18) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc11_20.4: init i32 = converted %.loc11_18, %int.convert_checked [template = constants.%.31]
 // CHECK:STDOUT:   %.loc11_20.5: init %tuple.type.2 = tuple_init (%.loc11_20.4) to file.%x.var [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc11_21: init %tuple.type.2 = converted %.loc11_20.1, %.loc11_20.5 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_21

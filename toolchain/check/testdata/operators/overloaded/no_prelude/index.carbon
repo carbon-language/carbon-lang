@@ -234,7 +234,6 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: @IndexWith.%IndexWith.type (%IndexWith.type.2) = facet_value constants.%empty_tuple.type, constants.%empty_tuple.type [symbolic = constants.%.6]
 // CHECK:STDOUT:   %.loc9_31: <witness> = interface_witness (%At.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -308,7 +307,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc6_52.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @At.1(constants.%empty_tuple.type, @impl.%.loc10) {
+// CHECK:STDOUT: specific @At.1(constants.%empty_tuple.type, constants.%.6) {
 // CHECK:STDOUT:   %SubscriptType => constants.%empty_tuple.type
 // CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3
 // CHECK:STDOUT:   %Self => constants.%.6

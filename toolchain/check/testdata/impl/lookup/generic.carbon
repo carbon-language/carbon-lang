@@ -142,9 +142,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.5) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: %HasF.type = facet_value %.5, %.5 [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [template]
-// CHECK:STDOUT:   %.8: <specific function> = specific_function %F.3, @F.2(%.5) [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.7: <specific function> = specific_function %F.3, @F.2(%.5) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -200,12 +199,10 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc9_10.2: %HasF.type = facet_value %T.loc8_14.2, %T.loc8_14.2 [symbolic = %.loc9_10.2 (constants.%.3)]
 // CHECK:STDOUT:   %.loc8_34.2: <witness> = interface_witness (%F) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc9_10.1: %HasF.type = facet_value constants.%T, constants.%T [symbolic = %.loc9_10.2 (constants.%.3)]
 // CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -233,8 +230,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %.5 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.1 = name_ref F, @HasF.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc13_4.1: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.5) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc13_4.1: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.5) [template = constants.%.7]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -248,13 +245,12 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc9_10.2 => constants.%.3
 // CHECK:STDOUT:   %.loc8_34.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc9_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -268,8 +264,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.loc9_10.2 => constants.%.6
-// CHECK:STDOUT:   %.loc8_34.2 => constants.%.7
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.5) {
@@ -297,8 +292,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.6) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.7: %HasF.type = facet_value %.6, %.6 [template]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %struct: %.6 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -377,7 +371,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc9_27.2: %HasF.type = facet_value %T.loc8_14.2, %T.loc8_14.2 [symbolic = %.loc9_27.2 (constants.%.4)]
 // CHECK:STDOUT:   %.loc8_34.2: <witness> = interface_witness (%F) [symbolic = %.loc8_34.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
@@ -394,7 +387,6 @@ fn G(x: A) {
 // CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc9_27.1: %HasF.type = facet_value constants.%T, constants.%T [symbolic = %.loc9_27.2 (constants.%.4)]
 // CHECK:STDOUT:     %.loc8_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_34.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -427,7 +419,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %.6 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc13_11.1: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc13_11.1: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc13_11.2: <bound method> = bound_method %x.ref, %.loc13_11.1
 // CHECK:STDOUT:   %.loc13_11.3: <specific function> = specific_function %.loc13_11.2, @F.2(constants.%.6)
 // CHECK:STDOUT:   %F.call: init %.6 = call %.loc13_11.3(%x.ref)
@@ -450,7 +442,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc9_27.2 => constants.%.4
 // CHECK:STDOUT:   %.loc8_34.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,7 +449,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc9_27.1) {
+// CHECK:STDOUT: specific @F.1(constants.%.4) {
 // CHECK:STDOUT:   %Self => constants.%.4
 // CHECK:STDOUT:   %.loc5_14.1 => constants.%T
 // CHECK:STDOUT: }
@@ -475,8 +466,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.loc9_27.2 => constants.%.7
-// CHECK:STDOUT:   %.loc8_34.2 => constants.%.8
+// CHECK:STDOUT:   %.loc8_34.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.6) {
@@ -511,9 +501,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%.3) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.8: %HasF.type = facet_value %C.3, %C.3 [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%F.3) [template]
-// CHECK:STDOUT:   %.10: <specific function> = specific_function %F.3, @F.2(%.3) [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %F.3, @F.2(%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -582,12 +571,10 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc11_10.2: %HasF.type = facet_value %C.loc10_25.2, %C.loc10_25.2 [symbolic = %.loc11_10.2 (constants.%.5)]
 // CHECK:STDOUT:   %.loc10_37.2: <witness> = interface_witness (%F) [symbolic = %.loc10_37.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.loc10_25.1 as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc11_10.1: %HasF.type = facet_value constants.%C.2, constants.%C.2 [symbolic = %.loc11_10.2 (constants.%.5)]
 // CHECK:STDOUT:     %.loc10_37.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_37.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -629,8 +616,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %C.3 = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.1 = name_ref F, @HasF.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc15_4.1: %F.type.1 = interface_witness_access constants.%.9, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc15_4.2: <specific function> = specific_function %.loc15_4.1, @F.2(constants.%.3) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc15_4.1: %F.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %.loc15_4.2: <specific function> = specific_function %.loc15_4.1, @F.2(constants.%.3) [template = constants.%.9]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc15_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -655,13 +642,12 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc11_10.2 => constants.%.5
 // CHECK:STDOUT:   %.loc10_37.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc11_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
@@ -684,8 +670,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.loc11_10.2 => constants.%.8
-// CHECK:STDOUT:   %.loc10_37.2 => constants.%.9
+// CHECK:STDOUT:   %.loc10_37.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.3) {
@@ -720,9 +705,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.2, @impl(%.3) [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.8: %HasF.type.3 = facet_value %.3, %.3 [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%F.4) [template]
-// CHECK:STDOUT:   %.10: <specific function> = specific_function %F.4, @F.2(%.3) [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.4) [template]
+// CHECK:STDOUT:   %.9: <specific function> = specific_function %F.4, @F.2(%.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -801,12 +785,10 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc9_10.2: @impl.%HasF.type.loc8_34.2 (%HasF.type.2) = facet_value constants.%.3, constants.%.3 [symbolic = %.loc9_10.2 (constants.%.4)]
 // CHECK:STDOUT:   %.loc8_38.2: <witness> = interface_witness (%F) [symbolic = %.loc8_38.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc8_25.2 as %HasF.type.loc8_34.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc9_10.1: @impl.%HasF.type.loc8_34.2 (%HasF.type.2) = facet_value constants.%.3, constants.%.3 [symbolic = %.loc9_10.2 (constants.%.4)]
 // CHECK:STDOUT:     %.loc8_38.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_38.2 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -838,8 +820,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(constants.%.3)> [template = constants.%HasF.type.3]
 // CHECK:STDOUT:   %.loc13_14: %.6 = specific_constant @HasF.%.loc5_9.1, @HasF(constants.%.3) [template = constants.%.7]
 // CHECK:STDOUT:   %F.ref: %.6 = name_ref F, %.loc13_14 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc13_4.1: %F.type.3 = interface_witness_access constants.%.9, element0 [template = constants.%F.4]
-// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.3) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc13_4.1: %F.type.3 = interface_witness_access constants.%.8, element0 [template = constants.%F.4]
+// CHECK:STDOUT:   %.loc13_4.2: <specific function> = specific_function %.loc13_4.1, @F.2(constants.%.3) [template = constants.%.9]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc13_4.2()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -877,13 +859,12 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc9_10.2 => constants.%.4
 // CHECK:STDOUT:   %.loc8_38.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T, @impl.%.loc9_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -912,8 +893,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.4
 // CHECK:STDOUT:   %F => constants.%F.4
-// CHECK:STDOUT:   %.loc9_10.2 => constants.%.8
-// CHECK:STDOUT:   %.loc8_38.2 => constants.%.9
+// CHECK:STDOUT:   %.loc8_38.2 => constants.%.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%.3) {
@@ -1001,12 +981,10 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc9_14.2, %U.loc9_24.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc10_10.2: %HasF.type = facet_value %T.loc9_14.2, %T.loc9_14.2 [symbolic = %.loc10_10.2 (constants.%.3)]
 // CHECK:STDOUT:   %.loc9_44.2: <witness> = interface_witness (%F) [symbolic = %.loc9_44.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc10_10.1: %HasF.type = facet_value constants.%T, constants.%T [symbolic = %.loc10_10.2 (constants.%.3)]
 // CHECK:STDOUT:     %.loc9_44.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc9_44.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -1048,13 +1026,12 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc10_10.2 => constants.%.3
 // CHECK:STDOUT:   %.loc9_44.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc10_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc9_14.2, %U.loc9_24.2) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
@@ -1171,12 +1148,10 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc9_10.2: @impl.%HasF.type.loc8_33.2 (%HasF.type.2) = facet_value %T.loc8_14.2, %T.loc8_14.2 [symbolic = %.loc9_10.2 (constants.%.3)]
 // CHECK:STDOUT:   %.loc8_37.2: <witness> = interface_witness (%F) [symbolic = %.loc8_37.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref.loc8_24 as %HasF.type.loc8_33.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc9_10.1: @impl.%HasF.type.loc8_33.2 (%HasF.type.2) = facet_value constants.%T, constants.%T [symbolic = %.loc9_10.2 (constants.%.3)]
 // CHECK:STDOUT:     %.loc8_37.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc8_37.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -1257,13 +1232,12 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc9_10.2 => constants.%.3
 // CHECK:STDOUT:   %.loc8_37.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T, @impl.%.loc9_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T

@@ -60,14 +60,12 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.4: %Add.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
 // CHECK:STDOUT:   %.6: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %.9: %AddAssign.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.10: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
@@ -156,7 +154,6 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: %Add.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -180,7 +177,6 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: %AddAssign.type = facet_value constants.%C, constants.%C [template = constants.%.9]
 // CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%Op.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

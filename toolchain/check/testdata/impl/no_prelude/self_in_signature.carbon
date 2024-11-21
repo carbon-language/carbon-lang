@@ -199,7 +199,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: %UseSelf.type = facet_value constants.%C, constants.%C [template = constants.%.6]
 // CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -226,7 +225,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24: %UseSelf.type = facet_value constants.%D, constants.%D [template = constants.%.9]
 // CHECK:STDOUT:   %.loc23: <witness> = interface_witness (%F.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -250,7 +248,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param: %tuple.type.3 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %tuple.type.3 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc32: %SelfNested.type = facet_value constants.%C, constants.%C [template = constants.%.18]
 // CHECK:STDOUT:   %.loc31: <witness> = interface_witness (%F.decl) [template = constants.%.19]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -274,7 +271,6 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param: %tuple.type.4 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %tuple.type.4 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc36: %SelfNested.type = facet_value constants.%D, constants.%D [template = constants.%.22]
 // CHECK:STDOUT:   %.loc35: <witness> = interface_witness (%F.decl) [template = constants.%.23]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -338,12 +334,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.1.%.loc20) {
+// CHECK:STDOUT: specific @F.1(constants.%.6) {
 // CHECK:STDOUT:   %Self => constants.%.6
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.2.%.loc24) {
+// CHECK:STDOUT: specific @F.1(constants.%.9) {
 // CHECK:STDOUT:   %Self => constants.%.9
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%D
 // CHECK:STDOUT: }
@@ -356,7 +352,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(@impl.3.%.loc32) {
+// CHECK:STDOUT: specific @F.4(constants.%.18) {
 // CHECK:STDOUT:   %Self => constants.%.18
 // CHECK:STDOUT:   %.loc28_16.1 => constants.%C
 // CHECK:STDOUT:   %.loc28_16.2 => constants.%.16
@@ -364,7 +360,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(@impl.4.%.loc36) {
+// CHECK:STDOUT: specific @F.4(constants.%.22) {
 // CHECK:STDOUT:   %Self => constants.%.22
 // CHECK:STDOUT:   %.loc28_16.1 => constants.%D
 // CHECK:STDOUT:   %.loc28_16.2 => constants.%.20

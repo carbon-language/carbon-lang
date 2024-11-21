@@ -66,7 +66,6 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc19: %Simple.type = facet_value <error>, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -86,5 +85,5 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc19) {}
+// CHECK:STDOUT: specific @F.1(<error>) {}
 // CHECK:STDOUT:

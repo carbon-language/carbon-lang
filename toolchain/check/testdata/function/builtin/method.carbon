@@ -40,23 +40,23 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.2, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.40: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.41: <bound method> = bound_method %.6, %Convert.15 [template]
-// CHECK:STDOUT:   %.42: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.43: <bound method> = bound_method %.42, %F.2 [template]
-// CHECK:STDOUT:   %.44: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.34: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.35: <bound method> = bound_method %.6, %Convert.15 [template]
+// CHECK:STDOUT:   %.36: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.37: <bound method> = bound_method %.36, %F.2 [template]
+// CHECK:STDOUT:   %.38: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.16: type = fn_type @Convert.12 [template]
 // CHECK:STDOUT:   %Convert.16: %Convert.type.16 = struct_value () [template]
-// CHECK:STDOUT:   %.46: <witness> = interface_witness (%Convert.16) [template]
-// CHECK:STDOUT:   %.47: <bound method> = bound_method %.44, %Convert.16 [template]
-// CHECK:STDOUT:   %.48: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.49: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.40: <witness> = interface_witness (%Convert.16) [template]
+// CHECK:STDOUT:   %.41: <bound method> = bound_method %.38, %Convert.16 [template]
+// CHECK:STDOUT:   %.42: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.43: i32 = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.type.17: type = fn_type @Convert.13 [template]
 // CHECK:STDOUT:   %Convert.17: %Convert.type.17 = struct_value () [template]
-// CHECK:STDOUT:   %.50: <witness> = interface_witness (%Convert.17) [template]
-// CHECK:STDOUT:   %.51: <bound method> = bound_method %.49, %Convert.17 [template]
-// CHECK:STDOUT:   %.52: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.53: type = array_type %.52, i32 [template]
+// CHECK:STDOUT:   %.44: <witness> = interface_witness (%Convert.17) [template]
+// CHECK:STDOUT:   %.45: <bound method> = bound_method %.43, %Convert.17 [template]
+// CHECK:STDOUT:   %.46: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %.47: type = array_type %.46, i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -88,34 +88,34 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %int.make_type_32.loc19_22: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc19_22.1: type = value_of_initializer %int.make_type_32.loc19_22 [template = i32]
 // CHECK:STDOUT:   %.loc19_22.2: type = converted %int.make_type_32.loc19_22, %.loc19_22.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_19.1: %Convert.type.2 = interface_witness_access constants.%.40, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc19_19.2: <bound method> = bound_method %.loc19_17, %.loc19_19.1 [template = constants.%.41]
-// CHECK:STDOUT:   %int.convert_checked.loc19_19: init i32 = call %.loc19_19.2(%.loc19_17) [template = constants.%.42]
-// CHECK:STDOUT:   %.loc19_19.3: i32 = value_of_initializer %int.convert_checked.loc19_19 [template = constants.%.42]
-// CHECK:STDOUT:   %.loc19_19.4: i32 = converted %.loc19_17, %.loc19_19.3 [template = constants.%.42]
+// CHECK:STDOUT:   %.loc19_19.1: %Convert.type.2 = interface_witness_access constants.%.34, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc19_19.2: <bound method> = bound_method %.loc19_17, %.loc19_19.1 [template = constants.%.35]
+// CHECK:STDOUT:   %int.convert_checked.loc19_19: init i32 = call %.loc19_19.2(%.loc19_17) [template = constants.%.36]
+// CHECK:STDOUT:   %.loc19_19.3: i32 = value_of_initializer %int.convert_checked.loc19_19 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc19_19.4: i32 = converted %.loc19_17, %.loc19_19.3 [template = constants.%.36]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%.loc12 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc19_26.1: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc19_26.2: <bound method> = bound_method %.loc19_19.4, %.loc19_26.1 [template = constants.%.43]
-// CHECK:STDOUT:   %.loc19_33.1: Core.IntLiteral = int_value 2 [template = constants.%.44]
-// CHECK:STDOUT:   %.loc19_33.2: %Convert.type.4 = interface_witness_access constants.%.46, element0 [template = constants.%Convert.16]
-// CHECK:STDOUT:   %.loc19_33.3: <bound method> = bound_method %.loc19_33.1, %.loc19_33.2 [template = constants.%.47]
-// CHECK:STDOUT:   %int.convert_checked.loc19_33: init i32 = call %.loc19_33.3(%.loc19_33.1) [template = constants.%.48]
-// CHECK:STDOUT:   %.loc19_33.4: i32 = value_of_initializer %int.convert_checked.loc19_33 [template = constants.%.48]
-// CHECK:STDOUT:   %.loc19_33.5: i32 = converted %.loc19_33.1, %.loc19_33.4 [template = constants.%.48]
-// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_26.2(%.loc19_19.4, %.loc19_33.5) [template = constants.%.49]
+// CHECK:STDOUT:   %.loc19_26.2: <bound method> = bound_method %.loc19_19.4, %.loc19_26.1 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc19_33.1: Core.IntLiteral = int_value 2 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc19_33.2: %Convert.type.4 = interface_witness_access constants.%.40, element0 [template = constants.%Convert.16]
+// CHECK:STDOUT:   %.loc19_33.3: <bound method> = bound_method %.loc19_33.1, %.loc19_33.2 [template = constants.%.41]
+// CHECK:STDOUT:   %int.convert_checked.loc19_33: init i32 = call %.loc19_33.3(%.loc19_33.1) [template = constants.%.42]
+// CHECK:STDOUT:   %.loc19_33.4: i32 = value_of_initializer %int.convert_checked.loc19_33 [template = constants.%.42]
+// CHECK:STDOUT:   %.loc19_33.5: i32 = converted %.loc19_33.1, %.loc19_33.4 [template = constants.%.42]
+// CHECK:STDOUT:   %int.sadd: init i32 = call %.loc19_26.2(%.loc19_19.4, %.loc19_33.5) [template = constants.%.43]
 // CHECK:STDOUT:   %.loc19_11.1: type = value_of_initializer %int.make_type_32.loc19_11 [template = i32]
 // CHECK:STDOUT:   %.loc19_11.2: type = converted %int.make_type_32.loc19_11, %.loc19_11.1 [template = i32]
-// CHECK:STDOUT:   %.loc19_32.1: %Convert.type.7 = interface_witness_access constants.%.50, element0 [template = constants.%Convert.17]
-// CHECK:STDOUT:   %.loc19_32.2: <bound method> = bound_method %int.sadd, %.loc19_32.1 [template = constants.%.51]
-// CHECK:STDOUT:   %.loc19_32.3: i32 = value_of_initializer %int.sadd [template = constants.%.49]
-// CHECK:STDOUT:   %.loc19_32.4: i32 = converted %int.sadd, %.loc19_32.3 [template = constants.%.49]
-// CHECK:STDOUT:   %int.convert_checked.loc19_32: init Core.IntLiteral = call %.loc19_32.2(%.loc19_32.4) [template = constants.%.52]
-// CHECK:STDOUT:   %.loc19_32.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_32 [template = constants.%.52]
-// CHECK:STDOUT:   %.loc19_32.6: Core.IntLiteral = converted %int.sadd, %.loc19_32.5 [template = constants.%.52]
-// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_32.6, i32 [template = constants.%.53]
-// CHECK:STDOUT:   %arr.var: ref %.53 = var arr
-// CHECK:STDOUT:   %arr: ref %.53 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc19_32.1: %Convert.type.7 = interface_witness_access constants.%.44, element0 [template = constants.%Convert.17]
+// CHECK:STDOUT:   %.loc19_32.2: <bound method> = bound_method %int.sadd, %.loc19_32.1 [template = constants.%.45]
+// CHECK:STDOUT:   %.loc19_32.3: i32 = value_of_initializer %int.sadd [template = constants.%.43]
+// CHECK:STDOUT:   %.loc19_32.4: i32 = converted %int.sadd, %.loc19_32.3 [template = constants.%.43]
+// CHECK:STDOUT:   %int.convert_checked.loc19_32: init Core.IntLiteral = call %.loc19_32.2(%.loc19_32.4) [template = constants.%.46]
+// CHECK:STDOUT:   %.loc19_32.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_32 [template = constants.%.46]
+// CHECK:STDOUT:   %.loc19_32.6: Core.IntLiteral = converted %int.sadd, %.loc19_32.5 [template = constants.%.46]
+// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_32.6, i32 [template = constants.%.47]
+// CHECK:STDOUT:   %arr.var: ref %.47 = var arr
+// CHECK:STDOUT:   %arr: ref %.47 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -177,7 +177,6 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: %I.type = facet_value i32, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_15: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -199,7 +198,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.1.%.loc16) {
+// CHECK:STDOUT: specific @F.1(constants.%.4) {
 // CHECK:STDOUT:   %Self => constants.%.4
 // CHECK:STDOUT:   %.loc12_14.1 => i32
 // CHECK:STDOUT: }

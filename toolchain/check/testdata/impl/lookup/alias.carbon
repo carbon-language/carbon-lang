@@ -90,7 +90,6 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc20: %HasF.type = facet_value constants.%C, constants.%C [template = constants.%.5]
 // CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -134,5 +133,5 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc20) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:

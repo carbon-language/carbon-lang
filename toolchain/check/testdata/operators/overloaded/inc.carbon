@@ -35,7 +35,6 @@ fn TestOp() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.6: %Inc.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
@@ -78,7 +77,6 @@ fn TestOp() {
 // CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %Inc.type = facet_value constants.%C, constants.%C [template = constants.%.6]
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -42,7 +42,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.4: %LeftShift.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %LeftShiftAssign.type: type = facet_type <@LeftShiftAssign> [template]
@@ -50,7 +49,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %.10: %LeftShiftAssign.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.11: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
@@ -141,7 +139,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %LeftShift.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -165,7 +162,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23: %LeftShiftAssign.type = facet_value constants.%C, constants.%C [template = constants.%.10]
 // CHECK:STDOUT:   %.loc22: <witness> = interface_witness (%Op.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
@@ -32,9 +33,9 @@ static auto NoteAssociatedFunction(Context& context,
 // Gets the self specific of a generic declaration that is an interface member,
 // given a specific for an enclosing generic, plus a type to use as `Self`.
 static auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificId enclosing_specific_id, SemIR::GenericId generic_id,
-    SemIR::TypeId self_type_id) -> SemIR::SpecificId {
+    Context& context, SemIR::SpecificId enclosing_specific_id,
+    SemIR::GenericId generic_id, SemIR::TypeId self_type_id)
+    -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
   auto bindings = context.inst_blocks().Get(generic.bindings_id);
 
@@ -66,11 +67,12 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // TODO: Make a symbolic interface witness here. For the moment, the witness
   // is never used.
   auto witness_inst_id = type_inst_id;
-  auto facet_value_inst_id = context.AddInst<SemIR::FacetValue>(
-      loc_id, {.type_id = self_binding.type_id,
-               .type_inst_id = type_inst_id,
-               .witness_inst_id = witness_inst_id});
-  arg_ids.push_back(facet_value_inst_id);
+  auto facet_value_const_id =
+      TryEvalInst(context, SemIR::InstId::Invalid,
+                  SemIR::FacetValue{.type_id = self_binding.type_id,
+                                    .type_inst_id = type_inst_id,
+                                    .witness_inst_id = witness_inst_id});
+  arg_ids.push_back(context.constant_values().GetInstId(facet_value_const_id));
 
   // Take any trailing argument values from the self specific.
   // TODO: If these refer to outer arguments, for example in their types, we may
@@ -113,8 +115,7 @@ static auto CheckAssociatedFunctionImplementation(
   // parameters.
   auto interface_function_specific_id =
       GetSelfSpecificForInterfaceMemberWithSelfType(
-          context, context.insts().GetLocId(impl_decl_id),
-          interface_function_type.specific_id,
+          context, interface_function_type.specific_id,
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,

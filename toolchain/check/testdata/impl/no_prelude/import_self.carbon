@@ -182,7 +182,6 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: %Add.type = facet_value constants.%empty_tuple.type, constants.%empty_tuple.type [template = constants.%.2]
 // CHECK:STDOUT:   %.loc6_16: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -226,7 +225,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(@impl.%.loc7) {
+// CHECK:STDOUT: specific @Op.2(constants.%.2) {
 // CHECK:STDOUT:   %Self => constants.%.2
 // CHECK:STDOUT:   %.1 => constants.%empty_tuple.type
 // CHECK:STDOUT: }

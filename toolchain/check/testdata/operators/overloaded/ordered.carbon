@@ -92,7 +92,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.1: type = fn_type @GreaterOrEquivalent.1 [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.1: %GreaterOrEquivalent.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Less.type.2: type = fn_type @Less.2 [template]
-// CHECK:STDOUT:   %.4: %Ordered.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %LessOrEquivalent.type.2: type = fn_type @LessOrEquivalent.2 [template]
 // CHECK:STDOUT:   %Greater.type.2: type = fn_type @Greater.2 [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.2: type = fn_type @GreaterOrEquivalent.2 [template]
@@ -296,10 +295,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: %Ordered.type = facet_value constants.%C, constants.%C [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8: %Ordered.type = facet_value constants.%C, constants.%C [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9: %Ordered.type = facet_value constants.%C, constants.%C [template = constants.%.4]
-// CHECK:STDOUT:   %.loc10: %Ordered.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

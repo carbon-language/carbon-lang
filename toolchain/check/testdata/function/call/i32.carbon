@@ -29,9 +29,9 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.37: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.31: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,11 +85,11 @@ fn Main() {
 // CHECK:STDOUT:   %b: ref i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
 // CHECK:STDOUT:   %.loc16_21.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc16_21.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc16_21.3: <bound method> = bound_method %.loc16_21.1, %.loc16_21.2 [template = constants.%.36]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc16_21.3(%.loc16_21.1) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc16_21.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.37]
-// CHECK:STDOUT:   %.loc16_21.5: i32 = converted %.loc16_21.1, %.loc16_21.4 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc16_21.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc16_21.3: <bound method> = bound_method %.loc16_21.1, %.loc16_21.2 [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc16_21.3(%.loc16_21.1) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc16_21.4: i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
+// CHECK:STDOUT:   %.loc16_21.5: i32 = converted %.loc16_21.1, %.loc16_21.4 [template = constants.%.31]
 // CHECK:STDOUT:   %Echo.call: init i32 = call %Echo.ref(%.loc16_21.5)
 // CHECK:STDOUT:   assign %b.var, %Echo.call
 // CHECK:STDOUT:   return

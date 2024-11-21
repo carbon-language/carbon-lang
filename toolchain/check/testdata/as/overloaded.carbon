@@ -33,27 +33,23 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
 // CHECK:STDOUT:   %As: %As.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %As.type.2: type = facet_type <@As, @As(%Dest)> [symbolic]
 // CHECK:STDOUT:   %As.type.3: type = facet_type <@As, @As(%X)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.1, @As(%X) [template]
-// CHECK:STDOUT:   %.10: %As.type.2 = facet_value i32, i32 [symbolic]
 // CHECK:STDOUT:   %.11: <witness> = interface_witness (%Convert.2) [template]
 // CHECK:STDOUT:   %As.type.4: type = facet_type <@As, @As(i32)> [template]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @As(i32) [template]
-// CHECK:STDOUT:   %.15: %As.type.2 = facet_value %X, %X [symbolic]
 // CHECK:STDOUT:   %.16: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %.17: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.type.18: type = fn_type @Convert.13 [template]
 // CHECK:STDOUT:   %Convert.18: %Convert.type.18 = struct_value () [template]
-// CHECK:STDOUT:   %.45: <witness> = interface_witness (%Convert.18) [template]
-// CHECK:STDOUT:   %.46: <bound method> = bound_method %.17, %Convert.18 [template]
-// CHECK:STDOUT:   %.47: i32 = int_value 4 [template]
-// CHECK:STDOUT:   %.48: <bound method> = bound_method %.47, %Convert.2 [template]
+// CHECK:STDOUT:   %.39: <witness> = interface_witness (%Convert.18) [template]
+// CHECK:STDOUT:   %.40: <bound method> = bound_method %.17, %Convert.18 [template]
+// CHECK:STDOUT:   %.41: i32 = int_value 4 [template]
+// CHECK:STDOUT:   %.42: <bound method> = bound_method %.41, %Convert.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,7 +109,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: @As.%As.type (%As.type.2) = facet_value i32, i32 [symbolic = constants.%.10]
 // CHECK:STDOUT:   %.loc15_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -137,7 +132,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: @As.%As.type (%As.type.2) = facet_value constants.%X, constants.%X [symbolic = constants.%.15]
 // CHECK:STDOUT:   %.loc19_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.16]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -183,14 +177,14 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int.make_type_32.loc23_21: init type = call constants.%Int32() [template = i32]
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_32.loc23_21 [template = i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_32.loc23_21, %.loc23_21.1 [template = i32]
-// CHECK:STDOUT:   %.loc23_18.1: %Convert.type.5 = interface_witness_access constants.%.45, element0 [template = constants.%Convert.18]
-// CHECK:STDOUT:   %.loc23_18.2: <bound method> = bound_method %.loc23_16, %.loc23_18.1 [template = constants.%.46]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc23_18.2(%.loc23_16) [template = constants.%.47]
-// CHECK:STDOUT:   %.loc23_18.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.47]
-// CHECK:STDOUT:   %.loc23_18.4: i32 = converted %.loc23_16, %.loc23_18.3 [template = constants.%.47]
+// CHECK:STDOUT:   %.loc23_18.1: %Convert.type.5 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.18]
+// CHECK:STDOUT:   %.loc23_18.2: <bound method> = bound_method %.loc23_16, %.loc23_18.1 [template = constants.%.40]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc23_18.2(%.loc23_16) [template = constants.%.41]
+// CHECK:STDOUT:   %.loc23_18.3: i32 = value_of_initializer %int.convert_checked [template = constants.%.41]
+// CHECK:STDOUT:   %.loc23_18.4: i32 = converted %.loc23_16, %.loc23_18.3 [template = constants.%.41]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc23_26.1: %Convert.type.3 = interface_witness_access constants.%.11, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %.loc23_26.2: <bound method> = bound_method %.loc23_18.4, %.loc23_26.1 [template = constants.%.48]
+// CHECK:STDOUT:   %.loc23_26.2: <bound method> = bound_method %.loc23_18.4, %.loc23_26.1 [template = constants.%.42]
 // CHECK:STDOUT:   %.loc23_26.3: ref %X = temporary_storage
 // CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %.loc23_26.2(%.loc23_18.4) to %.loc23_26.3
 // CHECK:STDOUT:   %.loc23_26.4: init %X = converted %.loc23_18.4, %Convert.call.loc23_26

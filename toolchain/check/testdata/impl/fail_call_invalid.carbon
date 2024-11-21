@@ -105,7 +105,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: %Simple.type = facet_value i32, i32 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc15_20: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -137,7 +136,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(@impl.%.loc19) {
+// CHECK:STDOUT: specific @G.1(constants.%.4) {
 // CHECK:STDOUT:   %Self => constants.%.4
 // CHECK:STDOUT:   %.loc12_14.1 => i32
 // CHECK:STDOUT: }

@@ -126,7 +126,6 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: %I.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%F.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -172,7 +171,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc19) {
+// CHECK:STDOUT: specific @F.1(constants.%.4) {
 // CHECK:STDOUT:   %Self => constants.%.4
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%C
 // CHECK:STDOUT: }

@@ -47,12 +47,12 @@ fn F() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.42: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.43: <bound method> = bound_method %.6, %Convert.15 [template]
-// CHECK:STDOUT:   %.44: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.45: <bound method> = bound_method %.7, %Convert.15 [template]
-// CHECK:STDOUT:   %.46: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%.44, %.46) [template]
+// CHECK:STDOUT:   %.36: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.37: <bound method> = bound_method %.6, %Convert.15 [template]
+// CHECK:STDOUT:   %.38: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.39: <bound method> = bound_method %.7, %Convert.15 [template]
+// CHECK:STDOUT:   %.40: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %struct: %Class = struct_value (%.38, %.40) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,19 +113,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_32: Core.IntLiteral = int_value 2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc25_33.1: %.8 = struct_literal (%.loc25_24, %.loc25_32)
 // CHECK:STDOUT:   %Class.ref.loc25_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc25_33.2: %Convert.type.2 = interface_witness_access constants.%.42, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc25_33.3: <bound method> = bound_method %.loc25_24, %.loc25_33.2 [template = constants.%.43]
-// CHECK:STDOUT:   %int.convert_checked.loc25_33.1: init i32 = call %.loc25_33.3(%.loc25_24) [template = constants.%.44]
-// CHECK:STDOUT:   %.loc25_33.4: init i32 = converted %.loc25_24, %int.convert_checked.loc25_33.1 [template = constants.%.44]
+// CHECK:STDOUT:   %.loc25_33.2: %Convert.type.2 = interface_witness_access constants.%.36, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc25_33.3: <bound method> = bound_method %.loc25_24, %.loc25_33.2 [template = constants.%.37]
+// CHECK:STDOUT:   %int.convert_checked.loc25_33.1: init i32 = call %.loc25_33.3(%.loc25_24) [template = constants.%.38]
+// CHECK:STDOUT:   %.loc25_33.4: init i32 = converted %.loc25_24, %int.convert_checked.loc25_33.1 [template = constants.%.38]
 // CHECK:STDOUT:   %.loc25_33.5: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_33.6: ref i32 = class_element_access %.loc25_33.5, element0
-// CHECK:STDOUT:   %.loc25_33.7: init i32 = initialize_from %.loc25_33.4 to %.loc25_33.6 [template = constants.%.44]
-// CHECK:STDOUT:   %.loc25_33.8: %Convert.type.2 = interface_witness_access constants.%.42, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc25_33.9: <bound method> = bound_method %.loc25_32, %.loc25_33.8 [template = constants.%.45]
-// CHECK:STDOUT:   %int.convert_checked.loc25_33.2: init i32 = call %.loc25_33.9(%.loc25_32) [template = constants.%.46]
-// CHECK:STDOUT:   %.loc25_33.10: init i32 = converted %.loc25_32, %int.convert_checked.loc25_33.2 [template = constants.%.46]
+// CHECK:STDOUT:   %.loc25_33.7: init i32 = initialize_from %.loc25_33.4 to %.loc25_33.6 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc25_33.8: %Convert.type.2 = interface_witness_access constants.%.36, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc25_33.9: <bound method> = bound_method %.loc25_32, %.loc25_33.8 [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked.loc25_33.2: init i32 = call %.loc25_33.9(%.loc25_32) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc25_33.10: init i32 = converted %.loc25_32, %int.convert_checked.loc25_33.2 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc25_33.11: ref i32 = class_element_access %.loc25_33.5, element1
-// CHECK:STDOUT:   %.loc25_33.12: init i32 = initialize_from %.loc25_33.10 to %.loc25_33.11 [template = constants.%.46]
+// CHECK:STDOUT:   %.loc25_33.12: init i32 = initialize_from %.loc25_33.10 to %.loc25_33.11 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc25_33.13: init %Class = class_init (%.loc25_33.7, %.loc25_33.12), %.loc25_33.5 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc25_33.14: ref %Class = temporary %.loc25_33.5, %.loc25_33.13
 // CHECK:STDOUT:   %.loc25_35.1: ref %Class = converted %.loc25_33.1, %.loc25_33.14

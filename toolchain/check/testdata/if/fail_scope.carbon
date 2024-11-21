@@ -32,9 +32,9 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.37: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.31: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -84,10 +84,10 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %n.var: ref i32 = var n
 // CHECK:STDOUT:   %n: ref i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %.loc13_18: Core.IntLiteral = int_value 2 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc13_19.1: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc13_19.2: <bound method> = bound_method %.loc13_18, %.loc13_19.1 [template = constants.%.36]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc13_19.2(%.loc13_18) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc13_19.3: init i32 = converted %.loc13_18, %int.convert_checked [template = constants.%.37]
+// CHECK:STDOUT:   %.loc13_19.1: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc13_19.2: <bound method> = bound_method %.loc13_18, %.loc13_19.1 [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc13_19.2(%.loc13_18) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc13_19.3: init i32 = converted %.loc13_18, %int.convert_checked [template = constants.%.31]
 // CHECK:STDOUT:   assign %n.var, %.loc13_19.3
 // CHECK:STDOUT:   %n.ref.loc14: ref i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc14: i32 = bind_value %n.ref.loc14

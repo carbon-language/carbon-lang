@@ -325,7 +325,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: %Add.type = facet_value i32, i32 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc19_17: <witness> = interface_witness (%Op.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -349,7 +348,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc24: @As.%As.type (%As.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.14]
 // CHECK:STDOUT:   %.loc23_30: <witness> = interface_witness (%Convert.decl) [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -373,7 +371,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value Core.IntLiteral, Core.IntLiteral [symbolic = constants.%.18]
 // CHECK:STDOUT:   %.loc27_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.19]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -398,7 +395,6 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc32: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = facet_value i32, i32 [symbolic = constants.%.22]
 // CHECK:STDOUT:   %.loc31_38: <witness> = interface_witness (%Convert.decl) [template = constants.%.23]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -492,7 +488,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T.patt.loc15_22.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(@impl.1.%.loc20) {
+// CHECK:STDOUT: specific @Op.1(constants.%.10) {
 // CHECK:STDOUT:   %Self => constants.%.10
 // CHECK:STDOUT:   %.loc8_15.1 => i32
 // CHECK:STDOUT: }
@@ -510,7 +506,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.loc12_32.3 => constants.%.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(i32, @impl.2.%.loc24) {
+// CHECK:STDOUT: specific @Convert.1(i32, constants.%.14) {
 // CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:   %As.type => constants.%As.type.3
 // CHECK:STDOUT:   %Self => constants.%.14
@@ -530,7 +526,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.loc16_32.3 => constants.%.17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.2(i32, @impl.3.%.loc28) {
+// CHECK:STDOUT: specific @Convert.2(i32, constants.%.18) {
 // CHECK:STDOUT:   %T => i32
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
 // CHECK:STDOUT:   %Self => constants.%.18
@@ -550,7 +546,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.loc16_32.3 => constants.%.21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.2(Core.IntLiteral, @impl.4.%.loc32) {
+// CHECK:STDOUT: specific @Convert.2(Core.IntLiteral, constants.%.22) {
 // CHECK:STDOUT:   %T => Core.IntLiteral
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self => constants.%.22
@@ -658,20 +654,20 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %import_ref.10 = import_ref Core//default, inst+42, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Core//default, inst+138, loaded [template = i32]
 // CHECK:STDOUT:   %import_ref.12: type = import_ref Core//default, inst+139, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Core//default, inst+161, loaded [template = constants.%.26]
-// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//default, inst+166, loaded [template = Core.IntLiteral]
-// CHECK:STDOUT:   %import_ref.15: type = import_ref Core//default, inst+171, loaded [template = constants.%As.type.3]
-// CHECK:STDOUT:   %import_ref.16: <witness> = import_ref Core//default, inst+195, loaded [template = constants.%.17]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Core//default, inst+160, loaded [template = constants.%.26]
+// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//default, inst+165, loaded [template = Core.IntLiteral]
+// CHECK:STDOUT:   %import_ref.15: type = import_ref Core//default, inst+170, loaded [template = constants.%As.type.3]
+// CHECK:STDOUT:   %import_ref.16: <witness> = import_ref Core//default, inst+193, loaded [template = constants.%.17]
 // CHECK:STDOUT:   %import_ref.17 = import_ref Core//default, inst+104, unloaded
 // CHECK:STDOUT:   %import_ref.18: @ImplicitAs.%.1 (%.10) = import_ref Core//default, inst+128, loaded [symbolic = @ImplicitAs.%.2 (constants.%.29)]
 // CHECK:STDOUT:   %import_ref.19 = import_ref Core//default, inst+120, unloaded
-// CHECK:STDOUT:   %import_ref.20: type = import_ref Core//default, inst+200, loaded [template = Core.IntLiteral]
-// CHECK:STDOUT:   %import_ref.21: type = import_ref Core//default, inst+205, loaded [template = constants.%ImplicitAs.type.3]
-// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref Core//default, inst+229, loaded [template = constants.%.42]
+// CHECK:STDOUT:   %import_ref.20: type = import_ref Core//default, inst+198, loaded [template = Core.IntLiteral]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref Core//default, inst+203, loaded [template = constants.%ImplicitAs.type.3]
+// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref Core//default, inst+226, loaded [template = constants.%.42]
 // CHECK:STDOUT:   %import_ref.23 = import_ref Core//default, inst+120, unloaded
-// CHECK:STDOUT:   %import_ref.25: type = import_ref Core//default, inst+233, loaded [template = i32]
-// CHECK:STDOUT:   %import_ref.26: type = import_ref Core//default, inst+239, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.27: <witness> = import_ref Core//default, inst+264, loaded [template = constants.%.30]
+// CHECK:STDOUT:   %import_ref.25: type = import_ref Core//default, inst+230, loaded [template = i32]
+// CHECK:STDOUT:   %import_ref.26: type = import_ref Core//default, inst+236, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.27: <witness> = import_ref Core//default, inst+260, loaded [template = constants.%.30]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

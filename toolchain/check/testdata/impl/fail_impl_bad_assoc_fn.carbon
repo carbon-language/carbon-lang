@@ -488,7 +488,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc62: %I.type = facet_value constants.%FExtraParam, constants.%FExtraParam [template = constants.%.5]
 // CHECK:STDOUT:   %.loc54: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -505,7 +504,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %self.param: %FExtraImplicitParam = value_param runtime_param0
 // CHECK:STDOUT:     %self: %FExtraImplicitParam = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc75: %I.type = facet_value constants.%FExtraImplicitParam, constants.%FExtraImplicitParam [template = constants.%.6]
 // CHECK:STDOUT:   %.loc67: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -524,7 +522,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc89: %I.type = facet_value constants.%FExtraReturnType, constants.%FExtraReturnType [template = constants.%.7]
 // CHECK:STDOUT:   %.loc81: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -550,7 +547,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc104: %J.type = facet_value constants.%FMissingParam, constants.%FMissingParam [template = constants.%.10]
 // CHECK:STDOUT:   %.loc96: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -576,7 +572,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc117: %J.type = facet_value constants.%FMissingImplicitParam, constants.%FMissingImplicitParam [template = constants.%.11]
 // CHECK:STDOUT:   %.loc109: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -602,7 +597,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param1
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc130: %J.type = facet_value constants.%FMissingReturnType, constants.%FMissingReturnType [template = constants.%.12]
 // CHECK:STDOUT:   %.loc122: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -633,7 +627,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc143: %J.type = facet_value constants.%FDifferentParamType, constants.%FDifferentParamType [template = constants.%.13]
 // CHECK:STDOUT:   %.loc135: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -664,7 +657,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc156: %J.type = facet_value constants.%FDifferentImplicitParamType, constants.%FDifferentImplicitParamType [template = constants.%.14]
 // CHECK:STDOUT:   %.loc148: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -695,7 +687,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref %FDifferentReturnType = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %FDifferentReturnType = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc169: %J.type = facet_value constants.%FDifferentReturnType, constants.%FDifferentReturnType [template = constants.%.15]
 // CHECK:STDOUT:   %.loc161: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -728,7 +719,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc183: %J.type = facet_value constants.%FDifferentParamName, constants.%FDifferentParamName [template = constants.%.16]
 // CHECK:STDOUT:   %.loc175: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -762,7 +752,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref %.26 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.26 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc200: %SelfNested.type = facet_value constants.%SelfNestedBadParam, constants.%SelfNestedBadParam [template = constants.%.27]
 // CHECK:STDOUT:   %.loc192: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -794,7 +783,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref %.26 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %.26 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc212: %SelfNested.type = facet_value constants.%SelfNestedBadReturnType, constants.%SelfNestedBadReturnType [template = constants.%.31]
 // CHECK:STDOUT:   %.loc205: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1018,27 +1006,27 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.4.%.loc62) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.5.%.loc75) {}
+// CHECK:STDOUT: specific @F.1(constants.%.6) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.6.%.loc89) {}
+// CHECK:STDOUT: specific @F.1(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.5(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.7.%.loc104) {}
+// CHECK:STDOUT: specific @F.5(constants.%.10) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.8.%.loc117) {}
+// CHECK:STDOUT: specific @F.5(constants.%.11) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.9.%.loc130) {}
+// CHECK:STDOUT: specific @F.5(constants.%.12) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.10.%.loc143) {}
+// CHECK:STDOUT: specific @F.5(constants.%.13) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.11.%.loc156) {}
+// CHECK:STDOUT: specific @F.5(constants.%.14) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.12.%.loc169) {}
+// CHECK:STDOUT: specific @F.5(constants.%.15) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.5(@impl.13.%.loc183) {}
+// CHECK:STDOUT: specific @F.5(constants.%.16) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.13(constants.%Self.3) {
 // CHECK:STDOUT:   %Self => constants.%Self.3
@@ -1049,7 +1037,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc188_52.1 => constants.%.21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.13(@impl.14.%.loc200) {
+// CHECK:STDOUT: specific @F.13(constants.%.27) {
 // CHECK:STDOUT:   %Self => constants.%.27
 // CHECK:STDOUT:   %.loc188_16.1 => constants.%SelfNestedBadParam
 // CHECK:STDOUT:   %.loc188_16.2 => constants.%.24
@@ -1058,7 +1046,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc188_52.1 => constants.%.26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.13(@impl.15.%.loc212) {
+// CHECK:STDOUT: specific @F.13(constants.%.31) {
 // CHECK:STDOUT:   %Self => constants.%.31
 // CHECK:STDOUT:   %.loc188_16.1 => constants.%SelfNestedBadReturnType
 // CHECK:STDOUT:   %.loc188_16.2 => constants.%.29

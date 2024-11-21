@@ -172,8 +172,6 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %self.param: i32 = value_param runtime_param0
 // CHECK:STDOUT:     %self: i32 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: %Simple.type = facet_value i32, i32 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc18: %Simple.type = facet_value i32, i32 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc16_20: <witness> = interface_witness (%F.decl, %G.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -250,9 +248,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc13_14.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc17) {}
+// CHECK:STDOUT: specific @F.1(constants.%.6) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(@impl.%.loc18) {
+// CHECK:STDOUT: specific @G.1(constants.%.6) {
 // CHECK:STDOUT:   %Self => constants.%.6
 // CHECK:STDOUT:   %.loc13_14.1 => i32
 // CHECK:STDOUT: }

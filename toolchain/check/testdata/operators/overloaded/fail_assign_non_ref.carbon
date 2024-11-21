@@ -52,13 +52,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.6: %Inc.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %.10: %AddAssign.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.11: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
@@ -130,7 +128,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: %Inc.type = facet_value constants.%C, constants.%C [template = constants.%.6]
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -154,7 +151,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: %AddAssign.type = facet_value constants.%C, constants.%C [template = constants.%.10]
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

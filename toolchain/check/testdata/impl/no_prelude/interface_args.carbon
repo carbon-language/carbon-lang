@@ -170,7 +170,6 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {} {}
-// CHECK:STDOUT:   %.loc13: @Action.%Action.type (%Action.type.2) = facet_value constants.%A, constants.%A [symbolic = constants.%.7]
 // CHECK:STDOUT:   %.loc12: <witness> = interface_witness (%Op.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -247,7 +246,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %.loc5_10.3 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%B, @impl.%.loc13) {}
+// CHECK:STDOUT: specific @Op.1(constants.%B, constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- action.impl.carbon
 // CHECK:STDOUT:
@@ -284,7 +283,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+33, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.3) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.8)]
@@ -292,7 +291,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+29, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//action, inst+54, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//action, inst+53, loaded [template = constants.%.9]
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//action, inst+45, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, inst+16, unloaded
 // CHECK:STDOUT: }
@@ -436,7 +435,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+33, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+36, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//action, inst+34, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+14, unloaded
 // CHECK:STDOUT:   %import_ref.8: @Action.%.1 (%.3) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%.2 (constants.%.10)]
@@ -444,7 +443,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+29, unloaded
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.12: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//action, inst+54, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//action, inst+53, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//action, inst+45, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.17 = import_ref Main//action, inst+37, unloaded
@@ -657,7 +656,6 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: @Factory.%Factory.type (%Factory.type.2) = facet_value constants.%A, constants.%A [symbolic = constants.%.7]
 // CHECK:STDOUT:   %.loc11: <witness> = interface_witness (%Make.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -714,7 +712,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %.loc5_17.3 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%B, @impl.%.loc12) {
+// CHECK:STDOUT: specific @Make.1(constants.%B, constants.%.7) {
 // CHECK:STDOUT:   %T => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -758,7 +756,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//factory, inst+42, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+45, loaded [template = constants.%Factory.type.3]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//factory, inst+62, loaded [template = constants.%.9]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//factory, inst+61, loaded [template = constants.%.9]
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//factory, inst+53, unloaded
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, inst+21, unloaded
 // CHECK:STDOUT: }
@@ -917,7 +915,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//factory, inst+42, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.10: type = import_ref Main//factory, inst+45, loaded [template = constants.%Factory.type.3]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//factory, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//factory, inst+61, unloaded
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//factory, inst+53, unloaded
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, inst+21, unloaded
 // CHECK:STDOUT: }

@@ -96,7 +96,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %NotEqual.1: %NotEqual.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.2: type = fn_type @Equal.2 [template]
-// CHECK:STDOUT:   %.4: %Eq.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %NotEqual.type.2: type = fn_type @NotEqual.2 [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Equal.1, %NotEqual.1) [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
@@ -212,8 +211,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: %Eq.type = facet_value constants.%C, constants.%C [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8: %Eq.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -367,7 +364,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %NotEqual.1: %NotEqual.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.2: type = fn_type @Equal.2 [template]
-// CHECK:STDOUT:   %.4: %Eq.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Equal.1, %NotEqual.1) [template]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
@@ -485,8 +481,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: %Eq.type = facet_value constants.%C, constants.%C [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9: %Eq.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

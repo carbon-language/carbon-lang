@@ -37,12 +37,12 @@ fn Test() {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.39: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.40: <bound method> = bound_method %.5, %Convert.15 [template]
-// CHECK:STDOUT:   %.41: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.42: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.43: <bound method> = bound_method %.42, %Convert.15 [template]
-// CHECK:STDOUT:   %.44: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %.5, %Convert.15 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.36: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %.37: <bound method> = bound_method %.36, %Convert.15 [template]
+// CHECK:STDOUT:   %.38: i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -91,19 +91,19 @@ fn Test() {
 // CHECK:STDOUT:   %j.ref.loc18: %.1 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_5: ref i32 = class_element_access %cv.ref.loc18, element0
 // CHECK:STDOUT:   %.loc18_10: Core.IntLiteral = int_value 1 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_8.1: %Convert.type.2 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc18_8.2: <bound method> = bound_method %.loc18_10, %.loc18_8.1 [template = constants.%.40]
-// CHECK:STDOUT:   %int.convert_checked.loc18: init i32 = call %.loc18_8.2(%.loc18_10) [template = constants.%.41]
-// CHECK:STDOUT:   %.loc18_8.3: init i32 = converted %.loc18_10, %int.convert_checked.loc18 [template = constants.%.41]
+// CHECK:STDOUT:   %.loc18_8.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc18_8.2: <bound method> = bound_method %.loc18_10, %.loc18_8.1 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked.loc18: init i32 = call %.loc18_8.2(%.loc18_10) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc18_8.3: init i32 = converted %.loc18_10, %int.convert_checked.loc18 [template = constants.%.35]
 // CHECK:STDOUT:   assign %.loc18_5, %.loc18_8.3
 // CHECK:STDOUT:   %cv.ref.loc19: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %k.ref.loc19: %.1 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc19_5: ref i32 = class_element_access %cv.ref.loc19, element1
-// CHECK:STDOUT:   %.loc19_10: Core.IntLiteral = int_value 2 [template = constants.%.42]
-// CHECK:STDOUT:   %.loc19_8.1: %Convert.type.2 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc19_8.2: <bound method> = bound_method %.loc19_10, %.loc19_8.1 [template = constants.%.43]
-// CHECK:STDOUT:   %int.convert_checked.loc19: init i32 = call %.loc19_8.2(%.loc19_10) [template = constants.%.44]
-// CHECK:STDOUT:   %.loc19_8.3: init i32 = converted %.loc19_10, %int.convert_checked.loc19 [template = constants.%.44]
+// CHECK:STDOUT:   %.loc19_10: Core.IntLiteral = int_value 2 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc19_8.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc19_8.2: <bound method> = bound_method %.loc19_10, %.loc19_8.1 [template = constants.%.37]
+// CHECK:STDOUT:   %int.convert_checked.loc19: init i32 = call %.loc19_8.2(%.loc19_10) [template = constants.%.38]
+// CHECK:STDOUT:   %.loc19_8.3: init i32 = converted %.loc19_10, %int.convert_checked.loc19 [template = constants.%.38]
 // CHECK:STDOUT:   assign %.loc19_5, %.loc19_8.3
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.ref.loc20: ref %Class = name_ref cv, %cv

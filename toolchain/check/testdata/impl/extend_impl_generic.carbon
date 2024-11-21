@@ -83,10 +83,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.48: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.49: <bound method> = bound_method %.13, %Convert.15 [template]
-// CHECK:STDOUT:   %.50: i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %Param = struct_value (%.50) [template]
+// CHECK:STDOUT:   %.42: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.43: <bound method> = bound_method %.13, %Convert.15 [template]
+// CHECK:STDOUT:   %.44: i32 = int_value 2 [template]
+// CHECK:STDOUT:   %struct: %Param = struct_value (%.44) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -168,7 +168,6 @@ class X(U:! type) {
 // CHECK:STDOUT:     %return.param: ref %Param = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Param = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: @HasF.%HasF.type (%HasF.type.2) = facet_value constants.%C, constants.%C [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -212,12 +211,12 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_20: Core.IntLiteral = int_value 2 [template = constants.%.13]
 // CHECK:STDOUT:   %.loc15_21.1: %.14 = struct_literal (%.loc15_20)
-// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.48, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.49]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc15_21.3(%.loc15_20) [template = constants.%.50]
-// CHECK:STDOUT:   %.loc15_21.4: init i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.50]
+// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.42, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.43]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc15_21.3(%.loc15_20) [template = constants.%.44]
+// CHECK:STDOUT:   %.loc15_21.4: init i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.44]
 // CHECK:STDOUT:   %.loc15_21.5: ref i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc15_21.6: init i32 = initialize_from %.loc15_21.4 to %.loc15_21.5 [template = constants.%.50]
+// CHECK:STDOUT:   %.loc15_21.6: init i32 = initialize_from %.loc15_21.4 to %.loc15_21.5 [template = constants.%.44]
 // CHECK:STDOUT:   %.loc15_21.7: init %Param = class_init (%.loc15_21.6), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.7 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc15_22 to %return
@@ -285,7 +284,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc5_14.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Param, @impl.1.%.loc14) {
+// CHECK:STDOUT: specific @F.1(constants.%Param, constants.%.8) {
 // CHECK:STDOUT:   %T => constants.%Param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,7 +318,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [symbolic]
 // CHECK:STDOUT:   %.8: type = struct_type {} [template]
 // CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
-// CHECK:STDOUT:   %.10: %I.type.3 = facet_value %X.2, %X.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -399,9 +397,6 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%U) [symbolic = %F.type (constants.%F.type.3)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.3) = struct_value () [symbolic = %F (constants.%F.3)]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %I.type.loc10: type = facet_type <@I, @I(%T)> [symbolic = %I.type.loc10 (constants.%I.type.2)]
-// CHECK:STDOUT:   %.loc10_28.2: @impl.%I.type.loc10 (%I.type.2) = facet_value %X, %X [symbolic = %.loc10_28.2 (constants.%.6)]
 // CHECK:STDOUT:   %.loc9_23.2: <witness> = interface_witness (%F) [symbolic = %.loc9_23.2 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.type.loc9_19.1 {
@@ -419,7 +414,6 @@ class X(U:! type) {
 // CHECK:STDOUT:       %t.param: @F.2.%U (%U) = value_param runtime_param1
 // CHECK:STDOUT:       %t: @F.2.%U (%U) = bind_name t, %t.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc10_28.1: @impl.%I.type.loc10 (%I.type.2) = facet_value constants.%X.2, constants.%X.2 [symbolic = %.loc10_28.2 (constants.%.6)]
 // CHECK:STDOUT:     %.loc9_23.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc9_23.2 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -533,9 +527,6 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %T => constants.%U
-// CHECK:STDOUT:   %I.type.loc10 => constants.%I.type.3
-// CHECK:STDOUT:   %.loc10_28.2 => constants.%.10
 // CHECK:STDOUT:   %.loc9_23.2 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -549,7 +540,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %X => constants.%X.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%U, @impl.%.loc10_28.1) {
+// CHECK:STDOUT: specific @F.1(constants.%U, constants.%.6) {
 // CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
 // CHECK:STDOUT:   %Self => constants.%.6
@@ -560,11 +551,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X.2
 // CHECK:STDOUT:   %I.type.loc9_19.2 => constants.%I.type.3
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%T) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@X.%U.loc8_9.2) {

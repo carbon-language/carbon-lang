@@ -27,12 +27,12 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.39: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.40: <bound method> = bound_method %.4, %Convert.15 [template]
-// CHECK:STDOUT:   %.41: i32 = int_value 12 [template]
-// CHECK:STDOUT:   %array: %.2 = tuple_value (%.41) [template]
-// CHECK:STDOUT:   %.42: <bound method> = bound_method %.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.43: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %.4, %Convert.15 [template]
+// CHECK:STDOUT:   %.35: i32 = int_value 12 [template]
+// CHECK:STDOUT:   %array: %.2 = tuple_value (%.35) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.1, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,23 +69,23 @@ var b: i32 = a[1];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_20: Core.IntLiteral = int_value 12 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc11_23.1: %tuple.type = tuple_literal (%.loc11_20)
-// CHECK:STDOUT:   %.loc11_23.2: %Convert.type.2 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc11_23.3: <bound method> = bound_method %.loc11_20, %.loc11_23.2 [template = constants.%.40]
-// CHECK:STDOUT:   %int.convert_checked.loc11: init i32 = call %.loc11_23.3(%.loc11_20) [template = constants.%.41]
-// CHECK:STDOUT:   %.loc11_23.4: init i32 = converted %.loc11_20, %int.convert_checked.loc11 [template = constants.%.41]
+// CHECK:STDOUT:   %.loc11_23.2: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc11_23.3: <bound method> = bound_method %.loc11_20, %.loc11_23.2 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked.loc11: init i32 = call %.loc11_23.3(%.loc11_20) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_23.4: init i32 = converted %.loc11_20, %int.convert_checked.loc11 [template = constants.%.35]
 // CHECK:STDOUT:   %.loc11_23.5: i32 = int_value 0 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc11_23.6: ref i32 = array_index file.%a.var, %.loc11_23.5
-// CHECK:STDOUT:   %.loc11_23.7: init i32 = initialize_from %.loc11_23.4 to %.loc11_23.6 [template = constants.%.41]
+// CHECK:STDOUT:   %.loc11_23.7: init i32 = initialize_from %.loc11_23.4 to %.loc11_23.6 [template = constants.%.35]
 // CHECK:STDOUT:   %.loc11_23.8: init %.2 = array_init (%.loc11_23.7) to file.%a.var [template = constants.%array]
 // CHECK:STDOUT:   %.loc11_24: init %.2 = converted %.loc11_23.1, %.loc11_23.8 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_24
 // CHECK:STDOUT:   %a.ref: ref %.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15_16.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc15_16.2: %Convert.type.2 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc15_16.3: <bound method> = bound_method %.loc15_16.1, %.loc15_16.2 [template = constants.%.42]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init i32 = call %.loc15_16.3(%.loc15_16.1) [template = constants.%.43]
-// CHECK:STDOUT:   %.loc15_16.4: i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%.43]
-// CHECK:STDOUT:   %.loc15_16.5: i32 = converted %.loc15_16.1, %.loc15_16.4 [template = constants.%.43]
+// CHECK:STDOUT:   %.loc15_16.2: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc15_16.3: <bound method> = bound_method %.loc15_16.1, %.loc15_16.2 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked.loc15: init i32 = call %.loc15_16.3(%.loc15_16.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc15_16.4: i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc15_16.5: i32 = converted %.loc15_16.1, %.loc15_16.4 [template = constants.%.37]
 // CHECK:STDOUT:   %.loc15_17.1: ref i32 = array_index %a.ref, %.loc15_16.5 [template = <error>]
 // CHECK:STDOUT:   %.loc15_17.2: i32 = bind_value %.loc15_17.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc15_17.2

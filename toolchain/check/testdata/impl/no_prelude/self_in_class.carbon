@@ -83,7 +83,6 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: %DefaultConstructible.type = facet_value constants.%C, constants.%C [template = constants.%.6]
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -129,7 +128,7 @@ class A {
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(@impl.%.loc21) {
+// CHECK:STDOUT: specific @Make.1(constants.%.6) {
 // CHECK:STDOUT:   %Self => constants.%.6
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%C
 // CHECK:STDOUT: }

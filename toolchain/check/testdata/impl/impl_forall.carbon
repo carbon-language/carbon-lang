@@ -76,12 +76,10 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc15_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc16_10.2: %Simple.type = facet_value %T.loc15_14.2, %T.loc15_14.2 [symbolic = %.loc16_10.2 (constants.%.3)]
 // CHECK:STDOUT:   %.loc15_36.2: <witness> = interface_witness (%F) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc16_10.1: %Simple.type = facet_value constants.%T, constants.%T [symbolic = %.loc16_10.2 (constants.%.3)]
 // CHECK:STDOUT:     %.loc15_36.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -113,13 +111,12 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc16_10.2 => constants.%.3
 // CHECK:STDOUT:   %.loc15_36.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.%.loc16_10.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc15_14.2) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T

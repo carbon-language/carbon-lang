@@ -243,7 +243,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc14: %HasF.type = facet_value constants.%C, constants.%C [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -253,7 +252,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasG.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {} {}
-// CHECK:STDOUT:   %.loc17: %HasG.type = facet_value constants.%C, constants.%C [template = constants.%.7]
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%G.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -323,9 +321,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(@impl.1.%.loc14) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(@impl.2.%.loc17) {}
+// CHECK:STDOUT: specific @G.1(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impls.carbon
 // CHECK:STDOUT:
@@ -410,7 +408,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasA1.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.3 = fn_decl @A.3 [template = constants.%A.3] {} {}
-// CHECK:STDOUT:   %.loc14: %HasA1.type = facet_value constants.%D, constants.%D [template = constants.%.5]
 // CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%A.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -420,7 +417,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasA2.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.4 = fn_decl @A.4 [template = constants.%A.4] {} {}
-// CHECK:STDOUT:   %.loc17: %HasA2.type = facet_value constants.%D, constants.%D [template = constants.%.7]
 // CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%A.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -478,9 +474,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.1(@impl.1.%.loc14) {}
+// CHECK:STDOUT: specific @A.1(constants.%.5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.2(@impl.2.%.loc17) {}
+// CHECK:STDOUT: specific @A.2(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- different_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -551,7 +547,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasI.ref {
 // CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {} {}
-// CHECK:STDOUT:   %.loc15: %HasI.type = facet_value constants.%E, constants.%E [template = constants.%.7]
 // CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%I.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -620,7 +615,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.1(@impl.%.loc15) {}
+// CHECK:STDOUT: specific @I.1(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -690,7 +685,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasK.ref {
 // CHECK:STDOUT:   %K.decl: %K.type.3 = fn_decl @K.3 [template = constants.%K.3] {} {}
-// CHECK:STDOUT:   %.loc15: %HasK.type = facet_value constants.%L, constants.%L [template = constants.%.7]
 // CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%K.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -749,7 +743,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.2(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.2(@impl.%.loc15) {}
+// CHECK:STDOUT: specific @K.2(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ambiguity_hidden.carbon
 // CHECK:STDOUT:
@@ -845,7 +839,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasN1.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.4 = fn_decl @N.4 [template = constants.%N.4] {} {}
-// CHECK:STDOUT:   %.loc19: %HasN1.type = facet_value constants.%O, constants.%O [template = constants.%.9]
 // CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%N.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -855,7 +848,6 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasN2.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.5 = fn_decl @N.5 [template = constants.%N.5] {} {}
-// CHECK:STDOUT:   %.loc22: %HasN2.type = facet_value constants.%O, constants.%O [template = constants.%.11]
 // CHECK:STDOUT:   %.loc21: <witness> = interface_witness (%N.decl) [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -937,7 +929,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.3(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.2(@impl.1.%.loc19) {}
+// CHECK:STDOUT: specific @N.2(constants.%.9) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.3(@impl.2.%.loc22) {}
+// CHECK:STDOUT: specific @N.3(constants.%.11) {}
 // CHECK:STDOUT:

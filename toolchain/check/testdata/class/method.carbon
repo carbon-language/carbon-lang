@@ -83,10 +83,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(i32) [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.11 [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
-// CHECK:STDOUT:   %.41: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.42: <bound method> = bound_method %.6, %Convert.15 [template]
-// CHECK:STDOUT:   %.43: i32 = int_value 1 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%.43) [template]
+// CHECK:STDOUT:   %.35: <witness> = interface_witness (%Convert.15) [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %.6, %Convert.15 [template]
+// CHECK:STDOUT:   %.37: i32 = int_value 1 [template]
+// CHECK:STDOUT:   %struct: %Class = struct_value (%.37) [template]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [template]
 // CHECK:STDOUT:   %CallWithAddr: %CallWithAddr.type = struct_value () [template]
 // CHECK:STDOUT:   %CallFThroughPointer.type: type = fn_type @CallFThroughPointer [template]
@@ -340,13 +340,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc35_17: Core.IntLiteral = int_value 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc35_18.1: %.7 = struct_literal (%.loc35_17)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc35_18.2: %Convert.type.2 = interface_witness_access constants.%.41, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc35_18.3: <bound method> = bound_method %.loc35_17, %.loc35_18.2 [template = constants.%.42]
-// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc35_18.3(%.loc35_17) [template = constants.%.43]
-// CHECK:STDOUT:   %.loc35_18.4: init i32 = converted %.loc35_17, %int.convert_checked [template = constants.%.43]
+// CHECK:STDOUT:   %.loc35_18.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc35_18.3: <bound method> = bound_method %.loc35_17, %.loc35_18.2 [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked: init i32 = call %.loc35_18.3(%.loc35_17) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc35_18.4: init i32 = converted %.loc35_17, %int.convert_checked [template = constants.%.37]
 // CHECK:STDOUT:   %.loc35_18.5: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc35_18.6: ref i32 = class_element_access %.loc35_18.5, element0
-// CHECK:STDOUT:   %.loc35_18.7: init i32 = initialize_from %.loc35_18.4 to %.loc35_18.6 [template = constants.%.43]
+// CHECK:STDOUT:   %.loc35_18.7: init i32 = initialize_from %.loc35_18.4 to %.loc35_18.6 [template = constants.%.37]
 // CHECK:STDOUT:   %.loc35_18.8: init %Class = class_init (%.loc35_18.7), %.loc35_18.5 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc35_18.9: ref %Class = temporary %.loc35_18.5, %.loc35_18.8
 // CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.9

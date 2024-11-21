@@ -34,7 +34,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.4: %Negate.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
@@ -92,7 +91,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: %Negate.type = facet_value constants.%C, constants.%C [template = constants.%.4]
 // CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

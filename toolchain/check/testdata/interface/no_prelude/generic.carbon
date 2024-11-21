@@ -238,7 +238,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.2) = facet_value constants.%C, constants.%C [symbolic = constants.%.8]
 // CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%F.decl) [template = constants.%.9]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -358,7 +357,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %.loc10_14.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C, @impl.2.%.loc16) {}
+// CHECK:STDOUT: specific @F.1(constants.%C, constants.%.8) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
 // CHECK:STDOUT:   %T.loc22_28.2 => constants.%T.1
