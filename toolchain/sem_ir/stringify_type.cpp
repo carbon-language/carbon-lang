@@ -178,7 +178,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(FacetAccessType inst): {
-        // Print `(T as I) as type` as simply `T`.
+        // Given `T:! I`, print `T as type` as simply `T`.
         push_inst_id(inst.facet_value_inst_id);
         break;
       }
@@ -209,9 +209,9 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(FacetValue inst): {
         // No need to output the witness.
-        push_inst_id(inst.type_inst_id);
-        push_string(" as ");
         push_inst_id(sem_ir.types().GetInstId(inst.type_id));
+        push_string(" as ");
+        push_inst_id(inst.type_inst_id);
         break;
       }
       case CARBON_KIND(FloatType inst): {
