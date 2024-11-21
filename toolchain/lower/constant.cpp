@@ -219,7 +219,8 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
 
   auto val = context.sem_ir().ints().Get(inst.int_id);
   int bit_width = int_type->getBitWidth();
-  bool is_signed = context.sem_ir().GetIntTypeInfo(inst.type_id).is_signed;
+  bool is_signed =
+      context.sem_ir().types().GetIntTypeInfo(inst.type_id).is_signed;
   return llvm::ConstantInt::get(type, is_signed ? val.sextOrTrunc(bit_width)
                                                 : val.zextOrTrunc(bit_width));
 }
