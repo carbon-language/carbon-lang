@@ -26,14 +26,12 @@ struct BusyboxInfo {
 // Returns the busybox information, given argv[0]. This primarily handles
 // resolving symlinks that point at the busybox.
 inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
-  BusyboxInfo info;
-
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
     argv0 = argv0_override;
   }
 
-  info.bin_path = argv0.str();
+  BusyboxInfo info = {.bin_path = argv0.str(), .mode = std::nullopt};
   std::filesystem::path filename = info.bin_path.filename();
   // The mode is set to the initial filename used for `argv[0]`.
   if (filename != "carbon" && filename != "carbon-busybox") {
