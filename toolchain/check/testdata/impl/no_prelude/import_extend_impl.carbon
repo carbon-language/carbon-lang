@@ -133,7 +133,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extend_impl_library, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//extend_impl_library, inst+14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.10: type = import_ref Main//extend_impl_library, inst+15, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//extend_impl_library, inst+20, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//extend_impl_library, inst+21, loaded [template = constants.%.6]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
