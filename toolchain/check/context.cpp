@@ -199,6 +199,16 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   FinishInst(inst_id, inst);
 }
 
+auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                                 SemIR::Inst inst) -> void {
+  auto old_inst = sem_ir().insts().Get(inst_id);
+  auto old_const_id = TryEvalInst(*this, inst_id, old_inst);
+  sem_ir().insts().Set(inst_id, inst);
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
+  auto new_const_id = TryEvalInst(*this, inst_id, inst);
+  CARBON_CHECK(old_const_id == new_const_id);
+}
+
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
     -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,

@@ -194,6 +194,11 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
+  // Replaces the instruction `inst_id` with `inst, not affecting location.
+  // The instruction is required to not change its constant value.
+  auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                          SemIR::Inst inst) -> void;
+
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
   // ReplaceInstBeforeConstantUse, it is safe to use after the namespace is used

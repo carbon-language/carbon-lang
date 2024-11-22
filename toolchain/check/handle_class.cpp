@@ -637,7 +637,7 @@ static auto AddStructTypeFields(
     auto field_decl = context.insts().GetAs<SemIR::FieldDecl>(field_decl_id);
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    context.sem_ir().insts().Set(field_decl_id, field_decl);
+    context.ReplaceInstPreservingConstantValue(field_decl_id, field_decl);
     if (field_decl.type_id == SemIR::TypeId::Error) {
       struct_type_fields.push_back(
           {.name_id = field_decl.name_id, .type_id = SemIR::TypeId::Error});
@@ -690,7 +690,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
     base_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
-    context.sem_ir().insts().Set(class_info.base_id, base_decl);
+    context.ReplaceInstPreservingConstantValue(class_info.base_id, base_decl);
     struct_type_fields.push_back(
         {.name_id = SemIR::NameId::Base,
          .type_id = context.insts()
