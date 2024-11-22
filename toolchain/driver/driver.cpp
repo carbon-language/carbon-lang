@@ -84,19 +84,21 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   if (driver_env_.installation->error()) {
-    llvm::errs() << "error: " << *driver_env_.installation->error() << "\n";
+    driver_env_.error_stream << "error: " << *driver_env_.installation->error()
+                             << "\n";
     return {.success = false};
   }
 
   Options options;
 
-  CommandLine::ParseResult result = CommandLine::Parse(
-      args, driver_env_.output_stream, driver_env_.error_stream, Options::Info,
+  ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
+      args, driver_env_.output_stream, Options::Info,
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 
-  if (result == CommandLine::ParseResult::Error) {
+  if (!result.ok()) {
+    driver_env_.error_stream << "error: " << result.error() << "\n";
     return {.success = false};
-  } else if (result == CommandLine::ParseResult::MetaSuccess) {
+  } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
   }
 

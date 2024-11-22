@@ -17,7 +17,9 @@ namespace Carbon {
 // Success values should be represented as the presence of a value in ErrorOr,
 // using `ErrorOr<Success>` and `return Success();` if no value needs to be
 // returned.
-struct Success {};
+struct Success : public Printable<Success> {
+  void Print(llvm::raw_ostream& out) const { out << "Success"; }
+};
 
 // Tracks an error message.
 //
