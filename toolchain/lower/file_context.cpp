@@ -326,35 +326,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
-  auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto call_param_ids =
+      sem_ir().inst_blocks().GetOrEmpty(function.call_params_id);
   int param_index = 0;
-  // The SemIR calling-convention parameters of the function, in order of
-  // runtime index. This is a transitional step toward generating this list
-  // in the check phase, which is why we're using the runtime index order
-  // even though it's less convenient for this usage.
-  llvm::SmallVector<SemIR::InstId> calling_convention_param_ids;
-  // This is an upper bound on the size because `self` and the return slot
-  // are the only runtime parameters that don't appear in the explicit
-  // parameter list.
-  calling_convention_param_ids.reserve(param_refs.size() + 2);
-  bool has_return_slot =
-      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
-          .has_return_slot();
-  for (auto param_ref_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (param_info.inst.runtime_index.is_valid()) {
-      calling_convention_param_ids.push_back(param_info.inst_id);
-    }
-  }
-  if (has_return_slot) {
-    auto return_slot =
-        sem_ir().insts().GetAs<SemIR::ReturnSlot>(function.return_slot_id);
-    calling_convention_param_ids.push_back(return_slot.storage_id);
-  }
 
   // TODO: Find a way to ensure this code and the function-call lowering use
   // the same parameter ordering.
@@ -375,16 +349,23 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of calling_convention_param_id that is in sequential order.
-  llvm::ArrayRef<SemIR::InstId> sequential_param_ids =
-      calling_convention_param_ids;
-
-  // The LLVM calling convention has the return slot first rather than last.
-  if (has_return_slot) {
-    lower_param(calling_convention_param_ids.back());
-
-    sequential_param_ids = sequential_param_ids.drop_back();
+  // The subset of call_param_ids that is already in the order that the LLVM
+  // calling convention expects.
+  llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
+  if (function.return_slot_id.is_valid()) {
+    // The LLVM calling convention has the return slot first rather than last.
+    // Note that this queries whether there is a return slot at the LLVM level,
+    // whereas `function.return_slot_id.is_valid()` queries whether there is a
+    // return slot at the SemIR level.
+    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+            .has_return_slot()) {
+      lower_param(call_param_ids.back());
+    }
+    sequential_param_ids = call_param_ids.drop_back();
+  } else {
+    sequential_param_ids = call_param_ids;
   }
+
   for (auto param_id : sequential_param_ids) {
     lower_param(param_id);
   }

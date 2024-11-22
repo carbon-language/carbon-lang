@@ -45,19 +45,32 @@
 
 namespace Carbon::SemIR {
 
-// A builtin instruction, corresponding to instructions like
-// InstId::BuiltinTypeType.
+// Used for the type of patterns that do not match a fixed type.
 //
-// Builtins don't have a parse node associated with them.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, Label)                          \
-  struct Name {                                                               \
-    static constexpr auto Kind = InstKind::Name.Define<Parse::InvalidNodeId>( \
-        {.ir_name = Label,                                                    \
-         .is_type = InstIsType::Always,                                       \
-         .constant_kind = InstConstantKind::Always});                         \
-    TypeId type_id;                                                           \
-  };
-#include "toolchain/sem_ir/inst_kind.def"
+// TODO: Annotate as a builtin.
+struct AutoType {
+  static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
+      {.ir_name = "auto",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
+// The type of bool literals and branch conditions, bool.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+//
+// TODO: Annotate as a builtin.
+struct BoolType {
+  static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
+      {.ir_name = "bool",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
 
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
@@ -370,6 +383,20 @@ struct BoundMethod {
   InstId function_id;
 };
 
+// The type of bound method values.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct BoundMethodType {
+  static constexpr auto Kind =
+      InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "<bound method>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // Common representation for all kinds of `Branch*` node.
 struct AnyBranch {
   static constexpr InstKind Kinds[] = {InstKind::Branch, InstKind::BranchIf,
@@ -426,10 +453,8 @@ struct Call {
 
   TypeId type_id;
   InstId callee_id;
-  // The arguments block contains IDs for the following arguments, in order:
-  //  - The argument for each implicit parameter.
-  //  - The argument for each explicit parameter.
-  //  - The argument for the return slot, if present.
+  // Runtime arguments in lexical order of the parameter declarations, followed
+  // by the argument for the return slot, if present.
   InstBlockId args_id;
 };
 
@@ -535,6 +560,21 @@ struct Deref {
   InstId pointer_id;
 };
 
+// Used when a semantic error has been detected, and a SemIR InstId is still
+// required. For example, when there is a type checking issue, this will be used
+// in the type_id. It's typically used as a cue that semantic checking doesn't
+// need to issue further diagnostics.
+//
+// TODO: Annotate as a builtin.
+struct ErrorInst {
+  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
+      {.ir_name = "<error>",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // An `export bind_name` declaration.
 struct ExportDecl {
   static constexpr auto Kind =
@@ -622,6 +662,22 @@ struct FloatType {
   // TODO: Consider adding a more compact way of representing either a small
   // float bit width or an inst_id.
   InstId bit_width_id;
+};
+
+// The legacy float type. This is currently used for real literals, and is
+// treated as f64. It's separate from `FloatType`, and should change to mirror
+// integers, likely replacing this with a `FloatLiteralType`.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct LegacyFloatType {
+  static constexpr auto Kind =
+      InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "f64",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
 };
 
 // A function declaration.
@@ -801,6 +857,23 @@ struct IntValue {
   IntId int_id;
 };
 
+// An arbitrary-precision integer type, which is used as the type of integer
+// literals and as the parameter type of `Core.Int` and `Core.Float`. This type
+// only provides compile-time operations, and is represented as an empty type at
+// runtime.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct IntLiteralType {
+  static constexpr auto Kind =
+      InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "Core.IntLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // An integer type.
 struct IntType {
   static constexpr auto Kind = InstKind::IntType.Define<Parse::InvalidNodeId>(
@@ -838,6 +911,20 @@ struct Namespace {
   // If the namespace was produced by an `import` line, the associated line for
   // diagnostics.
   AbsoluteInstId import_id;
+};
+
+// The type of namespace and imported package names.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct NamespaceType {
+  static constexpr auto Kind =
+      InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "<namespace>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
 };
 
 // A parameter for a function or other parameterized block, as exposed in the
@@ -1057,6 +1144,20 @@ struct SpecificFunction {
   SpecificId specific_id;
 };
 
+// The type of specific functions.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct SpecificFunctionType {
+  static constexpr auto Kind =
+      InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "<specific function>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // Splices a block into the location where this appears. This may be an
 // expression, producing a result with a given type. For example, when
 // constructing from aggregates we may figure out which conversions are required
@@ -1079,6 +1180,20 @@ struct StringLiteral {
 
   TypeId type_id;
   StringLiteralValueId string_literal_id;
+};
+
+// The type of string values and String literals.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct StringType {
+  static constexpr auto Kind =
+      InstKind::StringType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "String",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
 };
 
 // Access to a struct type, with the index into the struct_id representation.
@@ -1208,6 +1323,19 @@ struct TupleValue {
   InstBlockId elements_id;
 };
 
+// Tracks expressions which are valid as types. This has a deliberately
+// self-referential type.
+//
+// TODO: Annotate as a builtin.
+struct TypeType {
+  static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
+      {.ir_name = "type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // The `not` operator, such as `not operand`.
 struct UnaryOperatorNot {
   // TODO: Make Parse::NodeId more specific.
@@ -1270,6 +1398,20 @@ struct VarStorage {
   NameId name_id;
 };
 
+// The type of virtual function tables.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct VtableType {
+  static constexpr auto Kind =
+      InstKind::VtableType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "<vtable>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // An `expr where requirements` expression.
 struct WhereExpr {
   static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(
@@ -1282,6 +1424,20 @@ struct WhereExpr {
   // argument of the `where`.
   InstId period_self_id;
   InstBlockId requirements_id;
+};
+
+// The type of witnesses.
+//
+// Although this is a builtin, it may still evolve to a more standard type and
+// be removed.
+struct WitnessType {
+  static constexpr auto Kind =
+      InstKind::WitnessType.Define<Parse::InvalidNodeId>(
+          {.ir_name = "<witness>",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
 };
 
 // These concepts are an implementation detail of the library, not public API.

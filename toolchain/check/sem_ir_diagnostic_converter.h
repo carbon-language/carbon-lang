@@ -17,7 +17,7 @@ namespace Carbon::Check {
 class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
  public:
   explicit SemIRDiagnosticConverter(
-      llvm::ArrayRef<Parse::NodeLocConverter> node_converters,
+      llvm::ArrayRef<Parse::NodeLocConverter*> node_converters,
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
@@ -38,7 +38,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
       -> DiagnosticLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::NodeLocConverter> node_converters_;
+  llvm::ArrayRef<Parse::NodeLocConverter*> node_converters_;
 
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;

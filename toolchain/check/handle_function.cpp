@@ -182,10 +182,8 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   auto name = PopNameComponent(context, return_slot_pattern_id);
-  if (!name.params_id.is_valid()) {
-    CARBON_CHECK(!name.param_patterns_id.is_valid());
+  if (!name.param_patterns_id.is_valid()) {
     context.TODO(node_id, "function with positional parameters");
-    name.params_id = SemIR::InstBlockId::Empty;
     name.param_patterns_id = SemIR::InstBlockId::Empty;
   }
 
@@ -341,26 +339,28 @@ static auto HandleFunctionDefinitionAfterSignature(
   CheckFunctionReturnType(context, function.return_slot_id, function,
                           SemIR::SpecificId::Invalid);
 
+  auto params_to_complete =
+      context.inst_blocks().GetOrEmpty(function.call_params_id);
+  if (function.return_slot_id.is_valid()) {
+    // Exclude the return slot because it's diagnosed above.
+    params_to_complete = params_to_complete.drop_back();
+  }
   // Check the parameter types are complete.
-  for (auto param_ref_id : llvm::concat<const SemIR::InstId>(
-           context.inst_blocks().GetOrEmpty(function.implicit_param_refs_id),
-           context.inst_blocks().GetOrEmpty(function.param_refs_id))) {
+  for (auto param_ref_id : params_to_complete) {
     if (param_ref_id == SemIR::InstId::BuiltinErrorInst) {
       continue;
     }
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(context.sem_ir(), param_ref_id);
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(param_info.inst.type_id, [&] {
-      CARBON_DIAGNOSTIC(
-          IncompleteTypeInFunctionParam, Error,
-          "parameter has incomplete type {0} in function definition",
-          TypeOfInstId);
-      return context.emitter().Build(param_info.inst_id,
-                                     IncompleteTypeInFunctionParam,
-                                     param_info.inst_id);
-    });
+    context.TryToCompleteType(
+        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id, [&] {
+          CARBON_DIAGNOSTIC(
+              IncompleteTypeInFunctionParam, Error,
+              "parameter has incomplete type {0} in function definition",
+              TypeOfInstId);
+          return context.emitter().Build(
+              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
+        });
   }
 
   context.node_stack().Push(node_id, function_id);

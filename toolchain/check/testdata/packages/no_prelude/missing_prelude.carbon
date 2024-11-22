@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: var n: i32;
 // CHECK:STDERR:        ^~~
 // CHECK:STDERR:
@@ -80,7 +80,7 @@ class Core {
   fn Int[T:! type](N:! T) -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: var n: {} = i32;
 // CHECK:STDERR:             ^~~
 var n: {} = i32;

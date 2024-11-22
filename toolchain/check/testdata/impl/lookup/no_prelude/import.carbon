@@ -152,7 +152,7 @@ import PackageGenericInterface;
 fn M() {
   var obj: PackageHasParam.AnyParam(
     PackageGenericInterface.GenericInterface) = {};
-  // CHECK:STDERR: fail_todo_use_generic_interface_as_param.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `AnyParam(<cannot stringify inst+41 kind StructValue>)` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_use_generic_interface_as_param.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `AnyParam(<cannot stringify inst+37 kind StructValue>)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   obj.(PackageHasParam.Y.K)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

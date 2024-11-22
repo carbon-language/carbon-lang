@@ -323,9 +323,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, inst+37, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, inst+62, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, inst+102, loaded [template = constants.%Symbolic]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, inst+35, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, inst+60, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, inst+100, loaded [template = constants.%Symbolic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

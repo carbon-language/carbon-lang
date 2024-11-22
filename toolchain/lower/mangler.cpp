@@ -56,8 +56,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
-        auto self_inst_id = constant_values().GetConstantInstId(impl.self_id);
-        CARBON_KIND_SWITCH(insts().Get(self_inst_id)) {
+        auto self_inst =
+            insts().Get(constant_values().GetConstantInstId(impl.self_id));
+        CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
@@ -76,7 +77,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::TypeType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
-            os << self_inst_id.builtin_inst_kind().label();
+            os << self_inst.kind().ir_name();
             break;
           }
           case CARBON_KIND(SemIR::IntType int_type): {

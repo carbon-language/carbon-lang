@@ -16,7 +16,7 @@ class C {}
 
 class A {
   impl C as DefaultConstructible {
-    // `Self` here refers to `i32`, not `A`.
+    // `Self` here refers to `C`, not `A`.
     // TODO: Revisit this once #3714 is resolved.
     fn Make() -> Self { return {}; }
   }

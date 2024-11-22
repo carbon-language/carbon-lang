@@ -72,6 +72,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc13_6.3 as %I.ref.loc13 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst+27.loc13_15
+// CHECK:STDOUT:   witness = <unexpected>.inst+25.loc13_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

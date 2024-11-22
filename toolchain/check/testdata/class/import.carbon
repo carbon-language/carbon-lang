@@ -190,8 +190,8 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+8, loaded [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+33, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+56, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+31, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+54, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//prelude
@@ -199,13 +199,13 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.37 = import_ref Main//a, inst+29, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.44 = import_ref Main//a, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.45: %F.type = import_ref Main//a, inst+41, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.46: %G.type = import_ref Main//a, inst+52, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.48 = import_ref Main//a, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.49 = import_ref Main//a, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.37 = import_ref Main//a, inst+27, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.44 = import_ref Main//a, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.45: %F.type = import_ref Main//a, inst+39, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.46: %G.type = import_ref Main//a, inst+50, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.48 = import_ref Main//a, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.49 = import_ref Main//a, inst+50, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -316,5 +316,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst+443: %.42]();
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst+399: %.42]();
 // CHECK:STDOUT:

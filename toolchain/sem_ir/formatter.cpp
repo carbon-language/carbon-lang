@@ -1021,8 +1021,6 @@ class FormatterImpl {
 
   auto FormatArg(BoolValue v) -> void { out_ << v; }
 
-  auto FormatArg(BuiltinInstKind kind) -> void { out_ << kind.label(); }
-
   auto FormatArg(EntityNameId id) -> void {
     const auto& info = sem_ir_.entity_names().Get(id);
     FormatName(info.name_id);

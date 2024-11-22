@@ -118,6 +118,7 @@ cc_library(
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",
         "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
     ],
 )

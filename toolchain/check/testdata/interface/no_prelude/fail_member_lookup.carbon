@@ -21,7 +21,7 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:10: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   var v: Interface.T;
   // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Interface.T;

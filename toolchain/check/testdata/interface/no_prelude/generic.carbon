@@ -49,7 +49,7 @@ class B {}
 fn F(T:! Generic(A));
 fn G(T:! Generic(B)) {
   // TODO: Include generic arguments in the type name.
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+6]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~
   // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

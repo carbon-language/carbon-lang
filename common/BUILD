@@ -285,10 +285,11 @@ cc_binary(
     deps = [
         ":map",
         ":raw_hashtable_benchmark_helpers",
+        "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/random",
         "@boost_unordered",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -297,11 +298,10 @@ sh_test(
     name = "map_benchmark_test",
     # The benchmark allocates a large amount of memory.
     size = "enormous",
-    # We configure the test to run quickly.
-    timeout = "short",
+    # We configure the test to run somewhat quickly.
+    timeout = "moderate",
     srcs = [":map_benchmark"],
     args = [
-        "--benchmark_counters_tabular=true",
         "--benchmark_min_time=1x",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
@@ -346,8 +346,9 @@ cc_binary(
     srcs = ["raw_hashtable_metadata_group_benchmark.cpp"],
     deps = [
         ":raw_hashtable_metadata_group",
+        "//testing/base:benchmark_main",
         "@abseil-cpp//absl/random",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -356,7 +357,6 @@ sh_test(
     name = "raw_hashtable_metadata_group_benchmark_test",
     srcs = ["raw_hashtable_metadata_group_benchmark"],
     args = [
-        "--benchmark_counters_tabular=true",
         "--benchmark_min_time=1x",
     ],
 )
@@ -424,8 +424,9 @@ cc_binary(
     deps = [
         ":raw_hashtable_benchmark_helpers",
         ":set",
+        "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_set",
-        "@google_benchmark//:benchmark_main",
+        "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -434,11 +435,10 @@ sh_test(
     name = "set_benchmark_test",
     # The benchmark allocates a large amount of memory.
     size = "enormous",
-    # We configure the test to run quickly.
-    timeout = "short",
+    # We configure the test to run somewhat quickly.
+    timeout = "moderate",
     srcs = [":set_benchmark"],
     args = [
-        "--benchmark_counters_tabular=true",
         "--benchmark_min_time=1x",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",

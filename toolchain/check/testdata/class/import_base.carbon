@@ -165,7 +165,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+49, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+47, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.11
 // CHECK:STDOUT:     import Core//prelude
@@ -174,11 +174,11 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.44 = import_ref Main//a, inst+40, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+50, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+54, unloaded
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//a, inst+51, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.6: %.44 = import_ref Main//a, inst+38, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//a, inst+49, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

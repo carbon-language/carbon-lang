@@ -267,20 +267,20 @@ fn H() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_base, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, inst+50, loaded [template = constants.%Derived]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, inst+48, loaded [template = constants.%Derived]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+78, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//extend_generic_base, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.17 = import_ref Main//extend_generic_base, inst+46, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.6: %.17 = import_ref Main//extend_generic_base, inst+44, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//extend_generic_base, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.8: @Base.%.1 (%.9) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.2]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_base, inst+63, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//extend_generic_base, inst+54, loaded [template = constants.%Base.3]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+49, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_base, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//extend_generic_base, inst+52, loaded [template = constants.%Base.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

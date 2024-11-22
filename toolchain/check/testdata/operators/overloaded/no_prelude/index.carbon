@@ -24,7 +24,7 @@ fn F() { 0[1]; }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+7]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+7]]:10: error: `Core.IndexWith` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
