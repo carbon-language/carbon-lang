@@ -52,12 +52,13 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_22: type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc16_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc16_22.2: type = interface_witness_access %.loc16_22.1, element0
 // CHECK:STDOUT:     %bool.make_type.loc16_27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_27.1: type = value_of_initializer %bool.make_type.loc16_27 [template = bool]
 // CHECK:STDOUT:     %.loc16_27.2: type = converted %bool.make_type.loc16_27, %.loc16_27.1 [template = bool]
 // CHECK:STDOUT:     %.loc16_16: type = where_expr %.Self [template = constants.%I.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %.loc16_22, %.loc16_27.2
+// CHECK:STDOUT:       requirement_rewrite %.loc16_22.2, %.loc16_27.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

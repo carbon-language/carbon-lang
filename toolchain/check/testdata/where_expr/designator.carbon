@@ -153,10 +153,11 @@ class D {
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc10_29: type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc10_29.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc10_29.2: type = interface_witness_access %.loc10_29.1, element0
 // CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.3] {
-// CHECK:STDOUT:       requirement_equivalent %.loc10_29, %.loc10_41
+// CHECK:STDOUT:       requirement_equivalent %.loc10_29.2, %.loc10_41
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc10_17.1: %I.type.3 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]

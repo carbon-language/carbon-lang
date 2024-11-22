@@ -97,12 +97,14 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.patt.loc13_15.2: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc18_4.3: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %.loc18_4.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %.1 = name_ref F, @Interface.%.loc11 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc18: %F.type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc18_4.1: <witness> = facet_access_witness %T.ref [symbolic = %.loc18_4.3 (constants.%.3)]
+// CHECK:STDOUT:     %.loc18_4.2: %F.type = interface_witness_access %.loc18_4.1, element0
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

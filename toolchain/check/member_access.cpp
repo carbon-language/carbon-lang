@@ -10,7 +10,6 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -272,17 +271,14 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         return SemIR::InstId::BuiltinErrorInst;
 #else
         // Get the witness that `T` implements `base_type_id`.
-        auto witness_const_id = TryEvalInst(
-            context, SemIR::InstId::Invalid,
-            SemIR::FacetAccessWitness{.type_id = context.GetBuiltinType(
-                                          SemIR::BuiltinInstKind::WitnessType),
-                                      .facet_value_inst_id = base_id});
+        auto witness_inst_id = context.GetOrAddInst<SemIR::FacetAccessWitness>(
+            loc_id, {.type_id = context.GetBuiltinType(
+                         SemIR::BuiltinInstKind::WitnessType),
+                     .facet_value_inst_id = base_id});
         // FIXME: error handling
-        // TODO: Result will eventually be a facet witness instead of an
+        // TODO: Result will eventually be a facet type witness instead of an
         // interface witness. Will need to use the associated entity to identify
         // the correct interface.
-        auto witness_inst_id =
-            context.constant_values().GetInstId(witness_const_id);
         // FIXME: get this from `assoc_type->interface_type_id` as is done in
         // `PerformImplLookup`.
         SemIR::SpecificId interface_specific_id = SemIR::SpecificId::Invalid;

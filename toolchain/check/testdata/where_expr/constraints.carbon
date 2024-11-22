@@ -260,11 +260,12 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.Self.ref.loc15_20, %.loc15_20.1 [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.Self.ref.loc15_38: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc7 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_38: type = interface_witness_access constants.%.7, element0
+// CHECK:STDOUT:     %.loc15_38.1: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.7]
+// CHECK:STDOUT:     %.loc15_38.2: type = interface_witness_access %.loc15_38.1, element0
 // CHECK:STDOUT:     %.loc15_50: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_14: type = where_expr %.Self [template = constants.%I.type.3] {
 // CHECK:STDOUT:       requirement_impls %.loc15_20.2, %J.ref
-// CHECK:STDOUT:       requirement_equivalent %.loc15_38, %.loc15_50
+// CHECK:STDOUT:       requirement_equivalent %.loc15_38.2, %.loc15_50
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %I.type.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc15_8.1: %I.type.3 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_8.2 (constants.%W)]
@@ -370,11 +371,12 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %N.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %N.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %P.ref: %.1 = name_ref P, @N.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc8_22: type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc8_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc8_22.2: type = interface_witness_access %.loc8_22.1, element0
 // CHECK:STDOUT:     %.loc8_28.1: %.4 = struct_literal ()
 // CHECK:STDOUT:     %.loc8_28.2: type = converted %.loc8_28.1, constants.%.4 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc8_16: type = where_expr %.Self [template = constants.%N.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %.loc8_22, %.loc8_28.2
+// CHECK:STDOUT:       requirement_rewrite %.loc8_22.2, %.loc8_28.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %N.type.2 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_10.1: %N.type.2 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_10.2 (constants.%T)]
@@ -451,10 +453,11 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %K.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %K.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Associated.ref: %.1 = name_ref Associated, @K.%.loc8 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_36.1: %L.type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc15_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc15_36.2: %L.type = interface_witness_access %.loc15_36.1, element0
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [template = constants.%M.type]
-// CHECK:STDOUT:     %.loc15_36.2: type = facet_access_type %.loc15_36.1
-// CHECK:STDOUT:     %.loc15_36.3: type = converted %.loc15_36.1, %.loc15_36.2
+// CHECK:STDOUT:     %.loc15_36.3: type = facet_access_type %.loc15_36.2
+// CHECK:STDOUT:     %.loc15_36.4: type = converted %.loc15_36.2, %.loc15_36.3
 // CHECK:STDOUT:     %.loc15_30: type = where_expr %.Self [template = constants.%K.type.2] {
 // CHECK:STDOUT:       requirement_impls <error>, %M.ref
 // CHECK:STDOUT:     }
@@ -524,7 +527,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//state_constraints, inst+7, loaded [template = constants.%I.type.1]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+57, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+84, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+85, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -557,11 +560,12 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, imports.%import_ref.7 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_36: type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc16_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc16_36.2: type = interface_witness_access %.loc16_36.1, element0
 // CHECK:STDOUT:     %.loc16_46.1: Core.IntLiteral = int_value 2 [template = constants.%.4]
 // CHECK:STDOUT:     %.loc16_46.2: type = converted %.loc16_46.1, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = constants.%I.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %.loc16_36, <error>
+// CHECK:STDOUT:       requirement_rewrite %.loc16_36.2, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: %I.type.2 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %X.loc16_24.1: %I.type.2 = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc16_24.2 (constants.%X)]
@@ -783,7 +787,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+35, unloaded
 // CHECK:STDOUT:   %import_ref.4: %Impls.type = import_ref Main//state_constraints, inst+57, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+84, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+85, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
