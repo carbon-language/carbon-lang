@@ -435,7 +435,7 @@ sh_test(
     name = "set_benchmark_test",
     # The benchmark allocates a large amount of memory.
     size = "enormous",
-    # We configure the test to run quickly.
+    # We configure the test to run somewhat quickly.
     timeout = "moderate",
     srcs = [":set_benchmark"],
     args = [
