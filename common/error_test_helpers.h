@@ -11,6 +11,8 @@
 
 namespace Carbon::Testing {
 
+// Matches the message for an error state of `ErrorOr<T>`. For example:
+//   EXPECT_THAT(my_result, IsError(StrEq("error message")));
 class IsError {
  public:
   // NOLINTNEXTLINE(readability-identifier-naming)
@@ -44,6 +46,8 @@ class IsError {
   ::testing::Matcher<std::string> matcher_;
 };
 
+// Matches the value for a non-error state of `ErrorOr<T>`. For example:
+//   EXPECT_THAT(my_result, IsSuccess(Eq(3)));
 template <typename InnerMatcher>
 class IsSuccessMatcher {
  public:
@@ -79,6 +83,7 @@ class IsSuccessMatcher {
   InnerMatcher matcher_;
 };
 
+// Wraps `IsSuccessMatcher` for the inner matcher deduction.
 template <typename InnerMatcher>
 auto IsSuccess(InnerMatcher matcher) -> IsSuccessMatcher<InnerMatcher> {
   return IsSuccessMatcher<InnerMatcher>(matcher);
