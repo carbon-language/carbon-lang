@@ -561,7 +561,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %return.param_patt: %.5 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc10: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %.loc10_37: type = ptr_type %A [template = constants.%.5]
+// CHECK:STDOUT:     %.loc10: type = ptr_type %A [template = constants.%.5]
 // CHECK:STDOUT:     %return.param: ref %.5 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %.5 = return_slot %return.param
 // CHECK:STDOUT:   }

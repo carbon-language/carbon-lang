@@ -27,11 +27,6 @@ struct FunctionFields {
   // return type.
   InstId return_slot_pattern_id;
 
-  // The storage for the return value, which is a reference expression whose
-  // type is the return type of the function. As with return_slot_pattern_id,
-  // this is always present if the function has a declared return type.
-  InstId return_slot_id;
-
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
   VirtualModifier virtual_modifier;
@@ -59,9 +54,8 @@ struct Function : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
-    if (return_slot_id.is_valid()) {
+    if (return_slot_pattern_id.is_valid()) {
       out << ", return_slot_pattern: " << return_slot_pattern_id;
-      out << ", return_slot: " << return_slot_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(

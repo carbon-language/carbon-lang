@@ -115,7 +115,7 @@ class A {
 // CHECK:STDOUT:   fn() -> @Make.1.%.loc12_16.1 (%.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %return: %C {
+// CHECK:STDOUT: fn @Make.2() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_33.1: %.4 = struct_literal ()
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]

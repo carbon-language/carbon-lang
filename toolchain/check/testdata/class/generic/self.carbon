@@ -112,7 +112,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @MakeSelf.%Class (%Class.2) = struct_value () [symbolic = %struct (constants.%struct)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @MakeSelf.%Class (%Class.2) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @MakeSelf.%Class (%Class.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc14_35.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc14_35.2: init @MakeSelf.%Class (%Class.2) = class_init (), %return [symbolic = %struct (constants.%struct)]
@@ -128,7 +128,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %struct: @MakeClass.%Class.loc15_26.1 (%Class.2) = struct_value () [symbolic = %struct (constants.%struct)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @MakeClass.%Class.loc15_26.1 (%Class.2) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @MakeClass.%Class.loc15_26.1 (%Class.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc15_40.1: %.1 = struct_literal ()
 // CHECK:STDOUT:     %.loc15_40.2: init @MakeClass.%Class.loc15_26.1 (%Class.2) = class_init (), %return [symbolic = %struct (constants.%struct)]

@@ -51,28 +51,28 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt.loc16: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_17.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc16: init type = call constants.%Int(%.loc16_17.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_17.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_17.3: type = converted %int.make_type_signed.loc16, %.loc16_17.2 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc16
+// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt.loc16: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc12: init type = call constants.%Int(%.loc12_13.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_13.3: type = converted %int.make_type_signed.loc12, %.loc12_13.2 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:     %.loc12_10: ref %i32 = return_slot %return.param.loc12
+// CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern

@@ -697,19 +697,19 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt.loc8: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param.loc7: ref %C = out_param runtime_param0
-// CHECK:STDOUT:     %.loc7: ref %C = return_slot %return.param.loc7
+// CHECK:STDOUT:     %return.loc7: ref %C = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt.loc8: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %return.param.loc8: ref %C = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param.loc8
+// CHECK:STDOUT:     %return.loc8: ref %C = return_slot %return.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -720,12 +720,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> %return: %C {
+// CHECK:STDOUT: fn @Foo() -> %return.param_patt.loc7: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.loc8 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%struct]
-// CHECK:STDOUT:   return %.loc8_26 to %return
+// CHECK:STDOUT:   return %.loc8_26 to %return.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon

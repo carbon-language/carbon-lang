@@ -48,11 +48,8 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
     CollectNamesInBlock(fn_scope, fn.param_patterns_id);
-    if (fn.return_slot_id.is_valid()) {
-      insts_[fn.return_slot_id.index] = {
-          fn_scope,
-          GetScopeInfo(fn_scope).insts.AllocateName(
-              *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
+    if (fn.return_slot_pattern_id.is_valid()) {
+      CollectNamesInBlock(fn_scope, fn.return_slot_pattern_id);
     }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
@@ -577,6 +574,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case InstKind::ReturnSlotPattern: {
         add_inst_name_id(NameId::ReturnSlot, ".patt");
+        break;
+      }
+      case InstKind::ReturnSlot: {
+        add_inst_name_id(NameId::ReturnSlot);
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {

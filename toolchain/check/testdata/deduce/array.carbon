@@ -207,7 +207,7 @@ fn G() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc9_14: Core.IntLiteral = int_value 3 [template = constants.%.3]
@@ -236,9 +236,9 @@ fn G() -> C {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %.36 = name_ref a, %a
 // CHECK:STDOUT:   %.loc10_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.40]
-// CHECK:STDOUT:   %.loc8_8.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %.loc8: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %.loc10_12: %.36 = bind_value %a.ref
-// CHECK:STDOUT:   %F.call: init %C = call %.loc10_10(%.loc10_12) to %.loc8_8.2
+// CHECK:STDOUT:   %F.call: init %C = call %.loc10_10(%.loc10_12) to %.loc8
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -372,7 +372,7 @@ fn G() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_14: Core.IntLiteral = int_value 3 [template = constants.%.29]
@@ -526,7 +526,7 @@ fn G() -> C {
 // CHECK:STDOUT:   fn[%T.param_patt: type, %N.param_patt: %i32](%a.param_patt: <error>) -> @F.%T.loc10_6.2 (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_14: Core.IntLiteral = int_value 3 [template = constants.%.29]
@@ -678,7 +678,7 @@ fn G() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc10_14: Core.IntLiteral = int_value 3 [template = constants.%.36]
@@ -707,9 +707,9 @@ fn G() -> C {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %.37 = name_ref a, %a
 // CHECK:STDOUT:   %.loc21_10: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%.41]
-// CHECK:STDOUT:   %.loc8_8.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %.loc8: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %.loc21_12: %.40 = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %C = call %.loc21_10(<error>) to %.loc8_8.2
+// CHECK:STDOUT:   %F.call: init %C = call %.loc21_10(<error>) to %.loc8
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -853,7 +853,7 @@ fn G() -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %.loc13_14: Core.IntLiteral = int_value 3 [template = constants.%.29]

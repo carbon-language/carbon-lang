@@ -46,7 +46,7 @@ fn Run() -> String {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %return: String {
+// CHECK:STDOUT: fn @Run() -> %return.param_patt: String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

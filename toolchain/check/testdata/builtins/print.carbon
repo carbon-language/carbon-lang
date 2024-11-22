@@ -52,7 +52,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.38: %Print.type.2 = import_ref Core//prelude, inst+55, loaded [template = constants.%Print.2]
+// CHECK:STDOUT:   %import_ref.38: %Print.type.2 = import_ref Core//prelude, inst+54, loaded [template = constants.%Print.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

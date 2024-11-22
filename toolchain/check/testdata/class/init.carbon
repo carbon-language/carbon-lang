@@ -121,7 +121,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   .next = %.loc13_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %.3) -> %return: %Class {
+// CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %.3) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
@@ -135,7 +135,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   return %.loc17_32 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeReorder(%n.param_patt: %i32, %next.param_patt: %.3) -> %return: %Class {
+// CHECK:STDOUT: fn @MakeReorder(%n.param_patt: %i32, %next.param_patt: %.3) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %.3 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n

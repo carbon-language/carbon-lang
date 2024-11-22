@@ -763,7 +763,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %D {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_31: Core.IntLiteral = int_value 0 [template = constants.%.8]
 // CHECK:STDOUT:   %.loc8_39: Core.IntLiteral = int_value 0 [template = constants.%.8]
@@ -796,7 +796,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32 = "int.convert_checked";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %C.3]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.3[%self.param_patt: %C.3]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc10: ref %D = splice_block %return {}
@@ -804,7 +804,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.4[%self.param_patt: %C.4]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.4[%self.param_patt: %C.4]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc11: ref %D = splice_block %return {}
@@ -812,7 +812,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.5[%self.param_patt: %C.5]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.5[%self.param_patt: %C.5]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc12: ref %D = splice_block %return {}
@@ -820,7 +820,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.6[%self.param_patt: %C.6]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.6[%self.param_patt: %C.6]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc13: ref %D = splice_block %return {}
@@ -828,7 +828,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.7[%self.param_patt: %C.7]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.7[%self.param_patt: %C.7]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc14: ref %D = splice_block %return {}
@@ -836,7 +836,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.8[%self.param_patt: %C.8]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.8[%self.param_patt: %C.8]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc15: ref %D = splice_block %return {}
@@ -844,7 +844,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.9[%self.param_patt: %C.9]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.9[%self.param_patt: %C.9]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc16: ref %D = splice_block %return {}
@@ -852,7 +852,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.10[%self.param_patt: %C.10]() -> %return: %D {
+// CHECK:STDOUT: fn @Convert.10[%self.param_patt: %C.10]() -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc17: ref %D = splice_block %return {}
@@ -1146,12 +1146,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: type = import_ref P//library, inst+34, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.3 = import_ref P//library, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref P//library, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref P//library, inst+46, unloaded
-// CHECK:STDOUT:   %import_ref.6: %C.type = import_ref P//library, inst+25, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref P//library, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref P//library, inst+33, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.3 = import_ref P//library, inst+34, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref P//library, inst+40, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref P//library, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.6: %C.type = import_ref P//library, inst+24, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.7 = import_ref P//library, inst+29, unloaded
 // CHECK:STDOUT:   %import_ref.9 = import_ref Core//default, inst+36, unloaded
 // CHECK:STDOUT:   %import_ref.10: @ImplicitAs.%.1 (%.10) = import_ref Core//default, inst+60, loaded [symbolic = @ImplicitAs.%.2 (constants.%.15)]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Core//default, inst+52, unloaded
@@ -1159,31 +1159,31 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %import_ref.14: type = import_ref Core//default, inst+71, loaded [template = Core.IntLiteral]
 // CHECK:STDOUT:   %import_ref.15: type = import_ref Core//default, inst+79, loaded [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   %import_ref.16: <witness> = import_ref Core//default, inst+103, loaded [template = constants.%.16]
-// CHECK:STDOUT:   %import_ref.17: type = import_ref P//library, inst+148, loaded [template = constants.%C.3]
-// CHECK:STDOUT:   %import_ref.18: type = import_ref P//library, inst+153, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref P//library, inst+174, loaded [template = constants.%.29]
-// CHECK:STDOUT:   %import_ref.20: type = import_ref P//library, inst+191, loaded [template = constants.%C.4]
-// CHECK:STDOUT:   %import_ref.21: type = import_ref P//library, inst+196, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref P//library, inst+212, loaded [template = constants.%.32]
-// CHECK:STDOUT:   %import_ref.23: type = import_ref P//library, inst+228, loaded [template = constants.%C.5]
-// CHECK:STDOUT:   %import_ref.24: type = import_ref P//library, inst+233, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.25: <witness> = import_ref P//library, inst+249, loaded [template = constants.%.35]
-// CHECK:STDOUT:   %import_ref.26: type = import_ref P//library, inst+265, loaded [template = constants.%C.6]
-// CHECK:STDOUT:   %import_ref.27: type = import_ref P//library, inst+270, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.28: <witness> = import_ref P//library, inst+286, loaded [template = constants.%.38]
-// CHECK:STDOUT:   %import_ref.29: type = import_ref P//library, inst+302, loaded [template = constants.%C.7]
-// CHECK:STDOUT:   %import_ref.30: type = import_ref P//library, inst+307, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.31: <witness> = import_ref P//library, inst+323, loaded [template = constants.%.41]
-// CHECK:STDOUT:   %import_ref.32: type = import_ref P//library, inst+339, loaded [template = constants.%C.8]
-// CHECK:STDOUT:   %import_ref.33: type = import_ref P//library, inst+344, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.34: <witness> = import_ref P//library, inst+360, loaded [template = constants.%.44]
-// CHECK:STDOUT:   %import_ref.35: type = import_ref P//library, inst+376, loaded [template = constants.%C.9]
-// CHECK:STDOUT:   %import_ref.36: type = import_ref P//library, inst+381, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.37: <witness> = import_ref P//library, inst+397, loaded [template = constants.%.47]
-// CHECK:STDOUT:   %import_ref.38: type = import_ref P//library, inst+413, loaded [template = constants.%C.10]
-// CHECK:STDOUT:   %import_ref.39: type = import_ref P//library, inst+418, loaded [template = constants.%ImplicitAs.type.4]
-// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref P//library, inst+434, loaded [template = constants.%.50]
-// CHECK:STDOUT:   %import_ref.41: %Make.type = import_ref P//library, inst+55, loaded [template = constants.%Make]
+// CHECK:STDOUT:   %import_ref.17: type = import_ref P//library, inst+145, loaded [template = constants.%C.3]
+// CHECK:STDOUT:   %import_ref.18: type = import_ref P//library, inst+150, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref P//library, inst+171, loaded [template = constants.%.29]
+// CHECK:STDOUT:   %import_ref.20: type = import_ref P//library, inst+188, loaded [template = constants.%C.4]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref P//library, inst+193, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref P//library, inst+209, loaded [template = constants.%.32]
+// CHECK:STDOUT:   %import_ref.23: type = import_ref P//library, inst+225, loaded [template = constants.%C.5]
+// CHECK:STDOUT:   %import_ref.24: type = import_ref P//library, inst+230, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.25: <witness> = import_ref P//library, inst+246, loaded [template = constants.%.35]
+// CHECK:STDOUT:   %import_ref.26: type = import_ref P//library, inst+262, loaded [template = constants.%C.6]
+// CHECK:STDOUT:   %import_ref.27: type = import_ref P//library, inst+267, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.28: <witness> = import_ref P//library, inst+283, loaded [template = constants.%.38]
+// CHECK:STDOUT:   %import_ref.29: type = import_ref P//library, inst+299, loaded [template = constants.%C.7]
+// CHECK:STDOUT:   %import_ref.30: type = import_ref P//library, inst+304, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.31: <witness> = import_ref P//library, inst+320, loaded [template = constants.%.41]
+// CHECK:STDOUT:   %import_ref.32: type = import_ref P//library, inst+336, loaded [template = constants.%C.8]
+// CHECK:STDOUT:   %import_ref.33: type = import_ref P//library, inst+341, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.34: <witness> = import_ref P//library, inst+357, loaded [template = constants.%.44]
+// CHECK:STDOUT:   %import_ref.35: type = import_ref P//library, inst+373, loaded [template = constants.%C.9]
+// CHECK:STDOUT:   %import_ref.36: type = import_ref P//library, inst+378, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.37: <witness> = import_ref P//library, inst+394, loaded [template = constants.%.47]
+// CHECK:STDOUT:   %import_ref.38: type = import_ref P//library, inst+410, loaded [template = constants.%C.10]
+// CHECK:STDOUT:   %import_ref.39: type = import_ref P//library, inst+415, loaded [template = constants.%ImplicitAs.type.4]
+// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref P//library, inst+431, loaded [template = constants.%.50]
+// CHECK:STDOUT:   %import_ref.41: %Make.type = import_ref P//library, inst+54, loaded [template = constants.%Make]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1299,7 +1299,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F0(%n.param_patt: %i32) -> %return: %D {
+// CHECK:STDOUT: fn @F0(%n.param_patt: %i32) -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_7: bool = bool_literal false [template = constants.%.5]
 // CHECK:STDOUT:   if %.loc8_7 br !if.then.loc8 else br !if.else.loc8
@@ -1519,8 +1519,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !if.else.loc15:
 // CHECK:STDOUT:   %P.ref.loc16: <namespace> = name_ref P, imports.%P [template = imports.%P]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%import_ref.41 [template = constants.%Make]
-// CHECK:STDOUT:   %.loc7_15.2: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc7_15.2
+// CHECK:STDOUT:   %.loc7_15: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc7_15
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

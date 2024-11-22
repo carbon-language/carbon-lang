@@ -137,7 +137,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: %A {
+// CHECK:STDOUT: fn @F() -> %return.param_patt: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27.1: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [template = constants.%struct]

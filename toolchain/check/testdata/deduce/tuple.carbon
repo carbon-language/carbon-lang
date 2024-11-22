@@ -170,13 +170,13 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.3) -> %return: %D {
+// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.3) -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %tuple.type.3 = name_ref pair, %pair
 // CHECK:STDOUT:   %.loc10: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_20.2: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %.loc10(%pair.ref) to %.loc9_20.2
+// CHECK:STDOUT:   %.loc9_20: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %D = call %.loc10(%pair.ref) to %.loc9_20
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -544,7 +544,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   fn[%T.param_patt: type](%pair.param_patt: @F.%tuple.type (%tuple.type.2)) -> @F.%T.loc7_6.2 (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.3) -> %return: %D {
+// CHECK:STDOUT: fn @G(%pair.param_patt: %tuple.type.3) -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %pair.ref: %tuple.type.3 = name_ref pair, %pair

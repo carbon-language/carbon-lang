@@ -52,7 +52,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return: %tuple.type {
+// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return.param_patt: %tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %empty_tuple.type = tuple_literal ()

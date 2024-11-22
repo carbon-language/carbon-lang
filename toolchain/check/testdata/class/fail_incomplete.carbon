@@ -296,7 +296,7 @@ class C {
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc73_12: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc73_17: type = ptr_type %Class [template = constants.%.3]
+// CHECK:STDOUT:     %.loc73: type = ptr_type %Class [template = constants.%.3]
 // CHECK:STDOUT:     %Class.ref.loc73_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %p.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
@@ -384,7 +384,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertFromStruct() -> %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc42_43: %.2 = struct_literal ()
+// CHECK:STDOUT:   %.loc42: %.2 = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

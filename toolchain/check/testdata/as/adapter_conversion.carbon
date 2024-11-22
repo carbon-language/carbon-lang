@@ -209,7 +209,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %A {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_18: Core.IntLiteral = int_value 1 [template = constants.%.6]
 // CHECK:STDOUT:   %.loc9_26: Core.IntLiteral = int_value 2 [template = constants.%.7]

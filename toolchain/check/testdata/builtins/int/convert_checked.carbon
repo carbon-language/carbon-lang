@@ -832,27 +832,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+31, loaded [template = constants.%NegateI32]
-// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+58, loaded [template = constants.%SubI32]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4: %IntLiteral.type = import_ref Main//int_ops, inst+102, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.5: %Int32ToInt32.type = import_ref Main//int_ops, inst+121, loaded [template = constants.%Int32ToInt32]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9: %IntLiteralToIntLiteral.type = import_ref Main//int_ops, inst+197, loaded [template = constants.%IntLiteralToIntLiteral]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20: %Int32ToIntLiteral.type = import_ref Main//int_ops, inst+412, loaded [template = constants.%Int32ToIntLiteral]
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+30, loaded [template = constants.%NegateI32]
+// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+57, loaded [template = constants.%SubI32]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4: %IntLiteral.type = import_ref Main//int_ops, inst+100, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.5: %Int32ToInt32.type = import_ref Main//int_ops, inst+119, loaded [template = constants.%Int32ToInt32]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9: %IntLiteralToIntLiteral.type = import_ref Main//int_ops, inst+195, loaded [template = constants.%IntLiteralToIntLiteral]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20: %Int32ToIntLiteral.type = import_ref Main//int_ops, inst+410, loaded [template = constants.%Int32ToIntLiteral]
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -1024,27 +1024,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7: %Uint32ToInt32.type = import_ref Main//int_ops, inst+159, loaded [template = constants.%Uint32ToInt32]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7: %Uint32ToInt32.type = import_ref Main//int_ops, inst+157, loaded [template = constants.%Uint32ToInt32]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -1194,27 +1194,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+31, loaded [template = constants.%NegateI32]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+218, loaded [template = constants.%Int32ToInt16]
-// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+238, loaded [template = constants.%Int32ToUint16]
-// CHECK:STDOUT:   %import_ref.12: %Uint32ToInt16.type = import_ref Main//int_ops, inst+257, loaded [template = constants.%Uint32ToInt16]
-// CHECK:STDOUT:   %import_ref.13: %Uint32ToUint16.type = import_ref Main//int_ops, inst+276, loaded [template = constants.%Uint32ToUint16]
-// CHECK:STDOUT:   %import_ref.14: %IntLiteralToInt16.type = import_ref Main//int_ops, inst+295, loaded [template = constants.%IntLiteralToInt16]
-// CHECK:STDOUT:   %import_ref.15: %IntLiteralToUint16.type = import_ref Main//int_ops, inst+314, loaded [template = constants.%IntLiteralToUint16]
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20: %Int32ToIntLiteral.type = import_ref Main//int_ops, inst+412, loaded [template = constants.%Int32ToIntLiteral]
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+30, loaded [template = constants.%NegateI32]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+216, loaded [template = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+236, loaded [template = constants.%Int32ToUint16]
+// CHECK:STDOUT:   %import_ref.12: %Uint32ToInt16.type = import_ref Main//int_ops, inst+255, loaded [template = constants.%Uint32ToInt16]
+// CHECK:STDOUT:   %import_ref.13: %Uint32ToUint16.type = import_ref Main//int_ops, inst+274, loaded [template = constants.%Uint32ToUint16]
+// CHECK:STDOUT:   %import_ref.14: %IntLiteralToInt16.type = import_ref Main//int_ops, inst+293, loaded [template = constants.%IntLiteralToInt16]
+// CHECK:STDOUT:   %import_ref.15: %IntLiteralToUint16.type = import_ref Main//int_ops, inst+312, loaded [template = constants.%IntLiteralToUint16]
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20: %Int32ToIntLiteral.type = import_ref Main//int_ops, inst+410, loaded [template = constants.%Int32ToIntLiteral]
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -1569,27 +1569,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3: %AddU32.type = import_ref Main//int_ops, inst+95, loaded [template = constants.%AddU32]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18: %Uint32ToInt64.type = import_ref Main//int_ops, inst+374, loaded [template = constants.%Uint32ToInt64]
-// CHECK:STDOUT:   %import_ref.19: %Uint32ToUint64.type = import_ref Main//int_ops, inst+393, loaded [template = constants.%Uint32ToUint64]
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3: %AddU32.type = import_ref Main//int_ops, inst+93, loaded [template = constants.%AddU32]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18: %Uint32ToInt64.type = import_ref Main//int_ops, inst+372, loaded [template = constants.%Uint32ToInt64]
+// CHECK:STDOUT:   %import_ref.19: %Uint32ToUint64.type = import_ref Main//int_ops, inst+391, loaded [template = constants.%Uint32ToUint64]
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -1830,27 +1830,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+31, loaded [template = constants.%NegateI32]
-// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+58, loaded [template = constants.%SubI32]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16: %Int32ToInt64.type = import_ref Main//int_ops, inst+335, loaded [template = constants.%Int32ToInt64]
-// CHECK:STDOUT:   %import_ref.17: %Int32ToUint64.type = import_ref Main//int_ops, inst+355, loaded [template = constants.%Int32ToUint64]
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+30, loaded [template = constants.%NegateI32]
+// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+57, loaded [template = constants.%SubI32]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16: %Int32ToInt64.type = import_ref Main//int_ops, inst+333, loaded [template = constants.%Int32ToInt64]
+// CHECK:STDOUT:   %import_ref.17: %Int32ToUint64.type = import_ref Main//int_ops, inst+353, loaded [template = constants.%Int32ToUint64]
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2018,27 +2018,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3: %AddU32.type = import_ref Main//int_ops, inst+95, loaded [template = constants.%AddU32]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7: %Uint32ToInt32.type = import_ref Main//int_ops, inst+159, loaded [template = constants.%Uint32ToInt32]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3: %AddU32.type = import_ref Main//int_ops, inst+93, loaded [template = constants.%AddU32]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7: %Uint32ToInt32.type = import_ref Main//int_ops, inst+157, loaded [template = constants.%Uint32ToInt32]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2146,27 +2146,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+218, loaded [template = constants.%Int32ToInt16]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+216, loaded [template = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2251,27 +2251,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+238, loaded [template = constants.%Int32ToUint16]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+236, loaded [template = constants.%Int32ToUint16]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2360,27 +2360,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12: %Uint32ToInt16.type = import_ref Main//int_ops, inst+257, loaded [template = constants.%Uint32ToInt16]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12: %Uint32ToInt16.type = import_ref Main//int_ops, inst+255, loaded [template = constants.%Uint32ToInt16]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2475,27 +2475,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13: %Uint32ToUint16.type = import_ref Main//int_ops, inst+276, loaded [template = constants.%Uint32ToUint16]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13: %Uint32ToUint16.type = import_ref Main//int_ops, inst+274, loaded [template = constants.%Uint32ToUint16]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2593,27 +2593,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+58, loaded [template = constants.%SubI32]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+238, loaded [template = constants.%Int32ToUint16]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+57, loaded [template = constants.%SubI32]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11: %Int32ToUint16.type = import_ref Main//int_ops, inst+236, loaded [template = constants.%Int32ToUint16]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2717,27 +2717,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+58, loaded [template = constants.%SubI32]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+140, loaded [template = constants.%Int32ToUint32]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+57, loaded [template = constants.%SubI32]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6: %Int32ToUint32.type = import_ref Main//int_ops, inst+138, loaded [template = constants.%Int32ToUint32]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2842,27 +2842,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+58, loaded [template = constants.%SubI32]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+218, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17: %Int32ToUint64.type = import_ref Main//int_ops, inst+355, loaded [template = constants.%Int32ToUint64]
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2: %SubI32.type = import_ref Main//int_ops, inst+57, loaded [template = constants.%SubI32]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//int_ops, inst+216, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17: %Int32ToUint64.type = import_ref Main//int_ops, inst+353, loaded [template = constants.%Int32ToUint64]
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -2963,27 +2963,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+31, loaded [template = constants.%NegateI32]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+121, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+218, loaded [template = constants.%Int32ToInt16]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+335, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1: %NegateI32.type = import_ref Main//int_ops, inst+30, loaded [template = constants.%NegateI32]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//int_ops, inst+119, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+216, loaded [template = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//int_ops, inst+333, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23
@@ -3079,27 +3079,27 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+58, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+95, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+102, unloaded
-// CHECK:STDOUT:   %import_ref.5: %Int32ToInt32.type = import_ref Main//int_ops, inst+121, loaded [template = constants.%Int32ToInt32]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+140, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+159, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+178, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+197, unloaded
-// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+218, loaded [template = constants.%Int32ToInt16]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+238, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+257, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+276, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+295, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+314, unloaded
-// CHECK:STDOUT:   %import_ref.16: %Int32ToInt64.type = import_ref Main//int_ops, inst+335, loaded [template = constants.%Int32ToInt64]
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+355, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+374, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+393, unloaded
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+412, unloaded
-// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+431, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//int_ops, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//int_ops, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//int_ops, inst+93, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//int_ops, inst+100, unloaded
+// CHECK:STDOUT:   %import_ref.5: %Int32ToInt32.type = import_ref Main//int_ops, inst+119, loaded [template = constants.%Int32ToInt32]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//int_ops, inst+138, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//int_ops, inst+157, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//int_ops, inst+176, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//int_ops, inst+195, unloaded
+// CHECK:STDOUT:   %import_ref.10: %Int32ToInt16.type = import_ref Main//int_ops, inst+216, loaded [template = constants.%Int32ToInt16]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//int_ops, inst+236, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//int_ops, inst+255, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//int_ops, inst+274, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//int_ops, inst+293, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//int_ops, inst+312, unloaded
+// CHECK:STDOUT:   %import_ref.16: %Int32ToInt64.type = import_ref Main//int_ops, inst+333, loaded [template = constants.%Int32ToInt64]
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//int_ops, inst+353, unloaded
+// CHECK:STDOUT:   %import_ref.18 = import_ref Main//int_ops, inst+372, unloaded
+// CHECK:STDOUT:   %import_ref.19 = import_ref Main//int_ops, inst+391, unloaded
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//int_ops, inst+410, unloaded
+// CHECK:STDOUT:   %import_ref.21 = import_ref Main//int_ops, inst+429, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.23

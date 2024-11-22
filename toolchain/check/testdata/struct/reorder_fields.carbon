@@ -98,7 +98,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeF64() -> f64;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: %.3 {
+// CHECK:STDOUT: fn @F() -> %return.param_patt: %.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_15.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%.loc15_15.1) [template = constants.%i32]
