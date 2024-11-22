@@ -15,7 +15,7 @@ class Class(T:! type) {
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+14]]:10: error: type `i32` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDERR:          ^~~~~~~
 // CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]

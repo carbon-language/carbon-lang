@@ -107,16 +107,16 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.25: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.26: <bound method> = bound_method %.5, %Convert.14 [template]
-// CHECK:STDOUT:   %.27: <specific function> = specific_function %.26, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.28: %i32 = int_value 5 [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%.4, %.28) [template]
-// CHECK:STDOUT:   %.30: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %.31: <bound method> = bound_method %.30, %Convert.14 [template]
-// CHECK:STDOUT:   %.32: <specific function> = specific_function %.31, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.33: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %Class.4: type = class_type @Class, @Class(%empty_tuple.type, %.33) [template]
+// CHECK:STDOUT:   %.29: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %.5, %Convert.14 [template]
+// CHECK:STDOUT:   %.31: <specific function> = specific_function %.30, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.32: %i32 = int_value 5 [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%.4, %.32) [template]
+// CHECK:STDOUT:   %.34: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %.35: <bound method> = bound_method %.34, %Convert.14 [template]
+// CHECK:STDOUT:   %.36: <specific function> = specific_function %.35, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.37: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %Class.4: type = class_type @Class, @Class(%empty_tuple.type, %.37) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -158,26 +158,26 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %int.make_type_signed, %.loc6_17.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_17.3: type = ptr_type %i32 [template = constants.%.4]
 // CHECK:STDOUT:   %.loc6_20: Core.IntLiteral = int_value 5 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_13.1: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc6_13.2: <bound method> = bound_method %.loc6_20, %.loc6_13.1 [template = constants.%.26]
-// CHECK:STDOUT:   %.loc6_13.3: <specific function> = specific_function %.loc6_13.2, @Convert.2(constants.%.1) [template = constants.%.27]
-// CHECK:STDOUT:   %int.convert_checked.loc6: init %i32 = call %.loc6_13.3(%.loc6_20) [template = constants.%.28]
-// CHECK:STDOUT:   %.loc6_13.4: %i32 = value_of_initializer %int.convert_checked.loc6 [template = constants.%.28]
-// CHECK:STDOUT:   %.loc6_13.5: %i32 = converted %.loc6_20, %.loc6_13.4 [template = constants.%.28]
-// CHECK:STDOUT:   %Class.loc6: type = class_type @Class, @Class(constants.%.4, constants.%.28) [template = constants.%Class.3]
+// CHECK:STDOUT:   %.loc6_13.1: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc6_13.2: <bound method> = bound_method %.loc6_20, %.loc6_13.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc6_13.3: <specific function> = specific_function %.loc6_13.2, @Convert.2(constants.%.1) [template = constants.%.31]
+// CHECK:STDOUT:   %int.convert_checked.loc6: init %i32 = call %.loc6_13.3(%.loc6_20) [template = constants.%.32]
+// CHECK:STDOUT:   %.loc6_13.4: %i32 = value_of_initializer %int.convert_checked.loc6 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc6_13.5: %i32 = converted %.loc6_20, %.loc6_13.4 [template = constants.%.32]
+// CHECK:STDOUT:   %Class.loc6: type = class_type @Class, @Class(constants.%.4, constants.%.32) [template = constants.%Class.3]
 // CHECK:STDOUT:   %a.var: ref %Class.3 = var a
 // CHECK:STDOUT:   %a: ref %Class.3 = bind_name a, %a.var
 // CHECK:STDOUT:   %Class.ref.loc9: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:   %.loc9_15: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_18: Core.IntLiteral = int_value 0 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc9_18: Core.IntLiteral = int_value 0 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc9_13.1: type = converted %.loc9_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc9_13.2: %Convert.type.2 = interface_witness_access constants.%.25, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc9_13.3: <bound method> = bound_method %.loc9_18, %.loc9_13.2 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc9_13.4: <specific function> = specific_function %.loc9_13.3, @Convert.2(constants.%.1) [template = constants.%.32]
-// CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %.loc9_13.4(%.loc9_18) [template = constants.%.33]
-// CHECK:STDOUT:   %.loc9_13.5: %i32 = value_of_initializer %int.convert_checked.loc9 [template = constants.%.33]
-// CHECK:STDOUT:   %.loc9_13.6: %i32 = converted %.loc9_18, %.loc9_13.5 [template = constants.%.33]
-// CHECK:STDOUT:   %Class.loc9: type = class_type @Class, @Class(constants.%empty_tuple.type, constants.%.33) [template = constants.%Class.4]
+// CHECK:STDOUT:   %.loc9_13.2: %Convert.type.2 = interface_witness_access constants.%.29, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc9_13.3: <bound method> = bound_method %.loc9_18, %.loc9_13.2 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc9_13.4: <specific function> = specific_function %.loc9_13.3, @Convert.2(constants.%.1) [template = constants.%.36]
+// CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %.loc9_13.4(%.loc9_18) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc9_13.5: %i32 = value_of_initializer %int.convert_checked.loc9 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc9_13.6: %i32 = converted %.loc9_18, %.loc9_13.5 [template = constants.%.37]
+// CHECK:STDOUT:   %Class.loc9: type = class_type @Class, @Class(constants.%empty_tuple.type, constants.%.37) [template = constants.%Class.4]
 // CHECK:STDOUT:   %b.var: ref %Class.4 = var b
 // CHECK:STDOUT:   %b: ref %Class.4 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -205,20 +205,20 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%.4, constants.%.28) {
+// CHECK:STDOUT: specific @Class(constants.%.4, constants.%.32) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%.4
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%.4
-// CHECK:STDOUT:   %N.loc4_23.2 => constants.%.28
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%.28
+// CHECK:STDOUT:   %N.loc4_23.2 => constants.%.32
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%.32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%empty_tuple.type, constants.%.33) {
+// CHECK:STDOUT: specific @Class(constants.%empty_tuple.type, constants.%.37) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%empty_tuple.type
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %N.loc4_23.2 => constants.%.33
-// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%.33
+// CHECK:STDOUT:   %N.loc4_23.2 => constants.%.37
+// CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%.37
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

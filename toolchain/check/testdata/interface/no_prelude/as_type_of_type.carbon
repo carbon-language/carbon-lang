@@ -23,6 +23,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %T.patt: %Empty.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -54,14 +55,15 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %T.patt.loc13_6.2: %Empty.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc14_10.3: type = facet_access_type %T.loc13_6.2 [symbolic = %.loc14_10.3 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Empty.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc14_10.1: type = facet_type_access %T.ref [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %x.var: ref @F.%T.loc13_6.2 (%T) = var x
-// CHECK:STDOUT:     %x: ref @F.%T.loc13_6.2 (%T) = bind_name x, %x.var
+// CHECK:STDOUT:     %.loc14_10.1: type = facet_access_type %T.ref [symbolic = %.loc14_10.3 (constants.%.1)]
+// CHECK:STDOUT:     %.loc14_10.2: type = converted %T.ref, %.loc14_10.1 [symbolic = %.loc14_10.3 (constants.%.1)]
+// CHECK:STDOUT:     %x.var: ref @F.%.loc14_10.3 (%.1) = var x
+// CHECK:STDOUT:     %x: ref @F.%.loc14_10.3 (%.1) = bind_name x, %x.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

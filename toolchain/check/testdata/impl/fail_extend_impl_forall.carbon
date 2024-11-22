@@ -37,9 +37,10 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.3: %GenericInterface.type.2 = facet_value %C, %C [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,7 +106,7 @@ class C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc19_23.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc19_56.2: <witness> = interface_witness (%F) [symbolic = %.loc19_56.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc19_56.2: <witness> = interface_witness (%F) [symbolic = %.loc19_56.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc19_52.1 {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
@@ -116,7 +117,7 @@ class C {
 // CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param runtime_param0
 // CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc19_56.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc19_56.2 (constants.%.3)]
+// CHECK:STDOUT:     %.loc19_56.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc19_56.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -137,7 +138,7 @@ class C {
 // CHECK:STDOUT:     %T.loc19_23.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = specific_constant @impl.%GenericInterface.type.loc19_52.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.2]
-// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -196,14 +197,14 @@ class C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc19_56.2 => constants.%.3
+// CHECK:STDOUT:   %.loc19_56.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T, constants.%C) {
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.3) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

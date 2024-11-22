@@ -49,13 +49,8 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // to be a particular kind of instruction.
   template <typename InstT>
   auto GetAs(TypeId type_id) const -> InstT {
-    if constexpr (std::is_same_v<InstT, BuiltinInst>) {
-      return GetAsInst(type_id).As<InstT>();
-    } else {
-      // The type is not a builtin, so no need to check for special values.
-      auto inst_id = constants_->GetInstId(GetConstantId(type_id));
-      return insts_->GetAs<InstT>(inst_id);
-    }
+    auto inst_id = constants_->GetInstId(GetConstantId(type_id));
+    return insts_->GetAs<InstT>(inst_id);
   }
 
   // Returns the instruction used to define the specified type, if it is of a

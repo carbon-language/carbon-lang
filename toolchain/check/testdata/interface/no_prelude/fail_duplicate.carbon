@@ -123,10 +123,11 @@ interface Class { }
 // CHECK:STDOUT:   %Self.1: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
 // CHECK:STDOUT:   %Self.2: %.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @.1.%F.decl [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %.type, %F.type [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @.1.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -148,16 +149,16 @@ interface Class { }
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%Self (%Self.2) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self.2) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.%.loc14_14.1 (%.1) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%.loc14_14.1 (%.1) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %.type = name_ref Self, @.1.%Self [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc14_14.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %.loc14_14.2: type = converted %Self.ref, %.loc14_14.1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:     %self.param: @F.%Self (%Self.2) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @F.%Self (%Self.2) = bind_name self, %self.param
+// CHECK:STDOUT:     %.loc14_14.2: type = facet_access_type %Self.ref [symbolic = %.loc14_14.1 (constants.%.1)]
+// CHECK:STDOUT:     %.loc14_14.3: type = converted %Self.ref, %.loc14_14.2 [symbolic = %.loc14_14.1 (constants.%.1)]
+// CHECK:STDOUT:     %self.param: @F.%.loc14_14.1 (%.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @F.%.loc14_14.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -167,12 +168,14 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@.1.%Self: %.type) {
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %.loc14_14.1: type = facet_access_type %Self [symbolic = %.loc14_14.1 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self (%Self.2)]();
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%.loc14_14.1 (%.1)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %.loc14_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon

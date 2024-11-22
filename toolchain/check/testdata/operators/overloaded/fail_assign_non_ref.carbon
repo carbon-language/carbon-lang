@@ -52,12 +52,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%Op.3) [template]
+// CHECK:STDOUT:   %.11: <witness> = interface_witness (%Op.3) [template]
 // CHECK:STDOUT:   %TestIncNonRef.type: type = fn_type @TestIncNonRef [template]
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [template]
@@ -71,8 +71,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+63, loaded [template = constants.%Inc.type]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+34, loaded [template = constants.%AddAssign.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+67, loaded [template = constants.%Inc.type]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, inst+36, loaded [template = constants.%AddAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -128,7 +128,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %self.param: %.3 = value_param runtime_param0
 // CHECK:STDOUT:     %self: %.3 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
@@ -151,7 +151,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Op.decl) [template = constants.%.11]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
@@ -172,7 +172,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access constants.%.7, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %.loc30_3.2(<error>)
 // CHECK:STDOUT:   return
@@ -182,7 +182,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access constants.%.7, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access constants.%.11, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %.loc40_5.2(<error>, %b.ref)
 // CHECK:STDOUT:   return

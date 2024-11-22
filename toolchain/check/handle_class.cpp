@@ -512,6 +512,15 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
+  if (!context.struct_type_fields_stack().PeekArray().empty()) {
+    // TODO: Add note that includes the first field location as an example.
+    CARBON_DIAGNOSTIC(
+        BaseDeclAfterFieldDecl, Error,
+        "`base` declaration must appear before field declarations");
+    context.emitter().Emit(node_id, BaseDeclAfterFieldDecl);
+    return true;
+  }
+
   auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // The `base` value in the class scope has an unbound element type. Instance

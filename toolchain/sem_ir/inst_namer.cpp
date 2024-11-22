@@ -146,7 +146,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
 
   // Check for a builtin.
   if (inst_id.is_builtin()) {
-    return inst_id.builtin_inst_kind().label().str();
+    return sem_ir_.insts().Get(inst_id).kind().ir_name().str();
   }
 
   if (inst_id == InstId::PackageNamespace) {

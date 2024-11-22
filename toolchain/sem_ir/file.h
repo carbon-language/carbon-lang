@@ -14,6 +14,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
@@ -43,9 +44,9 @@ class File : public Printable<File> {
   };
 
   // Starts a new file for Check::CheckParseTree.
-  explicit File(CheckIRId check_ir_id, IdentifierId package_id,
-                LibraryNameId library_id, SharedValueStores& value_stores,
-                std::string filename);
+  explicit File(CheckIRId check_ir_id,
+                const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
+                SharedValueStores& value_stores, std::string filename);
 
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;

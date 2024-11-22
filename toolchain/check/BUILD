@@ -82,12 +82,10 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_diagnostic_converter",
-        "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -96,7 +94,11 @@ cc_library(
     name = "check",
     srcs = [
         "check.cpp",
+        "deferred_definition_worklist.cpp",
+        "deferred_definition_worklist.h",
         "handle.h",
+        "node_id_traversal.cpp",
+        "node_id_traversal.h",
     ] +
     # Glob handler files to avoid missing any.
     glob([
@@ -127,12 +129,10 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/parse:tree_node_diagnostic_converter",
-        "//toolchain/sem_ir:builtin_inst_kind",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -160,8 +160,8 @@ cc_library(
         "//common:ostream",
         "//common:vlog",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -176,9 +176,8 @@ cc_library(
         "//toolchain/base:kind_switch",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 
@@ -190,9 +189,8 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 
@@ -206,7 +204,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
-        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -219,9 +217,8 @@ cc_library(
         ":context",
         "//common:check",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:ids",
         "//toolchain/sem_ir:inst",
-        "//toolchain/sem_ir:inst_kind",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -244,7 +241,7 @@ cc_library(
         "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
         "//toolchain/sem_ir:file",
-        "//toolchain/sem_ir:ids",
+        "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
 )

@@ -177,14 +177,13 @@ the Code of Conduct.
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
     is used for meeting invites and project reminders. Contributors may add
     calendar entries for meetings added to discuss details. Standard entries
-    are:
-
-    -   The
-        [weekly sync](https://docs.google.com/document/d/1dwS2sJ8tsN3LwxqmZSv9OvqutYhP71dK9Dmr1IXQFTs/edit?resourcekey=0-NxBWgL9h05yD2GOR3wUisg),
-        where contributors are welcome.
-    -   [Open discussions](https://docs.google.com/document/d/1tEt4iM6vfcY0O0DG0uOEMIbaXcZXlNREc2ChNiEtn_w/edit),
-        which are unstructured meeting slots used for discussing proposals,
-        tooling, and other Carbon topics based on who attends.
+    have
+    [minutes](https://drive.google.com/drive/folders/1VssO6kn9-HeKfzPDqBDR0Sy5CUE0OnSs)
+    and include:
+    -   The weekly sync, where contributors are welcome.
+    -   Open discussions, which are unstructured meeting slots used for
+        discussing proposals, tooling, and other Carbon topics based on who
+        attends.
 
 #### Getting access
 

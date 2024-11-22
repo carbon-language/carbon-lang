@@ -13,7 +13,7 @@ interface I {
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:          ^~~
   let a: i32;

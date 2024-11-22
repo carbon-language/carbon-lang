@@ -30,10 +30,10 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.13: type = fn_type @Convert.4, @impl.3(%.1) [template]
 // CHECK:STDOUT:   %Convert.13: %Convert.type.13 = struct_value () [template]
-// CHECK:STDOUT:   %.19: <witness> = interface_witness (%Convert.13) [template]
-// CHECK:STDOUT:   %.20: <bound method> = bound_method %N.1, %Convert.13 [symbolic]
-// CHECK:STDOUT:   %.21: <specific function> = specific_function %.20, @Convert.4(%.1) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %.21(%N.1) [symbolic]
+// CHECK:STDOUT:   %.23: <witness> = interface_witness (%Convert.13) [template]
+// CHECK:STDOUT:   %.24: <bound method> = bound_method %N.1, %Convert.13 [symbolic]
+// CHECK:STDOUT:   %.25: <specific function> = specific_function %.24, @Convert.4(%.1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %.25(%N.1) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,8 +69,8 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %N.patt.loc12_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc12_6.2 (constants.%N.patt.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc16_16.6: <bound method> = bound_method %N.loc12_6.2, constants.%Convert.13 [symbolic = %.loc16_16.6 (constants.%.20)]
-// CHECK:STDOUT:   %.loc16_16.7: <specific function> = specific_function %.loc16_16.6, @Convert.4(constants.%.1) [symbolic = %.loc16_16.7 (constants.%.21)]
+// CHECK:STDOUT:   %.loc16_16.6: <bound method> = bound_method %N.loc12_6.2, constants.%Convert.13 [symbolic = %.loc16_16.6 (constants.%.24)]
+// CHECK:STDOUT:   %.loc16_16.7: <specific function> = specific_function %.loc16_16.6, @Convert.4(constants.%.1) [symbolic = %.loc16_16.7 (constants.%.25)]
 // CHECK:STDOUT:   %int.convert_checked.loc16_16.2: init Core.IntLiteral = call %.loc16_16.7(%N.loc12_6.2) [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: %i32) {
@@ -80,9 +80,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc12_6.1 [symbolic = %N.loc12_6.2 (constants.%N.1)]
 // CHECK:STDOUT:     %.loc16_11.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_11.3: type = converted %int.make_type_signed.loc16, %.loc16_11.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_16.1: %Convert.type.2 = interface_witness_access constants.%.19, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %.loc16_16.2: <bound method> = bound_method %N.ref, %.loc16_16.1 [symbolic = %.loc16_16.6 (constants.%.20)]
-// CHECK:STDOUT:     %.loc16_16.3: <specific function> = specific_function %.loc16_16.2, @Convert.4(constants.%.1) [symbolic = %.loc16_16.7 (constants.%.21)]
+// CHECK:STDOUT:     %.loc16_16.1: %Convert.type.2 = interface_witness_access constants.%.23, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:     %.loc16_16.2: <bound method> = bound_method %N.ref, %.loc16_16.1 [symbolic = %.loc16_16.6 (constants.%.24)]
+// CHECK:STDOUT:     %.loc16_16.3: <specific function> = specific_function %.loc16_16.2, @Convert.4(constants.%.1) [symbolic = %.loc16_16.7 (constants.%.25)]
 // CHECK:STDOUT:     %int.convert_checked.loc16_16.1: init Core.IntLiteral = call %.loc16_16.3(%N.ref) [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc16_16.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_16.1 [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc16_16.5: Core.IntLiteral = converted %N.ref, %.loc16_16.4 [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
