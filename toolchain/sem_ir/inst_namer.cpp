@@ -49,7 +49,10 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
     CollectNamesInBlock(fn_scope, fn.param_patterns_id);
     if (fn.return_slot_pattern_id.is_valid()) {
-      CollectNamesInBlock(fn_scope, fn.return_slot_pattern_id);
+      // TODO: Factor out a single-inst version of CollectNamesInBlock, so we
+      // don't have to pretend that fn.return_slot_pattern_id is an array.
+      CollectNamesInBlock(
+          fn_scope, llvm::ArrayRef<InstId>(&fn.return_slot_pattern_id, 1));
     }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
