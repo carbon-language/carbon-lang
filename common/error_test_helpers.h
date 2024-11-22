@@ -93,7 +93,7 @@ auto IsSuccess(InnerMatcher matcher) -> IsSuccessMatcher<InnerMatcher> {
 
 namespace Carbon {
 
-// Supports printing ErrorOr to std::ostream in tests.
+// Supports printing `ErrorOr<T>` to `std::ostream` in tests.
 template <typename T>
 auto operator<<(std::ostream& out, const ErrorOr<T>& error_or)
     -> std::ostream& {
