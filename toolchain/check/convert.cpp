@@ -168,15 +168,15 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
 // another aggregate.
 //
 // For the source: `src_id` is the source aggregate, `src_elem_type` is the
-// element type, `i` is the index, and `SourceAccessInstT` is the kind of
-// instruction used to access the source element.
+// element type, `src_field_index` is the index, and `SourceAccessInstT` is the
+// kind of instruction used to access the source element.
 //
 // For the target: `kind` is the kind of conversion or initialization,
 // `target_elem_type` is the element type. For initialization, `target_id` is
 // the destination, `target_block` is a pending block for target location
 // calculations that will be spliced as the return slot of the initializer if
-// necessary, `i` is the index, and `TargetAccessInstT` is the kind of
-// instruction used to access the destination element.
+// necessary, `target_field_index` is the index, and `TargetAccessInstT` is the
+// kind of instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, SemIR::LocId loc_id, SemIR::InstId src_id,
@@ -184,7 +184,7 @@ static auto ConvertAggregateElement(
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
     SemIR::TypeId target_elem_type, PendingBlock* target_block,
-    size_t src_field_index, size_t dest_field_index) {
+    size_t src_field_index, size_t target_field_index) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.
@@ -206,7 +206,7 @@ static auto ConvertAggregateElement(
   target.init_block = target_block;
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
-      dest_field_index);
+      target_field_index);
   return Convert(context, loc_id, src_elem_id, target);
 }
 
