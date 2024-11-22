@@ -116,8 +116,15 @@ static auto EmitAsConstant(ConstantContext& /*context*/, InstT inst)
 // For constants that are always of type `type`, produce the trivial runtime
 // representation of type `type`.
 template <typename InstT>
-  requires(InstT::Kind.is_type() == SemIR::InstIsType::Always)
+  requires(InstT::Kind.is_type() == SemIR::InstIsType::Always &&
+           InstT::Kind.constant_kind() != SemIR::InstConstantKind::SymbolicOnly)
 static auto EmitAsConstant(ConstantContext& context, InstT /*inst*/)
+    -> llvm::Constant* {
+  return context.GetTypeAsValue();
+}
+
+// Represent facet values the same as types.
+static auto EmitAsConstant(ConstantContext& context, SemIR::FacetValue /*inst*/)
     -> llvm::Constant* {
   return context.GetTypeAsValue();
 }

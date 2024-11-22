@@ -993,7 +993,7 @@ class ImportRefResolver {
         break;
       }
       default: {
-        if (const_inst_id == SemIR::InstId::BuiltinError) {
+        if (const_inst_id == SemIR::InstId::BuiltinErrorInst) {
           return SemIR::NameScopeId::Invalid;
         }
         break;
@@ -1069,6 +1069,10 @@ class ImportRefResolver {
       new_scope.AddRequired({.name_id = GetLocalNameId(entry.name_id),
                              .inst_id = ref_id,
                              .access_kind = entry.access_kind});
+    }
+    for (auto scope_inst_id : import_scope.extended_scopes) {
+      new_scope.extended_scopes.push_back(AddImportRef(
+          context_, {.ir_id = import_ir_id_, .inst_id = scope_inst_id}));
     }
   }
 
@@ -1193,7 +1197,13 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::ExportDecl inst): {
         return TryResolveTypedInst(inst);
       }
+      case CARBON_KIND(SemIR::FacetAccessType inst): {
+        return TryResolveTypedInst(inst);
+      }
       case CARBON_KIND(SemIR::FacetType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::FacetValue inst): {
         return TryResolveTypedInst(inst);
       }
       case CARBON_KIND(SemIR::FieldDecl inst): {
@@ -1253,11 +1263,25 @@ class ImportRefResolver {
       case CARBON_KIND(SemIR::UnboundElementType inst): {
         return TryResolveTypedInst(inst);
       }
-      default:
-        context_.TODO(
-            SemIR::LocId(AddImportIRInst(inst_id)),
-            llvm::formatv("TryResolveInst on {0}", untyped_inst.kind()).str());
-        return {.const_id = SemIR::ConstantId::Error};
+      default: {
+        // This instruction might have a constant value of a different kind.
+        auto constant_inst_id =
+            import_ir_.constant_values().GetConstantInstId(inst_id);
+        if (constant_inst_id == inst_id) {
+          context_.TODO(
+              SemIR::LocId(AddImportIRInst(inst_id)),
+              llvm::formatv("TryResolveInst on {0}", untyped_inst.kind())
+                  .str());
+          return {.const_id = SemIR::ConstantId::Error};
+        }
+        // Try to resolve the constant value instead. Note that this can only
+        // retry once.
+        CARBON_DCHECK(import_ir_.constant_values().GetConstantInstId(
+                          constant_inst_id) == constant_inst_id,
+                      "Constant value of constant instruction should refer to "
+                      "the same instruction");
+        return TryResolveInstCanonical(constant_inst_id, const_id);
+      }
     }
   }
 
@@ -1455,16 +1479,7 @@ class ImportRefResolver {
 
     if (import_class.base_id.is_valid()) {
       new_class.base_id = base_id;
-      // Add the base scope to extended scopes.
-      auto base_inst_id = context_.types().GetInstId(
-          context_.insts()
-              .GetAs<SemIR::BaseDecl>(new_class.base_id)
-              .base_type_id);
-      new_scope.extended_scopes.push_back(base_inst_id);
     }
-    // TODO: `extended_scopes` from `extend impl` are currently not imported.
-    // CARBON_CHECK(new_scope.extended_scopes.size() ==
-    //              import_scope.extended_scopes.size());
   }
 
   auto TryResolveTypedInst(SemIR::ClassDecl inst,
@@ -2063,6 +2078,17 @@ class ImportRefResolver {
     return ResolveAsConstant(interface_const_id);
   }
 
+  auto TryResolveTypedInst(SemIR::FacetAccessType inst) -> ResolveResult {
+    auto facet_value_inst_id = GetLocalConstantInstId(inst.facet_value_inst_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    return ResolveAs<SemIR::FacetAccessType>(
+        {.type_id = SemIR::TypeId::TypeType,
+         .facet_value_inst_id = facet_value_inst_id});
+  }
+
   auto TryResolveTypedInst(SemIR::FacetType inst) -> ResolveResult {
     CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
@@ -2113,6 +2139,20 @@ class ImportRefResolver {
             .requirement_block_id = SemIR::InstBlockId::Invalid});
     return ResolveAs<SemIR::FacetType>(
         {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id});
+  }
+
+  auto TryResolveTypedInst(SemIR::FacetValue inst) -> ResolveResult {
+    auto type_id = GetLocalConstantId(inst.type_id);
+    auto type_inst_id = GetLocalConstantInstId(inst.type_inst_id);
+    auto witness_inst_id = GetLocalConstantInstId(inst.witness_inst_id);
+    if (HasNewWork()) {
+      return Retry();
+    }
+
+    return ResolveAs<SemIR::FacetValue>(
+        {.type_id = context_.GetTypeIdForTypeConstant(type_id),
+         .type_inst_id = type_inst_id,
+         .witness_inst_id = witness_inst_id});
   }
 
   auto TryResolveTypedInst(SemIR::InterfaceWitness inst) -> ResolveResult {

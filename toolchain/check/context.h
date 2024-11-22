@@ -242,7 +242,7 @@ class Context {
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
-  // BuiltinError if not found.
+  // BuiltinErrorInst if not found.
   auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
@@ -405,6 +405,9 @@ class Context {
   auto GetGenericInterfaceType(SemIR::InterfaceId interface_id,
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
+
+  // Returns the type `i32`.
+  auto GetInt32Type() -> SemIR::TypeId;
 
   // Gets the facet type corresponding to a particular interface.
   auto GetInterfaceType(SemIR::InterfaceId interface_id,

@@ -152,10 +152,11 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -168,16 +169,16 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.%.loc9_22.1 (%.1) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%.loc9_22.1 (%.1) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc9_22.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc9_22.2: type = converted %Self.ref, %.loc9_22.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %self.param: @F.%Self (%Self) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:     %.loc9_22.2: type = facet_access_type %Self.ref [symbolic = %.loc9_22.1 (constants.%.1)]
+// CHECK:STDOUT:     %.loc9_22.3: type = converted %Self.ref, %.loc9_22.2 [symbolic = %.loc9_22.1 (constants.%.1)]
+// CHECK:STDOUT:     %self.param: @F.%.loc9_22.1 (%.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @F.%.loc9_22.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -187,12 +188,14 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %.loc9_22.1: type = facet_access_type %Self [symbolic = %.loc9_22.1 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self (%Self)]();
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%.loc9_22.1 (%.1)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %.loc9_22.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_member.carbon
@@ -200,10 +203,11 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -216,16 +220,16 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%Self (%Self) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.%Self (%Self) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.%.loc8_24.1 (%.1) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.%.loc8_24.1 (%.1) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc8_24.1: type = facet_type_access %Self.ref [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %Self.ref, %.loc8_24.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %self.param: @F.%Self (%Self) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @F.%Self (%Self) = bind_name self, %self.param
+// CHECK:STDOUT:     %.loc8_24.2: type = facet_access_type %Self.ref [symbolic = %.loc8_24.1 (constants.%.1)]
+// CHECK:STDOUT:     %.loc8_24.3: type = converted %Self.ref, %.loc8_24.2 [symbolic = %.loc8_24.1 (constants.%.1)]
+// CHECK:STDOUT:     %self.param: @F.%.loc8_24.1 (%.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @F.%.loc8_24.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -235,11 +239,13 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %.loc8_24.1: type = facet_access_type %Self [symbolic = %.loc8_24.1 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.%Self (%Self)]();
+// CHECK:STDOUT:   fn[%self.param_patt: @F.%.loc8_24.1 (%.1)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %.loc8_24.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

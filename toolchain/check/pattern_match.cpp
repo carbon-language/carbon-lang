@@ -133,8 +133,8 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
 
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
-  if (entry.pattern_id == SemIR::InstId::BuiltinError) {
-    results_.push_back(SemIR::InstId::BuiltinError);
+  if (entry.pattern_id == SemIR::InstId::BuiltinErrorInst) {
+    results_.push_back(SemIR::InstId::BuiltinErrorInst);
     return;
   }
   DiagnosticAnnotationScope annotate_diagnostics(
@@ -187,7 +187,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           context.emitter().Emit(
               TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
               AddrSelfIsNonRef);
-          results_.push_back(SemIR::InstId::BuiltinError);
+          results_.push_back(SemIR::InstId::BuiltinErrorInst);
           return;
       }
       auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
@@ -208,8 +208,8 @@ auto MatchContext::EmitPatternMatch(Context& context,
       switch (kind_) {
         case MatchKind::Caller: {
           CARBON_CHECK(entry.scrutinee_id.is_valid());
-          if (entry.scrutinee_id == SemIR::InstId::BuiltinError) {
-            results_.push_back(SemIR::InstId::BuiltinError);
+          if (entry.scrutinee_id == SemIR::InstId::BuiltinErrorInst) {
+            results_.push_back(SemIR::InstId::BuiltinErrorInst);
           } else {
             results_.push_back(ConvertToValueOfType(
                 context, context.insts().GetLocId(entry.scrutinee_id),

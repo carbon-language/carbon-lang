@@ -125,16 +125,18 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Outer.3: type = class_type @Outer, @Outer(%.3) [template]
 // CHECK:STDOUT:   %Inner.type.2: type = generic_class_type @Inner, @Outer(%.3) [template]
 // CHECK:STDOUT:   %Inner.3: %Inner.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: i32} [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %.4 [template]
-// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.3, %.5) [template]
+// CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.3, %.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -170,12 +172,13 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Outer.loc18: type = class_type @Outer, @Outer(constants.%.3) [template = constants.%Outer.3]
 // CHECK:STDOUT:   %.loc18_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.3) [template = constants.%Inner.3]
 // CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc18_18 [template = constants.%Inner.3]
-// CHECK:STDOUT:   %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:   %.loc18_30.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:   %.loc18_30.2: type = converted %int.make_type_32, %.loc18_30.1 [template = i32]
-// CHECK:STDOUT:   %.loc18_33: type = struct_type {.a: i32} [template = constants.%.4]
-// CHECK:STDOUT:   %.loc18_34: type = ptr_type %.4 [template = constants.%.5]
-// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.3, constants.%.5) [template = constants.%Inner.4]
+// CHECK:STDOUT:   %.loc18_30.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc18_30.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_30.3: type = converted %int.make_type_signed, %.loc18_30.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_33: type = struct_type {.a: %i32} [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18_34: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.3, constants.%.6) [template = constants.%Inner.4]
 // CHECK:STDOUT:   %w.var: ref %Inner.4 = var w
 // CHECK:STDOUT:   %w: ref %Inner.4 = bind_name w, %w.var
 // CHECK:STDOUT: }
@@ -250,9 +253,9 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Inner => constants.%Inner.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%.3, constants.%.5) {
-// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.5
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.5
+// CHECK:STDOUT: specific @Inner(constants.%.3, constants.%.6) {
+// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.6
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

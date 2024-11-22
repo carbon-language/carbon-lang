@@ -197,7 +197,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
-// CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {

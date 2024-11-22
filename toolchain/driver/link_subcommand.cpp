@@ -114,7 +114,7 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
                     options_.object_filenames.end());
 
   ClangRunner runner(driver_env.installation, options_.codegen_options.target,
-                     driver_env.vlog_stream);
+                     driver_env.fs, driver_env.vlog_stream);
   return {.success = runner.Run(clang_args)};
 }
 

@@ -77,7 +77,7 @@ class FileTestBase : public testing::Test {
   // The return value should be an error if there was an abnormal error, and
   // RunResult otherwise.
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-                   llvm::vfs::InMemoryFileSystem& fs,
+                   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
                    llvm::raw_pwrite_stream& stdout,
                    llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> = 0;
 

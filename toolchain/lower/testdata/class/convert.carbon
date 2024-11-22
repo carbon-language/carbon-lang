@@ -43,7 +43,7 @@ fn DoIt() {
 // CHECK:STDOUT: define void @_CDoIt.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { i32 }, align 8, !dbg !12
-// CHECK:STDOUT:   %.loc22_31.5.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   %.loc22_31.6.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @struct.loc22_32, i64 4, i1 false), !dbg !14
 // CHECK:STDOUT:   %Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !15
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %Convert.call), !dbg !16

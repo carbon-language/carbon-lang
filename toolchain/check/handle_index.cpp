@@ -97,7 +97,7 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
     CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
                       "type {0} does not support indexing", SemIR::TypeId);
     context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   Operator op{
@@ -133,8 +133,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_loc_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+          context, index_loc_id, index_inst_id, context.GetInt32Type());
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {
@@ -161,7 +160,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
 
     default: {
-      auto elem_id = SemIR::InstId::BuiltinError;
+      auto elem_id = SemIR::InstId::BuiltinErrorInst;
       if (operand_type_id != SemIR::TypeId::Error) {
         elem_id = PerformIndexWith(context, node_id, operand_inst_id,
                                    operand_type_id, index_inst_id);

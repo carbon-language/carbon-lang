@@ -364,7 +364,7 @@ class CompilationUnit {
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> void {
     LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
-      source_ = SourceBuffer::MakeFromFileOrStdin(driver_env_->fs,
+      source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                   input_filename_, *consumer_);
     });
     if (mem_usage_) {

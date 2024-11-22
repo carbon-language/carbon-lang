@@ -103,7 +103,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
-    rhs_as_type.inst_id = SemIR::InstId::BuiltinError;
+    rhs_as_type.inst_id = SemIR::InstId::BuiltinErrorInst;
   }
   // TODO: Require that at least one side uses a designator.
 

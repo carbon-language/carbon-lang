@@ -299,8 +299,13 @@ sh_test(
     size = "enormous",
     # We configure the test to run quickly.
     timeout = "short",
-    srcs = ["map_benchmark_test.sh"],
-    data = [":map_benchmark"],
+    srcs = [":map_benchmark"],
+    args = [
+        "--benchmark_counters_tabular=true",
+        "--benchmark_min_time=1x",
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+    ],
 )
 
 cc_library(
@@ -349,8 +354,11 @@ cc_binary(
 
 sh_test(
     name = "raw_hashtable_metadata_group_benchmark_test",
-    srcs = ["raw_hashtable_metadata_group_benchmark_test.sh"],
-    data = [":raw_hashtable_metadata_group_benchmark"],
+    srcs = ["raw_hashtable_metadata_group_benchmark"],
+    args = [
+        "--benchmark_counters_tabular=true",
+        "--benchmark_min_time=1x",
+    ],
 )
 
 cc_library(
@@ -428,8 +436,13 @@ sh_test(
     size = "enormous",
     # We configure the test to run quickly.
     timeout = "short",
-    srcs = ["set_benchmark_test.sh"],
-    data = [":set_benchmark"],
+    srcs = [":set_benchmark"],
+    args = [
+        "--benchmark_counters_tabular=true",
+        "--benchmark_min_time=1x",
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+    ],
 )
 
 cc_library(

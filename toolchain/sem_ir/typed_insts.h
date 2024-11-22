@@ -45,6 +45,20 @@
 
 namespace Carbon::SemIR {
 
+// A builtin instruction, corresponding to instructions like
+// InstId::BuiltinTypeType.
+//
+// Builtins don't have a parse node associated with them.
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, Label)                          \
+  struct Name {                                                               \
+    static constexpr auto Kind = InstKind::Name.Define<Parse::InvalidNodeId>( \
+        {.ir_name = Label,                                                    \
+         .is_type = InstIsType::Always,                                       \
+         .constant_kind = InstConstantKind::Always});                         \
+    TypeId type_id;                                                           \
+  };
+#include "toolchain/sem_ir/inst_kind.def"
+
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
@@ -401,20 +415,6 @@ struct BranchWithArg {
   InstId arg_id;
 };
 
-// A builtin instruction, corresponding to instructions like
-// InstId::BuiltinTypeType.
-struct BuiltinInst {
-  // Builtins don't have a parse node associated with them.
-  static constexpr auto Kind =
-      InstKind::BuiltinInst.Define<Parse::InvalidNodeId>(
-          {.ir_name = "builtin",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  BuiltinInstKind builtin_inst_kind;
-};
-
 // An abstract `callee(args)` call, where the callee may be a function, but
 // could also be a generic or other callable structure.
 struct Call {
@@ -546,6 +546,21 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// Represents accessing the `type` field in a facet value, which is notionally a
+// pair of a type and a witness.
+struct FacetAccessType {
+  static constexpr auto Kind = InstKind::FacetAccessType.Define<Parse::NodeId>(
+      {.ir_name = "facet_access_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  // An instruction that evaluates to a `FacetValue`.
+  InstId facet_value_inst_id;
+};
+
+// TODO: `FacetAccessWitness`
+
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
@@ -557,14 +572,20 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// Represents accessing the `type` field in a facet value, which is notionally a
-// pair of a type and a witness.
-struct FacetTypeAccess {
-  static constexpr auto Kind = InstKind::FacetTypeAccess.Define<Parse::NodeId>(
-      {.ir_name = "facet_type_access"});
+// A facet value, the value of a facet type. This consists of a type and a
+// witness that it satisfies the facet type.
+struct FacetValue {
+  static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
+      {.ir_name = "facet_value",
+       .is_type = InstIsType::Never,
+       .constant_kind = InstConstantKind::Always});
 
+  // A `FacetType`.
   TypeId type_id;
-  InstId facet_id;
+  // The type that you will get if you cast this value to `type`.
+  InstId type_inst_id;
+  // An `InterfaceWitness` instruction (TODO: `FacetTypeWitness`).
+  InstId witness_inst_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the

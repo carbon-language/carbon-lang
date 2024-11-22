@@ -40,7 +40,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.5: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -89,7 +90,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -121,16 +122,16 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %.1 = name_ref G, @C.%G [template = constants.%.2]
-// CHECK:STDOUT:   %.loc24: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc24: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %.loc24()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %.1 = name_ref G, @C.%G [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc25: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:

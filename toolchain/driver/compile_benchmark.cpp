@@ -24,7 +24,7 @@ class CompileBenchmark {
   CompileBenchmark()
       : installation_(InstallPaths::MakeForBazelRunfiles(GetExePath())),
         driver_(fs_, &installation_, llvm::outs(), llvm::errs()) {
-    AddPreludeFilesToVfs(installation_, &fs_);
+    AddPreludeFilesToVfs(installation_, fs_);
   }
 
   // Setup a set of source files in the VFS for the driver. Each string input is
@@ -35,8 +35,8 @@ class CompileBenchmark {
     llvm::OwningArrayRef<std::string> file_names(sources.size());
     for (ssize_t i : llvm::seq<ssize_t>(sources.size())) {
       file_names[i] = llvm::formatv("file_{0}.carbon", i).str();
-      fs_.addFile(file_names[i], /*ModificationTime=*/0,
-                  llvm::MemoryBuffer::getMemBuffer(sources[i]));
+      fs_->addFile(file_names[i], /*ModificationTime=*/0,
+                   llvm::MemoryBuffer::getMemBuffer(sources[i]));
     }
     return file_names;
   }
@@ -45,7 +45,8 @@ class CompileBenchmark {
   auto gen() -> SourceGen& { return gen_; }
 
  private:
-  llvm::vfs::InMemoryFileSystem fs_;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs_ =
+      new llvm::vfs::InMemoryFileSystem;
   const InstallPaths installation_;
   Driver driver_;
 

@@ -38,9 +38,8 @@ static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
     -> SemIR::InstId {
   if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
       SemIR::InstId::BuiltinIntLiteralType) {
-    operand_id = ConvertToValueOfType(
-        context, node_id, operand_id,
-        context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+    operand_id = ConvertToValueOfType(context, node_id, operand_id,
+                                      context.GetInt32Type());
   }
   return operand_id;
 }
