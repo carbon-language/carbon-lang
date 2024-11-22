@@ -22,8 +22,9 @@ class FileTestBaseTest : public FileTestBase {
       : FileTestBase(output_mutex, test_name) {}
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-           llvm::vfs::InMemoryFileSystem& fs, llvm::raw_pwrite_stream& stdout,
-           llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> override;
+           llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
+           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+      -> ErrorOr<RunResult> override;
 
   auto GetArgReplacements() -> llvm::StringMap<std::string> override {
     return {{"replacement", "replaced"}};
@@ -217,10 +218,10 @@ static auto EchoFileContent(TestParams& params)
   return {{.success = true}};
 }
 
-auto FileTestBaseTest::Run(const llvm::SmallVector<llvm::StringRef>& test_args,
-                           llvm::vfs::InMemoryFileSystem& fs,
-                           llvm::raw_pwrite_stream& stdout,
-                           llvm::raw_pwrite_stream& stderr)
+auto FileTestBaseTest::Run(
+    const llvm::SmallVector<llvm::StringRef>& test_args,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
+    llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
     -> ErrorOr<RunResult> {
   PrintArgs(test_args, stdout);
 
@@ -260,8 +261,8 @@ auto FileTestBaseTest::Run(const llvm::SmallVector<llvm::StringRef>& test_args,
           .Default(&EchoFileContent);
 
   // Call the appropriate test function for the file.
-  TestParams params = {.fs = fs, .stdout = stdout, .stderr = stderr};
-  CARBON_ASSIGN_OR_RETURN(params.files, GetFilesFromArgs(test_args, fs));
+  TestParams params = {.fs = *fs, .stdout = stdout, .stderr = stderr};
+  CARBON_ASSIGN_OR_RETURN(params.files, GetFilesFromArgs(test_args, *fs));
   return test_fn(params);
 }
 

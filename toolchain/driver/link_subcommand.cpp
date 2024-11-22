@@ -9,18 +9,6 @@
 
 namespace Carbon {
 
-constexpr CommandLine::CommandInfo LinkOptions::Info = {
-    .name = "link",
-    .help = R"""(
-Link Carbon executables.
-
-This subcommand links Carbon executables by combining object files.
-
-TODO: Support linking binary libraries, both archives and shared libraries.
-TODO: Support linking against binary libraries.
-)""",
-};
-
 auto LinkOptions::Build(CommandLine::CommandBuilder& b) -> void {
   b.AddStringPositionalArg(
       {
@@ -80,6 +68,20 @@ static void AddOSFlags(llvm::StringRef target,
   }
 }
 
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
+    .name = "link",
+    .help = R"""(
+Link Carbon executables.
+
+This subcommand links Carbon executables by combining object files.
+
+TODO: Support linking binary libraries, both archives and shared libraries.
+TODO: Support linking against binary libraries.
+)""",
+};
+
+LinkSubcommand::LinkSubcommand() : DriverSubcommand(SubcommandInfo) {}
+
 auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Currently we use the Clang driver to link. This works well on Unix
   // OSes but we likely need to directly build logic to invoke `link.exe` on
@@ -112,7 +114,7 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
                     options_.object_filenames.end());
 
   ClangRunner runner(driver_env.installation, options_.codegen_options.target,
-                     driver_env.vlog_stream);
+                     driver_env.fs, driver_env.vlog_stream);
   return {.success = runner.Run(clang_args)};
 }
 

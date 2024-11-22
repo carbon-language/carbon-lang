@@ -387,7 +387,7 @@ class NextDeferredDefinitionCache {
   // be encountered.
   auto SkipTo(Parse::DeferredDefinitionIndex next_index) -> void {
     index_ = next_index;
-    if (static_cast<std::size_t>(index_.index) ==
+    if (static_cast<size_t>(index_.index) ==
         tree_->deferred_definitions().size()) {
       start_id_ = Parse::NodeId::Invalid;
     } else {
@@ -819,8 +819,9 @@ static auto CheckRequiredDefinitions(Context& context,
         break;
       }
       case SemIR::InterfaceDecl::Kind: {
-        // TODO: handle `interface` as well, once we can test it without
-        // triggering https://github.com/carbon-language/carbon-lang/issues/4071
+        // TODO: Handle `interface` as well, once we can test it without
+        // triggering
+        // https://github.com/carbon-language/carbon-lang/issues/4071.
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       case CARBON_KIND(SemIR::SpecificFunction specific_function): {
@@ -897,6 +898,8 @@ static auto CheckParseTree(
     llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
     UnitInfo& unit_info, int total_ir_count, llvm::raw_ostream* vlog_stream)
     -> void {
+  Timings::ScopedTiming timing(unit_info.unit->timings, "check");
+
   auto package_id = IdentifierId::Invalid;
   auto library_id = StringLiteralValueId::Invalid;
   if (const auto& packaging = unit_info.unit->parse_tree->packaging_decl()) {

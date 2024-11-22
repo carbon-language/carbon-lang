@@ -35,6 +35,9 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
   // function type.
   auto IsValidType(const File& sem_ir, llvm::ArrayRef<TypeId> arg_types,
                    TypeId return_type) const -> bool;
+
+  // Returns whether this is a compile-time-only function.
+  auto IsCompTimeOnly() const -> bool;
 };
 
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \

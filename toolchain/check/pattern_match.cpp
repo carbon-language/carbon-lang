@@ -46,7 +46,7 @@ enum class MatchKind {
   // against the portion of the pattern below the ParamPattern insts.
   Callee,
 
-  // TODO: add enumerator for non-function-call pattern match
+  // TODO: Add enumerator for non-function-call pattern match.
 };
 
 // The collected state of a pattern-matching operation.
@@ -115,7 +115,7 @@ class MatchContext {
   SemIR::SpecificId callee_specific_id_;
 
   // The return slot inst emitted by `DoWork`, if any.
-  // TODO: can this be added to the block returned by `DoWork`, instead?
+  // TODO: Can this be added to the block returned by `DoWork`, instead?
   SemIR::InstId return_slot_id_;
 };
 
@@ -126,15 +126,15 @@ auto MatchContext::DoWork(Context& context) -> SemIR::InstBlockId {
   while (!stack_.empty()) {
     EmitPatternMatch(context, stack_.pop_back_val());
   }
-  auto block_id = context.inst_blocks().AddOrEmpty(results_);
+  auto block_id = context.inst_blocks().Add(results_);
   results_.clear();
   return block_id;
 }
 
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
-  if (entry.pattern_id == SemIR::InstId::BuiltinError) {
-    results_.push_back(SemIR::InstId::BuiltinError);
+  if (entry.pattern_id == SemIR::InstId::BuiltinErrorInst) {
+    results_.push_back(SemIR::InstId::BuiltinErrorInst);
     return;
   }
   DiagnosticAnnotationScope annotate_diagnostics(
@@ -151,13 +151,16 @@ auto MatchContext::EmitPatternMatch(Context& context,
     case SemIR::SymbolicBindingPattern::Kind: {
       CARBON_CHECK(kind_ == MatchKind::Callee);
       auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
-      auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(
-          binding_pattern.bind_name_id);
+      auto cache_entry =
+          context.bind_name_cache().Lookup(binding_pattern.entity_name_id);
+      // The cached bind_name should only be used once.
+      auto bind_name_id =
+          std::exchange(cache_entry.value(), SemIR::InstId::Invalid);
+      auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
       CARBON_CHECK(!bind_name.value_id.is_valid());
       bind_name.value_id = entry.scrutinee_id;
-      context.ReplaceInstBeforeConstantUse(binding_pattern.bind_name_id,
-                                           bind_name);
-      context.inst_block_stack().AddInstId(binding_pattern.bind_name_id);
+      context.ReplaceInstBeforeConstantUse(bind_name_id, bind_name);
+      context.inst_block_stack().AddInstId(bind_name_id);
       if (context.insts()
               .GetAs<SemIR::AnyParam>(entry.scrutinee_id)
               .runtime_index.is_valid()) {
@@ -188,7 +191,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           context.emitter().Emit(
               TokenOnly(context.insts().GetLocId(entry.scrutinee_id)),
               AddrSelfIsNonRef);
-          results_.push_back(SemIR::InstId::BuiltinError);
+          results_.push_back(SemIR::InstId::BuiltinErrorInst);
           return;
       }
       auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
@@ -209,8 +212,8 @@ auto MatchContext::EmitPatternMatch(Context& context,
       switch (kind_) {
         case MatchKind::Caller: {
           CARBON_CHECK(entry.scrutinee_id.is_valid());
-          if (entry.scrutinee_id == SemIR::InstId::BuiltinError) {
-            results_.push_back(SemIR::InstId::BuiltinError);
+          if (entry.scrutinee_id == SemIR::InstId::BuiltinErrorInst) {
+            results_.push_back(SemIR::InstId::BuiltinErrorInst);
           } else {
             results_.push_back(ConvertToValueOfType(
                 context, context.insts().GetLocId(entry.scrutinee_id),
@@ -255,7 +258,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           break;
         }
         case MatchKind::Callee: {
-          // TODO: consider ways to address near-duplication with the
+          // TODO: Consider ways to address near-duplication with the
           // ValueParamPattern case.
           if (param_pattern.runtime_index ==
               SemIR::RuntimeParamIndex::Unknown) {

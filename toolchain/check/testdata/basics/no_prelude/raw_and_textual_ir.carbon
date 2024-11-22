@@ -31,6 +31,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
+// CHECK:STDOUT:   struct_type_fields:
+// CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -50,7 +52,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'inst+2':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+3':          {kind: Converted, arg0: inst+2, arg1: inst+1, type: typeTypeType}
 // CHECK:STDOUT:     'inst+4':          {kind: BindName, arg0: entity_name0, arg1: inst+16, type: type(inst+1)}
-// CHECK:STDOUT:     'inst+5':          {kind: BindingPattern, arg0: entity_name0, arg1: inst+4, type: type(inst+1)}
+// CHECK:STDOUT:     'inst+5':          {kind: BindingPattern, arg0: entity_name0, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+6':          {kind: ValueParamPattern, arg0: inst+5, arg1: runtime_param0, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+7':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
 // CHECK:STDOUT:     'inst+8':          {kind: TupleLiteral, arg0: empty, type: type(inst+1)}
@@ -166,13 +168,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: --- raw_and_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %.2: type = tuple_type (%.1, %.1) [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
-// CHECK:STDOUT:   %tuple.1: %.1 = tuple_value () [template]
-// CHECK:STDOUT:   %tuple.2: %.2 = tuple_value (%tuple.1, %tuple.1) [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -180,39 +181,39 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %n.patt: %.1 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %.1 = value_param_pattern %n.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %empty_tuple.type = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %tuple.type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_12.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_20: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_24: %.1 = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_25.1: %.2 = tuple_literal (%.loc15_20, %.loc15_24)
-// CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%.2 [template = constants.%.2]
-// CHECK:STDOUT:     %n.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %n: %.1 = bind_name n, %n.param
-// CHECK:STDOUT:     %return.param: ref %.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.2 = return_slot %return.param
+// CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_20: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_24: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_25.1: %tuple.type = tuple_literal (%.loc15_20, %.loc15_24)
+// CHECK:STDOUT:     %.loc15_25.2: type = converted %.loc15_20, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%tuple.type [template = constants.%tuple.type]
+// CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
+// CHECK:STDOUT:     %return.param: ref %tuple.type = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n.param_patt: %.1) -> %return: %.2 {
+// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return: %tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, %n
-// CHECK:STDOUT:   %.loc16_15.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_16.1: %.2 = tuple_literal (%n.ref, %.loc16_15.1)
-// CHECK:STDOUT:   %.loc16_16.2: ref %.1 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc16_11: init %.1 = tuple_init () to %.loc16_16.2 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc16_16.3: init %.1 = converted %n.ref, %.loc16_11 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc16_16.4: ref %.1 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc16_15.2: init %.1 = tuple_init () to %.loc16_16.4 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc16_16.5: init %.1 = converted %.loc16_15.1, %.loc16_15.2 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc16_16.6: init %.2 = tuple_init (%.loc16_16.3, %.loc16_16.5) to %return [template = constants.%tuple.2]
-// CHECK:STDOUT:   %.loc16_17: init %.2 = converted %.loc16_16.1, %.loc16_16.6 [template = constants.%tuple.2]
+// CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
+// CHECK:STDOUT:   %.loc16_15.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_16.1: %tuple.type = tuple_literal (%n.ref, %.loc16_15.1)
+// CHECK:STDOUT:   %.loc16_16.2: ref %empty_tuple.type = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc16_11: init %empty_tuple.type = tuple_init () to %.loc16_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.3: init %empty_tuple.type = converted %n.ref, %.loc16_11 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.4: ref %empty_tuple.type = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc16_15.2: init %empty_tuple.type = tuple_init () to %.loc16_16.4 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.5: init %empty_tuple.type = converted %.loc16_15.1, %.loc16_15.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.6: init %tuple.type = tuple_init (%.loc16_16.3, %.loc16_16.5) to %return [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_17: init %tuple.type = converted %.loc16_16.1, %.loc16_16.6 [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc16_17 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

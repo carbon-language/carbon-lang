@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
+#include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
@@ -296,7 +297,6 @@ struct AnyBindingPattern {
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Represents a non-symbolic binding pattern.
@@ -306,13 +306,9 @@ struct BindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Represents a symbolic binding pattern.
-//
-// TODO: Consider dropping this and AnyBindingPattern, using BindingPattern
-// everywhere and relying on the kind of .bind_name_id to differentiate them.
 struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
@@ -324,7 +320,6 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
-  MatchingInstId bind_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -549,6 +544,17 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// A facet type value.
+struct FacetType {
+  static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
+      {.ir_name = "facet_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  FacetTypeId facet_type_id;
+};
+
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetTypeAccess {
@@ -734,18 +740,6 @@ struct InterfaceDecl {
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
   InstBlockId decl_block_id;
-};
-
-// The type for an interface, either non-generic or specific.
-struct InterfaceType {
-  static constexpr auto Kind = InstKind::InterfaceType.Define<Parse::NodeId>(
-      {.ir_name = "interface_type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  InterfaceId interface_id;
-  SpecificId specific_id;
 };
 
 // A witness that a type implements an interface.
@@ -1104,22 +1098,7 @@ struct StructType {
            .constant_kind = InstConstantKind::Conditional});
 
   TypeId type_id;
-  InstBlockId fields_id;
-};
-
-// A field in a struct's type, such as `.a: i32` in `{.a: i32}`.
-//
-// This instruction is an implementation detail of `StructType`, and doesn't
-// produce a value. As a consequence, although there's a type for the field, the
-// instruction has no type.
-struct StructTypeField {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::StructTypeField.Define<Parse::NodeId>(
-      {.ir_name = "struct_type_field",
-       .constant_kind = InstConstantKind::Conditional});
-
-  NameId name_id;
-  TypeId field_type_id;
+  StructTypeFieldsId fields_id;
 };
 
 // A struct value.

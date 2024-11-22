@@ -395,6 +395,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       add_inst_name(
           (sem_ir_.names().GetIRBaseName(name_id).str() + suffix).str());
     };
+    auto add_int_or_float_type_name = [&](char type_literal_prefix,
+                                          SemIR::InstId bit_width_id) {
+      std::string name;
+      llvm::raw_string_ostream out(name);
+      out << type_literal_prefix;
+      if (auto bit_width = sem_ir_.insts().TryGetAs<IntValue>(bit_width_id)) {
+        out << sem_ir_.ints().Get(bit_width->int_id);
+      } else {
+        out << "N";
+      }
+      add_inst_name(std::move(name));
+    };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
       AddBlockLabel(scope_id, sem_ir_.insts().GetLocId(inst_id), *branch);
@@ -451,6 +463,28 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(ClassType inst): {
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
+        continue;
+      }
+      case CARBON_KIND(FacetType inst): {
+        const auto& facet_type_info =
+            sem_ir_.facet_types().Get(inst.facet_type_id);
+        if (auto interface = facet_type_info.TryAsSingleInterface()) {
+          const auto& interface_info =
+              sem_ir_.interfaces().Get(interface->interface_id);
+          add_inst_name_id(interface_info.name_id, ".type");
+        } else if (facet_type_info.impls_constraints.empty()) {
+          if (facet_type_info.requirement_block_id.is_valid()) {
+            add_inst_name("type_where");
+          } else {
+            add_inst_name("type");
+          }
+        } else {
+          add_inst_name("facet_type");
+        }
+        continue;
+      }
+      case CARBON_KIND(FloatType inst): {
+        add_int_or_float_type_name('f', inst.bit_width_id);
         continue;
       }
       case CARBON_KIND(FunctionDecl inst): {
@@ -515,10 +549,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
         continue;
       }
-      case CARBON_KIND(InterfaceType inst): {
-        const auto& interface_info =
-            sem_ir_.interfaces().Get(inst.interface_id);
-        add_inst_name_id(interface_info.name_id, ".type");
+      case CARBON_KIND(IntType inst): {
+        add_int_or_float_type_name(inst.int_kind == IntKind::Signed ? 'i' : 'u',
+                                   inst.bit_width_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {
@@ -569,9 +602,19 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(TupleType inst): {
+        if (inst.elements_id == TypeBlockId::Empty) {
+          add_inst_name("empty_tuple.type");
+        } else {
+          add_inst_name("tuple.type");
+        }
+        continue;
+      }
       case CARBON_KIND(TupleValue inst): {
         if (sem_ir_.types().Is<ArrayType>(inst.type_id)) {
           add_inst_name("array");
+        } else if (inst.elements_id == InstBlockId::Empty) {
+          add_inst_name("empty_tuple");
         } else {
           add_inst_name("tuple");
         }

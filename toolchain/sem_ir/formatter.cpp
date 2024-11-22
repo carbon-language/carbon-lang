@@ -13,6 +13,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -25,8 +26,17 @@ namespace Carbon::SemIR {
 class FormatterImpl {
  public:
   explicit FormatterImpl(const File& sem_ir, InstNamer* inst_namer,
-                         llvm::raw_ostream& out, int indent)
-      : sem_ir_(sem_ir), inst_namer_(inst_namer), out_(out), indent_(indent) {}
+                         Formatter::ShouldFormatEntityFn should_format_entity,
+                         int indent)
+      : sem_ir_(sem_ir),
+        inst_namer_(inst_namer),
+        should_format_entity_(should_format_entity),
+        indent_(indent) {
+    // Create the first chunk and assign it to all instructions that don't have
+    // a chunk of their own.
+    auto first_chunk = AddChunkNoFlush(true);
+    tentative_inst_chunks_.resize(sem_ir.insts().size(), first_chunk);
+  }
 
   // Prints the SemIR.
   //
@@ -36,9 +46,10 @@ class FormatterImpl {
   auto Format() -> void {
     out_ << "--- " << sem_ir_.filename() << "\n\n";
 
-    FormatScope(InstNamer::ScopeId::Constants, sem_ir_.constants().array_ref());
-    FormatScope(InstNamer::ScopeId::ImportRefs,
-                sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs));
+    FormatScopeIfUsed(InstNamer::ScopeId::Constants,
+                      sem_ir_.constants().array_ref());
+    FormatScopeIfUsed(InstNamer::ScopeId::ImportRefs,
+                      sem_ir_.inst_blocks().Get(InstBlockId::ImportRefs));
 
     out_ << inst_namer_->GetScopeName(InstNamer::ScopeId::File) << " ";
     OpenBrace();
@@ -78,36 +89,99 @@ class FormatterImpl {
     out_ << "\n";
   }
 
-  // Prints a code block.
-  auto FormatPartialTrailingCodeBlock(llvm::ArrayRef<SemIR::InstId> block)
-      -> void {
-    out_ << ' ';
-    OpenBrace();
-    constexpr int NumPrintedOnSkip = 9;
-    // Avoid only skipping one item.
-    if (block.size() > NumPrintedOnSkip + 1) {
-      Indent();
-      out_ << "... skipping " << (block.size() - NumPrintedOnSkip)
-           << " insts ...\n";
-      block = block.take_back(NumPrintedOnSkip);
+  // Write buffered output to the given stream.
+  auto Write(llvm::raw_ostream& out) -> void {
+    FlushChunk();
+    for (const auto& chunk : output_chunks_) {
+      if (chunk.include_in_output) {
+        out << chunk.chunk;
+      }
     }
-    FormatCodeBlock(block);
-    CloseBrace();
-  }
-
-  // Prints a single instruction.
-  auto FormatInst(InstId inst_id) -> void {
-    if (!inst_id.is_valid()) {
-      Indent();
-      out_ << "invalid\n";
-      return;
-    }
-
-    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
  private:
   enum class AddSpace : bool { Before, After };
+
+  // A chunk of the buffered output. Chunks of the output, such as constant
+  // values, are buffered until we reach the end of formatting so that we can
+  // decide whether to include them based on whether they are referenced.
+  struct OutputChunk {
+    // Whether this chunk is known to be included in the output.
+    bool include_in_output;
+    // The textual contents of this chunk.
+    std::string chunk = std::string();
+    // Chunks that should be included in the output if this one is.
+    llvm::SmallVector<size_t> dependencies = {};
+  };
+
+  // A scope in which output should be buffered because we don't yet know
+  // whether to include it in the final formatted SemIR.
+  struct TentativeOutputScope {
+    explicit TentativeOutputScope(FormatterImpl& f) : formatter(f) {
+      index = formatter.AddChunk(false);
+    }
+    ~TentativeOutputScope() {
+      auto next_index = formatter.AddChunk(true);
+      CARBON_CHECK(next_index == index + 1, "Nested TentativeOutputScope");
+    }
+    FormatterImpl& formatter;
+    size_t index;
+  };
+
+  // Flushes the buffered output to the current chunk.
+  auto FlushChunk() -> void {
+    CARBON_CHECK(output_chunks_.back().chunk.empty());
+    output_chunks_.back().chunk = std::move(buffer_);
+    buffer_.clear();
+  }
+
+  // Adds a new chunk to the output. Does not flush existing output, so should
+  // only be called if there is no buffered output.
+  auto AddChunkNoFlush(bool include_in_output) -> size_t {
+    CARBON_CHECK(buffer_.empty());
+    output_chunks_.push_back({.include_in_output = include_in_output});
+    return output_chunks_.size() - 1;
+  }
+
+  // Flushes the current chunk and add a new chunk to the output.
+  auto AddChunk(bool include_in_output) -> size_t {
+    FlushChunk();
+    return AddChunkNoFlush(include_in_output);
+  }
+
+  // Marks the given chunk as being included in the output if the current chunk
+  // is.
+  auto IncludeChunkInOutput(size_t chunk) -> void {
+    if (chunk == output_chunks_.size() - 1) {
+      return;
+    }
+
+    if (auto& current_chunk = output_chunks_.back();
+        !current_chunk.include_in_output) {
+      current_chunk.dependencies.push_back(chunk);
+      return;
+    }
+
+    llvm::SmallVector<size_t> to_add = {chunk};
+    while (!to_add.empty()) {
+      auto& chunk = output_chunks_[to_add.pop_back_val()];
+      if (chunk.include_in_output) {
+        continue;
+      }
+      chunk.include_in_output = true;
+      to_add.append(chunk.dependencies);
+      chunk.dependencies.clear();
+    }
+  }
+
+  // Determines whether the specified entity should be included in the formatted
+  // output.
+  auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool {
+    if (!entity.latest_decl_id().is_valid()) {
+      return true;
+    }
+    return should_format_entity_(entity.latest_decl_id());
+  }
 
   // Begins a braced block. Writes an open brace, and prepares to insert a
   // newline after it if the braced block is non-empty.
@@ -152,24 +226,35 @@ class FormatterImpl {
     Indent(-2);
   }
 
-  // Formats a top-level scope, particularly Constants and ImportRefs.
-  auto FormatScope(InstNamer::ScopeId scope_id, llvm::ArrayRef<InstId> block)
-      -> void {
+  // Formats a top-level scope, and any of the instructions in that scope that
+  // are used.
+  auto FormatScopeIfUsed(InstNamer::ScopeId scope_id,
+                         llvm::ArrayRef<InstId> block) -> void {
     if (block.empty()) {
       return;
     }
 
     llvm::SaveAndRestore scope(scope_, scope_id);
-    out_ << inst_namer_->GetScopeName(scope_id) << " ";
-    OpenBrace();
-    FormatCodeBlock(block);
-    CloseBrace();
-    out_ << "\n\n";
+    // Note, we don't use OpenBrace() / CloseBrace() here because we always want
+    // a newline to avoid misformatting if the first instruction is omitted.
+    out_ << inst_namer_->GetScopeName(scope_id) << " {\n";
+    indent_ += 2;
+    for (const InstId inst_id : block) {
+      TentativeOutputScope scope(*this);
+      tentative_inst_chunks_[inst_id.index] = scope.index;
+      FormatInst(inst_id);
+    }
+    out_ << "}\n\n";
+    indent_ -= 2;
   }
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void {
     const Class& class_info = sem_ir_.classes().Get(id);
+    if (!ShouldFormatEntity(class_info)) {
+      return;
+    }
+
     FormatEntityStart("class", class_info.generic_id, id);
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
@@ -191,6 +276,10 @@ class FormatterImpl {
   // Formats a full interface.
   auto FormatInterface(InterfaceId id) -> void {
     const Interface& interface_info = sem_ir_.interfaces().Get(id);
+    if (!ShouldFormatEntity(interface_info)) {
+      return;
+    }
+
     FormatEntityStart("interface", interface_info.generic_id, id);
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
@@ -223,6 +312,10 @@ class FormatterImpl {
   // Formats a full impl.
   auto FormatImpl(ImplId id) -> void {
     const Impl& impl_info = sem_ir_.impls().Get(id);
+    if (!ShouldFormatEntity(impl_info)) {
+      return;
+    }
+
     FormatEntityStart("impl", impl_info.generic_id, id);
 
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
@@ -262,6 +355,10 @@ class FormatterImpl {
   // Formats a full function.
   auto FormatFunction(FunctionId id) -> void {
     const Function& fn = sem_ir_.functions().Get(id);
+    if (!ShouldFormatEntity(fn)) {
+      return;
+    }
+
     std::string function_start;
     switch (fn.virtual_modifier) {
       case FunctionFields::VirtualModifier::Virtual:
@@ -342,14 +439,6 @@ class FormatterImpl {
              sem_ir_.inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
              sem_ir_.inst_blocks().GetOrEmpty(
                  specific.GetValueBlock(region)))) {
-      if (generic_inst_id && specific_inst_id &&
-          sem_ir_.insts().Is<StructTypeField>(*generic_inst_id) &&
-          sem_ir_.insts().Is<StructTypeField>(*specific_inst_id)) {
-        // Skip printing struct type fields to match the way we print the
-        // generic.
-        continue;
-      }
-
       Indent();
       if (generic_inst_id) {
         FormatName(*generic_inst_id);
@@ -369,23 +458,20 @@ class FormatterImpl {
   // Formats a full specific.
   auto FormatSpecific(SpecificId id) -> void {
     const auto& specific = sem_ir_.specifics().Get(id);
+    const auto& generic = sem_ir_.generics().Get(specific.generic_id);
+    if (!should_format_entity_(generic.decl_id)) {
+      // Omit specifics if we also omitted the generic.
+      return;
+    }
+
+    llvm::SaveAndRestore generic_scope(
+        scope_, inst_namer_->GetScopeFor(specific.generic_id));
 
     out_ << "\n";
 
     out_ << "specific ";
     FormatName(id);
-
-    // TODO: Remove once we stop forming generic specifics with no generic
-    // during import.
-    if (!specific.generic_id.is_valid()) {
-      out_ << ";\n";
-      return;
-    }
     out_ << " ";
-
-    const auto& generic = sem_ir_.generics().Get(specific.generic_id);
-    llvm::SaveAndRestore generic_scope(
-        scope_, inst_namer_->GetScopeFor(specific.generic_id));
 
     OpenBrace();
     FormatSpecificRegion(generic, specific,
@@ -481,14 +567,7 @@ class FormatterImpl {
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void {
-    if (block_id.is_valid()) {
-      FormatCodeBlock(sem_ir_.inst_blocks().Get(block_id));
-    }
-  }
-
-  // Prints instructions for a code block.
-  auto FormatCodeBlock(llvm::ArrayRef<InstId> block) -> void {
-    for (const InstId inst_id : block) {
+    for (const InstId inst_id : sem_ir_.inst_blocks().GetOrEmpty(block_id)) {
       FormatInst(inst_id);
     }
   }
@@ -537,9 +616,10 @@ class FormatterImpl {
     }
 
     for (auto extended_scope_id : scope.extended_scopes) {
-      // TODO: Print this scope in a better way.
       Indent();
-      out_ << "extend " << extended_scope_id << "\n";
+      out_ << "extend ";
+      FormatName(extended_scope_id);
+      out_ << "\n";
     }
 
     // This is used to cluster all "Core//prelude/..." imports, but not
@@ -566,6 +646,17 @@ class FormatterImpl {
       Indent();
       out_ << "has_error\n";
     }
+  }
+
+  // Prints a single instruction.
+  auto FormatInst(InstId inst_id) -> void {
+    if (!inst_id.is_valid()) {
+      Indent();
+      out_ << "invalid\n";
+      return;
+    }
+
+    FormatInst(inst_id, sem_ir_.insts().Get(inst_id));
   }
 
   auto FormatInst(InstId inst_id, Inst inst) -> void {
@@ -899,18 +990,14 @@ class FormatterImpl {
     FormatTrailingBlock(inst.requirements_id);
   }
 
-  // StructTypeFields are formatted as part of their StructType.
-  auto FormatInst(InstId /*inst_id*/, StructTypeField /*inst*/) -> void {}
-
   auto FormatInstRHS(StructType inst) -> void {
     out_ << " {";
     llvm::ListSeparator sep;
-    for (auto field_id : sem_ir_.inst_blocks().Get(inst.fields_id)) {
+    for (auto field : sem_ir_.struct_type_fields().Get(inst.fields_id)) {
       out_ << sep << ".";
-      auto field = sem_ir_.insts().GetAs<StructTypeField>(field_id);
       FormatName(field.name_id);
       out_ << ": ";
-      FormatType(field.field_type_id);
+      FormatType(field.type_id);
     }
     out_ << "}";
   }
@@ -921,19 +1008,7 @@ class FormatterImpl {
   auto FormatArgs(Args... args) -> void {
     out_ << ' ';
     llvm::ListSeparator sep;
-    FormatArgsImpl(sep, args...);
-  }
-
-  auto FormatArgsImpl(llvm::ListSeparator& /* sep */) -> void {}
-
-  template <typename Arg, typename... Args>
-  auto FormatArgsImpl(llvm::ListSeparator& sep, Arg arg, Args... args) -> void {
-    // Suppress printing MatchingInstIds, which aren't really operands.
-    if constexpr (!std::is_same_v<Arg, SemIR::MatchingInstId>) {
-      out_ << sep;
-      FormatArg(arg);
-    }
-    FormatArgsImpl(sep, args...);
+    ((out_ << sep, FormatArg(args)), ...);
   }
 
   // FormatArg variants handling printing instruction arguments. Several things
@@ -954,6 +1029,33 @@ class FormatterImpl {
     if (info.bind_index.is_valid()) {
       out_ << ", " << info.bind_index.index;
     }
+  }
+
+  auto FormatArg(FacetTypeId id) -> void {
+    const auto& info = sem_ir_.facet_types().Get(id);
+    // Nothing output to indicate that this is a facet type since this is only
+    // used as the argument to a `facet_type` instruction.
+    out_ << "<";
+
+    llvm::ListSeparator sep(" & ");
+    if (info.impls_constraints.empty()) {
+      out_ << "type";
+    } else {
+      for (auto interface : info.impls_constraints) {
+        out_ << sep;
+        FormatName(interface.interface_id);
+        if (interface.specific_id.is_valid()) {
+          out_ << ", ";
+          FormatName(interface.specific_id);
+        }
+      }
+    }
+
+    if (info.requirement_block_id.is_valid()) {
+      // TODO: Include specifics.
+      out_ << " where TODO";
+    }
+    out_ << ">";
   }
 
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
@@ -1063,6 +1165,9 @@ class FormatterImpl {
   }
 
   auto FormatName(InstId id) -> void {
+    if (id.is_valid()) {
+      IncludeChunkInOutput(tentative_inst_chunks_[id.index]);
+    }
     out_ << inst_namer_->GetNameFor(scope_, id);
   }
 
@@ -1139,9 +1244,16 @@ class FormatterImpl {
 
   const File& sem_ir_;
   InstNamer* const inst_namer_;
+  Formatter::ShouldFormatEntityFn should_format_entity_;
 
-  // The output stream. Set while formatting instructions.
-  llvm::raw_ostream& out_;
+  // The output stream buffer.
+  std::string buffer_;
+
+  // The output stream.
+  llvm::raw_string_ostream out_ = llvm::raw_string_ostream(buffer_);
+
+  // Chunks of output text that we have created so far.
+  llvm::SmallVector<OutputChunk> output_chunks_;
 
   // The current scope that we are formatting within. References to names in
   // this scope will not have a `@scope.` prefix added.
@@ -1168,30 +1280,27 @@ class FormatterImpl {
   // instruction currently being printed. If true, only the phase of the
   // constant is printed, and the value is omitted.
   bool pending_constant_value_is_self_ = false;
+
+  // Indexes of chunks of output that should be included when an instruction is
+  // referenced, indexed by the instruction's index. This is resized in advance
+  // to the correct size.
+  llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
 };
 
 Formatter::Formatter(const Lex::TokenizedBuffer& tokenized_buffer,
-                     const Parse::Tree& parse_tree, const File& sem_ir)
-    : sem_ir_(sem_ir), inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
+                     const Parse::Tree& parse_tree, const File& sem_ir,
+                     ShouldFormatEntityFn should_format_entity)
+    : sem_ir_(sem_ir),
+      should_format_entity_(should_format_entity),
+      inst_namer_(tokenized_buffer, parse_tree, sem_ir) {}
 
 Formatter::~Formatter() = default;
 
 auto Formatter::Print(llvm::raw_ostream& out) -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, /*indent=*/0);
+  FormatterImpl formatter(sem_ir_, &inst_namer_, should_format_entity_,
+                          /*indent=*/0);
   formatter.Format();
-}
-
-auto Formatter::PrintPartialTrailingCodeBlock(
-    llvm::ArrayRef<SemIR::InstId> block, int indent, llvm::raw_ostream& out)
-    -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatPartialTrailingCodeBlock(block);
-}
-
-auto Formatter::PrintInst(SemIR::InstId inst_id, int indent,
-                          llvm::raw_ostream& out) -> void {
-  FormatterImpl formatter(sem_ir_, &inst_namer_, out, indent);
-  formatter.FormatInst(inst_id);
+  formatter.Write(out);
 }
 
 }  // namespace Carbon::SemIR

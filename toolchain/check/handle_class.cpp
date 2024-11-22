@@ -295,7 +295,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
 
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, class_id);
-  context.args_type_info_stack().Push();
+  context.struct_type_fields_stack().PushArray();
 
   // TODO: Handle the case where there's control flow in the class body. For
   // example:
@@ -380,8 +380,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
     return true;
   }
 
-  auto adapted_type_id =
-      ExprAsType(context, node_id, adapted_type_expr_id).type_id;
+  auto [adapted_inst_id, adapted_type_id] =
+      ExprAsType(context, node_id, adapted_type_expr_id);
   adapted_type_id = context.AsCompleteType(
       adapted_type_id,
       [&] {
@@ -405,26 +405,8 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    auto extended_scope_id = SemIR::NameScopeId::Invalid;
-    if (adapted_type_id == SemIR::TypeId::Error) {
-      // Recover by not extending any scope. We instead set has_error to true
-      // below.
-    } else if (auto* adapted_class_info =
-                   TryGetAsClass(context, adapted_type_id)) {
-      extended_scope_id = adapted_class_info->scope_id;
-      CARBON_CHECK(adapted_class_info->scope_id.is_valid(),
-                   "Complete class should have a scope");
-    } else {
-      // TODO: Accept any type that has a scope.
-      context.TODO(node_id, "extending non-class type");
-    }
-
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
-    if (extended_scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(extended_scope_id);
-    } else {
-      class_scope.has_error = true;
-    }
+    class_scope.extended_scopes.push_back(adapted_inst_id);
   }
   return true;
 }
@@ -448,9 +430,11 @@ struct BaseInfo {
 
   SemIR::TypeId type_id;
   SemIR::NameScopeId scope_id;
+  SemIR::InstId inst_id;
 };
 constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
-                                      .scope_id = SemIR::NameScopeId::Invalid};
+                                      .scope_id = SemIR::NameScopeId::Invalid,
+                                      .inst_id = SemIR::InstId::Invalid};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -496,7 +480,9 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
 
   CARBON_CHECK(base_class_info->scope_id.is_valid(),
                "Complete class should have a scope");
-  return {.type_id = base_type_id, .scope_id = base_class_info->scope_id};
+  return {.type_id = base_type_id,
+          .scope_id = base_class_info->scope_id,
+          .inst_id = base_type_inst_id};
 }
 
 auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
@@ -533,11 +519,10 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   auto field_type_id =
       context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
   class_info.base_id = context.AddInst<SemIR::BaseDecl>(
-      node_id,
-      {.type_id = field_type_id,
-       .base_type_id = base_info.type_id,
-       .index = SemIR::ElementIndex(
-           context.args_type_info_stack().PeekCurrentBlockContents().size())});
+      node_id, {.type_id = field_type_id,
+                .base_type_id = base_info.type_id,
+                .index = SemIR::ElementIndex(
+                    context.struct_type_fields_stack().PeekArray().size())});
 
   if (base_info.type_id != SemIR::TypeId::Error) {
     auto base_class_info = context.classes().Get(
@@ -548,10 +533,8 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   // Add a corresponding field to the object representation of the class.
   // TODO: Consider whether we want to use `partial T` here.
   // TODO: Should we diagnose if there are already any fields?
-  context.args_type_info_stack().AddInstId(
-      context.AddInstInNoBlock<SemIR::StructTypeField>(
-          node_id, {.name_id = SemIR::NameId::Base,
-                    .field_type_id = base_info.type_id}));
+  context.struct_type_fields_stack().AppendToTop(
+      {.name_id = SemIR::NameId::Base, .type_id = base_info.type_id});
 
   // Bind the name `base` in the class to the base field.
   context.decl_name_stack().AddNameOrDiagnoseDuplicate(
@@ -563,7 +546,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     if (base_info.scope_id.is_valid()) {
-      class_scope.extended_scopes.push_back(base_info.scope_id);
+      class_scope.extended_scopes.push_back(base_info.inst_id);
     } else {
       class_scope.has_error = true;
     }
@@ -576,7 +559,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
 static auto CheckCompleteAdapterClassType(Context& context,
                                           Parse::NodeId node_id,
                                           SemIR::ClassId class_id,
-                                          SemIR::InstBlockId fields_id)
+                                          SemIR::StructTypeFieldsId fields_id)
     -> SemIR::InstId {
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.is_valid()) {
@@ -586,19 +569,22 @@ static auto CheckCompleteAdapterClassType(Context& context,
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptWithBaseHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
-  if (!context.inst_blocks().Get(fields_id).empty()) {
-    auto first_field_id = context.inst_blocks().Get(fields_id).front();
+  if (auto fields = context.struct_type_fields().Get(fields_id);
+      !fields.empty()) {
+    auto [first_field_inst_id, _] = context.LookupNameInExactScope(
+        node_id, fields.front().name_id, class_info.scope_id,
+        context.name_scopes().Get(class_info.scope_id));
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
     CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
                       "first field declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
-        .Note(first_field_id, AdaptWithFieldHere)
+        .Note(first_field_inst_id, AdaptWithFieldHere)
         .Emit();
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
@@ -615,7 +601,7 @@ static auto CheckCompleteAdapterClassType(Context& context,
             .Build(class_info.adapt_id, AdaptWithVirtual)
             .Note(inst_id, AdaptWithVirtualHere)
             .Emit();
-        return SemIR::InstId::BuiltinError;
+        return SemIR::InstId::BuiltinErrorInst;
       }
     }
   }
@@ -649,7 +635,9 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
                                    SemIR::ClassId class_id) -> SemIR::InstId {
   auto& class_info = context.classes().Get(class_id);
   if (class_info.adapt_id.is_valid()) {
-    auto fields_id = context.args_type_info_stack().Pop();
+    auto fields_id = context.struct_type_fields().AddCanonical(
+        context.struct_type_fields_stack().PeekArray());
+    context.struct_type_fields_stack().PopArray();
 
     return CheckCompleteAdapterClassType(context, node_id, class_id, fields_id);
   }
@@ -666,15 +654,15 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   }
 
   if (defining_vtable_ptr) {
-    context.args_type_info_stack().AddFrontInstId(
-        context.AddInstInNoBlock<SemIR::StructTypeField>(
-            Parse::NodeId::Invalid,
-            {.name_id = SemIR::NameId::Vptr,
-             .field_type_id = context.GetPointerType(
-                 context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))}));
+    context.struct_type_fields_stack().PrependToTop(
+        {.name_id = SemIR::NameId::Vptr,
+         .type_id = context.GetPointerType(
+             context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))});
   }
 
-  auto fields_id = context.args_type_info_stack().Pop();
+  auto fields_id = context.struct_type_fields().AddCanonical(
+      context.struct_type_fields_stack().PeekArray());
+  context.struct_type_fields_stack().PopArray();
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,

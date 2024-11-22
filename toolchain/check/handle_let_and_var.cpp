@@ -147,7 +147,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
     -> std::optional<DeclInfo> {
   std::optional<DeclInfo> decl_info = DeclInfo();
 
-  // TODO: update binding-pattern handling to use the pattern block even in
+  // TODO: Update binding-pattern handling to use the pattern block even in
   // a let/var context, and then consume it here.
   context.pattern_block_stack().PopAndDiscard();
 
@@ -245,8 +245,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto bind_name = pattern.inst.As<SemIR::AnyBindName>();
   CARBON_CHECK(!bind_name.value_id.is_valid(),
                "Binding should not already have a value!");
-  bind_name.value_id =
-      decl_info->init_id ? *decl_info->init_id : SemIR::InstId::BuiltinError;
+  bind_name.value_id = decl_info->init_id ? *decl_info->init_id
+                                          : SemIR::InstId::BuiltinErrorInst;
   context.ReplaceInstBeforeConstantUse(decl_info->pattern_id, bind_name);
   context.inst_block_stack().AddInstId(decl_info->pattern_id);
 

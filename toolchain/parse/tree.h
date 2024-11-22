@@ -199,9 +199,6 @@ class Tree : public Printable<Tree> {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
-    explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
-        : kind(kind), has_error(has_error), token(token) {}
-
     // The kind of this node. Note that this is only a single byte.
     NodeKind kind;
 
@@ -221,7 +218,7 @@ class Tree : public Printable<Tree> {
     // optional (and will depend on the particular parse implementation
     // strategy). The goal is that you can rely on grammar-based structural
     // invariants *until* you encounter a node with this set.
-    bool has_error = false;
+    bool has_error;
 
     // The token root of this node.
     Lex::TokenIndex token;

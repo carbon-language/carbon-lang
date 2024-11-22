@@ -110,7 +110,7 @@ echo "build --repo_env=CC=$(readlink -f $(which clang-16))" >> user.bazelrc
 ### macOS
 
 ```shell
-# Install Hombrew.
+# Install Homebrew.
 /bin/bash -c "$(curl -fsSL \
   https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
@@ -305,7 +305,7 @@ bazel build -c dbg //toolchain
 Then debugging works with LLDB:
 
 ```shell
-lldb bazel-bin/toolchain/install/prefix_root/bin/carbon
+lldb bazel-bin/toolchain/install/prefix_root/lib/carbon/carbon-busybox
 ```
 
 Any installed version of LLDB at least as recent as the installed Clang used for

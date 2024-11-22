@@ -96,7 +96,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
-    case SemIR::BuiltinFunctionKind::IntMakeType32:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
       context.SetLocal(inst_id, context.GetTypeAsValue());
@@ -285,6 +284,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[0]),
                                     context.GetValue(arg_ids[1])));
       return;
+    }
+
+    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+      // TODO: Check this statically.
+      CARBON_CHECK(builtin_kind.IsCompTimeOnly());
+      CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
   }
 

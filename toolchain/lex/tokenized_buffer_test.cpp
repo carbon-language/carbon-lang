@@ -1119,6 +1119,22 @@ TEST_F(LexerTest, DiagnosticInvalidDigit) {
   compile_helper_.GetTokenizedBuffer("0x123abc", &consumer);
 }
 
+TEST_F(LexerTest, DiagnosticCR) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::UnsupportedCRLineEnding,
+                            DiagnosticLevel::Error, 1, 1, _)));
+  compile_helper_.GetTokenizedBuffer("\r", &consumer);
+}
+
+TEST_F(LexerTest, DiagnosticLFCR) {
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+                            DiagnosticKind::UnsupportedLFCRLineEnding,
+                            DiagnosticLevel::Error, 2, 1, _)));
+  compile_helper_.GetTokenizedBuffer("\n\r", &consumer);
+}
+
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(

@@ -34,7 +34,7 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
   auto index_with_inst_id = context.LookupNameInCore(node_id, "IndexWith");
   // If the `IndexWith` interface doesn't have generic arguments then return an
   // empty reference.
-  if (context.insts().Is<SemIR::InterfaceType>(index_with_inst_id)) {
+  if (context.insts().Is<SemIR::FacetType>(index_with_inst_id)) {
     return llvm::ArrayRef<SemIR::InstId>();
   }
 
@@ -59,12 +59,17 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
     if (impl_self_type_id != self_id) {
       continue;
     }
-    auto interface_type =
-        context.types().TryGetAs<SemIR::InterfaceType>(impl_constraint_type_id);
+    auto facet_type =
+        context.types().TryGetAs<SemIR::FacetType>(impl_constraint_type_id);
+    if (!facet_type) {
+      continue;
+    }
+    const auto& facet_type_info =
+        context.facet_types().Get(facet_type->facet_type_id);
+    auto interface_type = facet_type_info.TryAsSingleInterface();
     if (!interface_type) {
       continue;
     }
-
     if (index_with_interface->interface_id != interface_type->interface_id) {
       continue;
     }
@@ -92,7 +97,7 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
     CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
                       "type {0} does not support indexing", SemIR::TypeId);
     context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::InstId::BuiltinErrorInst;
   }
 
   Operator op{
@@ -128,8 +133,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_loc_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+          context, index_loc_id, index_inst_id, context.GetInt32Type());
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {
@@ -156,7 +160,7 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
 
     default: {
-      auto elem_id = SemIR::InstId::BuiltinError;
+      auto elem_id = SemIR::InstId::BuiltinErrorInst;
       if (operand_type_id != SemIR::TypeId::Error) {
         elem_id = PerformIndexWith(context, node_id, operand_inst_id,
                                    operand_type_id, index_inst_id);

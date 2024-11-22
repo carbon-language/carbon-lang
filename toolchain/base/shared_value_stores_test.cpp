@@ -40,7 +40,8 @@ TEST(SharedValueStores, PrintEmpty) {
 TEST(SharedValueStores, PrintVals) {
   SharedValueStores value_stores;
   llvm::APInt apint(64, 8, /*isSigned=*/true);
-  value_stores.ints().Add(apint);
+  value_stores.ints().AddSigned(apint);
+  value_stores.ints().AddSigned(llvm::APInt(64, 999'999'999'999));
   value_stores.reals().Add(
       Real{.mantissa = apint, .exponent = apint, .is_decimal = true});
   value_stores.identifiers().Add("a");
@@ -50,7 +51,7 @@ TEST(SharedValueStores, PrintVals) {
 
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
               MatchSharedValues(
-                  ElementsAre(Pair("int0", Yaml::Scalar("8"))),
+                  ElementsAre(Pair("ap_int0", Yaml::Scalar("999999999999"))),
                   ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
                   ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
                   ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));

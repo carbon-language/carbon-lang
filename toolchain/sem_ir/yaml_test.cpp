@@ -31,8 +31,9 @@ using ::testing::SizeIs;
 namespace Yaml = ::Carbon::Testing::Yaml;
 
 TEST(SemIRTest, YAML) {
-  llvm::vfs::InMemoryFileSystem fs;
-  CARBON_CHECK(fs.addFile(
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
+  CARBON_CHECK(fs->addFile(
       "test.carbon", /*ModificationTime=*/0,
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
   const auto install_paths =
@@ -63,6 +64,7 @@ TEST(SemIRTest, YAML) {
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
       Pair("specifics", Yaml::Mapping(SizeIs(0))),
+      Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
       Pair("type_blocks", Yaml::Mapping(SizeIs(Ge(1)))),
       Pair("insts",

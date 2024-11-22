@@ -13,6 +13,7 @@
 #include "common/ostream.h"
 #include "common/struct_reflection.h"
 #include "toolchain/base/index_base.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/block_value_store.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
@@ -165,8 +166,8 @@ class Inst : public Printable<Inst> {
     requires Internal::InstLikeType<TypedInst>
   auto As() const -> TypedInst {
     using Info = Internal::InstLikeTypeInfo<TypedInst>;
-    CARBON_CHECK(Is<TypedInst>(), "Casting inst of kind {0} to wrong kind {1}",
-                 kind(), Info::DebugName());
+    CARBON_CHECK(Is<TypedInst>(), "Casting inst {0} to wrong kind {1}", *this,
+                 Info::DebugName());
     auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
       if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
         return TypedInst{kind(), type_id_onwards...};
@@ -265,6 +266,7 @@ class Inst : public Printable<Inst> {
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
   static constexpr auto ToRaw(BuiltinInstKind kind) -> int32_t {
     return kind.AsInt();
   }
@@ -273,6 +275,10 @@ class Inst : public Printable<Inst> {
   template <typename T>
   static constexpr auto FromRaw(int32_t raw) -> T {
     return T(raw);
+  }
+  template <>
+  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
+    return IntId::MakeRaw(raw);
   }
   template <>
   constexpr auto FromRaw<BuiltinInstKind>(int32_t raw) -> BuiltinInstKind {
@@ -423,7 +429,7 @@ class InstStore {
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
@@ -445,20 +451,12 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
-    auto empty_id = AddCanonical({});
-    CARBON_CHECK(empty_id == InstBlockId::Empty);
     auto exports_id = AddDefaultValue();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto import_refs_id = AddDefaultValue();
     CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
     auto global_init_id = AddDefaultValue();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
-  }
-
-  // Adds a block with the given content, returning an ID to reference it.
-  // Returns Empty rather than creating a unique ID if the block is empty.
-  auto AddOrEmpty(llvm::ArrayRef<ElementType> content) -> InstBlockId {
-    return content.empty() ? InstBlockId::Empty : Add(content);
   }
 
   auto Set(InstBlockId block_id, llvm::ArrayRef<InstId> content) -> void {

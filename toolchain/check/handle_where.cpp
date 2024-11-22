@@ -16,7 +16,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (!context.IsFacetType(self_type_id)) {
+  if (self_type_id != SemIR::TypeId::Error &&
+      !context.IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
@@ -78,7 +79,8 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualEqualId node_id)
     -> bool {
   auto rhs = context.node_stack().PopExpr();
   auto lhs = context.node_stack().PopExpr();
-  // TODO: type check lhs and rhs are comparable
+  // TODO: Type check lhs and rhs are comparable.
+  // TODO: Require that at least one side uses a designator.
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
@@ -101,8 +103,9 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
-    rhs_as_type.inst_id = SemIR::InstId::BuiltinError;
+    rhs_as_type.inst_id = SemIR::InstId::BuiltinErrorInst;
   }
+  // TODO: Require that at least one side uses a designator.
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(

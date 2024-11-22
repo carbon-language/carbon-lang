@@ -9,7 +9,18 @@
 
 namespace Carbon {
 
-constexpr CommandLine::CommandInfo ClangOptions::Info = {
+auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
+  b.AddStringPositionalArg(
+      {
+          .name = "ARG",
+          .help = R"""(
+Arguments passed to Clang.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Append(&args); });
+}
+
+static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "clang",
     .help = R"""(
 Runs Clang on arguments.
@@ -27,23 +38,15 @@ results in an indirect Clang invocation.
 )""",
 };
 
-auto ClangOptions::Build(CommandLine::CommandBuilder& b) -> void {
-  b.AddStringPositionalArg(
-      {
-          .name = "ARG",
-          .help = R"""(
-Arguments passed to Clang.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Append(&args); });
-}
+ClangSubcommand::ClangSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
 // TODO: This lacks a lot of features from the main driver code. We may need to
 // add more.
 // https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
 auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner(driver_env.installation, target, driver_env.vlog_stream);
+  ClangRunner runner(driver_env.installation, target, driver_env.fs,
+                     driver_env.vlog_stream);
 
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.

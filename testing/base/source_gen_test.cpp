@@ -143,15 +143,16 @@ TEST(SourceGenTest, UniqueIdentifiers) {
 
 // Check that the source code doesn't have compiler errors.
 auto TestCompile(llvm::StringRef source) -> bool {
-  llvm::vfs::InMemoryFileSystem fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
   Driver driver(fs, &installation, llvm::outs(), llvm::errs());
 
-  AddPreludeFilesToVfs(installation, &fs);
+  AddPreludeFilesToVfs(installation, fs);
 
-  fs.addFile("test.carbon", /*ModificationTime=*/0,
-             llvm::MemoryBuffer::getMemBuffer(source));
+  fs->addFile("test.carbon", /*ModificationTime=*/0,
+              llvm::MemoryBuffer::getMemBuffer(source));
   return driver.RunCommand({"compile", "--phase=check", "test.carbon"}).success;
 }
 

@@ -55,15 +55,14 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [template]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 2 [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 0.5 [template]
-// CHECK:STDOUT:   %.5: f64 = float_literal 1.5 [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal 0.5 [template]
+// CHECK:STDOUT:   %.4: f64 = float_literal 1.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,7 +71,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -145,8 +143,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sub(%a.param_patt: f64, %b.param_patt: f64) -> f64 = "float.sub";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: f64, %b.param_patt: f64) -> f64 {
@@ -163,9 +159,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 0.5 [template = constants.%.4]
-// CHECK:STDOUT:   %float.sub: init f64 = call %Sub.ref(%.loc8_18, %.loc8_23) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 0.5 [template = constants.%.3]
+// CHECK:STDOUT:   %float.sub: init f64 = call %Sub.ref(%.loc8_18, %.loc8_23) [template = constants.%.4]
 // CHECK:STDOUT:   assign file.%x.var, %float.sub
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -175,7 +171,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %TooFew.type: type = fn_type @TooFew [template]
 // CHECK:STDOUT:   %TooFew: %TooFew.type = struct_value () [template]
@@ -202,8 +197,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -407,13 +400,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew(%a.param_patt: f64) -> f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany(%a.param_patt: f64, %b.param_patt: f64, %c.param_patt: f64) -> f64;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a.param_patt: f64, %b.param_patt: f64) -> bool;
 // CHECK:STDOUT:

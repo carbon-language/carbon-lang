@@ -53,8 +53,8 @@ class DriverTest : public testing::Test {
   auto MakeTestFile(llvm::StringRef text,
                     llvm::StringRef filename = "test_file.carbon")
       -> llvm::StringRef {
-    fs_.addFile(filename, /*ModificationTime=*/0,
-                llvm::MemoryBuffer::getMemBuffer(text));
+    fs_->addFile(filename, /*ModificationTime=*/0,
+                 llvm::MemoryBuffer::getMemBuffer(text));
     return filename;
   }
 
@@ -91,7 +91,8 @@ class DriverTest : public testing::Test {
     });
   }
 
-  llvm::vfs::InMemoryFileSystem fs_;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs_ =
+      new llvm::vfs::InMemoryFileSystem;
   const InstallPaths installation_;
   TestRawOstream test_output_stream_;
   TestRawOstream test_error_stream_;

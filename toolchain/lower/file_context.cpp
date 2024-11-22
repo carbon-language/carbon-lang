@@ -100,9 +100,9 @@ auto FileContext::BuildDICompileUnit(llvm::StringRef module_name,
   llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
   llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
                             llvm::DEBUG_METADATA_VERSION);
-  // FIXME: Include directory path in the compile_unit_file.
+  // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // FIXME: Introduce a new language code for Carbon. C works well for now since
+  // TODO: Introduce a new language code for Carbon. C works well for now since
   // it's something debuggers will already know/have support for at least.
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
@@ -228,7 +228,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   param_inst_ids.reserve(max_llvm_params);
   auto return_param_id = SemIR::InstId::Invalid;
   if (return_info.has_return_slot()) {
-    param_types.push_back(return_type->getPointerTo());
+    param_types.push_back(
+        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
     return_param_id = sem_ir()
                           .insts()
                           .GetAs<SemIR::ReturnSlot>(function.return_slot_id)
@@ -329,7 +330,7 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
       sem_ir().inst_blocks().GetOrEmpty(function.call_params_id);
   int param_index = 0;
 
-  // TODO: find a way to ensure this code and the function-call lowering use
+  // TODO: Find a way to ensure this code and the function-call lowering use
   // the same parameter ordering.
 
   // Lowers the given parameter. Must be called in LLVM calling convention
@@ -428,7 +429,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   CARBON_CHECK(name, "Unexpected special name for function: {0}",
                function.name_id);
   auto loc = GetLocForDI(function.definition_id);
-  // FIXME: Add more details here, including real subroutine type (once type
+  // TODO: Add more details here, including real subroutine type (once type
   // information is built), etc.
   return di_builder_.createFunction(
       di_compile_unit_, *name, llvm_function->getName(),
@@ -453,15 +454,13 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
     case SemIR::BuiltinInstKind::Invalid:
     case SemIR::BuiltinInstKind::AutoType:
       CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
-    case SemIR::BuiltinInstKind::Error:
+    case SemIR::BuiltinInstKind::ErrorInst:
       // This is a complete type but uses of it should never be lowered.
       return nullptr;
     case SemIR::BuiltinInstKind::TypeType:
       return context.GetTypeType();
-    case SemIR::BuiltinInstKind::FloatType:
+    case SemIR::BuiltinInstKind::LegacyFloatType:
       return llvm::Type::getDoubleTy(context.llvm_context());
-    case SemIR::BuiltinInstKind::IntType:
-      return llvm::Type::getInt32Ty(context.llvm_context());
     case SemIR::BuiltinInstKind::BoolType:
       // TODO: We may want to have different representations for `bool`
       // storage
@@ -529,13 +528,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
 
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
     -> llvm::Type* {
-  auto fields = context.sem_ir().inst_blocks().Get(inst.fields_id);
+  auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
-  for (auto field_id : fields) {
-    auto field =
-        context.sem_ir().insts().GetAs<SemIR::StructTypeField>(field_id);
-    subtypes.push_back(context.GetType(field.field_type_id));
+  for (auto field : fields) {
+    subtypes.push_back(context.GetType(field.type_id));
   }
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
@@ -557,9 +554,9 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
 
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::FunctionType,
+           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
            SemIR::GenericClassType, SemIR::GenericInterfaceType,
-           SemIR::InterfaceType, SemIR::UnboundElementType, SemIR::WhereExpr>())
+           SemIR::UnboundElementType, SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

@@ -298,8 +298,7 @@ static auto BuildFunctionDecl(Context& context,
         !function_info.param_patterns_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
-         return_type_id !=
-             context.GetBuiltinType(SemIR::BuiltinInstKind::IntType) &&
+         return_type_id != context.GetInt32Type() &&
          return_type_id != context.GetTupleType({}))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "invalid signature for `Main.Run` function; expected "
@@ -348,7 +347,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   }
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::InstId::BuiltinError) {
+    if (param_ref_id == SemIR::InstId::BuiltinErrorInst) {
       continue;
     }
 
@@ -502,6 +501,9 @@ auto HandleParseNode(Context& context,
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
+      // Build an empty generic definition if this is a generic builtin.
+      StartGenericDefinition(context);
+      FinishGenericDefinition(context, function.generic_id);
     } else {
       CARBON_DIAGNOSTIC(InvalidBuiltinSignature, Error,
                         "invalid signature for builtin function \"{0}\"",

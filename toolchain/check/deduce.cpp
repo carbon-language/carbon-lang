@@ -50,6 +50,9 @@ class DeductionWorklist {
   // Adds a single (param, arg) deduction of a specific.
   auto Add(SemIR::SpecificId param, SemIR::SpecificId arg,
            bool needs_substitution) -> void {
+    if (!param.is_valid() || !arg.is_valid()) {
+      return;
+    }
     auto& param_specific = context_.specifics().Get(param);
     auto& arg_specific = context_.specifics().Get(arg);
     if (param_specific.generic_id != arg_specific.generic_id) {
@@ -80,6 +83,28 @@ class DeductionWorklist {
     AddAll(context_.inst_blocks().Get(params), args, needs_substitution);
   }
 
+  auto AddAll(SemIR::StructTypeFieldsId params, SemIR::StructTypeFieldsId args,
+              bool needs_substitution) -> void {
+    const auto& param_fields = context_.struct_type_fields().Get(params);
+    const auto& arg_fields = context_.struct_type_fields().Get(args);
+    if (param_fields.size() != arg_fields.size()) {
+      // TODO: Decide whether to error on this or just treat the parameter list
+      // as non-deduced. For now we treat it as non-deduced.
+      return;
+    }
+    // Don't do deduction unless the names match in order.
+    // TODO: Support reordering of names.
+    for (auto [param, arg] : llvm::zip_equal(param_fields, arg_fields)) {
+      if (param.name_id != arg.name_id) {
+        return;
+      }
+    }
+    for (auto [param, arg] :
+         llvm::reverse(llvm::zip_equal(param_fields, arg_fields))) {
+      Add(param.type_id, arg.type_id, needs_substitution);
+    }
+  }
+
   auto AddAll(SemIR::InstBlockId params, SemIR::InstBlockId args,
               bool needs_substitution) -> void {
     AddAll(context_.inst_blocks().Get(params), context_.inst_blocks().Get(args),
@@ -92,13 +117,28 @@ class DeductionWorklist {
            needs_substitution);
   }
 
+  auto AddAll(SemIR::FacetTypeId params, SemIR::FacetTypeId args,
+              bool needs_substitution) -> void {
+    const auto& param_impls =
+        context_.facet_types().Get(params).impls_constraints;
+    const auto& arg_impls = context_.facet_types().Get(args).impls_constraints;
+    if (param_impls.size() != arg_impls.size()) {
+      // TODO: Decide whether to error on this or just treat the parameter list
+      // as non-deduced. For now we treat it as non-deduced.
+      return;
+    }
+    for (auto [param, arg] :
+         llvm::reverse(llvm::zip_equal(param_impls, arg_impls))) {
+      Add(param.specific_id, arg.specific_id, needs_substitution);
+    }
+  }
+
   // Adds a (param, arg) pair for an instruction argument, given its kind.
   auto AddInstArg(SemIR::IdKind kind, int32_t param, int32_t arg,
                   bool needs_substitution) -> void {
     switch (kind) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
-      case SemIR::IdKind::For<SemIR::InterfaceId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
       case SemIR::IdKind::For<SemIR::InstId>:
@@ -106,6 +146,10 @@ class DeductionWorklist {
         break;
       case SemIR::IdKind::For<SemIR::TypeId>:
         Add(SemIR::TypeId(param), SemIR::TypeId(arg), needs_substitution);
+        break;
+      case SemIR::IdKind::For<SemIR::StructTypeFieldsId>:
+        AddAll(SemIR::StructTypeFieldsId(param), SemIR::StructTypeFieldsId(arg),
+               needs_substitution);
         break;
       case SemIR::IdKind::For<SemIR::InstBlockId>:
         AddAll(SemIR::InstBlockId(param), SemIR::InstBlockId(arg),
@@ -118,6 +162,10 @@ class DeductionWorklist {
       case SemIR::IdKind::For<SemIR::SpecificId>:
         Add(SemIR::SpecificId(param), SemIR::SpecificId(arg),
             needs_substitution);
+        break;
+      case SemIR::IdKind::For<SemIR::FacetTypeId>:
+        AddAll(SemIR::FacetTypeId(param), SemIR::FacetTypeId(arg),
+               needs_substitution);
         break;
       default:
         CARBON_FATAL("unexpected argument kind");
@@ -274,7 +322,7 @@ auto DeductionContext::Deduce() -> bool {
       DiagnosticAnnotationScope annotate_diagnostics(&context().emitter(),
                                                      note_initializing_param);
       arg_id = ConvertToValueOfType(context(), loc_id_, arg_id, param_type_id);
-      if (arg_id == SemIR::InstId::BuiltinError) {
+      if (arg_id == SemIR::InstId::BuiltinErrorInst) {
         return false;
       }
     }
@@ -374,10 +422,11 @@ auto DeductionContext::Deduce() -> bool {
       case SemIR::ArrayType::Kind:
       case SemIR::ClassType::Kind:
       case SemIR::ConstType::Kind:
+      case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
-      case SemIR::InterfaceType::Kind:
       case SemIR::IntType::Kind:
       case SemIR::PointerType::Kind:
+      case SemIR::StructType::Kind:
       case SemIR::TupleType::Kind:
       case SemIR::TupleValue::Kind: {
         auto arg_inst = context().insts().Get(arg_id);
@@ -392,7 +441,6 @@ auto DeductionContext::Deduce() -> bool {
         continue;
       }
 
-      case SemIR::StructType::Kind:
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;

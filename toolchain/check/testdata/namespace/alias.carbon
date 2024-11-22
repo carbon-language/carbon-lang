@@ -23,12 +23,20 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
+// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
+// CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.23: <bound method> = bound_method %.2, %Convert.14 [template]
+// CHECK:STDOUT:   %.24: <specific function> = specific_function %.23, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.25: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
@@ -37,11 +45,11 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,64 +68,71 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %ns: <namespace> = bind_alias ns, %NS [template = %NS]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc15_14.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc15_14.2: type = converted %int.make_type_32, %.loc15_14.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:     %.loc15_14.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc15_14.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_14.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_14.3: type = converted %int.make_type_signed, %.loc15_14.2 [template = constants.%i32]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc17_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc17_11.2: type = converted %int.make_type_32, %.loc17_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:     %.loc17_11.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc17_11.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc17_11.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc17_11.3: type = converted %int.make_type_signed, %.loc17_11.2 [template = constants.%i32]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NS.ref.loc19: <namespace> = name_ref NS, %NS [template = %NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %C: %A.type = bind_alias C, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {
-// CHECK:STDOUT:     %return.patt: i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: i32 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc21_11.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc21_11.2: type = converted %int.make_type_32, %.loc21_11.1 [template = i32]
-// CHECK:STDOUT:     %return.param: ref i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref i32 = return_slot %return.param
+// CHECK:STDOUT:     %.loc21_11.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc21_11.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_11.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_11.3: type = converted %int.make_type_signed, %.loc21_11.2 [template = constants.%i32]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> i32 {
+// CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_27: i32 = int_value 0 [template = constants.%.2]
-// CHECK:STDOUT:   return %.loc15_27
+// CHECK:STDOUT:   %.loc15_27: Core.IntLiteral = int_value 0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_28.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_28.2: <bound method> = bound_method %.loc15_27, %.loc15_28.1 [template = constants.%.23]
+// CHECK:STDOUT:   %.loc15_28.3: <specific function> = specific_function %.loc15_28.2, @Convert.2(constants.%.1) [template = constants.%.24]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc15_28.3(%.loc15_27) [template = constants.%.25]
+// CHECK:STDOUT:   %.loc15_28.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.25]
+// CHECK:STDOUT:   %.loc15_28.5: %i32 = converted %.loc15_27, %.loc15_28.4 [template = constants.%.25]
+// CHECK:STDOUT:   return %.loc15_28.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> i32 {
+// CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns [template = file.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc17_30.1: i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc17_30.2: i32 = converted %A.call, %.loc17_30.1
+// CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
+// CHECK:STDOUT:   %.loc17_30.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc17_30.2: %i32 = converted %A.call, %.loc17_30.1
 // CHECK:STDOUT:   return %.loc17_30.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D() -> i32 {
+// CHECK:STDOUT: fn @D() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: %A.type = name_ref C, file.%C [template = constants.%A]
-// CHECK:STDOUT:   %A.call: init i32 = call %C.ref()
-// CHECK:STDOUT:   %.loc21_27.1: i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc21_27.2: i32 = converted %A.call, %.loc21_27.1
+// CHECK:STDOUT:   %A.call: init %i32 = call %C.ref()
+// CHECK:STDOUT:   %.loc21_27.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc21_27.2: %i32 = converted %A.call, %.loc21_27.1
 // CHECK:STDOUT:   return %.loc21_27.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

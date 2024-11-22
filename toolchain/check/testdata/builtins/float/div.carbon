@@ -57,19 +57,18 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %Div.type: type = fn_type @Div [template]
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 10 [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 2.5 [template]
-// CHECK:STDOUT:   %.5: f64 = float_literal 4 [template]
-// CHECK:STDOUT:   %.6: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.7: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %.8: f64 = float_literal +Inf [template]
-// CHECK:STDOUT:   %.9: f64 = float_literal NaN [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 10 [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal 2.5 [template]
+// CHECK:STDOUT:   %.4: f64 = float_literal 4 [template]
+// CHECK:STDOUT:   %.5: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %.6: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.7: f64 = float_literal +Inf [template]
+// CHECK:STDOUT:   %.8: f64 = float_literal NaN [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -78,7 +77,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -161,8 +159,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc10_8.3: type = converted %float.make_type.loc10, %.loc10_8.2 [template = f64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Div(%a.param_patt: f64, %b.param_patt: f64) -> f64 = "float.div";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: f64, %b.param_patt: f64) -> f64 {
@@ -179,23 +175,23 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref.loc8: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 10 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc8_24: f64 = float_literal 2.5 [template = constants.%.4]
-// CHECK:STDOUT:   %float.div.loc8: init f64 = call %Div.ref.loc8(%.loc8_18, %.loc8_24) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 10 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_24: f64 = float_literal 2.5 [template = constants.%.3]
+// CHECK:STDOUT:   %float.div.loc8: init f64 = call %Div.ref.loc8(%.loc8_18, %.loc8_24) [template = constants.%.4]
 // CHECK:STDOUT:   assign file.%a.var, %float.div.loc8
 // CHECK:STDOUT:   %Div.ref.loc9: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc9_18: f64 = float_literal 1 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc9_23: f64 = float_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %float.div.loc9: init f64 = call %Div.ref.loc9(%.loc9_18, %.loc9_23) [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_27.1: f64 = value_of_initializer %float.div.loc9 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc9_18: f64 = float_literal 1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc9_23: f64 = float_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %float.div.loc9: init f64 = call %Div.ref.loc9(%.loc9_18, %.loc9_23) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_27.1: f64 = value_of_initializer %float.div.loc9 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%.7]
 // CHECK:STDOUT:   %b: f64 = bind_name b, %.loc9_27.2
 // CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %.loc10_18: f64 = float_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc10_23: f64 = float_literal 0 [template = constants.%.7]
-// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%.loc10_18, %.loc10_23) [template = constants.%.9]
-// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%.9]
-// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc10_18: f64 = float_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc10_23: f64 = float_literal 0 [template = constants.%.6]
+// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%.loc10_18, %.loc10_23) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%.8]
 // CHECK:STDOUT:   %c: f64 = bind_name c, %.loc10_27.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -205,7 +201,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %.2: type = tuple_type () [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %TooFew.type: type = fn_type @TooFew [template]
 // CHECK:STDOUT:   %TooFew: %TooFew.type = struct_value () [template]
@@ -232,8 +227,6 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Core//prelude/types, inst+60, loaded [template = constants.%Float]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -437,13 +430,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew(%a.param_patt: f64) -> f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany(%a.param_patt: f64, %b.param_patt: f64, %c.param_patt: f64) -> f64;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a.param_patt: f64, %b.param_patt: f64) -> bool;
 // CHECK:STDOUT:

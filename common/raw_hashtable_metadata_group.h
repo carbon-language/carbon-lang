@@ -477,7 +477,7 @@ class MetadataGroup : public Printable<MetadataGroup> {
       -> bool;
 
   // SIMD implementations of each operation. We minimize platform-specific APIs
-  // to reduce the scope of errors that can only be discoverd building on one
+  // to reduce the scope of errors that can only be discovered building on one
   // platform, so the bodies of these contain the platform specific code. Their
   // behavior and semantics exactly match the documentation for the un-prefixed
   // functions.

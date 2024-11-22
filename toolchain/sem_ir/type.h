@@ -101,7 +101,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Determines whether the given type is a signed integer type.
   auto IsSignedInt(TypeId int_type_id) const -> bool {
     auto inst_id = GetInstId(int_type_id);
-    if (inst_id == InstId::BuiltinIntType) {
+    if (inst_id == InstId::BuiltinIntLiteralType) {
       return true;
     }
     auto int_type = insts_->TryGetAs<IntType>(inst_id);
@@ -126,10 +126,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_type_info_"),
-                  complete_type_info_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "complete_types_"),
-                  complete_types_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_type_info_"),
+                      complete_type_info_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "complete_types_"),
+                      complete_types_);
   }
 
  private:

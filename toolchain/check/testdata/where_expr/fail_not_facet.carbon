@@ -22,11 +22,7 @@ fn F(T:! i32 where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+8]]:10: error: name `NOT_DECLARED` not found [NameNotFound]
-// CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
-// CHECK:STDERR:          ^~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:10: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fail_left_where_unknown.carbon:[[@LINE+4]]:10: error: name `NOT_DECLARED` not found [NameNotFound]
 // CHECK:STDERR: fn G(U:! NOT_DECLARED where .Self == bool);
 // CHECK:STDERR:          ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -36,11 +32,7 @@ fn G(U:! NOT_DECLARED where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var.carbon:[[@LINE+7]]:8: error: name `e` not found [NameNotFound]
-// CHECK:STDERR: var v: e where .x = 3;
-// CHECK:STDERR:        ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: name `e` not found [NameNotFound]
 // CHECK:STDERR: var v: e where .x = 3;
 // CHECK:STDERR:        ^
 var v: e where .x = 3;
@@ -48,9 +40,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT: --- fail_left_where_not_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Int32.type: type = fn_type @Int32 [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int32: %Int32.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -62,13 +55,11 @@ var v: e where .x = 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int32 = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .Bool = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %Int32.type = import_ref Core//prelude/types, inst+15, loaded [template = constants.%Int32]
-// CHECK:STDOUT:   %import_ref.2: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,9 +72,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %T.patt.loc8_6.1: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<invalid> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.make_type_32: init type = call constants.%Int32() [template = i32]
-// CHECK:STDOUT:     %.loc8_10.1: type = value_of_initializer %int.make_type_32 [template = i32]
-// CHECK:STDOUT:     %.loc8_10.2: type = converted %int.make_type_32, %.loc8_10.1 [template = i32]
+// CHECK:STDOUT:     %.loc8_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_10.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %int.make_type_signed, %.loc8_10.2 [template = constants.%i32]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
@@ -94,10 +86,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %T.loc8_6.1: <error> = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_6.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int32() -> type = "int.make_type_32";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc8_6.1: <error>) {
 // CHECK:STDOUT:   %T.loc8_6.2: <error> = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.2 (constants.%T)]
@@ -116,7 +104,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %U: <error> = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: <error> = symbolic_binding_pattern U, 0 [symbolic]
@@ -130,7 +117,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Core//prelude/types/bool, inst+5, loaded [template = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -140,40 +126,38 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc12_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc12_6.1, runtime_param<invalid> [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc8_6.1: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<invalid> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc12_6.1: <error> = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc12_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc8_6.1: <error> = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc8_6.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc12_6.1: <error>) {
-// CHECK:STDOUT:   %U.loc12_6.2: <error> = bind_symbolic_name U, 0 [symbolic = %U.loc12_6.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc12_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc12_6.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @G(%U.loc8_6.1: <error>) {
+// CHECK:STDOUT:   %U.loc8_6.2: <error> = bind_symbolic_name U, 0 [symbolic = %U.loc8_6.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc8_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.loc12_6.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc12_6.2 => constants.%U
+// CHECK:STDOUT:   %U.loc8_6.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc8_6.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: i32 = int_value 3 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -192,9 +176,10 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   %e.ref: <error> = name_ref e, <error> [template = <error>]
 // CHECK:STDOUT:   %.Self: <error> = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:   %.loc11_21: i32 = int_value 3 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc11_10: type = where_expr %.Self [template = <error>] {
-// CHECK:STDOUT:     requirement_rewrite <error>, <error>
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc7_21: Core.IntLiteral = int_value 3 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc7_10: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     requirement_rewrite %x.ref, <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var

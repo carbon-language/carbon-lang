@@ -10,12 +10,14 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -25,6 +27,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 
@@ -33,6 +36,12 @@ namespace Carbon::SemIR {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
+  // Used to return information about an integer type in `GetIntTypeInfo`.
+  struct IntTypeInfo {
+    bool is_signed;
+    IntId bit_width;
+  };
+
   // Starts a new file for Check::CheckParseTree.
   explicit File(CheckIRId check_ir_id, IdentifierId package_id,
                 LibraryNameId library_id, SharedValueStores& value_stores,
@@ -67,6 +76,24 @@ class File : public Printable<File> {
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
+  }
+
+  // Returns integer type information from a type ID. Abstracts away the
+  // difference between an `IntType` instruction defined type and a builtin
+  // instruction defined type. Uses IntId::Invalid for types that have an
+  // invalid width.
+  //
+  // TODO: Move this to TypeStore.
+  auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
+    auto inst_id = types().GetInstId(int_type_id);
+    if (inst_id == InstId::BuiltinIntLiteralType) {
+      return {.is_signed = true, .bit_width = IntId::Invalid};
+    }
+    auto int_type = insts().GetAs<IntType>(inst_id);
+    auto bit_width_inst = insts().TryGetAs<IntValue>(int_type.bit_width_id);
+    return {
+        .is_signed = int_type.int_kind.is_signed(),
+        .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
@@ -114,6 +141,12 @@ class File : public Printable<File> {
   auto interfaces() const -> const ValueStore<InterfaceId>& {
     return interfaces_;
   }
+  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
+  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
+    return facet_types_;
+  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto generics() -> GenericStore& { return generics_; }
@@ -135,6 +168,12 @@ class File : public Printable<File> {
   }
   auto name_scopes() -> NameScopeStore& { return name_scopes_; }
   auto name_scopes() const -> const NameScopeStore& { return name_scopes_; }
+  auto struct_type_fields() -> StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
+  auto struct_type_fields() const -> const StructTypeFieldsStore& {
+    return struct_type_fields_;
+  }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
   auto type_blocks() -> BlockValueStore<TypeBlockId>& { return type_blocks_; }
@@ -202,6 +241,9 @@ class File : public Printable<File> {
   // Storage for interfaces.
   ValueStore<InterfaceId> interfaces_;
 
+  // Storage for facet types.
+  CanonicalValueStore<FacetTypeId> facet_types_;
+
   // Storage for impls.
   ImplStore impls_;
 
@@ -245,6 +287,9 @@ class File : public Printable<File> {
   // Storage for instructions that represent computed global constants, such as
   // types.
   ConstantStore constants_;
+
+  // Storage for StructTypeField lists.
+  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(&insts_, &constant_values_);

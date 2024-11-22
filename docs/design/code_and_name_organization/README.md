@@ -33,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Imports from the current package](#imports-from-the-current-package)
         -   [Exporting imported names](#exporting-imported-names)
     -   [Namespaces](#namespaces)
-        -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
+        -   [Redeclaring imported namespaces](#redeclaring-imported-namespaces)
         -   [Declaring namespace members](#declaring-namespace-members)
         -   [Aliasing](#aliasing)
 -   [Caveats](#caveats)
@@ -684,7 +684,7 @@ the file's namespace. In the above example, after declaring
 `namespace Timezones.Internal;`, `Timezones` is available as an identifier and
 `Internal` is reached through `Timezones`.
 
-#### Re-declaring imported namespaces
+#### Redeclaring imported namespaces
 
 Namespaces may exist in imported package entities, in addition to being declared
 in the current file. However, even if the namespace already exists in an

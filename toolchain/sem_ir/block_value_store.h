@@ -30,10 +30,18 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   using ElementType = IdT::ElementType;
 
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator) {}
+      : allocator_(&allocator) {
+    auto empty = llvm::MutableArrayRef<ElementType>();
+    auto empty_val = canonical_blocks_.Insert(
+        empty, [&] { return values_.Add(empty); }, KeyContext(this));
+    CARBON_CHECK(empty_val.key() == IdT::Empty);
+  }
 
   // Adds a block with the given content, returning an ID to reference it.
   auto Add(llvm::ArrayRef<ElementType> content) -> IdT {
+    if (content.empty()) {
+      return IdT::Empty;
+    }
     return values_.Add(AllocateCopy(content));
   }
 
@@ -50,6 +58,9 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   // Adds a block or finds an existing canonical block with the given content,
   // and returns an ID to reference it.
   auto AddCanonical(llvm::ArrayRef<ElementType> content) -> IdT {
+    if (content.empty()) {
+      return IdT::Empty;
+    }
     auto result = canonical_blocks_.Insert(
         content, [&] { return Add(content); }, KeyContext(this));
     return result.key();
@@ -85,8 +96,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    mem_usage.Add(MemUsage::ConcatLabel(label, "canonical_blocks_"),
-                  canonical_blocks_, KeyContext(this));
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "canonical_blocks_"),
+                      canonical_blocks_, KeyContext(this));
   }
 
   auto size() const -> int { return values_.size(); }
@@ -112,7 +123,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   class KeyContext;
 
   // Allocates an uninitialized array using our slab allocator.
-  auto AllocateUninitialized(std::size_t size)
+  auto AllocateUninitialized(size_t size)
       -> llvm::MutableArrayRef<ElementType> {
     // We're not going to run a destructor, so ensure that's OK.
     static_assert(std::is_trivially_destructible_v<ElementType>);

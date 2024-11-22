@@ -90,10 +90,6 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//b, inst+6, loaded
-// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = file.%C
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -114,7 +110,6 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,14 +117,6 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//c, inst+4, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//c, inst+6, loaded
-// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .C = %C
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//c, inst+8, loaded
-// CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
-// CHECK:STDOUT:     .D = file.%D.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
@@ -155,7 +142,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- e.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = tuple_type () [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -188,10 +175,10 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc5_9.1: %.1 = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %e.var: ref %.1 = var e
-// CHECK:STDOUT:   %e: ref %.1 = bind_name e, %e.var
+// CHECK:STDOUT:   %.loc5_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
@@ -202,7 +189,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, imports.%B [template = imports.%B]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, imports.%C [template = imports.%C]
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
-// CHECK:STDOUT:   %D.call: init %.1 = call %D.ref()
+// CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

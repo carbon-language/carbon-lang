@@ -28,34 +28,10 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
-// Forms an IntValue instruction with type `i32` for a given literal integer
-// value, which is assumed to be unsigned.
-static auto MakeI32Literal(Context& context, Parse::NodeId node_id,
-                           IntId int_id) -> SemIR::InstId {
-  auto val = context.ints().Get(int_id);
-  if (val.getActiveBits() > 31) {
-    CARBON_DIAGNOSTIC(IntLiteralTooLargeForI32, Error,
-                      "integer literal with value {0} does not fit in i32",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, IntLiteralTooLargeForI32,
-                           llvm::APSInt(val, /*isUnsigned=*/true));
-    return SemIR::InstId::BuiltinError;
-  }
-  // Literals are always represented as unsigned, so zero-extend if needed.
-  auto i32_val = val.zextOrTrunc(32);
-  return context.AddInst<SemIR::IntValue>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::IntType),
-       .int_id = context.ints().Add(i32_val)});
-}
-
 // Forms an IntValue instruction with type `IntLiteral` for a given literal
 // integer value, which is assumed to be unsigned.
 static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
                            IntId int_id) -> SemIR::InstId {
-  // TODO: `IntId`s with different bit-widths are considered different values
-  // here. Decide how we want to canonicalize these. For now this is only used
-  // by type literals, so we rely on the lexer picking some consistent rule.
   return context.AddInst<SemIR::IntValue>(
       node_id, {.type_id = context.GetBuiltinType(
                     SemIR::BuiltinInstKind::IntLiteralType),
@@ -63,9 +39,7 @@ static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
-  // Convert the literal to i32.
-  // TODO: Form an integer literal value and a corresponding type here instead.
-  auto int_literal_id = MakeI32Literal(
+  auto int_literal_id = MakeIntLiteral(
       context, node_id,
       context.tokens().GetIntLiteral(context.parse_tree().node_token(node_id)));
   context.node_stack().Push(node_id, int_literal_id);
@@ -90,7 +64,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
                            llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
     return true;
   }
 
@@ -100,7 +74,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealExponentTooLargeForI64,
                            llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinError);
+    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
     return true;
   }
 
@@ -110,9 +84,9 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
   context.AddInstAndPush<SemIR::FloatLiteral>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::FloatType),
-       .float_id = float_id});
+      node_id, {.type_id = context.GetBuiltinType(
+                    SemIR::BuiltinInstKind::LegacyFloatType),
+                .float_id = float_id});
   return true;
 }
 
@@ -159,14 +133,6 @@ auto HandleParseNode(Context& context, Parse::IntTypeLiteralId node_id)
     -> bool {
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  // Special case: `i32` has a custom builtin for now.
-  // TODO: Remove this special case.
-  if (context.ints().Get(size_id) == 32) {
-    auto fn_inst_id = context.LookupNameInCore(node_id, "Int32");
-    auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
-    context.node_stack().Push(node_id, type_inst_id);
-    return true;
-  }
   return HandleIntOrUnsignedIntTypeLiteral(context, node_id,
                                            SemIR::IntKind::Signed, size_id);
 }

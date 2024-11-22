@@ -297,12 +297,13 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
       DoArgReplacements(context.test_args, context.test_files));
 
   // Create the files in-memory.
-  llvm::vfs::InMemoryFileSystem fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
+      new llvm::vfs::InMemoryFileSystem;
   for (const auto& test_file : context.test_files) {
-    if (!fs.addFile(test_file.filename, /*ModificationTime=*/0,
-                    llvm::MemoryBuffer::getMemBuffer(
-                        test_file.content, test_file.filename,
-                        /*RequiresNullTerminator=*/false))) {
+    if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
+                     llvm::MemoryBuffer::getMemBuffer(
+                         test_file.content, test_file.filename,
+                         /*RequiresNullTerminator=*/false))) {
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
@@ -1015,7 +1016,9 @@ static auto RunAutoupdate(llvm::StringRef exe_path,
 
   pool.wait();
   if (crashed) {
-    return EXIT_FAILURE;
+    // Abort rather than returning so that we don't get a LeakSanitizer report.
+    // We expect to have leaked memory if one or more of our tests crashed.
+    std::abort();
   }
   llvm::errs() << "\nDone!\n";
   return EXIT_SUCCESS;

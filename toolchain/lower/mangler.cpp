@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
 
@@ -42,10 +43,16 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
-        auto interface_type = insts().GetAs<SemIR::InterfaceType>(
+        auto facet_type = insts().GetAs<SemIR::FacetType>(
             constant_values().GetConstantInstId(impl.constraint_id));
+        const auto& facet_type_info =
+            sem_ir().facet_types().Get(facet_type.facet_type_id);
+        auto interface_type = facet_type_info.TryAsSingleInterface();
+        CARBON_CHECK(interface_type,
+                     "Mangling of an impl of something other than a single "
+                     "interface is not yet supported.");
         const auto& interface =
-            sem_ir().interfaces().Get(interface_type.interface_id);
+            sem_ir().interfaces().Get(interface_type->interface_id);
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
@@ -60,6 +67,15 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           }
           case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
             os << builtin_inst.builtin_inst_kind.label();
+            break;
+          }
+          case CARBON_KIND(SemIR::IntType int_type): {
+            os << (int_type.int_kind == SemIR::IntKind::Signed ? "i" : "u")
+               << sem_ir().ints().Get(
+                      sem_ir()
+                          .insts()
+                          .GetAs<SemIR::IntValue>(int_type.bit_width_id)
+                          .int_id);
             break;
           }
           default:

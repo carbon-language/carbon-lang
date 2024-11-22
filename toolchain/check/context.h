@@ -124,6 +124,17 @@ class Context {
     return AddInstInNoBlock(SemIR::LocIdAndInst(loc, inst));
   }
 
+  // If the instruction has an implicit location and a constant value, returns
+  // the constant value's instruction ID. Otherwise, same as AddInst.
+  auto GetOrAddInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId;
+
+  // Convenience for GetOrAddInst with typed nodes.
+  template <typename InstT, typename LocT>
+  auto GetOrAddInst(LocT loc, InstT inst)
+      -> decltype(GetOrAddInst(SemIR::LocIdAndInst(loc, inst))) {
+    return GetOrAddInst(SemIR::LocIdAndInst(loc, inst));
+  }
+
   // Adds an instruction to the current block, returning the produced ID. The
   // instruction is a placeholder that is expected to be replaced by
   // `ReplaceInstBeforeConstantUse`.
@@ -214,15 +225,24 @@ class Context {
                               const SemIR::NameScope& scope)
       -> std::pair<SemIR::InstId, SemIR::AccessKind>;
 
-  // Performs a qualified name lookup in a specified scope and in scopes that
-  // it extends, returning the referenced instruction.
+  // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
+  // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
+  // still updates `*scopes` and returns `true`.
+  auto AppendLookupScopesForConstant(SemIRLoc loc,
+                                     SemIR::ConstantId base_const_id,
+                                     llvm::SmallVector<LookupScope>* scopes)
+      -> bool;
+
+  // Performs a qualified name lookup in a specified scopes and in scopes that
+  // they extend, returning the referenced instruction.
   auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
-                           LookupScope scope, bool required = true,
+                           llvm::ArrayRef<LookupScope> lookup_scopes,
+                           bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
-  // BuiltinError if not found.
+  // BuiltinErrorInst if not found.
   auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
@@ -350,8 +370,14 @@ class Context {
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
     return type_id == SemIR::TypeId::TypeType ||
-           types().Is<SemIR::InterfaceType>(type_id);
+           types().Is<SemIR::FacetType>(type_id);
   }
+
+  // Create a FacetType typed instruction object consisting of a single
+  // interface.
+  auto FacetTypeFromInterface(SemIR::InterfaceId interface_id,
+                              SemIR::SpecificId specific_id)
+      -> SemIR::FacetType;
 
   // TODO: Consider moving these `Get*Type` functions to a separate class.
 
@@ -380,12 +406,18 @@ class Context {
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
+  // Returns the type `i32`.
+  auto GetInt32Type() -> SemIR::TypeId;
+
+  // Gets the facet type corresponding to a particular interface.
+  auto GetInterfaceType(SemIR::InterfaceId interface_id,
+                        SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
   // Returns a pointer type whose pointee type is `pointee_type_id`.
   auto GetPointerType(SemIR::TypeId pointee_type_id) -> SemIR::TypeId;
 
-  // Returns a struct type with the given fields, which should be a block of
-  // `StructTypeField`s.
-  auto GetStructType(SemIR::InstBlockId refs_id) -> SemIR::TypeId;
+  // Returns a struct type with the given fields.
+  auto GetStructType(SemIR::StructTypeFieldsId fields_id) -> SemIR::TypeId;
 
   // Returns a tuple type with the given element types.
   auto GetTupleType(llvm::ArrayRef<SemIR::TypeId> type_ids) -> SemIR::TypeId;
@@ -456,6 +488,10 @@ class Context {
     return args_type_info_stack_;
   }
 
+  auto struct_type_fields_stack() -> ArrayStack<SemIR::StructTypeField>& {
+    return struct_type_fields_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -503,6 +539,9 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+    return sem_ir().facet_types();
+  }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
@@ -515,6 +554,9 @@ class Context {
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
+  }
+  auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
+    return sem_ir().struct_type_fields();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   auto type_blocks() -> SemIR::BlockValueStore<SemIR::TypeBlockId>& {
@@ -539,6 +581,10 @@ class Context {
 
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
+  }
+
+  auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
+    return bind_name_cache_;
   }
 
  private:
@@ -602,6 +648,10 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
+  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
+  // object representations.
+  ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
+
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
 
@@ -651,6 +701,11 @@ class Context {
   // instructions and needs to be visible in textual IR.
   // FinalizeImportRefBlock() will produce an inst block for them.
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
+
+  // Cache of allocated AnyBindName insts, keyed by the entity names they refer
+  // to. These are allocated while generating the pattern IR, but are emitted
+  // later as part of the pattern-match IR.
+  Map<SemIR::EntityNameId, SemIR::InstId> bind_name_cache_;
 };
 
 }  // namespace Carbon::Check
