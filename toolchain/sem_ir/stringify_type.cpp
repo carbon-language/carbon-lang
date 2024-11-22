@@ -192,6 +192,12 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         push_inst_id(inst.facet_value_inst_id);
         break;
       }
+      case CARBON_KIND(FacetAccessWitness inst): {
+        out << "<witness for ";
+        push_string(">");
+        push_inst_id(inst.facet_value_inst_id);
+        break;
+      }
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);

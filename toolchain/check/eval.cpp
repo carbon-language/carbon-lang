@@ -1627,7 +1627,21 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         return MakeNonConstantResult(phase);
       }
     }
-
+    case CARBON_KIND(SemIR::FacetAccessWitness typed_inst): {
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(
+              eval_context, &typed_inst,
+              &SemIR::FacetAccessWitness::facet_value_inst_id, &phase)) {
+        if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+                typed_inst.facet_value_inst_id)) {
+          return eval_context.constant_values().Get(
+              facet_value->witness_inst_id);
+        }
+        return MakeConstantResult(eval_context.context(), typed_inst, phase);
+      } else {
+        return MakeNonConstantResult(phase);
+      }
+    }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       Phase phase = Phase::Template;
       SemIR::TypeId base_facet_type_id =
