@@ -396,7 +396,8 @@ static auto ConvertStructToStructOrClass(Context& context,
   auto dest_elem_fields = sem_ir.struct_type_fields().Get(dest_type.fields_id);
   bool dest_has_vptr = !dest_elem_fields.empty() &&
                        dest_elem_fields.front().name_id == SemIR::NameId::Vptr;
-  auto dest_elem_fields_size = dest_elem_fields.size() - dest_has_vptr;
+  int dest_vptr_offset = (dest_has_vptr ? 1 : 0);
+  auto dest_elem_fields_size = dest_elem_fields.size() - dest_vptr_offset;
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -498,7 +499,7 @@ static auto ConvertStructToStructOrClass(Context& context,
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_id, literal_elems,
             inner_kind, target.init_id, dest_field.type_id, target.init_block,
-            src_field_index, src_field_index + dest_has_vptr);
+            src_field_index, src_field_index + dest_vptr_offset);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
