@@ -47,7 +47,7 @@ namespace Carbon::SemIR {
 
 // Used for the type of patterns that do not match a fixed type.
 //
-// TODO: Annotate as a builtin.
+// This is a singleton instruction.
 struct AutoType {
   static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
       {.ir_name = "auto",
@@ -59,10 +59,8 @@ struct AutoType {
 
 // The type of bool literals and branch conditions, bool.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
-//
-// TODO: Annotate as a builtin.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct BoolType {
   static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
       {.ir_name = "bool",
@@ -399,8 +397,8 @@ struct BoundMethod {
 
 // The type of bound method values.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct BoundMethodType {
   static constexpr auto Kind =
       InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
@@ -582,7 +580,7 @@ struct Deref {
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
 //
-// TODO: Annotate as a builtin.
+// This is a singleton instruction.
 struct ErrorInst {
   static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
       {.ir_name = "<error>",
@@ -701,8 +699,8 @@ struct FloatType {
 // treated as f64. It's separate from `FloatType`, and should change to mirror
 // integers, likely replacing this with a `FloatLiteralType`.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct LegacyFloatType {
   static constexpr auto Kind =
       InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
@@ -897,8 +895,8 @@ struct IntValue {
 // only provides compile-time operations, and is represented as an empty type at
 // runtime.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct IntLiteralType {
   static constexpr auto Kind =
       InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
@@ -951,8 +949,8 @@ struct Namespace {
 
 // The type of namespace and imported package names.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct NamespaceType {
   static constexpr auto Kind =
       InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
@@ -1183,8 +1181,8 @@ struct SpecificFunction {
 
 // The type of specific functions.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct SpecificFunctionType {
   static constexpr auto Kind =
       InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
@@ -1221,8 +1219,8 @@ struct StringLiteral {
 
 // The type of string values and String literals.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct StringType {
   static constexpr auto Kind =
       InstKind::StringType.Define<Parse::InvalidNodeId>(
@@ -1368,7 +1366,7 @@ struct TupleValue {
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
 //
-// TODO: Annotate as a builtin.
+// This is a singleton instruction.
 struct TypeType {
   static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
       {.ir_name = "type",
@@ -1442,8 +1440,8 @@ struct VarStorage {
 
 // The type of virtual function tables.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct VtableType {
   static constexpr auto Kind =
       InstKind::VtableType.Define<Parse::InvalidNodeId>(
@@ -1470,8 +1468,8 @@ struct WhereExpr {
 
 // The type of witnesses.
 //
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
+// This is a singleton instruction. However, it may still evolve to a more
+// standard type and be removed.
 struct WitnessType {
   static constexpr auto Kind =
       InstKind::WitnessType.Define<Parse::InvalidNodeId>(
