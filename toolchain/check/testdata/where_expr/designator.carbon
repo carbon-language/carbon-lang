@@ -18,10 +18,6 @@ interface I {
 
 fn PeriodSelf(T:! I where .Self == ());
 
-// CHECK:STDERR: success.carbon:[[@LINE+4]]:29: error: semantics TODO: `unimplemented access to facet member` [SemanticsTodo]
-// CHECK:STDERR: fn PeriodMember(U:! I where .Member == ());
-// CHECK:STDERR:                             ^~~~~~~
-// CHECK:STDERR:
 fn PeriodMember(U:! I where .Member == ());
 
 fn TypeSelfImpls(V:! type where .Self impls I);
@@ -104,6 +100,7 @@ class D {
 // CHECK:STDOUT:   %T.patt: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self.1 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I.type.3 = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic]
@@ -149,32 +146,33 @@ class D {
 // CHECK:STDOUT:     %T.loc8_15.1: %I.type.2 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt.loc14_17.1: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc14_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %I.type.3 = value_param_pattern %U.patt.loc14_17.1, runtime_param<invalid> [symbolic = %U.patt.loc14_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc10_17.1: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: %I.type.3 = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc14_41: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc14_23: type = where_expr %.Self [template = constants.%I.type.3] {
-// CHECK:STDOUT:       requirement_equivalent <error>, %.loc14_41
+// CHECK:STDOUT:     %.loc10_29: type = interface_witness_access constants.%.3, element0
+// CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.3] {
+// CHECK:STDOUT:       requirement_equivalent %.loc10_29, %.loc10_41
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type.3 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc14_17.1: %I.type.3 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc14_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc10_17.1: %I.type.3 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
-// CHECK:STDOUT:     %V.patt.loc16_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc16_18.2 (constants.%V.patt)]
-// CHECK:STDOUT:     %V.param_patt: %type_where = value_param_pattern %V.patt.loc16_18.1, runtime_param<invalid> [symbolic = %V.patt.loc16_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.patt.loc12_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
+// CHECK:STDOUT:     %V.param_patt: %type_where = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
-// CHECK:STDOUT:     %.loc16: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %type_where = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %V.loc16_18.1: %type_where = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc16_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc12_18.1: %type_where = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,16 +194,16 @@ class D {
 // CHECK:STDOUT:   fn(%T.param_patt: %I.type.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc14_17.1: %I.type.3) {
-// CHECK:STDOUT:   %U.loc14_17.2: %I.type.3 = bind_symbolic_name U, 0 [symbolic = %U.loc14_17.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc14_17.2: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc14_17.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %I.type.3) {
+// CHECK:STDOUT:   %U.loc10_17.2: %I.type.3 = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc10_17.2: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: %I.type.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc16_18.1: %type_where) {
-// CHECK:STDOUT:   %V.loc16_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc16_18.2 (constants.%V)]
-// CHECK:STDOUT:   %V.patt.loc16_18.2: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc16_18.2 (constants.%V.patt)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: %type_where) {
+// CHECK:STDOUT:   %V.loc12_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc12_18.2 (constants.%V)]
+// CHECK:STDOUT:   %V.patt.loc12_18.2: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.param_patt: %type_where);
 // CHECK:STDOUT: }
@@ -216,13 +214,13 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %U.loc14_17.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc14_17.2 => constants.%U
+// CHECK:STDOUT:   %U.loc10_17.2 => constants.%U
+// CHECK:STDOUT:   %U.patt.loc10_17.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %V.loc16_18.2 => constants.%V
-// CHECK:STDOUT:   %V.patt.loc16_18.2 => constants.%V
+// CHECK:STDOUT:   %V.loc12_18.2 => constants.%V
+// CHECK:STDOUT:   %V.patt.loc12_18.2 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_wrong_member.carbon

@@ -10,6 +10,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -124,6 +125,38 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto AccessMemberOfInterfaceWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
+    SemIR::SpecificId interface_specific_id,
+    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id)
+    -> SemIR::InstId {
+  auto member_value_id = context.constant_values().GetConstantInstId(member_id);
+  if (!member_value_id.is_valid()) {
+    if (member_value_id != SemIR::InstId::BuiltinErrorInst) {
+      context.TODO(member_id, "non-constant associated entity");
+    }
+    return SemIR::InstId::BuiltinErrorInst;
+  }
+
+  auto assoc_entity =
+      context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
+  if (!assoc_entity) {
+    context.TODO(member_id, "unexpected value for associated entity");
+    return SemIR::InstId::BuiltinErrorInst;
+  }
+
+  // TODO: This produces the type of the associated entity with no value for
+  // `Self`. The type `Self` might appear in the type of an associated constant,
+  // and if so, we'll need to substitute it here somehow.
+  auto subst_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), interface_specific_id, assoc_type.entity_type_id);
+
+  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
+      loc_id, {.type_id = subst_type_id,
+               .witness_id = witness_id,
+               .index = assoc_entity->index});
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -170,32 +203,9 @@ static auto PerformImplLookup(
     }
     return SemIR::InstId::BuiltinErrorInst;
   }
-
-  auto member_value_id = context.constant_values().GetConstantInstId(member_id);
-  if (!member_value_id.is_valid()) {
-    if (member_value_id != SemIR::InstId::BuiltinErrorInst) {
-      context.TODO(member_id, "non-constant associated entity");
-    }
-    return SemIR::InstId::BuiltinErrorInst;
-  }
-
-  auto assoc_entity =
-      context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
-  if (!assoc_entity) {
-    context.TODO(member_id, "unexpected value for associated entity");
-    return SemIR::InstId::BuiltinErrorInst;
-  }
-
-  // TODO: This produces the type of the associated entity with no value for
-  // `Self`. The type `Self` might appear in the type of an associated constant,
-  // and if so, we'll need to substitute it here somehow.
-  auto subst_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_type->specific_id, assoc_type.entity_type_id);
-
-  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
-      loc_id, {.type_id = subst_type_id,
-               .witness_id = witness_id,
-               .index = assoc_entity->index});
+  return AccessMemberOfInterfaceWitness(context, loc_id, witness_id,
+                                        interface_type->specific_id, assoc_type,
+                                        member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -256,9 +266,31 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       if (base_type_id != SemIR::TypeId::TypeType &&
           context.IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
+#if 0
         // FIXME: Want to get a witness.
         context.TODO(member_id, "unimplemented access to facet member");
         return SemIR::InstId::BuiltinErrorInst;
+#else
+        // Get the witness that `T` implements `base_type_id`.
+        auto witness_const_id = TryEvalInst(
+            context, SemIR::InstId::Invalid,
+            SemIR::FacetAccessWitness{.type_id = context.GetBuiltinType(
+                                          SemIR::BuiltinInstKind::WitnessType),
+                                      .facet_value_inst_id = base_id});
+        // FIXME: error handling
+        // TODO: Result will eventually be a facet witness instead of an
+        // interface witness. Will need to use the associated entity to identify
+        // the correct interface.
+        auto witness_inst_id =
+            context.constant_values().GetInstId(witness_const_id);
+        // FIXME: get this from `assoc_type->interface_type_id` as is done in
+        // `PerformImplLookup`.
+        SemIR::SpecificId interface_specific_id = SemIR::SpecificId::Invalid;
+        // FIXME: Desire here is to find `member_id` in `witness_const_id`.
+        member_id = AccessMemberOfInterfaceWitness(
+            context, loc_id, witness_inst_id, interface_specific_id,
+            *assoc_type, member_id);
+#endif
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.
