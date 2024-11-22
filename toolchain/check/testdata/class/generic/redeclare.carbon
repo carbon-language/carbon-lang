@@ -64,7 +64,7 @@ class C(T:! type, U:! i32) {}
 library "[[@TEST_NAME]]";
 
 class D(T:! type);
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: type `i32` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: class D(T:! i32) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here [RedeclParamPrevious]

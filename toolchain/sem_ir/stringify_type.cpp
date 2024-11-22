@@ -177,6 +177,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(FacetAccessType inst): {
+        // Given `T:! I`, print `T as type` as simply `T`.
+        push_inst_id(inst.facet_value_inst_id);
+        break;
+      }
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
@@ -202,9 +207,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
-      case CARBON_KIND(FacetTypeAccess inst): {
-        // Print `T as type` as simply `T`.
-        push_inst_id(inst.facet_id);
+      case CARBON_KIND(FacetValue inst): {
+        // No need to output the witness.
+        push_inst_id(sem_ir.types().GetInstId(inst.type_id));
+        push_string(" as ");
+        push_inst_id(inst.type_inst_id);
         break;
       }
       case CARBON_KIND(FloatType inst): {
@@ -423,7 +430,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
-        out << "<cannot stringify " << step.inst_id << ">";
+        out << "<cannot stringify " << step.inst_id << " kind "
+            << untyped_inst.kind() << ">";
         break;
     }
   }

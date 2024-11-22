@@ -44,12 +44,12 @@ interface I {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.3) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.28: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.29: <bound method> = bound_method %.8, %Convert.14 [template]
-// CHECK:STDOUT:   %.30: <specific function> = specific_function %.29, @Convert.2(%.3) [template]
-// CHECK:STDOUT:   %.31: %i32 = int_value 42 [template]
-// CHECK:STDOUT:   %.32: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %.33: %.32 = assoc_entity element3, @I.%N [template]
+// CHECK:STDOUT:   %.32: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.33: <bound method> = bound_method %.8, %Convert.14 [template]
+// CHECK:STDOUT:   %.34: <specific function> = specific_function %.33, @Convert.2(%.3) [template]
+// CHECK:STDOUT:   %.35: %i32 = int_value 42 [template]
+// CHECK:STDOUT:   %.36: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %.37: %.36 = assoc_entity element3, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -119,14 +119,14 @@ interface I {
 // CHECK:STDOUT:   %.loc19_11.2: type = value_of_initializer %int.make_type_signed.loc19 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_11.3: type = converted %int.make_type_signed.loc19, %.loc19_11.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_17: Core.IntLiteral = int_value 42 [template = constants.%.8]
-// CHECK:STDOUT:   %.loc19_19.1: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc19_19.2: <bound method> = bound_method %.loc19_17, %.loc19_19.1 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc19_19.3: <specific function> = specific_function %.loc19_19.2, @Convert.2(constants.%.3) [template = constants.%.30]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc19_19.3(%.loc19_17) [template = constants.%.31]
-// CHECK:STDOUT:   %.loc19_19.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
-// CHECK:STDOUT:   %.loc19_19.5: %i32 = converted %.loc19_17, %.loc19_19.4 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc19_19.1: %Convert.type.2 = interface_witness_access constants.%.32, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc19_19.2: <bound method> = bound_method %.loc19_17, %.loc19_19.1 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc19_19.3: <specific function> = specific_function %.loc19_19.2, @Convert.2(constants.%.3) [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc19_19.3(%.loc19_17) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc19_19.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
+// CHECK:STDOUT:   %.loc19_19.5: %i32 = converted %.loc19_17, %.loc19_19.4 [template = constants.%.35]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc19_19.6: %.32 = assoc_entity element3, %N [template = constants.%.33]
+// CHECK:STDOUT:   %.loc19_19.6: %.36 = assoc_entity element3, %N [template = constants.%.37]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

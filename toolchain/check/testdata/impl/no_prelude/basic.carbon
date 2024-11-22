@@ -32,7 +32,8 @@ impl C as Simple {
 // CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.5: %Simple.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -61,7 +62,7 @@ impl C as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %Simple.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -87,5 +88,5 @@ impl C as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:

@@ -57,7 +57,8 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.5: %I.type = facet_value %C.2, %C.2 [symbolic]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,11 +106,11 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc10_34.2: <witness> = interface_witness (%F) [symbolic = %.loc10_34.2 (constants.%.5)]
+// CHECK:STDOUT:   %.loc10_34.2: <witness> = interface_witness (%F) [symbolic = %.loc10_34.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.loc10_25.1 as %I.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc10_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_34.2 (constants.%.5)]
+// CHECK:STDOUT:     %.loc10_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_34.2 (constants.%.6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -165,12 +166,12 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc10_34.2 => constants.%.5
+// CHECK:STDOUT:   %.loc10_34.2 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C.2) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
@@ -215,7 +216,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//import_generic, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.2)]
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//import_generic, inst+42, loaded [symbolic = @impl.%.1 (constants.%.6)]
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.%.1 (constants.%.6)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

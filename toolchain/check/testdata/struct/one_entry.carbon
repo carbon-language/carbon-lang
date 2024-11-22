@@ -24,11 +24,11 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.24: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.25: <bound method> = bound_method %.3, %Convert.14 [template]
-// CHECK:STDOUT:   %.26: <specific function> = specific_function %.25, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.27: %i32 = int_value 4 [template]
-// CHECK:STDOUT:   %struct: %.2 = struct_value (%.27) [template]
+// CHECK:STDOUT:   %.28: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.29: <bound method> = bound_method %.3, %Convert.14 [template]
+// CHECK:STDOUT:   %.30: <specific function> = specific_function %.29, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.31: %i32 = int_value 4 [template]
+// CHECK:STDOUT:   %struct: %.2 = struct_value (%.31) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,11 +67,11 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_26: Core.IntLiteral = int_value 4 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc11_27.1: %.4 = struct_literal (%.loc11_26)
-// CHECK:STDOUT:   %.loc11_27.2: %Convert.type.2 = interface_witness_access constants.%.24, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc11_27.3: <bound method> = bound_method %.loc11_26, %.loc11_27.2 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc11_27.4: <specific function> = specific_function %.loc11_27.3, @Convert.2(constants.%.1) [template = constants.%.26]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc11_27.4(%.loc11_26) [template = constants.%.27]
-// CHECK:STDOUT:   %.loc11_27.5: init %i32 = converted %.loc11_26, %int.convert_checked [template = constants.%.27]
+// CHECK:STDOUT:   %.loc11_27.2: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc11_27.3: <bound method> = bound_method %.loc11_26, %.loc11_27.2 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc11_27.4: <specific function> = specific_function %.loc11_27.3, @Convert.2(constants.%.1) [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc11_27.4(%.loc11_26) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc11_27.5: init %i32 = converted %.loc11_26, %int.convert_checked [template = constants.%.31]
 // CHECK:STDOUT:   %.loc11_27.6: init %.2 = struct_init (%.loc11_27.5) to file.%x.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc11_28: init %.2 = converted %.loc11_27.1, %.loc11_27.6 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_28

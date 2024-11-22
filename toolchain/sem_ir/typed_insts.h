@@ -546,6 +546,21 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// Represents accessing the `type` field in a facet value, which is notionally a
+// pair of a type and a witness.
+struct FacetAccessType {
+  static constexpr auto Kind = InstKind::FacetAccessType.Define<Parse::NodeId>(
+      {.ir_name = "facet_access_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  // An instruction that evaluates to a `FacetValue`.
+  InstId facet_value_inst_id;
+};
+
+// TODO: `FacetAccessWitness`
+
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
@@ -557,14 +572,20 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// Represents accessing the `type` field in a facet value, which is notionally a
-// pair of a type and a witness.
-struct FacetTypeAccess {
-  static constexpr auto Kind = InstKind::FacetTypeAccess.Define<Parse::NodeId>(
-      {.ir_name = "facet_type_access"});
+// A facet value, the value of a facet type. This consists of a type and a
+// witness that it satisfies the facet type.
+struct FacetValue {
+  static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
+      {.ir_name = "facet_value",
+       .is_type = InstIsType::Never,
+       .constant_kind = InstConstantKind::Always});
 
+  // A `FacetType`.
   TypeId type_id;
-  InstId facet_id;
+  // The type that you will get if you cast this value to `type`.
+  InstId type_inst_id;
+  // An `InterfaceWitness` instruction (TODO: `FacetTypeWitness`).
+  InstId witness_inst_id;
 };
 
 // A field in a class, of the form `var field: field_type;`. The type of the

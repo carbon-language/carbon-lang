@@ -544,6 +544,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
         // Substitute into the constant describing the extended scope to
         // determine its corresponding specific.
         CARBON_CHECK(extended_id.is_valid());
+        LoadImportRef(*this, extended_id);
         SemIR::ConstantId const_id =
             GetConstantValueInSpecific(sem_ir(), specific_id, extended_id);
 
@@ -1133,9 +1134,10 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::AssociatedEntityType, SemIR::FacetAccessType,
+             SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+             SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value

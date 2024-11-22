@@ -194,11 +194,13 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %EqualEqual.type: type = fn_type @EqualEqual [template]
 // CHECK:STDOUT:   %EqualEqual: %EqualEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self.2: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.5: type = facet_access_type %.Self.2 [symbolic]
 // CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
 // CHECK:STDOUT:   %V: %J.type.2 = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %J.type.2 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
+// CHECK:STDOUT:   %.6: type = facet_access_type %.Self.1 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %W: %I.type.3 = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %I.type.3 = symbolic_binding_pattern W, 0 [symbolic]
@@ -247,8 +249,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: %J.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
-// CHECK:STDOUT:     %.loc13_22.1: type = facet_type_access %.Self.ref [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %.loc13_22.2: type = converted %.Self.ref, %.loc13_22.1 [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:     %.loc13_22.1: type = facet_access_type %.Self.ref [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc13_22.2: type = converted %.Self.ref, %.loc13_22.1 [symbolic = constants.%.5]
 // CHECK:STDOUT:     %.loc13_16: type = where_expr %.Self [template = constants.%J.type.2] {
 // CHECK:STDOUT:       requirement_impls %.loc13_22.2, %I.ref
 // CHECK:STDOUT:     }
@@ -263,8 +265,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref.loc15_20: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type.1]
-// CHECK:STDOUT:     %.loc15_20.1: type = facet_type_access %.Self.ref.loc15_20 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.loc15_20.2: type = converted %.Self.ref.loc15_20, %.loc15_20.1 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.loc15_20.1: type = facet_access_type %.Self.ref.loc15_20 [symbolic = constants.%.6]
+// CHECK:STDOUT:     %.loc15_20.2: type = converted %.Self.ref.loc15_20, %.loc15_20.1 [symbolic = constants.%.6]
 // CHECK:STDOUT:     %.Self.ref.loc15_38: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc7 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_50: %empty_tuple.type = tuple_literal ()
@@ -525,8 +527,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//state_constraints, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//state_constraints, inst+7, loaded [template = constants.%I.type.1]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+56, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//state_constraints, inst+57, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+82, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
@@ -783,8 +785,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//state_constraints, inst+3, loaded [template = constants.%J.type.1]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.4: %Impls.type = import_ref Main//state_constraints, inst+56, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.4: %Impls.type = import_ref Main//state_constraints, inst+57, loaded [template = constants.%Impls]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+82, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude

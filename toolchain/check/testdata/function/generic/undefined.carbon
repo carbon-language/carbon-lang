@@ -67,11 +67,11 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.7, @impl.5(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.23: <bound method> = bound_method %.2, %Convert.14 [template]
-// CHECK:STDOUT:   %.24: <specific function> = specific_function %.23, @Convert.7(%.1) [template]
-// CHECK:STDOUT:   %.25: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.26: <specific function> = specific_function %Defined, @Defined(%i32) [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.2, %Convert.14 [template]
+// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.7(%.1) [template]
+// CHECK:STDOUT:   %.29: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.30: <specific function> = specific_function %Defined, @Defined(%i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -141,13 +141,13 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc9: init type = call constants.%Int(%.loc9_23.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc9_23.2: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc9_23.3: type = converted %int.make_type_signed.loc9, %.loc9_23.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_20.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc9_20.2: <bound method> = bound_method %.loc9_18, %.loc9_20.1 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc9_20.3: <specific function> = specific_function %.loc9_20.2, @Convert.7(constants.%.1) [template = constants.%.24]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc9_20.3(%.loc9_18) [template = constants.%.25]
-// CHECK:STDOUT:   %.loc9_20.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.25]
-// CHECK:STDOUT:   %.loc9_20.5: %i32 = converted %.loc9_18, %.loc9_20.4 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [template = constants.%.26]
+// CHECK:STDOUT:   %.loc9_20.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc9_20.2: <bound method> = bound_method %.loc9_18, %.loc9_20.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc9_20.3: <specific function> = specific_function %.loc9_20.2, @Convert.7(constants.%.1) [template = constants.%.28]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc9_20.3(%.loc9_18) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc9_20.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.29]
+// CHECK:STDOUT:   %.loc9_20.5: %i32 = converted %.loc9_18, %.loc9_20.4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [template = constants.%.30]
 // CHECK:STDOUT:   %Defined.call: init %i32 = call %.loc9_10(%.loc9_20.5)
 // CHECK:STDOUT:   %.loc9_27.1: %i32 = value_of_initializer %Defined.call
 // CHECK:STDOUT:   %.loc9_27.2: %i32 = converted %Defined.call, %.loc9_27.1
@@ -183,11 +183,11 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.7, @impl.5(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.23: <bound method> = bound_method %.2, %Convert.14 [template]
-// CHECK:STDOUT:   %.24: <specific function> = specific_function %.23, @Convert.7(%.1) [template]
-// CHECK:STDOUT:   %.25: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.26: <specific function> = specific_function %Defined, @Defined(%i32) [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.2, %Convert.14 [template]
+// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.7(%.1) [template]
+// CHECK:STDOUT:   %.29: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.30: <specific function> = specific_function %Defined, @Defined(%i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -274,13 +274,13 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%.loc7_23.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_23.2: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_23.3: type = converted %int.make_type_signed.loc7, %.loc7_23.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_20.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc7_20.2: <bound method> = bound_method %.loc7_18, %.loc7_20.1 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc7_20.3: <specific function> = specific_function %.loc7_20.2, @Convert.7(constants.%.1) [template = constants.%.24]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc7_20.3(%.loc7_18) [template = constants.%.25]
-// CHECK:STDOUT:   %.loc7_20.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.25]
-// CHECK:STDOUT:   %.loc7_20.5: %i32 = converted %.loc7_18, %.loc7_20.4 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [template = constants.%.26]
+// CHECK:STDOUT:   %.loc7_20.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc7_20.2: <bound method> = bound_method %.loc7_18, %.loc7_20.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc7_20.3: <specific function> = specific_function %.loc7_20.2, @Convert.7(constants.%.1) [template = constants.%.28]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc7_20.3(%.loc7_18) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc7_20.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.29]
+// CHECK:STDOUT:   %.loc7_20.5: %i32 = converted %.loc7_18, %.loc7_20.4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc7_10: <specific function> = specific_function %Defined.ref, @Defined(constants.%i32) [template = constants.%.30]
 // CHECK:STDOUT:   %Defined.call: init %i32 = call %.loc7_10(%.loc7_20.5)
 // CHECK:STDOUT:   %.loc7_27.1: %i32 = value_of_initializer %Defined.call
 // CHECK:STDOUT:   %.loc7_27.2: %i32 = converted %Defined.call, %.loc7_27.1
@@ -316,11 +316,11 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.7, @impl.5(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.22: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.23: <bound method> = bound_method %.2, %Convert.14 [template]
-// CHECK:STDOUT:   %.24: <specific function> = specific_function %.23, @Convert.7(%.1) [template]
-// CHECK:STDOUT:   %.25: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.26: <specific function> = specific_function %Undefined, @Undefined(%i32) [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.2, %Convert.14 [template]
+// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.7(%.1) [template]
+// CHECK:STDOUT:   %.29: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.30: <specific function> = specific_function %Undefined, @Undefined(%i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -384,13 +384,13 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_25.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_25.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_25.3: type = converted %int.make_type_signed.loc13, %.loc13_25.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_22.1: %Convert.type.2 = interface_witness_access constants.%.22, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc13_22.2: <bound method> = bound_method %.loc13_20, %.loc13_22.1 [template = constants.%.23]
-// CHECK:STDOUT:   %.loc13_22.3: <specific function> = specific_function %.loc13_22.2, @Convert.7(constants.%.1) [template = constants.%.24]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc13_22.3(%.loc13_20) [template = constants.%.25]
-// CHECK:STDOUT:   %.loc13_22.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.25]
-// CHECK:STDOUT:   %.loc13_22.5: %i32 = converted %.loc13_20, %.loc13_22.4 [template = constants.%.25]
-// CHECK:STDOUT:   %.loc13_10: <specific function> = specific_function %Undefined.ref, @Undefined(constants.%i32) [template = constants.%.26]
+// CHECK:STDOUT:   %.loc13_22.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc13_22.2: <bound method> = bound_method %.loc13_20, %.loc13_22.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc13_22.3: <specific function> = specific_function %.loc13_22.2, @Convert.7(constants.%.1) [template = constants.%.28]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc13_22.3(%.loc13_20) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc13_22.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.29]
+// CHECK:STDOUT:   %.loc13_22.5: %i32 = converted %.loc13_20, %.loc13_22.4 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc13_10: <specific function> = specific_function %Undefined.ref, @Undefined(constants.%i32) [template = constants.%.30]
 // CHECK:STDOUT:   %Undefined.call: init %i32 = call %.loc13_10(%.loc13_22.5)
 // CHECK:STDOUT:   %.loc13_29.1: %i32 = value_of_initializer %Undefined.call
 // CHECK:STDOUT:   %.loc13_29.2: %i32 = converted %Undefined.call, %.loc13_29.1
