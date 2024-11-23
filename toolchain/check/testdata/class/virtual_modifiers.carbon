@@ -15,6 +15,10 @@ package Modifiers;
 base class Base {
   virtual fn H();
 
+  // CHECK:STDERR: modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR:   impl fn I();
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   impl fn I();
 }
 
@@ -23,6 +27,9 @@ abstract class Abstract {
 
   virtual fn K();
 
+  // CHECK:STDERR: modifiers.carbon:[[@LINE+3]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR:   impl fn L();
+  // CHECK:STDERR:   ^~~~~~~~~~~~
   impl fn L();
 }
 
@@ -88,7 +95,7 @@ fn F() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [template = constants.%I] {} {}
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -100,7 +107,7 @@ fn F() {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {} {}
 // CHECK:STDOUT:   %L.decl: %L.type = fn_decl @L [template = constants.%L] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.2 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
