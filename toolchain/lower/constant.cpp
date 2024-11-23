@@ -209,6 +209,9 @@ static auto EmitAsConstant(ConstantContext& /*context*/,
   CARBON_FATAL("TODO: Add support: {0}", inst);
 }
 
+// Tries to emit an LLVM constant value for this constant instruction. Centrally
+// handles some common cases and then dispatches to the relevant EmitAsConstant
+// overload based on the type of the instruction for the remaining cases.
 template <typename InstT>
 static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
     -> llvm::Constant* {
@@ -221,6 +224,7 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
     // be used by lowering.
     return nullptr;
   } else if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Always) {
+    // All types are lowered to the same value.
     return context.GetTypeAsValue();
   } else {
     return EmitAsConstant(context, inst);
