@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_INSTALL_BUSYBOX_INFO_H_
 
 #include <filesystem>
+#include <iterator>
 #include <optional>
 #include <string>
 
@@ -54,20 +55,30 @@ inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
     // We break this into two cases we need to handle:
     // - Carbon's CLI will be: `<prefix>/bin/carbon`
     // - Other tools will be: `<prefix>/lib/carbon/<group>/bin/<tool>`
-    std::error_code ec;
+    //
+    // We also check that the current path is within a `bin` directory to
+    // provide best-effort checking for accidentally walking up from symlinks
+    // that aren't within an installation-shaped tree.
     auto parent_path = info.bin_path.parent_path();
-    auto lib_path = filename == "carbon" ? parent_path / ".." / "lib" / "carbon"
-                                         : parent_path / ".." / "..";
-    auto busybox_path = lib_path / "carbon-busybox";
-    if (std::filesystem::exists(busybox_path, ec)) {
-      info.bin_path = busybox_path;
-      return info;
+    // Strip any `.` path components at the end to simplify processing.
+    while (parent_path.filename() == ".") {
+      parent_path = parent_path.parent_path();
     }
-    // Errors for the relative busybox search aren't interesting.
-    ec.clear();
+    if (parent_path.filename() == "bin") {
+      auto lib_path = filename == "carbon"
+                          ? parent_path / ".." / "lib" / "carbon"
+                          : parent_path / ".." / "..";
+      auto busybox_path = lib_path / "carbon-busybox";
+      std::error_code ec;
+      if (std::filesystem::exists(busybox_path, ec)) {
+        info.bin_path = busybox_path;
+        return info;
+      }
+    }
 
     // Try to walk through another layer of symlinks and see if we can find the
     // installation there or are linked directly to the busybox.
+    std::error_code ec;
     auto symlink_target = std::filesystem::read_symlink(info.bin_path, ec);
     if (ec) {
       return ErrorBuilder()

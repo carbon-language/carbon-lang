@@ -253,6 +253,38 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
               Eq(dir_ / "lib/carbon/llvm/bin/../../carbon-busybox"));
 }
 
+TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
+  // Add two installs of Carbon nested inside each other in a realistic
+  // scenario: `/usr` and `/usr/local`.
+  auto usr_prefix = MakeInstallTree(dir_ / "usr");
+  auto usr_local_prefix = MakeInstallTree(dir_ / "usr/local");
+
+  // Now add a stray symlink directly in `.../usr/local` to the local install.
+  //
+  // This has the interesting property that both of these "work" and find the
+  // same busybox but probably wanted to find different ones:
+  // - `.../usr/local/../lib/carbon/carbon-busybox`
+  // - `.../usr/bin/../lib/carbon/carbon-busybox`
+  auto stray_target = MakeSymlink(dir_ / "usr/local/carbon", "bin/carbon");
+
+  // Check that the busybox doesn't use the relative busybox in this case, and
+  // walks the symlink to find the correct installation.
+  auto info = GetBusyboxInfo(stray_target.string());
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path,
+              Eq(dir_ / "usr/local/bin/../lib/carbon/carbon-busybox"));
+
+  // Ensure this works even with intervening `.` directory components.
+  stray_target = MakeSymlink(dir_ / "usr/local/carbon2", "bin/././carbon");
+
+  // Check that the busybox doesn't use the relative busybox in this case, and
+  // walks the symlink to find the correct installation.
+  info = GetBusyboxInfo(stray_target.string());
+  ASSERT_TRUE(info.ok()) << info.error();
+  EXPECT_THAT(info->bin_path,
+              Eq(dir_ / "usr/local/bin/../lib/carbon/carbon-busybox"));
+}
+
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   // The test should not have this environment variable set.
   ASSERT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
