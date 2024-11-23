@@ -124,6 +124,14 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto GetInterfaceFromFacetType(Context& context, SemIR::TypeId type_id)
+    -> std::optional<SemIR::FacetTypeInfo::ImplsConstraint> {
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+  return facet_type_info.TryAsSingleInterface();
+}
+
 static auto AccessMemberOfInterfaceWitness(
     Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
     SemIR::SpecificId interface_specific_id,
@@ -163,11 +171,8 @@ static auto PerformImplLookup(
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
-  auto facet_type =
-      context.types().GetAs<SemIR::FacetType>(assoc_type.interface_type_id);
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-  auto interface_type = facet_type_info.TryAsSingleInterface();
+  auto interface_type =
+      GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
   if (!interface_type) {
     context.TODO(loc_id,
                  "Lookup of impl witness not yet supported except for a single "
@@ -265,28 +270,48 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       if (base_type_id != SemIR::TypeId::TypeType &&
           context.IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
-#if 0
-        // FIXME: Want to get a witness.
-        context.TODO(member_id, "unimplemented access to facet member");
-        return SemIR::InstId::BuiltinErrorInst;
-#else
-        // Get the witness that `T` implements `base_type_id`.
-        auto witness_inst_id = context.GetOrAddInst<SemIR::FacetAccessWitness>(
-            loc_id, {.type_id = context.GetBuiltinType(
-                         SemIR::BuiltinInstKind::WitnessType),
-                     .facet_value_inst_id = base_id});
-        // FIXME: error handling
-        // TODO: Result will eventually be a facet type witness instead of an
-        // interface witness. Will need to use the associated entity to identify
-        // the correct interface.
-        // FIXME: get this from `assoc_type->interface_type_id` as is done in
-        // `PerformImplLookup`.
-        SemIR::SpecificId interface_specific_id = SemIR::SpecificId::Invalid;
-        // FIXME: Desire here is to find `member_id` in `witness_const_id`.
+
+        auto assoc_interface =
+            GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
+        // An associated entity should always be associated with a single
+        // interface.
+        CARBON_CHECK(assoc_interface);
+
+        // First look for `*assoc_interface` in the type of the base. If it is
+        // found, get the witness that the interface is implemented from
+        // `base_id`.
+        auto facet_type = context.types().GetAs<SemIR::FacetType>(base_type_id);
+        const auto& facet_type_info =
+            context.facet_types().Get(facet_type.facet_type_id);
+        // Witness that `T` implements the `*assoc_interface`.
+        SemIR::InstId witness_inst_id = SemIR::InstId::Invalid;
+        for (auto base_interface : facet_type_info.impls_constraints) {
+          // Get the witness that `T` implements `base_type_id`.
+          if (base_interface == *assoc_interface) {
+            witness_inst_id = context.GetOrAddInst<SemIR::FacetAccessWitness>(
+                loc_id, {.type_id = context.GetBuiltinType(
+                             SemIR::BuiltinInstKind::WitnessType),
+                         .facet_value_inst_id = base_id});
+            // TODO: Result will eventually be a facet type witness instead of
+            // an interface witness. Will need to use the index
+            // `*assoc_interface` was found in
+            // `facet_type_info.impls_constraints` to get the correct interface
+            // witness out.
+            break;
+          }
+        }
+        // TODO: If that fails, would need to do impl lookup to see if the facet
+        // value implements the interface of `*assoc_type`.
+        if (!witness_inst_id.is_valid()) {
+          context.TODO(member_id,
+                       "associated entity not found in facet type, need to do "
+                       "impl lookup");
+          return SemIR::InstId::BuiltinErrorInst;
+        }
+
         member_id = AccessMemberOfInterfaceWitness(
-            context, loc_id, witness_inst_id, interface_specific_id,
+            context, loc_id, witness_inst_id, assoc_interface->specific_id,
             *assoc_type, member_id);
-#endif
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.
