@@ -645,9 +645,9 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   }
 
   bool defining_vtable_ptr = class_info.is_dynamic;
-  if (class_info.base_id.is_valid()) {
-    auto base_type_id =
-        class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::Invalid);
+  if (auto base_type_id =
+          class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::Invalid);
+      base_type_id.is_valid()) {
     // TODO: If the base class is template dependent, we will need to decide
     // whether to add a vptr as part of instantiation.
     if (auto* base_class_info = TryGetAsClass(context, base_type_id);
