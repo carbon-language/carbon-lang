@@ -167,14 +167,25 @@ Some name mirroring examples are:
 -   `strings` is a `ValueStore<StringId>`, which has an index type of
     `StringId`, but for copy-related reasons, uses `llvm::StringRef` for values.
 
-A fairly complete list of `ValueStore` uses should be available on
-[checking's Context class](https://github.com/search?q=repository%3Acarbon-language%2Fcarbon-lang%20path%3Acheck%2Fcontext.h%20symbol%3Aidentifiers&type=code).
+There are also a number of wrappers around `ValueStore` that provide some
+additional functionality and which are named with the `Store` suffix, such as
+`InstStore` or `CanonicalValueStore`.
+
+A fairly complete list of `ValueStore` (and `ValueStore` wrapper) uses should be
+available on [checking's Context class].
+
+<!-- google-doc-style-ignore -->
+
+[checking's Context class]:
+    https://github.com/search?q=repo%3Acarbon-language%2Fcarbon-lang+path%3Atoolchain%2Fcheck%2Fcontext.h+%2F%5Cw%2BStore%2F&type=code
+
+<!-- google-doc-style-resume -->
 
 ## Template metaprogramming
 
 TODO: show example patterns
 
--   TypedInstArgsInfo from toolchain/sem_ir/inst.h
+-   InstLikeTypeInfo from toolchain/sem_ir/inst.h
 -   templated using
 -   std::declval
 -   decltype
@@ -197,39 +208,31 @@ The presence of specific fields in a struct with a specified type is detected
 using the following idiom:
 
 ```cpp
-template <typename T, typename = FieldType T::*>
-constexpr bool HasField = false;
-template <typename T>
-constexpr bool HasField<T, decltype(&T::field)> = true;
-```
-
-This is intended to check the same property as the following concept, which we
-can't use because we currently need to compile in C++17 mode:
-
-```cpp
+// HasField<T> is true if T has a `U field` field of type FieldType.
 template <typename T> concept HasField = requires (T x) {
-  { x.field } -> std::same_as<FieldType>;
+  { &x.field } -> std::same_as<FieldType T::*>;
 };
 ```
+
+See `HasKindMemberAsField` in
+[`toolchain/sem_ir/typed_insts.h`](/toolchain/sem_ir/typed_insts.h) for an
+example.
 
 To detect a field with a specific name with a type derived from a specified base
 type, use this idiom:
 
 ```cpp
-// HasField<T> is true if T has a `U field` field,
-// where `U` extends `BaseClass`.
-template <typename T, bool Enabled = true>
-inline constexpr bool HasField = false;
-template <typename T>
-inline constexpr bool HasField<
-    T, bool(std::is_base_of_v<BaseClass, decltype(T::field)>)> = true;
-```
+namespace Internal {
 
-The equivalent concept is:
+template <typename T, typename From> concept FieldDerivedFrom =
+    std::derived_from<std::remove_cvref_t<T>, From>;
 
-```cpp
+}
+
+// HasField<T> is true if T has a `U field` field, where `U` extends
+// `BaseClass`.
 template <typename T> concept HasField = requires (T x) {
-  { x.field } -> std::derived_from<BaseClass>;
+  { x.field } -> Internal::FieldDerivedFrom<BaseClass>;
 };
 ```
 
@@ -266,17 +269,15 @@ This can be used for complex initialization, as in:
 ```cpp
 // variable declaration
 static const llvm::ArrayRef<std::byte> entropy_bytes =
-// initializer starts with a lambda
+    // initializer starts with a lambda
     []() -> llvm::ArrayRef<std::byte> {
-  static llvm::SmallVector<std::byte> bytes;
+      static llvm::SmallVector<std::byte> bytes;
 
-  // a bunch of code
+      // a bunch of code
 
-  // return the value to initialize the variable with
-  return bytes;
-
-// finish defining the lambda, and then immediately invoke it
-}();
+      // return the value to initialize the variable with
+      return bytes;
+    }();  // finish defining the lambda, and then immediately invoke it
 ```
 
 It can also be used inside a `CARBON_DCHECK` to avoid computation that is only
