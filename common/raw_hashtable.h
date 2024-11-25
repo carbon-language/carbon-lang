@@ -440,7 +440,7 @@ class ViewImpl {
   static auto PrefetchEntryGroup(const EntryT* entry_group) -> void {
     if constexpr (CARBON_ENABLE_PREFETCH_ENTRY_GROUP) {
       // Prefetch with a "low" temporal locality as we're primarily expecting a
-      // brief use of the storage and then to return to application code.
+      // brief use of the entries and then to return to application code.
       __builtin_prefetch(entry_group, /*read*/ 0, /*low-locality*/ 1);
     }
   }
