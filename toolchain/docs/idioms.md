@@ -218,24 +218,6 @@ See `HasKindMemberAsField` in
 [`toolchain/sem_ir/typed_insts.h`](/toolchain/sem_ir/typed_insts.h) for an
 example.
 
-To detect a field with a specific name with a type derived from a specified base
-type, use this idiom:
-
-```cpp
-namespace Internal {
-
-template <typename T, typename From> concept FieldDerivedFrom =
-    std::derived_from<std::remove_cvref_t<T>, From>;
-
-}
-
-// HasField<T> is true if T has a `U field` field, where `U` extends
-// `BaseClass`.
-template <typename T> concept HasField = requires (T x) {
-  { x.field } -> Internal::FieldDerivedFrom<BaseClass>;
-};
-```
-
 ## Local lambdas to reduce duplicate code
 
 Sometimes code that would be repeated in a function is factored into a local
