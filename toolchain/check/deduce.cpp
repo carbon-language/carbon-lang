@@ -417,30 +417,6 @@ auto DeductionContext::Deduce() -> bool {
         continue;
       }
 
-      // Various kinds of parameter should match an argument of the same form,
-      // if the operands all match.
-      case SemIR::ArrayType::Kind:
-      case SemIR::ClassType::Kind:
-      case SemIR::ConstType::Kind:
-      case SemIR::FacetType::Kind:
-      case SemIR::FloatType::Kind:
-      case SemIR::IntType::Kind:
-      case SemIR::PointerType::Kind:
-      case SemIR::StructType::Kind:
-      case SemIR::TupleType::Kind:
-      case SemIR::TupleValue::Kind: {
-        auto arg_inst = context().insts().Get(arg_id);
-        if (arg_inst.kind() != param_inst.kind()) {
-          break;
-        }
-        auto [kind0, kind1] = param_inst.ArgKinds();
-        worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
-                             needs_substitution);
-        worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
-                             needs_substitution);
-        continue;
-      }
-
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;
@@ -448,6 +424,20 @@ auto DeductionContext::Deduce() -> bool {
         // TODO: Handle more cases.
 
       default:
+        if (param_inst.kind().deduce_through()) {
+          // Various kinds of parameter should match an argument of the same
+          // form, if the operands all match.
+          auto arg_inst = context().insts().Get(arg_id);
+          if (arg_inst.kind() != param_inst.kind()) {
+            break;
+          }
+          auto [kind0, kind1] = param_inst.ArgKinds();
+          worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
+                               needs_substitution);
+          worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
+                               needs_substitution);
+          continue;
+        }
         break;
     }
 
