@@ -27,9 +27,10 @@ abstract class Abstract {
 
   virtual fn K();
 
-  // CHECK:STDERR: modifiers.carbon:[[@LINE+3]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR: modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
   // CHECK:STDERR:   impl fn L();
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   impl fn L();
 }
 
@@ -52,6 +53,17 @@ import Modifiers;
 
 fn F() {
   var v: Modifiers.Base = {};
+}
+
+// --- impl.carbon
+
+package Impl;
+
+class C {
+  // CHECK:STDERR: impl.carbon:[[@LINE+3]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR:   impl fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  impl fn F();
 }
 
 // CHECK:STDOUT: --- modifiers.carbon
@@ -241,4 +253,42 @@ fn F() {
 // CHECK:STDOUT:   assign %v.var, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F();
 // CHECK:STDOUT:
