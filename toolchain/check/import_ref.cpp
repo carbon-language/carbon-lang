@@ -172,6 +172,60 @@ static auto GetInstWithConstantValue(const SemIR::File& file,
   return file.inst_blocks().Get(block)[symbolic_const.index.index()];
 }
 
+namespace {
+// The result of attempting to resolve an imported instruction to a constant.
+struct ResolveResult {
+  // The new constant value, if known.
+  SemIR::ConstantId const_id;
+  // Whether resolution has been attempted once and needs to be retried.
+  bool retry = false;
+};
+}  // namespace
+
+namespace {
+// A context within which we are performing an import. Tracks information about
+// the source and destination. This provides a restricted interface compared to
+// ImportResolver: in particular, it does not have access to a work list.
+// Therefore code that accepts an ImportContext is unable to enqueue new work.
+class ImportContext {
+ public:
+  // A generic that we have partially imported.
+  struct PendingGeneric {
+    SemIR::GenericId import_id;
+    SemIR::GenericId local_id;
+  };
+
+  // A specific that we have partially imported.
+  struct PendingSpecific {
+    SemIR::SpecificId import_id;
+    SemIR::SpecificId local_id;
+  };
+
+  explicit ImportContext(Context& context, SemIR::ImportIRId import_ir_id)
+      : context_(context),
+        import_ir_id_(import_ir_id),
+        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir) {}
+
+  auto import_ir_constant_values() -> SemIR::ConstantValueStore& {
+    return context_.import_ir_constant_values()[import_ir_id_.index];
+  }
+
+ protected:
+  Context& context_;
+  SemIR::ImportIRId import_ir_id_;
+  const SemIR::File& import_ir_;
+
+  // TODO: The following members don't belong here. This pending work mechanism
+  // can probably be removed entirely if we stop importing generic eval blocks
+  // and instead evaluate them directly in the imported IR.
+
+  // Generics that we have partially imported but not yet finished importing.
+  llvm::SmallVector<PendingGeneric> pending_generics_;
+  // Specifics that we have partially imported but not yet finished importing.
+  llvm::SmallVector<PendingSpecific> pending_specifics_;
+};
+}  // namespace
+
 // Resolves an instruction from an imported IR into a constant referring to the
 // current IR.
 //
@@ -240,12 +294,10 @@ static auto GetInstWithConstantValue(const SemIR::File& file,
 // TODO: Fix function `extern` handling and merging, rewrite tests.
 // - check/testdata/function/declaration/import.carbon
 // - check/testdata/packages/cross_package_import.carbon
-class ImportRefResolver {
+class ImportRefResolver : public ImportContext {
  public:
   explicit ImportRefResolver(Context& context, SemIR::ImportIRId import_ir_id)
-      : context_(context),
-        import_ir_id_(import_ir_id),
-        import_ir_(*context_.import_irs().Get(import_ir_id).sem_ir) {}
+      : ImportContext(context, import_ir_id) {}
 
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. See the class comment
@@ -323,14 +375,6 @@ class ImportRefResolver {
   }
 
  private:
-  // The result of attempting to resolve an imported instruction to a constant.
-  struct ResolveResult {
-    // The new constant value, if known.
-    SemIR::ConstantId const_id;
-    // Whether resolution has been attempted once and needs to be retried.
-    bool retry = false;
-  };
-
   // A step in work_stack_.
   struct Work {
     // The instruction to work on.
@@ -360,18 +404,6 @@ class ImportRefResolver {
   struct SpecificData {
     SemIR::ConstantId generic_const_id;
     llvm::SmallVector<SemIR::InstId> args;
-  };
-
-  // A generic that we have partially imported.
-  struct PendingGeneric {
-    SemIR::GenericId import_id;
-    SemIR::GenericId local_id;
-  };
-
-  // A specific that we have partially imported.
-  struct PendingSpecific {
-    SemIR::SpecificId import_id;
-    SemIR::SpecificId local_id;
   };
 
   // Looks to see if an instruction has been resolved. If a constant is only
@@ -2396,20 +2428,9 @@ class ImportRefResolver {
     }
   }
 
-  auto import_ir_constant_values() -> SemIR::ConstantValueStore& {
-    return context_.import_ir_constant_values()[import_ir_id_.index];
-  }
-
-  Context& context_;
-  SemIR::ImportIRId import_ir_id_;
-  const SemIR::File& import_ir_;
   llvm::SmallVector<Work> work_stack_;
   // The size of work_stack_ at the start of resolving the current instruction.
   size_t initial_work_ = 0;
-  // Generics that we have partially imported but not yet finished importing.
-  llvm::SmallVector<PendingGeneric> pending_generics_;
-  // Specifics that we have partially imported but not yet finished importing.
-  llvm::SmallVector<PendingSpecific> pending_specifics_;
 };
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being
