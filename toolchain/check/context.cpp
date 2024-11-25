@@ -201,8 +201,7 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
 
 auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
                                                  SemIR::Inst inst) -> void {
-  auto old_inst = sem_ir().insts().Get(inst_id);
-  auto old_const_id = TryEvalInst(*this, inst_id, old_inst);
+  auto old_const_id = sem_ir().constant_values().Get(inst_id);
   sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
   auto new_const_id = TryEvalInst(*this, inst_id, inst);
