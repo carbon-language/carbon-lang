@@ -1094,191 +1094,6 @@ class ImportRefResolver {
     return context_.inst_blocks().Add(new_associated_entities);
   }
 
-  // Tries to resolve the InstId, returning a constant when ready, or Invalid if
-  // more has been added to the stack. A similar API is followed for all
-  // following TryResolveTypedInst helper functions.
-  //
-  // `const_id` is Invalid unless we've tried to resolve this instruction
-  // before, in which case it's the previous result.
-  //
-  // TODO: Error is returned when support is missing, but that should go away.
-  auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id)
-      -> ResolveResult {
-    auto inst_const_id = import_ir_.constant_values().Get(inst_id);
-    if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic()) {
-      return TryResolveInstCanonical(inst_id, const_id);
-    }
-
-    // Try to import the generic. This might add new work.
-    const auto& symbolic_const =
-        import_ir_.constant_values().GetSymbolicConstant(inst_const_id);
-    auto generic_const_id = GetLocalConstantId(symbolic_const.generic_id);
-
-    auto inner_const_id = SemIR::ConstantId::Invalid;
-    if (const_id.is_valid()) {
-      // For the third phase, extract the constant value that
-      // TryResolveInstCanonical produced previously.
-      inner_const_id = context_.constant_values().Get(
-          context_.constant_values().GetSymbolicConstant(const_id).inst_id);
-    }
-
-    // Import the constant and rebuild the symbolic constant data.
-    auto result = TryResolveInstCanonical(inst_id, inner_const_id);
-    if (!result.const_id.is_valid()) {
-      // First phase: TryResolveInstCanoncial needs a retry.
-      return result;
-    }
-
-    if (!const_id.is_valid()) {
-      // Second phase: we have created an abstract constant. Create a
-      // corresponding generic constant.
-      if (symbolic_const.generic_id.is_valid()) {
-        result.const_id = context_.constant_values().AddSymbolicConstant(
-            {.inst_id = context_.constant_values().GetInstId(result.const_id),
-             .generic_id = GetLocalGenericId(generic_const_id),
-             .index = symbolic_const.index});
-      }
-    } else {
-      // Third phase: perform a consistency check and produce the constant we
-      // created in the second phase.
-      CARBON_CHECK(result.const_id == inner_const_id,
-                   "Constant value changed in third phase.");
-      result.const_id = const_id;
-    }
-
-    return result;
-  }
-
-  // Tries to resolve the InstId, returning a canonical constant when ready, or
-  // Invalid if more has been added to the stack. This is the same as
-  // TryResolveInst, except that it may resolve symbolic constants as canonical
-  // constants instead of as constants associated with a particular generic.
-  auto TryResolveInstCanonical(SemIR::InstId inst_id,
-                               SemIR::ConstantId const_id) -> ResolveResult {
-    if (inst_id.is_builtin()) {
-      CARBON_CHECK(!const_id.is_valid());
-      // Constants for builtins can be directly copied.
-      return ResolveAsConstant(context_.constant_values().Get(inst_id));
-    }
-
-    auto untyped_inst = import_ir_.insts().Get(inst_id);
-    CARBON_KIND_SWITCH(untyped_inst) {
-      case CARBON_KIND(SemIR::AssociatedEntity inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::AssociatedEntityType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::BaseDecl inst): {
-        return TryResolveTypedInst(inst, inst_id);
-      }
-      case CARBON_KIND(SemIR::BindAlias inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case SemIR::BindName::Kind: {
-        // TODO: Should we be resolving BindNames at all?
-        return ResolveAsConstant(SemIR::ConstantId::NotConstant);
-      }
-      case CARBON_KIND(SemIR::BindSymbolicName inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::ClassDecl inst): {
-        return TryResolveTypedInst(inst, const_id);
-      }
-      case CARBON_KIND(SemIR::ClassType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::CompleteTypeWitness inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::ConstType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::ExportDecl inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::FacetType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::FieldDecl inst): {
-        return TryResolveTypedInst(inst, inst_id);
-      }
-      case CARBON_KIND(SemIR::FunctionDecl inst): {
-        return TryResolveTypedInst(inst, const_id);
-      }
-      case CARBON_KIND(SemIR::FunctionType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::GenericClassType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::GenericInterfaceType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::ImplDecl inst): {
-        return TryResolveTypedInst(inst, const_id);
-      }
-      case CARBON_KIND(SemIR::ImportRefLoaded inst): {
-        return TryResolveTypedInst(inst, inst_id);
-      }
-      case CARBON_KIND(SemIR::InterfaceDecl inst): {
-        return TryResolveTypedInst(inst, const_id);
-      }
-      case CARBON_KIND(SemIR::InterfaceWitness inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::IntValue inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::IntType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::PointerType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::SpecificFunction inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::StructType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::StructValue inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::TupleType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::TupleValue inst): {
-        return TryResolveTypedInst(inst);
-      }
-      case CARBON_KIND(SemIR::UnboundElementType inst): {
-        return TryResolveTypedInst(inst);
-      }
-      default: {
-        // This instruction might have a constant value of a different kind.
-        auto constant_inst_id =
-            import_ir_.constant_values().GetConstantInstId(inst_id);
-        if (constant_inst_id == inst_id) {
-          context_.TODO(
-              SemIR::LocId(AddImportIRInst(inst_id)),
-              llvm::formatv("TryResolveInst on {0}", untyped_inst.kind())
-                  .str());
-          return {.const_id = SemIR::ConstantId::Error};
-        }
-        // Try to resolve the constant value instead. Note that this can only
-        // retry once.
-        CARBON_DCHECK(import_ir_.constant_values().GetConstantInstId(
-                          constant_inst_id) == constant_inst_id,
-                      "Constant value of constant instruction should refer to "
-                      "the same instruction");
-        return TryResolveInstCanonical(constant_inst_id, const_id);
-      }
-    }
-  }
-
   // Produces a resolve result that tries resolving this instruction again. If
   // `const_id` is specified, then this is the end of the second phase, and the
   // constant value will be passed to the next resolution attempt. Otherwise,
@@ -2283,27 +2098,189 @@ class ImportRefResolver {
          .element_type_id = context_.GetTypeIdForTypeConstant(elem_const_id)});
   }
 
-  // Perform any work that we deferred until the end of the main Resolve loop.
-  auto PerformPendingWork() -> void {
-    // Note that the individual Finish steps can add new pending work, so keep
-    // going until we have no more work to do.
-    while (!pending_generics_.empty() || !pending_specifics_.empty()) {
-      // Process generics in the order that we added them because a later
-      // generic might refer to an earlier one, and the calls to
-      // RebuildGenericEvalBlock assume that the reachable SemIR is in a valid
-      // state.
-      // TODO: Import the generic eval block rather than calling
-      // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
-      // NOLINTNEXTLINE(modernize-loop-convert)
-      for (size_t i = 0; i != pending_generics_.size(); ++i) {
-        FinishPendingGeneric(pending_generics_[i]);
-      }
-      pending_generics_.clear();
+  // Tries to resolve the InstId, returning a canonical constant when ready, or
+  // Invalid if more has been added to the stack. This is the same as
+  // TryResolveInst, except that it may resolve symbolic constants as canonical
+  // constants instead of as constants associated with a particular generic.
+  auto TryResolveInstCanonical(SemIR::InstId inst_id,
+                               SemIR::ConstantId const_id) -> ResolveResult {
+    if (inst_id.is_builtin()) {
+      CARBON_CHECK(!const_id.is_valid());
+      // Constants for builtins can be directly copied.
+      return ResolveAsConstant(context_.constant_values().Get(inst_id));
+    }
 
-      while (!pending_specifics_.empty()) {
-        FinishPendingSpecific(pending_specifics_.pop_back_val());
+    auto untyped_inst = import_ir_.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(untyped_inst) {
+      case CARBON_KIND(SemIR::AssociatedEntity inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::AssociatedEntityType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::BaseDecl inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::BindAlias inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case SemIR::BindName::Kind: {
+        // TODO: Should we be resolving BindNames at all?
+        return ResolveAsConstant(SemIR::ConstantId::NotConstant);
+      }
+      case CARBON_KIND(SemIR::BindSymbolicName inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ClassDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::ClassType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::CompleteTypeWitness inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ConstType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ExportDecl inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::FacetType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::FieldDecl inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::FunctionDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::FunctionType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::GenericClassType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::GenericInterfaceType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::ImplDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::ImportRefLoaded inst): {
+        return TryResolveTypedInst(inst, inst_id);
+      }
+      case CARBON_KIND(SemIR::InterfaceDecl inst): {
+        return TryResolveTypedInst(inst, const_id);
+      }
+      case CARBON_KIND(SemIR::InterfaceWitness inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::IntValue inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::IntType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::PointerType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::SpecificFunction inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::StructType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::StructValue inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::TupleType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::TupleValue inst): {
+        return TryResolveTypedInst(inst);
+      }
+      case CARBON_KIND(SemIR::UnboundElementType inst): {
+        return TryResolveTypedInst(inst);
+      }
+      default: {
+        // This instruction might have a constant value of a different kind.
+        auto constant_inst_id =
+            import_ir_.constant_values().GetConstantInstId(inst_id);
+        if (constant_inst_id == inst_id) {
+          context_.TODO(
+              SemIR::LocId(AddImportIRInst(inst_id)),
+              llvm::formatv("TryResolveInst on {0}", untyped_inst.kind())
+                  .str());
+          return {.const_id = SemIR::ConstantId::Error};
+        }
+        // Try to resolve the constant value instead. Note that this can only
+        // retry once.
+        CARBON_DCHECK(import_ir_.constant_values().GetConstantInstId(
+                          constant_inst_id) == constant_inst_id,
+                      "Constant value of constant instruction should refer to "
+                      "the same instruction");
+        return TryResolveInstCanonical(constant_inst_id, const_id);
       }
     }
+  }
+
+  // Tries to resolve the InstId, returning a constant when ready, or Invalid if
+  // more has been added to the stack. A similar API is followed for all
+  // following TryResolveTypedInst helper functions.
+  //
+  // `const_id` is Invalid unless we've tried to resolve this instruction
+  // before, in which case it's the previous result.
+  //
+  // TODO: Error is returned when support is missing, but that should go away.
+  auto TryResolveInst(SemIR::InstId inst_id, SemIR::ConstantId const_id)
+      -> ResolveResult {
+    auto inst_const_id = import_ir_.constant_values().Get(inst_id);
+    if (!inst_const_id.is_valid() || !inst_const_id.is_symbolic()) {
+      return TryResolveInstCanonical(inst_id, const_id);
+    }
+
+    // Try to import the generic. This might add new work.
+    const auto& symbolic_const =
+        import_ir_.constant_values().GetSymbolicConstant(inst_const_id);
+    auto generic_const_id = GetLocalConstantId(symbolic_const.generic_id);
+
+    auto inner_const_id = SemIR::ConstantId::Invalid;
+    if (const_id.is_valid()) {
+      // For the third phase, extract the constant value that
+      // TryResolveInstCanonical produced previously.
+      inner_const_id = context_.constant_values().Get(
+          context_.constant_values().GetSymbolicConstant(const_id).inst_id);
+    }
+
+    // Import the constant and rebuild the symbolic constant data.
+    auto result = TryResolveInstCanonical(inst_id, inner_const_id);
+    if (!result.const_id.is_valid()) {
+      // First phase: TryResolveInstCanoncial needs a retry.
+      return result;
+    }
+
+    if (!const_id.is_valid()) {
+      // Second phase: we have created an abstract constant. Create a
+      // corresponding generic constant.
+      if (symbolic_const.generic_id.is_valid()) {
+        result.const_id = context_.constant_values().AddSymbolicConstant(
+            {.inst_id = context_.constant_values().GetInstId(result.const_id),
+             .generic_id = GetLocalGenericId(generic_const_id),
+             .index = symbolic_const.index});
+      }
+    } else {
+      // Third phase: perform a consistency check and produce the constant we
+      // created in the second phase.
+      CARBON_CHECK(result.const_id == inner_const_id,
+                   "Constant value changed in third phase.");
+      result.const_id = const_id;
+    }
+
+    return result;
   }
 
   // Resolves and returns the local contents for an imported instruction block
@@ -2393,6 +2370,29 @@ class ImportRefResolver {
           ResolveLocalInstBlock(import_specific.definition_block_id);
       context_.specifics().Get(pending.local_id).definition_block_id =
           definition_block_id;
+    }
+  }
+
+  // Perform any work that we deferred until the end of the main Resolve loop.
+  auto PerformPendingWork() -> void {
+    // Note that the individual Finish steps can add new pending work, so keep
+    // going until we have no more work to do.
+    while (!pending_generics_.empty() || !pending_specifics_.empty()) {
+      // Process generics in the order that we added them because a later
+      // generic might refer to an earlier one, and the calls to
+      // RebuildGenericEvalBlock assume that the reachable SemIR is in a valid
+      // state.
+      // TODO: Import the generic eval block rather than calling
+      // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
+      // NOLINTNEXTLINE(modernize-loop-convert)
+      for (size_t i = 0; i != pending_generics_.size(); ++i) {
+        FinishPendingGeneric(pending_generics_[i]);
+      }
+      pending_generics_.clear();
+
+      while (!pending_specifics_.empty()) {
+        FinishPendingSpecific(pending_specifics_.pop_back_val());
+      }
     }
   }
 
