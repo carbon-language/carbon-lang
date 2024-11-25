@@ -395,17 +395,6 @@ class ImportRefResolver : public ImportContext {
     llvm::SmallVector<SemIR::ImportIRInst> indirect_insts = {};
   };
 
-  // Local information associated with an imported generic.
-  struct GenericData {
-    llvm::SmallVector<SemIR::InstId> bindings;
-  };
-
-  // Local information associated with an imported specific.
-  struct SpecificData {
-    SemIR::ConstantId generic_const_id;
-    llvm::SmallVector<SemIR::InstId> args;
-  };
-
   // Looks to see if an instruction has been resolved. If a constant is only
   // found indirectly, sets the constant for any indirect steps that don't
   // already have the constant. If a constant isn't found, returns the indirect
@@ -583,6 +572,11 @@ class ImportRefResolver : public ImportContext {
          .self_specific_id = SemIR::SpecificId::Invalid});
   }
 
+  // Local information associated with an imported generic.
+  struct GenericData {
+    llvm::SmallVector<SemIR::InstId> bindings;
+  };
+
   // Gets a local version of the data associated with a generic.
   auto GetLocalGenericData(SemIR::GenericId generic_id) -> GenericData {
     if (!generic_id.is_valid()) {
@@ -656,6 +650,12 @@ class ImportRefResolver : public ImportContext {
       }
     }
   }
+
+  // Local information associated with an imported specific.
+  struct SpecificData {
+    SemIR::ConstantId generic_const_id;
+    llvm::SmallVector<SemIR::InstId> args;
+  };
 
   // Gets local information about an imported specific.
   auto GetLocalSpecificData(SemIR::SpecificId specific_id) -> SpecificData {
