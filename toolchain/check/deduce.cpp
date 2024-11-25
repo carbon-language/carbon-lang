@@ -122,15 +122,17 @@ class DeductionWorklist {
     const auto& param_impls =
         context_.facet_types().Get(params).impls_constraints;
     const auto& arg_impls = context_.facet_types().Get(args).impls_constraints;
-    if (param_impls.size() != arg_impls.size()) {
-      // TODO: Decide whether to error on this or just treat the parameter list
-      // as non-deduced. For now we treat it as non-deduced.
+    // TODO: Decide whether to error on these or just treat the parameter list
+    // as non-deduced. For now we treat it as non-deduced.
+    if (param_impls.size() != 1 || arg_impls.size() != 1) {
       return;
     }
-    for (auto [param, arg] :
-         llvm::reverse(llvm::zip_equal(param_impls, arg_impls))) {
-      Add(param.specific_id, arg.specific_id, needs_substitution);
+    auto param = param_impls.front();
+    auto arg = arg_impls.front();
+    if (param.interface_id != arg.interface_id) {
+      return;
     }
+    Add(param.specific_id, arg.specific_id, needs_substitution);
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
