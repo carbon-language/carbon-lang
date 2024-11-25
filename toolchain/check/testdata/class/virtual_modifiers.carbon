@@ -68,6 +68,18 @@ fn F() {
   b1.m2 = 4;
 }
 
+// --- todo_impl_without_base_declaration.carbon
+
+package ImplWithoutBaseDeclaration;
+
+base class Base {
+}
+
+class Derived {
+  extend base: Base;
+  impl fn F();
+}
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -400,4 +412,61 @@ fn F() {
 // CHECK:STDOUT:   assign %.loc18_5, %.loc18_9.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_impl_without_base_declaration.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.3: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %.5: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.6: type = struct_type {.<vptr>: %.5, .base: %Base} [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %.loc15: %.4 = base_decl %Base, element1 [template]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .base = %.loc15
+// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   extend name_scope2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F();
 // CHECK:STDOUT:
