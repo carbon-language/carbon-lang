@@ -10,7 +10,7 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant` [SemanticsTodo]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant T` [SemanticsTodo]
 // CHECK:STDERR: impl bool as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~
 impl bool as I {}
