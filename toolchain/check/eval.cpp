@@ -509,9 +509,11 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
   Phase phase = Phase::Template;
-  if (auto aggregate_id =
-          GetConstantValue(eval_context, access_inst.aggregate_id, &phase);
-      aggregate_id.is_valid()) {
+  if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
+                                    &SemIR::AnyAggregateAccess::aggregate_id,
+                                    &phase)) {
+    auto aggregate_id = access_inst.aggregate_id;
+    CARBON_CHECK(aggregate_id.is_valid());
     if (auto aggregate =
             eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(
                 aggregate_id)) {
@@ -526,6 +528,7 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
       CARBON_CHECK(phase != Phase::Template,
                    "Failed to evaluate template constant {0}", inst);
     }
+    return MakeConstantResult(eval_context.context(), access_inst, phase);
   }
   return MakeNonConstantResult(phase);
 }
