@@ -59,6 +59,17 @@ namespace Carbon::SemIR {
   };
 #include "toolchain/sem_ir/inst_kind.def"
 
+// Common representation for declarations describing the foundation type of a
+// class -- either its adapted type or its base class.
+struct AnyFoundationDecl {
+  static constexpr InstKind Kinds[] = {InstKind::AdaptDecl, InstKind::BaseDecl};
+
+  InstKind kind;
+  InstId foundation_type_inst_id;
+  // Kind-specific data.
+  int32_t arg1;
+};
+
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
