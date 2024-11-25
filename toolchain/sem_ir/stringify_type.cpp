@@ -56,6 +56,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
   llvm::SmallVector<Step> steps = {Step{
       .sem_ir = outer_sem_ir, .kind = Step::Inst, .inst_id = outer_inst_id}};
 
+  // Note: The `steps` worklist is a stack and so work is resolved in the
+  // reverse order from the order added.
   auto push_string = [&](const char* string) {
     steps.push_back({.sem_ir = outer_sem_ir,
                      .kind = Step::FixedString,
@@ -84,6 +86,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
 
     const auto& sem_ir = step.sem_ir;
     // Helper for instructions with the current sem_ir.
+    // Note: The `steps` worklist is a stack and so work is resolved in the
+    // reverse order from the order added.
     auto push_inst_id = [&](InstId inst_id) {
       steps.push_back(
           {.sem_ir = sem_ir, .kind = Step::Inst, .inst_id = inst_id});
