@@ -210,7 +210,7 @@ using the following idiom:
 ```cpp
 // HasField<T> is true if T has a `U field` field of type FieldType.
 template <typename T> concept HasField = requires (T x) {
-  { &x.field } -> std::same_as<FieldType T::*>;
+  { &T::field } -> std::same_as<FieldType T::*>;
 };
 ```
 
