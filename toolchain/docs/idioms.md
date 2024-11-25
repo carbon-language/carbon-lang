@@ -277,7 +277,9 @@ static const llvm::ArrayRef<std::byte> entropy_bytes =
 
       // return the value to initialize the variable with
       return bytes;
-    }();  // finish defining the lambda, and then immediately invoke it
+
+      // finish defining the lambda, and then immediately invoke it
+    }();
 ```
 
 It can also be used inside a `CARBON_DCHECK` to avoid computation that is only
