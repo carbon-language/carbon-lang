@@ -194,7 +194,7 @@ class Context {
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
 
-  // Replaces the instruction `inst_id` with `inst, not affecting location.
+  // Replaces the instruction `inst_id` with `inst`, not affecting location.
   // The instruction is required to not change its constant value.
   auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
                                           SemIR::Inst inst) -> void;
