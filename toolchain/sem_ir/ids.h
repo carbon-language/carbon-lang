@@ -39,10 +39,9 @@ struct InstId : public IdBase, public Printable<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
-// BuiltinInst IDs.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
-  static const InstId Builtin##Name;
-#include "toolchain/sem_ir/builtin_inst_kind.def"
+// Builtin inst IDs.
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) static const InstId Builtin##Name;
+#include "toolchain/sem_ir/inst_kind.def"
 
   // The namespace for a `package` expression.
   static const InstId PackageNamespace;
@@ -83,10 +82,10 @@ struct InstId : public IdBase, public Printable<InstId> {
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_INST_KIND_NAME(Name) \
-  constexpr InstId InstId::Builtin##Name =         \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
+  constexpr InstId InstId::Builtin##Name =    \
       InstId::ForBuiltin(BuiltinInstKind::Name);
-#include "toolchain/sem_ir/builtin_inst_kind.def"
+#include "toolchain/sem_ir/inst_kind.def"
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
@@ -212,7 +211,7 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 constexpr ConstantId ConstantId::Error =
-    ConstantId::ForTemplateConstant(InstId::BuiltinError);
+    ConstantId::ForTemplateConstant(InstId::BuiltinErrorInst);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
 // The ID of a EntityName.
@@ -255,6 +254,8 @@ constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
 // arguments passed to them at runtime. In a `call` instruction, a runtime
 // argument will have the position in the argument list corresponding to its
 // runtime parameter index.
+// TODO: Rename this to CallParamIndex, for consistency with the "`Call`
+// parameters" terminology in EntityWithParamsBase.
 struct RuntimeParamIndex : public IndexBase,
                            public Printable<RuntimeParamIndex> {
   // An explicitly invalid index.

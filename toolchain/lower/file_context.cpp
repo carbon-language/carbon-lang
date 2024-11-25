@@ -228,7 +228,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   param_inst_ids.reserve(max_llvm_params);
   auto return_param_id = SemIR::InstId::Invalid;
   if (return_info.has_return_slot()) {
-    param_types.push_back(return_type->getPointerTo());
+    param_types.push_back(
+        llvm::PointerType::get(return_type, /*AddressSpace=*/0));
     return_param_id = sem_ir()
                           .insts()
                           .GetAs<SemIR::ReturnSlot>(function.return_slot_id)
@@ -325,35 +326,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // TODO: This duplicates the mapping between sem_ir instructions and LLVM
   // function parameters that was already computed in BuildFunctionDecl.
   // We should only do that once.
-  auto implicit_param_refs =
-      sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_refs_id);
-  auto param_refs = sem_ir().inst_blocks().GetOrEmpty(function.param_refs_id);
+  auto call_param_ids =
+      sem_ir().inst_blocks().GetOrEmpty(function.call_params_id);
   int param_index = 0;
-  // The SemIR calling-convention parameters of the function, in order of
-  // runtime index. This is a transitional step toward generating this list
-  // in the check phase, which is why we're using the runtime index order
-  // even though it's less convenient for this usage.
-  llvm::SmallVector<SemIR::InstId> calling_convention_param_ids;
-  // This is an upper bound on the size because `self` and the return slot
-  // are the only runtime parameters that don't appear in the explicit
-  // parameter list.
-  calling_convention_param_ids.reserve(param_refs.size() + 2);
-  bool has_return_slot =
-      SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
-          .has_return_slot();
-  for (auto param_ref_id :
-       llvm::concat<const SemIR::InstId>(implicit_param_refs, param_refs)) {
-    auto param_info =
-        SemIR::Function::GetParamFromParamRefId(sem_ir(), param_ref_id);
-    if (param_info.inst.runtime_index.is_valid()) {
-      calling_convention_param_ids.push_back(param_info.inst_id);
-    }
-  }
-  if (has_return_slot) {
-    auto return_slot =
-        sem_ir().insts().GetAs<SemIR::ReturnSlot>(function.return_slot_id);
-    calling_convention_param_ids.push_back(return_slot.storage_id);
-  }
 
   // TODO: Find a way to ensure this code and the function-call lowering use
   // the same parameter ordering.
@@ -374,16 +349,23 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of calling_convention_param_id that is in sequential order.
-  llvm::ArrayRef<SemIR::InstId> sequential_param_ids =
-      calling_convention_param_ids;
-
-  // The LLVM calling convention has the return slot first rather than last.
-  if (has_return_slot) {
-    lower_param(calling_convention_param_ids.back());
-
-    sequential_param_ids = sequential_param_ids.drop_back();
+  // The subset of call_param_ids that is already in the order that the LLVM
+  // calling convention expects.
+  llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
+  if (function.return_slot_id.is_valid()) {
+    // The LLVM calling convention has the return slot first rather than last.
+    // Note that this queries whether there is a return slot at the LLVM level,
+    // whereas `function.return_slot_id.is_valid()` queries whether there is a
+    // return slot at the SemIR level.
+    if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
+            .has_return_slot()) {
+      lower_param(call_param_ids.back());
+    }
+    sequential_param_ids = call_param_ids.drop_back();
+  } else {
+    sequential_param_ids = call_param_ids;
   }
+
   for (auto param_id : sequential_param_ids) {
     lower_param(param_id);
   }
@@ -459,48 +441,6 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       llvm::DISubprogram::SPFlagDefinition);
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
-    -> llvm::Type* {
-  return llvm::ArrayType::get(
-      context.GetType(inst.element_type_id),
-      context.sem_ir().GetArrayBoundValue(inst.bound_id));
-}
-
-static auto BuildTypeForInst(FileContext& context, SemIR::BuiltinInst inst)
-    -> llvm::Type* {
-  switch (inst.builtin_inst_kind) {
-    case SemIR::BuiltinInstKind::Invalid:
-    case SemIR::BuiltinInstKind::AutoType:
-      CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
-    case SemIR::BuiltinInstKind::Error:
-      // This is a complete type but uses of it should never be lowered.
-      return nullptr;
-    case SemIR::BuiltinInstKind::TypeType:
-      return context.GetTypeType();
-    case SemIR::BuiltinInstKind::FloatType:
-      return llvm::Type::getDoubleTy(context.llvm_context());
-    case SemIR::BuiltinInstKind::IntType:
-      return llvm::Type::getInt32Ty(context.llvm_context());
-    case SemIR::BuiltinInstKind::BoolType:
-      // TODO: We may want to have different representations for `bool`
-      // storage
-      // (`i8`) versus for `bool` values (`i1`).
-      return llvm::Type::getInt1Ty(context.llvm_context());
-    case SemIR::BuiltinInstKind::SpecificFunctionType:
-    case SemIR::BuiltinInstKind::StringType:
-      // TODO: Decide how we want to represent `StringType`.
-      return llvm::PointerType::get(context.llvm_context(), 0);
-    case SemIR::BuiltinInstKind::BoundMethodType:
-    case SemIR::BuiltinInstKind::IntLiteralType:
-    case SemIR::BuiltinInstKind::NamespaceType:
-    case SemIR::BuiltinInstKind::WitnessType:
-      // Return an empty struct as a placeholder.
-      return llvm::StructType::get(context.llvm_context());
-    case SemIR::BuiltinInstKind::VtableType:
-      return llvm::Type::getVoidTy(context.llvm_context());
-  }
-}
-
 // BuildTypeForInst is used to construct types for FileContext::BuildType below.
 // Implementations return the LLVM type for the instruction. This first overload
 // is the fallback handler for non-type instructions.
@@ -509,6 +449,25 @@ template <typename InstT>
 static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
     -> llvm::Type* {
   CARBON_FATAL("Cannot use inst as type: {0}", inst);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
+    -> llvm::Type* {
+  return llvm::ArrayType::get(
+      context.GetType(inst.element_type_id),
+      context.sem_ir().GetArrayBoundValue(inst.bound_id));
+}
+
+static auto BuildTypeForInst(FileContext& /*context*/, SemIR::AutoType inst)
+    -> llvm::Type* {
+  CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
+    -> llvm::Type* {
+  // TODO: We may want to have different representations for `bool` storage
+  // (`i8`) versus for `bool` values (`i1`).
+  return llvm::Type::getInt1Ty(context.llvm_context());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
@@ -525,6 +484,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
   return context.GetType(inst.inner_id);
 }
 
+static auto BuildTypeForInst(FileContext& /*context*/,
+                             SemIR::ErrorInst /*inst*/) -> llvm::Type* {
+  // This is a complete type but uses of it should never be lowered.
+  return nullptr;
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
     -> llvm::Type* {
   // TODO: Handle different sizes.
@@ -539,6 +504,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
   return llvm::IntegerType::get(
       context.llvm_context(),
       context.sem_ir().ints().Get(width->int_id).getZExtValue());
+}
+
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::LegacyFloatType /*inst*/) -> llvm::Type* {
+  return llvm::Type::getDoubleTy(context.llvm_context());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
@@ -572,11 +542,41 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   return llvm::StructType::get(context.llvm_context(), subtypes);
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
+    -> llvm::Type* {
+  return context.GetTypeType();
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
+    -> llvm::Type* {
+  return llvm::Type::getVoidTy(context.llvm_context());
+}
+
+template <typename InstT>
+  requires(InstT::Kind.template IsAnyOf<SemIR::SpecificFunctionType,
+                                        SemIR::StringType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // TODO: Decide how we want to represent `StringType`.
+  return llvm::PointerType::get(context.llvm_context(), 0);
+}
+
+template <typename InstT>
+  requires(InstT::Kind
+               .template IsAnyOf<SemIR::BoundMethodType, SemIR::IntLiteralType,
+                                 SemIR::NamespaceType, SemIR::WitnessType>())
+static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+    -> llvm::Type* {
+  // Return an empty struct as a placeholder.
+  return llvm::StructType::get(context.llvm_context());
+}
+
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
-           SemIR::GenericClassType, SemIR::GenericInterfaceType,
-           SemIR::UnboundElementType, SemIR::WhereExpr>())
+           SemIR::AssociatedEntityType, SemIR::FacetAccessType,
+           SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+           SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+           SemIR::WhereExpr>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

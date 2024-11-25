@@ -17,7 +17,6 @@ fn Six() -> x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

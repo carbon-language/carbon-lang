@@ -29,7 +29,7 @@ interface Generic(T:! type);
 interface Generic {}
 
 interface DifferentParams(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^~~~~~
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
@@ -165,7 +165,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.1(@.1.%T.loc19_22.2) {
+// CHECK:STDOUT: specific @.1(%T.loc19_22.2) {
 // CHECK:STDOUT:   %T.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT:   %T.patt.loc19_22.2 => constants.%T.1
 // CHECK:STDOUT: }
@@ -185,7 +185,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @.3(@.3.%T.loc38_27.2) {
+// CHECK:STDOUT: specific @.3(%T.loc38_27.2) {
 // CHECK:STDOUT:   %T.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT:   %T.patt.loc38_27.2 => constants.%T.2
 // CHECK:STDOUT: }

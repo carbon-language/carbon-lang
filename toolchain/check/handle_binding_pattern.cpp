@@ -201,10 +201,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
       }
       if (had_error) {
-        context.AddNameToLookup(name_id, SemIR::InstId::BuiltinError);
+        context.AddNameToLookup(name_id, SemIR::InstId::BuiltinErrorInst);
         // Replace the parameter with an invalid instruction so that we don't
         // try constructing a generic based on it.
-        param_pattern_id = SemIR::InstId::BuiltinError;
+        param_pattern_id = SemIR::InstId::BuiltinErrorInst;
       } else {
         auto bind_id = context.AddInstInNoBlock(
             make_bind_name(cast_type_id, SemIR::InstId::Invalid));

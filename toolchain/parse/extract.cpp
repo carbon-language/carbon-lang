@@ -71,7 +71,7 @@ class NodeExtractor {
 
   // Extracts a tuple-like type `T` by extracting its components and then
   // assembling a `T` value.
-  template <typename T, typename... U, std::size_t... Index>
+  template <typename T, typename... U, size_t... Index>
   auto ExtractTupleLikeType(std::index_sequence<Index...> /*indices*/,
                             std::tuple<U...>* /*type*/) -> std::optional<T>;
 
@@ -334,7 +334,7 @@ struct Extractable<Lex::TokenIndex> {
   }
 };
 
-template <typename T, typename... U, std::size_t... Index>
+template <typename T, typename... U, size_t... Index>
 auto NodeExtractor::ExtractTupleLikeType(
     std::index_sequence<Index...> /*indices*/, std::tuple<U...>* /*type*/)
     -> std::optional<T> {

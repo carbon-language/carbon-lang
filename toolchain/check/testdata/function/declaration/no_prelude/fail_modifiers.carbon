@@ -94,7 +94,6 @@ extern private fn ExternOrderAndConflict() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %WrongOrder.type: type = fn_type @WrongOrder [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %WrongOrder: %WrongOrder.type = struct_value () [template]
 // CHECK:STDOUT:   %DuplicateVirtual.type: type = fn_type @DuplicateVirtual [template]
 // CHECK:STDOUT:   %DuplicateVirtual: %DuplicateVirtual.type = struct_value () [template]

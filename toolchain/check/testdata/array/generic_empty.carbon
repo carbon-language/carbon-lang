@@ -21,9 +21,8 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %.2: type = array_type %.1, %T [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [symbolic]
 // CHECK:STDOUT:   %array: %.2 = tuple_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,7 +59,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc13_16: i32 = int_value 0 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc13_16: Core.IntLiteral = int_value 0 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc13_17.1: type = array_type %.loc13_16, %T [symbolic = %.loc13_17.2 (constants.%.2)]
 // CHECK:STDOUT:     %arr.var: ref @G.%.loc13_17.2 (%.2) = var arr
 // CHECK:STDOUT:     %arr: ref @G.%.loc13_17.2 (%.2) = bind_name arr, %arr.var

@@ -98,7 +98,7 @@ class Sieve {
   }
 
   fn MarkMultiplesNotPrime[addr self: Self*](p: i32) {
-    var n: i32 = 2 * p;
+    var n: i32 = p * 2;
     while (n < 1000) {
       self->is_prime[n] = false;
       n += p;

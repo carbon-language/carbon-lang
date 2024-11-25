@@ -41,10 +41,10 @@ DiagnosticConsumer.
 DiagnosticConsumers handle output of diagnostic messages after they've been
 formatted by an Emitter. Important consumers are:
 
--   [ConsoleDiagnosticConsumer](/toolchain/diagnostics/diagnostic_emitter.h):
+-   [ConsoleDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.cpp):
     prints diagnostics to console.
 
--   [ErrorTrackingDiagnosticConsumer](/toolchain/diagnostics/diagnostic_emitter.h):
+-   [ErrorTrackingDiagnosticConsumer](/toolchain/diagnostics/diagnostic_consumer.h):
     counts the number of errors produced, particularly so that it can be
     determined whether any errors were encountered.
 
@@ -79,7 +79,7 @@ Here, `CARBON_DIAGNOSTIC` defines a static instance of a diagnostic named
 `InvalidCode` with the associated severity (`Error` or `Warning`).
 
 The `Emit` call produces a single instance of the diagnostic. When emitted,
-`"Code is invalid"` will be the message used. The type of `location` depends on
+`"code is invalid"` will be the message used. The type of `location` depends on
 the `DiagnosticEmitter`.
 
 A diagnostic with an argument looks like:

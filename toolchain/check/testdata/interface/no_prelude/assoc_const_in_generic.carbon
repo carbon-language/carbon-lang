@@ -165,7 +165,7 @@ fn H() {
 // CHECK:STDOUT:   %U.patt.loc12_8.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@I.%T.loc11_13.2) {
+// CHECK:STDOUT: specific @I(%T.loc11_13.2) {
 // CHECK:STDOUT:   %T.loc11_13.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }

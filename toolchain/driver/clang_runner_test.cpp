@@ -58,7 +58,8 @@ TEST(ClangRunnerTest, Version) {
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner(&install_paths, target, &test_os);
+  auto vfs = llvm::vfs::getRealFileSystem();
+  ClangRunner runner(&install_paths, target, vfs, &test_os);
 
   std::string out;
   std::string err;
@@ -129,7 +130,8 @@ TEST(ClangRunnerTest, LinkCommandEcho) {
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner(&install_paths, target, &verbose_os);
+  auto vfs = llvm::vfs::getRealFileSystem();
+  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,
@@ -162,7 +164,8 @@ TEST(ClangRunnerTest, DashC) {
   std::string verbose_out;
   llvm::raw_string_ostream verbose_os(verbose_out);
   std::string target = llvm::sys::getDefaultTargetTriple();
-  ClangRunner runner(&install_paths, target, &verbose_os);
+  auto vfs = llvm::vfs::getRealFileSystem();
+  ClangRunner runner(&install_paths, target, vfs, &verbose_os);
   std::string out;
   std::string err;
   EXPECT_TRUE(RunWithCapturedOutput(out, err,

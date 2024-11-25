@@ -113,6 +113,9 @@ runs:
         # First fetch the relevant base into the git repository.
         git fetch --depth=1 origin $GIT_BASE_SHA
 
+        # Do a retried query to try to download things for target-determinator.
+        ./scripts/run_bazel.py --attempts=5 cquery //... > /dev/null
+
         # Then use `target-determinator` as wrapped by our script.
         ./scripts/target_determinator.py $GIT_BASE_SHA >$TARGETS_FILE
 

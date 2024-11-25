@@ -13,7 +13,7 @@ namespace Carbon {
 
 struct DriverEnv {
   // The filesystem for source code.
-  llvm::vfs::FileSystem& fs;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
 
   // Helper to locate the toolchain installation's files.
   const InstallPaths* installation;

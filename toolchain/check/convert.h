@@ -102,7 +102,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {
-  // The converted expression of type `type`, or `InstId::BuiltinError`.
+  // The converted expression of type `type`, or `InstId::BuiltinErrorInst`.
   SemIR::InstId inst_id;
   // The corresponding type, or `TypeId::Error`.
   SemIR::TypeId type_id;

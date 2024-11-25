@@ -1057,10 +1057,6 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
           SemIR::InstId::BuiltinIntLiteralType);
     }
 
-    case SemIR::BuiltinFunctionKind::IntMakeType32: {
-      return context.constant_values().Get(SemIR::InstId::BuiltinIntType);
-    }
-
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned: {
       return MakeIntTypeResult(context, loc, SemIR::IntKind::Signed, arg_ids[0],
                                phase);
@@ -1079,7 +1075,8 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
       if (!ValidateFloatBitWidth(context, loc, arg_ids[0])) {
         return SemIR::ConstantId::Error;
       }
-      return context.constant_values().Get(SemIR::InstId::BuiltinFloatType);
+      return context.constant_values().Get(
+          SemIR::InstId::BuiltinLegacyFloatType);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
@@ -1088,6 +1085,9 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
 
     // Integer conversions.
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+      if (phase == Phase::Symbolic) {
+        return MakeConstantResult(context, call, phase);
+      }
       return PerformCheckedIntConvert(context, loc, arg_ids[0], call.type_id);
     }
 
@@ -1330,6 +1330,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::CompleteTypeWitness::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
+    case SemIR::FacetValue::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::FacetValue::type_id,
+                                        &SemIR::FacetValue::type_inst_id,
+                                        &SemIR::FacetValue::witness_inst_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
@@ -1402,7 +1407,18 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
-    case SemIR::BuiltinInst::Kind:
+    case SemIR::AutoType::Kind:
+    case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
+    case SemIR::ErrorInst::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::LegacyFloatType::Kind:
+    case SemIR::NamespaceType::Kind:
+    case SemIR::SpecificFunctionType::Kind:
+    case SemIR::StringType::Kind:
+    case SemIR::TypeType::Kind:
+    case SemIR::VtableType::Kind:
+    case SemIR::WitnessType::Kind:
       // Builtins are always template constants.
       return MakeConstantResult(eval_context.context(), inst, Phase::Template);
 
@@ -1597,11 +1613,21 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::ValueOfInitializer typed_inst): {
       return eval_context.GetConstantValue(typed_inst.init_id);
     }
-    case CARBON_KIND(SemIR::FacetTypeAccess typed_inst): {
-      // TODO: Once we start tracking the witness in the facet value, remove it
-      // here. For now, we model a facet value as just a type.
-      return eval_context.GetConstantValue(typed_inst.facet_id);
+    case CARBON_KIND(SemIR::FacetAccessType typed_inst): {
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(
+              eval_context, &typed_inst,
+              &SemIR::FacetAccessType::facet_value_inst_id, &phase)) {
+        if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+                typed_inst.facet_value_inst_id)) {
+          return eval_context.constant_values().Get(facet_value->type_inst_id);
+        }
+        return MakeConstantResult(eval_context.context(), typed_inst, phase);
+      } else {
+        return MakeNonConstantResult(phase);
+      }
     }
+
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       Phase phase = Phase::Template;
       SemIR::TypeId base_facet_type_id =
@@ -1717,7 +1743,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
     result[i] = context.constant_values().GetInstId(const_id);
 
     // TODO: If this becomes possible through monomorphization failure, produce
-    // a diagnostic and put `SemIR::InstId::BuiltinError` in the table entry.
+    // a diagnostic and put `SemIR::InstId::BuiltinErrorInst` in the table
+    // entry.
     CARBON_CHECK(result[i].is_valid());
   }
 

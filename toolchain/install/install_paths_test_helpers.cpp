@@ -10,8 +10,9 @@ namespace Carbon::Testing {
 
 // Prepares the VFS with prelude files from the real filesystem. Primarily for
 // tests.
-auto AddPreludeFilesToVfs(InstallPaths install_paths,
-                          llvm::vfs::InMemoryFileSystem* vfs) -> void {
+auto AddPreludeFilesToVfs(
+    InstallPaths install_paths,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& vfs) -> void {
   // Load the prelude into the test VFS.
   auto real_fs = llvm::vfs::getRealFileSystem();
   auto prelude = install_paths.ReadPreludeManifest();

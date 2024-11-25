@@ -21,18 +21,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %.2: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%.1, %.2) [symbolic]
-// CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%.1, %T) [symbolic]
-// CHECK:STDOUT:   %.3: type = ptr_type %tuple.type.3 [symbolic]
 // CHECK:STDOUT:   %.4: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %.5: i32 = int_value 5 [template]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %.6: type = array_type %.5, %T [symbolic]
-// CHECK:STDOUT:   %.7: type = ptr_type %.6 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,7 +79,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %v.var: ref @F.%.loc14_16.2 (%.4) = var v
 // CHECK:STDOUT:     %v: ref @F.%.loc14_16.2 (%.4) = bind_name v, %v.var
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc15_14: i32 = int_value 5 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc15_14: Core.IntLiteral = int_value 5 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_15.1: type = array_type %.loc15_14, %T [symbolic = %.loc15_15.2 (constants.%.6)]
 // CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.6) = var w
 // CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.6) = bind_name w, %w.var

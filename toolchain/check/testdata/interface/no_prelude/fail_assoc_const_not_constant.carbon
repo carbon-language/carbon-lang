@@ -13,7 +13,7 @@ interface I {
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+3]]:10: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:          ^~~
   let a: i32;
@@ -30,7 +30,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,6 +50,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %.loc19: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

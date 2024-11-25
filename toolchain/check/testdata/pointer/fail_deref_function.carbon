@@ -24,7 +24,6 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,6 +49,7 @@ fn A() {
 // CHECK:STDOUT:   %.loc16: ref <error> = deref <error>
 // CHECK:STDOUT:   %A.ref.loc20: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc20: ref <error> = deref <error>
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

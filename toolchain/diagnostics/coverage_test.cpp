@@ -29,10 +29,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::ErrorStattingFile,
     DiagnosticKind::FileTooLarge,
 
-    // Int literals are currently limited to i32. Once that's fixed, this
-    // should be tested.
-    DiagnosticKind::ArrayBoundTooLarge,
-
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
     DiagnosticKind::TooManyTokens,

@@ -69,7 +69,6 @@ fn NS();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
 // CHECK:STDOUT:   %.2: %.type.2 = struct_value () [template]

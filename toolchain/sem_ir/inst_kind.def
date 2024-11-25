@@ -10,10 +10,44 @@
 // This macro should be defined before including this header:
 // - CARBON_SEM_IR_INST_KIND(Name)
 //   Invoked for each kind of semantic instruction.
+//
+// Temporarily, we have CARBON_SEM_IR_BUILTIN_INST_KIND too:
+//
+// - CARBON_SEM_IR_BUILTIN_INST_KIND(Name)
+//   Defines a non-Invalid builtin type. Falls back to CARBON_SEM_IR_INST_KIND
+//   if not defined.
+//
+// TODO: Merge builtin instructions into the standard CARBON_SEM_IR_INST_KIND,
+// tracking the "builtin" annotation separately. This approach is used for
+// legacy compatibility.
+
+// If CARBON_SEM_IR_BUILTIN_INST_KIND is missing, default to
+// CARBON_SEM_IR_INST_KIND. However, if it's provided, make
+// CARBON_SEM_IR_INST_KIND optional. Per the above TODO, this is temporary.
+#ifndef CARBON_SEM_IR_BUILTIN_INST_KIND
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) CARBON_SEM_IR_INST_KIND(Name)
+#else
+#ifndef CARBON_SEM_IR_INST_KIND
+#define CARBON_SEM_IR_INST_KIND(Name)
+#endif
+#endif
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
 #endif
+
+CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(ErrorInst)
+CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(IntLiteralType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(LegacyFloatType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(StringType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(BoundMethodType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(SpecificFunctionType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(WitnessType)
+CARBON_SEM_IR_BUILTIN_INST_KIND(VtableType)
 
 // For each instruction kind declared here there is a matching definition in
 // `typed_insts.h`.
@@ -41,7 +75,6 @@ CARBON_SEM_IR_INST_KIND(BoundMethod)
 CARBON_SEM_IR_INST_KIND(Branch)
 CARBON_SEM_IR_INST_KIND(BranchIf)
 CARBON_SEM_IR_INST_KIND(BranchWithArg)
-CARBON_SEM_IR_INST_KIND(BuiltinInst)
 CARBON_SEM_IR_INST_KIND(Call)
 CARBON_SEM_IR_INST_KIND(ClassDecl)
 CARBON_SEM_IR_INST_KIND(ClassElementAccess)
@@ -51,8 +84,9 @@ CARBON_SEM_IR_INST_KIND(CompleteTypeWitness)
 CARBON_SEM_IR_INST_KIND(ConstType)
 CARBON_SEM_IR_INST_KIND(Converted)
 CARBON_SEM_IR_INST_KIND(Deref)
+CARBON_SEM_IR_INST_KIND(FacetAccessType)
 CARBON_SEM_IR_INST_KIND(FacetType)
-CARBON_SEM_IR_INST_KIND(FacetTypeAccess)
+CARBON_SEM_IR_INST_KIND(FacetValue)
 CARBON_SEM_IR_INST_KIND(FieldDecl)
 CARBON_SEM_IR_INST_KIND(FloatLiteral)
 CARBON_SEM_IR_INST_KIND(FloatType)
@@ -109,3 +143,4 @@ CARBON_SEM_IR_INST_KIND(VarStorage)
 CARBON_SEM_IR_INST_KIND(WhereExpr)
 
 #undef CARBON_SEM_IR_INST_KIND
+#undef CARBON_SEM_IR_BUILTIN_INST_KIND
