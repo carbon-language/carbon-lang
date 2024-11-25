@@ -576,7 +576,6 @@ static auto CheckCompleteAdapterClassType(Context& context,
   }
 
   auto field_decls = context.field_decls_stack().PeekArray();
-  context.field_decls_stack().PopArray();
   if (!field_decls.empty()) {
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
     CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
@@ -652,7 +651,6 @@ static auto AddStructTypeFields(
   }
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
-  context.field_decls_stack().PopArray();
   return fields_id;
 }
 
@@ -717,6 +715,7 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   class_info.complete_type_witness_id = complete_type_witness_id;
 
   context.inst_block_stack().Pop();
+  context.field_decls_stack().PopArray();
 
   FinishGenericDefinition(context, class_info.generic_id);
 
