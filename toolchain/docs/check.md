@@ -113,7 +113,7 @@ stable index across `SemIR` instances.
 
 The kind-specific members on a typed instruction struct can be of any type
 listed in the `SemIR::IdKind` enumeration defined in
-[sem_ir/id_kinds.h](/toolchain/sem_ir/id_kinds.h). The most commonly used kinds
+[sem_ir/id_kind.h](/toolchain/sem_ir/id_kind.h). The most commonly used kinds
 refer to other instructions:
 
 -   `SemIR::InstId`: Refers to a specific instance of an instruction. For
