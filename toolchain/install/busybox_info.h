@@ -24,8 +24,16 @@ struct BusyboxInfo {
   std::optional<std::string> mode;
 };
 
-// Returns the busybox information, given argv[0]. This primarily handles
-// resolving symlinks that point at the busybox.
+// Returns the busybox information, given argv[0].
+//
+// Extracts the desired mode for the busybox from the initial command name.
+//
+// Locates the installed busybox binary both by searching from the command name
+// based on the expected structure of the installation, and resolving symlinks.
+// It sets the `bin_path` to the most consistent busybox binary found for the
+// initial command.
+//
+// If unable to locate a plausible busybox binary, returns an error instead.
 inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
