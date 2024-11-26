@@ -512,7 +512,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
-  if (!context.struct_type_fields_stack().PeekArray().empty()) {
+  if (!context.field_decls_stack().PeekArray().empty()) {
     // TODO: Add note that includes the first field location as an example.
     CARBON_DIAGNOSTIC(
         BaseDeclAfterFieldDecl, Error,
