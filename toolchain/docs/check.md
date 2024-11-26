@@ -119,9 +119,9 @@ refer to other instructions:
 -   `SemIR::InstId`: Refers to a specific instance of an instruction. For
     example, this should be used if the operand may have side-effects or a
     meaningful location.
--   `SemIR::ConstantId`: An abstract reference to a known constant value.
-    This should be used instead of `InstId` if you care only about the identity
-    of the value and not how it was formed.
+-   `SemIR::ConstantId`: An abstract reference to a known constant value. This
+    should be used instead of `InstId` if you care only about the identity of
+    the value and not how it was formed.
 -   `SemIR::TypeId`: An abstract reference to a known constant value of type
     `type`. This should be used instead of `ConstantId` if you know that the
     type of the constant value is always `type` (or the value is the "error"
