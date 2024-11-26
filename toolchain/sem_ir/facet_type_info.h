@@ -77,6 +77,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   auto operator==(const FacetTypeInfo& rhs) const -> bool {
     return impls_constraints == rhs.impls_constraints &&
+           rewrite_constraints == rhs.rewrite_constraints &&
            other_requirements == rhs.other_requirements;
   }
 };
@@ -86,6 +87,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
+  hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
   hasher.HashRaw(value.other_requirements);
   return static_cast<HashCode>(hasher);
 }
