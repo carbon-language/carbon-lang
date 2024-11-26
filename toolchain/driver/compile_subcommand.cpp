@@ -270,7 +270,7 @@ Excludes files with the given prefix from dumps.
       {
           .name = "debug-info",
           .help = R"""(
-Emit DWARF debug information.
+Whether to emit DWARF debug information.
 )""",
       },
       [&](auto& arg_b) {
