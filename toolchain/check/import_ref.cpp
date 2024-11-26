@@ -271,8 +271,10 @@ class ImportContext {
   // Returns the local file's import ID for the IR we are importing from.
   auto import_ir_id() -> SemIR::ImportIRId { return import_ir_id_; }
 
-  // A value store for local constant values of imported instructions.
-  auto import_ir_constant_values() -> decltype(auto) {
+  // A value store for local constant values of imported instructions. This maps
+  // from `InstId`s in the import IR to corresponding `ConstantId`s in the local
+  // IR.
+  auto local_constant_values_for_import_insts() -> decltype(auto) {
     return local_context().import_ir_constant_values()[import_ir_id_.index];
   }
 
@@ -455,7 +457,7 @@ class ImportRefResolver : public ImportContext {
         work_stack_.pop_back();
       }
     }
-    auto constant_id = import_ir_constant_values().Get(inst_id);
+    auto constant_id = local_constant_values_for_import_insts().Get(inst_id);
     CARBON_CHECK(constant_id.is_valid());
     return constant_id;
   }
@@ -506,7 +508,7 @@ class ImportRefResolver : public ImportContext {
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
   auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = import_ir_constant_values().Get(inst_id);
+    auto const_id = local_constant_values_for_import_insts().Get(inst_id);
     if (!const_id.is_valid()) {
       work_stack_.push_back({.inst_id = inst_id});
     }
@@ -541,7 +543,8 @@ class ImportRefResolver : public ImportContext {
   auto FindResolvedConstId(SemIR::InstId inst_id) -> ResolvedConstId {
     ResolvedConstId result;
 
-    if (auto existing_const_id = import_ir_constant_values().Get(inst_id);
+    if (auto existing_const_id =
+            local_constant_values_for_import_insts().Get(inst_id);
         existing_const_id.is_valid()) {
       result.const_id = existing_const_id;
       return result;
@@ -595,7 +598,7 @@ class ImportRefResolver : public ImportContext {
   auto SetResolvedConstId(SemIR::InstId inst_id,
                           llvm::ArrayRef<SemIR::ImportIRInst> indirect_insts,
                           SemIR::ConstantId const_id) -> void {
-    import_ir_constant_values().Set(inst_id, const_id);
+    local_constant_values_for_import_insts().Set(inst_id, const_id);
     for (auto indirect_inst : indirect_insts) {
       local_context()
           .import_ir_constant_values()[indirect_inst.ir_id.index]
@@ -667,7 +670,8 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
 static auto GetLocalConstantIdChecked(ImportContext& context,
                                       SemIR::InstId inst_id)
     -> SemIR::ConstantId {
-  auto result_id = context.import_ir_constant_values().Get(inst_id);
+  auto result_id =
+      context.local_constant_values_for_import_insts().Get(inst_id);
   CARBON_CHECK(result_id.is_valid());
   return result_id;
 }
@@ -1177,7 +1181,7 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
       // If the namespace has already been imported, we can use its constant.
       // However, if it hasn't, we use Invalid instead of adding it to the
       // work stack. That's expected to be okay when resolving references.
-      const_id = resolver.import_ir_constant_values().Get(inst_id);
+      const_id = resolver.local_constant_values_for_import_insts().Get(inst_id);
       break;
 
     default:
