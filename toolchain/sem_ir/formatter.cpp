@@ -1049,7 +1049,7 @@ class FormatterImpl {
       }
     }
 
-    if (info.requirement_block_id.is_valid()) {
+    if (info.other_requirements) {
       // TODO: Include specifics.
       out_ << " where TODO";
     }

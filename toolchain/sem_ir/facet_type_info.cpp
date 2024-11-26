@@ -29,8 +29,8 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (requirement_block_id.is_valid()) {
-    out << outer_sep << "requirements: " << requirement_block_id;
+  if (other_requirements) {
+    out << outer_sep << "+ TODO requirements";
   }
   out << "}";
 }

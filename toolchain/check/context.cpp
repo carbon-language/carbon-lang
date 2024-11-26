@@ -1290,9 +1290,9 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
 auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
                                      SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  SemIR::FacetTypeId facet_type_id = facet_types().Add(SemIR::FacetTypeInfo{
-      .impls_constraints = {{interface_id, specific_id}},
-      .requirement_block_id = SemIR::InstBlockId::Invalid});
+  SemIR::FacetTypeId facet_type_id = facet_types().Add(
+      SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
+                           .other_requirements = false});
   return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }
 

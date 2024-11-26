@@ -58,8 +58,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   llvm::SmallVector<RewriteConstraint> rewrite_constraints;
 
   // TODO: Add same-type constraints.
-  // TODO: Remove `requirement_block_id`.
-  InstBlockId requirement_block_id;
+  // TODO: Remove once all requirements are supported.
+  bool other_requirements;
   // TODO: Add optional resolved facet type.
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -77,7 +77,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   auto operator==(const FacetTypeInfo& rhs) const -> bool {
     return impls_constraints == rhs.impls_constraints &&
-           requirement_block_id == rhs.requirement_block_id;
+           other_requirements == rhs.other_requirements;
   }
 };
 
@@ -86,7 +86,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
   hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
-  hasher.HashRaw(value.requirement_block_id);
+  hasher.HashRaw(value.other_requirements);
   return static_cast<HashCode>(hasher);
 }
 

@@ -212,7 +212,7 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         // TODO: Also output other restrictions from facet_type_info.
         if (step.index + 1 >=
                 static_cast<int>(facet_type_info.impls_constraints.size()) &&
-            facet_type_info.requirement_block_id.is_valid()) {
+            facet_type_info.other_requirements) {
           out << " where...";
         }
         break;

@@ -1648,8 +1648,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
       SemIR::Inst base_facet_inst =
           eval_context.GetConstantValueAsInst(base_facet_type_id);
-      SemIR::FacetTypeInfo info = {.requirement_block_id =
-                                       SemIR::InstBlockId::Invalid};
+      SemIR::FacetTypeInfo info = {.other_requirements = false};
       // `where` provides that the base facet is an error, `type`, or a facet
       // type.
       if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
@@ -1663,7 +1662,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                      base_facet_inst);
       }
       // TODO: Combine other requirements, and then process & canonicalize them.
-      info.requirement_block_id = typed_inst.requirements_id;
+      info.other_requirements = typed_inst.requirements_id.is_valid();
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 
