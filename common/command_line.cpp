@@ -55,6 +55,21 @@ auto operator<<(llvm::raw_ostream& output, CommandKind kind)
   }
   CARBON_FATAL("Corrupt command kind!");
 }
+
+template <typename T, typename ToPrintable>
+static auto PrintListOfAlternatives(llvm::raw_ostream& output,
+                                    llvm::ArrayRef<T> alternatives,
+                                    ToPrintable to_printable) -> void {
+  for (const auto& alternative : alternatives.drop_back()) {
+    output << "`" << to_printable(alternative)
+           << (alternatives.size() > 2 ? "`, " : "` ");
+  }
+  if (alternatives.size() > 1) {
+    output << "or ";
+  }
+  output << "`" << to_printable(alternatives.back()) << "`";
+}
+
 Arg::Arg(ArgInfo info) : info(info) {}
 
 Arg::~Arg() {
@@ -328,14 +343,10 @@ void MetaPrinter::PrintVersion(const Command& command) const {
 }
 
 void MetaPrinter::PrintSubcommands(const Command& command) const {
-  for (const auto& subcommand :
-       llvm::ArrayRef(command.subcommands).drop_back()) {
-    *out_ << "`" << subcommand->info.name << "`, ";
-  }
-  if (command.subcommands.size() > 1) {
-    *out_ << "or ";
-  }
-  *out_ << "`" << command.subcommands.back()->info.name << "`";
+  PrintListOfAlternatives(*out_, llvm::ArrayRef(command.subcommands),
+                          [](const std::unique_ptr<Command>& subcommand) {
+                            return subcommand->info.name;
+                          });
 }
 
 void MetaPrinter::PrintRawVersion(const Command& command,
@@ -903,13 +914,8 @@ auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     error << "` has an invalid value `";
     llvm::printEscapedString(value, error);
     error << "`; valid values are: ";
-    for (auto value_string : arg.value_strings.drop_back()) {
-      error << "`" << value_string << "`, ";
-    }
-    if (arg.value_strings.size() > 1) {
-      error << "or ";
-    }
-    error << "`" << arg.value_strings.back() << "`";
+    PrintListOfAlternatives(error, arg.value_strings,
+                            [](llvm::StringRef x) { return x; });
     return Error(error_str);
   }
   return Success();
