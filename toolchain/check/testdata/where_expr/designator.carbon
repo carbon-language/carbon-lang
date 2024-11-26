@@ -226,15 +226,14 @@ class D {
 // CHECK:STDOUT: --- fail_wrong_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %J.type.1: type = facet_type <@J> [template]
-// CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type.1, type [template]
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
+// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @J.%Member [template]
-// CHECK:STDOUT:   %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
-// CHECK:STDOUT:   %W: %J.type.2 = bind_symbolic_name W, 0 [symbolic]
-// CHECK:STDOUT:   %W.patt: %J.type.2 = symbolic_binding_pattern W, 0 [symbolic]
+// CHECK:STDOUT:   %W: <error> = bind_symbolic_name W, 0 [symbolic]
+// CHECK:STDOUT:   %W.patt: <error> = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMismatch.type: type = fn_type @PeriodMismatch [template]
 // CHECK:STDOUT:   %PeriodMismatch: %PeriodMismatch.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -253,26 +252,26 @@ class D {
 // CHECK:STDOUT:     .PeriodMismatch = %PeriodMismatch.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type.1] {} {}
+// CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   %PeriodMismatch.decl: %PeriodMismatch.type = fn_decl @PeriodMismatch [template = constants.%PeriodMismatch] {
-// CHECK:STDOUT:     %W.patt.loc12_19.1: %J.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %J.type.2 = value_param_pattern %W.patt.loc12_19.1, runtime_param<invalid> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt.loc12_19.1: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc12_19.1, runtime_param<invalid> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type.1]
-// CHECK:STDOUT:     %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: %J.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc12_44: %.3 = struct_literal ()
-// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%J.type.2] {
+// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.param: %J.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc12_19.1: %J.type.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
+// CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %W.loc12_19.1: <error> = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc12_19.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
-// CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
 // CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
 // CHECK:STDOUT:
@@ -282,11 +281,11 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12_19.1: %J.type.2) {
-// CHECK:STDOUT:   %W.loc12_19.2: %J.type.2 = bind_symbolic_name W, 0 [symbolic = %W.loc12_19.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc12_19.2: %J.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
+// CHECK:STDOUT: generic fn @PeriodMismatch(%W.loc12_19.1: <error>) {
+// CHECK:STDOUT:   %W.loc12_19.2: <error> = bind_symbolic_name W, 0 [symbolic = %W.loc12_19.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc12_19.2: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%W.param_patt: %J.type.2);
+// CHECK:STDOUT:   fn(%W.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMismatch(constants.%W) {

@@ -395,7 +395,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 }
 
 // Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
-// conversion.
+// conversion. Does not perform canonicalization.
 static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::FacetTypeId facet_type_id,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
@@ -404,9 +404,20 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     interface.specific_id =
         GetConstantValue(eval_context, interface.specific_id, phase);
   }
-  std::sort(info.impls_constraints.begin(), info.impls_constraints.end());
-  // TODO: Process & canonicalize other requirements.
+  for (auto& rewrite : info.rewrite_constraints) {
+    rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
+    rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
+    *phase = LatestPhase(*phase, GetPhase(rewrite.lhs_const_id));
+    *phase = LatestPhase(*phase, GetPhase(rewrite.rhs_const_id));
+  }
+  // TODO: Process other requirements.
   return info;
+}
+
+static auto CanonicalizeFacetTypeInfo(SemIR::FacetTypeInfo* info) {
+  std::sort(info->impls_constraints.begin(), info->impls_constraints.end());
+  std::sort(info->rewrite_constraints.begin(), info->rewrite_constraints.end());
+  // TODO: Canonicalize other requirements.
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -1458,6 +1469,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       Phase phase = Phase::Template;
       SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
           eval_context, facet_type.facet_type_id, &phase);
+      CanonicalizeFacetTypeInfo(&info);
       // TODO: Reuse `inst` if we can detect that nothing has changed.
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
@@ -1661,8 +1673,27 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                      "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
                      base_facet_inst);
       }
-      // TODO: Combine other requirements, and then process & canonicalize them.
-      info.other_requirements = typed_inst.requirements_id.is_valid();
+      if (typed_inst.requirements_id.is_valid()) {
+        auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
+        for (auto inst_id : insts) {
+          if (auto rewrite =
+                  eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
+                      inst_id)) {
+            SemIR::ConstantId lhs =
+                eval_context.GetConstantValue(rewrite->lhs_id);
+            SemIR::ConstantId rhs =
+                eval_context.GetConstantValue(rewrite->rhs_id);
+            phase = LatestPhase(phase, GetPhase(lhs));
+            phase = LatestPhase(phase, GetPhase(rhs));
+            info.rewrite_constraints.push_back(
+                {.lhs_const_id = lhs, .rhs_const_id = rhs});
+          } else {
+            // TODO: Handle other requirements
+            info.other_requirements = true;
+          }
+        }
+      }
+      CanonicalizeFacetTypeInfo(&info);
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 
