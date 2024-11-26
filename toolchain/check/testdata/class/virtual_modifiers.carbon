@@ -68,7 +68,7 @@ fn F() {
   b1.m2 = 4;
 }
 
-// --- todo_impl_without_base_declaration.carbon
+// --- todo_fail_impl_without_base_declaration.carbon
 
 package ImplWithoutBaseDeclaration;
 
