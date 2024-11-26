@@ -161,7 +161,11 @@ auto MatchContext::EmitPatternMatch(Context& context,
       bind_name.value_id = entry.scrutinee_id;
       context.ReplaceInstBeforeConstantUse(bind_name_id, bind_name);
       context.inst_block_stack().AddInstId(bind_name_id);
-      results_.push_back(bind_name_id);
+      if (context.insts()
+              .GetAs<SemIR::AnyParam>(entry.scrutinee_id)
+              .runtime_index.is_valid()) {
+        results_.push_back(entry.scrutinee_id);
+      }
       break;
     }
     case CARBON_KIND(SemIR::AddrPattern addr_pattern): {
@@ -280,6 +284,7 @@ auto MatchContext::EmitPatternMatch(Context& context,
           pattern.loc_id, {.type_id = return_slot_pattern.type_id,
                            .type_inst_id = return_slot_pattern.type_inst_id,
                            .storage_id = entry.scrutinee_id});
+      results_.push_back(entry.scrutinee_id);
       break;
     }
     default: {
@@ -293,20 +298,19 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
     -> ParameterBlocks {
-  auto params_id = SemIR::InstBlockId::Invalid;
-  auto implicit_params_id = SemIR::InstBlockId::Invalid;
+  if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
+      !implicit_param_patterns_id.is_valid()) {
+    return {.call_params_id = SemIR::InstBlockId::Invalid,
+            .return_slot_id = SemIR::InstId::Invalid};
+  }
 
   MatchContext match(MatchKind::Callee);
 
-  if (implicit_param_patterns_id.is_valid()) {
-    // We add work to the stack in reverse so that the results will be produced
-    // in the original order.
-    for (SemIR::InstId inst_id :
-         llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
-      match.AddWork(
-          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
-    }
-    implicit_params_id = match.DoWork(context);
+  // We add work to the stack in reverse so that the results will be produced
+  // in the original order.
+  if (return_slot_pattern_id.is_valid()) {
+    match.AddWork({.pattern_id = return_slot_pattern_id,
+                   .scrutinee_id = SemIR::InstId::Invalid});
   }
 
   if (param_patterns_id.is_valid()) {
@@ -315,17 +319,17 @@ auto CalleePatternMatch(Context& context,
       match.AddWork(
           {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
     }
-    params_id = match.DoWork(context);
   }
 
-  if (return_slot_pattern_id.is_valid()) {
-    match.AddWork({.pattern_id = return_slot_pattern_id,
-                   .scrutinee_id = SemIR::InstId::Invalid});
-    CARBON_CHECK(match.DoWork(context) == SemIR::InstBlockId::Empty);
+  if (implicit_param_patterns_id.is_valid()) {
+    for (SemIR::InstId inst_id :
+         llvm::reverse(context.inst_blocks().Get(implicit_param_patterns_id))) {
+      match.AddWork(
+          {.pattern_id = inst_id, .scrutinee_id = SemIR::InstId::Invalid});
+    }
   }
 
-  return {.implicit_params_id = implicit_params_id,
-          .params_id = params_id,
+  return {.call_params_id = match.DoWork(context),
           .return_slot_id = match.return_slot_id()};
 }
 

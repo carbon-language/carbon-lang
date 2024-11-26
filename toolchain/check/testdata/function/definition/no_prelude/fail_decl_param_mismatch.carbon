@@ -29,7 +29,7 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:         ^~~~
 // CHECK:STDERR:

@@ -76,12 +76,6 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       continue;
     }
 
-    // Builtins have designated labels.
-    if (step.inst_id.is_builtin()) {
-      out << step.inst_id.builtin_inst_kind().label();
-      continue;
-    }
-
     const auto& sem_ir = step.sem_ir;
     // Helper for instructions with the current sem_ir.
     auto push_inst_id = [&](InstId inst_id) {
@@ -120,6 +114,22 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
 
     auto untyped_inst = sem_ir.insts().Get(step.inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
+      case SemIR::AutoType::Kind:
+      case SemIR::BoolType::Kind:
+      case SemIR::BoundMethodType::Kind:
+      case SemIR::ErrorInst::Kind:
+      case SemIR::IntLiteralType::Kind:
+      case SemIR::LegacyFloatType::Kind:
+      case SemIR::NamespaceType::Kind:
+      case SemIR::SpecificFunctionType::Kind:
+      case SemIR::StringType::Kind:
+      case SemIR::TypeType::Kind:
+      case SemIR::VtableType::Kind:
+      case SemIR::WitnessType::Kind: {
+        // Builtin instructions use their IR name as a label.
+        out << untyped_inst.kind().ir_name();
+        break;
+      }
       case CARBON_KIND(ArrayType inst): {
         if (step.index == 0) {
           out << "[";
@@ -177,6 +187,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(FacetAccessType inst): {
+        // Given `T:! I`, print `T as type` as simply `T`.
+        push_inst_id(inst.facet_value_inst_id);
+        break;
+      }
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
@@ -202,9 +217,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
-      case CARBON_KIND(FacetTypeAccess inst): {
-        // Print `T as type` as simply `T`.
-        push_inst_id(inst.facet_id);
+      case CARBON_KIND(FacetValue inst): {
+        // No need to output the witness.
+        push_inst_id(sem_ir.types().GetInstId(inst.type_id));
+        push_string(" as ");
+        push_inst_id(inst.type_inst_id);
         break;
       }
       case CARBON_KIND(FloatType inst): {
@@ -339,16 +356,13 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case Assign::Kind:
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
-      case AutoType::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BindingPattern::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
-      case BoolType::Kind:
       case BoundMethod::Kind:
-      case BoundMethodType::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -359,7 +373,6 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case CompleteTypeWitness::Kind:
       case Converted::Kind:
       case Deref::Kind:
-      case ErrorInst::Kind:
       case FieldDecl::Kind:
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
@@ -368,14 +381,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
-      case IntLiteralType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case LegacyFloatType::Kind:
       case Namespace::Kind:
-      case NamespaceType::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
@@ -387,10 +397,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ReturnSlotPattern::Kind:
       case SpecificConstant::Kind:
       case SpecificFunction::Kind:
-      case SpecificFunctionType::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
-      case StringType::Kind:
       case StructAccess::Kind:
       case StructInit::Kind:
       case StructLiteral::Kind:
@@ -402,15 +410,12 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case TupleInit::Kind:
       case TupleLiteral::Kind:
       case TupleValue::Kind:
-      case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
       case VarStorage::Kind:
-      case VtableType::Kind:
-      case WitnessType::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
         auto const_inst_id =
@@ -423,7 +428,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
-        out << "<cannot stringify " << step.inst_id << ">";
+        out << "<cannot stringify " << step.inst_id << " kind "
+            << untyped_inst.kind() << ">";
         break;
     }
   }

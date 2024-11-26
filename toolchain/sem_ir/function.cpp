@@ -102,20 +102,6 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
   return sem_ir.entity_names().Get(binding_pattern.entity_name_id).name_id;
 }
 
-auto Function::GetParamFromParamRefId(const File& sem_ir, InstId param_ref_id)
-    -> ParamInfo {
-  auto ref = sem_ir.insts().Get(param_ref_id);
-
-  auto bind_name = ref.TryAs<AnyBindName>();
-  if (bind_name) {
-    param_ref_id = bind_name->value_id;
-    ref = sem_ir.insts().Get(param_ref_id);
-  } else {
-    CARBON_FATAL();
-  }
-  return {param_ref_id, ref.As<AnyParam>(), bind_name};
-}
-
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_slot_id.is_valid()) {

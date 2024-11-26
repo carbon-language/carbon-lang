@@ -117,7 +117,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               inst+7
 // CHECK:STDOUT:       1:               inst+8
 // CHECK:STDOUT:     block6:
-// CHECK:STDOUT:       0:               inst+4
+// CHECK:STDOUT:       0:               inst+16
+// CHECK:STDOUT:       1:               inst+17
 // CHECK:STDOUT:     block7:
 // CHECK:STDOUT:       0:               inst+5
 // CHECK:STDOUT:       1:               inst+6

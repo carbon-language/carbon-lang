@@ -173,7 +173,7 @@ auto SemIRDiagnosticConverter::ConvertLocInFile(const SemIR::File* sem_ir,
                                                 bool token_only,
                                                 ContextFnT context_fn) const
     -> DiagnosticLoc {
-  return node_converters_[sem_ir->check_ir_id().index].ConvertLoc(
+  return node_converters_[sem_ir->check_ir_id().index]->ConvertLoc(
       Parse::NodeLoc(node_id, token_only), context_fn);
 }
 

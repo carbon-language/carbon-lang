@@ -19,12 +19,15 @@
 
 namespace Carbon::SemIR {
 
-File::File(CheckIRId check_ir_id, IdentifierId package_id,
-           LibraryNameId library_id, SharedValueStores& value_stores,
-           std::string filename)
+File::File(CheckIRId check_ir_id,
+           const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
+           SharedValueStores& value_stores, std::string filename)
     : check_ir_id_(check_ir_id),
-      package_id_(package_id),
-      library_id_(library_id),
+      package_id_(packaging_decl ? packaging_decl->names.package_id
+                                 : IdentifierId::Invalid),
+      library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
+                                       packaging_decl->names.library_id)
+                                 : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       impls_(*this),
@@ -43,7 +46,7 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
 // Error uses a self-referential type so that it's not accidentally treated as
 // a normal type. Every other builtin is a type, including the
 // self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                    \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name)                         \
   insts_.AddInNoBlock(LocIdAndInst::NoLoc<Name>(                      \
       {.type_id = BuiltinInstKind::Name == BuiltinInstKind::ErrorInst \
                       ? TypeId::Error                                 \
@@ -260,8 +263,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
+      case FacetAccessType::Kind:
       case FacetType::Kind:
-      case FacetTypeAccess::Kind:
+      case FacetValue::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:
       case FunctionType::Kind:
