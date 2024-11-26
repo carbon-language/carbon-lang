@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseSet.h"
@@ -220,15 +221,8 @@ class MetaPrinter;
 class Parser;
 class CommandBuilder;
 
-// The result of parsing arguments can be a parse error, a successfully parsed
-// command line, or a meta-success due to triggering a meta-action during the
-// parse such as rendering help text.
+// The result of parsing arguments.
 enum class ParseResult : int8_t {
-  // Signifies an error parsing arguments. It will have been diagnosed using
-  // the streams provided to the parser, and no useful parsed arguments are
-  // available.
-  Error,
-
   // Signifies that program arguments were successfully parsed and can be
   // used.
   Success,
@@ -660,9 +654,9 @@ class CommandBuilder {
 // are printed to `errors`, but meta-actions like printing a command's help go
 // to `out`.
 auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
-           llvm::raw_ostream& out, llvm::raw_ostream& errors,
-           CommandInfo command_info,
-           llvm::function_ref<void(CommandBuilder&)> build) -> ParseResult;
+           llvm::raw_ostream& out, CommandInfo command_info,
+           llvm::function_ref<void(CommandBuilder&)> build)
+    -> ErrorOr<ParseResult>;
 
 // Implementation details only below.
 

@@ -127,6 +127,23 @@
 //   order of this observation is also not guaranteed.
 namespace Carbon::RawHashtable {
 
+// Which prefetch strategies to enable can be controlled via macros to enable
+// doing experiments.
+//
+// Currently, benchmarking on both modern AMD and ARM CPUs seems to indicate
+// that the entry group prefetching is more beneficial than metadata, but that
+// benefit is degraded when enabling them both. This determined our current
+// default of no metadata prefetch but enabled entry group prefetch.
+//
+// Override these by defining them as part of the build explicitly to either `0`
+// or `1`. If left undefined, the defaults will be supplied.
+#ifndef CARBON_ENABLE_PREFETCH_METADATA
+#define CARBON_ENABLE_PREFETCH_METADATA 0
+#endif
+#ifndef CARBON_ENABLE_PREFETCH_ENTRY_GROUP
+#define CARBON_ENABLE_PREFETCH_ENTRY_GROUP 1
+#endif
+
 // If allocating storage, allocate a minimum of one cacheline of group metadata
 // or a minimum of one group, whichever is larger.
 constexpr ssize_t MinAllocatedSize = std::max<ssize_t>(64, MaxGroupSize);
@@ -405,6 +422,29 @@ class ViewImpl {
                                      EntriesOffset(alloc_size_));
   }
 
+  // Prefetch the metadata prior to probing. This is to overlap any of the
+  // memory access latency we can with the hashing of a key or other
+  // latency-bound operation prior to probing.
+  auto PrefetchMetadata() const -> void {
+    if constexpr (CARBON_ENABLE_PREFETCH_METADATA) {
+      // Prefetch with a "low" temporal locality as we're primarily expecting a
+      // brief use of the metadata and then to return to application code.
+      __builtin_prefetch(metadata(), /*read*/ 0, /*low-locality*/ 1);
+    }
+  }
+
+  // Prefetch an entry. This prefetches for read as it is primarily expected to
+  // be used in the probing path, and writing afterwards isn't especially slowed
+  // down. We don't want to synthesize writes unless we *know* we're going to
+  // write.
+  static auto PrefetchEntryGroup(const EntryT* entry_group) -> void {
+    if constexpr (CARBON_ENABLE_PREFETCH_ENTRY_GROUP) {
+      // Prefetch with a "low" temporal locality as we're primarily expecting a
+      // brief use of the entries and then to return to application code.
+      __builtin_prefetch(entry_group, /*read*/ 0, /*low-locality*/ 1);
+    }
+  }
+
   ssize_t alloc_size_;
   Storage* storage_;
 };
@@ -521,6 +561,9 @@ class BaseImpl {
     CARBON_DCHECK(alloc_size() >= small_alloc_size());
     return alloc_size() == small_alloc_size();
   }
+
+  // Wrapper to call `ViewImplT::PrefetchStorage`, see that method for details.
+  auto PrefetchStorage() const -> void { view_impl_.PrefetchMetadata(); }
 
   auto Construct(Storage* small_storage) -> void;
   auto Destroy() -> void;
@@ -688,9 +731,7 @@ template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
     LookupKeyT lookup_key, KeyContextT key_context) const -> EntryT* {
-  // Prefetch with a "low" temporal locality as we're primarily expecting a
-  // brief use of the storage and then to return to application code.
-  __builtin_prefetch(storage_, /*read*/ 0, /*low-locality*/ 1);
+  PrefetchMetadata();
 
   ssize_t local_size = alloc_size_;
   CARBON_DCHECK(local_size > 0);
@@ -707,15 +748,20 @@ auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
   do {
     ssize_t group_index = s.index();
 
+    // Load the group's metadata and prefetch the entries for this group. The
+    // prefetch here helps hide key access latency while we're matching the
+    // metadata.
+    MetadataGroup g = MetadataGroup::Load(local_metadata, group_index);
+    EntryT* group_entries = &local_entries[group_index];
+    PrefetchEntryGroup(group_entries);
+
     // For each group, match the tag against the metadata to extract the
     // potentially matching entries within the group.
-    MetadataGroup g = MetadataGroup::Load(local_metadata, group_index);
     auto metadata_matched_range = g.Match(tag);
     if (LLVM_LIKELY(metadata_matched_range)) {
       // If any entries in this group potentially match based on their metadata,
       // walk each candidate and compare its key to see if we have definitively
       // found a match.
-      EntryT* group_entries = &local_entries[group_index];
       auto byte_it = metadata_matched_range.begin();
       auto byte_end = metadata_matched_range.end();
       do {
@@ -853,6 +899,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
     LookupKeyT lookup_key, KeyContextT key_context)
     -> std::pair<EntryT*, bool> {
   CARBON_DCHECK(alloc_size() > 0);
+  PrefetchStorage();
 
   uint8_t* local_metadata = metadata();
 
@@ -877,11 +924,16 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
 
   for (ProbeSequence s(hash_index, alloc_size());; s.Next()) {
     ssize_t group_index = s.index();
+
+    // Load the group's metadata and prefetch the entries for this group. The
+    // prefetch here helps hide key access latency while we're matching the
+    // metadata.
     auto g = MetadataGroup::Load(local_metadata, group_index);
+    EntryT* group_entries = &local_entries[group_index];
+    ViewImplT::PrefetchEntryGroup(group_entries);
 
     auto control_byte_matched_range = g.Match(tag);
     if (control_byte_matched_range) {
-      EntryT* group_entries = &local_entries[group_index];
       auto byte_it = control_byte_matched_range.begin();
       auto byte_end = control_byte_matched_range.end();
       do {

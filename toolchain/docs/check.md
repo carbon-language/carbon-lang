@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Postorder processing](#postorder-processing)
 -   [Key IR concepts](#key-ir-concepts)
+    -   [Instruction operands](#instruction-operands)
     -   [Parameters and arguments](#parameters-and-arguments)
 -   [SemIR textual format](#semir-textual-format)
     -   [Raw form](#raw-form)
@@ -74,7 +75,7 @@ interprets to build the `SemIR`.
 
 A `SemIR::Inst` is the basic building block that represents a simple
 instruction, such as an operator or declaring a literal. For each kind of
-instruction, a typedef for that specific kind of instruction is provided in the
+instruction, a struct for that specific kind of instruction is provided in the
 `SemIR` namespace. For example, `SemIR::Assign` represents an assignment
 instruction, and `SemIR::PointerType` represents a pointer type instruction.
 
@@ -107,6 +108,27 @@ A `SemIR::Builtin` represents a language built-in, such as the unconstrained
 facet type `type`. We will also have built-in functions which would need to form
 the implementation of some library types, such as `i32`. Built-ins are in a
 stable index across `SemIR` instances.
+
+### Instruction operands
+
+The kind-specific members on a typed instruction struct can be of any type
+listed in the `SemIR::IdKind` enumeration defined in
+[sem_ir/id_kind.h](/toolchain/sem_ir/id_kind.h). The most commonly used kinds
+refer to other instructions:
+
+-   `SemIR::InstId`: Refers to a specific instance of an instruction. For
+    example, this should be used if the operand may have side-effects or a
+    meaningful location.
+-   `SemIR::ConstantId`: An abstract reference to a known constant value. This
+    should be used instead of `InstId` if you care only about the identity of
+    the value and not how it was formed.
+-   `SemIR::TypeId`: An abstract reference to a known constant value of type
+    `type`. This should be used instead of `ConstantId` if you know that the
+    type of the constant value is always `type` (or the value is the "error"
+    constant, whose type is also the "error" constant).
+
+Other ID types are used for more specialized purposes. Refer to the class
+documentation for the ID type for more details.
 
 ### Parameters and arguments
 

@@ -212,8 +212,8 @@ static auto BuildFunctionDecl(Context& context,
       parent_scope_inst) {
     if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
       auto& class_info = context.classes().Get(class_decl->class_id);
-      CARBON_CHECK(virtual_modifier != SemIR::Function::VirtualModifier::Impl ||
-                   class_info.is_dynamic);
+      // TODO: If this is an `impl` function, check there's a matching base
+      // function that's impl or virtual.
       class_info.is_dynamic = true;
     }
   }

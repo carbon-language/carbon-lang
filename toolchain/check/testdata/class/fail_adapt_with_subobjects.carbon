@@ -121,7 +121,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_signed, %.loc10_12.1 [template = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc15: %.5 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.5 = base_decl %Base, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
@@ -171,7 +171,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%.loc13_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.3: type = converted %int.make_type_signed.loc13, %.loc13_10.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc13_8: %.2 = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
@@ -188,17 +188,17 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int.make_type_signed.loc25: init type = call constants.%Int(%.loc25_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc25_10.2: type = value_of_initializer %int.make_type_signed.loc25 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc25_10.3: type = converted %int.make_type_signed.loc25, %.loc25_10.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc25_8: %.3 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc25_8: %.3 = field_decl a, element<invalid> [template]
 // CHECK:STDOUT:   %.loc26_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%.loc26_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc26_10.2: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc26_10.3: type = converted %int.make_type_signed.loc26, %.loc26_10.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_8: %.3 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc26_8: %.3 = field_decl b, element<invalid> [template]
 // CHECK:STDOUT:   %.loc27_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc27: init type = call constants.%Int(%.loc27_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc27_10.2: type = value_of_initializer %int.make_type_signed.loc27 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc27_10.3: type = converted %int.make_type_signed.loc27, %.loc27_10.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc27_8: %.3 = field_decl c, element2 [template]
+// CHECK:STDOUT:   %.loc27_8: %.3 = field_decl c, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
@@ -250,12 +250,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc7: %.4 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc7: %.4 = base_decl %Base, element<invalid> [template]
 // CHECK:STDOUT:   %.loc8_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc8_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.3: type = converted %int.make_type_signed, %.loc8_10.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_8: %.6 = field_decl n, element1 [template]
+// CHECK:STDOUT:   %.loc8_8: %.6 = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:   %.loc15_10: %.1 = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   adapt_decl %.1

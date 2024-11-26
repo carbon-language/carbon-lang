@@ -480,7 +480,8 @@ struct ClassElementAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
-          {.ir_name = "class_element_access"});
+          {.ir_name = "class_element_access",
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId base_id;
@@ -1221,7 +1222,8 @@ struct StringType {
 struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
-      {.ir_name = "struct_access"});
+      {.ir_name = "struct_access",
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId struct_id;
@@ -1296,8 +1298,9 @@ struct TemporaryStorage {
 // for assignment.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::TupleAccess.Define<Parse::NodeId>({.ir_name = "tuple_access"});
+  static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
+      {.ir_name = "tuple_access",
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId tuple_id;

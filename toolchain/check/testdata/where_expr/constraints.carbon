@@ -54,7 +54,7 @@ interface A {
 // CHECK:STDERR:
 fn NestedRewrite(D:! (A where .B = bool) where .C = ());
 
-// --- fail_todo_associated_type_impls.carbon
+// --- associated_type_impls.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -65,10 +65,6 @@ interface K {
   let Associated:! L;
 }
 
-// CHECK:STDERR: fail_todo_associated_type_impls.carbon:[[@LINE+4]]:36: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: fn AssociatedTypeImpls(W:! K where .Associated impls M);
-// CHECK:STDERR:                                    ^~~~~~~~~~~
-// CHECK:STDERR:
 fn AssociatedTypeImpls(W:! K where .Associated impls M);
 
 // --- fail_check_rewrite_constraints.carbon
@@ -281,7 +277,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %.Self.ref.loc15_38: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc7 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc15_38.1: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.7]
-// CHECK:STDOUT:     %.loc15_38.2: type = interface_witness_access %.loc15_38.1, element0
+// CHECK:STDOUT:     %.loc15_38.2: type = interface_witness_access %.loc15_38.1, element0 [symbolic = constants.%.8]
 // CHECK:STDOUT:     %.loc15_50: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_14: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_impls %.loc15_20.2, %J.ref
@@ -515,7 +511,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %D.patt.loc13_18.2 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_associated_type_impls.carbon
+// CHECK:STDOUT: --- associated_type_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [template]
@@ -528,6 +524,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @K.%Associated [template]
 // CHECK:STDOUT:   %.Self: %K.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %.4: %L.type = interface_witness_access %.3, element0 [symbolic]
+// CHECK:STDOUT:   %.5: type = facet_access_type %.4 [symbolic]
 // CHECK:STDOUT:   %K.type.2: type = facet_type <@K where TODO> [template]
 // CHECK:STDOUT:   %W: %K.type.2 = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %K.type.2 = symbolic_binding_pattern W, 0 [symbolic]
@@ -555,23 +553,23 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %M.decl: type = interface_decl @M [template = constants.%M.type] {} {}
 // CHECK:STDOUT:   %K.decl: type = interface_decl @K [template = constants.%K.type.1] {} {}
 // CHECK:STDOUT:   %AssociatedTypeImpls.decl: %AssociatedTypeImpls.type = fn_decl @AssociatedTypeImpls [template = constants.%AssociatedTypeImpls] {
-// CHECK:STDOUT:     %W.patt.loc15_24.1: %K.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc15_24.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %K.type.2 = value_param_pattern %W.patt.loc15_24.1, runtime_param<invalid> [symbolic = %W.patt.loc15_24.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt.loc11_24.1: %K.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: %K.type.2 = value_param_pattern %W.patt.loc11_24.1, runtime_param<invalid> [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type.1]
 // CHECK:STDOUT:     %.Self: %K.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %K.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Associated.ref: %.1 = name_ref Associated, @K.%.loc8 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
-// CHECK:STDOUT:     %.loc15_36.2: %L.type = interface_witness_access %.loc15_36.1, element0
+// CHECK:STDOUT:     %.loc11_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc11_36.2: %L.type = interface_witness_access %.loc11_36.1, element0 [symbolic = constants.%.4]
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [template = constants.%M.type]
-// CHECK:STDOUT:     %.loc15_36.3: type = facet_access_type %.loc15_36.2
-// CHECK:STDOUT:     %.loc15_36.4: type = converted %.loc15_36.2, %.loc15_36.3
-// CHECK:STDOUT:     %.loc15_30: type = where_expr %.Self [template = constants.%K.type.2] {
-// CHECK:STDOUT:       requirement_impls <error>, %M.ref
+// CHECK:STDOUT:     %.loc11_36.3: type = facet_access_type %.loc11_36.2 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc11_36.4: type = converted %.loc11_36.2, %.loc11_36.3 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.loc11_30: type = where_expr %.Self [template = constants.%K.type.2] {
+// CHECK:STDOUT:       requirement_impls %.loc11_36.4, %M.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %K.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc15_24.1: %K.type.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_24.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc11_24.1: %K.type.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc11_24.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -603,16 +601,16 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   witness = (%Associated)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc15_24.1: %K.type.2) {
-// CHECK:STDOUT:   %W.loc15_24.2: %K.type.2 = bind_symbolic_name W, 0 [symbolic = %W.loc15_24.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc15_24.2: %K.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc15_24.2 (constants.%W.patt)]
+// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc11_24.1: %K.type.2) {
+// CHECK:STDOUT:   %W.loc11_24.2: %K.type.2 = bind_symbolic_name W, 0 [symbolic = %W.loc11_24.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc11_24.2: %K.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: %K.type.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
-// CHECK:STDOUT:   %W.loc15_24.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc15_24.2 => constants.%W
+// CHECK:STDOUT:   %W.loc11_24.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_24.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
