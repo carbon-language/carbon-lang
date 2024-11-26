@@ -131,14 +131,14 @@ namespace Carbon::RawHashtable {
 // doing experiments.
 //
 // Currently, benchmarking on both modern AMD and ARM CPUs seems to indicate
-// that the entry group prefetching is more beneficial than storage, but that
+// that the entry group prefetching is more beneficial than metadata, but that
 // benefit is degraded when enabling them both. This determined our current
-// default of no storage prefetch but enabled entry group prefetch.
+// default of no metadata prefetch but enabled entry group prefetch.
 //
 // Override these by defining them as part of the build explicitly to either `0`
 // or `1`. If left undefined, the defaults will be supplied.
-#ifndef CARBON_ENABLE_PREFETCH_STORAGE
-#define CARBON_ENABLE_PREFETCH_STORAGE 0
+#ifndef CARBON_ENABLE_PREFETCH_METADATA
+#define CARBON_ENABLE_PREFETCH_METADATA 0
 #endif
 #ifndef CARBON_ENABLE_PREFETCH_ENTRY_GROUP
 #define CARBON_ENABLE_PREFETCH_ENTRY_GROUP 1
@@ -422,14 +422,14 @@ class ViewImpl {
                                      EntriesOffset(alloc_size_));
   }
 
-  // Prefetch the storage prior to probing. This is to overlap any of the memory
-  // access latency we can with the hashing of a key or other latency-bound
-  // operation prior to probing.
-  auto PrefetchStorage() const -> void {
-    if constexpr (CARBON_ENABLE_PREFETCH_STORAGE) {
+  // Prefetch the metadata prior to probing. This is to overlap any of the
+  // memory access latency we can with the hashing of a key or other
+  // latency-bound operation prior to probing.
+  auto PrefetchMetadata() const -> void {
+    if constexpr (CARBON_ENABLE_PREFETCH_METADATA) {
       // Prefetch with a "low" temporal locality as we're primarily expecting a
-      // brief use of the storage and then to return to application code.
-      __builtin_prefetch(storage_, /*read*/ 0, /*low-locality*/ 1);
+      // brief use of the metadata and then to return to application code.
+      __builtin_prefetch(metadata(), /*read*/ 0, /*low-locality*/ 1);
     }
   }
 
@@ -563,7 +563,7 @@ class BaseImpl {
   }
 
   // Wrapper to call `ViewImplT::PrefetchStorage`, see that method for details.
-  auto PrefetchStorage() const -> void { view_impl_.PrefetchStorage(); }
+  auto PrefetchStorage() const -> void { view_impl_.PrefetchMetadata(); }
 
   auto Construct(Storage* small_storage) -> void;
   auto Destroy() -> void;
@@ -731,7 +731,7 @@ template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto ViewImpl<InputKeyT, InputValueT, InputKeyContextT>::LookupEntry(
     LookupKeyT lookup_key, KeyContextT key_context) const -> EntryT* {
-  PrefetchStorage();
+  PrefetchMetadata();
 
   ssize_t local_size = alloc_size_;
   CARBON_DCHECK(local_size > 0);
