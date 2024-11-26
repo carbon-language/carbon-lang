@@ -35,7 +35,7 @@ interface N {
 
 fn Equal(T:! N where .P = {});
 
-// --- fail_todo_associated_type_impls.carbon
+// --- associated_type_impls.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -402,7 +402,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %T.patt.loc8_10.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_associated_type_impls.carbon
+// CHECK:STDOUT: --- associated_type_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [template]
