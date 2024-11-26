@@ -512,11 +512,9 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
   if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
                                     &SemIR::AnyAggregateAccess::aggregate_id,
                                     &phase)) {
-    auto aggregate_id = access_inst.aggregate_id;
-    CARBON_CHECK(aggregate_id.is_valid());
     if (auto aggregate =
             eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(
-                aggregate_id)) {
+                access_inst.aggregate_id)) {
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
       CARBON_CHECK(index < elements.size(), "Access out of bounds.");
