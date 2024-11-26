@@ -519,11 +519,26 @@ class ImportRefResolver : public ImportContext {
     return GetLocalConstantId(import_ir_.types().GetConstantId(type_id));
   }
 
-  template <typename Id>
-  auto GetLocalConstantIdChecked(Id id) {
-    auto result = GetLocalConstantId(id);
-    CARBON_CHECK(result.is_valid());
-    return result;
+  // Returns the ConstantId for an InstId that is required to have already been
+  // imported.
+  auto GetLocalConstantIdChecked(SemIR::InstId inst_id) -> SemIR::ConstantId {
+    auto result_id = import_ir_constant_values().Get(inst_id);
+    CARBON_CHECK(result_id.is_valid());
+    return result_id;
+  }
+
+  // Returns the ConstantId for a ConstantId that is required to have already
+  // been imported.
+  auto GetLocalConstantIdChecked(SemIR::ConstantId const_id)
+      -> SemIR::ConstantId {
+    return GetLocalConstantIdChecked(
+        GetInstWithConstantValue(import_ir_, const_id));
+  }
+
+  // Returns the ConstantId for a TypeId that is required to have already been
+  // imported.
+  auto GetLocalConstantIdChecked(SemIR::TypeId type_id) -> SemIR::ConstantId {
+    return GetLocalConstantIdChecked(import_ir_.types().GetConstantId(type_id));
   }
 
   // Translates a NameId from the import IR to a local NameId.
