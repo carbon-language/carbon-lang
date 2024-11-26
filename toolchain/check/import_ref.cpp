@@ -319,6 +319,7 @@ class ImportRefResolver : public ImportContext {
       initial_work_ = work_stack_.size();
       auto [new_const_id, retry] =
           TryResolveInst(work.inst_id, existing.const_id);
+      CARBON_CHECK(!HasNewWork() || retry);
 
       CARBON_CHECK(
           !existing.const_id.is_valid() || existing.const_id == new_const_id,
@@ -1132,14 +1133,12 @@ class ImportRefResolver : public ImportContext {
   // this is the end of the first phase.
   auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
       -> ResolveResult {
-    CARBON_CHECK(HasNewWork());
     return {.const_id = const_id, .retry = true};
   }
 
   // Produces a resolve result that provides the given constant value. Requires
   // that there is no new work.
   auto ResolveAsConstant(SemIR::ConstantId const_id) -> ResolveResult {
-    CARBON_CHECK(!HasNewWork());
     return {.const_id = const_id};
   }
 
@@ -1158,7 +1157,6 @@ class ImportRefResolver : public ImportContext {
   // declaration, we need an associated location, so AddInstInNoBlock should be
   // used instead. Requires that there is no new work.
   auto ResolveAsUntyped(SemIR::Inst inst) -> ResolveResult {
-    CARBON_CHECK(!HasNewWork());
     auto result = TryEvalInst(context_, SemIR::InstId::Invalid, inst);
     CARBON_CHECK(result.is_constant(), "{0} is not constant", inst);
     return {.const_id = result};
