@@ -526,6 +526,15 @@ class ImportRefResolver : public ImportContext {
     return result;
   }
 
+  // Translates a NameId from the import IR to a local NameId.
+  auto GetLocalNameId(SemIR::NameId import_name_id) -> SemIR::NameId {
+    if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.is_valid()) {
+      return SemIR::NameId::ForIdentifier(
+          context_.identifiers().Add(import_ir_.identifiers().Get(ident_id)));
+    }
+    return import_name_id;
+  }
+
   // Gets the local constant values corresponding to an imported inst block.
   auto GetLocalInstBlockContents(SemIR::InstBlockId import_block_id)
       -> llvm::SmallVector<SemIR::InstId> {
@@ -544,18 +553,6 @@ class ImportRefResolver : public ImportContext {
     }
 
     return inst_ids;
-  }
-
-  // Gets a local instruction block ID corresponding to an imported inst block
-  // whose contents were already imported, for example by
-  // GetLocalInstBlockContents.
-  auto GetLocalInstBlockId(SemIR::InstBlockId import_block_id,
-                           llvm::ArrayRef<SemIR::InstId> contents)
-      -> SemIR::InstBlockId {
-    if (!import_block_id.is_valid()) {
-      return SemIR::InstBlockId::Invalid;
-    }
-    return context_.inst_blocks().Add(contents);
   }
 
   // Gets a local canonical instruction block ID corresponding to an imported
@@ -956,15 +953,6 @@ class ImportRefResolver : public ImportContext {
             {.type_id = type_id,
              .subpattern_id = new_return_slot_pattern_id,
              .runtime_index = param_pattern.runtime_index}));
-  }
-
-  // Translates a NameId from the import IR to a local NameId.
-  auto GetLocalNameId(SemIR::NameId import_name_id) -> SemIR::NameId {
-    if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.is_valid()) {
-      return SemIR::NameId::ForIdentifier(
-          context_.identifiers().Add(import_ir_.identifiers().Get(ident_id)));
-    }
-    return import_name_id;
   }
 
   // Translates a NameScopeId from the import IR to a local NameScopeId. Adds
