@@ -362,40 +362,44 @@ Learn more about the Carbon project:
 
 Carbon focused talks from the community:
 
-### Upcoming
-
--   [Generic implementation strategies in Carbon and Clang](https://discourse.llvm.org/t/announcing-the-2024-llvm-developers-meeting-program/81108),
-    LLVM Developers' Meeting, Oct 23-24
-
 ### 2024
 
--   [The Carbon Language: Road to 0.1](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1),
-    NDC {TechTown}
--   [How designing Carbon with C++ interop taught me about C++ variadics and overloads](https://chandlerc.blog/slides/2024-cppnorth-design-stories),
-    CppNorth
--   [Generic Arity: Definition-Checked Variadics in Carbon](https://www.youtube.com/watch?v=Y_px536l_80),
-    C++Now
--   [Carbon: An experiment in different tradeoffs](https://youtu.be/Za_KWj5RMR8)
-    panel session, EuroLLVM
+-   Generic implementation strategies in Carbon and Clang, LLVM Developers'
+    Meeting
+    ([slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
+-   The Carbon Language: Road to 0.1, NDC {TechTown}
+    ([slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
+-   How designing Carbon with C++ interop taught me about C++ variadics and
+    overloads, CppNorth ([video](https://youtu.be/8SGMy9ENGz8),
+    [slides](https://chandlerc.blog/slides/2024-cppnorth-design-stories))
+-   Generic Arity: Definition-Checked Variadics in Carbon, C++Now
+    ([video](https://youtu.be/Y_px536l_80))
+-   Carbon: An experiment in different tradeoffs, panel session, EuroLLVM
+    ([video](https://youtu.be/Za_KWj5RMR8))
     -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
--   [Carbon's high-level semantic IR](https://youtu.be/vIWT4RhUcyw) lightning
-    talk, EuroLLVM
+-   Carbon's high-level semantic IR lightning talk, EuroLLVM
+    ([video](https://youtu.be/vIWT4RhUcyw))
 
 ### 2023
 
--   [Carbon’s Successor Strategy: From C++ interop to memory safety](https://youtu.be/1ZTJ9omXOQ0),
-    C++Now
--   Definition-Checked Generics ([Part 1](https://youtu.be/FKC8WACSMP0),
-    [Part 2](https://youtu.be/VxQ3PwxiSzk)), C++Now
--   [Modernizing Compiler Design for Carbon’s Toolchain](https://youtu.be/ZI198eFghJk),
-    C++Now
+-   Carbon’s Successor Strategy: From C++ interop to memory safety, C++Now
+    ([video](https://youtu.be/1ZTJ9omXOQ0),
+    [slides](https://chandlerc.blog/slides/2023-cppnow-carbon-strategy/index.html#/))
+-   Definition-Checked Generics, C++Now
+    -   Part 1 ([video](https://youtu.be/FKC8WACSMP0),
+        [slides](https://chandlerc.blog/slides/2023-cppnow-generics-1/#/))
+    -   Part 2 ([video](https://youtu.be/VxQ3PwxiSzk),
+        [slides](https://chandlerc.blog/slides/2023-cppnow-generics-2/#/))
+-   Modernizing Compiler Design for Carbon’s Toolchain, C++Now
+    ([video](https://youtu.be/ZI198eFghJk),
+    [slides](https://chandlerc.blog/slides/2023-cppnow-compiler/index.html#/))
 
 ### 2022
 
--   [Carbon Language: Syntax and trade-offs](https://youtu.be/9Y2ivB8VaIs), Core
-    C++
--   [Carbon Language: An experimental successor to C++](https://youtu.be/omrY53kbVoA),
-    CppNorth
+-   Carbon Language: Syntax and trade-offs, Core C++
+    ([video](https://youtu.be/9Y2ivB8VaIs))
+-   Carbon Language: An experimental successor to C++, CppNorth
+    ([video](https://youtu.be/omrY53kbVoA))
 
 ## Join us
 

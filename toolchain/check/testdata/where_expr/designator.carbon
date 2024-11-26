@@ -100,6 +100,7 @@ class D {
 // CHECK:STDOUT:   %T.patt: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
+// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self.1 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I.type.3 = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic]
@@ -152,9 +153,11 @@ class D {
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc10_29.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc10_29.2: type = interface_witness_access %.loc10_29.1, element0
 // CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.3] {
-// CHECK:STDOUT:       requirement_equivalent %Member.ref, %.loc10_41
+// CHECK:STDOUT:       requirement_equivalent %.loc10_29.2, %.loc10_41
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I.type.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc10_17.1: %I.type.3 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
