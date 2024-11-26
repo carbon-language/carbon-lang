@@ -75,9 +75,8 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
 // from an imported IR, with a known constant value. This is useful when the
 // instruction has a symbolic constant value, in order to produce an instruction
 // that hold that symbolic constant.
-static auto AddLoadedImportRef(Context& context,
+static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
                                SemIR::ImportIRInst import_ir_inst,
-                               SemIR::TypeId type_id,
                                SemIR::ConstantId const_id) -> SemIR::InstId {
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
   SemIR::ImportRefLoaded inst = {
@@ -469,6 +468,18 @@ class ImportRefResolver : public ImportContext {
       context_.import_ir_constant_values()[indirect_inst.ir_id.index].Set(
           indirect_inst.inst_id, const_id);
     }
+  }
+
+  auto AddImportRef(SemIR::InstId inst_id) -> SemIR::InstId {
+    return Carbon::Check::AddImportRef(
+        context_, {.ir_id = import_ir_id_, .inst_id = inst_id});
+  }
+
+  auto AddLoadedImportRef(SemIR::TypeId type_id, SemIR::InstId inst_id,
+                          SemIR::ConstantId const_id) -> SemIR::InstId {
+    return Carbon::Check::AddLoadedImportRef(
+        context_, type_id, {.ir_id = import_ir_id_, .inst_id = inst_id},
+        const_id);
   }
 
   auto AddImportIRInst(SemIR::InstId inst_id) -> SemIR::ImportIRInstId {
@@ -1097,15 +1108,13 @@ class ImportRefResolver : public ImportContext {
   auto AddNameScopeImportRefs(const SemIR::NameScope& import_scope,
                               SemIR::NameScope& new_scope) -> void {
     for (auto entry : import_scope.names) {
-      auto ref_id = AddImportRef(
-          context_, {.ir_id = import_ir_id_, .inst_id = entry.inst_id});
+      auto ref_id = AddImportRef(entry.inst_id);
       new_scope.AddRequired({.name_id = GetLocalNameId(entry.name_id),
                              .inst_id = ref_id,
                              .access_kind = entry.access_kind});
     }
     for (auto scope_inst_id : import_scope.extended_scopes) {
-      new_scope.extended_scopes.push_back(AddImportRef(
-          context_, {.ir_id = import_ir_id_, .inst_id = scope_inst_id}));
+      new_scope.extended_scopes.push_back(AddImportRef(scope_inst_id));
     }
   }
 
@@ -1121,8 +1130,7 @@ class ImportRefResolver : public ImportContext {
     llvm::SmallVector<SemIR::InstId> new_associated_entities;
     new_associated_entities.reserve(associated_entities.size());
     for (auto inst_id : associated_entities) {
-      new_associated_entities.push_back(
-          AddImportRef(context_, {.ir_id = import_ir_id_, .inst_id = inst_id}));
+      new_associated_entities.push_back(AddImportRef(inst_id));
     }
     return context_.inst_blocks().Add(new_associated_entities);
   }
@@ -1175,8 +1183,7 @@ class ImportRefResolver : public ImportContext {
     }
 
     // Add a lazy reference to the target declaration.
-    auto decl_id = AddImportRef(
-        context_, {.ir_id = import_ir_id_, .inst_id = inst.decl_id});
+    auto decl_id = AddImportRef(inst.decl_id);
 
     return ResolveAs<SemIR::AssociatedEntity>(
         {.type_id = context_.GetTypeIdForTypeConstant(type_const_id),
@@ -1737,18 +1744,14 @@ class ImportRefResolver : public ImportContext {
 
     // Create instructions for self and constraint to hold the symbolic constant
     // value for a generic impl.
-    new_impl.self_id = AddLoadedImportRef(
-        context_, {.ir_id = import_ir_id_, .inst_id = import_impl.self_id},
-        SemIR::TypeId::TypeType, self_const_id);
-    new_impl.constraint_id = AddLoadedImportRef(
-        context_,
-        {.ir_id = import_ir_id_, .inst_id = import_impl.constraint_id},
-        SemIR::TypeId::TypeType, constraint_const_id);
+    new_impl.self_id = AddLoadedImportRef(SemIR::TypeId::TypeType,
+                                          import_impl.self_id, self_const_id);
+    new_impl.constraint_id =
+        AddLoadedImportRef(SemIR::TypeId::TypeType, import_impl.constraint_id,
+                           constraint_const_id);
 
     if (import_impl.is_defined()) {
-      auto witness_id = AddImportRef(
-          context_,
-          {.ir_id = import_ir_id_, .inst_id = import_impl.witness_id});
+      auto witness_id = AddImportRef(import_impl.witness_id);
       AddImplDefinition(import_impl, new_impl, witness_id);
     }
 
