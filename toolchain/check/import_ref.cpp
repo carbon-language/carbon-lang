@@ -374,6 +374,14 @@ class ImportRefResolver : public ImportContext {
     }
   }
 
+  // Returns true if new unresolved constants were found as part of this
+  // `Resolve` step.
+  auto HasNewWork() -> bool {
+    CARBON_CHECK(initial_work_ <= work_stack_.size(),
+                 "Work shouldn't decrease");
+    return initial_work_ < work_stack_.size();
+  }
+
  private:
   // A step in work_stack_.
   struct Work {
@@ -460,14 +468,6 @@ class ImportRefResolver : public ImportContext {
       context_.import_ir_constant_values()[indirect_inst.ir_id.index].Set(
           indirect_inst.inst_id, const_id);
     }
-  }
-
-  // Returns true if new unresolved constants were found as part of this
-  // `Resolve` step.
-  auto HasNewWork() -> bool {
-    CARBON_CHECK(initial_work_ <= work_stack_.size(),
-                 "Work shouldn't decrease");
-    return initial_work_ < work_stack_.size();
   }
 
   auto AddImportIRInst(SemIR::InstId inst_id) -> SemIR::ImportIRInstId {
