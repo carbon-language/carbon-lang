@@ -217,6 +217,8 @@ static auto BuildFunctionDecl(Context& context,
         CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
         context.emitter().Build(node_id, ImplWithoutBase).Emit();
       }
+      // TODO: If this is an `impl` function, check there's a matching base
+      // function that's impl or virtual.
       class_info.is_dynamic = true;
     }
   }

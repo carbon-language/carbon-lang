@@ -85,6 +85,39 @@ class C {
   impl fn F();
 }
 
+// --- init_members.carbon
+
+package InitMembers;
+
+base class Base {
+  var m1: i32;
+  var m2: i32;
+
+  virtual fn F();
+}
+
+fn F() {
+  var i: i32 = 3;
+  // TODO: These should initialize element1 (.m), not element0 (the vptr)
+  var b1: Base = {.m2 = i, .m1 = i};
+  var b2: Base = {.m2 = 3, .m1 = 5};
+
+  // This one is good, though.
+  b1.m2 = 4;
+}
+
+// --- todo_fail_impl_without_base_declaration.carbon
+
+package ImplWithoutBaseDeclaration;
+
+base class Base {
+}
+
+class Derived {
+  extend base: Base;
+  impl fn F();
+}
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -256,187 +289,4 @@ class C {
 // CHECK:STDOUT:   assign %v.var, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_abstract.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A1: type = class_type @A1 [template]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %A2: type = class_type @A2 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %A2, %A1 [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %A1} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .A1 = %A1.decl
-// CHECK:STDOUT:     .A2 = %A2.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A1.decl: type = class_decl @A1 [template = constants.%A1] {} {}
-// CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [template = constants.%A2] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @A1 {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @A2 {
-// CHECK:STDOUT:   %A1.ref: type = name_ref A1, file.%A1.decl [template = constants.%A1]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %A1, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %A1.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_base.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B1: type = class_type @B1 [template]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT:   %B2: type = class_type @B2 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B2, %B1 [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %B1} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.10: type = unbound_element_type %C, %B2 [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.base: %B2} [template]
-// CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .B1 = %B1.decl
-// CHECK:STDOUT:     .B2 = %B2.decl
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B1.decl: type = class_decl @B1 [template = constants.%B1] {} {}
-// CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {} {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @B1 {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B1
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %B1, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B2
-// CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %B1.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
-// CHECK:STDOUT:   %.loc14: %.10 = base_decl %B2, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %.11 [template = constants.%.12]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc14
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %B2.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @F.1();
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2();
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.3();
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_modifiers.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.<vptr>: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.2 [template = constants.%.3]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F();
 // CHECK:STDOUT:

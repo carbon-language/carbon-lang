@@ -166,7 +166,8 @@ struct ArrayType {
   static constexpr auto Kind = InstKind::ArrayType.Define<Parse::ArrayExprId>(
       {.ir_name = "array_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::Conditional,
+       .deduce_through = true});
 
   TypeId type_id;
   InstId bound_id;
@@ -479,7 +480,8 @@ struct ClassElementAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
-          {.ir_name = "class_element_access"});
+          {.ir_name = "class_element_access",
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId base_id;
@@ -501,7 +503,8 @@ struct ClassType {
   static constexpr auto Kind = InstKind::ClassType.Define<Parse::NodeId>(
       {.ir_name = "class_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
+       .constant_kind = InstConstantKind::Always,
+       .deduce_through = true});
 
   TypeId type_id;
   ClassId class_id;
@@ -534,7 +537,8 @@ struct ConstType {
       InstKind::ConstType.Define<Parse::PrefixOperatorConstId>(
           {.ir_name = "const_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
 
   TypeId type_id;
   TypeId inner_id;
@@ -599,14 +603,29 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// TODO: `FacetAccessWitness`
+// Represents accessing the `witness` field in a facet value, which is
+// notionally a pair of a type and a witness.
+struct FacetAccessWitness {
+  static constexpr auto Kind =
+      InstKind::FacetAccessWitness.Define<Parse::NodeId>(
+          {.ir_name = "facet_access_witness",
+           .is_type = InstIsType::Never,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always the builtin witness type.
+  TypeId type_id;
+  // An instruction that evaluates to a `FacetValue`.
+  InstId facet_value_inst_id;
+};
 
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
       {.ir_name = "facet_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
+       .constant_kind = InstConstantKind::Always,
+       .deduce_through = true});
 
   TypeId type_id;
   FacetTypeId facet_type_id;
@@ -656,7 +675,8 @@ struct FloatType {
   static constexpr auto Kind = InstKind::FloatType.Define<Parse::InvalidNodeId>(
       {.ir_name = "float_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::Conditional,
+       .deduce_through = true});
 
   TypeId type_id;
   // TODO: Consider adding a more compact way of representing either a small
@@ -879,7 +899,8 @@ struct IntType {
   static constexpr auto Kind = InstKind::IntType.Define<Parse::InvalidNodeId>(
       {.ir_name = "int_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::Conditional,
+       .deduce_through = true});
 
   TypeId type_id;
   IntKind int_kind;
@@ -1008,7 +1029,8 @@ struct PointerType {
       InstKind::PointerType.Define<Parse::PostfixOperatorStarId>(
           {.ir_name = "ptr_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
 
   TypeId type_id;
   TypeId pointee_id;
@@ -1200,7 +1222,8 @@ struct StringType {
 struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
-      {.ir_name = "struct_access"});
+      {.ir_name = "struct_access",
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId struct_id;
@@ -1233,7 +1256,8 @@ struct StructType {
       InstKind::StructType.Define<Parse::StructTypeLiteralId>(
           {.ir_name = "struct_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional});
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
 
   TypeId type_id;
   StructTypeFieldsId fields_id;
@@ -1274,8 +1298,9 @@ struct TemporaryStorage {
 // for assignment.
 struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::TupleAccess.Define<Parse::NodeId>({.ir_name = "tuple_access"});
+  static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
+      {.ir_name = "tuple_access",
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   InstId tuple_id;
@@ -1307,7 +1332,8 @@ struct TupleType {
   static constexpr auto Kind = InstKind::TupleType.Define<Parse::InvalidNodeId>(
       {.ir_name = "tuple_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::Conditional,
+       .deduce_through = true});
 
   TypeId type_id;
   TypeBlockId elements_id;
@@ -1317,7 +1343,8 @@ struct TupleType {
 struct TupleValue {
   static constexpr auto Kind = InstKind::TupleValue.Define<Parse::NodeId>(
       {.ir_name = "tuple_value",
-       .constant_kind = InstConstantKind::Conditional});
+       .constant_kind = InstConstantKind::Conditional,
+       .deduce_through = true});
 
   TypeId type_id;
   InstBlockId elements_id;
