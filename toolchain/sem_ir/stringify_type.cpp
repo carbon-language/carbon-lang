@@ -48,7 +48,7 @@ class StepStack {
     };
   };
 
-  explicit StepStack(const SemIR::File& file, InstId outer_inst_id)
+  explicit StepStack(const SemIR::File* file, InstId outer_inst_id)
       : sem_ir(file) {
     steps.push_back({.kind = Inst, .inst_id = outer_inst_id});
   }
@@ -66,14 +66,14 @@ class StepStack {
     steps.push_back({.kind = Name, .name_id = name_id});
   }
   auto PushTypeId(TypeId type_id) -> void {
-    PushInstId(sem_ir.types().GetInstId(type_id));
+    PushInstId(sem_ir->types().GetInstId(type_id));
   }
   auto PushSpecificId(const EntityWithParamsBase& entity,
                       SpecificId specific_id) -> void {
     if (!entity.param_patterns_id.is_valid()) {
       return;
     }
-    int num_params = sem_ir.inst_blocks().Get(entity.param_patterns_id).size();
+    int num_params = sem_ir->inst_blocks().Get(entity.param_patterns_id).size();
     if (!num_params) {
       PushString("()");
       return;
@@ -84,9 +84,9 @@ class StepStack {
       // case?
       return;
     }
-    const auto& specific = sem_ir.specifics().Get(specific_id);
+    const auto& specific = sem_ir->specifics().Get(specific_id);
     auto args =
-        sem_ir.inst_blocks().Get(specific.args_id).take_back(num_params);
+        sem_ir->inst_blocks().Get(specific.args_id).take_back(num_params);
     bool last = true;
     for (auto arg : llvm::reverse(args)) {
       PushString(last ? ")" : ", ");
@@ -100,7 +100,7 @@ class StepStack {
   auto Pop() -> Step { return steps.pop_back_val(); }
 
  private:
-  const SemIR::File& sem_ir;
+  const SemIR::File* sem_ir;
   llvm::SmallVector<Step> steps;
 };
 }  // namespace
@@ -112,7 +112,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
 
   // Note: Since this is a stack, work is resolved in the reverse order from the
   // order pushed.
-  StepStack step_stack(sem_ir, outer_inst_id);
+  StepStack step_stack(&sem_ir, outer_inst_id);
 
   while (!step_stack.empty()) {
     auto step = step_stack.Pop();
