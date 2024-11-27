@@ -24,89 +24,91 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   return 0;
 }
 
+namespace {
+class StepStack {
+ public:
+  enum Kind : uint8_t {
+    Inst,
+    FixedString,
+    ArrayBound,
+    Name,
+  };
+  struct Step {
+    // The kind of step to perform.
+    Kind kind;
+    union {
+      // The instruction to print, when kind is Inst.
+      InstId inst_id;
+      // The fixed string to print, when kind is FixedString.
+      const char* fixed_string;
+      // The array bound to print, when kind is ArrayBound.
+      InstId bound_id;
+      // The name to print, when kind is Name.
+      NameId name_id;
+    };
+  };
+
+  explicit StepStack(const SemIR::File& file, InstId outer_inst_id)
+      : sem_ir(file) {
+    steps.push_back({.kind = Inst, .inst_id = outer_inst_id});
+  }
+
+  auto PushInstId(InstId inst_id) -> void {
+    steps.push_back({.kind = Inst, .inst_id = inst_id});
+  }
+  auto PushString(const char* string) -> void {
+    steps.push_back({.kind = FixedString, .fixed_string = string});
+  }
+  auto PushArrayBound(InstId bound_id) -> void {
+    steps.push_back({.kind = ArrayBound, .bound_id = bound_id});
+  }
+  auto PushNameId(NameId name_id) -> void {
+    steps.push_back({.kind = Name, .name_id = name_id});
+  }
+  auto PushTypeId(TypeId type_id) -> void {
+    PushInstId(sem_ir.types().GetInstId(type_id));
+  }
+  auto PushSpecificId(const EntityWithParamsBase& entity,
+                      SpecificId specific_id) -> void {
+    if (!entity.param_patterns_id.is_valid()) {
+      return;
+    }
+    int num_params = sem_ir.inst_blocks().Get(entity.param_patterns_id).size();
+    if (!num_params) {
+      PushString("()");
+      return;
+    }
+    if (!specific_id.is_valid()) {
+      // The name of the generic was used within the generic itself.
+      // TODO: Should we print the names of the generic parameters in this
+      // case?
+      return;
+    }
+    const auto& specific = sem_ir.specifics().Get(specific_id);
+    auto args =
+        sem_ir.inst_blocks().Get(specific.args_id).take_back(num_params);
+    bool last = true;
+    for (auto arg : llvm::reverse(args)) {
+      PushString(last ? ")" : ", ");
+      PushInstId(arg);
+      last = false;
+    }
+    PushString("(");
+  }
+
+  auto empty() -> bool { return steps.empty(); }
+  auto Pop() -> Step { return steps.pop_back_val(); }
+
+  const SemIR::File& sem_ir;
+  llvm::SmallVector<Step> steps;
+};
+}  // namespace
+
 auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     -> std::string {
   std::string str;
   llvm::raw_string_ostream out(str);
 
-  class StepStack {
-   public:
-    enum Kind : uint8_t {
-      Inst,
-      FixedString,
-      ArrayBound,
-      Name,
-    };
-    struct Step {
-      // The kind of step to perform.
-      Kind kind;
-      union {
-        // The instruction to print, when kind is Inst.
-        InstId inst_id;
-        // The fixed string to print, when kind is FixedString.
-        const char* fixed_string;
-        // The array bound to print, when kind is ArrayBound.
-        InstId bound_id;
-        // The name to print, when kind is Name.
-        NameId name_id;
-      };
-    };
-
-    explicit StepStack(const SemIR::File& file, InstId outer_inst_id)
-        : sem_ir(file) {
-      steps.push_back({.kind = Inst, .inst_id = outer_inst_id});
-    }
-
-    auto PushInstId(InstId inst_id) -> void {
-      steps.push_back({.kind = Inst, .inst_id = inst_id});
-    }
-    auto PushString(const char* string) -> void {
-      steps.push_back({.kind = FixedString, .fixed_string = string});
-    }
-    auto PushArrayBound(InstId bound_id) -> void {
-      steps.push_back({.kind = ArrayBound, .bound_id = bound_id});
-    }
-    auto PushNameId(NameId name_id) -> void {
-      steps.push_back({.kind = Name, .name_id = name_id});
-    }
-    auto PushTypeId(TypeId type_id) -> void {
-      PushInstId(sem_ir.types().GetInstId(type_id));
-    }
-    auto PushSpecificId(const EntityWithParamsBase& entity,
-                        SpecificId specific_id) -> void {
-      if (!entity.param_patterns_id.is_valid()) {
-        return;
-      }
-      int num_params =
-          sem_ir.inst_blocks().Get(entity.param_patterns_id).size();
-      if (!num_params) {
-        PushString("()");
-        return;
-      }
-      if (!specific_id.is_valid()) {
-        // The name of the generic was used within the generic itself.
-        // TODO: Should we print the names of the generic parameters in this
-        // case?
-        return;
-      }
-      const auto& specific = sem_ir.specifics().Get(specific_id);
-      auto args =
-          sem_ir.inst_blocks().Get(specific.args_id).take_back(num_params);
-      bool last = true;
-      for (auto arg : llvm::reverse(args)) {
-        PushString(last ? ")" : ", ");
-        PushInstId(arg);
-        last = false;
-      }
-      PushString("(");
-    }
-
-    auto empty() -> bool { return steps.empty(); }
-    auto Pop() -> Step { return steps.pop_back_val(); }
-
-    const SemIR::File& sem_ir;
-    llvm::SmallVector<Step> steps;
-  };
   // Note: Since this is a stack, work is resolved in the reverse order from the
   // order pushed.
   StepStack step_stack(sem_ir, outer_inst_id);
