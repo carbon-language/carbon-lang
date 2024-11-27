@@ -48,12 +48,6 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
     CollectNamesInBlock(fn_scope, fn.param_patterns_id);
-    if (fn.return_slot_pattern_id.is_valid()) {
-      // TODO: Factor out a single-inst version of CollectNamesInBlock, so we
-      // don't have to pretend that fn.return_slot_pattern_id is an array.
-      CollectNamesInBlock(
-          fn_scope, llvm::ArrayRef<InstId>(&fn.return_slot_pattern_id, 1));
-    }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
     }
@@ -491,6 +485,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function_info = sem_ir_.functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
+        // FIXME pattern and decl are handled separately. Could lead to skew
+        // in presence of duplicates. pattern_block_id comes from the
+        // definition, decl_bock_id comes from the current decl.
         CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
         CollectNamesInBlock(function_scope_id, inst.decl_block_id);
         continue;

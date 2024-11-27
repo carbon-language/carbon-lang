@@ -89,7 +89,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc22: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc22_38.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -150,7 +150,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc22: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref.loc18: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:     %.loc18_32.1: Core.IntLiteral = int_value 32 [template = constants.%.1]

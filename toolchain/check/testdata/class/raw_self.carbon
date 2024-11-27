@@ -81,7 +81,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, runtime_param1
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc21: %tuple.type.2 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc21_32.1: Core.IntLiteral = int_value 32 [template = constants.%.2]
@@ -132,7 +132,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, runtime_param1
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc21: %tuple.type.2 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc13_28.1: Core.IntLiteral = int_value 32 [template = constants.%.2]
@@ -181,7 +181,7 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt.loc13: %tuple.type.2 {
+// CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
 // CHECK:STDOUT:   %n.ref: %.3 = name_ref n, @Class.%.loc14_8 [template = @Class.%.loc14_8]

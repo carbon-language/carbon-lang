@@ -421,7 +421,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %return.patt: %CompleteClass.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc8: %CompleteClass.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %CompleteClass.3 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:     %.loc8_25: Core.IntLiteral = int_value 32 [template = constants.%.24]
@@ -741,7 +741,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   fn() -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return.param_patt.1: %CompleteClass.3 {
+// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %CompleteClass.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_16: Core.IntLiteral = int_value 1 [template = constants.%.30]
 // CHECK:STDOUT:   %.loc9_17.1: %.31 = struct_literal (%.loc9_16)

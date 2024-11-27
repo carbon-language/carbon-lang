@@ -78,7 +78,7 @@ class Class {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc11: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc11: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc11_29.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -95,7 +95,7 @@ class Class {
 // CHECK:STDOUT:     %self.param_patt: %.2 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc15_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc15: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc15_27: type = ptr_type %Class [template = constants.%.2]
@@ -115,7 +115,7 @@ class Class {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc11: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc5_25.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -132,7 +132,7 @@ class Class {
 // CHECK:STDOUT:     %self.param_patt: %.2 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc15_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc15: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc6: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc6_23: type = ptr_type %Class [template = constants.%.2]

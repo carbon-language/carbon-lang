@@ -100,7 +100,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc28: %Class = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.param.loc28: ref %Class = out_param runtime_param0
@@ -128,7 +128,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc28: %Class = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.param.loc18: ref %Class = out_param runtime_param0
@@ -163,7 +163,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param_patt.loc18: %Class {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref %Class = var self

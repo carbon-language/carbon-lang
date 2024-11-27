@@ -117,7 +117,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6, runtime_param<invalid> [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc6: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4: type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_20.1: type = ptr_type %T [symbolic = %.loc4_20.2 (constants.%.1)]
@@ -130,7 +130,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.patt.loc6: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6, runtime_param<invalid> [symbolic = constants.%T.patt]
 // CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc6: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc6 [symbolic = constants.%T]
 // CHECK:STDOUT:     %.loc6: type = ptr_type %T [symbolic = constants.%.1]
@@ -149,7 +149,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %.loc7_10.2 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type) -> @F.%.loc4_20.2 (%.1) {
+// CHECK:STDOUT:   fn(%T.param_patt: type) -> %.1 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]

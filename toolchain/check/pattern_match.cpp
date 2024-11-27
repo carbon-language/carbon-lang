@@ -275,10 +275,11 @@ auto MatchContext::EmitPatternMatch(Context& context,
           pattern.loc_id, {.type_id = return_slot_pattern.type_id,
                            .type_inst_id = return_slot_pattern.type_inst_id,
                            .storage_id = entry.scrutinee_id});
-      CARBON_CHECK(
-          !context.scope_stack()
-               .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
-               .is_valid());
+      bool already_in_lookup =
+          context.scope_stack()
+              .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
+              .is_valid();
+      CARBON_CHECK(!already_in_lookup);
       results_.push_back(entry.scrutinee_id);
       break;
     }

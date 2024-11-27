@@ -74,7 +74,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc21: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_15.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc21_15: init type = call constants.%Int(%.loc21_15.1) [template = constants.%i32]
@@ -126,7 +126,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc21: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc16_11.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc16_11: init type = call constants.%Int(%.loc16_11.1) [template = constants.%i32]

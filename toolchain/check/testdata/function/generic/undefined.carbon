@@ -212,7 +212,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %x.patt: %T = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %T = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc10: %T = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %T = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_25: type = name_ref T, %T.loc4_12.1 [symbolic = %T.loc4_12.2 (constants.%T)]
 // CHECK:STDOUT:     %T.ref.loc4_31: type = name_ref T, %T.loc4_12.1 [symbolic = %T.loc4_12.2 (constants.%T)]
@@ -240,7 +240,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %x.patt: %T = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %T = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %T = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc10: %T = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %T = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = constants.%T]
@@ -259,7 +259,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: %T) -> @Defined.%T.loc4_12.2 (%T) {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Defined.%T.loc4_12.2 (%T) = name_ref x, %x.loc10
 // CHECK:STDOUT:     return %x.ref

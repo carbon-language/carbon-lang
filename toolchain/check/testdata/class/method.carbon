@@ -133,7 +133,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc20: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc20_29.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -270,7 +270,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc20: %i32 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %.loc12_25.1: Core.IntLiteral = int_value 32 [template = constants.%.1]

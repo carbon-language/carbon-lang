@@ -241,7 +241,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:     %u.param_patt: %U = value_param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %U = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc20: %U = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %U = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
 // CHECK:STDOUT:     %Self.ref.loc20: type = name_ref Self, %.loc20 [symbolic = constants.%C.2]
@@ -283,7 +283,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %u.patt: %U = binding_pattern u
 // CHECK:STDOUT:       %u.param_patt: %U = value_param_pattern %u.patt, runtime_param1
 // CHECK:STDOUT:       %return.patt: %U = return_slot_pattern
-// CHECK:STDOUT:       %return.param_patt.loc20: %U = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:       %return.param_patt: %U = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc14: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       %Self.ref.loc14: type = name_ref Self, %.loc14 [symbolic = %C (constants.%C.2)]
@@ -314,7 +314,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %C.2](%U.param_patt: type, %u.param_patt: %U) -> @F.%U.loc14_22.1 (%U) {
+// CHECK:STDOUT:   fn[%self.param_patt: %C.2](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref

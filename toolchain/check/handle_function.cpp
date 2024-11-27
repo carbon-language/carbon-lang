@@ -102,6 +102,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     // Track the signature from the definition, so that IDs in the body
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
+    prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
   }
   if ((prev_import_ir_id.is_valid() && !new_is_import)) {
     ReplacePrevInstForMerge(context, new_function.parent_scope_id,

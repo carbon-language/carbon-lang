@@ -74,7 +74,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc19: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc11_9: init type = call constants.%Int(%.loc11_9.1) [template = constants.%i32]
@@ -101,7 +101,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc19: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc19_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc19_9: init type = call constants.%Int(%.loc19_9.1) [template = constants.%i32]
@@ -128,7 +128,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc29: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc21_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc21_9: init type = call constants.%Int(%.loc21_9.1) [template = constants.%i32]
@@ -155,7 +155,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc29: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc29_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc29_9: init type = call constants.%Int(%.loc29_9.1) [template = constants.%i32]
@@ -182,7 +182,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc38: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc31_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc31_9: init type = call constants.%Int(%.loc31_9.1) [template = constants.%i32]
@@ -209,7 +209,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %m.patt: %i32 = binding_pattern m
 // CHECK:STDOUT:     %m.param_patt: %i32 = value_param_pattern %m.patt, runtime_param1
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt.loc38: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc38_9.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc38_9: init type = call constants.%Int(%.loc38_9.1) [template = constants.%i32]
