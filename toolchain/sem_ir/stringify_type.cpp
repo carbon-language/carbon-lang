@@ -209,11 +209,24 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
             push_string(" & ");
           }
         }
-        // TODO: Also output other restrictions from facet_type_info.
         if (step.index + 1 >=
-                static_cast<int>(facet_type_info.impls_constraints.size()) &&
-            facet_type_info.other_requirements) {
-          out << " where...";
+            static_cast<int>(facet_type_info.impls_constraints.size())) {
+          bool some_where = false;
+          if (facet_type_info.other_requirements) {
+            push_string("...");
+            some_where = true;
+          }
+          if (!facet_type_info.rewrite_constraints.empty()) {
+            if (some_where) {
+              push_string(" and");
+            }
+            // TODO: Render the actual constraint.
+            push_string(" <rewrites>");
+            some_where = true;
+          }
+          if (some_where) {
+            push_string(" where");
+          }
         }
         break;
       }

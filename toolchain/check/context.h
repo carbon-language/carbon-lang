@@ -162,13 +162,6 @@ class Context {
     return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId {
-    auto const_id = constants().GetOrAdd(inst, is_symbolic);
-    CARBON_VLOG("AddConstant: {0}\n", inst);
-    return const_id;
-  }
-
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   template <typename InstT>

@@ -24,10 +24,12 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   // The index of this symbolic constant within the generic's list of symbolic
   // constants, or invalid if `generic_id` is invalid.
   GenericInstIndex index;
+  // True if this is constant is symbolic just because it uses `.Self`.
+  bool dot_self;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << "}";
+        << ", index: " << index << ", .Self: " << dot_self << "}";
   }
 };
 
@@ -148,9 +150,10 @@ class ConstantStore {
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.
   //
-  // This updates `sem_ir.insts()` and `sem_ir.constant_values()` if the
+  // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
+  enum PhaseType { IsTemplate, IsDotSelfSymbolic, IsSymbolic };
+  auto GetOrAdd(Inst inst, PhaseType phase) -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

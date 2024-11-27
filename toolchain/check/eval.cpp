@@ -178,6 +178,9 @@ namespace {
 enum class Phase : uint8_t {
   // Value could be entirely and concretely computed.
   Template,
+  // Evaluation phase is symbolic because the expression involves specifically a
+  // reference to `.Self`.
+  DotSelfSymbolic,
   // Evaluation phase is symbolic because the expression involves a reference to
   // a symbolic binding.
   Symbolic,
@@ -191,7 +194,8 @@ enum class Phase : uint8_t {
 }  // namespace
 
 // Gets the phase in which the value of a constant will become available.
-static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
+static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
+    -> Phase {
   if (!constant_id.is_constant()) {
     return Phase::Runtime;
   } else if (constant_id == SemIR::ConstantId::Error) {
@@ -200,7 +204,13 @@ static auto GetPhase(SemIR::ConstantId constant_id) -> Phase {
     return Phase::Template;
   } else {
     CARBON_CHECK(constant_id.is_symbolic());
-    return Phase::Symbolic;
+    if (eval_context.constant_values()
+            .GetSymbolicConstant(constant_id)
+            .dot_self) {
+      return Phase::DotSelfSymbolic;
+    } else {
+      return Phase::Symbolic;
+    }
   }
 }
 
@@ -215,9 +225,14 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
   switch (phase) {
     case Phase::Template:
-      return context.AddConstant(inst, /*is_symbolic=*/false);
+      return context.constants().GetOrAdd(inst,
+                                          SemIR::ConstantStore::IsTemplate);
+    case Phase::DotSelfSymbolic:
+      return context.constants().GetOrAdd(
+          inst, SemIR::ConstantStore::IsDotSelfSymbolic);
     case Phase::Symbolic:
-      return context.AddConstant(inst, /*is_symbolic=*/true);
+      return context.constants().GetOrAdd(inst,
+                                          SemIR::ConstantStore::IsSymbolic);
     case Phase::UnknownDueToError:
       return SemIR::ConstantId::Error;
     case Phase::Runtime:
@@ -270,7 +285,7 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
   auto const_id = eval_context.GetConstantValue(inst_id);
-  *phase = LatestPhase(*phase, GetPhase(const_id));
+  *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
   return eval_context.constant_values().GetInstId(const_id);
 }
 
@@ -279,7 +294,7 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
 static auto GetConstantValue(EvalContext& eval_context, SemIR::TypeId type_id,
                              Phase* phase) -> SemIR::TypeId {
   auto const_id = eval_context.GetConstantValue(type_id);
-  *phase = LatestPhase(*phase, GetPhase(const_id));
+  *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
   return eval_context.context().GetTypeIdForTypeConstant(const_id);
 }
 
@@ -407,8 +422,8 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   for (auto& rewrite : info.rewrite_constraints) {
     rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
     rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
-    *phase = LatestPhase(*phase, GetPhase(rewrite.lhs_const_id));
-    *phase = LatestPhase(*phase, GetPhase(rewrite.rhs_const_id));
+    *phase = LatestPhase(*phase, GetPhase(eval_context, rewrite.lhs_const_id));
+    *phase = LatestPhase(*phase, GetPhase(eval_context, rewrite.rhs_const_id));
   }
   // TODO: Process other requirements.
   return info;
@@ -1684,8 +1699,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                 eval_context.GetConstantValue(rewrite->lhs_id);
             SemIR::ConstantId rhs =
                 eval_context.GetConstantValue(rewrite->rhs_id);
-            phase = LatestPhase(phase, GetPhase(lhs));
-            phase = LatestPhase(phase, GetPhase(rhs));
+            phase = LatestPhase(phase, GetPhase(eval_context, lhs));
+            phase = LatestPhase(phase, GetPhase(eval_context, rhs));
             info.rewrite_constraints.push_back(
                 {.lhs_const_id = lhs, .rhs_const_id = rhs});
           } else {
@@ -1702,7 +1717,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // All other uses of unary `not` are non-constant.
     case CARBON_KIND(SemIR::UnaryOperatorNot typed_inst): {
       auto const_id = eval_context.GetConstantValue(typed_inst.operand_id);
-      auto phase = GetPhase(const_id);
+      auto phase = GetPhase(eval_context, const_id);
       if (phase == Phase::Template) {
         auto value = eval_context.insts().GetAs<SemIR::BoolLiteral>(
             eval_context.constant_values().GetInstId(const_id));
