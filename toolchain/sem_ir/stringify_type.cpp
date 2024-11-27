@@ -96,9 +96,10 @@ class StepStack {
     PushString("(");
   }
 
-  auto empty() -> bool { return steps.empty(); }
+  auto empty() const -> bool { return steps.empty(); }
   auto Pop() -> Step { return steps.pop_back_val(); }
 
+ private:
   const SemIR::File& sem_ir;
   llvm::SmallVector<Step> steps;
 };
