@@ -28,12 +28,18 @@ struct BusyboxInfo {
 //
 // Extracts the desired mode for the busybox from the initial command name.
 //
-// Locates the installed busybox binary both by searching from the command name
-// based on the expected structure of the installation, and resolving symlinks.
-// It sets the `bin_path` to the most consistent busybox binary found for the
-// initial command.
+// Searches to try and locate the installed busybox binary using a
+// heuristic-based algorithm:
 //
-// If unable to locate a plausible busybox binary, returns an error instead.
+// 1) Sets the initial binary path to the provided `argv[0]` path.
+// 2) Checks if the binary path *is* the busybox binary. If so, uses it.
+// 3) Checks if the binary path is within an installation prefix with a busybox
+//    binary in the expected location relative to that prefix. If so, uses that
+//    busybox.
+// 4) Checks if the binary path is a symlink and if so resolves the binary path
+//    to its target and goes to (2).
+//
+// If unable to locate a plausible busybox binary, returns an error.
 inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
