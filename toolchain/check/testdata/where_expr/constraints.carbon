@@ -181,10 +181,10 @@ interface E {
 }
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `E where .element1 = () and .element0 = bool` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `E where <.element1> = () and <.element0> = bool` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let H: (E where .F = bool and .G = ()) = bool;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `ImplicitAs(E where .element1 = () and .element0 = bool)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `ImplicitAs(E where <.element1> = () and <.element0> = bool)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let H: (E where .F = bool and .G = ()) = bool;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let H: (E where .F = bool and .G = ()) = bool;

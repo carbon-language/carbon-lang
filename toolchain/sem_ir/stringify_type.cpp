@@ -304,19 +304,22 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(InterfaceWitnessAccess inst): {
-        // TODO: Prints `.element0` instead of `.T`.
-        out << "." << inst.index;
-        /* FIXME: doesn't work
         auto const_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
-        // Ends up being a `FacetAccessWitness` in practice.
-        auto witness = sem_ir.insts().GetAs<InterfaceWitness>(const_id);
-        auto elements = sem_ir.inst_blocks().Get(witness.elements_id);
-        auto index = static_cast<size_t>(inst.index.index);
-        CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-        step_stack.PushInstId(elements[index]);
-        step_stack.PushString(".");
-        */
+        auto witness = sem_ir.insts().GetAs<FacetAccessWitness>(const_id);
+        auto sym_name =
+            sem_ir.insts().GetAs<BindSymbolicName>(witness.facet_value_inst_id);
+        auto name_id =
+            sem_ir.entity_names().Get(sym_name.entity_name_id).name_id;
+        // Suppress implied `.Self`.
+        if (name_id == SemIR::NameId::PeriodSelf) {
+          // TODO: This prints `.element0` instead of `.(I.T)`.
+          out << "<." << inst.index << ">";
+        } else {
+          out << "<" << inst.index << " of ";
+          step_stack.PushString(">");
+          step_stack.PushInstId(witness.facet_value_inst_id);
+        }
         break;
       }
       case CARBON_KIND(NameRef inst): {
