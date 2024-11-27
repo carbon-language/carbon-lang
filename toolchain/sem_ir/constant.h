@@ -29,7 +29,8 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << ", .Self: " << dot_self << "}";
+        << ", index: " << index << ", .Self: " << (dot_self ? "true" : "false")
+        << "}";
   }
 };
 
