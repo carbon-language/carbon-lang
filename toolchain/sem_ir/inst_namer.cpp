@@ -468,16 +468,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_.facet_types().Get(inst.facet_type_id);
+        bool has_where = facet_type_info.other_requirements ||
+                         !facet_type_info.rewrite_constraints.empty();
         if (auto interface = facet_type_info.TryAsSingleInterface()) {
           const auto& interface_info =
               sem_ir_.interfaces().Get(interface->interface_id);
-          add_inst_name_id(interface_info.name_id, ".type");
+          add_inst_name_id(interface_info.name_id,
+                           has_where ? "_where.type" : ".type");
         } else if (facet_type_info.impls_constraints.empty()) {
-          if (facet_type_info.other_requirements) {
-            add_inst_name("type_where");
-          } else {
-            add_inst_name("type");
-          }
+          add_inst_name(has_where ? "type_where" : "type");
         } else {
           add_inst_name("facet_type");
         }

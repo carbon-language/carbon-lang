@@ -89,21 +89,21 @@ class D {
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
-// CHECK:STDOUT:   %.Self.1: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.1: %I.type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
-// CHECK:STDOUT:   %T: %I.type.2 = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
+// CHECK:STDOUT:   %T: %I_where.type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %I_where.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self.1 [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %U: %I.type.2 = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: %I.type.2 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: %I_where.type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [template]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self.2: type = bind_symbolic_name .Self, 0 [symbolic]
@@ -130,37 +130,37 @@ class D {
 // CHECK:STDOUT:     .TypeSelfImpls = %TypeSelfImpls.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type.1] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [template = constants.%PeriodSelf] {
-// CHECK:STDOUT:     %T.patt.loc8_15.1: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: %I.type.2 = value_param_pattern %T.patt.loc8_15.1, runtime_param<invalid> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc8_15.1: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: %I_where.type = value_param_pattern %T.patt.loc8_15.1, runtime_param<invalid> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
-// CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.loc8_37: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%I.type.2] {
+// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.param: %I.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc8_15.1: %I.type.2 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.param: %I_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.loc8_15.1: %I_where.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt.loc10_17.1: %I.type.2 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %U.param_patt: %I.type.2 = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc10_17.1: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
-// CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc10_29.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
 // CHECK:STDOUT:     %.loc10_29.2: type = interface_witness_access %.loc10_29.1, element0 [symbolic = constants.%.4]
 // CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.2] {
+// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_equivalent %.loc10_29.2, %.loc10_41
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.param: %I.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %U.loc10_17.1: %I.type.2 = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %U.loc10_17.1: %I_where.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt.loc12_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
@@ -168,7 +168,7 @@ class D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
@@ -178,7 +178,7 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
 // CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
 // CHECK:STDOUT:
@@ -188,18 +188,18 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: %I.type.2) {
-// CHECK:STDOUT:   %T.loc8_15.2: %I.type.2 = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc8_15.2: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: %I_where.type) {
+// CHECK:STDOUT:   %T.loc8_15.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc8_15.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc8_15.2: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: %I.type.2);
+// CHECK:STDOUT:   fn(%T.param_patt: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %I.type.2) {
-// CHECK:STDOUT:   %U.loc10_17.2: %I.type.2 = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
-// CHECK:STDOUT:   %U.patt.loc10_17.2: %I.type.2 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc10_17.1: %I_where.type) {
+// CHECK:STDOUT:   %U.loc10_17.2: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc10_17.2 (constants.%U)]
+// CHECK:STDOUT:   %U.patt.loc10_17.2: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: %I.type.2);
+// CHECK:STDOUT:   fn(%U.param_patt: %I_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc12_18.1: %type_where) {
