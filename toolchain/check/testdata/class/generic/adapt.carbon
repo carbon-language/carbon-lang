@@ -58,7 +58,10 @@ fn Access(a: Adapter) -> i32 {
   return a.x;
 }
 
-// --- extend_adapt_specific_type_copy.carbon
+// --- extend_adapt_specific_type_library.carbon
+
+// TODO: Delete this file and change the next file to instead import the
+// previous file once the previous file can be successfully type-checked.
 
 library "[[@TEST_NAME]]";
 
@@ -74,7 +77,7 @@ class Adapter {
 
 library "[[@TEST_NAME]]";
 
-import library "extend_adapt_specific_type_copy";
+import library "extend_adapt_specific_type_library";
 
 fn ImportedAccess(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
@@ -515,7 +518,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %.loc6_1.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_adapt_specific_type_copy.carbon
+// CHECK:STDOUT: --- extend_adapt_specific_type_library.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -553,45 +556,45 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
-// CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc7_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_9.1, runtime_param<invalid> [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [template = constants.%Adapter] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc4_9.1: type) {
-// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
-// CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
+// CHECK:STDOUT: generic class @C(%T.loc7_9.1: type) {
+// CHECK:STDOUT:   %T.loc7_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_9.2 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc7_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_9.2) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %.loc5_8.2: type = unbound_element_type @C.%C (%C.2), @C.%T.loc4_9.2 (%T) [symbolic = %.loc5_8.2 (constants.%.1)]
-// CHECK:STDOUT:   %.loc6_1.2: type = struct_type {.x: @C.%T.loc4_9.2 (%T)} [symbolic = %.loc6_1.2 (constants.%.2)]
-// CHECK:STDOUT:   %.loc6_1.3: <witness> = complete_type_witness @C.%.loc6_1.2 (%.2) [symbolic = %.loc6_1.3 (constants.%.3)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc7_9.2) [symbolic = %C (constants.%C.2)]
+// CHECK:STDOUT:   %.loc8_8.2: type = unbound_element_type @C.%C (%C.2), @C.%T.loc7_9.2 (%T) [symbolic = %.loc8_8.2 (constants.%.1)]
+// CHECK:STDOUT:   %.loc9_1.2: type = struct_type {.x: @C.%T.loc7_9.2 (%T)} [symbolic = %.loc9_1.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc9_1.3: <witness> = complete_type_witness @C.%.loc9_1.2 (%.2) [symbolic = %.loc9_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc5_8.1: @C.%.loc5_8.2 (%.1) = field_decl x, element0 [template]
-// CHECK:STDOUT:     %.loc6_1.1: <witness> = complete_type_witness %.2 [symbolic = %.loc6_1.3 (constants.%.3)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_9.1 [symbolic = %T.loc7_9.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc8_8.1: @C.%.loc8_8.2 (%.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc9_1.1: <witness> = complete_type_witness %.2 [symbolic = %.loc9_1.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
-// CHECK:STDOUT:     .x = %.loc5_8.1
+// CHECK:STDOUT:     .x = %.loc8_8.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc9_18: Core.IntLiteral = int_value 32 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc9_18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_17.2: type = converted %int.make_type_signed, %.loc9_17.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_18: Core.IntLiteral = int_value 32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc12_18) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_17.2: type = converted %int.make_type_signed, %.loc12_17.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.3]
 // CHECK:STDOUT:   adapt_decl %C [template]
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.6 [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
@@ -599,24 +602,24 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.loc7_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
+// CHECK:STDOUT: specific @C(%T.loc7_9.2) {
+// CHECK:STDOUT:   %T.loc7_9.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc7_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%i32
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%i32
+// CHECK:STDOUT:   %T.loc7_9.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc7_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C => constants.%C.3
-// CHECK:STDOUT:   %.loc5_8.2 => constants.%.5
-// CHECK:STDOUT:   %.loc6_1.2 => constants.%.6
-// CHECK:STDOUT:   %.loc6_1.3 => constants.%.7
+// CHECK:STDOUT:   %.loc8_8.2 => constants.%.5
+// CHECK:STDOUT:   %.loc9_1.2 => constants.%.6
+// CHECK:STDOUT:   %.loc9_1.3 => constants.%.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extend_adapt_specific_type.carbon
@@ -642,18 +645,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_adapt_specific_type_copy, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_adapt_specific_type_copy, inst+26, loaded [template = constants.%Adapter]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_adapt_specific_type_library, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_adapt_specific_type_library, inst+26, loaded [template = constants.%Adapter]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.8
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.9
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_adapt_specific_type_copy, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.4: @C.%.1 (%.6) = import_ref Main//extend_adapt_specific_type_copy, inst+18, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_adapt_specific_type_copy, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//extend_adapt_specific_type_copy, inst+44, loaded [template = constants.%C.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_adapt_specific_type_library, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.4: @C.%.1 (%.6) = import_ref Main//extend_adapt_specific_type_library, inst+18, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_adapt_specific_type_library, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//extend_adapt_specific_type_library, inst+44, loaded [template = constants.%C.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
