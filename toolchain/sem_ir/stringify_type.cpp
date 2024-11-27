@@ -483,6 +483,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case WhereExpr::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
+        CARBON_CHECK(sem_ir.constant_values().Get(step.inst_id).is_valid(),
+                     "inst_id: {0} kind: {1}", step.inst_id,
+                     untyped_inst.kind());
         auto const_inst_id =
             sem_ir.constant_values().GetConstantInstId(step.inst_id);
         if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {

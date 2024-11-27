@@ -2056,6 +2056,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FacetAccessWitness inst)
+    -> ResolveResult {
+  auto facet_value_inst_id =
+      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::FacetAccessWitness>(
+      resolver, {.type_id = resolver.local_context().GetBuiltinType(
+                     SemIR::BuiltinInstKind::WitnessType),
+                 .facet_value_inst_id = facet_value_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
@@ -2066,6 +2081,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                      .Get(interface.interface_id)
                                      .first_owning_decl_id);
     GetLocalSpecificData(resolver, interface.specific_id);
+  }
+  for (auto rewrite : facet_type_info.rewrite_constraints) {
+    GetLocalConstantId(resolver, rewrite.lhs_const_id);
+    GetLocalConstantId(resolver, rewrite.rhs_const_id);
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2099,10 +2118,18 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           {generic_interface_type.interface_id, specific_id});
     }
   }
+  llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>
+      rewrite_constraints;
+  for (auto rewrite : facet_type_info.rewrite_constraints) {
+    rewrite_constraints.push_back(
+        {.lhs_const_id = GetLocalConstantId(resolver, rewrite.lhs_const_id),
+         .rhs_const_id = GetLocalConstantId(resolver, rewrite.rhs_const_id)});
+  }
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
       resolver.local_facet_types().Add(SemIR::FacetTypeInfo{
           .impls_constraints = impls_constraints,
+          .rewrite_constraints = rewrite_constraints,
           .other_requirements = facet_type_info.other_requirements});
   return ResolveAs<SemIR::FacetType>(
       resolver,
@@ -2138,6 +2165,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = resolver.local_context().GetBuiltinType(
                      SemIR::BuiltinInstKind::WitnessType),
                  .elements_id = elements_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::InterfaceWitnessAccess inst)
+    -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto witness_id = GetLocalConstantInstId(resolver, inst.witness_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::InterfaceWitnessAccess>(
+      resolver,
+      {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
+       .witness_id = witness_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2365,6 +2408,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FacetAccessType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::FacetAccessWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::FacetType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2396,6 +2442,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::InterfaceWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::InterfaceWitnessAccess inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::IntValue inst): {

@@ -46,6 +46,30 @@ interface A {
 
 fn NestedRewrite(D:! (A where .B = bool) where .C = ());
 
+// --- fail_import_rewrites.carbon
+
+library "[[@TEST_NAME]]";
+
+// TODO: Should import successfully and then get errors when calling the
+// imported functions.
+
+// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+9]]:1: in import [InImport]
+// CHECK:STDERR: equal_constraint.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: nested_rewrites.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: nested_rewrites.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
+// CHECK:STDERR:
+import library "equal_constraint";
+import library "nested_rewrites";
+
+fn Calls() {
+  Equal(bool);
+  NestedRewrite(i32);
+}
+
 // --- associated_type_impls.carbon
 
 library "[[@TEST_NAME]]";
@@ -179,6 +203,7 @@ interface E {
   let F:! type;
   let G:! type;
 }
+// Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `type` to `E where .(E.G) = () and .(E.F) = bool` [ImplicitAsConversionFailure]
@@ -545,6 +570,111 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
 // CHECK:STDOUT:   %D.loc9_18.2 => constants.%D
 // CHECK:STDOUT:   %D.patt.loc9_18.2 => constants.%D
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_rewrites.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Calls.type: type = fn_type @Calls [template]
+// CHECK:STDOUT:   %Calls: %Calls.type = struct_value () [template]
+// CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
+// CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
+// CHECK:STDOUT:   %T: <error> = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: <error> = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
+// CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [template]
+// CHECK:STDOUT:   %NestedRewrite: %NestedRewrite.type = struct_value () [template]
+// CHECK:STDOUT:   %D: <error> = bind_symbolic_name D, 0 [symbolic]
+// CHECK:STDOUT:   %D.patt: <error> = symbolic_binding_pattern D, 0 [symbolic]
+// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.2 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//equal_constraint, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Equal.type = import_ref Main//equal_constraint, inst+33, loaded [template = constants.%Equal]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//nested_rewrites, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.4: %NestedRewrite.type = import_ref Main//nested_rewrites, inst+56, loaded [template = constants.%NestedRewrite]
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Bool = %import_ref.8
+// CHECK:STDOUT:     .Int = %import_ref.14
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//equal_constraint, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//equal_constraint, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//equal_constraint, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//nested_rewrites, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//nested_rewrites, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//nested_rewrites, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//nested_rewrites, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//nested_rewrites, inst+11, unloaded
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .N = imports.%import_ref.1
+// CHECK:STDOUT:     .Equal = imports.%import_ref.2
+// CHECK:STDOUT:     .A = imports.%import_ref.3
+// CHECK:STDOUT:     .NestedRewrite = imports.%import_ref.4
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Calls = %Calls.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %Calls.decl: %Calls.type = fn_decl @Calls [template = constants.%Calls] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @N {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .P = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @A {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%import_ref.9
+// CHECK:STDOUT:   .B = imports.%import_ref.10
+// CHECK:STDOUT:   .C = imports.%import_ref.11
+// CHECK:STDOUT:   witness = (imports.%import_ref.12, imports.%import_ref.13)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Calls() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%import_ref.2 [template = constants.%Equal]
+// CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
+// CHECK:STDOUT:   %.loc21: Core.IntLiteral = int_value 32 [template = constants.%.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc21) [template = constants.%i32]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Equal(constants.%T: <error>) {
+// CHECK:STDOUT:   %T: <error> = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%T.param_patt: <error>);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: <error>) {
+// CHECK:STDOUT:   %D: <error> = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
+// CHECK:STDOUT:   %D.patt: <error> = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%D.param_patt: <error>);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Equal(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %T.patt => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
+// CHECK:STDOUT:   %D => constants.%D
+// CHECK:STDOUT:   %D.patt => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_type_impls.carbon
@@ -1163,60 +1293,60 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %E.decl: type = interface_decl @E [template = constants.%E.type] {} {}
-// CHECK:STDOUT:   %E.ref.loc17: type = name_ref E, %E.decl [template = constants.%E.type]
+// CHECK:STDOUT:   %E.ref.loc18: type = name_ref E, %E.decl [template = constants.%E.type]
 // CHECK:STDOUT:   %.Self.1: %E.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %.Self.ref.loc17_17: %E.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %F.ref.loc17: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_17.1: <witness> = facet_access_witness %.Self.ref.loc17_17 [symbolic = constants.%.4]
-// CHECK:STDOUT:   %.loc17_17.2: type = interface_witness_access %.loc17_17.1, element0 [symbolic = constants.%.5]
+// CHECK:STDOUT:   %.Self.ref.loc18_17: %E.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:   %F.ref.loc18: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_17.1: <witness> = facet_access_witness %.Self.ref.loc18_17 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.loc18_17.2: type = interface_witness_access %.loc18_17.1, element0 [symbolic = constants.%.5]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc17_22.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc17_22.2: type = converted %bool.make_type, %.loc17_22.1 [template = bool]
-// CHECK:STDOUT:   %.Self.ref.loc17_31: %E.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %G.ref.loc17: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_31.1: <witness> = facet_access_witness %.Self.ref.loc17_31 [symbolic = constants.%.4]
-// CHECK:STDOUT:   %.loc17_31.2: type = interface_witness_access %.loc17_31.1, element1 [symbolic = constants.%.6]
-// CHECK:STDOUT:   %.loc17_37.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_37.2: type = converted %.loc17_37.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc17_11: type = where_expr %.Self.1 [template = constants.%E_where.type.1] {
-// CHECK:STDOUT:     requirement_rewrite %.loc17_17.2, %.loc17_22.2
-// CHECK:STDOUT:     requirement_rewrite %.loc17_31.2, %.loc17_37.2
+// CHECK:STDOUT:   %.loc18_22.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc18_22.2: type = converted %bool.make_type, %.loc18_22.1 [template = bool]
+// CHECK:STDOUT:   %.Self.ref.loc18_31: %E.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:   %G.ref.loc18: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc18_31.1: <witness> = facet_access_witness %.Self.ref.loc18_31 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.loc18_31.2: type = interface_witness_access %.loc18_31.1, element1 [symbolic = constants.%.6]
+// CHECK:STDOUT:   %.loc18_37.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_37.2: type = converted %.loc18_37.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc18_11: type = where_expr %.Self.1 [template = constants.%E_where.type.1] {
+// CHECK:STDOUT:     requirement_rewrite %.loc18_17.2, %.loc18_22.2
+// CHECK:STDOUT:     requirement_rewrite %.loc18_31.2, %.loc18_37.2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %E.ref.loc26: type = name_ref E, %E.decl [template = constants.%E.type]
+// CHECK:STDOUT:   %E.ref.loc27: type = name_ref E, %E.decl [template = constants.%E.type]
 // CHECK:STDOUT:   %.Self.2: %E.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %.Self.ref.loc26_18: %E.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %F.ref.loc26: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc26_18.1: <witness> = facet_access_witness %.Self.ref.loc26_18 [symbolic = constants.%.4]
-// CHECK:STDOUT:   %.loc26_18.2: type = interface_witness_access %.loc26_18.1, element0 [symbolic = constants.%.5]
-// CHECK:STDOUT:   %.loc26_24.1: %.31 = struct_literal ()
-// CHECK:STDOUT:   %.loc26_24.2: type = converted %.loc26_24.1, constants.%.31 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc26_12: type = where_expr %.Self.2 [template = constants.%E_where.type.2] {
-// CHECK:STDOUT:     requirement_rewrite %.loc26_18.2, %.loc26_24.2
+// CHECK:STDOUT:   %.Self.ref.loc27_18: %E.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:   %F.ref.loc27: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc27_18.1: <witness> = facet_access_witness %.Self.ref.loc27_18 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.loc27_18.2: type = interface_witness_access %.loc27_18.1, element0 [symbolic = constants.%.5]
+// CHECK:STDOUT:   %.loc27_24.1: %.31 = struct_literal ()
+// CHECK:STDOUT:   %.loc27_24.2: type = converted %.loc27_24.1, constants.%.31 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc27_12: type = where_expr %.Self.2 [template = constants.%E_where.type.2] {
+// CHECK:STDOUT:     requirement_rewrite %.loc27_18.2, %.loc27_24.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self.3: %E_where.type.2 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:   %.Self.ref.loc26_33: %E_where.type.2 = name_ref .Self, %.Self.3 [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:   %G.ref.loc26: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc26_33.1: <witness> = facet_access_witness %.Self.ref.loc26_33 [symbolic = constants.%.32]
-// CHECK:STDOUT:   %.loc26_33.2: type = interface_witness_access %.loc26_33.1, element1 [symbolic = constants.%.33]
-// CHECK:STDOUT:   %.loc26_38.1: Core.IntLiteral = int_value 32 [template = constants.%.34]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc26_38.1) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_38.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_38.3: type = converted %int.make_type_signed, %.loc26_38.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_27: type = where_expr %.Self.3 [template = constants.%E_where.type.3] {
-// CHECK:STDOUT:     requirement_rewrite %.loc26_33.2, %.loc26_38.3
+// CHECK:STDOUT:   %.Self.ref.loc27_33: %E_where.type.2 = name_ref .Self, %.Self.3 [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:   %G.ref.loc27: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc27_33.1: <witness> = facet_access_witness %.Self.ref.loc27_33 [symbolic = constants.%.32]
+// CHECK:STDOUT:   %.loc27_33.2: type = interface_witness_access %.loc27_33.1, element1 [symbolic = constants.%.33]
+// CHECK:STDOUT:   %.loc27_38.1: Core.IntLiteral = int_value 32 [template = constants.%.34]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc27_38.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_38.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_38.3: type = converted %int.make_type_signed, %.loc27_38.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc27_27: type = where_expr %.Self.3 [template = constants.%E_where.type.3] {
+// CHECK:STDOUT:     requirement_rewrite %.loc27_33.2, %.loc27_38.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %E.ref.loc34: type = name_ref E, %E.decl [template = constants.%E.type]
+// CHECK:STDOUT:   %E.ref.loc35: type = name_ref E, %E.decl [template = constants.%E.type]
 // CHECK:STDOUT:   %.Self.4: %E.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %.Self.ref.loc34_17: %E.type = name_ref .Self, %.Self.4 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %F.ref.loc34: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc34_17.1: <witness> = facet_access_witness %.Self.ref.loc34_17 [symbolic = constants.%.4]
-// CHECK:STDOUT:   %.loc34_17.2: type = interface_witness_access %.loc34_17.1, element0 [symbolic = constants.%.5]
-// CHECK:STDOUT:   %.Self.ref.loc34_22: %E.type = name_ref .Self, %.Self.4 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:   %G.ref.loc34: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc34_27.1: <witness> = facet_access_witness %.Self.ref.loc34_22 [symbolic = constants.%.4]
-// CHECK:STDOUT:   %.loc34_27.2: type = interface_witness_access %.loc34_27.1, element1 [symbolic = constants.%.6]
-// CHECK:STDOUT:   %.loc34_11: type = where_expr %.Self.4 [template = constants.%E_where.type.4] {
-// CHECK:STDOUT:     requirement_rewrite %.loc34_17.2, %.loc34_27.2
+// CHECK:STDOUT:   %.Self.ref.loc35_17: %E.type = name_ref .Self, %.Self.4 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:   %F.ref.loc35: %.1 = name_ref F, @E.%.loc5 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc35_17.1: <witness> = facet_access_witness %.Self.ref.loc35_17 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.loc35_17.2: type = interface_witness_access %.loc35_17.1, element0 [symbolic = constants.%.5]
+// CHECK:STDOUT:   %.Self.ref.loc35_22: %E.type = name_ref .Self, %.Self.4 [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:   %G.ref.loc35: %.1 = name_ref G, @E.%.loc6 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc35_27.1: <witness> = facet_access_witness %.Self.ref.loc35_22 [symbolic = constants.%.4]
+// CHECK:STDOUT:   %.loc35_27.2: type = interface_witness_access %.loc35_27.1, element1 [symbolic = constants.%.6]
+// CHECK:STDOUT:   %.loc35_11: type = where_expr %.Self.4 [template = constants.%E_where.type.4] {
+// CHECK:STDOUT:     requirement_rewrite %.loc35_17.2, %.loc35_27.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1236,15 +1366,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_42: Core.IntLiteral = int_value 64 [template = constants.%.7]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc17_42) [template = f64]
-// CHECK:STDOUT:   %.loc17_45: %E_where.type.1 = converted %float.make_type, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_42: Core.IntLiteral = int_value 64 [template = constants.%.7]
+// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%.loc18_42) [template = f64]
+// CHECK:STDOUT:   %.loc18_45: %E_where.type.1 = converted %float.make_type, <error> [template = <error>]
 // CHECK:STDOUT:   %H: %E_where.type.1 = bind_name H, <error>
-// CHECK:STDOUT:   %bool.make_type.loc26: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc26: %E_where.type.3 = converted %bool.make_type.loc26, <error> [template = <error>]
+// CHECK:STDOUT:   %bool.make_type.loc27: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %.loc27: %E_where.type.3 = converted %bool.make_type.loc27, <error> [template = <error>]
 // CHECK:STDOUT:   %J: %E_where.type.3 = bind_name J, <error>
-// CHECK:STDOUT:   %bool.make_type.loc34: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc34: %E_where.type.4 = converted %bool.make_type.loc34, <error> [template = <error>]
+// CHECK:STDOUT:   %bool.make_type.loc35: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %.loc35: %E_where.type.4 = converted %bool.make_type.loc35, <error> [template = <error>]
 // CHECK:STDOUT:   %K: %E_where.type.4 = bind_name K, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
