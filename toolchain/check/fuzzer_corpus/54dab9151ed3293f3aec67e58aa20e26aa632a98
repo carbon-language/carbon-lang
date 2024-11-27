@@ -3,21 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
-// CHECK:STDOUT: result: 3
 
 package ExplorerTest;
 
-
-
-
 fn Main() -> i32 {
-  var ar: [i32; 4] = (0, 1,2,3);
-  var count : i32 = 0;
-  for( x: i32 in ar){
-      count = count +x;
-      if( x == 2){
-        break;
-      }
-  }
-  return count;
+  var v: array(i32, 2);
+  // CHECK:STDERR: COMPILATION ERROR: fail_array.carbon:[[@LINE+1]]: use of uninitialized variable v
+  return v[0];
 }

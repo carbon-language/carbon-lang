@@ -42,7 +42,7 @@ class Reachable {
   }
 
   fn AddLevel[addr self: Self*](terrain: Terrain, level: i32) {
-    let adj: [(i32, i32); 4] = ((-1, 0), (0, -1), (1, 0), (0, 1));
+    let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     var y: i32 = 0;
     while (y < 43) {
       var x: i32 = 0;
@@ -84,7 +84,7 @@ class Reachable {
     return total;
   }
 
-  var trailheads: [[u256; 43]; 43];
+  var trailheads: array(array(u256, 43), 43);
 }
 
 fn Run() {

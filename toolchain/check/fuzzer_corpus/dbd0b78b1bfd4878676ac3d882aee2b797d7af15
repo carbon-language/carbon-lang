@@ -22,7 +22,7 @@ class A{
 }
 
 fn Main() -> i32 {
-  var a: [A; 2] = ({.n = 6},{.n = 5});
-  var b: [[A; 2]; 2] = (({.n = 4},{.n = 3}), ({.n = 2},{.n = 1}));
+  var a: array(A, 2) = ({.n = 6},{.n = 5});
+  var b: array(array(A, 2), 2) = (({.n = 4},{.n = 3}), ({.n = 2},{.n = 1}));
   return 1;
 }

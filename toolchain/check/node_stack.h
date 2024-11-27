@@ -431,7 +431,8 @@ class NodeStack {
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
-      case Parse::NodeKind::ArrayExprSemi:
+      case Parse::NodeKind::ArrayExprComma:
+      case Parse::NodeKind::ArrayExprKeyword:
       case Parse::NodeKind::BuiltinName:
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:

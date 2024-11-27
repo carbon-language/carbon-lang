@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F() -> [i32; 42];
+fn F() -> array(i32, 42);
 
 // --- user.carbon
 

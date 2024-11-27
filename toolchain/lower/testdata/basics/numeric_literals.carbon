@@ -11,13 +11,13 @@
 fn F() {
   // 8 and 9 trigger special behavior in APInt when mishandling signed versus
   // unsigned, so we pay extra attention to those.
-  var ints: [i32; 4] = (
+  var ints: array(i32, 4) = (
     8,
     9,
     0x8,
     0b1000,
   );
-  var floats: [f64; 6] = (
+  var floats: array(f64, 6) = (
     0.9,
     8.0,
     80.0,
@@ -78,7 +78,7 @@ fn F() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 24, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 26, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 29, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 31, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 20, column: 3, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 1, scope: !4)

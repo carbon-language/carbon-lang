@@ -22,11 +22,11 @@ impl i32 as ImplicitAs(A) {
 }
 
 fn Main() -> i32 {
-  var arr1: [i32; 2] = (1, 2 as A);
+  var arr1: array(i32, 2) = (1, 2 as A);
   Print("1: {0}", arr1[0]);
   Print("2: {0}", arr1[1]);
 
-  var arr2: [A; 2] = (3, 4 as A);
+  var arr2: array(A, 2) = (3, 4 as A);
   Print("3: {0}", arr2[0].n);
   Print("4: {0}", arr2[1].n);
   return 0;

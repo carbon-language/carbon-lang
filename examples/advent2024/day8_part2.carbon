@@ -9,7 +9,7 @@ import Core library "io";
 import library "day8_common";
 import library "io_utils";
 
-fn MarkAndCount(marks: [[bool; 50]; 50]*, x: i32, y: i32) -> i32 {
+fn MarkAndCount(marks: array(array(bool, 50), 50)*, x: i32, y: i32) -> i32 {
   if (not (*marks)[x][y]) {
     (*marks)[x][y] = true;
     return 1;
@@ -17,7 +17,7 @@ fn MarkAndCount(marks: [[bool; 50]; 50]*, x: i32, y: i32) -> i32 {
   return 0;
 }
 
-fn MarkAndCountAntinodesFor(grid: Grid, marks: [[bool; 50]; 50]*, ax: i32, ay: i32) -> i32 {
+fn MarkAndCountAntinodesFor(grid: Grid, marks: array(array(bool, 50), 50)*, ax: i32, ay: i32) -> i32 {
   var count: i32 = 0;
   var by: i32 = 0;
   while (by < 50) {
@@ -44,7 +44,7 @@ fn MarkAndCountAntinodesFor(grid: Grid, marks: [[bool; 50]; 50]*, ax: i32, ay: i
   return count;
 }
 
-fn MarkAndCountAntinodes(grid: Grid, marks: [[bool; 50]; 50]*) -> i32 {
+fn MarkAndCountAntinodes(grid: Grid, marks: array(array(bool, 50), 50)*) -> i32 {
   var count: i32 = 0;
   var y: i32 = 0;
   while (y < 50) {
@@ -61,7 +61,7 @@ fn MarkAndCountAntinodes(grid: Grid, marks: [[bool; 50]; 50]*) -> i32 {
 }
 
 fn Run() {
-  var marks: [[bool; 50]; 50];
+  var marks: array(array(bool, 50), 50);
   var y: i32 = 0;
   while (y < 50) {
     var x: i32 = 0;

@@ -3,11 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // AUTOUPDATE
+// CHECK:STDOUT: result: 3
 
 package ExplorerTest;
 
 fn Main() -> i32 {
-  // CHECK:STDERR: COMPILATION ERROR: fail_size_mismatch.carbon:[[@LINE+1]]: type error in initializer of variable: '(i32, i32, i32)' is not implicitly convertible to '[i32; 2]'
-  var x: [i32; 2] = (0, 1, 2);
-  return x[0];
+  var t: auto = (1, 2);
+  var a: array(i32, 2) = t;
+  return a[0] + a[1];
 }

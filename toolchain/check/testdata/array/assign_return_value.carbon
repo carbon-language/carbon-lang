@@ -11,7 +11,7 @@
 fn F() -> (i32,) { return (0,); }
 
 fn Run() {
-  var t: [i32; 1] = F();
+  var t: array(i32, 1) = F();
 }
 
 // CHECK:STDOUT: --- assign_return_value.carbon
@@ -96,17 +96,17 @@ fn Run() {
 // CHECK:STDOUT:   %t.var: ref %array_type = var t
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %tuple.type.a1c = call %F.ref()
-// CHECK:STDOUT:   %.loc14_23.1: ref %tuple.type.a1c = temporary_storage
-// CHECK:STDOUT:   %.loc14_23.2: ref %tuple.type.a1c = temporary %.loc14_23.1, %F.call
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc14_23.2, element0
-// CHECK:STDOUT:   %.loc14_23.3: %i32 = bind_value %tuple.elem0
+// CHECK:STDOUT:   %.loc14_28.1: ref %tuple.type.a1c = temporary_storage
+// CHECK:STDOUT:   %.loc14_28.2: ref %tuple.type.a1c = temporary %.loc14_28.1, %F.call
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc14_28.2, element0
+// CHECK:STDOUT:   %.loc14_28.3: %i32 = bind_value %tuple.elem0
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc14_23.4: ref %i32 = array_index %t.var, %int_0
-// CHECK:STDOUT:   %.loc14_23.5: init %i32 = initialize_from %.loc14_23.3 to %.loc14_23.4
-// CHECK:STDOUT:   %.loc14_23.6: init %array_type = array_init (%.loc14_23.5) to %t.var
-// CHECK:STDOUT:   %.loc14_3.2: init %array_type = converted %F.call, %.loc14_23.6
+// CHECK:STDOUT:   %.loc14_28.4: ref %i32 = array_index %t.var, %int_0
+// CHECK:STDOUT:   %.loc14_28.5: init %i32 = initialize_from %.loc14_28.3 to %.loc14_28.4
+// CHECK:STDOUT:   %.loc14_28.6: init %array_type = array_init (%.loc14_28.5) to %t.var
+// CHECK:STDOUT:   %.loc14_3.2: init %array_type = converted %F.call, %.loc14_28.6
 // CHECK:STDOUT:   assign %t.var, %.loc14_3.2
-// CHECK:STDOUT:   %.loc14_17: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc14_22: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]

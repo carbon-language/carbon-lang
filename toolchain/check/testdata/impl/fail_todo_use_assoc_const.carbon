@@ -69,18 +69,18 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let N:! i32;
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
-  // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+4]]:32: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
-  // CHECK:STDERR:                                ^
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:37: error: cannot implicitly convert from `<associated entity in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   fn F[self: Self]() -> array(bool, N);
+  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+4]]:37: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F[self: Self]() -> array(bool, N);
+  // CHECK:STDERR:                                     ^
   // CHECK:STDERR:
-  fn F[self: Self]() -> [bool; N];
+  fn F[self: Self]() -> array(bool, N);
 }
 
 impl () as I where .N = 2 {
-  fn F[self: Self]() -> [bool; 2] { return (true, false); }
+  fn F[self: Self]() -> array(bool, 2) { return (true, false); }
 }
 
 // CHECK:STDOUT: --- fail_todo_associated_type_in_signature.carbon
@@ -549,9 +549,9 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %N.ref: %I.assoc_type = name_ref N, @N.%assoc0 [concrete = constants.%assoc0.73c]
-// CHECK:STDOUT:     %.loc12_26.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc12_26.2: type = converted %bool.make_type, %.loc12_26.1 [concrete = bool]
-// CHECK:STDOUT:     %.loc12_32: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc12_31.1: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:     %.loc12_31.2: type = converted %bool.make_type, %.loc12_31.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc12_37: Core.IntLiteral = converted %N.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %array_type: type = array_type <error>, bool [concrete = <error>]
 // CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.b70) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.b70)] {
@@ -585,8 +585,8 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %.loc16_26.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc16_26.2: type = converted %bool.make_type, %.loc16_26.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc16_31.1: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:     %.loc16_31.2: type = converted %bool.make_type, %.loc16_31.1 [concrete = bool]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, bool [concrete = constants.%array_type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.44.%.loc15_7.2 [concrete = constants.%empty_tuple.type]
@@ -611,16 +611,16 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc16_56.1: %tuple.type = tuple_literal (%true, %false)
+// CHECK:STDOUT:   %.loc16_61.1: %tuple.type = tuple_literal (%true, %false)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc16_56.2: ref bool = array_index %return, %int_0
-// CHECK:STDOUT:   %.loc16_56.3: init bool = initialize_from %true to %.loc16_56.2 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc16_61.2: ref bool = array_index %return, %int_0
+// CHECK:STDOUT:   %.loc16_61.3: init bool = initialize_from %true to %.loc16_61.2 [concrete = constants.%true]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc16_56.4: ref bool = array_index %return, %int_1
-// CHECK:STDOUT:   %.loc16_56.5: init bool = initialize_from %false to %.loc16_56.4 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc16_56.6: init %array_type = array_init (%.loc16_56.3, %.loc16_56.5) to %return [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc16_57: init %array_type = converted %.loc16_56.1, %.loc16_56.6 [concrete = constants.%array]
-// CHECK:STDOUT:   return %.loc16_57 to %return
+// CHECK:STDOUT:   %.loc16_61.4: ref bool = array_index %return, %int_1
+// CHECK:STDOUT:   %.loc16_61.5: init bool = initialize_from %false to %.loc16_61.4 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc16_61.6: init %array_type = array_init (%.loc16_61.3, %.loc16_61.5) to %return [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc16_62: init %array_type = converted %.loc16_61.1, %.loc16_61.6 [concrete = constants.%array]
+// CHECK:STDOUT:   return %.loc16_62 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%Self.826) {}

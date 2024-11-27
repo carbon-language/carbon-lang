@@ -790,29 +790,32 @@ struct MatchStatement {
 // Expression nodes
 // ----------------
 
-using ArrayExprStart =
-    LeafNode<NodeKind::ArrayExprStart, Lex::OpenSquareBracketTokenIndex>;
+using ArrayExprKeyword =
+    LeafNode<NodeKind::ArrayExprKeyword, Lex::ArrayTokenIndex>;
 
-// The start of an array type, `[i32;`.
-//
-// TODO: Consider flattening this into `ArrayExpr`.
-struct ArrayExprSemi {
-  static constexpr auto Kind = NodeKind::ArrayExprSemi.Define(
-      {.bracketed_by = ArrayExprStart::Kind, .child_count = 2});
+// The array keyword and opening paren in `array(T, N)`.
+struct ArrayExprStart {
+  static constexpr auto Kind =
+      NodeKind::ArrayExprStart.Define({.child_count = 1});
 
-  ArrayExprStartId left_square;
-  AnyExprId type;
-  Lex::SemiTokenIndex token;
+  ArrayExprKeywordId keyword;
+  Lex::OpenParenTokenIndex token;
 };
 
-// An array type, such as  `[i32; 3]` or `[i32;]`.
-struct ArrayExpr {
-  static constexpr auto Kind = NodeKind::ArrayExpr.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = ArrayExprSemi::Kind});
+using ArrayExprComma = LeafNode<NodeKind::ArrayExprComma, Lex::CommaTokenIndex>;
 
-  ArrayExprSemiId start;
-  std::optional<AnyExprId> bound;
-  Lex::CloseSquareBracketTokenIndex token;
+// An array type, `array(T, N)`.
+struct ArrayExpr {
+  static constexpr auto Kind =
+      NodeKind::ArrayExpr.Define({.category = NodeCategory::Expr,
+                                  .bracketed_by = ArrayExprStart::Kind,
+                                  .child_count = 4});
+
+  ArrayExprStartId start;
+  AnyExprId type;
+  ArrayExprCommaId comma;
+  AnyExprId bound;
+  Lex::CloseParenTokenIndex token;
 };
 
 // The opening portion of an indexing expression: `a[`.
