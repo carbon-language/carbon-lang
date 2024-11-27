@@ -101,6 +101,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Empty
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
@@ -114,6 +115,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Field
 // CHECK:STDOUT:   .x = %.loc8_8
+// CHECK:STDOUT:   complete_type_witness = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
@@ -141,6 +143,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%ForwardDeclared
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -157,10 +160,13 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %struct.1: %Empty = struct_value () [template]
 // CHECK:STDOUT:   %Field: type = class_type @Field [template]
 // CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.x: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %.8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.x: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -225,12 +231,14 @@ fn Run() {
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   complete_type_witness = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .x = imports.%import_ref.7
+// CHECK:STDOUT:   complete_type_witness = constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.1 {
@@ -238,6 +246,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.44
 // CHECK:STDOUT:   .F = imports.%import_ref.45
 // CHECK:STDOUT:   .G = imports.%import_ref.46
+// CHECK:STDOUT:   complete_type_witness = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.2 {
@@ -245,6 +254,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.47
 // CHECK:STDOUT:   .F = imports.%import_ref.48
 // CHECK:STDOUT:   .G = imports.%import_ref.49
+// CHECK:STDOUT:   complete_type_witness = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

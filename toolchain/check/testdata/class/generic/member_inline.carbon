@@ -128,6 +128,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .n = %.loc13_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,6 +254,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .data = %.loc11_11.1
+// CHECK:STDOUT:     complete_type_witness = %.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

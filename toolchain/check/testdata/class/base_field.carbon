@@ -108,6 +108,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT:   .c = %.loc14_8
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -131,6 +132,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT:   .e = %.loc21_8
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%p.param_patt: %.10) -> %.11 {

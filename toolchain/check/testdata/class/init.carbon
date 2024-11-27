@@ -119,6 +119,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT:   .next = %.loc13_11
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %.3) -> %return: %Class {

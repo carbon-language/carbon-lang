@@ -82,6 +82,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %Member.decl
 // CHECK:STDOUT:   .field = %.loc13_12
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Member[%self.param_patt: %C]();

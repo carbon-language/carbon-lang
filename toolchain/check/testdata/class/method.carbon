@@ -315,6 +315,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .A = %A
 // CHECK:STDOUT:   .k = %.loc17_8
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {

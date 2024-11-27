@@ -195,6 +195,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     complete_type_witness = %.loc4_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,6 +296,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     complete_type_witness = %.loc4_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,6 +383,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     complete_type_witness = %.loc4_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,6 +470,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
+// CHECK:STDOUT:     complete_type_witness = %.loc4_33
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -561,6 +565,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Outer.2
 // CHECK:STDOUT:     .Inner = %Inner.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -630,6 +635,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -111,6 +111,7 @@ fn Run() {
 // CHECK:STDOUT:   .Unused = %Unused.decl
 // CHECK:STDOUT:   .x = %.loc8_8
 // CHECK:STDOUT:   .unused = %.loc9_13
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
@@ -122,6 +123,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%Child
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
@@ -138,6 +140,10 @@ fn Run() {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.x: %i32, .unused: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %.10: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %.11: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %.12: type = struct_type {.x: Core.IntLiteral, .unused: Core.IntLiteral} [template]
@@ -198,6 +204,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   .base = imports.%import_ref.9
 // CHECK:STDOUT:   extend imports.%import_ref.10
+// CHECK:STDOUT:   complete_type_witness = constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
@@ -207,6 +214,7 @@ fn Run() {
 // CHECK:STDOUT:   .Unused = imports.%import_ref.5
 // CHECK:STDOUT:   .x = imports.%import_ref.6
 // CHECK:STDOUT:   .unused = imports.%import_ref.7
+// CHECK:STDOUT:   complete_type_witness = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

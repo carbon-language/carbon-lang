@@ -157,6 +157,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   complete_type_witness = %.loc37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnCUnused() -> %C;
@@ -189,6 +190,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [template]
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -224,6 +227,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
+// CHECK:STDOUT:   complete_type_witness = constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {

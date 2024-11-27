@@ -85,6 +85,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc12_8
 // CHECK:STDOUT:   .k = %.loc13_8
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

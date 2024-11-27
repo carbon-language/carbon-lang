@@ -206,6 +206,7 @@ fn ConvertInit() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -223,6 +224,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17_8
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -240,6 +242,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .c = %.loc22_8
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %.17) -> %.18 {

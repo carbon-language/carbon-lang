@@ -75,6 +75,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .c = %.loc10_8
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -85,6 +86,8 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
 // CHECK:STDOUT:   %.2: type = struct_type {.b: %.1} [template]
+// CHECK:STDOUT:   %.3: type = struct_type {.c: %.2} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT:   %.6: type = unbound_element_type %Cycle, %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -115,6 +118,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .c = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

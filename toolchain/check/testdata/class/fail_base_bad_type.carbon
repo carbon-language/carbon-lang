@@ -235,6 +235,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromError
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseError(%p.param_patt: %.1) -> %i32 {
@@ -304,6 +305,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromNonType
 // CHECK:STDOUT:   .base = %.loc12_18
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBasNonType(%p.param_patt: %.25) -> %i32 {
@@ -397,6 +399,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromi32
 // CHECK:STDOUT:   .base = %.loc7_19
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBasei32(%p.param_patt: %.2) -> %.3 {
@@ -496,6 +499,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   complete_type_witness = %.loc2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
@@ -509,6 +513,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromTuple
 // CHECK:STDOUT:   .base = %.loc9_23
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseTuple(%p.param_patt: %.4) -> %.5 {
@@ -620,6 +625,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromStruct
 // CHECK:STDOUT:   .base = %.loc9_34
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseStruct(%p.param_patt: %.4) -> %.3 {
@@ -719,6 +725,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromIncomplete
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseIncomplete(%p.param_patt: %.1) -> %.2 {
@@ -843,6 +850,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Final
 // CHECK:STDOUT:   .a = %.loc3_8
+// CHECK:STDOUT:   complete_type_witness = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
@@ -854,6 +862,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%DeriveFromFinal
 // CHECK:STDOUT:   .base = %.loc11
 // CHECK:STDOUT:   extend %Final.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertToBadBaseFinal(%p.param_patt: %.9) -> %.10 {

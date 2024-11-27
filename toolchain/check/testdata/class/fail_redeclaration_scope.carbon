@@ -67,6 +67,7 @@ class Y {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.1
 // CHECK:STDOUT:   .B = %B.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -77,6 +78,7 @@ class Y {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT:   .A = %A.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
@@ -86,6 +88,7 @@ class Y {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2
 // CHECK:STDOUT:   .B = %B.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.1 {
@@ -93,6 +96,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B.1
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.2;
@@ -103,6 +107,7 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Y
+// CHECK:STDOUT:   complete_type_witness = %.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
@@ -110,5 +115,6 @@ class Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.3
+// CHECK:STDOUT:   complete_type_witness = %.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

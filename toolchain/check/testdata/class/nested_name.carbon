@@ -93,6 +93,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .Inner = %Inner.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
@@ -106,6 +107,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .n = %.loc13_10
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {

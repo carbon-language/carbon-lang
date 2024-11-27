@@ -217,6 +217,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     complete_type_witness = %.loc7_26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -373,6 +374,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.type.8: type = tuple_type (%tuple.type.6, %tuple.type.7) [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %.25: type = struct_type {} [template]
+// CHECK:STDOUT:   %.26: <witness> = complete_type_witness %.25 [template]
 // CHECK:STDOUT:   %X: %tuple.type.7 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt: %tuple.type.7 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %.27: Core.IntLiteral = int_value 1 [template]
@@ -697,6 +700,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.40
+// CHECK:STDOUT:     complete_type_witness = constants.%.26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1203,6 +1207,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.20: <witness> = interface_witness (%Convert.12) [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %.21: type = struct_type {} [template]
+// CHECK:STDOUT:   %.22: <witness> = complete_type_witness %.21 [template]
 // CHECK:STDOUT:   %.23: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.23 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (%i32, %i32) [template]
@@ -1466,6 +1472,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.39
+// CHECK:STDOUT:     complete_type_witness = constants.%.22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1903,6 +1910,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.20: <witness> = interface_witness (%Convert.12) [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %.21: type = struct_type {} [template]
+// CHECK:STDOUT:   %.22: <witness> = complete_type_witness %.21 [template]
 // CHECK:STDOUT:   %.23: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.23 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (%i32, %i32) [template]
@@ -2202,6 +2211,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.39
+// CHECK:STDOUT:     complete_type_witness = constants.%.22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

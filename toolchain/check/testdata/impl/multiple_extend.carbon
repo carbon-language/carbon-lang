@@ -274,6 +274,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   extend @impl.1.%HasF.ref
 // CHECK:STDOUT:   extend @impl.2.%HasG.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %HasF.type) {
@@ -439,6 +440,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   extend @impl.1.%HasA1.ref
 // CHECK:STDOUT:   extend @impl.2.%HasA2.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(@HasA1.%Self: %HasA1.type) {
@@ -561,6 +563,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .J = %J.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -577,6 +580,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT:   extend @impl.%HasI.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.1(@HasI.%Self: %HasI.type) {
@@ -699,6 +703,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
@@ -715,6 +720,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT:   extend @impl.%HasK.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.1() {
@@ -862,6 +868,7 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NBase
 // CHECK:STDOUT:   .N = %N.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
@@ -885,6 +892,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   extend %NBase.ref
 // CHECK:STDOUT:   extend @impl.1.%HasN1.ref
 // CHECK:STDOUT:   extend @impl.2.%HasN2.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @N.1() {

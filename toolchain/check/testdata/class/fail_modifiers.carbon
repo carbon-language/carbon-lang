@@ -165,6 +165,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TwoAbstract
+// CHECK:STDOUT:   complete_type_witness = %.loc48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
@@ -172,6 +173,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Virtual
+// CHECK:STDOUT:   complete_type_witness = %.loc65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder {
@@ -179,6 +181,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%WrongOrder
+// CHECK:STDOUT:   complete_type_witness = %.loc74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
@@ -186,6 +189,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
+// CHECK:STDOUT:   complete_type_witness = %.loc83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractWithDefinition {
@@ -197,6 +201,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: abstract fn @F() {

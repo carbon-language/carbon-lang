@@ -207,6 +207,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
 // CHECK:STDOUT:   extend %SomeClass.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
@@ -237,6 +238,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   .b = %.loc8_8
 // CHECK:STDOUT:   .StaticMemberFunction = %StaticMemberFunction.decl
 // CHECK:STDOUT:   .AdapterMethod = %AdapterMethod.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @StaticMemberFunction();
@@ -317,6 +319,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
@@ -327,6 +330,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
 // CHECK:STDOUT:   extend %SomeClass.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1[%self.param_patt: %SomeClass]();
@@ -412,6 +416,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%SomeClass
 // CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT:   .b = %.loc6_8
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClassAdapter {
@@ -422,6 +427,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
 // CHECK:STDOUT:   extend %SomeClass.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %SomeClassAdapter) -> %i32 {
@@ -497,6 +503,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
 // CHECK:STDOUT:   extend %.loc5_33
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %StructAdapter) -> %i32 {
@@ -573,6 +580,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TupleAdapter
 // CHECK:STDOUT:   extend %.loc5_26.5
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %TupleAdapter) -> %i32 {
@@ -664,6 +672,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%IntAdapter
 // CHECK:STDOUT:   extend %.loc7_27.2
+// CHECK:STDOUT:   complete_type_witness = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInt(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";

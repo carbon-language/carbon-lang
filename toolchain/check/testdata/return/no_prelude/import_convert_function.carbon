@@ -739,6 +739,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     complete_type_witness = %.loc6_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -759,6 +760,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .n = %.loc7_16
 // CHECK:STDOUT:   .m = %.loc7_28
+// CHECK:STDOUT:   complete_type_witness = %.loc7_35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
@@ -1033,12 +1035,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: %i32, .m: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %F0.type: type = fn_type @F0 [template]
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: bool = bool_literal false [template]
 // CHECK:STDOUT:   %.6: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
 // CHECK:STDOUT:   %N: %i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.8: Core.IntLiteral = int_value 0 [template]
@@ -1283,6 +1288,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .n = imports.%import_ref.4
 // CHECK:STDOUT:   .m = imports.%import_ref.5
+// CHECK:STDOUT:   complete_type_witness = constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%N: %i32) {
@@ -1294,6 +1300,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.7
+// CHECK:STDOUT:     complete_type_witness = constants.%.7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

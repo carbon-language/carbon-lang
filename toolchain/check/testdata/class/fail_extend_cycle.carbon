@@ -69,6 +69,7 @@ base class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   complete_type_witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -80,6 +81,7 @@ base class A {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
@@ -94,5 +96,6 @@ base class A {
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .c = %.loc31
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -136,6 +136,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
@@ -149,6 +150,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
 // CHECK:STDOUT:   .a = %.loc16_8
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
@@ -166,6 +168,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .b = %.loc21_8
 // CHECK:STDOUT:   extend %A2.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

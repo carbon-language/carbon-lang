@@ -99,6 +99,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
@@ -112,6 +113,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .c = %.loc19
 // CHECK:STDOUT:   .d = %.loc20
+// CHECK:STDOUT:   complete_type_witness = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> %Inner;

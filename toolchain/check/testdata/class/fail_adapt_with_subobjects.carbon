@@ -112,6 +112,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   complete_type_witness = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBase {
@@ -127,6 +128,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_fields.carbon
@@ -176,6 +178,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
 // CHECK:STDOUT:   .n = %.loc13_8
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithFields {
@@ -205,6 +208,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   .a = %.loc25_8
 // CHECK:STDOUT:   .b = %.loc26_8
 // CHECK:STDOUT:   .c = %.loc27_8
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon
@@ -246,6 +250,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   complete_type_witness = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
@@ -265,5 +270,6 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .n = %.loc8_8
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

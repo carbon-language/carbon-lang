@@ -98,6 +98,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
@@ -109,6 +110,7 @@ class C4 {
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -119,6 +121,7 @@ class C4 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT:   .base = %.loc30
+// CHECK:STDOUT:   complete_type_witness = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
@@ -130,6 +133,7 @@ class C4 {
 // CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT:   .base = %.loc41
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
@@ -141,5 +145,6 @@ class C4 {
 // CHECK:STDOUT:   .Self = constants.%C4
 // CHECK:STDOUT:   .base = %.loc51
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

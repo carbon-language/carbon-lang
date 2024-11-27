@@ -116,6 +116,7 @@ class E {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -128,6 +129,7 @@ class E {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   extend @impl.2.%I.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -140,5 +142,6 @@ class E {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   extend @impl.3.%I.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -202,6 +202,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Self = constants.%CompleteClass.2
 // CHECK:STDOUT:     .n = %.loc7_8.1
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,6 +329,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.24: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.24 [template]
+// CHECK:STDOUT:   %.25: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %.26: <witness> = complete_type_witness %.25 [template]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %.27: type = unbound_element_type %CompleteClass.2, %i32 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
@@ -624,6 +627,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .x = %.loc5_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -642,6 +646,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Self = imports.%import_ref.38
 // CHECK:STDOUT:     .n = imports.%import_ref.39
 // CHECK:STDOUT:     .F = imports.%import_ref.40
+// CHECK:STDOUT:     complete_type_witness = constants.%.26
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1093,6 +1098,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %UseMethod: %UseMethod.type = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -1174,6 +1181,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Self = imports.%import_ref.5
 // CHECK:STDOUT:     .n = imports.%import_ref.6
 // CHECK:STDOUT:     .F = imports.%import_ref.7
+// CHECK:STDOUT:     complete_type_witness = constants.%.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1272,6 +1280,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.1: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -1565,6 +1575,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     .Self = imports.%import_ref.4
 // CHECK:STDOUT:     .n = imports.%import_ref.5
 // CHECK:STDOUT:     .F = imports.%import_ref.6
+// CHECK:STDOUT:     complete_type_witness = constants.%.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2245,6 +2256,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.22
 // CHECK:STDOUT:     .x = %.loc16
+// CHECK:STDOUT:     complete_type_witness = %.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -79,6 +79,7 @@ interface I {
 // CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     extend %.loc19
 // CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     complete_type_witness = %.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

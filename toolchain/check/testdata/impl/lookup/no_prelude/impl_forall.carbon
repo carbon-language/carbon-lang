@@ -265,6 +265,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.2
 // CHECK:STDOUT:     .n = %.loc3_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc4_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

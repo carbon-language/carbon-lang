@@ -212,6 +212,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .x = %x
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_tuple.type {
@@ -270,6 +271,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .x = %x
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_tuple.type {
@@ -364,6 +366,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .a = %a
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .d = %d
+// CHECK:STDOUT:   complete_type_witness = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%b.loc10_8.2: %tuple.type.1) {
@@ -518,6 +521,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .x = %x
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %empty_tuple.type {
@@ -798,6 +802,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .Self = constants.%I
 // CHECK:STDOUT:   .T = %T
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> <error>;

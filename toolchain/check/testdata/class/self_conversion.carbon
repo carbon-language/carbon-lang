@@ -141,6 +141,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -180,6 +181,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   .SelfBase = %SelfBase.decl
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase.decl
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> %i32 {

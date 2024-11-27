@@ -226,6 +226,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .n = %.loc7_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc8_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -374,6 +375,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.2
 // CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,6 +408,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%B.2
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,6 +508,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NotGeneric
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -580,6 +584,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Generic.2
 // CHECK:STDOUT:     .TooFew = %TooFew.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,6 +671,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Generic.2
 // CHECK:STDOUT:     .TooMany = %TooMany.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -769,6 +775,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Generic.2
 // CHECK:STDOUT:     .WrongType = %WrongType.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

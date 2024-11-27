@@ -89,6 +89,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NoParams
+// CHECK:STDOUT:   complete_type_witness = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @EmptyParams {
@@ -96,6 +97,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%EmptyParams.2
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -204,6 +206,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Outer.2
 // CHECK:STDOUT:     .Inner = %Inner.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,6 +221,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.2
+// CHECK:STDOUT:     complete_type_witness = %.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
