@@ -220,6 +220,21 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
       std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
 }
 
+// `where` expressions using `.Self` should not be considered symbolic
+// - `Interface where .Self impls I and .A = bool` -> template
+// - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
+//   is symbolic and not due to `.Self`.
+static auto UpdatePhaseIgnorePeriodSelf(EvalContext& eval_context,
+                                        SemIR::ConstantId constant_id,
+                                        Phase* phase) {
+  Phase constant_phase = GetPhase(eval_context, constant_id);
+  // Since LatestPhase(x, Phase::Template) == x, this is equivalent to replacing
+  // Phase::PeriodSelfSymbolic with Phase::Template.
+  if (constant_phase != Phase::PeriodSelfSymbolic) {
+    *phase = LatestPhase(*phase, constant_phase);
+  }
+}
+
 // Forms a `constant_id` describing a given evaluation result.
 static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
@@ -422,8 +437,9 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   for (auto& rewrite : info.rewrite_constraints) {
     rewrite.lhs_const_id = eval_context.GetInContext(rewrite.lhs_const_id);
     rewrite.rhs_const_id = eval_context.GetInContext(rewrite.rhs_const_id);
-    *phase = LatestPhase(*phase, GetPhase(eval_context, rewrite.lhs_const_id));
-    *phase = LatestPhase(*phase, GetPhase(eval_context, rewrite.rhs_const_id));
+    // `where` requirements using `.Self` should not be considered symbolic
+    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.lhs_const_id, phase);
+    UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
   }
   // TODO: Process other requirements.
   return info;
@@ -1702,8 +1718,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                 eval_context.GetConstantValue(rewrite->lhs_id);
             SemIR::ConstantId rhs =
                 eval_context.GetConstantValue(rewrite->rhs_id);
-            phase = LatestPhase(phase, GetPhase(eval_context, lhs));
-            phase = LatestPhase(phase, GetPhase(eval_context, rhs));
+            // `where` requirements using `.Self` should not be considered
+            // symbolic
+            UpdatePhaseIgnorePeriodSelf(eval_context, lhs, &phase);
+            UpdatePhaseIgnorePeriodSelf(eval_context, rhs, &phase);
             info.rewrite_constraints.push_back(
                 {.lhs_const_id = lhs, .rhs_const_id = rhs});
           } else {
@@ -1713,12 +1731,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         }
       }
       CanonicalizeFacetTypeInfo(&info);
-      // `where` expressions using `.Self` should not be considered symbolic
-      // - `Interface where .Self impls I and .A = bool` -> template
-      // - `T:! type` ... `Interface where .A = T` -> symbolic
-      if (phase == Phase::PeriodSelfSymbolic) {
-        phase = Phase::Template;
-      }
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 
