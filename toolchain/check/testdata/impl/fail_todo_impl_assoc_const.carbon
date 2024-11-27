@@ -27,7 +27,7 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:   %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
+// CHECK:STDOUT:   %I.type.2: type = facet_type <@I where %.4 = bool> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

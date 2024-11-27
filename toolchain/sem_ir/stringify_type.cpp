@@ -218,12 +218,17 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           step_stack.PushString("...");
           some_where = true;
         }
-        if (!facet_type_info.rewrite_constraints.empty()) {
+        for (auto rewrite :
+             llvm::reverse(facet_type_info.rewrite_constraints)) {
           if (some_where) {
             step_stack.PushString(" and");
           }
-          // TODO: Render the actual constraint.
-          step_stack.PushString(" <rewrites>");
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.rhs_const_id));
+          step_stack.PushString(" = ");
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.lhs_const_id));
+          step_stack.PushString(" ");
           some_where = true;
         }
         // TODO: Other restrictions from facet_type_info.
@@ -296,6 +301,22 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           step_stack.PushString(")");
           step_stack.PushInstId(inst.bit_width_id);
         }
+        break;
+      }
+      case CARBON_KIND(InterfaceWitnessAccess inst): {
+        // TODO: Prints `.element0` instead of `.T`.
+        out << "." << inst.index;
+        /* FIXME: doesn't work
+        auto const_id =
+            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        // Ends up being a `FacetAccessWitness` in practice.
+        auto witness = sem_ir.insts().GetAs<InterfaceWitness>(const_id);
+        auto elements = sem_ir.inst_blocks().Get(witness.elements_id);
+        auto index = static_cast<size_t>(inst.index.index);
+        CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+        step_stack.PushInstId(elements[index]);
+        step_stack.PushString(".");
+        */
         break;
       }
       case CARBON_KIND(NameRef inst): {
@@ -400,7 +421,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
