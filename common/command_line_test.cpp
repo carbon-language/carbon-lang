@@ -361,7 +361,7 @@ TEST(ArgParserTest, BasicSubcommands) {
 
   EXPECT_THAT(parse({"sub2", "--option=abc", "subsub42", "--option=xyz"}, os),
               IsError(StrEq("invalid subcommand `subsub42`; available "
-                            "subcommands: `subsub`, or `help`")));
+                            "subcommands: `subsub` or `help`")));
 
   EXPECT_THAT(
       parse({"sub2", "--option=abc", "subsub", "--option=xyz"}, llvm::errs()),
@@ -434,20 +434,27 @@ TEST(ArgParserTest, PositionalAppending) {
   EXPECT_THAT(strings3, ElementsAre(StrEq("e"), StrEq("f")));
 }
 
+static auto ParseOneOfOption(llvm::ArrayRef<llvm::StringRef> args,
+                             llvm::raw_ostream& s,
+                             llvm::function_ref<void(OneOfArgBuilder&)> build)
+    -> ErrorOr<ParseResult> {
+  return Parse(args, s, TestCommandInfo, [&](auto& b) {
+    b.AddOneOfOption({.name = "option"}, build);
+    b.Do([] {});
+  });
+}
+
 TEST(ArgParserTest, OneOfOption) {
   int value = 0;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Parse(args, s, TestCommandInfo, [&](auto& b) {
-      b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
-        arg_b.SetOneOf(
-            {
-                arg_b.OneOfValue("x", 1),
-                arg_b.OneOfValue("y", 2),
-                arg_b.OneOfValue("z", 3),
-            },
-            &value);
-      });
-      b.Do([] {});
+    return ParseOneOfOption(args, s, [&](auto& arg_b) {
+      arg_b.SetOneOf(
+          {
+              arg_b.OneOfValue("x", 1),
+              arg_b.OneOfValue("y", 2),
+              arg_b.OneOfValue("z", 3),
+          },
+          &value);
     });
   };
 
@@ -489,20 +496,48 @@ TEST(ArgParserTest, OneOfOption) {
               IsError(StrEq(llvm::formatv(ErrorStr, "\\00"))));
 }
 
+TEST(ArgParserTest, OneOfOptionWithTwoOptions) {
+  int value = 0;
+  TestRawOstream os;
+  EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
+                               [&](auto& arg_b) {
+                                 arg_b.SetOneOf(
+                                     {
+                                         arg_b.OneOfValue("x", 1),
+                                         arg_b.OneOfValue("y", 2),
+                                     },
+                                     &value);
+                               }),
+              IsError(StrEq("option `--option=z` has an invalid value `z`; "
+                            "valid values are: `x` or `y`")));
+}
+
+TEST(ArgParserTest, OneOfOptionWithOneOption) {
+  int value = 0;
+  TestRawOstream os;
+  EXPECT_THAT(ParseOneOfOption({"--option=z"}, os,
+                               [&](auto& arg_b) {
+                                 arg_b.SetOneOf(
+                                     {
+                                         arg_b.OneOfValue("x", 1),
+                                     },
+                                     &value);
+                               }),
+              IsError(StrEq("option `--option=z` has an invalid value `z`; "
+                            "valid values are: `x`")));
+}
+
 TEST(ArgParserTest, OneOfOptionAppending) {
   llvm::SmallVector<int> values;
   auto parse = [&](llvm::ArrayRef<llvm::StringRef> args, llvm::raw_ostream& s) {
-    return Parse(args, s, TestCommandInfo, [&](auto& b) {
-      b.AddOneOfOption({.name = "option"}, [&](auto& arg_b) {
-        arg_b.AppendOneOf(
-            {
-                arg_b.OneOfValue("x", 1),
-                arg_b.OneOfValue("y", 2),
-                arg_b.OneOfValue("z", 3),
-            },
-            &values);
-      });
-      b.Do([] {});
+    return ParseOneOfOption(args, s, [&](auto& arg_b) {
+      arg_b.AppendOneOf(
+          {
+              arg_b.OneOfValue("x", 1),
+              arg_b.OneOfValue("y", 2),
+              arg_b.OneOfValue("z", 3),
+          },
+          &values);
     });
   };
 
