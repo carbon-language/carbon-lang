@@ -431,9 +431,6 @@ class Context {
   auto GetUnboundElementType(SemIR::TypeId class_type_id,
                              SemIR::TypeId element_type_id) -> SemIR::TypeId;
 
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
-
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 

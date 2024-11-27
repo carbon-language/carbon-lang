@@ -1253,6 +1253,28 @@ static auto ResolveAs(ImportContext& context, InstT inst) -> ResolveResult {
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::AdaptDecl inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto adapted_type_const_id = GetLocalConstantId(
+      resolver,
+      resolver.import_constant_values().Get(inst.adapted_type_inst_id));
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto adapted_type_inst_id =
+      AddLoadedImportRef(resolver, SemIR::TypeId::TypeType,
+                         inst.adapted_type_inst_id, adapted_type_const_id);
+
+  // Create a corresponding instruction to represent the declaration.
+  auto inst_id = resolver.local_context().AddInstInNoBlock(
+      resolver.local_context().MakeImportedLocAndInst<SemIR::AdaptDecl>(
+          AddImportIRInst(resolver, import_inst_id),
+          {.adapted_type_inst_id = adapted_type_inst_id}));
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedEntity inst) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
@@ -1293,20 +1315,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BaseDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto base_type_const_id = GetLocalConstantId(resolver, inst.base_type_id);
+  auto base_type_const_id = GetLocalConstantId(
+      resolver, resolver.import_constant_values().Get(inst.base_type_inst_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  // Import the instruction in order to update contained base_type_id and
-  // track the import location.
+  auto base_type_inst_id =
+      AddLoadedImportRef(resolver, SemIR::TypeId::TypeType,
+                         inst.base_type_inst_id, base_type_const_id);
+
+  // Create a corresponding instruction to represent the declaration.
   auto inst_id = resolver.local_context().AddInstInNoBlock(
       resolver.local_context().MakeImportedLocAndInst<SemIR::BaseDecl>(
           AddImportIRInst(resolver, import_inst_id),
           {.type_id =
                resolver.local_context().GetTypeIdForTypeConstant(type_const_id),
-           .base_type_id = resolver.local_context().GetTypeIdForTypeConstant(
-               base_type_const_id),
+           .base_type_inst_id = base_type_inst_id,
            .index = inst.index}));
   return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
 }
@@ -1397,7 +1422,8 @@ static auto AddClassDefinition(ImportContext& context,
                                const SemIR::Class& import_class,
                                SemIR::Class& new_class,
                                SemIR::InstId complete_type_witness_id,
-                               SemIR::InstId base_id) -> void {
+                               SemIR::InstId base_id, SemIR::InstId adapt_id)
+    -> void {
   new_class.definition_id = new_class.first_owning_decl_id;
 
   new_class.complete_type_witness_id = complete_type_witness_id;
@@ -1416,6 +1442,9 @@ static auto AddClassDefinition(ImportContext& context,
 
   if (import_class.base_id.is_valid()) {
     new_class.base_id = base_id;
+  }
+  if (import_class.adapt_id.is_valid()) {
+    new_class.adapt_id = adapt_id;
   }
 }
 
@@ -1480,6 +1509,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto base_id = import_class.base_id.is_valid()
                      ? GetLocalConstantInstId(resolver, import_class.base_id)
                      : SemIR::InstId::Invalid;
+  auto adapt_id = import_class.adapt_id.is_valid()
+                      ? GetLocalConstantInstId(resolver, import_class.adapt_id)
+                      : SemIR::InstId::Invalid;
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(class_const_id);
@@ -1498,7 +1530,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   if (import_class.is_defined()) {
     AddClassDefinition(resolver, import_class, new_class,
-                       complete_type_witness_id, base_id);
+                       complete_type_witness_id, base_id, adapt_id);
   }
 
   return ResolveResult::Done(class_const_id);
@@ -2328,6 +2360,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
 
   auto untyped_inst = resolver.import_insts().Get(inst_id);
   CARBON_KIND_SWITCH(untyped_inst) {
+    case CARBON_KIND(SemIR::AdaptDecl inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
+    }
     case CARBON_KIND(SemIR::AssociatedEntity inst): {
       return TryResolveTypedInst(resolver, inst);
     }

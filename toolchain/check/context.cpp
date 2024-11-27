@@ -390,18 +390,19 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   }
 
   // TODO: Support scoped entities other than just classes.
-  auto class_info = context.classes().Get(class_type->class_id);
+  const auto& class_info = context.classes().Get(class_type->class_id);
 
   auto parent_type_id = class_info.self_type_id;
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            class_info.base_id)) {
-      parent_type_id = base_decl->base_type_id;
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       class_info.adapt_id)) {
-      parent_type_id = adapt_decl->adapted_type_id;
+    if (auto base_type_id =
+            class_info.GetBaseType(context.sem_ir(), class_type->specific_id);
+        base_type_id.is_valid()) {
+      parent_type_id = base_type_id;
+    } else if (auto adapted_type_id = class_info.GetAdaptedType(
+                   context.sem_ir(), class_type->specific_id);
+               adapted_type_id.is_valid()) {
+      parent_type_id = adapted_type_id;
     } else {
       CARBON_FATAL("Expected parent for parent access");
     }
@@ -957,7 +958,13 @@ class TypeCompleter {
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
-        Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        if (auto adapted_type_id =
+                class_info.GetAdaptedType(context_.sem_ir(), inst.specific_id);
+            adapted_type_id.is_valid()) {
+          Push(adapted_type_id);
+        } else {
+          Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        }
         break;
       }
       case CARBON_KIND(SemIR::ConstType inst): {
@@ -1127,12 +1134,10 @@ class TypeCompleter {
     auto& class_info = context_.classes().Get(inst.class_id);
     // The value representation of an adapter is the value representation of
     // its adapted type.
-    if (class_info.adapt_id.is_valid()) {
-      return GetNestedValueRepr(SemIR::GetTypeInSpecific(
-          context_.sem_ir(), inst.specific_id,
-          context_.insts()
-              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-              .adapted_type_id));
+    if (auto adapted_type_id =
+            class_info.GetAdaptedType(context_.sem_ir(), inst.specific_id);
+        adapted_type_id.is_valid()) {
+      return GetNestedValueRepr(adapted_type_id);
     }
     // Otherwise, the value representation for a class is a pointer to the
     // object representation.
@@ -1398,13 +1403,6 @@ auto Context::GetUnboundElementType(SemIR::TypeId class_type_id,
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(*this, class_type_id,
                                                 element_type_id);
-}
-
-auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  if (auto const_type = types().TryGetAs<SemIR::ConstType>(type_id)) {
-    return const_type->inner_id;
-  }
-  return type_id;
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

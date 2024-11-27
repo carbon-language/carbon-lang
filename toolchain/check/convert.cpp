@@ -607,15 +607,12 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
       break;
     }
     auto& derived_class = context.classes().Get(derived_class_type->class_id);
-    if (!derived_class.base_id.is_valid()) {
+    auto base_type_id = derived_class.GetBaseType(
+        context.sem_ir(), derived_class_type->specific_id);
+    if (!base_type_id.is_valid()) {
       result = std::nullopt;
       break;
     }
-    auto base_decl =
-        context.insts().GetAs<SemIR::BaseDecl>(derived_class.base_id);
-    auto base_type_id = SemIR::GetTypeInSpecific(
-        context.sem_ir(), derived_class_type->specific_id,
-        base_decl.base_type_id);
     result->push_back({derived_class.base_id, base_type_id});
     derived_id = base_type_id;
   }
@@ -712,12 +709,15 @@ static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // If the type is an adapter, its object representation type is its compatible
   // non-adapter type.
-  if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
+  while (auto class_type =
+             context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
-    if (class_info.adapt_id.is_valid()) {
-      return class_info.GetObjectRepr(context.sem_ir(),
-                                      class_type->specific_id);
+    auto adapted_type_id =
+        class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
+    if (!adapted_type_id.is_valid()) {
+      break;
     }
+    type_id = adapted_type_id;
   }
 
   // Otherwise, the type itself is a non-adapter type.

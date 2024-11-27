@@ -6,6 +6,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -387,21 +388,23 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
       [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
                           "adapted type {0} is an incomplete type",
-                          SemIR::TypeId);
+                          InstIdAsType);
         return context.emitter().Build(node_id, IncompleteTypeInAdaptDecl,
-                                       adapted_type_id);
+                                       adapted_inst_id);
       },
       [&] {
         CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
-                          "adapted type {0} is an abstract type",
-                          SemIR::TypeId);
+                          "adapted type {0} is an abstract type", InstIdAsType);
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
-                                       adapted_type_id);
+                                       adapted_inst_id);
       });
+  if (adapted_type_id == SemIR::TypeId::Error) {
+    adapted_inst_id = SemIR::InstId::BuiltinErrorInst;
+  }
 
   // Build a SemIR representation for the declaration.
   class_info.adapt_id = context.AddInst<SemIR::AdaptDecl>(
-      node_id, {.adapted_type_id = adapted_type_id});
+      node_id, {.adapted_type_inst_id = adapted_inst_id});
 
   // Extend the class scope with the adapted type's scope if requested.
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
@@ -432,9 +435,10 @@ struct BaseInfo {
   SemIR::NameScopeId scope_id;
   SemIR::InstId inst_id;
 };
-constexpr BaseInfo BaseInfo::Error = {.type_id = SemIR::TypeId::Error,
-                                      .scope_id = SemIR::NameScopeId::Invalid,
-                                      .inst_id = SemIR::InstId::Invalid};
+constexpr BaseInfo BaseInfo::Error = {
+    .type_id = SemIR::TypeId::Error,
+    .scope_id = SemIR::NameScopeId::Invalid,
+    .inst_id = SemIR::InstId::BuiltinErrorInst};
 }  // namespace
 
 // Diagnoses an attempt to derive from a final type.
@@ -531,7 +535,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
       context.GetUnboundElementType(class_info.self_type_id, base_info.type_id);
   class_info.base_id = context.AddInst<SemIR::BaseDecl>(
       node_id, {.type_id = field_type_id,
-                .base_type_id = base_info.type_id,
+                .base_type_inst_id = base_info.inst_id,
                 .index = SemIR::ElementIndex::Invalid});
 
   if (base_info.type_id != SemIR::TypeId::Error) {
@@ -607,27 +611,17 @@ static auto CheckCompleteAdapterClassType(Context& context,
   }
 
   // The object representation of the adapter is the object representation
-  // of the adapted type. This is the adapted type itself unless it's a class
-  // type.
-  //
-  // TODO: The object representation of `const T` should also be the object
-  // representation of `T`.
-  auto adapted_type_id = context.insts()
-                             .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-                             .adapted_type_id;
-  if (auto adapted_class =
-          context.types().TryGetAs<SemIR::ClassType>(adapted_type_id)) {
-    auto& adapted_class_info = context.classes().Get(adapted_class->class_id);
-    if (adapted_class_info.adapt_id.is_valid()) {
-      return adapted_class_info.complete_type_witness_id;
-    }
-  }
+  // of the adapted type.
+  auto adapted_type_id =
+      class_info.GetAdaptedType(context.sem_ir(), SemIR::SpecificId::Invalid);
+  auto object_repr_id = context.types().GetObjectRepr(adapted_type_id);
 
   return context.AddInst<SemIR::CompleteTypeWitness>(
       node_id,
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType),
-       .object_repr_id = adapted_type_id});
+       .object_repr_id = object_repr_id});
 }
+
 static auto AddStructTypeFields(
     Context& context,
     llvm::SmallVector<SemIR::StructTypeField>& struct_type_fields)
@@ -664,11 +658,12 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   }
 
   bool defining_vptr = class_info.is_dynamic;
-  if (class_info.base_id.is_valid()) {
-    auto base_info = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
+  auto base_type_id =
+      class_info.GetBaseType(context.sem_ir(), SemIR::SpecificId::Invalid);
+  if (base_type_id.is_valid()) {
     // TODO: If the base class is template dependent, we will need to decide
     // whether to add a vptr as part of instantiation.
-    if (auto* base_class_info = TryGetAsClass(context, base_info.base_type_id);
+    if (auto* base_class_info = TryGetAsClass(context, base_type_id);
         base_class_info && base_class_info->is_dynamic) {
       defining_vptr = false;
     }
@@ -684,16 +679,13 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
          .type_id = context.GetPointerType(
              context.GetBuiltinType(SemIR::BuiltinInstKind::VtableType))});
   }
-  if (class_info.base_id.is_valid()) {
+  if (base_type_id.is_valid()) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(class_info.base_id);
     base_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     context.ReplaceInstPreservingConstantValue(class_info.base_id, base_decl);
     struct_type_fields.push_back(
-        {.name_id = SemIR::NameId::Base,
-         .type_id = context.insts()
-                        .GetAs<SemIR::BaseDecl>(class_info.base_id)
-                        .base_type_id});
+        {.name_id = SemIR::NameId::Base, .type_id = base_type_id});
   }
 
   return context.AddInst<SemIR::CompleteTypeWitness>(

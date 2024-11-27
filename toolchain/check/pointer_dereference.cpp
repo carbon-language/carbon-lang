@@ -23,8 +23,8 @@ auto PerformPointerDereference(
   //
   // to convert to a pointer value.
   base_id = ConvertToValueExpr(context, base_id);
-  auto type_id =
-      context.GetUnqualifiedType(context.insts().Get(base_id).type_id());
+  auto type_id = context.types().GetUnqualifiedType(
+      context.insts().Get(base_id).type_id());
   auto result_type_id = SemIR::TypeId::Error;
   if (auto pointer_type =
           context.types().TryGetAs<SemIR::PointerType>(type_id)) {

@@ -676,7 +676,7 @@ static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
   auto arg_val = context.ints().Get(arg.int_id);
 
   auto [is_signed, bit_width_id] =
-      context.sem_ir().GetIntTypeInfo(dest_type_id);
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
   auto width = bit_width_id.is_valid()
                    ? context.ints().Get(bit_width_id).getZExtValue()
                    : arg_val.getBitWidth();
@@ -718,7 +718,8 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
                                      SemIR::InstId arg_id)
     -> SemIR::ConstantId {
   auto op = context.insts().GetAs<SemIR::IntValue>(arg_id);
-  auto [is_signed, bit_width_id] = context.sem_ir().GetIntTypeInfo(op.type_id);
+  auto [is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(op.type_id);
   CARBON_CHECK(bit_width_id != IntId::Invalid,
                "Cannot evaluate a generic bit width integer: {0}", op);
   llvm::APInt op_val = context.ints().GetAtWidth(op.int_id, bit_width_id);
@@ -771,7 +772,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
   }
 
   auto [lhs_is_signed, lhs_bit_width_id] =
-      context.sem_ir().GetIntTypeInfo(lhs.type_id);
+      context.sem_ir().types().GetIntTypeInfo(lhs.type_id);
   llvm::APInt lhs_val = context.ints().GetAtWidth(lhs.int_id, lhs_bit_width_id);
 
   llvm::APInt result_val;
@@ -916,7 +917,8 @@ static auto PerformBuiltinIntComparison(Context& context,
   CARBON_CHECK(lhs.type_id == rhs.type_id,
                "Builtin comparison with mismatched types!");
 
-  auto [is_signed, bit_width_id] = context.sem_ir().GetIntTypeInfo(lhs.type_id);
+  auto [is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(lhs.type_id);
   CARBON_CHECK(bit_width_id != IntId::Invalid,
                "Cannot evaluate a generic bit width integer: {0}", lhs);
   llvm::APInt lhs_val = context.ints().GetAtWidth(lhs.int_id, bit_width_id);
@@ -1497,6 +1499,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     // TODO: This doesn't properly handle redeclarations. Consider adding a
     // corresponding `Value` inst for each of these cases, or returning the
     // first declaration.
+    case SemIR::AdaptDecl::Kind:
     case SemIR::AssociatedConstantDecl::Kind:
     case SemIR::BaseDecl::Kind:
     case SemIR::FieldDecl::Kind:
@@ -1699,7 +1702,6 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     // These cases are either not expressions or not constant.
-    case SemIR::AdaptDecl::Kind:
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:
     case SemIR::BindName::Kind:

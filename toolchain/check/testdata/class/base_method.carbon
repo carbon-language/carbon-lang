@@ -125,7 +125,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc22: %.35 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc22: %.35 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.36 [template = constants.%.37]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -72,13 +72,26 @@ struct BoolType {
   TypeId type_id;
 };
 
+// Common representation for declarations describing the foundation type of a
+// class -- either its adapted type or its base class.
+struct AnyFoundationDecl {
+  static constexpr InstKind Kinds[] = {InstKind::AdaptDecl, InstKind::BaseDecl};
+
+  InstKind kind;
+  InstId foundation_type_inst_id;
+  // Kind-specific data.
+  int32_t arg1;
+};
+
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
-      {.ir_name = "adapt_decl", .is_lowered = false});
+      {.ir_name = "adapt_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   // No type_id; this is not a value.
-  TypeId adapted_type_id;
+  InstId adapted_type_inst_id;
 };
 
 // Takes the address of a reference expression, such as for the `&` address-of
@@ -242,7 +255,7 @@ struct BaseDecl {
       {.ir_name = "base_decl", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  TypeId base_type_id;
+  InstId base_type_inst_id;
   ElementIndex index;
 };
 
@@ -846,6 +859,8 @@ struct InterfaceWitness {
   static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
       {.ir_name = "interface_witness",
        .constant_kind = InstConstantKind::Conditional,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
        .is_lowered = false});
 
   // Always the builtin witness type.
