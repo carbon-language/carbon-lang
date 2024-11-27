@@ -152,7 +152,7 @@ class ConstantStore {
   //
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  enum PhaseType { IsTemplate, IsDotSelfSymbolic, IsSymbolic };
+  enum PhaseType { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
   auto GetOrAdd(Inst inst, PhaseType phase) -> ConstantId;
 
   // Collects memory usage of members.

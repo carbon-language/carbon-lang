@@ -180,7 +180,7 @@ enum class Phase : uint8_t {
   Template,
   // Evaluation phase is symbolic because the expression involves specifically a
   // reference to `.Self`.
-  DotSelfSymbolic,
+  PeriodSelfSymbolic,
   // Evaluation phase is symbolic because the expression involves a reference to
   // a symbolic binding.
   Symbolic,
@@ -207,7 +207,7 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     if (eval_context.constant_values()
             .GetSymbolicConstant(constant_id)
             .dot_self) {
-      return Phase::DotSelfSymbolic;
+      return Phase::PeriodSelfSymbolic;
     } else {
       return Phase::Symbolic;
     }
@@ -227,9 +227,9 @@ static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     case Phase::Template:
       return context.constants().GetOrAdd(inst,
                                           SemIR::ConstantStore::IsTemplate);
-    case Phase::DotSelfSymbolic:
+    case Phase::PeriodSelfSymbolic:
       return context.constants().GetOrAdd(
-          inst, SemIR::ConstantStore::IsDotSelfSymbolic);
+          inst, SemIR::ConstantStore::IsPeriodSelfSymbolic);
     case Phase::Symbolic:
       return context.constants().GetOrAdd(inst,
                                           SemIR::ConstantStore::IsSymbolic);
@@ -1608,7 +1608,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
       bind.value_id = SemIR::InstId::Invalid;
-      return MakeConstantResult(eval_context.context(), bind, Phase::Symbolic);
+      Phase phase = bind_name.name_id == SemIR::NameId::PeriodSelf
+                        ? Phase::PeriodSelfSymbolic
+                        : Phase::Symbolic;
+      return MakeConstantResult(eval_context.context(), bind, phase);
     }
 
     // These semantic wrappers don't change the constant value.
@@ -1710,6 +1713,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
         }
       }
       CanonicalizeFacetTypeInfo(&info);
+      // `where` expressions using `.Self` should not be considered symbolic
+      // - `Interface where .Self impls I and .A = bool` -> template
+      // - `T:! type` ... `Interface where .A = T` -> symbolic
+      if (phase == Phase::PeriodSelfSymbolic) {
+        phase = Phase::Template;
+      }
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 
