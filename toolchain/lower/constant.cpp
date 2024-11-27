@@ -105,6 +105,12 @@ static auto EmitAggregateConstant(ConstantContext& context,
 // auto EmitAsConstant(ConstantContext& context, SemIR::InstT inst)
 //     -> llvm::Constant*;
 
+// Represent facet values the same as types.
+static auto EmitAsConstant(ConstantContext& context, SemIR::FacetValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetTypeAsValue();
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::StructValue inst)
     -> llvm::Constant* {
   return EmitAggregateConstant<llvm::ConstantStruct>(

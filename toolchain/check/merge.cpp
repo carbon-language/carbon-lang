@@ -203,6 +203,10 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
   // TODO: Consider differentiating between type and name mistakes. For now,
   // taking the simpler approach because I also think we may want to refactor
   // params.
+  CARBON_DIAGNOSTIC(
+      RedeclParamPrevious, Note,
+      "previous declaration's corresponding {0:implicit |}parameter here",
+      BoolAsSelect);
   auto emit_diagnostic = [&]() {
     if (!diagnose) {
       return;
@@ -210,10 +214,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     CARBON_DIAGNOSTIC(RedeclParamDiffers, Error,
                       "redeclaration differs at {0:implicit |}parameter {1}",
                       BoolAsSelect, int32_t);
-    CARBON_DIAGNOSTIC(
-        RedeclParamPrevious, Note,
-        "previous declaration's corresponding {0:implicit |}parameter here",
-        BoolAsSelect);
     context.emitter()
         .Build(new_param_pattern_id, RedeclParamDiffers, is_implicit_param,
                param_index + 1)
@@ -223,12 +223,27 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
 
   auto new_param_pattern = context.insts().Get(new_param_pattern_id);
   auto prev_param_pattern = context.insts().Get(prev_param_pattern_id);
-  if (new_param_pattern.kind() != prev_param_pattern.kind() ||
-      !context.types().AreEqualAcrossDeclarations(
-          new_param_pattern.type_id(),
-          SemIR::GetTypeInSpecific(context.sem_ir(), prev_specific_id,
-                                   prev_param_pattern.type_id()))) {
+  if (new_param_pattern.kind() != prev_param_pattern.kind()) {
     emit_diagnostic();
+    return false;
+  }
+
+  auto prev_param_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), prev_specific_id, prev_param_pattern.type_id());
+  if (!context.types().AreEqualAcrossDeclarations(new_param_pattern.type_id(),
+                                                  prev_param_type_id)) {
+    if (!diagnose) {
+      return false;
+    }
+    CARBON_DIAGNOSTIC(RedeclParamDiffersType, Error,
+                      "type {3} of {0:implicit |}parameter {1} in "
+                      "redeclaration differs from previous parameter type {2}",
+                      BoolAsSelect, int32_t, SemIR::TypeId, SemIR::TypeId);
+    context.emitter()
+        .Build(new_param_pattern_id, RedeclParamDiffersType, is_implicit_param,
+               param_index + 1, prev_param_type_id, new_param_pattern.type_id())
+        .Note(prev_param_pattern_id, RedeclParamPrevious, is_implicit_param)
+        .Emit();
     return false;
   }
 

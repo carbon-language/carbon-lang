@@ -10,7 +10,7 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: impl true as I {}
 // CHECK:STDERR:      ^~~~
 impl true as I {}

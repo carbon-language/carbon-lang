@@ -283,7 +283,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//adapt_specific_type, inst+9, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//adapt_specific_type, inst+26, loaded [template = constants.%Adapter]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//adapt_specific_type, inst+67, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//adapt_specific_type, inst+65, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.8
 // CHECK:STDOUT:     import Core//prelude
@@ -653,7 +653,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_adapt_specific_type_copy, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.4: @C.%.1 (%.6) = import_ref Main//extend_adapt_specific_type_copy, inst+18, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_adapt_specific_type_copy, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//extend_adapt_specific_type_copy, inst+46, loaded [template = constants.%C.3]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//extend_adapt_specific_type_copy, inst+44, loaded [template = constants.%C.3]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -870,7 +870,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %Adapter.type = import_ref Main//adapt_generic_type, inst+9, loaded [template = constants.%Adapter.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//adapt_generic_type, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//adapt_generic_type, inst+51, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude

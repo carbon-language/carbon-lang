@@ -19,23 +19,28 @@ namespace Carbon::Check {
 
 // Checking information that's tracked per file.
 struct Unit {
+  DiagnosticConsumer* consumer;
   SharedValueStores* value_stores;
   std::optional<Timings>* timings;
   const Lex::TokenizedBuffer* tokens;
   const Parse::Tree* parse_tree;
-  DiagnosticConsumer* consumer;
+
   // Returns a lazily constructed TreeAndSubtrees.
-  std::function<const Parse::TreeAndSubtrees&()> get_parse_tree_and_subtrees;
-  // The generated IR. Unset on input, set on output.
-  std::optional<SemIR::File>* sem_ir;
+  llvm::function_ref<const Parse::TreeAndSubtrees&()>
+      get_parse_tree_and_subtrees;
+
+  // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
+  SemIR::File* sem_ir;
+
+  // Diagnostic converters.
+  Parse::NodeLocConverter* node_converter;
+  SemIRDiagnosticConverter* sem_ir_converter;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-auto CheckParseTrees(
-    llvm::MutableArrayRef<Unit> units,
-    llvm::MutableArrayRef<Parse::NodeLocConverter> node_converters,
-    bool prelude_import, llvm::raw_ostream* vlog_stream) -> void;
+auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
+                     llvm::raw_ostream* vlog_stream) -> void;
 
 }  // namespace Carbon::Check
 

@@ -509,12 +509,12 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto access_inst = inst.As<SemIR::AnyAggregateAccess>();
   Phase phase = Phase::Template;
-  if (auto aggregate_id =
-          GetConstantValue(eval_context, access_inst.aggregate_id, &phase);
-      aggregate_id.is_valid()) {
+  if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
+                                    &SemIR::AnyAggregateAccess::aggregate_id,
+                                    &phase)) {
     if (auto aggregate =
             eval_context.insts().TryGetAs<SemIR::AnyAggregateValue>(
-                aggregate_id)) {
+                access_inst.aggregate_id)) {
       auto elements = eval_context.inst_blocks().Get(aggregate->elements_id);
       auto index = static_cast<size_t>(access_inst.index.index);
       CARBON_CHECK(index < elements.size(), "Access out of bounds.");
@@ -526,6 +526,7 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
       CARBON_CHECK(phase != Phase::Template,
                    "Failed to evaluate template constant {0}", inst);
     }
+    return MakeConstantResult(eval_context.context(), access_inst, phase);
   }
   return MakeNonConstantResult(phase);
 }
@@ -1332,6 +1333,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::CompleteTypeWitness::Kind:
       return RebuildIfFieldsAreConstant(
           eval_context, inst, &SemIR::CompleteTypeWitness::object_repr_id);
+    case SemIR::FacetValue::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::FacetValue::type_id,
+                                        &SemIR::FacetValue::type_inst_id,
+                                        &SemIR::FacetValue::witness_inst_id);
     case SemIR::FunctionType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::FunctionType::specific_id);
@@ -1611,10 +1617,34 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::ValueOfInitializer typed_inst): {
       return eval_context.GetConstantValue(typed_inst.init_id);
     }
-    case CARBON_KIND(SemIR::FacetTypeAccess typed_inst): {
-      // TODO: Once we start tracking the witness in the facet value, remove it
-      // here. For now, we model a facet value as just a type.
-      return eval_context.GetConstantValue(typed_inst.facet_id);
+    case CARBON_KIND(SemIR::FacetAccessType typed_inst): {
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(
+              eval_context, &typed_inst,
+              &SemIR::FacetAccessType::facet_value_inst_id, &phase)) {
+        if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+                typed_inst.facet_value_inst_id)) {
+          return eval_context.constant_values().Get(facet_value->type_inst_id);
+        }
+        return MakeConstantResult(eval_context.context(), typed_inst, phase);
+      } else {
+        return MakeNonConstantResult(phase);
+      }
+    }
+    case CARBON_KIND(SemIR::FacetAccessWitness typed_inst): {
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(
+              eval_context, &typed_inst,
+              &SemIR::FacetAccessWitness::facet_value_inst_id, &phase)) {
+        if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+                typed_inst.facet_value_inst_id)) {
+          return eval_context.constant_values().Get(
+              facet_value->witness_inst_id);
+        }
+        return MakeConstantResult(eval_context.context(), typed_inst, phase);
+      } else {
+        return MakeNonConstantResult(phase);
+      }
     }
     case CARBON_KIND(SemIR::WhereExpr typed_inst): {
       Phase phase = Phase::Template;

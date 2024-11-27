@@ -29,7 +29,8 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %.3: %Simple.type = facet_value %T, %T [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,11 +76,11 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc15_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc15_36.2: <witness> = interface_witness (%F) [symbolic = %.loc15_36.2 (constants.%.3)]
+// CHECK:STDOUT:   %.loc15_36.2: <witness> = interface_witness (%F) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
-// CHECK:STDOUT:     %.loc15_36.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc15_36.2 (constants.%.3)]
+// CHECK:STDOUT:     %.loc15_36.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc15_36.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -110,12 +111,12 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc15_36.2 => constants.%.3
+// CHECK:STDOUT:   %.loc15_36.2 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T) {}
+// CHECK:STDOUT: specific @F.1(constants.%.3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc15_14.2) {
 // CHECK:STDOUT:   %T.loc15_14.2 => constants.%T

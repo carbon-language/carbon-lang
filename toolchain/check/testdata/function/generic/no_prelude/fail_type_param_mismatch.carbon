@@ -10,7 +10,7 @@
 
 fn F(T:! type, U:! type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let n: U = *p;

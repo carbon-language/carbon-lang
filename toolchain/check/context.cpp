@@ -199,6 +199,15 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   FinishInst(inst_id, inst);
 }
 
+auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                                 SemIR::Inst inst) -> void {
+  auto old_const_id = sem_ir().constant_values().Get(inst_id);
+  sem_ir().insts().Set(inst_id, inst);
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
+  auto new_const_id = TryEvalInst(*this, inst_id, inst);
+  CARBON_CHECK(old_const_id == new_const_id);
+}
+
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
     -> void {
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
@@ -609,7 +618,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 //
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
-static auto GetCorePackage(Context& context, SemIRLoc loc)
+static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
     -> SemIR::NameScopeId {
   auto core_ident_id = context.identifiers().Add("Core");
   auto packaging = context.parse_tree().packaging_decl();
@@ -631,15 +640,17 @@ static auto GetCorePackage(Context& context, SemIRLoc loc)
     }
   }
 
-  CARBON_DIAGNOSTIC(CoreNotFound, Error,
-                    "package `Core` implicitly referenced here, but not found");
-  context.emitter().Emit(loc, CoreNotFound);
+  CARBON_DIAGNOSTIC(
+      CoreNotFound, Error,
+      "`Core.{0}` implicitly referenced here, but package `Core` not found",
+      std::string);
+  context.emitter().Emit(loc, CoreNotFound, name.str());
   return SemIR::NameScopeId::Invalid;
 }
 
 auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
     -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(*this, loc);
+  auto core_package_id = GetCorePackage(*this, loc, name);
   if (!core_package_id.is_valid()) {
     return SemIR::InstId::BuiltinErrorInst;
   }
@@ -1139,9 +1150,10 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::AssociatedEntityType, SemIR::FacetAccessType,
+             SemIR::FacetType, SemIR::FunctionType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+             SemIR::WhereExpr>())
   auto BuildValueReprForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // These types have no runtime operations, so we use an empty value

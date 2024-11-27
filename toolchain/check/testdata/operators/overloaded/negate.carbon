@@ -34,7 +34,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness (%Op.1) [template]
+// CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
@@ -46,7 +46,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+85, loaded [template = constants.%Negate.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+91, loaded [template = constants.%Negate.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -91,7 +91,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
@@ -116,7 +116,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.3, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %.loc24_10.2: <bound method> = bound_method %a.ref, %.loc24_10.1
 // CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23_17.2

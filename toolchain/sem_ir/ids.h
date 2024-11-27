@@ -40,8 +40,7 @@ struct InstId : public IdBase, public Printable<InstId> {
   static const InstId Invalid;
 
 // Builtin inst IDs.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  static const InstId Builtin##Name;
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) static const InstId Builtin##Name;
 #include "toolchain/sem_ir/inst_kind.def"
 
   // The namespace for a `package` expression.
@@ -83,8 +82,8 @@ struct InstId : public IdBase, public Printable<InstId> {
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  constexpr InstId InstId::Builtin##Name =         \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
+  constexpr InstId InstId::Builtin##Name =    \
       InstId::ForBuiltin(BuiltinInstKind::Name);
 #include "toolchain/sem_ir/inst_kind.def"
 
@@ -255,6 +254,8 @@ constexpr CompileTimeBindIndex CompileTimeBindIndex::Invalid =
 // arguments passed to them at runtime. In a `call` instruction, a runtime
 // argument will have the position in the argument list corresponding to its
 // runtime parameter index.
+// TODO: Rename this to CallParamIndex, for consistency with the "`Call`
+// parameters" terminology in EntityWithParamsBase.
 struct RuntimeParamIndex : public IndexBase,
                            public Printable<RuntimeParamIndex> {
   // An explicitly invalid index.
@@ -804,11 +805,16 @@ constexpr TypeBlockId TypeBlockId::Empty = TypeBlockId(0);
 struct ElementIndex : public IndexBase, public Printable<ElementIndex> {
   using IndexBase::IndexBase;
 
+  // An explicitly invalid ID.
+  static const ElementIndex Invalid;
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "element";
     IndexBase::Print(out);
   }
 };
+
+constexpr ElementIndex ElementIndex::Invalid = ElementIndex(InvalidIndex);
 
 // The ID of a library name. This is either a string literal or `default`.
 struct LibraryNameId : public IdBase, public Printable<NameId> {

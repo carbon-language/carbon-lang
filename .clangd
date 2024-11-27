@@ -5,3 +5,7 @@
 CompileFlags:
   # Workaround for https://github.com/clangd/clangd/issues/1582
   Remove: [-march=*]
+Diagnostics:
+  # `unused-includes`: has false positives, reporting includes unused when
+  #   they are used.
+  Suppress: [unused-includes]

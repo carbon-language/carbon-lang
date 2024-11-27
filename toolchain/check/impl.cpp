@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
@@ -51,16 +52,27 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
                    enclosing_specific_args.end());
   }
 
-  // Add the `Self` argument.
+  // Add the `Self` argument. First find the `Self` binding.
+  auto self_binding =
+      context.insts().GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()]);
   CARBON_CHECK(
-      context.entity_names()
-              .Get(context.insts()
-                       .GetAs<SemIR::BindSymbolicName>(bindings[arg_ids.size()])
-                       .entity_name_id)
-              .name_id == SemIR::NameId::SelfType,
-      "Expected a Self binding, found {0}",
-      context.insts().Get(bindings[arg_ids.size()]));
-  arg_ids.push_back(context.types().GetInstId(self_type_id));
+      context.entity_names().Get(self_binding.entity_name_id).name_id ==
+          SemIR::NameId::SelfType,
+      "Expected a Self binding, found {0}", self_binding);
+  // Create a facet value to be the value of `Self` in the interface.
+  // This facet value consists of the type `self_type_id` and a witness that the
+  // type implements `self_binding.type_id`. The witness needs to be symbolic
+  // since we haven't finished defining the implementation here.
+  auto type_inst_id = context.types().GetInstId(self_type_id);
+  // TODO: Make a symbolic interface witness here. For the moment, the witness
+  // is never used.
+  auto witness_inst_id = type_inst_id;
+  auto facet_value_const_id =
+      TryEvalInst(context, SemIR::InstId::Invalid,
+                  SemIR::FacetValue{.type_id = self_binding.type_id,
+                                    .type_inst_id = type_inst_id,
+                                    .witness_inst_id = witness_inst_id});
+  arg_ids.push_back(context.constant_values().GetInstId(facet_value_const_id));
 
   // Take any trailing argument values from the self specific.
   // TODO: If these refer to outer arguments, for example in their types, we may

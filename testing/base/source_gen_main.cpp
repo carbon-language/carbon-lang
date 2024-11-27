@@ -54,9 +54,8 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   int lines = 10'000;
   SourceGen::Language language;
 
-  CommandLine::ParseResult parsed_args = CommandLine::Parse(
-      args, llvm::outs(), llvm::errs(), Info,
-      [&](CommandLine::CommandBuilder& b) {
+  auto parse_result = CommandLine::Parse(
+      args, llvm::outs(), Info, [&](CommandLine::CommandBuilder& b) {
         b.AddStringOption(OutputArgInfo,
                           [&](auto& arg_b) { arg_b.Set(&output_filename); });
         b.AddIntegerOption(LinesArgInfo,
@@ -74,9 +73,10 @@ auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool {
         // No-op action as there is only one operation for this command.
         b.Do([] {});
       });
-  if (parsed_args == CommandLine::ParseResult::Error) {
+  if (!parse_result.ok()) {
+    llvm::errs() << "error: " << *parse_result << "\n";
     return false;
-  } else if (parsed_args == CommandLine::ParseResult::MetaSuccess) {
+  } else if (*parse_result == CommandLine::ParseResult::MetaSuccess) {
     // Fully handled by the CLI library.
     return true;
   }

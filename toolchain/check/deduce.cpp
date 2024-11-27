@@ -122,15 +122,17 @@ class DeductionWorklist {
     const auto& param_impls =
         context_.facet_types().Get(params).impls_constraints;
     const auto& arg_impls = context_.facet_types().Get(args).impls_constraints;
-    if (param_impls.size() != arg_impls.size()) {
-      // TODO: Decide whether to error on this or just treat the parameter list
-      // as non-deduced. For now we treat it as non-deduced.
+    // TODO: Decide whether to error on these or just treat the parameter list
+    // as non-deduced. For now we treat it as non-deduced.
+    if (param_impls.size() != 1 || arg_impls.size() != 1) {
       return;
     }
-    for (auto [param, arg] :
-         llvm::reverse(llvm::zip_equal(param_impls, arg_impls))) {
-      Add(param.specific_id, arg.specific_id, needs_substitution);
+    auto param = param_impls.front();
+    auto arg = arg_impls.front();
+    if (param.interface_id != arg.interface_id) {
+      return;
     }
+    Add(param.specific_id, arg.specific_id, needs_substitution);
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
@@ -417,30 +419,6 @@ auto DeductionContext::Deduce() -> bool {
         continue;
       }
 
-      // Various kinds of parameter should match an argument of the same form,
-      // if the operands all match.
-      case SemIR::ArrayType::Kind:
-      case SemIR::ClassType::Kind:
-      case SemIR::ConstType::Kind:
-      case SemIR::FacetType::Kind:
-      case SemIR::FloatType::Kind:
-      case SemIR::IntType::Kind:
-      case SemIR::PointerType::Kind:
-      case SemIR::StructType::Kind:
-      case SemIR::TupleType::Kind:
-      case SemIR::TupleValue::Kind: {
-        auto arg_inst = context().insts().Get(arg_id);
-        if (arg_inst.kind() != param_inst.kind()) {
-          break;
-        }
-        auto [kind0, kind1] = param_inst.ArgKinds();
-        worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
-                             needs_substitution);
-        worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
-                             needs_substitution);
-        continue;
-      }
-
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;
@@ -448,6 +426,20 @@ auto DeductionContext::Deduce() -> bool {
         // TODO: Handle more cases.
 
       default:
+        if (param_inst.kind().deduce_through()) {
+          // Various kinds of parameter should match an argument of the same
+          // form, if the operands all match.
+          auto arg_inst = context().insts().Get(arg_id);
+          if (arg_inst.kind() != param_inst.kind()) {
+            break;
+          }
+          auto [kind0, kind1] = param_inst.ArgKinds();
+          worklist_.AddInstArg(kind0, param_inst.arg0(), arg_inst.arg0(),
+                               needs_substitution);
+          worklist_.AddInstArg(kind1, param_inst.arg1(), arg_inst.arg1(),
+                               needs_substitution);
+          continue;
+        }
         break;
     }
 

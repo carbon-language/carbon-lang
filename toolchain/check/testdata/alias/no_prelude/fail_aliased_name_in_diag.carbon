@@ -14,7 +14,7 @@ class D {}
 alias c = C;
 var d: D = {};
 
-// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:1: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_aliased_name_in_diag.carbon:[[@LINE+3]]:1: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: let c_var: c = d;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 let c_var: c = d;

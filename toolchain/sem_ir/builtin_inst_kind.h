@@ -12,22 +12,18 @@
 namespace Carbon::SemIR {
 
 CARBON_DEFINE_RAW_ENUM_CLASS(BuiltinInstKind, uint8_t) {
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  CARBON_RAW_ENUM_ENUMERATOR(Name)
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 };
 
 class BuiltinInstKind : public CARBON_ENUM_BASE(BuiltinInstKind) {
  public:
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
-  CARBON_ENUM_CONSTANT_DECL(Name)
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/inst_kind.def"
-
-  auto label() -> llvm::StringRef;
 
   // The count of enum values excluding Invalid.
   static constexpr uint8_t ValidCount = 0
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) +1
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) +1
 #include "toolchain/sem_ir/inst_kind.def"
       ;
 
@@ -36,7 +32,7 @@ class BuiltinInstKind : public CARBON_ENUM_BASE(BuiltinInstKind) {
   using EnumBase::FromInt;
 };
 
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...) \
+#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
   CARBON_ENUM_CONSTANT_DEFINITION(BuiltinInstKind, Name)
 #include "toolchain/sem_ir/inst_kind.def"
 

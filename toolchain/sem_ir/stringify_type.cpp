@@ -56,6 +56,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
   llvm::SmallVector<Step> steps = {Step{
       .sem_ir = outer_sem_ir, .kind = Step::Inst, .inst_id = outer_inst_id}};
 
+  // Note: The `steps` worklist is a stack and so work is resolved in the
+  // reverse order from the order added.
   auto push_string = [&](const char* string) {
     steps.push_back({.sem_ir = outer_sem_ir,
                      .kind = Step::FixedString,
@@ -76,14 +78,10 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       continue;
     }
 
-    // Builtins have designated labels.
-    if (step.inst_id.is_builtin()) {
-      out << step.inst_id.builtin_inst_kind().label();
-      continue;
-    }
-
     const auto& sem_ir = step.sem_ir;
     // Helper for instructions with the current sem_ir.
+    // Note: The `steps` worklist is a stack and so work is resolved in the
+    // reverse order from the order added.
     auto push_inst_id = [&](InstId inst_id) {
       steps.push_back(
           {.sem_ir = sem_ir, .kind = Step::Inst, .inst_id = inst_id});
@@ -120,6 +118,22 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
 
     auto untyped_inst = sem_ir.insts().Get(step.inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
+      case SemIR::AutoType::Kind:
+      case SemIR::BoolType::Kind:
+      case SemIR::BoundMethodType::Kind:
+      case SemIR::ErrorInst::Kind:
+      case SemIR::IntLiteralType::Kind:
+      case SemIR::LegacyFloatType::Kind:
+      case SemIR::NamespaceType::Kind:
+      case SemIR::SpecificFunctionType::Kind:
+      case SemIR::StringType::Kind:
+      case SemIR::TypeType::Kind:
+      case SemIR::VtableType::Kind:
+      case SemIR::WitnessType::Kind: {
+        // Builtin instructions use their IR name as a label.
+        out << untyped_inst.kind().ir_name();
+        break;
+      }
       case CARBON_KIND(ArrayType inst): {
         if (step.index == 0) {
           out << "[";
@@ -131,17 +145,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        if (step.index == 0) {
-          out << "<associated ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
-        } else if (step.index == 1) {
-          out << " in ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.interface_type_id));
-        } else {
-          out << ">";
-        }
+        out << "<associated ";
+        push_string(">");
+        push_inst_id(sem_ir.types().GetInstId(inst.interface_type_id));
+        push_string(" in ");
+        push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
         break;
       }
       case BindAlias::Kind:
@@ -160,21 +168,28 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ConstType inst): {
-        if (step.index == 0) {
-          out << "const ";
+        out << "const ";
 
-          // Add parentheses if required.
-          auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
-          if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
-              GetTypePrecedence(SemIR::ConstType::Kind)) {
-            out << "(";
-            steps.push_back(step.Next());
-          }
-
-          push_inst_id(inner_type_inst_id);
-        } else if (step.index == 1) {
-          out << ")";
+        // Add parentheses if required.
+        auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
+        if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
+            GetTypePrecedence(SemIR::ConstType::Kind)) {
+          out << "(";
+          push_string(")");
         }
+
+        push_inst_id(inner_type_inst_id);
+        break;
+      }
+      case CARBON_KIND(FacetAccessType inst): {
+        // Given `T:! I`, print `T as type` as simply `T`.
+        push_inst_id(inst.facet_value_inst_id);
+        break;
+      }
+      case CARBON_KIND(FacetAccessWitness inst): {
+        out << "<witness for ";
+        push_string(">");
+        push_inst_id(inst.facet_value_inst_id);
         break;
       }
       case CARBON_KIND(FacetType inst): {
@@ -202,22 +217,22 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         }
         break;
       }
-      case CARBON_KIND(FacetTypeAccess inst): {
-        // Print `T as type` as simply `T`.
-        push_inst_id(inst.facet_id);
+      case CARBON_KIND(FacetValue inst): {
+        // No need to output the witness.
+        push_inst_id(sem_ir.types().GetInstId(inst.type_id));
+        push_string(" as ");
+        push_inst_id(inst.type_inst_id);
         break;
       }
       case CARBON_KIND(FloatType inst): {
         // TODO: Is this okay?
-        if (step.index == 1) {
-          out << ")";
-        } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << "f";
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
           out << "Core.Float(";
-          steps.push_back(step.Next());
+          push_string(")");
           push_inst_id(inst.bit_width_id);
         }
         break;
@@ -240,15 +255,13 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(IntType inst): {
-        if (step.index == 1) {
-          out << ")";
-        } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
           out << (inst.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
-          steps.push_back(step.Next());
+          push_string(")");
           push_inst_id(inst.bit_width_id);
         }
         break;
@@ -258,12 +271,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(PointerType inst): {
-        if (step.index == 0) {
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
-        } else if (step.index == 1) {
-          out << "*";
-        }
+        push_string("*");
+        push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
         break;
       }
       case CARBON_KIND(StructType inst): {
@@ -290,44 +299,35 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (refs.empty()) {
           out << "()";
           break;
-        } else if (step.index == 0) {
-          out << "(";
-        } else if (step.index < static_cast<int>(refs.size())) {
-          out << ", ";
-        } else {
-          // A tuple of one element has a comma to disambiguate from an
-          // expression.
-          if (step.index == 1) {
-            out << ",";
-          }
-          out << ")";
-          break;
         }
-        steps.push_back(step.Next());
-        push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
+        out << "(";
+        push_string(")");
+        // A tuple of one element has a comma to disambiguate from an
+        // expression.
+        if (refs.size() == 1) {
+          push_string(",");
+        }
+        for (auto i : llvm::reverse(llvm::seq(refs.size()))) {
+          push_inst_id(sem_ir.types().GetInstId(refs[i]));
+          if (i > 0) {
+            push_string(", ");
+          }
+        }
         break;
       }
       case CARBON_KIND(UnboundElementType inst): {
-        if (step.index == 0) {
-          out << "<unbound element of class ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.class_type_id));
-        } else {
-          out << ">";
-        }
+        out << "<unbound element of class ";
+        push_string(">");
+        push_inst_id(sem_ir.types().GetInstId(inst.class_type_id));
         break;
       }
       case CARBON_KIND(WhereExpr inst): {
-        if (step.index == 0) {
-          out << "<where restriction on ";
-          steps.push_back(step.Next());
-          TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
-          push_inst_id(sem_ir.types().GetInstId(type_id));
-          // TODO: Also output restrictions from the inst block
-          // inst.requirements_id.
-        } else {
-          out << ">";
-        }
+        out << "<where restriction on ";
+        push_string(">");
+        TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
+        push_inst_id(sem_ir.types().GetInstId(type_id));
+        // TODO: Also output restrictions from the inst block
+        // inst.requirements_id.
         break;
       }
       case AdaptDecl::Kind:
@@ -339,16 +339,13 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case Assign::Kind:
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
-      case AutoType::Kind:
       case BaseDecl::Kind:
       case BindName::Kind:
       case BindValue::Kind:
       case BindingPattern::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
-      case BoolType::Kind:
       case BoundMethod::Kind:
-      case BoundMethodType::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -359,7 +356,6 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case CompleteTypeWitness::Kind:
       case Converted::Kind:
       case Deref::Kind:
-      case ErrorInst::Kind:
       case FieldDecl::Kind:
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
@@ -368,14 +364,11 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
-      case IntLiteralType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case LegacyFloatType::Kind:
       case Namespace::Kind:
-      case NamespaceType::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
       case RequirementEquivalent::Kind:
@@ -387,10 +380,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ReturnSlotPattern::Kind:
       case SpecificConstant::Kind:
       case SpecificFunction::Kind:
-      case SpecificFunctionType::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
-      case StringType::Kind:
       case StructAccess::Kind:
       case StructInit::Kind:
       case StructLiteral::Kind:
@@ -402,15 +393,12 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case TupleInit::Kind:
       case TupleLiteral::Kind:
       case TupleValue::Kind:
-      case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
       case VarStorage::Kind:
-      case VtableType::Kind:
-      case WitnessType::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
         auto const_inst_id =
@@ -423,7 +411,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         // We don't need to handle stringification for instructions that don't
         // show up in errors, but make it clear what's going on so that it's
         // clearer when stringification is needed.
-        out << "<cannot stringify " << step.inst_id << ">";
+        out << "<cannot stringify " << step.inst_id << " kind "
+            << untyped_inst.kind() << ">";
         break;
     }
   }

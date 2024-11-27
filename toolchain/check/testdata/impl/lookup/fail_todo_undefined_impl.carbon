@@ -48,7 +48,8 @@ impl C as I {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.7: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,7 +102,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {}
-// CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -139,5 +140,5 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT: specific @F.1(constants.%.7) {}
 // CHECK:STDOUT:

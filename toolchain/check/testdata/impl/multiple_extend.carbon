@@ -178,12 +178,14 @@ fn P(o: O) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.5: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%G.2) [template]
-// CHECK:STDOUT:   %.7: type = struct_type {} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.7: %HasG.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%G.2) [template]
+// CHECK:STDOUT:   %.9: type = struct_type {} [template]
+// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -241,7 +243,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasF.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -250,7 +252,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasG.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%G.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%G.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
@@ -266,7 +268,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [template = constants.%HasG.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -298,19 +300,19 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %.1 = name_ref F, @HasF.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %.1 = name_ref F, @HasF.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access constants.%.5, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %.loc23()
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %.3 = name_ref G, @HasG.%.loc9 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc24: %G.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc24: %G.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%G.2]
 // CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %.loc24()
 // CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %.3 = name_ref G, @HasG.%.loc9 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc25: %G.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %.loc25: %G.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%G.2]
 // CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -319,9 +321,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%C) {}
+// CHECK:STDOUT: specific @G.1(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impls.carbon
 // CHECK:STDOUT:
@@ -341,12 +343,14 @@ fn P(o: O) {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %A.type.3: type = fn_type @A.3 [template]
 // CHECK:STDOUT:   %A.3: %A.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%A.3) [template]
+// CHECK:STDOUT:   %.5: %HasA1.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%A.3) [template]
 // CHECK:STDOUT:   %A.type.4: type = fn_type @A.4 [template]
 // CHECK:STDOUT:   %A.4: %A.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.6: <witness> = interface_witness (%A.4) [template]
-// CHECK:STDOUT:   %.7: type = struct_type {} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.7: %HasA2.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%A.4) [template]
+// CHECK:STDOUT:   %.9: type = struct_type {} [template]
+// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -404,7 +408,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasA1.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.3 = fn_decl @A.3 [template = constants.%A.3] {} {}
-// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%A.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: <witness> = interface_witness (%A.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
@@ -413,7 +417,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasA2.ref {
 // CHECK:STDOUT:   %A.decl: %A.type.4 = fn_decl @A.4 [template = constants.%A.4] {} {}
-// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%A.decl) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16: <witness> = interface_witness (%A.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
@@ -429,7 +433,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [template = constants.%HasA2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -470,9 +474,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.1(constants.%D) {}
+// CHECK:STDOUT: specific @A.1(constants.%.5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.2(constants.%D) {}
+// CHECK:STDOUT: specific @A.2(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- different_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -493,9 +497,10 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.6: type = unbound_element_type %E, %B [template]
 // CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
 // CHECK:STDOUT:   %I.2: %I.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%I.2) [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
+// CHECK:STDOUT:   %.7: %HasI.type = facet_value %E, %E [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%I.2) [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -542,7 +547,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasI.ref {
 // CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {} {}
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%I.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%I.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .I = %I.decl
@@ -565,7 +570,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [template = constants.%HasI.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.8 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
@@ -593,11 +598,11 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %.1 = name_ref I, @HasI.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20: %I.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %.loc20: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
 // CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
 // CHECK:STDOUT:   %I.ref.loc21: %.1 = name_ref I, @HasI.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc21: %I.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %.loc21: %I.type.1 = interface_witness_access constants.%.8, element0 [template = constants.%I.2]
 // CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %.loc21()
 // CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
@@ -610,7 +615,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.1(constants.%E) {}
+// CHECK:STDOUT: specific @I.1(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -630,9 +635,10 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.6: type = unbound_element_type %L, %Base [template]
 // CHECK:STDOUT:   %K.type.3: type = fn_type @K.3 [template]
 // CHECK:STDOUT:   %K.3: %K.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%K.3) [template]
-// CHECK:STDOUT:   %.8: type = struct_type {.base: %Base} [template]
-// CHECK:STDOUT:   %.9: <witness> = complete_type_witness %.8 [template]
+// CHECK:STDOUT:   %.7: %HasK.type = facet_value %L, %L [template]
+// CHECK:STDOUT:   %.8: <witness> = interface_witness (%K.3) [template]
+// CHECK:STDOUT:   %.9: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %.10: <witness> = complete_type_witness %.9 [template]
 // CHECK:STDOUT:   %M.type: type = fn_type @M [template]
 // CHECK:STDOUT:   %M: %M.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -679,7 +685,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasK.ref {
 // CHECK:STDOUT:   %K.decl: %K.type.3 = fn_decl @K.3 [template = constants.%K.3] {} {}
-// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%K.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc14: <witness> = interface_witness (%K.decl) [template = constants.%.8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %K.decl
@@ -702,7 +708,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [template = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [template = constants.%HasK.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.8 [template = constants.%.9]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.9 [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
@@ -737,7 +743,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.2(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.2(constants.%L) {}
+// CHECK:STDOUT: specific @K.2(constants.%.7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ambiguity_hidden.carbon
 // CHECK:STDOUT:
@@ -764,14 +770,16 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.8: type = unbound_element_type %O, %NBase [template]
 // CHECK:STDOUT:   %N.type.4: type = fn_type @N.4 [template]
 // CHECK:STDOUT:   %N.4: %N.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.9: <witness> = interface_witness (%N.4) [template]
+// CHECK:STDOUT:   %.9: %HasN1.type = facet_value %O, %O [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness (%N.4) [template]
 // CHECK:STDOUT:   %N.type.5: type = fn_type @N.5 [template]
 // CHECK:STDOUT:   %N.5: %N.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %.10: <witness> = interface_witness (%N.5) [template]
+// CHECK:STDOUT:   %.11: %HasN2.type = facet_value %O, %O [template]
+// CHECK:STDOUT:   %.12: <witness> = interface_witness (%N.5) [template]
 // CHECK:STDOUT:   %N.type.6: type = fn_type @N.6 [template]
 // CHECK:STDOUT:   %N.6: %N.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.base: %NBase} [template]
-// CHECK:STDOUT:   %.12: <witness> = complete_type_witness %.11 [template]
+// CHECK:STDOUT:   %.13: type = struct_type {.base: %NBase} [template]
+// CHECK:STDOUT:   %.14: <witness> = complete_type_witness %.13 [template]
 // CHECK:STDOUT:   %P.type: type = fn_type @P [template]
 // CHECK:STDOUT:   %P: %P.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -831,7 +839,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasN1.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.4 = fn_decl @N.4 [template = constants.%N.4] {} {}
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%N.decl) [template = constants.%.9]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%N.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
@@ -840,7 +848,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasN2.ref {
 // CHECK:STDOUT:   %N.decl: %N.type.5 = fn_decl @N.5 [template = constants.%N.5] {} {}
-// CHECK:STDOUT:   %.loc21: <witness> = interface_witness (%N.decl) [template = constants.%.10]
+// CHECK:STDOUT:   %.loc21: <witness> = interface_witness (%N.decl) [template = constants.%.12]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
@@ -868,7 +876,7 @@ fn P(o: O) {
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [template = constants.%HasN2.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N.decl: %N.type.6 = fn_decl @N.6 [template = constants.%N.6] {} {}
-// CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %.11 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %.13 [template = constants.%.14]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O
@@ -921,7 +929,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.3(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.2(constants.%O) {}
+// CHECK:STDOUT: specific @N.2(constants.%.9) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.3(constants.%O) {}
+// CHECK:STDOUT: specific @N.3(constants.%.11) {}
 // CHECK:STDOUT:
