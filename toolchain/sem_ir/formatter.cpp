@@ -1049,7 +1049,7 @@ class FormatterImpl {
       }
     }
 
-    if (info.other_requirements) {
+    if (info.other_requirements || !info.rewrite_constraints.empty()) {
       // TODO: Include specifics.
       out_ << " where TODO";
     }
