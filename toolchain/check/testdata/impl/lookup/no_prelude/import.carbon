@@ -152,7 +152,7 @@ import PackageGenericInterface;
 fn M() {
   var obj: PackageHasParam.AnyParam(
     PackageGenericInterface.GenericInterface) = {};
-  // CHECK:STDERR: fail_todo_use_generic_interface_as_param.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `AnyParam(<cannot stringify inst+37 kind StructValue>)` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_use_generic_interface_as_param.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `AnyParam(<cannot stringify inst+38 kind StructValue>)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   obj.(PackageHasParam.Y.K)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -300,15 +300,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageA: <namespace> = namespace file.%PackageA.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     .HasF = %import_ref.3
+// CHECK:STDOUT:     .HasF = %import_ref.4
 // CHECK:STDOUT:     import PackageA//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref PackageA//default, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageA//default, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageA//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref PackageA//default, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.6: %F.type.2 = import_ref PackageA//default, inst+5, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageA//default, inst+15, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageA//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageA//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref PackageA//default, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.7: %F.type.2 = import_ref PackageA//default, inst+5, loaded [template = constants.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -328,7 +329,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
-// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
+// CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, imports.%import_ref.4 [template = constants.%HasF.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
@@ -349,9 +350,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .F = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %HasG.ref {
@@ -391,8 +392,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@HasG.%Self: %HasG.type) {
@@ -443,7 +444,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %HasF.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [template]
@@ -452,18 +453,19 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageA: <namespace> = namespace file.%PackageA.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     .HasF = %import_ref.3
+// CHECK:STDOUT:     .HasF = %import_ref.4
 // CHECK:STDOUT:     import PackageA//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref PackageA//default, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageA//default, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageA//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref PackageA//default, inst+10, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref PackageA//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.8: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref PackageA//default, inst+24, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageA//default, inst+15, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageA//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageA//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref PackageA//default, inst+10, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref PackageA//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref PackageA//default, inst+24, loaded [template = constants.%.6]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -485,28 +487,28 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .F = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.8 as imports.%import_ref.9 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.9 as imports.%import_ref.10 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.10
+// CHECK:STDOUT:   witness = imports.%import_ref.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestCF(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %PackageA.ref.loc7: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
-// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
-// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.4 [template = constants.%HasF.type]
+// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc7()
 // CHECK:STDOUT:   return
@@ -534,7 +536,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.1: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %HasF.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %HasG.type: type = facet_type <@HasG> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -544,7 +546,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageA: <namespace> = namespace file.%PackageA.import, [template] {
-// CHECK:STDOUT:     .HasF = %import_ref.3
+// CHECK:STDOUT:     .HasF = %import_ref.4
 // CHECK:STDOUT:     import PackageA//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageB: <namespace> = namespace file.%PackageB.import, [template] {
@@ -552,27 +554,29 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageB//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref PackageB//default, inst+14, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageB//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageA//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref PackageA//default, inst+10, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref PackageA//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref PackageA//default, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.11 = import_ref PackageA//default, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref PackageB//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref PackageB//default, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref PackageB//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref PackageB//default, inst+24, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.16: type = import_ref PackageB//default, inst+25, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.17 = import_ref PackageB//default, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.18: type = import_ref PackageB//default, inst+34, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref PackageB//default, inst+43, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.20: <witness> = import_ref PackageB//default, inst+52, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.21: type = import_ref PackageB//default, inst+55, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.22: type = import_ref PackageB//default, inst+56, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.23 = import_ref PackageB//default, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageB//default, inst+17, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageB//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageA//default, inst+1, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageA//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref PackageA//default, inst+10, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref PackageA//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref PackageA//default, inst+15, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref PackageA//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.13 = import_ref PackageA//default, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref PackageB//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref PackageB//default, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref PackageB//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref PackageB//default, inst+25, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.18: type = import_ref PackageB//default, inst+26, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.19 = import_ref PackageB//default, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.20: type = import_ref PackageB//default, inst+35, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref PackageB//default, inst+44, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref PackageB//default, inst+53, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.23: type = import_ref PackageB//default, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.24: type = import_ref PackageB//default, inst+57, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.25 = import_ref PackageB//default, inst+63, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -596,56 +600,56 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .F = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.12
-// CHECK:STDOUT:   .G = imports.%import_ref.13
-// CHECK:STDOUT:   witness = (imports.%import_ref.14)
+// CHECK:STDOUT:   .Self = imports.%import_ref.14
+// CHECK:STDOUT:   .G = imports.%import_ref.15
+// CHECK:STDOUT:   witness = (imports.%import_ref.16)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.9 as imports.%import_ref.10 {
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.11 as imports.%import_ref.12 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.11
+// CHECK:STDOUT:   witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: imports.%import_ref.15 as imports.%import_ref.16 {
+// CHECK:STDOUT: impl @impl.2: imports.%import_ref.17 as imports.%import_ref.18 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.17
+// CHECK:STDOUT:   witness = imports.%import_ref.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: imports.%import_ref.18 as imports.%import_ref.19 {
+// CHECK:STDOUT: impl @impl.3: imports.%import_ref.20 as imports.%import_ref.21 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.20
+// CHECK:STDOUT:   witness = imports.%import_ref.22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: imports.%import_ref.21 as imports.%import_ref.22 {
+// CHECK:STDOUT: impl @impl.4: imports.%import_ref.23 as imports.%import_ref.24 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.23
+// CHECK:STDOUT:   witness = imports.%import_ref.25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.10
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestDF(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
-// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.3 [template = constants.%HasF.type]
-// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.4 [template = constants.%HasF.type]
+// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8: %F.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc8()
 // CHECK:STDOUT:   return
@@ -673,7 +677,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.1: %HasG.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %HasG.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
@@ -687,31 +691,33 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     import PackageA//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageB: <namespace> = namespace file.%PackageB.import, [template] {
-// CHECK:STDOUT:     .HasG = %import_ref.3
+// CHECK:STDOUT:     .HasG = %import_ref.4
 // CHECK:STDOUT:     import PackageB//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref PackageA//default, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageA//default, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageB//default, inst+3, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageB//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref PackageB//default, inst+12, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref PackageB//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref PackageA//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref PackageA//default, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref PackageA//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.13 = import_ref PackageA//default, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.14: type = import_ref PackageB//default, inst+24, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.15: type = import_ref PackageB//default, inst+25, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.16: <witness> = import_ref PackageB//default, inst+31, loaded [template = constants.%.6]
-// CHECK:STDOUT:   %import_ref.17 = import_ref PackageB//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.18: type = import_ref PackageB//default, inst+34, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref PackageB//default, inst+43, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.20 = import_ref PackageB//default, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.21: type = import_ref PackageB//default, inst+55, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.22: type = import_ref PackageB//default, inst+56, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.23 = import_ref PackageB//default, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageA//default, inst+15, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageA//default, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageB//default, inst+3, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageB//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref PackageB//default, inst+12, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref PackageB//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref PackageA//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref PackageA//default, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref PackageA//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageA//default, inst+17, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.13: type = import_ref PackageA//default, inst+18, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.14 = import_ref PackageA//default, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.15: type = import_ref PackageB//default, inst+25, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.16: type = import_ref PackageB//default, inst+26, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.17: <witness> = import_ref PackageB//default, inst+32, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.18: <witness> = import_ref PackageB//default, inst+17, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.19 = import_ref PackageB//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.20: type = import_ref PackageB//default, inst+35, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref PackageB//default, inst+44, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.22 = import_ref PackageB//default, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.23: type = import_ref PackageB//default, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.24: type = import_ref PackageB//default, inst+57, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.25 = import_ref PackageB//default, inst+63, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -735,56 +741,56 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .G = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .G = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   .F = imports.%import_ref.9
-// CHECK:STDOUT:   witness = (imports.%import_ref.10)
+// CHECK:STDOUT:   .Self = imports.%import_ref.9
+// CHECK:STDOUT:   .F = imports.%import_ref.10
+// CHECK:STDOUT:   witness = (imports.%import_ref.11)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.11 as imports.%import_ref.12 {
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.12 as imports.%import_ref.13 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.13
+// CHECK:STDOUT:   witness = imports.%import_ref.14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: imports.%import_ref.14 as imports.%import_ref.15 {
+// CHECK:STDOUT: impl @impl.2: imports.%import_ref.15 as imports.%import_ref.16 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.16
+// CHECK:STDOUT:   witness = imports.%import_ref.17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: imports.%import_ref.18 as imports.%import_ref.19 {
+// CHECK:STDOUT: impl @impl.3: imports.%import_ref.20 as imports.%import_ref.21 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.20
+// CHECK:STDOUT:   witness = imports.%import_ref.22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4: imports.%import_ref.21 as imports.%import_ref.22 {
+// CHECK:STDOUT: impl @impl.4: imports.%import_ref.23 as imports.%import_ref.24 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.23
+// CHECK:STDOUT:   witness = imports.%import_ref.25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.17
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.19
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestCG(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %PackageB.ref: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
-// CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.3 [template = constants.%HasG.type]
-// CHECK:STDOUT:   %G.ref: %.4 = name_ref G, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.4 [template = constants.%HasG.type]
+// CHECK:STDOUT:   %G.ref: %.4 = name_ref G, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc8: %G.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%G.2]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %.loc8()
 // CHECK:STDOUT:   return
@@ -812,7 +818,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.1: %HasG.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %HasG.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
@@ -823,28 +829,30 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageB: <namespace> = namespace file.%PackageB.import, [template] {
 // CHECK:STDOUT:     .D = %import_ref.1
-// CHECK:STDOUT:     .HasG = %import_ref.3
+// CHECK:STDOUT:     .HasG = %import_ref.4
 // CHECK:STDOUT:     import PackageB//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref PackageB//default, inst+14, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageB//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageB//default, inst+3, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageB//default, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref PackageB//default, inst+12, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref PackageB//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref PackageB//default, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref PackageB//default, inst+24, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref PackageB//default, inst+25, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.11 = import_ref PackageB//default, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref PackageB//default, inst+40, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref PackageB//default, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref PackageB//default, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref PackageB//default, inst+34, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.16: type = import_ref PackageB//default, inst+43, loaded [template = constants.%HasF.type]
-// CHECK:STDOUT:   %import_ref.17 = import_ref PackageB//default, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.18: type = import_ref PackageB//default, inst+55, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.19: type = import_ref PackageB//default, inst+56, loaded [template = constants.%HasG.type]
-// CHECK:STDOUT:   %import_ref.20: <witness> = import_ref PackageB//default, inst+62, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageB//default, inst+17, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageB//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageB//default, inst+3, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageB//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref PackageB//default, inst+12, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref PackageB//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref PackageB//default, inst+23, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.10 = import_ref PackageB//default, inst+24, unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageB//default, inst+25, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageB//default, inst+26, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.13 = import_ref PackageB//default, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref PackageB//default, inst+41, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref PackageB//default, inst+42, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref PackageB//default, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref PackageB//default, inst+35, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.18: type = import_ref PackageB//default, inst+44, loaded [template = constants.%HasF.type]
+// CHECK:STDOUT:   %import_ref.19 = import_ref PackageB//default, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.20: type = import_ref PackageB//default, inst+56, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.21: type = import_ref PackageB//default, inst+57, loaded [template = constants.%HasG.type]
+// CHECK:STDOUT:   %import_ref.22: <witness> = import_ref PackageB//default, inst+63, loaded [template = constants.%.6]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -866,51 +874,51 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .G = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .G = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.12
-// CHECK:STDOUT:   .F = imports.%import_ref.13
-// CHECK:STDOUT:   witness = (imports.%import_ref.14)
+// CHECK:STDOUT:   .Self = imports.%import_ref.14
+// CHECK:STDOUT:   .F = imports.%import_ref.15
+// CHECK:STDOUT:   witness = (imports.%import_ref.16)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.9 as imports.%import_ref.10 {
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.11 as imports.%import_ref.12 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.11
+// CHECK:STDOUT:   witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: imports.%import_ref.15 as imports.%import_ref.16 {
+// CHECK:STDOUT: impl @impl.2: imports.%import_ref.17 as imports.%import_ref.18 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.17
+// CHECK:STDOUT:   witness = imports.%import_ref.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: imports.%import_ref.18 as imports.%import_ref.19 {
+// CHECK:STDOUT: impl @impl.3: imports.%import_ref.20 as imports.%import_ref.21 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.20
+// CHECK:STDOUT:   witness = imports.%import_ref.22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.10
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestDG(%d.param_patt: %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %PackageB.ref.loc7: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
-// CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.3 [template = constants.%HasG.type]
-// CHECK:STDOUT:   %G.ref: %.4 = name_ref G, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.4 [template = constants.%HasG.type]
+// CHECK:STDOUT:   %G.ref: %.4 = name_ref G, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc7: %G.type.1 = interface_witness_access constants.%.6, element0 [template = constants.%G.2]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %.loc7()
 // CHECK:STDOUT:   return
@@ -1176,21 +1184,22 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %L: %L.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %AnyParam.3 = struct_value () [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %Y.type, %K.type.2 [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageHasParam: <namespace> = namespace file.%PackageHasParam.import, [template] {
 // CHECK:STDOUT:     .AnyParam = %import_ref.1
-// CHECK:STDOUT:     .Y = %import_ref.3
+// CHECK:STDOUT:     .Y = %import_ref.4
 // CHECK:STDOUT:     import PackageHasParam//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageHasParam//default, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageHasParam//default, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.6 = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%.7]
-// CHECK:STDOUT:   %import_ref.6: %K.type.2 = import_ref PackageHasParam//default, inst+30, loaded [template = constants.%K.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageHasParam//default, inst+24, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageHasParam//default, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageHasParam//default, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.6 = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%.7]
+// CHECK:STDOUT:   %import_ref.7: %K.type.2 = import_ref PackageHasParam//default, inst+30, loaded [template = constants.%K.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1213,7 +1222,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
 // CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) [template = constants.%AnyParam.3]
 // CHECK:STDOUT:     %PackageHasParam.ref.loc8_52: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:     %Y.ref: type = name_ref Y, imports.%import_ref.3 [template = constants.%Y.type]
+// CHECK:STDOUT:     %Y.ref: type = name_ref Y, imports.%import_ref.4 [template = constants.%Y.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %L.decl: %L.type = fn_decl @L [template = constants.%L] {} {}
 // CHECK:STDOUT: }
@@ -1237,9 +1246,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .K = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .K = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %AnyParam as %Y.ref {
@@ -1261,8 +1270,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.2
-// CHECK:STDOUT:     complete_type_witness = constants.%.2
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1291,8 +1300,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   assign %obj.var, %.loc13_59
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.3 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.3 [template = constants.%Y.type]
-// CHECK:STDOUT:   %K.ref: %.6 = name_ref K, imports.%import_ref.5 [template = constants.%.7]
+// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.4 [template = constants.%Y.type]
+// CHECK:STDOUT:   %K.ref: %.6 = name_ref K, imports.%import_ref.6 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc14: %K.type.2 = interface_witness_access constants.%.4, element0 [template = constants.%K.1]
 // CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %.loc14()
 // CHECK:STDOUT:   return
@@ -1361,27 +1370,28 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.3: %Y.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type: type = fn_type @K [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %Y.type, %K.type [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %PackageHasParam: <namespace> = namespace file.%PackageHasParam.import, [template] {
 // CHECK:STDOUT:     .AnyParam = %import_ref.1
-// CHECK:STDOUT:     .Y = %import_ref.5
+// CHECK:STDOUT:     .Y = %import_ref.6
 // CHECK:STDOUT:     import PackageHasParam//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageGenericInterface: <namespace> = namespace file.%PackageGenericInterface.import, [template] {
-// CHECK:STDOUT:     .GenericInterface = %import_ref.3
+// CHECK:STDOUT:     .GenericInterface = %import_ref.4
 // CHECK:STDOUT:     import PackageGenericInterface//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref PackageHasParam//default, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.3: %GenericInterface.type.1 = import_ref PackageGenericInterface//default, inst+9, loaded [template = constants.%GenericInterface]
-// CHECK:STDOUT:   %import_ref.4 = import_ref PackageGenericInterface//default, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref PackageHasParam//default, inst+28, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.4 = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.8 = import_ref PackageHasParam//default, inst+30, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageHasParam//default, inst+24, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref PackageHasParam//default, inst+22, unloaded
+// CHECK:STDOUT:   %import_ref.4: %GenericInterface.type.1 = import_ref PackageGenericInterface//default, inst+9, loaded [template = constants.%GenericInterface]
+// CHECK:STDOUT:   %import_ref.5 = import_ref PackageGenericInterface//default, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
+// CHECK:STDOUT:   %import_ref.7 = import_ref PackageHasParam//default, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.8: %.4 = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.9 = import_ref PackageHasParam//default, inst+30, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1405,16 +1415,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.4
+// CHECK:STDOUT:     .Self = imports.%import_ref.5
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6
-// CHECK:STDOUT:   .K = imports.%import_ref.7
-// CHECK:STDOUT:   witness = (imports.%import_ref.8)
+// CHECK:STDOUT:   .Self = imports.%import_ref.7
+// CHECK:STDOUT:   .K = imports.%import_ref.8
+// CHECK:STDOUT:   witness = (imports.%import_ref.9)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(constants.%T: type, constants.%X.2: @AnyParam.%T (%T)) {
@@ -1427,8 +1437,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.2
-// CHECK:STDOUT:     complete_type_witness = constants.%.2
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1437,7 +1447,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc8: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:   %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.1]
 // CHECK:STDOUT:   %PackageGenericInterface.ref: <namespace> = name_ref PackageGenericInterface, imports.%PackageGenericInterface [template = imports.%PackageGenericInterface]
-// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, imports.%import_ref.3 [template = constants.%GenericInterface]
+// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, imports.%import_ref.4 [template = constants.%GenericInterface]
 // CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) [template = constants.%AnyParam.3]
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.3 = var obj
 // CHECK:STDOUT:   %obj: ref %AnyParam.3 = bind_name obj, %obj.var
@@ -1447,8 +1457,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   assign %obj.var, %.loc9_51
 // CHECK:STDOUT:   %obj.ref: ref %AnyParam.3 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.5 [template = constants.%Y.type]
-// CHECK:STDOUT:   %K.ref: %.4 = name_ref K, imports.%import_ref.7 [template = constants.%.5]
+// CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.6 [template = constants.%Y.type]
+// CHECK:STDOUT:   %K.ref: %.4 = name_ref K, imports.%import_ref.8 [template = constants.%.5]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1719,7 +1729,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %Extra8.type: type = facet_type <@Extra8> [template]
 // CHECK:STDOUT:   %Extra7.type: type = facet_type <@Extra7> [template]
 // CHECK:STDOUT:   %Extra6.type: type = facet_type <@Extra6> [template]
@@ -1735,26 +1745,27 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %HasExtraInterfaces: <namespace> = namespace file.%HasExtraInterfaces.import, [template] {
 // CHECK:STDOUT:     .C = %import_ref.1
-// CHECK:STDOUT:     .I = %import_ref.3
+// CHECK:STDOUT:     .I = %import_ref.4
 // CHECK:STDOUT:     import HasExtraInterfaces//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %C.type = import_ref HasExtraInterfaces//default, inst+39, loaded [template = constants.%C.1]
-// CHECK:STDOUT:   %import_ref.2 = import_ref HasExtraInterfaces//default, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref HasExtraInterfaces//default, inst+49, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref HasExtraInterfaces//default, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref HasExtraInterfaces//default, inst+57, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref HasExtraInterfaces//default, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref HasExtraInterfaces//default, inst+31, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref HasExtraInterfaces//default, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref HasExtraInterfaces//default, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref HasExtraInterfaces//default, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref HasExtraInterfaces//default, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref HasExtraInterfaces//default, inst+11, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref HasExtraInterfaces//default, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref HasExtraInterfaces//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref HasExtraInterfaces//default, inst+72, loaded [template = constants.%C.4]
-// CHECK:STDOUT:   %import_ref.17: type = import_ref HasExtraInterfaces//default, inst+74, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.18 = import_ref HasExtraInterfaces//default, inst+80, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref HasExtraInterfaces//default, inst+47, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref HasExtraInterfaces//default, inst+45, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref HasExtraInterfaces//default, inst+49, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref HasExtraInterfaces//default, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref HasExtraInterfaces//default, inst+57, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref HasExtraInterfaces//default, inst+53, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref HasExtraInterfaces//default, inst+31, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref HasExtraInterfaces//default, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref HasExtraInterfaces//default, inst+23, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref HasExtraInterfaces//default, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.13 = import_ref HasExtraInterfaces//default, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref HasExtraInterfaces//default, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref HasExtraInterfaces//default, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref HasExtraInterfaces//default, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.17: type = import_ref HasExtraInterfaces//default, inst+72, loaded [template = constants.%C.4]
+// CHECK:STDOUT:   %import_ref.18: type = import_ref HasExtraInterfaces//default, inst+74, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.19 = import_ref HasExtraInterfaces//default, inst+80, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1777,62 +1788,62 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .F = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra8 {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra7 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.9
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra6 {
+// CHECK:STDOUT: interface @Extra7 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.10
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra5 {
+// CHECK:STDOUT: interface @Extra6 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra4 {
+// CHECK:STDOUT: interface @Extra5 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.12
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra3 {
+// CHECK:STDOUT: interface @Extra4 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.13
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra2 {
+// CHECK:STDOUT: interface @Extra3 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.14
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Extra1 {
+// CHECK:STDOUT: interface @Extra2 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.15
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.16 as imports.%import_ref.17 {
+// CHECK:STDOUT: interface @Extra1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%import_ref.18
+// CHECK:STDOUT:   .Self = imports.%import_ref.16
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: imports.%import_ref.17 as imports.%import_ref.18 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%import_ref.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%T: type) {
@@ -1843,8 +1854,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.2
-// CHECK:STDOUT:     complete_type_witness = constants.%.2
+// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1852,8 +1863,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.3 = name_ref c, %c
 // CHECK:STDOUT:   %HasExtraInterfaces.ref.loc11: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [template = imports.%HasExtraInterfaces]
-// CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%import_ref.3 [template = constants.%I.type]
-// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%import_ref.4 [template = constants.%I.type]
+// CHECK:STDOUT:   %F.ref: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

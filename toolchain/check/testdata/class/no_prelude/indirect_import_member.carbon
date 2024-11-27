@@ -155,8 +155,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -169,15 +170,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .F = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .F = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//c, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//c, inst+10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -197,9 +198,10 @@ var x: () = D.C.F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+9, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//c, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,9 +226,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .F = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .F = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- f.carbon
@@ -255,8 +257,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//a, inst+3, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+3, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -273,9 +276,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .F = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .F = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -283,7 +286,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
@@ -301,9 +304,10 @@ var x: () = D.C.F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+9, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//c, inst+8, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//c, inst+9, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -320,9 +324,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .F = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .F = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -330,7 +334,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
@@ -348,9 +352,10 @@ var x: () = D.C.F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+9, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//c, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//c, inst+8, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//c, inst+9, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -367,9 +372,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .F = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .F = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -377,7 +382,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
@@ -397,10 +402,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//e, inst+3, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//e, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//e, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//e, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//e, inst+10, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//e, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//e, inst+13, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//e, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.7: %F.type = import_ref Main//e, inst+11, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -417,16 +424,16 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .C = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .C = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   .F = imports.%import_ref.7
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -434,8 +441,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%D]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5 [template = constants.%F]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.7 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return
@@ -455,10 +462,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//e, inst+3, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//e, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//e, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//e, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//e, inst+10, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//e, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//e, inst+13, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//e, inst+10, unloaded
+// CHECK:STDOUT:   %import_ref.7: %F.type = import_ref Main//e, inst+11, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -475,16 +484,16 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .C = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .C = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   .F = imports.%import_ref.7
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -492,8 +501,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%D]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5 [template = constants.%F]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.7 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   assign file.%x.var, %F.call
 // CHECK:STDOUT:   return

@@ -73,8 +73,9 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Foo//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Foo//a, inst+10, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Foo//a, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -86,8 +87,8 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .n = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .n = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -98,8 +98,9 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %.6 = import_ref Main//a, inst+17, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+19, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.5: %.6 = import_ref Main//a, inst+17, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -116,9 +117,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .c = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = constants.%.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   .c = imports.%import_ref.5
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -129,7 +130,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref %.1 = struct_access %a.ref.loc7_11, element0
 // CHECK:STDOUT:   %.loc7_12.2: %.1 = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: %.6 = name_ref c, imports.%import_ref.4 [template = imports.%.1]
+// CHECK:STDOUT:   %c.ref: %.6 = name_ref c, imports.%import_ref.5 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_15: ref %.2 = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref %.1 = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: %.1 = bind_value %.loc7_17.1

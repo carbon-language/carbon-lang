@@ -90,7 +90,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Test//def, inst+1, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Test//def, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Test//def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -108,8 +109,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
