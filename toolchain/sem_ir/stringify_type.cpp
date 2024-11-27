@@ -69,6 +69,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     auto PushNameId(NameId name_id) -> void {
       steps.push_back({.kind = Name, .name_id = name_id});
     }
+    auto PushTypeId(TypeId type_id) -> void {
+      PushInstId(sem_ir.types().GetInstId(type_id));
+    }
     auto PushSpecificId(const EntityWithParamsBase& entity,
                         SpecificId specific_id) -> void {
       if (!entity.param_patterns_id.is_valid()) {
@@ -152,15 +155,15 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushString("]");
         step_stack.PushArrayBound(inst.bound_id);
         step_stack.PushString("; ");
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.element_type_id));
+        step_stack.PushTypeId(inst.element_type_id);
         break;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
         out << "<associated ";
         step_stack.PushString(">");
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.interface_type_id));
+        step_stack.PushTypeId(inst.interface_type_id);
         step_stack.PushString(" in ");
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.entity_type_id));
+        step_stack.PushTypeId(inst.entity_type_id);
         break;
       }
       case BindAlias::Kind:
@@ -230,7 +233,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(FacetValue inst): {
         // No need to output the witness.
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.type_id));
+        step_stack.PushTypeId(inst.type_id);
         step_stack.PushString(" as ");
         step_stack.PushInstId(inst.type_inst_id);
         break;
@@ -283,7 +286,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(PointerType inst): {
         step_stack.PushString("*");
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.pointee_id));
+        step_stack.PushTypeId(inst.pointee_id);
         break;
       }
       case CARBON_KIND(StructType inst): {
@@ -296,7 +299,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushString("}");
         for (auto index : llvm::reverse(llvm::seq(fields.size()))) {
           const auto& field = fields[index];
-          step_stack.PushInstId(sem_ir.types().GetInstId(field.type_id));
+          step_stack.PushTypeId(field.type_id);
           step_stack.PushString(": ");
           step_stack.PushNameId(field.name_id);
           step_stack.PushString(".");
@@ -320,7 +323,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           step_stack.PushString(",");
         }
         for (auto i : llvm::reverse(llvm::seq(refs.size()))) {
-          step_stack.PushInstId(sem_ir.types().GetInstId(refs[i]));
+          step_stack.PushTypeId(refs[i]);
           if (i > 0) {
             step_stack.PushString(", ");
           }
@@ -330,14 +333,14 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(UnboundElementType inst): {
         out << "<unbound element of class ";
         step_stack.PushString(">");
-        step_stack.PushInstId(sem_ir.types().GetInstId(inst.class_type_id));
+        step_stack.PushTypeId(inst.class_type_id);
         break;
       }
       case CARBON_KIND(WhereExpr inst): {
         out << "<where restriction on ";
         step_stack.PushString(">");
         TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
-        step_stack.PushInstId(sem_ir.types().GetInstId(type_id));
+        step_stack.PushTypeId(type_id);
         // TODO: Also output restrictions from the inst block
         // inst.requirements_id.
         break;
