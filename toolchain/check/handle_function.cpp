@@ -212,6 +212,11 @@ static auto BuildFunctionDecl(Context& context,
       parent_scope_inst) {
     if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
       auto& class_info = context.classes().Get(class_decl->class_id);
+      if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
+          !class_info.base_id.is_valid()) {
+        CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
+        context.emitter().Build(node_id, ImplWithoutBase).Emit();
+      }
       // TODO: If this is an `impl` function, check there's a matching base
       // function that's impl or virtual.
       class_info.is_dynamic = true;

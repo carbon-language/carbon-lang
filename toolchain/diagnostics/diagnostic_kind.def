@@ -225,6 +225,7 @@ CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
+CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
 
 // Deduction.
 CARBON_DIAGNOSTIC_KIND(DeductionIncomplete)
