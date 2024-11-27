@@ -117,22 +117,22 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
   while (!step_stack.empty()) {
     auto step = step_stack.Pop();
 
-    if (step.kind == StepStack::FixedString) {
-      out << step.fixed_string;
-      continue;
-    }
-    if (step.kind == StepStack::ArrayBound) {
-      out << sem_ir.GetArrayBoundValue(step.bound_id);
-      continue;
-    }
-    if (step.kind == StepStack::Name) {
-      out << sem_ir.names().GetFormatted(step.name_id);
-      continue;
-    }
-    CARBON_CHECK(step.kind == StepStack::Inst);
-    if (!step.inst_id.is_valid()) {
-      out << "<invalid type>";
-      continue;
+    switch (step.kind) {
+      case StepStack::FixedString:
+        out << step.fixed_string;
+        continue;
+      case StepStack::ArrayBound:
+        out << sem_ir.GetArrayBoundValue(step.bound_id);
+        continue;
+      case StepStack::Name:
+        out << sem_ir.names().GetFormatted(step.name_id);
+        continue;
+      case StepStack::Inst:
+        if (!step.inst_id.is_valid()) {
+          out << "<invalid type>";
+          continue;
+        }
+        // Fall through to the rest of the function.
     }
 
     auto untyped_inst = sem_ir.insts().Get(step.inst_id);
