@@ -311,15 +311,15 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             sem_ir.insts().GetAs<BindSymbolicName>(witness.facet_value_inst_id);
         auto name_id =
             sem_ir.entity_names().Get(sym_name.entity_name_id).name_id;
+        // TODO: This prints `.element0 in I` instead of `.(I.T)`.
+        out << "<." << inst.index << " in ";
+        step_stack.PushString(">");
         // Suppress implied `.Self`.
-        if (name_id == SemIR::NameId::PeriodSelf) {
-          // TODO: This prints `.element0` instead of `.(I.T)`.
-          out << "<." << inst.index << ">";
-        } else {
-          out << "<" << inst.index << " of ";
-          step_stack.PushString(">");
+        if (name_id != SemIR::NameId::PeriodSelf) {
           step_stack.PushInstId(witness.facet_value_inst_id);
+          step_stack.PushString(" of ");
         }
+        step_stack.PushTypeId(sym_name.type_id);
         break;
       }
       case CARBON_KIND(NameRef inst): {
