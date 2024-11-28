@@ -208,7 +208,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -225,8 +226,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -303,7 +304,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, inst+5, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -320,8 +322,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

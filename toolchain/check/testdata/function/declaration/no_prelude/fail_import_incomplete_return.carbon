@@ -204,7 +204,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//incomplete_return, inst+27, loaded [template = constants.%ReturnDUnused]
 // CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//incomplete_return, inst+35, loaded [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//incomplete_return, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//incomplete_return, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//incomplete_return, inst+48, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//incomplete_return, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -226,8 +227,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.9
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {

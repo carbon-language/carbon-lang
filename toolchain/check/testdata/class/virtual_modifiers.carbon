@@ -205,8 +205,9 @@ class Derived {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -237,9 +238,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .H = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .H = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();
@@ -266,8 +267,9 @@ class Derived {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -283,9 +285,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .H = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .H = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

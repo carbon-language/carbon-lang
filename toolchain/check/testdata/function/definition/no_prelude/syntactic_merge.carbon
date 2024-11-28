@@ -454,7 +454,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -486,8 +487,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
@@ -788,7 +789,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//alias_two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -813,8 +815,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {

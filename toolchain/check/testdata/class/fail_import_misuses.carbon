@@ -97,7 +97,8 @@ var a: Incomplete;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -117,8 +118,8 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {

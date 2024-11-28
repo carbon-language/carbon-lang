@@ -1501,11 +1501,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   LoadLocalPatternConstantIds(resolver, import_class.param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_class.generic_id);
   auto self_const_id = GetLocalConstantId(resolver, import_class.self_type_id);
-  auto complete_type_witness_id =
+  auto complete_type_witness_const_id =
       import_class.complete_type_witness_id.is_valid()
-          ? GetLocalConstantInstId(resolver,
-                                   import_class.complete_type_witness_id)
-          : SemIR::InstId::Invalid;
+          ? GetLocalConstantId(resolver, import_class.complete_type_witness_id)
+          : SemIR::ConstantId::Invalid;
   auto base_id = import_class.base_id.is_valid()
                      ? GetLocalConstantInstId(resolver, import_class.base_id)
                      : SemIR::InstId::Invalid;
@@ -1529,6 +1528,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_context().GetTypeIdForTypeConstant(self_const_id);
 
   if (import_class.is_defined()) {
+    auto complete_type_witness_id = AddLoadedImportRef(
+        resolver,
+        resolver.local_context().GetBuiltinType(
+            SemIR::BuiltinInstKind::WitnessType),
+        import_class.complete_type_witness_id, complete_type_witness_const_id);
     AddClassDefinition(resolver, import_class, new_class,
                        complete_type_witness_id, base_id, adapt_id);
   }

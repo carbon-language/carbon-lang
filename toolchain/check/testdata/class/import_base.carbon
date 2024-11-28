@@ -173,18 +173,20 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+47, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.14
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.6: %.44 = import_ref Main//a, inst+38, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//a, inst+49, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+45, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.7: %.44 = import_ref Main//a, inst+38, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+43, unloaded
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, inst+54, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+52, unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, inst+49, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -201,20 +203,20 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.9
-// CHECK:STDOUT:   .base = imports.%import_ref.10
-// CHECK:STDOUT:   extend imports.%import_ref.11
-// CHECK:STDOUT:   complete_type_witness = constants.%.6
+// CHECK:STDOUT:   .Self = imports.%import_ref.11
+// CHECK:STDOUT:   .base = imports.%import_ref.12
+// CHECK:STDOUT:   extend imports.%import_ref.13
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .F = imports.%import_ref.4
-// CHECK:STDOUT:   .Unused = imports.%import_ref.5
-// CHECK:STDOUT:   .x = imports.%import_ref.6
-// CHECK:STDOUT:   .unused = imports.%import_ref.7
-// CHECK:STDOUT:   complete_type_witness = constants.%.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   .F = imports.%import_ref.5
+// CHECK:STDOUT:   .Unused = imports.%import_ref.6
+// CHECK:STDOUT:   .x = imports.%import_ref.7
+// CHECK:STDOUT:   .unused = imports.%import_ref.8
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -247,7 +249,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %a.var, %.loc7_49
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %.44 = name_ref x, imports.%import_ref.6 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %.44 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0
@@ -259,7 +261,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc8_7.4: init %i32 = converted %.loc8_9, %int.convert_checked.loc8 [template = constants.%.48]
 // CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_7.4
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5 [template = constants.%F]
 // CHECK:STDOUT:   %.loc9_4: <bound method> = bound_method %a.ref.loc9, %F.ref
 // CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
 // CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1

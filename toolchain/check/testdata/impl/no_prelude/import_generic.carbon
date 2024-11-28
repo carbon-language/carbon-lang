@@ -204,12 +204,13 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -251,7 +252,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6 {
+// CHECK:STDOUT:   impl: imports.%import_ref.6 as imports.%import_ref.7 {
 // CHECK:STDOUT:     %.loc4: <witness> = interface_witness () [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -267,16 +268,16 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
+// CHECK:STDOUT:   impl: imports.%import_ref.8 as imports.%import_ref.9 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.9
+// CHECK:STDOUT:     witness = imports.%import_ref.10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -341,12 +342,13 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -387,7 +389,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.5 as imports.%import_ref.6;
+// CHECK:STDOUT:   impl: imports.%import_ref.6 as imports.%import_ref.7;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl.2(constants.%T: type) {
@@ -398,16 +400,16 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.7 as imports.%import_ref.8 {
+// CHECK:STDOUT:   impl: imports.%import_ref.8 as imports.%import_ref.9 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.9
+// CHECK:STDOUT:     witness = imports.%import_ref.10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = constants.%.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
