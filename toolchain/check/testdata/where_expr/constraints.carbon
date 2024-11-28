@@ -57,10 +57,10 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `N where .(N.<TODO: <import ref unloaded>>) = {}` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `N where .(N.<TODO: <import ref unloaded invalid entity name>>) = {}` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Equal(bool);
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(N where .(N.<TODO: <import ref unloaded>>) = {})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(N where .(N.<TODO: <import ref unloaded invalid entity name>>) = {})` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Equal(bool);
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-10]]:1: in import [InImport]
@@ -70,10 +70,10 @@ fn Calls() {
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `A where .(A.<TODO: <import ref unloaded>>) = () and .(A.<TODO: <import ref unloaded>>) = bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `A where .(A.<TODO: <import ref unloaded invalid entity name>>) = () and .(A.<TODO: <import ref unloaded invalid entity name>>) = bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   NestedRewrite(i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(A where .(A.<TODO: <import ref unloaded>>) = () and .(A.<TODO: <import ref unloaded>>) = bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(A where .(A.<TODO: <import ref unloaded invalid entity name>>) = () and .(A.<TODO: <import ref unloaded invalid entity name>>) = bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   NestedRewrite(i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-23]]:1: in import [InImport]

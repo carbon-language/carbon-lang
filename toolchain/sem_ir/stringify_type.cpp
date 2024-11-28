@@ -291,6 +291,18 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
+      case CARBON_KIND(ImportRefUnloaded inst): {
+        // Shouldn't get here. But if we do, don't crash trying to access the
+        // constant value of this instruction.
+        if (inst.entity_name_id.is_valid()) {
+          auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
+          out << "<import ref unloaded: "
+              << sem_ir.names().GetFormatted(name_id) << ">";
+        } else {
+          out << "<import ref unloaded invalid entity name>";
+        }
+        break;
+      }
       case CARBON_KIND(IntType inst): {
         if (auto width_value =
                 sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
@@ -412,12 +424,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.class_type_id);
         break;
       }
-      case ImportRefUnloaded::Kind: {
-        // Shouldn't get here. But if we do, don't crash. If we didn't have this
-        // case, it would try accessing the constant value of this instruction.
-        out << "<import ref unloaded>";
-        break;
-      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -488,9 +494,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case WhereExpr::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
-        CARBON_CHECK(sem_ir.constant_values().Get(step.inst_id).is_valid(),
-                     "inst_id: {0} kind: {1}", step.inst_id,
-                     untyped_inst.kind());
         auto const_inst_id =
             sem_ir.constant_values().GetConstantInstId(step.inst_id);
         if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {
