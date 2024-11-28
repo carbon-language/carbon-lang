@@ -132,7 +132,7 @@ cd carbon-lang
 pre-commit install
 
 # Run tests.
-bazel test //...:all
+bazelisk test //...:all
 ```
 
 > NOTE: On macOS, you should end up adding rc file lines similar to:
