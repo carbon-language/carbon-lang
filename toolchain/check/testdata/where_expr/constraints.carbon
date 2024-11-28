@@ -53,20 +53,34 @@ library "[[@TEST_NAME]]";
 // TODO: Should import successfully and then get errors when calling the
 // imported functions.
 
-// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: equal_constraint.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: nested_rewrites.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:1: in import [InImport]
-// CHECK:STDERR: nested_rewrites.carbon: error: semantics TODO: `TryResolveInst on FacetAccessWitness` [SemanticsTodo]
-// CHECK:STDERR:
 import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `N where .(N.<TODO: <import ref unloaded>>) = {}` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   Equal(bool);
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(N where .(N.<TODO: <import ref unloaded>>) = {})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Equal(bool);
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-10]]:1: in import [InImport]
+  // CHECK:STDERR: equal_constraint.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn Equal(T:! N where .P = {});
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Equal(bool);
+
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `A where .(A.<TODO: <import ref unloaded>>) = () and .(A.<TODO: <import ref unloaded>>) = bool` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   NestedRewrite(i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(A where .(A.<TODO: <import ref unloaded>>) = () and .(A.<TODO: <import ref unloaded>>) = bool)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   NestedRewrite(i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-23]]:1: in import [InImport]
+  // CHECK:STDERR: nested_rewrites.carbon:9:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn NestedRewrite(D:! (A where .B = bool) where .C = ());
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   NestedRewrite(i32);
 }
 
@@ -576,21 +590,37 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Calls.type: type = fn_type @Calls [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Calls: %Calls.type = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type: type = fn_type @Equal [template]
 // CHECK:STDOUT:   %Equal: %Equal.type = struct_value () [template]
-// CHECK:STDOUT:   %T: <error> = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %T.patt: <error> = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %N.type: type = facet_type <@N> [template]
+// CHECK:STDOUT:   %.Self.1: %N.type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.2: <witness> = facet_access_witness %.Self.1 [symbolic]
+// CHECK:STDOUT:   %.3: type = interface_witness_access %.2, element0 [symbolic]
+// CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %.3 = %.1> [template]
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %NestedRewrite.type: type = fn_type @NestedRewrite [template]
 // CHECK:STDOUT:   %NestedRewrite: %NestedRewrite.type = struct_value () [template]
-// CHECK:STDOUT:   %D: <error> = bind_symbolic_name D, 0 [symbolic]
-// CHECK:STDOUT:   %D.patt: <error> = symbolic_binding_pattern D, 0 [symbolic]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
+// CHECK:STDOUT:   %.Self.2: %A.type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.27: <witness> = facet_access_witness %.Self.2 [symbolic]
+// CHECK:STDOUT:   %.28: type = interface_witness_access %.27, element0 [symbolic]
+// CHECK:STDOUT:   %A_where.type.1: type = facet_type <@A where %.28 = bool> [template]
+// CHECK:STDOUT:   %.Self.3: %A_where.type.1 = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.29: <witness> = facet_access_witness %.Self.3 [symbolic]
+// CHECK:STDOUT:   %.30: type = interface_witness_access %.29, element1 [symbolic]
+// CHECK:STDOUT:   %A_where.type.2: type = facet_type <@A where %.30 = %empty_tuple.type and %.28 = bool> [template]
+// CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic]
+// CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic]
+// CHECK:STDOUT:   %.31: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.2 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.31 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -600,18 +630,19 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %import_ref.4: %NestedRewrite.type = import_ref Main//nested_rewrites, inst+56, loaded [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref.8
-// CHECK:STDOUT:     .Int = %import_ref.14
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.9
+// CHECK:STDOUT:     .Int = %import_ref.50
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//equal_constraint, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//equal_constraint, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//equal_constraint, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//nested_rewrites, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//nested_rewrites, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//nested_rewrites, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//nested_rewrites, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//nested_rewrites, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.45 = import_ref Main//nested_rewrites, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.46 = import_ref Main//nested_rewrites, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.47 = import_ref Main//nested_rewrites, inst+12, unloaded
+// CHECK:STDOUT:   %import_ref.48 = import_ref Main//nested_rewrites, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.49 = import_ref Main//nested_rewrites, inst+11, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -637,34 +668,36 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.9
-// CHECK:STDOUT:   .B = imports.%import_ref.10
-// CHECK:STDOUT:   .C = imports.%import_ref.11
-// CHECK:STDOUT:   witness = (imports.%import_ref.12, imports.%import_ref.13)
+// CHECK:STDOUT:   .Self = imports.%import_ref.45
+// CHECK:STDOUT:   .B = imports.%import_ref.46
+// CHECK:STDOUT:   .C = imports.%import_ref.47
+// CHECK:STDOUT:   witness = (imports.%import_ref.48, imports.%import_ref.49)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Calls() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%import_ref.2 [template = constants.%Equal]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %.loc22: %N_where.type = converted %bool.make_type, <error> [template = <error>]
 // CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
-// CHECK:STDOUT:   %.loc21: Core.IntLiteral = int_value 32 [template = constants.%.2]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc21) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc35_17: Core.IntLiteral = int_value 32 [template = constants.%.31]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc35_17) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc35_16: %A_where.type.2 = converted %int.make_type_signed, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(constants.%T: <error>) {
-// CHECK:STDOUT:   %T: <error> = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %T.patt: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
+// CHECK:STDOUT: generic fn @Equal(constants.%T: %N_where.type) {
+// CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: <error>);
+// CHECK:STDOUT:   fn(%T.param_patt: %N_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: <error>) {
-// CHECK:STDOUT:   %D: <error> = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
-// CHECK:STDOUT:   %D.patt: <error> = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
+// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: %A_where.type.2) {
+// CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
+// CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%D.param_patt: <error>);
+// CHECK:STDOUT:   fn(%D.param_patt: %A_where.type.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {

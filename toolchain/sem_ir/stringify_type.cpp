@@ -412,6 +412,12 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.class_type_id);
         break;
       }
+      case ImportRefUnloaded::Kind: {
+        // Shouldn't get here. But if we do, don't crash. If we didn't have this
+        // case, it would try accessing the constant value of this instruction.
+        out << "<import ref unloaded>";
+        break;
+      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -444,7 +450,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImplDecl::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
-      case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
