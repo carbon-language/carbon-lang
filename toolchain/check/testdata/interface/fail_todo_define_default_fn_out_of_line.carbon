@@ -303,6 +303,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

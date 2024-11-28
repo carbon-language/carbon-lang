@@ -93,6 +93,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -106,6 +107,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .b = %.loc16_8
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBInA(%a.param_patt: %A) -> %i32 {

@@ -179,11 +179,12 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT:   .c = %.loc14_8
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc18: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.6 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %.loc20_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%.loc20_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.2: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
@@ -202,6 +203,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT:   .e = %.loc21_8
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerived(%d.param_patt: %Derived) -> %i32 {

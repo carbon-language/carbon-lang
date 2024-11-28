@@ -98,48 +98,53 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc18: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc30: %.7 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc30: %.7 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc31: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT:   .base = %.loc30
+// CHECK:STDOUT:   complete_type_witness = %.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc41: %.8 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc41: %.8 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc42: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT:   .base = %.loc41
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc51: %.9 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc51: %.9 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc52: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C4
 // CHECK:STDOUT:   .base = %.loc51
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -93,6 +93,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {

@@ -487,6 +487,7 @@ var n: {} = i32;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Core
 // CHECK:STDOUT:   .Int = %Int.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(%T.loc6_10.2: type, %N.loc6_20.2: @Int.%T.loc6_10.1 (%T)) {

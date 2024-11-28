@@ -101,6 +101,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Empty
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
@@ -114,6 +115,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Field
 // CHECK:STDOUT:   .x = %.loc8_8
+// CHECK:STDOUT:   complete_type_witness = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
@@ -141,6 +143,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%ForwardDeclared
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -157,10 +160,13 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %struct.1: %Empty = struct_value () [template]
 // CHECK:STDOUT:   %Field: type = class_type @Field [template]
 // CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.4 [template]
+// CHECK:STDOUT:   %.5: type = struct_type {.x: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
 // CHECK:STDOUT:   %.8: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %.9: type = struct_type {.x: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -193,19 +199,23 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+31, loaded [template = constants.%ForwardDeclared.1]
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+54, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.8
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.10
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.37 = import_ref Main//a, inst+27, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.44 = import_ref Main//a, inst+32, unloaded
-// CHECK:STDOUT:   %import_ref.45: %F.type = import_ref Main//a, inst+39, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.46: %G.type = import_ref Main//a, inst+50, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//a, inst+6, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//a, inst+29, loaded [template = constants.%.6]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.9: %.37 = import_ref Main//a, inst+27, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.46: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst+32, unloaded
-// CHECK:STDOUT:   %import_ref.48 = import_ref Main//a, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.49 = import_ref Main//a, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.48: %F.type = import_ref Main//a, inst+39, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.49: %G.type = import_ref Main//a, inst+50, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.50: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.51 = import_ref Main//a, inst+32, unloaded
+// CHECK:STDOUT:   %import_ref.52 = import_ref Main//a, inst+39, unloaded
+// CHECK:STDOUT:   %import_ref.53 = import_ref Main//a, inst+50, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,27 +234,31 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6
-// CHECK:STDOUT:   .x = imports.%import_ref.7
+// CHECK:STDOUT:   .Self = imports.%import_ref.8
+// CHECK:STDOUT:   .x = imports.%import_ref.9
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.1 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.44
-// CHECK:STDOUT:   .F = imports.%import_ref.45
-// CHECK:STDOUT:   .G = imports.%import_ref.46
+// CHECK:STDOUT:   .Self = imports.%import_ref.47
+// CHECK:STDOUT:   .F = imports.%import_ref.48
+// CHECK:STDOUT:   .G = imports.%import_ref.49
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.2 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.47
-// CHECK:STDOUT:   .F = imports.%import_ref.48
-// CHECK:STDOUT:   .G = imports.%import_ref.49
+// CHECK:STDOUT:   .Self = imports.%import_ref.51
+// CHECK:STDOUT:   .F = imports.%import_ref.52
+// CHECK:STDOUT:   .G = imports.%import_ref.53
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -274,7 +288,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_26: init %Field = converted %.loc9_25.1, %.loc9_25.8 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %b.var, %.loc9_26
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
-// CHECK:STDOUT:   %x.ref: %.37 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %.37 = name_ref x, imports.%import_ref.9 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc10_9: Core.IntLiteral = int_value 2 [template = constants.%.38]
 // CHECK:STDOUT:   %.loc10_7.1: %Convert.type.2 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.14]
@@ -291,12 +305,12 @@ fn Run() {
 // CHECK:STDOUT:   %.loc12_30: init %ForwardDeclared.1 = converted %.loc12_29.1, %.loc12_29.2 [template = constants.%struct.3]
 // CHECK:STDOUT:   assign %c.var, %.loc12_30
 // CHECK:STDOUT:   %c.ref.loc13: ref %ForwardDeclared.1 = name_ref c, %c
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.45 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.48 [template = constants.%F]
 // CHECK:STDOUT:   %.loc13_4: <bound method> = bound_method %c.ref.loc13, %F.ref
 // CHECK:STDOUT:   %.loc13_3: %ForwardDeclared.1 = bind_value %c.ref.loc13
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc13_4(%.loc13_3)
 // CHECK:STDOUT:   %c.ref.loc14: ref %ForwardDeclared.1 = name_ref c, %c
-// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.46 [template = constants.%G]
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.49 [template = constants.%G]
 // CHECK:STDOUT:   %.loc14_4: <bound method> = bound_method %c.ref.loc14, %G.ref
 // CHECK:STDOUT:   %.loc14_3: %.42 = addr_of %c.ref.loc14
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %.loc14_4(%.loc14_3)
@@ -316,5 +330,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst+399: %.42]();
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst+403: %.42]();
 // CHECK:STDOUT:

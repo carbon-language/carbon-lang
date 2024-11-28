@@ -73,6 +73,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -98,7 +99,8 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Other//a, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Other//a, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Other//a, inst+5, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -130,11 +132,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %A {
@@ -153,6 +157,8 @@ fn Run() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -166,15 +172,16 @@ fn Run() {
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//b, inst+22, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Other//b, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Other//b, inst+4, loaded
-// CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.3, [template] {
-// CHECK:STDOUT:     .A = %import_ref.4
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//b, inst+23, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//b, inst+16, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Other//b, inst+17, unloaded
+// CHECK:STDOUT:   %import_ref.4: <namespace> = import_ref Other//b, inst+4, loaded
+// CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.4, [template] {
+// CHECK:STDOUT:     .A = %import_ref.5
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Other//a, inst+4, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Other//a, inst+4, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,7 +197,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -202,7 +210,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_10.2: ref %A = temporary %.loc7_10.1, %F.call.loc7
 // CHECK:STDOUT:   %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.4 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.5 [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %A = name_ref a, %a

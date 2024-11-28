@@ -59,18 +59,23 @@ export C.n;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .n = %.loc5_8
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.n: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Foo//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Foo//a, inst+10, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Foo//a, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -82,7 +87,8 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .n = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .n = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

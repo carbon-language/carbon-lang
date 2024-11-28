@@ -131,6 +131,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .a = %.loc12_8.1
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

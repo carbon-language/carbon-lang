@@ -118,6 +118,7 @@ base class BaseClass {
 // CHECK:STDOUT:   .Self = constants.%FinalClass
 // CHECK:STDOUT:   .Abstract = %Abstract.decl
 // CHECK:STDOUT:   .Virtual = %Virtual.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractClass {
@@ -143,6 +144,7 @@ base class BaseClass {
 // CHECK:STDOUT:   .Self = constants.%AbstractClass
 // CHECK:STDOUT:   .Default = %Default.decl
 // CHECK:STDOUT:   .Final = %Final.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
@@ -159,6 +161,7 @@ base class BaseClass {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%BaseClass
 // CHECK:STDOUT:   .Abstract = %Abstract.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Abstract.1[%self.param_patt: %FinalClass]();

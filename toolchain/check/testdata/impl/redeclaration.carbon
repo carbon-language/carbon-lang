@@ -95,5 +95,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

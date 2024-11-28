@@ -106,6 +106,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .NoSelf = %NoSelf.decl
 // CHECK:STDOUT:   .WithSelf = %WithSelf.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();

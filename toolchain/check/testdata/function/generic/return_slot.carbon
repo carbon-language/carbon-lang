@@ -109,6 +109,7 @@ fn G() {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Wrap.2
 // CHECK:STDOUT:     .Make = %Make.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,6 +126,7 @@ fn G() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .arr = %.loc15_18
+// CHECK:STDOUT:   complete_type_witness = %.loc15_32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make(@Wrap.%T.loc11_12.1: type) {

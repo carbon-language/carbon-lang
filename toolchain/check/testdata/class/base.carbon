@@ -147,11 +147,12 @@ class Derived {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .b = %.loc4_8
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc8: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.6 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %.loc10_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -164,6 +165,7 @@ class Derived {
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
@@ -257,6 +259,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   complete_type_witness = %.loc4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -271,5 +274,6 @@ class Derived {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .d = %.loc7_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

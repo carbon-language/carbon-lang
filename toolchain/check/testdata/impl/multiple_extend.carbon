@@ -274,6 +274,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   extend @impl.1.%HasF.ref
 // CHECK:STDOUT:   extend @impl.2.%HasG.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %HasF.type) {
@@ -439,6 +440,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   extend @impl.1.%HasA1.ref
 // CHECK:STDOUT:   extend @impl.2.%HasA2.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(@HasA1.%Self: %HasA1.type) {
@@ -561,11 +563,12 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .J = %J.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc13: %.6 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.6 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [template = constants.%HasI.type]
@@ -577,6 +580,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT:   extend @impl.%HasI.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.1(@HasI.%Self: %HasI.type) {
@@ -699,11 +703,12 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.6 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [template = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [template = constants.%HasK.type]
@@ -715,6 +720,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT:   extend @impl.%HasK.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.1() {
@@ -862,11 +868,12 @@ fn P(o: O) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NBase
 // CHECK:STDOUT:   .N = %N.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
 // CHECK:STDOUT:   %NBase.ref: type = name_ref NBase, file.%NBase.decl [template = constants.%NBase]
-// CHECK:STDOUT:   %.loc17: %.8 = base_decl %NBase, element0 [template]
+// CHECK:STDOUT:   %.loc17: %.8 = base_decl %NBase.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [template = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [template = constants.%HasN1.type]
@@ -885,6 +892,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   extend %NBase.ref
 // CHECK:STDOUT:   extend @impl.1.%HasN1.ref
 // CHECK:STDOUT:   extend @impl.2.%HasN2.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @N.1() {

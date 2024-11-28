@@ -129,6 +129,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     complete_type_witness = %.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -186,6 +187,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -195,7 +197,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.7 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.2) [symbolic]
@@ -210,13 +212,14 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//import_generic, inst+7, loaded [template = constants.%C.1]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//import_generic, inst+17, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref Main//import_generic, inst+25, loaded [template = constants.%.5]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//import_generic, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.2)]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.%.1 (constants.%.6)]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, inst+15, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+13, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+19, unloaded
+// CHECK:STDOUT:   %import_ref.6: %.4 = import_ref Main//import_generic, inst+25, loaded [template = constants.%.5]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.2)]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.%.1 (constants.%.6)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -239,7 +242,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.ref: ref %C.3 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %.4 = name_ref F, imports.%import_ref.5 [template = constants.%.5]
+// CHECK:STDOUT:     %F.ref: %.4 = name_ref F, imports.%import_ref.6 [template = constants.%.5]
 // CHECK:STDOUT:     %.loc15_12.1: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.3]
 // CHECK:STDOUT:     %.loc15_12.2: <specific function> = specific_function %.loc15_12.1, @F.2(constants.%.1) [template = constants.%.8]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %.loc15_12.2()
@@ -253,9 +256,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   witness = (imports.%import_ref.6)
+// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .F = imports.%import_ref.6
+// CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @impl(constants.%T: type) {
@@ -268,9 +271,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
 // CHECK:STDOUT:   %.1: <witness> = interface_witness (%F) [symbolic = %.1 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: imports.%import_ref.8 as imports.%import_ref.9 {
+// CHECK:STDOUT:   impl: imports.%import_ref.9 as imports.%import_ref.10 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = imports.%import_ref.10
+// CHECK:STDOUT:     witness = imports.%import_ref.11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,7 +285,8 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.3
+// CHECK:STDOUT:     .Self = imports.%import_ref.4
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

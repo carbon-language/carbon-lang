@@ -53,6 +53,7 @@ class Class {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl.loc12
+// CHECK:STDOUT:   complete_type_witness = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

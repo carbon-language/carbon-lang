@@ -108,6 +108,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Make = %Make.decl
 // CHECK:STDOUT:   .p = %.loc18_8
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {

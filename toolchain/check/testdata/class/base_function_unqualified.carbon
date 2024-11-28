@@ -68,11 +68,12 @@ fn Derived.H() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc16: %.4 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc16: %.4 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.5 [template = constants.%.6]
@@ -83,6 +84,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

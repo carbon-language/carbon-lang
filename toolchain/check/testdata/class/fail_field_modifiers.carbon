@@ -120,5 +120,6 @@ class Class {
 // CHECK:STDOUT:   .k = %.loc23_14
 // CHECK:STDOUT:   .l = %l
 // CHECK:STDOUT:   .m = %m
+// CHECK:STDOUT:   complete_type_witness = %.loc35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

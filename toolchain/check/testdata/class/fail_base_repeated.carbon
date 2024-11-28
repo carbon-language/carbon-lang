@@ -77,6 +77,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
@@ -84,11 +85,12 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
+// CHECK:STDOUT:   complete_type_witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc15: %.4 = base_decl %B1, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.4 = base_decl %B1.ref, element0 [template]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
@@ -96,11 +98,12 @@ class D {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   extend %B1.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc28: %.7 = base_decl %B1, element0 [template]
+// CHECK:STDOUT:   %.loc28: %.7 = base_decl %B1.ref.loc28, element0 [template]
 // CHECK:STDOUT:   %B1.ref.loc35: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %.loc36: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
@@ -108,5 +111,6 @@ class D {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .base = %.loc28
 // CHECK:STDOUT:   extend %B1.ref.loc28
+// CHECK:STDOUT:   complete_type_witness = %.loc36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

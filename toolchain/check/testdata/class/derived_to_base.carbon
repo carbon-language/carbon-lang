@@ -206,11 +206,12 @@ fn ConvertInit() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %.6 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc16: %.6 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %.loc17_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc17_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -223,11 +224,12 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .base = %.loc16
 // CHECK:STDOUT:   .b = %.loc17_8
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21: %.13 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc21: %.13 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc22_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc22_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc22_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -240,6 +242,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   .base = %.loc21
 // CHECK:STDOUT:   .c = %.loc22_8
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %.17) -> %.18 {

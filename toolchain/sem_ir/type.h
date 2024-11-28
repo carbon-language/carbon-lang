@@ -16,8 +16,13 @@ namespace Carbon::SemIR {
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {
  public:
-  explicit TypeStore(InstStore* insts, ConstantValueStore* constants)
-      : insts_(insts), constants_(constants) {}
+  // Used to return information about an integer type in `GetIntTypeInfo`.
+  struct IntTypeInfo {
+    bool is_signed;
+    IntId bit_width;
+  };
+
+  explicit TypeStore(File* file) : file_(file) {}
 
   // Returns the ID of the constant used to define the specified type.
   auto GetConstantId(TypeId type_id) const -> ConstantId {
@@ -29,14 +34,10 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
   // Returns the ID of the instruction used to define the specified type.
-  auto GetInstId(TypeId type_id) const -> InstId {
-    return constants_->GetInstId(GetConstantId(type_id));
-  }
+  auto GetInstId(TypeId type_id) const -> InstId;
 
   // Returns the instruction used to define the specified type.
-  auto GetAsInst(TypeId type_id) const -> Inst {
-    return insts_->Get(GetInstId(type_id));
-  }
+  auto GetAsInst(TypeId type_id) const -> Inst;
 
   // Returns whether the specified kind of instruction was used to define the
   // type.
@@ -49,8 +50,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // to be a particular kind of instruction.
   template <typename InstT>
   auto GetAs(TypeId type_id) const -> InstT {
-    auto inst_id = constants_->GetInstId(GetConstantId(type_id));
-    return insts_->GetAs<InstT>(inst_id);
+    return GetAsInst(type_id).As<InstT>();
   }
 
   // Returns the instruction used to define the specified type, if it is of a
@@ -87,21 +87,31 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     CARBON_CHECK(IsComplete(type_id));
   }
 
+  // Get the object representation associated with a type. For a non-class type,
+  // this is the type itself. An invalid TypeId is returned if the object
+  // representation cannot be determined because the type is not complete.
+  auto GetObjectRepr(TypeId type_id) const -> TypeId;
+
   // Determines whether the given type is known to be complete. This does not
   // determine whether the type could be completed, only whether it has been.
   auto IsComplete(TypeId type_id) const -> bool {
     return complete_type_info_.Contains(type_id);
   }
 
-  // Determines whether the given type is a signed integer type.
-  auto IsSignedInt(TypeId int_type_id) const -> bool {
-    auto inst_id = GetInstId(int_type_id);
-    if (inst_id == InstId::BuiltinIntLiteralType) {
-      return true;
-    }
-    auto int_type = insts_->TryGetAs<IntType>(inst_id);
-    return int_type && int_type->int_kind.is_signed();
-  }
+  // Removes any top-level `const` qualifiers from a type.
+  auto GetUnqualifiedType(TypeId type_id) const -> TypeId;
+
+  // Determines whether the given type is a signed integer type. This includes
+  // the case where the type is `Core.IntLiteral` or a class type whose object
+  // representation is a signed integer type.
+  auto IsSignedInt(TypeId int_type_id) const -> bool;
+
+  // Returns integer type information from a type ID that is known to represent
+  // an integer type. Abstracts away the difference between an `IntType`
+  // instruction defined type, a builtin instruction defined type, and a class
+  // adapting such a type. Uses IntId::Invalid for types that have a
+  // non-constant width and for IntLiteral.
+  auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
 
   // Returns a list of types that were completed in this file, in the order in
   // which they were completed. Earlier types in this list cannot contain
@@ -128,8 +138,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   }
 
  private:
-  InstStore* insts_;
-  ConstantValueStore* constants_;
+  File* file_;
   Map<TypeId, CompleteTypeInfo> complete_type_info_;
   llvm::SmallVector<TypeId> complete_types_;
 };

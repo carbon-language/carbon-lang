@@ -98,6 +98,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .I = %I.decl
 // CHECK:STDOUT:   .G = file.%G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
@@ -111,6 +112,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .I = %I.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

@@ -81,6 +81,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -90,11 +91,12 @@ fn D.C.F() {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc20: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc20: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -102,6 +104,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   .base = %.loc20
 // CHECK:STDOUT:   .F = file.%F.decl
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();

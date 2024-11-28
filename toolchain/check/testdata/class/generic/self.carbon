@@ -102,6 +102,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     .MakeSelf = %MakeSelf.decl
 // CHECK:STDOUT:     .MakeClass = %MakeClass.decl
 // CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     complete_type_witness = %.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -74,6 +74,7 @@ class Access {
 // CHECK:STDOUT:   .G [protected] = %G.decl
 // CHECK:STDOUT:   .k [private] = %.loc17_16
 // CHECK:STDOUT:   .l [protected] = %.loc19_18
+// CHECK:STDOUT:   complete_type_witness = %.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

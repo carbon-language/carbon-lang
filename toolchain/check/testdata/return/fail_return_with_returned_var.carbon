@@ -123,6 +123,7 @@ fn G() -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .a = %.loc23_16
 // CHECK:STDOUT:   .b = %.loc23_28
+// CHECK:STDOUT:   complete_type_witness = %.loc23_35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {

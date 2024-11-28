@@ -243,6 +243,7 @@ class A {
 // CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = %SOME_INTERNAL_CONSTANT
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %SomeInternalFunction.decl
 // CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> %i32 {
@@ -346,6 +347,7 @@ class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [protected] = %.loc5_18
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -462,6 +464,7 @@ class A {
 // CHECK:STDOUT:   .GetRadius = %GetRadius.decl
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %SomeInternalFunction.decl
 // CHECK:STDOUT:   .Compute = %Compute.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetRadius[%self.param_patt: %Circle]() -> %i32 {
@@ -556,6 +559,7 @@ class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x = %x
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -645,6 +649,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [protected] = %x
 // CHECK:STDOUT:   .y [private] = %y
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -696,6 +701,7 @@ class A {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .F [private] = %F.decl
 // CHECK:STDOUT:   .G [private] = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

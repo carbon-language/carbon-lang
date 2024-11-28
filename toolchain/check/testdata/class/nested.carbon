@@ -123,6 +123,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   .po = %.loc36_9
 // CHECK:STDOUT:   .qo = %.loc37_9
 // CHECK:STDOUT:   .pi = %.loc38_9
+// CHECK:STDOUT:   complete_type_witness = %.loc39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
@@ -144,6 +145,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   .po = %.loc20_11
 // CHECK:STDOUT:   .qi = %.loc21_11
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {

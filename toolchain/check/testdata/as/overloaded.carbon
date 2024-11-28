@@ -158,6 +158,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return: %X {

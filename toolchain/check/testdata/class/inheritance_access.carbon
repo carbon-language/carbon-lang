@@ -283,11 +283,12 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%Shape
 // CHECK:STDOUT:   .x [protected] = %.loc5_18
 // CHECK:STDOUT:   .y [protected] = %.loc6_18
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Circle {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc10: %.6 = base_decl %Shape, element0 [template]
+// CHECK:STDOUT:   %.loc10: %.6 = base_decl %Shape.ref, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
@@ -317,6 +318,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc10
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
 // CHECK:STDOUT:   extend %Shape.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return: %tuple.type.2 {
@@ -399,11 +401,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.4 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -422,11 +425,12 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F [private] = %F.decl
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: %.10 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.10 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -448,6 +452,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc14
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1();
@@ -546,11 +551,12 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .SOME_CONSTANT [protected] = %SOME_CONSTANT
 // CHECK:STDOUT:   .SomeProtectedFunction [protected] = %SomeProtectedFunction.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: %.33 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc12: %.33 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -581,6 +587,7 @@ class B {
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeProtectedFunction() -> %i32 {
@@ -661,11 +668,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Shape
 // CHECK:STDOUT:   .y [private] = %.loc5_16
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Square {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Shape, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Shape.ref, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Square = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Square = value_param_pattern %self.patt, runtime_param0
@@ -689,6 +697,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .GetPosition = %GetPosition.decl
 // CHECK:STDOUT:   extend %Shape.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Square]() -> %i32 {
@@ -736,6 +745,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F [private] = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -789,6 +799,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F [protected] = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -845,11 +856,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .F [private] = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %.loc18: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
@@ -858,6 +870,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -914,11 +927,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .F [protected] = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.5 [template = constants.%.6]
 // CHECK:STDOUT:
@@ -927,6 +941,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1024,6 +1039,7 @@ class B {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .SOME_PROTECTED_CONSTANT [protected] = %SOME_PROTECTED_CONSTANT
 // CHECK:STDOUT:   .SOME_PRIVATE_CONSTANT [private] = %SOME_PRIVATE_CONSTANT
+// CHECK:STDOUT:   complete_type_witness = %.loc7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Internal {
@@ -1044,6 +1060,7 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Internal
 // CHECK:STDOUT:   .INTERNAL_CONSTANT [protected] = %INTERNAL_CONSTANT
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -1083,6 +1100,7 @@ class B {
 // CHECK:STDOUT:   .internal [private] = %.loc14
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .SomeFunc = %SomeFunc.decl
+// CHECK:STDOUT:   complete_type_witness = %.loc46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
@@ -1153,11 +1171,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [private] = %.loc5_16
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
@@ -1173,6 +1192,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {
@@ -1232,11 +1252,12 @@ class B {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .x [protected] = %.loc5_18
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
@@ -1252,6 +1273,7 @@ class B {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %B]() {

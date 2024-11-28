@@ -129,6 +129,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:     .GetValue = %GetValue.decl
 // CHECK:STDOUT:     .k = %.loc21_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc22_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

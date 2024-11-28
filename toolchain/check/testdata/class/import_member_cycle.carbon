@@ -61,6 +61,7 @@ fn Run() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -70,6 +71,8 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -78,8 +81,9 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+9, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+11, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,8 +99,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .a = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .a = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

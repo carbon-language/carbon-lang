@@ -75,5 +75,6 @@ impl AC as AI {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

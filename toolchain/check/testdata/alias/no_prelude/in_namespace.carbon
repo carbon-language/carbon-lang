@@ -68,6 +68,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .v = %.loc11_16
+// CHECK:STDOUT:   complete_type_witness = %.loc11_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %C {

@@ -189,6 +189,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
 // CHECK:STDOUT:   .x = %.loc9_8
+// CHECK:STDOUT:   complete_type_witness = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -203,6 +204,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   extend @impl.1.%HasF.type
+// CHECK:STDOUT:   complete_type_witness = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%T.loc4_16.1: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.2)) {
@@ -449,6 +451,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%X.2
 // CHECK:STDOUT:     extend %.loc9
+// CHECK:STDOUT:     complete_type_witness = %.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -220,6 +220,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
@@ -230,6 +231,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .a = %.loc15
+// CHECK:STDOUT:   complete_type_witness = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon
@@ -265,6 +267,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Var() {
@@ -315,6 +318,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %Abstract) {
@@ -357,15 +361,17 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   adapt_decl <error>
+// CHECK:STDOUT:   adapt_decl <error> [template]
 // CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapter
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- define_and_call_abstract_param.carbon
@@ -420,6 +426,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Param(%a.param_patt: %Abstract);
@@ -488,11 +495,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc10_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -505,6 +513,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Abstract.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
@@ -573,11 +582,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc10_10.1: Core.IntLiteral = int_value 32 [template = constants.%.5]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc10_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -590,6 +600,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Abstract.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Return(%a.param_patt: %Abstract) -> %return: %Abstract {
@@ -665,11 +676,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Abstract, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.6 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %.loc11_10.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc11_10.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -682,6 +694,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   .d = %.loc11_8
 // CHECK:STDOUT:   extend %Abstract.ref
+// CHECK:STDOUT:   complete_type_witness = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %i32 {
@@ -726,6 +739,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -780,6 +794,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT:   complete_type_witness = %.loc5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnAbstract() -> %Abstract;

@@ -98,6 +98,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   extend @impl.%I.ref
 // CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   complete_type_witness = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) {

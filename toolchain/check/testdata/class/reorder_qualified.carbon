@@ -144,6 +144,7 @@ class A {
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   .AF = %AF.decl
 // CHECK:STDOUT:   .a = %.loc46_8
+// CHECK:STDOUT:   complete_type_witness = %.loc47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -161,6 +162,7 @@ class A {
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .BF = %BF.decl
 // CHECK:STDOUT:   .b = %.loc16_10
+// CHECK:STDOUT:   complete_type_witness = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -179,6 +181,7 @@ class A {
 // CHECK:STDOUT:   .D = %D.decl
 // CHECK:STDOUT:   .CF = %CF.decl
 // CHECK:STDOUT:   .c = %.loc42_10
+// CHECK:STDOUT:   complete_type_witness = %.loc43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -196,6 +199,7 @@ class A {
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .DF = %DF.decl
 // CHECK:STDOUT:   .d = %.loc24_12
+// CHECK:STDOUT:   complete_type_witness = %.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BF();

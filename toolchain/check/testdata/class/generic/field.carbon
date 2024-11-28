@@ -160,6 +160,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .x = %.loc12_8.1
+// CHECK:STDOUT:     complete_type_witness = %.loc13_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
