@@ -213,8 +213,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %.loc11_11.2: <bound method> = bound_method %x.ref, %.loc11_11.1
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %.loc11_11.2(%x.ref, %y.ref)
-// CHECK:STDOUT:   %.loc11_20.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc11_20.2: ref %empty_tuple.type = temporary %.loc11_20.1, %Op.call
+// CHECK:STDOUT:   %.loc11_22.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc11_22.2: ref %empty_tuple.type = temporary %.loc11_22.1, %Op.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_23: %empty_tuple.type = converted %Op.call, %tuple [template = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc11_23

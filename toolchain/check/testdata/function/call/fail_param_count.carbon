@@ -15,7 +15,7 @@ fn Run2(a: i32, b: i32) {}
 fn Main() {
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
@@ -23,7 +23,7 @@ fn Main() {
   Run0(1);
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(0, 1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
@@ -32,7 +32,7 @@ fn Main() {
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
@@ -40,7 +40,7 @@ fn Main() {
   Run1();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1(0, 1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ fn Main() {
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ fn Main() {
   Run2();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2(0);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~

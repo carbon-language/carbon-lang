@@ -45,7 +45,7 @@ fn F[T:! type](pair: (T, T)) -> T;
 fn G(pair: (C, D)) -> D {
   // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE+6]]:10: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
   // CHECK:STDERR:   return F(pair);
-  // CHECK:STDERR:          ^~
+  // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR: fail_inconsistent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn F[T:! type](pair: (T, T)) -> T;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -295,8 +295,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %A.param_patt: %i32 = value_param_pattern %A.patt.loc6_6.1, runtime_param<invalid> [symbolic = %A.patt.loc6_6.2 (constants.%A.patt)]
 // CHECK:STDOUT:     %B.patt.loc6_15.1: %i32 = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc6_15.2 (constants.%B.patt)]
 // CHECK:STDOUT:     %B.param_patt: %i32 = value_param_pattern %B.patt.loc6_15.1, runtime_param<invalid> [symbolic = %B.patt.loc6_15.2 (constants.%B.patt)]
-// CHECK:STDOUT:     %h.patt: @F.%HasPair.loc6_34.2 (%HasPair.3) = binding_pattern h
-// CHECK:STDOUT:     %h.param_patt: @F.%HasPair.loc6_34.2 (%HasPair.3) = value_param_pattern %h.patt, runtime_param0
+// CHECK:STDOUT:     %h.patt: @F.%HasPair.loc6_41.2 (%HasPair.3) = binding_pattern h
+// CHECK:STDOUT:     %h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.3) = value_param_pattern %h.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -313,8 +313,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %B.ref.loc6_39: %i32 = name_ref B, %B.loc6_15.1 [symbolic = %B.loc6_15.2 (constants.%B)]
 // CHECK:STDOUT:     %.loc6_40: %tuple.type.2 = tuple_literal (%A.ref, %B.ref.loc6_39)
 // CHECK:STDOUT:     %tuple.loc6_40.1: %tuple.type.2 = tuple_value (%A.ref, %B.ref.loc6_39) [symbolic = %tuple.loc6_40.2 (constants.%tuple.1)]
-// CHECK:STDOUT:     %.loc6_34: %tuple.type.2 = converted %.loc6_40, %tuple.loc6_40.1 [symbolic = %tuple.loc6_40.2 (constants.%tuple.1)]
-// CHECK:STDOUT:     %HasPair.loc6_34.1: type = class_type @HasPair, @HasPair(constants.%tuple.1) [symbolic = %HasPair.loc6_34.2 (constants.%HasPair.3)]
+// CHECK:STDOUT:     %.loc6_41: %tuple.type.2 = converted %.loc6_40, %tuple.loc6_40.1 [symbolic = %tuple.loc6_40.2 (constants.%tuple.1)]
+// CHECK:STDOUT:     %HasPair.loc6_41.1: type = class_type @HasPair, @HasPair(constants.%tuple.1) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.3)]
 // CHECK:STDOUT:     %.loc6_47.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed.loc6_47: init type = call constants.%Int(%.loc6_47.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_47.2: type = value_of_initializer %int.make_type_signed.loc6_47 [template = constants.%i32]
@@ -323,8 +323,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %A.loc6_6.1: %i32 = bind_symbolic_name A, 0, %A.param [symbolic = %A.loc6_6.2 (constants.%A)]
 // CHECK:STDOUT:     %B.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %B.loc6_15.1: %i32 = bind_symbolic_name B, 1, %B.param [symbolic = %B.loc6_15.2 (constants.%B)]
-// CHECK:STDOUT:     %h.param: @F.%HasPair.loc6_34.2 (%HasPair.3) = value_param runtime_param0
-// CHECK:STDOUT:     %h: @F.%HasPair.loc6_34.2 (%HasPair.3) = bind_name h, %h.param
+// CHECK:STDOUT:     %h.param: @F.%HasPair.loc6_41.2 (%HasPair.3) = value_param runtime_param0
+// CHECK:STDOUT:     %h: @F.%HasPair.loc6_41.2 (%HasPair.3) = bind_name h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -351,7 +351,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc8_22.10: %i32 = value_of_initializer %int.convert_checked.loc8_22.2 [template = constants.%.37]
 // CHECK:STDOUT:     %.loc8_22.11: %i32 = converted %.loc8_21, %.loc8_22.10 [template = constants.%.37]
 // CHECK:STDOUT:     %tuple: %tuple.type.2 = tuple_value (%.loc8_22.6, %.loc8_22.11) [template = constants.%tuple.2]
-// CHECK:STDOUT:     %.loc8_16: %tuple.type.2 = converted %.loc8_22.1, %tuple [template = constants.%tuple.2]
+// CHECK:STDOUT:     %.loc8_23: %tuple.type.2 = converted %.loc8_22.1, %tuple [template = constants.%tuple.2]
 // CHECK:STDOUT:     %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.2) [template = constants.%HasPair.4]
 // CHECK:STDOUT:     %.loc8_29.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_29.1) [template = constants.%i32]
@@ -385,11 +385,11 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %B.loc6_15.2: %i32 = bind_symbolic_name B, 1 [symbolic = %B.loc6_15.2 (constants.%B)]
 // CHECK:STDOUT:   %B.patt.loc6_15.2: %i32 = symbolic_binding_pattern B, 1 [symbolic = %B.patt.loc6_15.2 (constants.%B.patt)]
 // CHECK:STDOUT:   %tuple.loc6_40.2: %tuple.type.2 = tuple_value (%A.loc6_6.2, %B.loc6_15.2) [symbolic = %tuple.loc6_40.2 (constants.%tuple.1)]
-// CHECK:STDOUT:   %HasPair.loc6_34.2: type = class_type @HasPair, @HasPair(%tuple.loc6_40.2) [symbolic = %HasPair.loc6_34.2 (constants.%HasPair.3)]
+// CHECK:STDOUT:   %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(%tuple.loc6_40.2) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%A.param_patt: %i32, %B.param_patt: %i32](%h.param_patt: @F.%HasPair.loc6_34.2 (%HasPair.3)) -> %i32 {
+// CHECK:STDOUT:   fn[%A.param_patt: %i32, %B.param_patt: %i32](%h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.3)) -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %B.ref.loc6_60: %i32 = name_ref B, %B.loc6_15.1 [symbolic = %B.loc6_15.2 (constants.%B)]
 // CHECK:STDOUT:     return %B.ref.loc6_60
@@ -430,7 +430,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %B.loc6_15.2 => constants.%B
 // CHECK:STDOUT:   %B.patt.loc6_15.2 => constants.%B
 // CHECK:STDOUT:   %tuple.loc6_40.2 => constants.%tuple.1
-// CHECK:STDOUT:   %HasPair.loc6_34.2 => constants.%HasPair.3
+// CHECK:STDOUT:   %HasPair.loc6_41.2 => constants.%HasPair.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasPair(constants.%tuple.2) {
@@ -446,7 +446,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %B.loc6_15.2 => constants.%.37
 // CHECK:STDOUT:   %B.patt.loc6_15.2 => constants.%.37
 // CHECK:STDOUT:   %tuple.loc6_40.2 => constants.%tuple.2
-// CHECK:STDOUT:   %HasPair.loc6_34.2 => constants.%HasPair.4
+// CHECK:STDOUT:   %HasPair.loc6_41.2 => constants.%HasPair.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

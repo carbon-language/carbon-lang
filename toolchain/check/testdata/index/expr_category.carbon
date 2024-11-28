@@ -271,17 +271,17 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc27_6.2: ref %i32 = array_index %.loc27_6.1, %.loc27_5.6
 // CHECK:STDOUT:   %.loc27_6.3: %i32 = bind_value %.loc27_6.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc28_4.1: ref %.3 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %.3 = call %F.ref() to %.loc28_4.1
+// CHECK:STDOUT:   %.loc28_5.1: ref %.3 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %.3 = call %F.ref() to %.loc28_5.1
 // CHECK:STDOUT:   %.loc28_7.1: Core.IntLiteral = int_value 0 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc28_4.2: ref %.3 = temporary %.loc28_4.1, %F.call
+// CHECK:STDOUT:   %.loc28_5.2: ref %.3 = temporary %.loc28_5.1, %F.call
 // CHECK:STDOUT:   %.loc28_7.2: %Convert.type.2 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc28_7.3: <bound method> = bound_method %.loc28_7.1, %.loc28_7.2 [template = constants.%.42]
 // CHECK:STDOUT:   %.loc28_7.4: <specific function> = specific_function %.loc28_7.3, @Convert.2(constants.%.1) [template = constants.%.43]
 // CHECK:STDOUT:   %int.convert_checked.loc28: init %i32 = call %.loc28_7.4(%.loc28_7.1) [template = constants.%.44]
 // CHECK:STDOUT:   %.loc28_7.5: %i32 = value_of_initializer %int.convert_checked.loc28 [template = constants.%.44]
 // CHECK:STDOUT:   %.loc28_7.6: %i32 = converted %.loc28_7.1, %.loc28_7.5 [template = constants.%.44]
-// CHECK:STDOUT:   %.loc28_8.1: ref %i32 = array_index %.loc28_4.2, %.loc28_7.6
+// CHECK:STDOUT:   %.loc28_8.1: ref %i32 = array_index %.loc28_5.2, %.loc28_7.6
 // CHECK:STDOUT:   %.loc28_8.2: %i32 = bind_value %.loc28_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -107,8 +107,8 @@ fn Test() {
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, imports.%import_ref.2 [template = constants.%ImplicitAs]
 // CHECK:STDOUT:     %.loc19_27: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc19_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_26.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_26.2: type = converted %int.make_type_signed, %.loc19_26.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_30.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_30.2: type = converted %int.make_type_signed, %.loc19_30.1 [template = constants.%i32]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_i32.decl: %Sink_i32.type = fn_decl @Sink_i32 [template = constants.%Sink_i32] {
@@ -256,34 +256,34 @@ fn Test() {
 // CHECK:STDOUT:   %Source.ref.loc30: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc30_12: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%.19]
-// CHECK:STDOUT:   %.loc30_18.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Source.call.loc30: init %X = call %.loc30_12() to %.loc30_18.1
-// CHECK:STDOUT:   %.loc30_18.2: %Convert.type.5 = interface_witness_access constants.%.17, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %.loc30_18.3: <bound method> = bound_method %Source.call.loc30, %.loc30_18.2
-// CHECK:STDOUT:   %.loc30_18.4: ref %X = temporary %.loc30_18.1, %Source.call.loc30
-// CHECK:STDOUT:   %.loc30_18.5: %X = bind_value %.loc30_18.4
-// CHECK:STDOUT:   %Convert.call.loc30: init %i32 = call %.loc30_18.3(%.loc30_18.5)
-// CHECK:STDOUT:   %.loc30_18.6: %i32 = value_of_initializer %Convert.call.loc30
-// CHECK:STDOUT:   %.loc30_18.7: %i32 = converted %Source.call.loc30, %.loc30_18.6
-// CHECK:STDOUT:   %Sink_i32.call: init %empty_tuple.type = call %Sink_i32.ref(%.loc30_18.7)
+// CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Source.call.loc30: init %X = call %.loc30_12() to %.loc30_20.1
+// CHECK:STDOUT:   %.loc30_20.2: %Convert.type.5 = interface_witness_access constants.%.17, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc30_20.3: <bound method> = bound_method %Source.call.loc30, %.loc30_20.2
+// CHECK:STDOUT:   %.loc30_20.4: ref %X = temporary %.loc30_20.1, %Source.call.loc30
+// CHECK:STDOUT:   %.loc30_20.5: %X = bind_value %.loc30_20.4
+// CHECK:STDOUT:   %Convert.call.loc30: init %i32 = call %.loc30_20.3(%.loc30_20.5)
+// CHECK:STDOUT:   %.loc30_20.6: %i32 = value_of_initializer %Convert.call.loc30
+// CHECK:STDOUT:   %.loc30_20.7: %i32 = converted %Source.call.loc30, %.loc30_20.6
+// CHECK:STDOUT:   %Sink_i32.call: init %empty_tuple.type = call %Sink_i32.ref(%.loc30_20.7)
 // CHECK:STDOUT:   %Sink_X.ref: %Sink_X.type = name_ref Sink_X, file.%Sink_X.decl [template = constants.%Sink_X]
 // CHECK:STDOUT:   %Source.ref.loc31: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %.loc31_17: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc31_17) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc31_16.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc31_16.2: type = converted %int.make_type_signed, %.loc31_16.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc31_20.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc31_20.2: type = converted %int.make_type_signed, %.loc31_20.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc31_10: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [template = constants.%.37]
 // CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %.loc31_10()
-// CHECK:STDOUT:   %.loc31_16.3: %Convert.type.3 = interface_witness_access constants.%.12, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %.loc31_16.4: <bound method> = bound_method %Source.call.loc31, %.loc31_16.3
-// CHECK:STDOUT:   %.loc31_16.5: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc31_16.6: %i32 = value_of_initializer %Source.call.loc31
-// CHECK:STDOUT:   %.loc31_16.7: %i32 = converted %Source.call.loc31, %.loc31_16.6
-// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %.loc31_16.4(%.loc31_16.7) to %.loc31_16.5
-// CHECK:STDOUT:   %.loc31_16.8: init %X = converted %Source.call.loc31, %Convert.call.loc31
-// CHECK:STDOUT:   %.loc31_16.9: ref %X = temporary %.loc31_16.5, %.loc31_16.8
-// CHECK:STDOUT:   %.loc31_16.10: %X = bind_value %.loc31_16.9
-// CHECK:STDOUT:   %Sink_X.call: init %empty_tuple.type = call %Sink_X.ref(%.loc31_16.10)
+// CHECK:STDOUT:   %.loc31_20.3: %Convert.type.3 = interface_witness_access constants.%.12, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc31_20.4: <bound method> = bound_method %Source.call.loc31, %.loc31_20.3
+// CHECK:STDOUT:   %.loc31_20.5: ref %X = temporary_storage
+// CHECK:STDOUT:   %.loc31_20.6: %i32 = value_of_initializer %Source.call.loc31
+// CHECK:STDOUT:   %.loc31_20.7: %i32 = converted %Source.call.loc31, %.loc31_20.6
+// CHECK:STDOUT:   %Convert.call.loc31: init %X = call %.loc31_20.4(%.loc31_20.7) to %.loc31_20.5
+// CHECK:STDOUT:   %.loc31_20.8: init %X = converted %Source.call.loc31, %Convert.call.loc31
+// CHECK:STDOUT:   %.loc31_20.9: ref %X = temporary %.loc31_20.5, %.loc31_20.8
+// CHECK:STDOUT:   %.loc31_20.10: %X = bind_value %.loc31_20.9
+// CHECK:STDOUT:   %Sink_X.call: init %empty_tuple.type = call %Sink_X.ref(%.loc31_20.10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

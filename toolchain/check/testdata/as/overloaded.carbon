@@ -89,8 +89,8 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %As.ref: %As.type.1 = name_ref As, imports.%import_ref.2 [template = constants.%As]
 // CHECK:STDOUT:     %.loc19_19: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc19_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_18.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_18.2: type = converted %int.make_type_signed, %.loc19_18.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_22.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc19_22.2: type = converted %int.make_type_signed, %.loc19_22.1 [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_8.1: Core.IntLiteral = int_value 32 [template = constants.%.1]

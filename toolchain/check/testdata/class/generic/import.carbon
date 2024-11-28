@@ -154,8 +154,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, file.%CompleteClass.decl [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:     %.loc11_25: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc11_25) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_24.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_24.2: type = converted %int.make_type_signed, %.loc11_24.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_28.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_28.2: type = converted %int.make_type_signed, %.loc11_28.1 [template = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.3 = return_slot %return.param
@@ -430,8 +430,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:     %.loc8_25: Core.IntLiteral = int_value 32 [template = constants.%.24]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_25) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_24.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %int.make_type_signed, %.loc8_24.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_28.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_28.2: type = converted %int.make_type_signed, %.loc8_28.1 [template = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.3 = return_slot %return.param
@@ -1192,8 +1192,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %.loc6_24: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%.loc6_24) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_23.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_23.2: type = converted %int.make_type_signed.loc6, %.loc6_23.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc6_27.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc6_27.2: type = converted %int.make_type_signed.loc6, %.loc6_27.1 [template = constants.%i32]
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
@@ -1224,8 +1224,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.1]
 // CHECK:STDOUT:   %.loc11_24: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%.loc11_24) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_23.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_23.2: type = converted %int.make_type_signed.loc11, %.loc11_23.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_27.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_27.2: type = converted %int.make_type_signed.loc11, %.loc11_27.1 [template = constants.%i32]
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.3]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
@@ -1594,8 +1594,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.3 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc14_33: ref %CompleteClass.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc14_33
+// CHECK:STDOUT:   %.loc14_34: ref %CompleteClass.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %CompleteClass.4 = call %F.ref() to %.loc14_34
 // CHECK:STDOUT:   %.loc14_35: %CompleteClass.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   return

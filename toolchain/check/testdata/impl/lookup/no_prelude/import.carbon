@@ -1584,7 +1584,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %Extra7.ref: type = name_ref Extra7, file.%Extra7.decl [template = constants.%Extra7.type]
 // CHECK:STDOUT:     %Extra8.ref: type = name_ref Extra8, file.%Extra8.decl [template = constants.%Extra8.type]
 // CHECK:STDOUT:     %.loc16_71: %tuple.type.1 = tuple_literal (%Extra1.ref, %Extra2.ref, %Extra3.ref, %Extra4.ref, %Extra5.ref, %Extra6.ref, %Extra7.ref, %Extra8.ref)
-// CHECK:STDOUT:     %.loc16_7: type = converted %.loc16_71, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %.loc16_72: type = converted %.loc16_71, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.type.2) [template = constants.%C.3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }

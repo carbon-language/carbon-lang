@@ -37,7 +37,7 @@ let b: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), 1);
 // its result is representable.
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation -2147483648 % -1 [CompileTimeIntegerOverflow]
 // CHECK:STDERR: let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
@@ -51,13 +51,13 @@ fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
 // CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let a: i32 = Mod(1, 0);
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR:
 let a: i32 = Mod(1, 0);
 
 // CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+3]]:14: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR: let b: i32 = Mod(0, 0);
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR:              ^~~~~~~~~
 let b: i32 = Mod(0, 0);
 
 // CHECK:STDOUT: --- int_div.carbon
@@ -160,15 +160,15 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.smod: init %i32 = call %Mod.ref(%.loc4_20.6, %.loc4_23.6) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc4_11.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.3: type = converted %int.make_type_signed.loc4, %.loc4_11.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_19.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc4_19.2: <bound method> = bound_method %int.smod, %.loc4_19.1 [template = constants.%.36]
-// CHECK:STDOUT:   %.loc4_19.3: <specific function> = specific_function %.loc4_19.2, @Convert.4(constants.%.1) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc4_19.4: %i32 = value_of_initializer %int.smod [template = constants.%.34]
-// CHECK:STDOUT:   %.loc4_19.5: %i32 = converted %int.smod, %.loc4_19.4 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked.loc4_19: init Core.IntLiteral = call %.loc4_19.3(%.loc4_19.5) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_19.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_19 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_19.7: Core.IntLiteral = converted %int.smod, %.loc4_19.6 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_19.7, %i32 [template = constants.%.39]
+// CHECK:STDOUT:   %.loc4_24.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_24.2: <bound method> = bound_method %int.smod, %.loc4_24.1 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc4_24.3: <specific function> = specific_function %.loc4_24.2, @Convert.4(constants.%.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc4_24.4: %i32 = value_of_initializer %int.smod [template = constants.%.34]
+// CHECK:STDOUT:   %.loc4_24.5: %i32 = converted %int.smod, %.loc4_24.4 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked.loc4_24: init Core.IntLiteral = call %.loc4_24.3(%.loc4_24.5) [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_24.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_24 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_24.7: Core.IntLiteral = converted %int.smod, %.loc4_24.6 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_24.7, %i32 [template = constants.%.39]
 // CHECK:STDOUT:   %arr.var: ref %.39 = var arr
 // CHECK:STDOUT:   %arr: ref %.39 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -383,7 +383,7 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.convert_checked.loc9_25: init %i32 = call %.loc9_25.4(%.loc9_25.1) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc9_25.5: %i32 = value_of_initializer %int.convert_checked.loc9_25 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc9_25.6: %i32 = converted %.loc9_25.1, %.loc9_25.5 [template = constants.%.29]
-// CHECK:STDOUT:   %int.snegate.loc9_24: init %i32 = call %Negate.ref.loc9_18(%.loc9_25.6) [template = constants.%.30]
+// CHECK:STDOUT:   %int.snegate.loc9_36: init %i32 = call %Negate.ref.loc9_18(%.loc9_25.6) [template = constants.%.30]
 // CHECK:STDOUT:   %Negate.ref.loc9_39: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc9_46.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
 // CHECK:STDOUT:   %.loc9_46.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
@@ -392,12 +392,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.convert_checked.loc9_46: init %i32 = call %.loc9_46.4(%.loc9_46.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc9_46.5: %i32 = value_of_initializer %int.convert_checked.loc9_46 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc9_46.6: %i32 = converted %.loc9_46.1, %.loc9_46.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.snegate.loc9_45: init %i32 = call %Negate.ref.loc9_39(%.loc9_46.6) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc9_24.1: %i32 = value_of_initializer %int.snegate.loc9_24 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc9_24.2: %i32 = converted %int.snegate.loc9_24, %.loc9_24.1 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc9_45.1: %i32 = value_of_initializer %int.snegate.loc9_45 [template = constants.%.35]
-// CHECK:STDOUT:   %.loc9_45.2: %i32 = converted %int.snegate.loc9_45, %.loc9_45.1 [template = constants.%.35]
-// CHECK:STDOUT:   %int.smod.loc9: init %i32 = call %Mod.ref.loc9(%.loc9_24.2, %.loc9_45.2) [template = constants.%.36]
+// CHECK:STDOUT:   %int.snegate.loc9_47: init %i32 = call %Negate.ref.loc9_39(%.loc9_46.6) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc9_36.1: %i32 = value_of_initializer %int.snegate.loc9_36 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc9_36.2: %i32 = converted %int.snegate.loc9_36, %.loc9_36.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc9_47.1: %i32 = value_of_initializer %int.snegate.loc9_47 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc9_47.2: %i32 = converted %int.snegate.loc9_47, %.loc9_47.1 [template = constants.%.35]
+// CHECK:STDOUT:   %int.smod.loc9: init %i32 = call %Mod.ref.loc9(%.loc9_36.2, %.loc9_47.2) [template = constants.%.36]
 // CHECK:STDOUT:   %.loc9_49.1: %i32 = value_of_initializer %int.smod.loc9 [template = constants.%.36]
 // CHECK:STDOUT:   %.loc9_49.2: %i32 = converted %int.smod.loc9, %.loc9_49.1 [template = constants.%.36]
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc9_49.2
@@ -413,25 +413,25 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %.loc12_29.6: %i32 = converted %.loc12_29.1, %.loc12_29.5 [template = constants.%.29]
 // CHECK:STDOUT:   %int.snegate.loc12: init %i32 = call %Negate.ref.loc12(%.loc12_29.6) [template = constants.%.30]
 // CHECK:STDOUT:   %.loc12_43.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc12_28.1: %i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc12_28.2: %i32 = converted %int.snegate.loc12, %.loc12_28.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc12_40.1: %i32 = value_of_initializer %int.snegate.loc12 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc12_40.2: %i32 = converted %int.snegate.loc12, %.loc12_40.1 [template = constants.%.30]
 // CHECK:STDOUT:   %.loc12_43.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc12_43.3: <bound method> = bound_method %.loc12_43.1, %.loc12_43.2 [template = constants.%.32]
 // CHECK:STDOUT:   %.loc12_43.4: <specific function> = specific_function %.loc12_43.3, @Convert.2(constants.%.1) [template = constants.%.33]
 // CHECK:STDOUT:   %int.convert_checked.loc12_43: init %i32 = call %.loc12_43.4(%.loc12_43.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc12_43.5: %i32 = value_of_initializer %int.convert_checked.loc12_43 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc12_43.6: %i32 = converted %.loc12_43.1, %.loc12_43.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.ssub.loc12: init %i32 = call %Sub.ref.loc12(%.loc12_28.2, %.loc12_43.6) [template = constants.%.37]
+// CHECK:STDOUT:   %int.ssub.loc12: init %i32 = call %Sub.ref.loc12(%.loc12_40.2, %.loc12_43.6) [template = constants.%.37]
 // CHECK:STDOUT:   %.loc12_47.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc12_21.1: %i32 = value_of_initializer %int.ssub.loc12 [template = constants.%.37]
-// CHECK:STDOUT:   %.loc12_21.2: %i32 = converted %int.ssub.loc12, %.loc12_21.1 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc12_44.1: %i32 = value_of_initializer %int.ssub.loc12 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc12_44.2: %i32 = converted %int.ssub.loc12, %.loc12_44.1 [template = constants.%.37]
 // CHECK:STDOUT:   %.loc12_47.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc12_47.3: <bound method> = bound_method %.loc12_47.1, %.loc12_47.2 [template = constants.%.32]
 // CHECK:STDOUT:   %.loc12_47.4: <specific function> = specific_function %.loc12_47.3, @Convert.2(constants.%.1) [template = constants.%.33]
 // CHECK:STDOUT:   %int.convert_checked.loc12_47: init %i32 = call %.loc12_47.4(%.loc12_47.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc12_47.5: %i32 = value_of_initializer %int.convert_checked.loc12_47 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc12_47.6: %i32 = converted %.loc12_47.1, %.loc12_47.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.smod.loc12: init %i32 = call %Mod.ref.loc12(%.loc12_21.2, %.loc12_47.6) [template = constants.%.36]
+// CHECK:STDOUT:   %int.smod.loc12: init %i32 = call %Mod.ref.loc12(%.loc12_44.2, %.loc12_47.6) [template = constants.%.36]
 // CHECK:STDOUT:   %.loc12_49.1: %i32 = value_of_initializer %int.smod.loc12 [template = constants.%.36]
 // CHECK:STDOUT:   %.loc12_49.2: %i32 = converted %int.smod.loc12, %.loc12_49.1 [template = constants.%.36]
 // CHECK:STDOUT:   %b: %i32 = bind_name b, %.loc12_49.2
@@ -445,17 +445,17 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.convert_checked.loc20_29: init %i32 = call %.loc20_29.4(%.loc20_29.1) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc20_29.5: %i32 = value_of_initializer %int.convert_checked.loc20_29 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc20_29.6: %i32 = converted %.loc20_29.1, %.loc20_29.5 [template = constants.%.29]
-// CHECK:STDOUT:   %int.snegate.loc20_28: init %i32 = call %Negate.ref.loc20_22(%.loc20_29.6) [template = constants.%.30]
+// CHECK:STDOUT:   %int.snegate.loc20_40: init %i32 = call %Negate.ref.loc20_22(%.loc20_29.6) [template = constants.%.30]
 // CHECK:STDOUT:   %.loc20_43.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc20_28.1: %i32 = value_of_initializer %int.snegate.loc20_28 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc20_28.2: %i32 = converted %int.snegate.loc20_28, %.loc20_28.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc20_40.1: %i32 = value_of_initializer %int.snegate.loc20_40 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc20_40.2: %i32 = converted %int.snegate.loc20_40, %.loc20_40.1 [template = constants.%.30]
 // CHECK:STDOUT:   %.loc20_43.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc20_43.3: <bound method> = bound_method %.loc20_43.1, %.loc20_43.2 [template = constants.%.32]
 // CHECK:STDOUT:   %.loc20_43.4: <specific function> = specific_function %.loc20_43.3, @Convert.2(constants.%.1) [template = constants.%.33]
 // CHECK:STDOUT:   %int.convert_checked.loc20_43: init %i32 = call %.loc20_43.4(%.loc20_43.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc20_43.5: %i32 = value_of_initializer %int.convert_checked.loc20_43 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc20_43.6: %i32 = converted %.loc20_43.1, %.loc20_43.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.ssub.loc20: init %i32 = call %Sub.ref.loc20(%.loc20_28.2, %.loc20_43.6) [template = constants.%.37]
+// CHECK:STDOUT:   %int.ssub.loc20: init %i32 = call %Sub.ref.loc20(%.loc20_40.2, %.loc20_43.6) [template = constants.%.37]
 // CHECK:STDOUT:   %Negate.ref.loc20_47: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %.loc20_54.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
 // CHECK:STDOUT:   %.loc20_54.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
@@ -464,12 +464,12 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %int.convert_checked.loc20_54: init %i32 = call %.loc20_54.4(%.loc20_54.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc20_54.5: %i32 = value_of_initializer %int.convert_checked.loc20_54 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc20_54.6: %i32 = converted %.loc20_54.1, %.loc20_54.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.snegate.loc20_53: init %i32 = call %Negate.ref.loc20_47(%.loc20_54.6) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc20_21.1: %i32 = value_of_initializer %int.ssub.loc20 [template = constants.%.37]
-// CHECK:STDOUT:   %.loc20_21.2: %i32 = converted %int.ssub.loc20, %.loc20_21.1 [template = constants.%.37]
-// CHECK:STDOUT:   %.loc20_53.1: %i32 = value_of_initializer %int.snegate.loc20_53 [template = constants.%.35]
-// CHECK:STDOUT:   %.loc20_53.2: %i32 = converted %int.snegate.loc20_53, %.loc20_53.1 [template = constants.%.35]
-// CHECK:STDOUT:   %int.smod.loc20: init %i32 = call %Mod.ref.loc20(%.loc20_21.2, %.loc20_53.2) [template = constants.%.36]
+// CHECK:STDOUT:   %int.snegate.loc20_55: init %i32 = call %Negate.ref.loc20_47(%.loc20_54.6) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc20_44.1: %i32 = value_of_initializer %int.ssub.loc20 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc20_44.2: %i32 = converted %int.ssub.loc20, %.loc20_44.1 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc20_55.1: %i32 = value_of_initializer %int.snegate.loc20_55 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc20_55.2: %i32 = converted %int.snegate.loc20_55, %.loc20_55.1 [template = constants.%.35]
+// CHECK:STDOUT:   %int.smod.loc20: init %i32 = call %Mod.ref.loc20(%.loc20_44.2, %.loc20_55.2) [template = constants.%.36]
 // CHECK:STDOUT:   %.loc20_57.1: %i32 = value_of_initializer %int.smod.loc20 [template = constants.%.36]
 // CHECK:STDOUT:   %.loc20_57.2: %i32 = converted %int.smod.loc20, %.loc20_57.1 [template = constants.%.36]
 // CHECK:STDOUT:   %c: %i32 = bind_name c, %.loc20_57.2

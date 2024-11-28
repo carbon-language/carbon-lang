@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !11
 // CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !12
-// CHECK:STDOUT:   %.loc17_22.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   %.loc17_23.1.temp = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   call void @_CBar.Main(), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }

@@ -42,23 +42,23 @@ fn JustRight(a: i32, b: i32) -> i32 = "int.uadd";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_few: [i32; TooFew(1)];
-// CHECK:STDERR:                    ^~~~~~~
+// CHECK:STDERR:                    ^~~~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew(1)];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2, 3)];
-// CHECK:STDERR:                     ^~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2, 3)];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1, 2)];
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1, 2)];
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:21: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
-// CHECK:STDERR:                     ^~~~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,15 +186,15 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %int.uadd: init %i32 = call %Add.ref(%.loc4_20.6, %.loc4_23.6) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc4_11.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.3: type = converted %int.make_type_signed.loc4, %.loc4_11.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_19.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc4_19.2: <bound method> = bound_method %int.uadd, %.loc4_19.1 [template = constants.%.36]
-// CHECK:STDOUT:   %.loc4_19.3: <specific function> = specific_function %.loc4_19.2, @Convert.4(constants.%.1) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc4_19.4: %i32 = value_of_initializer %int.uadd [template = constants.%.34]
-// CHECK:STDOUT:   %.loc4_19.5: %i32 = converted %int.uadd, %.loc4_19.4 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked.loc4_19: init Core.IntLiteral = call %.loc4_19.3(%.loc4_19.5) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_19.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_19 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_19.7: Core.IntLiteral = converted %int.uadd, %.loc4_19.6 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_19.7, %i32 [template = constants.%.39]
+// CHECK:STDOUT:   %.loc4_24.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_24.2: <bound method> = bound_method %int.uadd, %.loc4_24.1 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc4_24.3: <specific function> = specific_function %.loc4_24.2, @Convert.4(constants.%.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc4_24.4: %i32 = value_of_initializer %int.uadd [template = constants.%.34]
+// CHECK:STDOUT:   %.loc4_24.5: %i32 = converted %int.uadd, %.loc4_24.4 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked.loc4_24: init Core.IntLiteral = call %.loc4_24.3(%.loc4_24.5) [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_24.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_24 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_24.7: Core.IntLiteral = converted %int.uadd, %.loc4_24.6 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_25: type = array_type %.loc4_24.7, %i32 [template = constants.%.39]
 // CHECK:STDOUT:   %arr.var: ref %.39 = var arr
 // CHECK:STDOUT:   %arr: ref %.39 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]

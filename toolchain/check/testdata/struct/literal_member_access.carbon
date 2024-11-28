@@ -85,19 +85,19 @@ fn F() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14_16: Core.IntLiteral = int_value 1 [template = constants.%.3]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc14_25.1: ref %.2 = temporary_storage
-// CHECK:STDOUT:   %G.call: init %.2 = call %G.ref() to %.loc14_25.1
+// CHECK:STDOUT:   %.loc14_26.1: ref %.2 = temporary_storage
+// CHECK:STDOUT:   %G.call: init %.2 = call %G.ref() to %.loc14_26.1
 // CHECK:STDOUT:   %.loc14_34: Core.IntLiteral = int_value 3 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc14_35.1: %.6 = struct_literal (%.loc14_16, %G.call, %.loc14_34)
-// CHECK:STDOUT:   %.loc14_25.2: ref %.2 = temporary %.loc14_25.1, %G.call
-// CHECK:STDOUT:   %.loc14_25.3: ref %i32 = struct_access %.loc14_25.2, element0
-// CHECK:STDOUT:   %.loc14_25.4: %i32 = bind_value %.loc14_25.3
-// CHECK:STDOUT:   %.loc14_25.5: ref %i32 = struct_access %.loc14_25.2, element1
-// CHECK:STDOUT:   %.loc14_25.6: %i32 = bind_value %.loc14_25.5
-// CHECK:STDOUT:   %.loc14_25.7: ref %i32 = struct_access %.loc14_25.2, element2
-// CHECK:STDOUT:   %.loc14_25.8: %i32 = bind_value %.loc14_25.7
-// CHECK:STDOUT:   %struct.loc14_25: %.2 = struct_value (%.loc14_25.4, %.loc14_25.6, %.loc14_25.8)
-// CHECK:STDOUT:   %.loc14_35.2: %.2 = converted %G.call, %struct.loc14_25
+// CHECK:STDOUT:   %.loc14_26.2: ref %.2 = temporary %.loc14_26.1, %G.call
+// CHECK:STDOUT:   %.loc14_26.3: ref %i32 = struct_access %.loc14_26.2, element0
+// CHECK:STDOUT:   %.loc14_26.4: %i32 = bind_value %.loc14_26.3
+// CHECK:STDOUT:   %.loc14_26.5: ref %i32 = struct_access %.loc14_26.2, element1
+// CHECK:STDOUT:   %.loc14_26.6: %i32 = bind_value %.loc14_26.5
+// CHECK:STDOUT:   %.loc14_26.7: ref %i32 = struct_access %.loc14_26.2, element2
+// CHECK:STDOUT:   %.loc14_26.8: %i32 = bind_value %.loc14_26.7
+// CHECK:STDOUT:   %struct.loc14_26: %.2 = struct_value (%.loc14_26.4, %.loc14_26.6, %.loc14_26.8)
+// CHECK:STDOUT:   %.loc14_35.2: %.2 = converted %G.call, %struct.loc14_26
 // CHECK:STDOUT:   %struct.loc14_35: %.6 = struct_value (%.loc14_16, %.loc14_35.2, %.loc14_34)
 // CHECK:STDOUT:   %.loc14_35.3: %.6 = converted %.loc14_35.1, %struct.loc14_35
 // CHECK:STDOUT:   %.loc14_36: %.2 = struct_access %.loc14_35.3, element1

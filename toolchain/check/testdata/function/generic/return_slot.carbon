@@ -160,8 +160,8 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
 // CHECK:STDOUT:   %.loc18_21: Core.IntLiteral = int_value 32 [template = constants.%.4]
 // CHECK:STDOUT:   %int.make_type_signed.loc18_21: init type = call constants.%Int(%.loc18_21) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_20.1: type = value_of_initializer %int.make_type_signed.loc18_21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_20.2: type = converted %int.make_type_signed.loc18_21, %.loc18_20.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_24.1: type = value_of_initializer %int.make_type_signed.loc18_21 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_24.2: type = converted %int.make_type_signed.loc18_21, %.loc18_24.1 [template = constants.%i32]
 // CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(constants.%i32) [template = constants.%Wrap.3]
 // CHECK:STDOUT:   %.loc18_25.1: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%i32) [template = constants.%Make.2]
 // CHECK:STDOUT:   %Make.ref.loc18: %Make.type.2 = name_ref Make, %.loc18_25.1 [template = constants.%Make.2]
@@ -174,7 +174,7 @@ fn G() {
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
 // CHECK:STDOUT:   %.loc19_21: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_19: type = converted %.loc19_21, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc19_22: type = converted %.loc19_21, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Wrap.loc19: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [template = constants.%Wrap.4]
 // CHECK:STDOUT:   %.loc19_23.1: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%empty_tuple.type) [template = constants.%Make.3]
 // CHECK:STDOUT:   %Make.ref.loc19: %Make.type.3 = name_ref Make, %.loc19_23.1 [template = constants.%Make.3]

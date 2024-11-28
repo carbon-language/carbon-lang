@@ -44,23 +44,23 @@ fn JustRight(a: i32) -> i32 = "int.unegate";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_few: [i32; TooFew()];
-// CHECK:STDERR:                    ^~~~~~~
+// CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
 var too_few: [i32; TooFew()];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:21: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_many: [i32; TooMany(1, 2)];
-// CHECK:STDERR:                     ^~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~
 // CHECK:STDERR:
 var too_many: [i32; TooMany(1, 2)];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:28: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var bad_return_type: [i32; BadReturnType(1)];
-// CHECK:STDERR:                            ^~~~~~~~~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var bad_return_type: [i32; BadReturnType(1)];
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2)];
-// CHECK:STDERR:                     ^~~~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn JustRight(a: i32) -> i32 = "int.unegate";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,7 +70,7 @@ var bad_call: [i32; JustRight(1, 2)];
 fn RuntimeCallTooFew(a: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return TooFew(a);
-  // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-42]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn TooFew() -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
@@ -81,7 +81,7 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
 fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return TooMany(a, b, c);
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn TooMany(a: i32, b: i32) -> i32 = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,7 +92,7 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
 fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+6]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   return BadReturnType(a, b);
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-54]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn BadReturnType(a: i32) -> bool = "int.unegate";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -196,21 +196,21 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %int.convert_checked.loc4_30: init %i32 = call %.loc4_30.4(%.loc4_30.1) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc4_30.5: %i32 = value_of_initializer %int.convert_checked.loc4_30 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc4_30.6: %i32 = converted %.loc4_30.1, %.loc4_30.5 [template = constants.%.29]
-// CHECK:STDOUT:   %int.unegate.loc4_29: init %i32 = call %Negate.ref.loc4_23(%.loc4_30.6) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc4_29.1: %i32 = value_of_initializer %int.unegate.loc4_29 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc4_29.2: %i32 = converted %int.unegate.loc4_29, %.loc4_29.1 [template = constants.%.30]
-// CHECK:STDOUT:   %int.unegate.loc4_22: init %i32 = call %Negate.ref.loc4_16(%.loc4_29.2) [template = constants.%.29]
+// CHECK:STDOUT:   %int.unegate.loc4_33: init %i32 = call %Negate.ref.loc4_23(%.loc4_30.6) [template = constants.%.30]
+// CHECK:STDOUT:   %.loc4_33.1: %i32 = value_of_initializer %int.unegate.loc4_33 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc4_33.2: %i32 = converted %int.unegate.loc4_33, %.loc4_33.1 [template = constants.%.30]
+// CHECK:STDOUT:   %int.unegate.loc4_34: init %i32 = call %Negate.ref.loc4_16(%.loc4_33.2) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc4_11.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.3: type = converted %int.make_type_signed.loc4, %.loc4_11.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_22.1: %Convert.type.6 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc4_22.2: <bound method> = bound_method %int.unegate.loc4_22, %.loc4_22.1 [template = constants.%.32]
-// CHECK:STDOUT:   %.loc4_22.3: <specific function> = specific_function %.loc4_22.2, @Convert.4(constants.%.1) [template = constants.%.33]
-// CHECK:STDOUT:   %.loc4_22.4: %i32 = value_of_initializer %int.unegate.loc4_22 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc4_22.5: %i32 = converted %int.unegate.loc4_22, %.loc4_22.4 [template = constants.%.29]
-// CHECK:STDOUT:   %int.convert_checked.loc4_22: init Core.IntLiteral = call %.loc4_22.3(%.loc4_22.5) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_22.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_22 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_22.7: Core.IntLiteral = converted %int.unegate.loc4_22, %.loc4_22.6 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_22.7, %i32 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc4_34.1: %Convert.type.6 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_34.2: <bound method> = bound_method %int.unegate.loc4_34, %.loc4_34.1 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc4_34.3: <specific function> = specific_function %.loc4_34.2, @Convert.4(constants.%.1) [template = constants.%.33]
+// CHECK:STDOUT:   %.loc4_34.4: %i32 = value_of_initializer %int.unegate.loc4_34 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc4_34.5: %i32 = converted %int.unegate.loc4_34, %.loc4_34.4 [template = constants.%.29]
+// CHECK:STDOUT:   %int.convert_checked.loc4_34: init Core.IntLiteral = call %.loc4_34.3(%.loc4_34.5) [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_34.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_34 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_34.7: Core.IntLiteral = converted %int.unegate.loc4_34, %.loc4_34.6 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_34.7, %i32 [template = constants.%.34]
 // CHECK:STDOUT:   %arr.var: ref %.34 = var arr
 // CHECK:STDOUT:   %arr: ref %.34 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -708,12 +708,12 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %int.convert_checked.loc8: init %i32 = call %.loc8_28.4(%.loc8_28.1) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc8_28.5: %i32 = value_of_initializer %int.convert_checked.loc8 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc8_28.6: %i32 = converted %.loc8_28.1, %.loc8_28.5 [template = constants.%.29]
-// CHECK:STDOUT:   %int.unegate.loc8_27: init %i32 = call %Negate.ref.loc8_21(%.loc8_28.6) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc8_27.1: %i32 = value_of_initializer %int.unegate.loc8_27 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc8_27.2: %i32 = converted %int.unegate.loc8_27, %.loc8_27.1 [template = constants.%.30]
-// CHECK:STDOUT:   %int.unegate.loc8_20: init %i32 = call %Negate.ref.loc8_14(%.loc8_27.2) [template = constants.%.29]
-// CHECK:STDOUT:   %.loc8_40.1: %i32 = value_of_initializer %int.unegate.loc8_20 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc8_40.2: %i32 = converted %int.unegate.loc8_20, %.loc8_40.1 [template = constants.%.29]
+// CHECK:STDOUT:   %int.unegate.loc8_38: init %i32 = call %Negate.ref.loc8_21(%.loc8_28.6) [template = constants.%.30]
+// CHECK:STDOUT:   %.loc8_38.1: %i32 = value_of_initializer %int.unegate.loc8_38 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc8_38.2: %i32 = converted %int.unegate.loc8_38, %.loc8_38.1 [template = constants.%.30]
+// CHECK:STDOUT:   %int.unegate.loc8_39: init %i32 = call %Negate.ref.loc8_14(%.loc8_38.2) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_40.1: %i32 = value_of_initializer %int.unegate.loc8_39 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_40.2: %i32 = converted %int.unegate.loc8_39, %.loc8_40.1 [template = constants.%.29]
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc8_40.2
 // CHECK:STDOUT:   %Negate.ref.loc11_14: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
@@ -725,22 +725,22 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %int.convert_checked.loc11_32: init %i32 = call %.loc11_32.4(%.loc11_32.1) [template = constants.%.29]
 // CHECK:STDOUT:   %.loc11_32.5: %i32 = value_of_initializer %int.convert_checked.loc11_32 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc11_32.6: %i32 = converted %.loc11_32.1, %.loc11_32.5 [template = constants.%.29]
-// CHECK:STDOUT:   %int.unegate.loc11_31: init %i32 = call %Negate.ref.loc11_25(%.loc11_32.6) [template = constants.%.30]
+// CHECK:STDOUT:   %int.unegate.loc11_42: init %i32 = call %Negate.ref.loc11_25(%.loc11_32.6) [template = constants.%.30]
 // CHECK:STDOUT:   %.loc11_45.1: Core.IntLiteral = int_value 1 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc11_31.1: %i32 = value_of_initializer %int.unegate.loc11_31 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc11_31.2: %i32 = converted %int.unegate.loc11_31, %.loc11_31.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc11_42.1: %i32 = value_of_initializer %int.unegate.loc11_42 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc11_42.2: %i32 = converted %int.unegate.loc11_42, %.loc11_42.1 [template = constants.%.30]
 // CHECK:STDOUT:   %.loc11_45.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc11_45.3: <bound method> = bound_method %.loc11_45.1, %.loc11_45.2 [template = constants.%.32]
 // CHECK:STDOUT:   %.loc11_45.4: <specific function> = specific_function %.loc11_45.3, @Convert.2(constants.%.1) [template = constants.%.33]
 // CHECK:STDOUT:   %int.convert_checked.loc11_45: init %i32 = call %.loc11_45.4(%.loc11_45.1) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc11_45.5: %i32 = value_of_initializer %int.convert_checked.loc11_45 [template = constants.%.34]
 // CHECK:STDOUT:   %.loc11_45.6: %i32 = converted %.loc11_45.1, %.loc11_45.5 [template = constants.%.34]
-// CHECK:STDOUT:   %int.usub: init %i32 = call %Sub.ref(%.loc11_31.2, %.loc11_45.6) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_24.1: %i32 = value_of_initializer %int.usub [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_24.2: %i32 = converted %int.usub, %.loc11_24.1 [template = constants.%.35]
-// CHECK:STDOUT:   %int.unegate.loc11_20: init %i32 = call %Negate.ref.loc11_14(%.loc11_24.2) [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_48.1: %i32 = value_of_initializer %int.unegate.loc11_20 [template = constants.%.35]
-// CHECK:STDOUT:   %.loc11_48.2: %i32 = converted %int.unegate.loc11_20, %.loc11_48.1 [template = constants.%.35]
+// CHECK:STDOUT:   %int.usub: init %i32 = call %Sub.ref(%.loc11_42.2, %.loc11_45.6) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_46.1: %i32 = value_of_initializer %int.usub [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_46.2: %i32 = converted %int.usub, %.loc11_46.1 [template = constants.%.35]
+// CHECK:STDOUT:   %int.unegate.loc11_47: init %i32 = call %Negate.ref.loc11_14(%.loc11_46.2) [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_48.1: %i32 = value_of_initializer %int.unegate.loc11_47 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc11_48.2: %i32 = converted %int.unegate.loc11_47, %.loc11_48.1 [template = constants.%.35]
 // CHECK:STDOUT:   %b: %i32 = bind_name b, %.loc11_48.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

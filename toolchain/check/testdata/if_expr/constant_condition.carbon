@@ -191,9 +191,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc15_24.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc15_24.2: %i32 = converted %A.call, %.loc15_24.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_24.2)
+// CHECK:STDOUT:   %.loc15_25.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc15_25.2: %i32 = converted %A.call, %.loc15_25.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_25.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
@@ -215,9 +215,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc19_25.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc19_25.2: %i32 = converted %A.call, %.loc19_25.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc19_25.2)
+// CHECK:STDOUT:   %.loc19_26.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc19_26.2: %i32 = converted %A.call, %.loc19_26.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc19_26.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]

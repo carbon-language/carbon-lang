@@ -100,15 +100,15 @@ fn G() {
 // CHECK:STDOUT:     %.loc14_42.1: Core.IntLiteral = int_value 0 [template = constants.%.6]
 // CHECK:STDOUT:     %.loc14_42.2: ref %tuple.type.2 = array_index %v.var, %.loc14_42.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc14_35: init %tuple.type.2 = call %F.ref.loc14_34() to %.loc14_42.3
+// CHECK:STDOUT:   %F.call.loc14_36: init %tuple.type.2 = call %F.ref.loc14_34() to %.loc14_42.3
 // CHECK:STDOUT:   %F.ref.loc14_39: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_42.6: ref %tuple.type.2 = splice_block %.loc14_42.5 {
 // CHECK:STDOUT:     %.loc14_42.4: Core.IntLiteral = int_value 1 [template = constants.%.7]
 // CHECK:STDOUT:     %.loc14_42.5: ref %tuple.type.2 = array_index %v.var, %.loc14_42.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc14_40: init %tuple.type.2 = call %F.ref.loc14_39() to %.loc14_42.6
-// CHECK:STDOUT:   %.loc14_42.7: %tuple.type.3 = tuple_literal (%F.call.loc14_35, %F.call.loc14_40)
-// CHECK:STDOUT:   %.loc14_42.8: init %.3 = array_init (%F.call.loc14_35, %F.call.loc14_40) to %v.var
+// CHECK:STDOUT:   %F.call.loc14_41: init %tuple.type.2 = call %F.ref.loc14_39() to %.loc14_42.6
+// CHECK:STDOUT:   %.loc14_42.7: %tuple.type.3 = tuple_literal (%F.call.loc14_36, %F.call.loc14_41)
+// CHECK:STDOUT:   %.loc14_42.8: init %.3 = array_init (%F.call.loc14_36, %F.call.loc14_41) to %v.var
 // CHECK:STDOUT:   %.loc14_43: init %.3 = converted %.loc14_42.7, %.loc14_42.8
 // CHECK:STDOUT:   assign %v.var, %.loc14_43
 // CHECK:STDOUT:   return

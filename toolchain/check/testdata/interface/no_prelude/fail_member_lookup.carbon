@@ -17,7 +17,7 @@ interface Interface {
 fn F() {
   // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:3: error: value of type `<associated <type of F> in Interface>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   Interface.F();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   Interface.F();
 

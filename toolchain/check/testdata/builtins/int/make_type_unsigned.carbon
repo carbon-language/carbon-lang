@@ -41,7 +41,7 @@ import library "types";
 
 // CHECK:STDERR: fail_zero_size.carbon:[[@LINE+4]]:8: error: integer type width of 0 is not positive [IntWidthNotPositive]
 // CHECK:STDERR: var n: UInt(0);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:        ^~~~~~~
 // CHECK:STDERR:
 var n: UInt(0);
 
@@ -55,7 +55,7 @@ fn Negate(n: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive [IntWidthNotPositive]
 // CHECK:STDERR: var n: UInt(Negate(1));
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var n: UInt(Negate(1));
 
@@ -67,7 +67,7 @@ import library "types";
 
 // CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR: var m: UInt(1000000000);
-// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~~
 var m: UInt(1000000000);
 
 // CHECK:STDOUT: --- types.carbon
@@ -171,14 +171,14 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc6_9: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_14: Core.IntLiteral = int_value 64 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc6_13: init type = call %UInt.ref.loc6_9(%.loc6_14) [template = constants.%u64]
-// CHECK:STDOUT:     %.loc6_16.1: type = value_of_initializer %int.make_type_unsigned.loc6_13 [template = constants.%u64]
-// CHECK:STDOUT:     %.loc6_16.2: type = converted %int.make_type_unsigned.loc6_13, %.loc6_16.1 [template = constants.%u64]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc6_16: init type = call %UInt.ref.loc6_9(%.loc6_14) [template = constants.%u64]
+// CHECK:STDOUT:     %.loc6_16.1: type = value_of_initializer %int.make_type_unsigned.loc6_16 [template = constants.%u64]
+// CHECK:STDOUT:     %.loc6_16.2: type = converted %int.make_type_unsigned.loc6_16, %.loc6_16.1 [template = constants.%u64]
 // CHECK:STDOUT:     %UInt.ref.loc6_22: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc6_27: Core.IntLiteral = int_value 64 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc6_26: init type = call %UInt.ref.loc6_22(%.loc6_27) [template = constants.%u64]
-// CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %int.make_type_unsigned.loc6_26 [template = constants.%u64]
-// CHECK:STDOUT:     %.loc6_29.2: type = converted %int.make_type_unsigned.loc6_26, %.loc6_29.1 [template = constants.%u64]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc6_29: init type = call %UInt.ref.loc6_22(%.loc6_27) [template = constants.%u64]
+// CHECK:STDOUT:     %.loc6_29.1: type = value_of_initializer %int.make_type_unsigned.loc6_29 [template = constants.%u64]
+// CHECK:STDOUT:     %.loc6_29.2: type = converted %int.make_type_unsigned.loc6_29, %.loc6_29.1 [template = constants.%u64]
 // CHECK:STDOUT:     %n.param: %u64 = value_param runtime_param0
 // CHECK:STDOUT:     %n: %u64 = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %u64 = out_param runtime_param1
@@ -192,14 +192,14 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %UInt.ref.loc10_9: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_14: Core.IntLiteral = int_value 13 [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc10_13: init type = call %UInt.ref.loc10_9(%.loc10_14) [template = constants.%u13]
-// CHECK:STDOUT:     %.loc10_16.1: type = value_of_initializer %int.make_type_unsigned.loc10_13 [template = constants.%u13]
-// CHECK:STDOUT:     %.loc10_16.2: type = converted %int.make_type_unsigned.loc10_13, %.loc10_16.1 [template = constants.%u13]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc10_16: init type = call %UInt.ref.loc10_9(%.loc10_14) [template = constants.%u13]
+// CHECK:STDOUT:     %.loc10_16.1: type = value_of_initializer %int.make_type_unsigned.loc10_16 [template = constants.%u13]
+// CHECK:STDOUT:     %.loc10_16.2: type = converted %int.make_type_unsigned.loc10_16, %.loc10_16.1 [template = constants.%u13]
 // CHECK:STDOUT:     %UInt.ref.loc10_22: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %.loc10_27: Core.IntLiteral = int_value 13 [template = constants.%.2]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc10_26: init type = call %UInt.ref.loc10_22(%.loc10_27) [template = constants.%u13]
-// CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_unsigned.loc10_26 [template = constants.%u13]
-// CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_unsigned.loc10_26, %.loc10_29.1 [template = constants.%u13]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc10_29: init type = call %UInt.ref.loc10_22(%.loc10_27) [template = constants.%u13]
+// CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_unsigned.loc10_29 [template = constants.%u13]
+// CHECK:STDOUT:     %.loc10_29.2: type = converted %int.make_type_unsigned.loc10_29, %.loc10_29.1 [template = constants.%u13]
 // CHECK:STDOUT:     %n.param: %u13 = value_param runtime_param0
 // CHECK:STDOUT:     %n: %u13 = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %u13 = out_param runtime_param1
@@ -219,14 +219,14 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:     %.loc14_28.2: type = converted %int_literal.make_type, %.loc14_28.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %UInt.ref.loc14_34: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_39: Core.IntLiteral = name_ref N, %N.loc14_13.1 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_38: init type = call %UInt.ref.loc14_34(%N.ref.loc14_39) [symbolic = %uN (constants.%uN)]
-// CHECK:STDOUT:     %.loc14_40.1: type = value_of_initializer %int.make_type_unsigned.loc14_38 [symbolic = %uN (constants.%uN)]
-// CHECK:STDOUT:     %.loc14_40.2: type = converted %int.make_type_unsigned.loc14_38, %.loc14_40.1 [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_40: init type = call %UInt.ref.loc14_34(%N.ref.loc14_39) [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %.loc14_40.1: type = value_of_initializer %int.make_type_unsigned.loc14_40 [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %.loc14_40.2: type = converted %int.make_type_unsigned.loc14_40, %.loc14_40.1 [symbolic = %uN (constants.%uN)]
 // CHECK:STDOUT:     %UInt.ref.loc14_46: %UInt.type = name_ref UInt, imports.%import_ref.2 [template = constants.%UInt]
 // CHECK:STDOUT:     %N.ref.loc14_51: Core.IntLiteral = name_ref N, %N.loc14_13.1 [symbolic = %N.loc14_13.2 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_unsigned.loc14_50: init type = call %UInt.ref.loc14_46(%N.ref.loc14_51) [symbolic = %uN (constants.%uN)]
-// CHECK:STDOUT:     %.loc14_52.1: type = value_of_initializer %int.make_type_unsigned.loc14_50 [symbolic = %uN (constants.%uN)]
-// CHECK:STDOUT:     %.loc14_52.2: type = converted %int.make_type_unsigned.loc14_50, %.loc14_52.1 [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %int.make_type_unsigned.loc14_52: init type = call %UInt.ref.loc14_46(%N.ref.loc14_51) [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %.loc14_52.1: type = value_of_initializer %int.make_type_unsigned.loc14_52 [symbolic = %uN (constants.%uN)]
+// CHECK:STDOUT:     %.loc14_52.2: type = converted %int.make_type_unsigned.loc14_52, %.loc14_52.1 [symbolic = %uN (constants.%uN)]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc14_13.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_13.2 (constants.%N)]
 // CHECK:STDOUT:     %x.param: @Symbolic.%uN (%uN) = value_param runtime_param0
@@ -388,15 +388,15 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %.loc12_20.5: %i32 = value_of_initializer %int.convert_checked.loc12_20 [template = constants.%.29]
 // CHECK:STDOUT:   %.loc12_20.6: %i32 = converted %.loc12_20.1, %.loc12_20.5 [template = constants.%.29]
 // CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc12_20.6) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc12_19.1: %Convert.type.6 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_19.2: <bound method> = bound_method %int.snegate, %.loc12_19.1 [template = constants.%.32]
-// CHECK:STDOUT:   %.loc12_19.3: <specific function> = specific_function %.loc12_19.2, @Convert.4(constants.%.1) [template = constants.%.33]
-// CHECK:STDOUT:   %.loc12_19.4: %i32 = value_of_initializer %int.snegate [template = constants.%.30]
-// CHECK:STDOUT:   %.loc12_19.5: %i32 = converted %int.snegate, %.loc12_19.4 [template = constants.%.30]
-// CHECK:STDOUT:   %int.convert_checked.loc12_19: init Core.IntLiteral = call %.loc12_19.3(%.loc12_19.5) [template = constants.%.34]
-// CHECK:STDOUT:   %.loc12_19.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_19 [template = constants.%.34]
-// CHECK:STDOUT:   %.loc12_19.7: Core.IntLiteral = converted %int.snegate, %.loc12_19.6 [template = constants.%.34]
-// CHECK:STDOUT:   %int.make_type_unsigned: init type = call %UInt.ref(%.loc12_19.7) [template = <error>]
+// CHECK:STDOUT:   %.loc12_21.1: %Convert.type.6 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc12_21.2: <bound method> = bound_method %int.snegate, %.loc12_21.1 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc12_21.3: <specific function> = specific_function %.loc12_21.2, @Convert.4(constants.%.1) [template = constants.%.33]
+// CHECK:STDOUT:   %.loc12_21.4: %i32 = value_of_initializer %int.snegate [template = constants.%.30]
+// CHECK:STDOUT:   %.loc12_21.5: %i32 = converted %int.snegate, %.loc12_21.4 [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked.loc12_21: init Core.IntLiteral = call %.loc12_21.3(%.loc12_21.5) [template = constants.%.34]
+// CHECK:STDOUT:   %.loc12_21.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_21 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc12_21.7: Core.IntLiteral = converted %int.snegate, %.loc12_21.6 [template = constants.%.34]
+// CHECK:STDOUT:   %int.make_type_unsigned: init type = call %UInt.ref(%.loc12_21.7) [template = <error>]
 // CHECK:STDOUT:   %.loc12_22.1: type = value_of_initializer %int.make_type_unsigned [template = <error>]
 // CHECK:STDOUT:   %.loc12_22.2: type = converted %int.make_type_unsigned, %.loc12_22.1 [template = <error>]
 // CHECK:STDOUT:   %n.var: ref <error> = var n

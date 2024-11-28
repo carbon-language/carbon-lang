@@ -464,8 +464,8 @@ class B {
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   %.loc15_43.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc15_43.2: ref %empty_tuple.type = temporary %.loc15_43.1, %F.call
+// CHECK:STDOUT:   %.loc15_44.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc15_44.2: ref %empty_tuple.type = temporary %.loc15_44.1, %F.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_45: %empty_tuple.type = converted %F.call, %tuple [template = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc15_45

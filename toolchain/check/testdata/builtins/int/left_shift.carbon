@@ -32,12 +32,12 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 let size_1: i32 = LeftShift(1, 31);
 // CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 32 [CompileTimeShiftOutOfRange]
 // CHECK:STDERR: let size_2: i32 = LeftShift(1, 32);
-// CHECK:STDERR:                   ^~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let size_2: i32 = LeftShift(1, 32);
 // CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:19: error: shift distance not in range [0, 32) in 1 << 33 [CompileTimeShiftOutOfRange]
 // CHECK:STDERR: let size_3: i32 = LeftShift(1, 33);
-// CHECK:STDERR:                   ^~~~~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let size_3: i32 = LeftShift(1, 33);
 
@@ -45,7 +45,7 @@ let size_3: i32 = LeftShift(1, 33);
 let overflow_1: i32 = LeftShift(1000, 31);
 // CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:23: error: shift distance not in range [0, 32) in 1000 << 32 [CompileTimeShiftOutOfRange]
 // CHECK:STDERR: let overflow_2: i32 = LeftShift(1000, 32);
-// CHECK:STDERR:                       ^~~~~~~~~~
+// CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let overflow_2: i32 = LeftShift(1000, 32);
 
@@ -53,14 +53,14 @@ let overflow_2: i32 = LeftShift(1000, 32);
 let no_overflow_1: i32 = LeftShift(0, 31);
 // CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:26: error: shift distance not in range [0, 32) in 0 << 32 [CompileTimeShiftOutOfRange]
 // CHECK:STDERR: let no_overflow_2: i32 = LeftShift(0, 32);
-// CHECK:STDERR:                          ^~~~~~~~~~
+// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let no_overflow_2: i32 = LeftShift(0, 32);
 
 // Negative shifts aren't allowed either.
 // CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:21: error: shift distance not in range [0, 32) in 1 << -1 [CompileTimeShiftOutOfRange]
 // CHECK:STDERR: let negative: i32 = LeftShift(1, Negate(1));
-// CHECK:STDERR:                     ^~~~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~
 let negative: i32 = LeftShift(1, Negate(1));
 
 // CHECK:STDOUT: --- int_left_shift.carbon
@@ -163,15 +163,15 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%.loc4_26.6, %.loc4_29.6) [template = constants.%.34]
 // CHECK:STDOUT:   %.loc4_11.2: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.3: type = converted %int.make_type_signed.loc4, %.loc4_11.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_25.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc4_25.2: <bound method> = bound_method %int.left_shift, %.loc4_25.1 [template = constants.%.36]
-// CHECK:STDOUT:   %.loc4_25.3: <specific function> = specific_function %.loc4_25.2, @Convert.4(constants.%.1) [template = constants.%.37]
-// CHECK:STDOUT:   %.loc4_25.4: %i32 = value_of_initializer %int.left_shift [template = constants.%.34]
-// CHECK:STDOUT:   %.loc4_25.5: %i32 = converted %int.left_shift, %.loc4_25.4 [template = constants.%.34]
-// CHECK:STDOUT:   %int.convert_checked.loc4_25: init Core.IntLiteral = call %.loc4_25.3(%.loc4_25.5) [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_25.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_25 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_25.7: Core.IntLiteral = converted %int.left_shift, %.loc4_25.6 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc4_31: type = array_type %.loc4_25.7, %i32 [template = constants.%.39]
+// CHECK:STDOUT:   %.loc4_30.1: %Convert.type.6 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.15]
+// CHECK:STDOUT:   %.loc4_30.2: <bound method> = bound_method %int.left_shift, %.loc4_30.1 [template = constants.%.36]
+// CHECK:STDOUT:   %.loc4_30.3: <specific function> = specific_function %.loc4_30.2, @Convert.4(constants.%.1) [template = constants.%.37]
+// CHECK:STDOUT:   %.loc4_30.4: %i32 = value_of_initializer %int.left_shift [template = constants.%.34]
+// CHECK:STDOUT:   %.loc4_30.5: %i32 = converted %int.left_shift, %.loc4_30.4 [template = constants.%.34]
+// CHECK:STDOUT:   %int.convert_checked.loc4_30: init Core.IntLiteral = call %.loc4_30.3(%.loc4_30.5) [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_30.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_30 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_30.7: Core.IntLiteral = converted %int.left_shift, %.loc4_30.6 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc4_31: type = array_type %.loc4_30.7, %i32 [template = constants.%.39]
 // CHECK:STDOUT:   %arr.var: ref %.39 = var arr
 // CHECK:STDOUT:   %arr: ref %.39 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %.loc5_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
@@ -533,9 +533,9 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %int.convert_checked.loc40_31: init %i32 = call %.loc40_31.4(%.loc40_31.1) [template = constants.%.30]
 // CHECK:STDOUT:   %.loc40_31.5: %i32 = value_of_initializer %int.convert_checked.loc40_31 [template = constants.%.30]
 // CHECK:STDOUT:   %.loc40_31.6: %i32 = converted %.loc40_31.1, %.loc40_31.5 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc40_40.1: %i32 = value_of_initializer %int.snegate [template = constants.%.50]
-// CHECK:STDOUT:   %.loc40_40.2: %i32 = converted %int.snegate, %.loc40_40.1 [template = constants.%.50]
-// CHECK:STDOUT:   %int.left_shift.loc40: init %i32 = call %LeftShift.ref.loc40(%.loc40_31.6, %.loc40_40.2) [template = <error>]
+// CHECK:STDOUT:   %.loc40_42.1: %i32 = value_of_initializer %int.snegate [template = constants.%.50]
+// CHECK:STDOUT:   %.loc40_42.2: %i32 = converted %int.snegate, %.loc40_42.1 [template = constants.%.50]
+// CHECK:STDOUT:   %int.left_shift.loc40: init %i32 = call %LeftShift.ref.loc40(%.loc40_31.6, %.loc40_42.2) [template = <error>]
 // CHECK:STDOUT:   %.loc40_44.1: %i32 = value_of_initializer %int.left_shift.loc40 [template = <error>]
 // CHECK:STDOUT:   %.loc40_44.2: %i32 = converted %int.left_shift.loc40, %.loc40_44.1 [template = <error>]
 // CHECK:STDOUT:   %negative: %i32 = bind_name negative, %.loc40_44.2

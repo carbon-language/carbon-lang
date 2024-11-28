@@ -19,7 +19,7 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
   // that's not how we currently model `Core.Int`.
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   var v: Core.Int(N);
-  // CHECK:STDERR:          ^~~~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Core.Int(N);
 }
 

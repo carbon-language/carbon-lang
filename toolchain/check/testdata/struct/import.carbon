@@ -182,7 +182,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %.loc9_28.10: %i32 = value_of_initializer %int.convert_checked.loc9_28.2 [template = constants.%.51]
 // CHECK:STDOUT:     %.loc9_28.11: %i32 = converted %.loc9_27, %.loc9_28.10 [template = constants.%.51]
 // CHECK:STDOUT:     %struct: %.39 = struct_value (%.loc9_28.6, %.loc9_28.11) [template = constants.%struct.4]
-// CHECK:STDOUT:     %.loc9_12: %.39 = converted %.loc9_28.1, %struct [template = constants.%struct.4]
+// CHECK:STDOUT:     %.loc9_29: %.39 = converted %.loc9_28.1, %struct [template = constants.%struct.4]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct.4) [template = constants.%C.3]
 // CHECK:STDOUT:     %return.param: ref %C.3 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C.3 = return_slot %return.param
@@ -474,7 +474,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc6_25.10: %i32 = value_of_initializer %int.convert_checked.loc6_25.2 [template = constants.%.44]
 // CHECK:STDOUT:   %.loc6_25.11: %i32 = converted %.loc6_24, %.loc6_25.10 [template = constants.%.44]
 // CHECK:STDOUT:   %struct: %.30 = struct_value (%.loc6_25.6, %.loc6_25.11) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_9: %.30 = converted %.loc6_25.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_26: %.30 = converted %.loc6_25.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%struct) [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
 // CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
@@ -1977,7 +1977,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc9_29.10: %i32 = value_of_initializer %int.convert_checked.loc9_29.2 [template = constants.%.38]
 // CHECK:STDOUT:   %.loc9_29.11: %i32 = converted %.loc9_28, %.loc9_29.10 [template = constants.%.38]
 // CHECK:STDOUT:   %struct: %.24 = struct_value (%.loc9_29.6, %.loc9_29.11) [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc9_13: %.24 = converted %.loc9_29.1, %struct [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc9_30: %.24 = converted %.loc9_29.1, %struct [template = constants.%struct.1]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%struct.1) [template = constants.%C.3]
 // CHECK:STDOUT:   %c_bad.var: ref %C.3 = var c_bad
 // CHECK:STDOUT:   %c_bad: ref %C.3 = bind_name c_bad, %c_bad.var
@@ -2263,8 +2263,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
-// CHECK:STDOUT:   %.loc9_35: ref %C.4 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc9_35
+// CHECK:STDOUT:   %.loc9_36: ref %C.4 = temporary_storage
+// CHECK:STDOUT:   %F.call: init %C.4 = call %F.ref() to %.loc9_36
 // CHECK:STDOUT:   %.loc9_37: %C.3 = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
 // CHECK:STDOUT:   return

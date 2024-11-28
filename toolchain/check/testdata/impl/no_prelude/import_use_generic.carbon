@@ -80,7 +80,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc10_14.1 [symbolic = %T.loc10_14.2 (constants.%T)]
-// CHECK:STDOUT:     %C.loc10_25.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc10_25.2 (constants.%C.2)]
+// CHECK:STDOUT:     %C.loc10_27.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc10_27.2 (constants.%C.2)]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_14.2 (constants.%T)]
@@ -101,14 +101,14 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: generic impl @impl(%T.loc10_14.1: type) {
 // CHECK:STDOUT:   %T.loc10_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc10_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc10_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %C.loc10_25.2: type = class_type @C, @C(%T.loc10_14.2) [symbolic = %C.loc10_25.2 (constants.%C.2)]
+// CHECK:STDOUT:   %C.loc10_27.2: type = class_type @C, @C(%T.loc10_14.2) [symbolic = %C.loc10_27.2 (constants.%C.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
 // CHECK:STDOUT:   %.loc10_34.2: <witness> = interface_witness (%F) [symbolic = %.loc10_34.2 (constants.%.6)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %C.loc10_25.1 as %I.ref {
+// CHECK:STDOUT:   impl: %C.loc10_27.1 as %I.ref {
 // CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {} {}
 // CHECK:STDOUT:     %.loc10_34.1: <witness> = interface_witness (%F.decl) [symbolic = %.loc10_34.2 (constants.%.6)]
 // CHECK:STDOUT:
@@ -162,7 +162,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
-// CHECK:STDOUT:   %C.loc10_25.2 => constants.%C.2
+// CHECK:STDOUT:   %C.loc10_27.2 => constants.%C.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
@@ -177,7 +177,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
-// CHECK:STDOUT:   %C.loc10_25.2 => constants.%C.2
+// CHECK:STDOUT:   %C.loc10_27.2 => constants.%C.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_in_fn_decl.carbon
@@ -232,7 +232,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc6_11: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc6_9: type = converted %.loc6_11, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc6_12: type = converted %.loc6_11, constants.%.1 [template = constants.%.1]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%.1) [template = constants.%C.3]
 // CHECK:STDOUT:   %c.var: ref %C.3 = var c
 // CHECK:STDOUT:   %c: ref %C.3 = bind_name c, %c.var
@@ -246,9 +246,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %.loc15_12.1: %F.type.1 = interface_witness_access constants.%.7, element0 [template = constants.%F.3]
 // CHECK:STDOUT:     %.loc15_12.2: <specific function> = specific_function %.loc15_12.1, @F.2(constants.%.1) [template = constants.%.8]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %.loc15_12.2()
-// CHECK:STDOUT:     %.loc15_18.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:     %.loc15_18.2: ref %empty_tuple.type = temporary %.loc15_18.1, %F.call
-// CHECK:STDOUT:     %.loc15_19: type = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc15_19.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:     %.loc15_19.2: ref %empty_tuple.type = temporary %.loc15_19.1, %F.call
+// CHECK:STDOUT:     %.loc15_19.3: type = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

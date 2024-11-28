@@ -205,9 +205,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
-// CHECK:STDOUT:   %.loc7_10.1: ref %A = temporary_storage
-// CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_10.1
-// CHECK:STDOUT:   %.loc7_10.2: ref %A = temporary %.loc7_10.1, %F.call.loc7
+// CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
+// CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
+// CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
 // CHECK:STDOUT:   %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.5 [template = constants.%A]

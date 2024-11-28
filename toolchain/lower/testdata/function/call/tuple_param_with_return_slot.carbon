@@ -39,8 +39,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.2.loc16_20.12), !dbg !13
+// CHECK:STDOUT:   %.loc16_21.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_21.1.temp, { i32 } { i32 1 }, ptr @tuple.2.loc16_20.12), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

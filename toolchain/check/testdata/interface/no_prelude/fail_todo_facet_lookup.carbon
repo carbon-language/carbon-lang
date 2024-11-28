@@ -13,7 +13,7 @@ interface Interface { fn F(); }
 fn CallStatic(T:! Interface) {
   // CHECK:STDERR: fail_todo_facet_lookup.carbon:[[@LINE+4]]:3: error: value of type `<type of F>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   T.F();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   T.F();
 }

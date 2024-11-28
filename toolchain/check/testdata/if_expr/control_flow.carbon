@@ -136,9 +136,9 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %A.ref()
-// CHECK:STDOUT:   %.loc15_21.1: %i32 = value_of_initializer %A.call
-// CHECK:STDOUT:   %.loc15_21.2: %i32 = converted %A.call, %.loc15_21.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_21.2)
+// CHECK:STDOUT:   %.loc15_22.1: %i32 = value_of_initializer %A.call
+// CHECK:STDOUT:   %.loc15_22.2: %i32 = converted %A.call, %.loc15_22.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_22.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]

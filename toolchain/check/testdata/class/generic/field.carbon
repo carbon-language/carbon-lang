@@ -90,8 +90,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %.loc15_15: Core.IntLiteral = int_value 32 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_15: init type = call constants.%Int(%.loc15_15) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_14.1: type = value_of_initializer %int.make_type_signed.loc15_15 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_14.2: type = converted %int.make_type_signed.loc15_15, %.loc15_14.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_18.1: type = value_of_initializer %int.make_type_signed.loc15_15 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_18.2: type = converted %int.make_type_signed.loc15_15, %.loc15_18.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.3]
 // CHECK:STDOUT:     %.loc15_24.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_24: init type = call constants.%Int(%.loc15_24.1) [template = constants.%i32]
@@ -105,38 +105,38 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc19_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc19_6.1, runtime_param<invalid> [symbolic = %T.patt.loc19_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %c.patt: @G.%Class.loc19_24.2 (%Class.2) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @G.%Class.loc19_24.2 (%Class.2) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: @G.%Class.loc19_26.2 (%Class.2) = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: @G.%Class.loc19_26.2 (%Class.2) = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @G.%T.loc19_6.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @G.%T.loc19_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc19_25: type = name_ref T, %T.loc19_6.1 [symbolic = %T.loc19_6.2 (constants.%T)]
-// CHECK:STDOUT:     %Class.loc19_24.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_24.2 (constants.%Class.2)]
+// CHECK:STDOUT:     %Class.loc19_26.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_26.2 (constants.%Class.2)]
 // CHECK:STDOUT:     %T.ref.loc19_32: type = name_ref T, %T.loc19_6.1 [symbolic = %T.loc19_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_6.2 (constants.%T)]
-// CHECK:STDOUT:     %c.param: @G.%Class.loc19_24.2 (%Class.2) = value_param runtime_param0
-// CHECK:STDOUT:     %c: @G.%Class.loc19_24.2 (%Class.2) = bind_name c, %c.param
+// CHECK:STDOUT:     %c.param: @G.%Class.loc19_26.2 (%Class.2) = value_param runtime_param0
+// CHECK:STDOUT:     %c: @G.%Class.loc19_26.2 (%Class.2) = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref @G.%T.loc19_6.2 (%T) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @G.%T.loc19_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %U.patt.loc23_6.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc23_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc23_6.1, runtime_param<invalid> [symbolic = %U.patt.loc23_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %c.patt: @H.%Class.loc23_24.2 (%Class.4) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @H.%Class.loc23_24.2 (%Class.4) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: @H.%Class.loc23_26.2 (%Class.4) = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: @H.%Class.loc23_26.2 (%Class.4) = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @H.%U.loc23_6.2 (%U) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @H.%U.loc23_6.2 (%U) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %U.ref.loc23_25: type = name_ref U, %U.loc23_6.1 [symbolic = %U.loc23_6.2 (constants.%U)]
-// CHECK:STDOUT:     %Class.loc23_24.1: type = class_type @Class, @Class(constants.%U) [symbolic = %Class.loc23_24.2 (constants.%Class.4)]
+// CHECK:STDOUT:     %Class.loc23_26.1: type = class_type @Class, @Class(constants.%U) [symbolic = %Class.loc23_26.2 (constants.%Class.4)]
 // CHECK:STDOUT:     %U.ref.loc23_32: type = name_ref U, %U.loc23_6.1 [symbolic = %U.loc23_6.2 (constants.%U)]
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc23_6.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc23_6.2 (constants.%U)]
-// CHECK:STDOUT:     %c.param: @H.%Class.loc23_24.2 (%Class.4) = value_param runtime_param0
-// CHECK:STDOUT:     %c: @H.%Class.loc23_24.2 (%Class.4) = bind_name c, %c.param
+// CHECK:STDOUT:     %c.param: @H.%Class.loc23_26.2 (%Class.4) = value_param runtime_param0
+// CHECK:STDOUT:     %c: @H.%Class.loc23_26.2 (%Class.4) = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref @H.%U.loc23_6.2 (%U) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @H.%U.loc23_6.2 (%U) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -176,14 +176,14 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: generic fn @G(%T.loc19_6.1: type) {
 // CHECK:STDOUT:   %T.loc19_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc19_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %Class.loc19_24.2: type = class_type @Class, @Class(%T.loc19_6.2) [symbolic = %Class.loc19_24.2 (constants.%Class.2)]
+// CHECK:STDOUT:   %Class.loc19_26.2: type = class_type @Class, @Class(%T.loc19_6.2) [symbolic = %Class.loc19_26.2 (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc20_11.3: type = unbound_element_type @G.%Class.loc19_24.2 (%Class.2), @G.%T.loc19_6.2 (%T) [symbolic = %.loc20_11.3 (constants.%.1)]
+// CHECK:STDOUT:   %.loc20_11.3: type = unbound_element_type @G.%Class.loc19_26.2 (%Class.2), @G.%T.loc19_6.2 (%T) [symbolic = %.loc20_11.3 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%T.param_patt: type, %c.param_patt: @G.%Class.loc19_24.2 (%Class.2)) -> @G.%T.loc19_6.2 (%T) {
+// CHECK:STDOUT:   fn(%T.param_patt: type, %c.param_patt: @G.%Class.loc19_26.2 (%Class.2)) -> @G.%T.loc19_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %c.ref: @G.%Class.loc19_24.2 (%Class.2) = name_ref c, %c
+// CHECK:STDOUT:     %c.ref: @G.%Class.loc19_26.2 (%Class.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%.loc20_11.3 (%.1) = name_ref x, @Class.%.loc12_8.1 [template = @Class.%.loc12_8.1]
 // CHECK:STDOUT:     %.loc20_11.1: ref @G.%T.loc19_6.2 (%T) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc20_11.2: @G.%T.loc19_6.2 (%T) = bind_value %.loc20_11.1
@@ -194,14 +194,14 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: generic fn @H(%U.loc23_6.1: type) {
 // CHECK:STDOUT:   %U.loc23_6.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc23_6.2 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc23_6.2: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc23_6.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %Class.loc23_24.2: type = class_type @Class, @Class(%U.loc23_6.2) [symbolic = %Class.loc23_24.2 (constants.%Class.4)]
+// CHECK:STDOUT:   %Class.loc23_26.2: type = class_type @Class, @Class(%U.loc23_6.2) [symbolic = %Class.loc23_26.2 (constants.%Class.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc24_11.3: type = unbound_element_type @H.%Class.loc23_24.2 (%Class.4), @H.%U.loc23_6.2 (%U) [symbolic = %.loc24_11.3 (constants.%.10)]
+// CHECK:STDOUT:   %.loc24_11.3: type = unbound_element_type @H.%Class.loc23_26.2 (%Class.4), @H.%U.loc23_6.2 (%U) [symbolic = %.loc24_11.3 (constants.%.10)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%U.param_patt: type, %c.param_patt: @H.%Class.loc23_24.2 (%Class.4)) -> @H.%U.loc23_6.2 (%U) {
+// CHECK:STDOUT:   fn(%U.param_patt: type, %c.param_patt: @H.%Class.loc23_26.2 (%Class.4)) -> @H.%U.loc23_6.2 (%U) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %c.ref: @H.%Class.loc23_24.2 (%Class.4) = name_ref c, %c
+// CHECK:STDOUT:     %c.ref: @H.%Class.loc23_26.2 (%Class.4) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%.loc24_11.3 (%.10) = name_ref x, @Class.%.loc12_8.1 [template = @Class.%.loc12_8.1]
 // CHECK:STDOUT:     %.loc24_11.1: ref @H.%U.loc23_6.2 (%U) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc24_11.2: @H.%U.loc23_6.2 (%U) = bind_value %.loc24_11.1
@@ -244,7 +244,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc19_6.2 => constants.%T
-// CHECK:STDOUT:   %Class.loc19_24.2 => constants.%Class.2
+// CHECK:STDOUT:   %Class.loc19_26.2 => constants.%Class.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%U) {
@@ -266,6 +266,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: specific @H(constants.%U) {
 // CHECK:STDOUT:   %U.loc23_6.2 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc23_6.2 => constants.%U
-// CHECK:STDOUT:   %Class.loc23_24.2 => constants.%Class.4
+// CHECK:STDOUT:   %Class.loc23_26.2 => constants.%Class.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -83,9 +83,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_25: init type = call %IntLiteral.ref.loc4_14() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_26.1: type = value_of_initializer %int_literal.make_type.loc4_25 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_26.2: type = converted %int_literal.make_type.loc4_25, %.loc4_26.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_26: init type = call %IntLiteral.ref.loc4_14() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_26.1: type = value_of_initializer %int_literal.make_type.loc4_26 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_26.2: type = converted %int_literal.make_type.loc4_26, %.loc4_26.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
 // CHECK:STDOUT:     %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
@@ -94,9 +94,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_42.2: type = converted %int.make_type_signed, %.loc4_42.1 [symbolic = %iN (constants.%iN)]
 // CHECK:STDOUT:     %Core.ref.loc4_48: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc4_52: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_63: init type = call %IntLiteral.ref.loc4_52() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %int_literal.make_type.loc4_63 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_64.2: type = converted %int_literal.make_type.loc4_63, %.loc4_64.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_64: init type = call %IntLiteral.ref.loc4_52() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %int_literal.make_type.loc4_64 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_64.2: type = converted %int_literal.make_type.loc4_64, %.loc4_64.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:     %n.param: @F.%iN (%iN) = value_param runtime_param0
@@ -209,9 +209,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref.loc8_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc8_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc8_25: init type = call %IntLiteral.ref.loc8_14() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_26.1: type = value_of_initializer %int_literal.make_type.loc8_25 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_26.2: type = converted %int_literal.make_type.loc8_25, %.loc8_26.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc8_26: init type = call %IntLiteral.ref.loc8_14() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_26.1: type = value_of_initializer %int_literal.make_type.loc8_26 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_26.2: type = converted %int_literal.make_type.loc8_26, %.loc8_26.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %Core.ref.loc8_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Float.ref: %Float.type = name_ref Float, imports.%import_ref.2 [template = constants.%Float]
 // CHECK:STDOUT:     %N.ref.loc8: Core.IntLiteral = name_ref N, %N.loc8_6.1 [symbolic = %N.loc8_6.2 (constants.%N)]
@@ -220,9 +220,9 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc8_44.2: type = converted %float.make_type, %.loc8_44.1
 // CHECK:STDOUT:     %Core.ref.loc8_50: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc8_54: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc8_65: init type = call %IntLiteral.ref.loc8_54() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_66.1: type = value_of_initializer %int_literal.make_type.loc8_65 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc8_66.2: type = converted %int_literal.make_type.loc8_65, %.loc8_66.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc8_66: init type = call %IntLiteral.ref.loc8_54() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_66.1: type = value_of_initializer %int_literal.make_type.loc8_66 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_66.2: type = converted %int_literal.make_type.loc8_66, %.loc8_66.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc8_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc8_6.2 (constants.%N)]
 // CHECK:STDOUT:     %n.param: <error> = value_param runtime_param0

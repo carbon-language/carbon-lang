@@ -279,11 +279,11 @@ class A {
 // CHECK:STDOUT:   %Circle.ref.loc18_15: type = name_ref Circle, file.%Circle.decl [template = constants.%Circle]
 // CHECK:STDOUT:   %Circle.ref.loc18_24: type = name_ref Circle, file.%Circle.decl [template = constants.%Circle]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @Circle.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc18_35.1: ref %Circle = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Circle = call %Make.ref() to %.loc18_35.1
-// CHECK:STDOUT:   %.loc18_35.2: ref %Circle = temporary %.loc18_35.1, %Make.call
-// CHECK:STDOUT:   %.loc18_35.3: %Circle = bind_value %.loc18_35.2
-// CHECK:STDOUT:   %circle: %Circle = bind_name circle, %.loc18_35.3
+// CHECK:STDOUT:   %.loc18_36.1: ref %Circle = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Circle = call %Make.ref() to %.loc18_36.1
+// CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Make.call
+// CHECK:STDOUT:   %.loc18_36.3: %Circle = bind_value %.loc18_36.2
+// CHECK:STDOUT:   %circle: %Circle = bind_name circle, %.loc18_36.3
 // CHECK:STDOUT:   %.loc26_15.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc26_15.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc26_15.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
