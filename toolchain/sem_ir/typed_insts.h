@@ -21,7 +21,7 @@
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
 // - Up to two `[...]Id` members describing the contents of the struct.
-// - Optionally, a `ElementIndex index;` member, for instruction that represent
+// - Optionally, a `ElementIndex index;` member, for instructions that refer to
 //   one of a set of elements (e.g. a field from a class).
 //
 // The field names here matter -- the fields must have the names specified
