@@ -101,10 +101,11 @@ Instructions are stored as type-erased `SemIR::Inst` objects, which store the
 instruction kind and the (up to) four fields described above. This balances the
 size of `SemIR::Inst` against the overhead of indirection.
 
-Most instructions have with them a `LocId` that tracks its location, and is
+Most instructions have with them a `LocId` that tracks their location, and is
 stored on the `InstStore` and retrieved by `GetLocId()`. The exception to this
-is `SemIR::Builtin` which do come with an associated location (as they do not
-come from source code) and for which `GetLocId()` will return `LocId::Invalid`.
+is `SemIR::Builtin` which do not come with an associated location (as they do
+not come from source code) and for which `GetLocId()` will return
+`LocId::Invalid`.
 
 A `SemIR::InstBlock` can represent a code block. However, it can also be created
 when a series of instructions needs to be closely associated, such as a
