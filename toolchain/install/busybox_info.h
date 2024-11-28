@@ -28,18 +28,11 @@ struct BusyboxInfo {
 //
 // Extracts the desired mode for the busybox from the initial command name.
 //
-// Searches to try and locate the installed busybox binary using a
-// heuristic-based algorithm:
+// Checks if the path in argv0 is an executable in a valid Carbon install, or a
+// symlink to such an executable, and sets `bin_path` to the path of
+// `lib/carbon/carbon-busybox` within that install.
 //
-// 1) Sets the initial binary path to the provided `argv[0]` path.
-// 2) Checks if the binary path *is* the busybox binary. If so, uses it.
-// 3) Checks if the binary path is within an installation prefix with a busybox
-//    binary in the expected location relative to that prefix. If so, uses that
-//    busybox.
-// 4) Checks if the binary path is a symlink and if so resolves the binary path
-//    to its target and goes to (2).
-//
-// If unable to locate a plausible busybox binary, returns an error.
+// If unable to locate a plausible busybox binary, returns an error instead.
 inline auto GetBusyboxInfo(llvm::StringRef argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
