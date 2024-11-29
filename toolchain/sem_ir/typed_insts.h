@@ -20,9 +20,10 @@
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
-// - Up to two `[...]Id` members describing the contents of the struct.
-// - Optionally, a `ElementIndex index;` member, for instructions that refer to
-//   one of a set of elements (e.g. a field from a class).
+// - Up to two members describing the contents of the struct. These are types
+//   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
+//
+// TODO: There are some `int32_t` fields, which breaks the above rule, how/why?
 //
 // The field names here matter -- the fields must have the names specified
 // above, when present. When converting to a `SemIR::Inst`, the `kind` and
@@ -34,16 +35,16 @@
 // enumeration. This `Kind` declaration also defines the instruction kind by
 // calling `InstKind::Define` and specifying additional information about the
 // instruction kind. This information is available through the member functions
-// of the `InstKind` value declared in `inst_kind.h`, and includes the name
-// used in textual IR and whether the instruction is a terminator instruction.
+// of the `InstKind` value declared in `inst_kind.h`, and includes the name used
+// in textual IR and whether the instruction is a terminator instruction.
 //
 // Struct types can also be provided for categories of instructions with a
 // common representation, to allow the common representation to be accessed
 // conveniently. In this case, instead of providing a constant `Kind` member,
 // the struct should have a constant `InstKind Kinds[];` member that lists the
-// kinds of instructions in the category, and an `InstKind kind;` member that
-// is used to identify the specific kind of the instruction. Separate struct
-// types still need to be defined for each instruction kind in the category.
+// kinds of instructions in the category, and an `InstKind kind;` member that is
+// used to identify the specific kind of the instruction. Separate struct types
+// still need to be defined for each instruction kind in the category.
 
 namespace Carbon::SemIR {
 

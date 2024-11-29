@@ -89,23 +89,18 @@ instruction, as described in
     instructions, which are modeled as producing a value of "namespace" type,
     even though they can't be used as a first-class value in Carbon expressions.
 
--   Up to two additional, kind-specific members. For example `SemIR::Assign` has
-    members `InstId lhs_id` and `InstId rhs_id`.
-
--   Optionally, an `ElementIndex index` field for instructions that refer to a
-    single element from a larger set. For example, `SemIR::ClassElementAccess`
-    has an `ElementIndex` into the fields of the class to define which field it
-    is accessing.
+-   Up to two additional, kind-specific members, which are typically ids or
+    indexes derived from `IdBase`. For example `SemIR::Assign` has members
+    `InstId lhs_id` and `InstId rhs_id`. And `SemIR::ClassElementAccess` has an
+    `ElementIndex` into the fields of the class to define which field it is
+    accessing. See the comment in
+    [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) for more details.
 
 Instructions are stored as type-erased `SemIR::Inst` objects, which store the
 instruction kind and the (up to) four fields described above. This balances the
-size of `SemIR::Inst` against the overhead of indirection.
-
-Most instructions have with them a `LocId` that tracks their location, and is
-stored on the `InstStore` and retrieved by `GetLocId()`. The exception to this
-is `SemIR::Builtin` which do not come with an associated location (as they do
-not come from source code) and for which `GetLocId()` will return
-`LocId::Invalid`.
+size of `SemIR::Inst` against the overhead of indirection. All instructions have
+with them a `LocId` that tracks their source location, and is stored separately
+on the `InstStore` and retrieved by `GetLocId()`.
 
 A `SemIR::InstBlock` can represent a code block. However, it can also be created
 when a series of instructions needs to be closely associated, such as a
