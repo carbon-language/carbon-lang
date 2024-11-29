@@ -420,6 +420,8 @@ class CompilationUnit {
 
   auto PreCheck() -> Parse::NodeLocConverter& {
     CARBON_CHECK(parse_tree_, "Must call RunParse first");
+    CARBON_CHECK(!node_converter_.has_value(), "Called PreCheck twice");
+
     get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
       return this->GetParseTreeAndSubtrees();
     };
@@ -433,6 +435,7 @@ class CompilationUnit {
                     llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
       -> Check::Unit {
     CARBON_CHECK(node_converter_, "Must call PreCheck first");
+    CARBON_CHECK(!sem_ir_.has_value(), "Called GetCheckUnit twice");
 
     sem_ir_.emplace(check_ir_id, parse_tree_->packaging_decl(), value_stores_,
                     input_filename_);
