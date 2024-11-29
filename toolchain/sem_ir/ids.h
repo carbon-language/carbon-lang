@@ -820,11 +820,11 @@ struct LocId : public IdBase, public Printable<LocId> {
 
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
 
-// Polymorphic id for `Any[...]` typed instructions. Used for fields where the
-// specific instruction structs have different field types in that position or
-// do not have a field in that position at all. Allows conversion with
-// `Inst::As<>` from the specific typed instruction to the `Any[...]`
-// instruction group.
+// Polymorphic id for fields in `Any[...]` typed instruction groups. Used for
+// fields where the specific instruction structs have different field types in
+// that position or do not have a field in that position at all. Allows
+// conversion with `Inst::As<>` from the specific typed instruction to the
+// `Any[...]` instruction group.
 //
 // This participates in `Inst::FromRaw` in order to convert from specific
 // instructions, but does not participate in `Inst::ToRaw` as it's not possible
