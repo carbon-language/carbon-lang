@@ -39,7 +39,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %Add.type, %Op.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity @Add.%Op.decl, element0 [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,7 +75,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param: ref @Op.%.loc5_15.1 (%.1) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @Op.%.loc5_15.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity %Op.decl, element0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -112,7 +112,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %Add.type, %Op.type.2 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity imports.%import_ref.5, element0 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

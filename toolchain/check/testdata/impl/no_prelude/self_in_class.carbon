@@ -31,7 +31,7 @@ class A {
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity @DefaultConstructible.%Make.decl, element0 [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
@@ -66,7 +66,7 @@ class A {
 // CHECK:STDOUT:     %return.param: ref @Make.1.%.loc12_16.1 (%.1) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Make.1.%.loc12_16.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity %Make.decl, element0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %Make.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

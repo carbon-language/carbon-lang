@@ -693,11 +693,11 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity @I.%T, element0 [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.27: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.28: %.27 = assoc_entity @I.%F.decl, element1 [template]
+// CHECK:STDOUT:   %.28: %.27 = assoc_entity element1, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -725,7 +725,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc5_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_21.2: type = converted %int.make_type_signed, %.loc5_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc5_21.3: %.2 = assoc_entity %T, element0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5_21.3: %.2 = assoc_entity element0, %T [template = constants.%.3]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
@@ -735,7 +735,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: %.27 = assoc_entity %F.decl, element1 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc13: %.27 = assoc_entity element1, %F.decl [template = constants.%.28]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

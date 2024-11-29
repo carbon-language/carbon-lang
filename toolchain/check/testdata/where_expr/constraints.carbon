@@ -167,10 +167,10 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.2: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity @I.%Member, element0 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type.1, %J.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity @I.%Second, element1 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @I.%Second [template]
 // CHECK:STDOUT:   %.Self.1: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I.type.2 = bind_symbolic_name U, 0 [symbolic]
@@ -278,10 +278,10 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %.loc7: %.1 = assoc_entity %Member, element0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: %.1 = assoc_entity element0, %Member [template = constants.%.2]
 // CHECK:STDOUT:   %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type.1]
 // CHECK:STDOUT:   %Second: %J.type.1 = assoc_const_decl Second [template]
-// CHECK:STDOUT:   %.loc8: %.3 = assoc_entity %Second, element1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8: %.3 = assoc_entity element1, %Second [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -332,7 +332,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %N.type.1: type = facet_type <@N> [template]
 // CHECK:STDOUT:   %Self: %N.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %N.type.1, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity @N.%P, element0 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @N.%P [template]
 // CHECK:STDOUT:   %.Self: %N.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
@@ -382,7 +382,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: interface @N {
 // CHECK:STDOUT:   %Self: %N.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %P: type = assoc_const_decl P [template]
-// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity %P, element0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %P [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -412,7 +412,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %K.type.1: type = facet_type <@K> [template]
 // CHECK:STDOUT:   %Self.3: %K.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %K.type.1, %L.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity @K.%Associated, element0 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @K.%Associated [template]
 // CHECK:STDOUT:   %.Self: %K.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: %L.type = interface_witness_access %.3, element0 [symbolic]
@@ -484,7 +484,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %Self: %K.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %L.ref: type = name_ref L, file.%L.decl [template = constants.%L.type]
 // CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl Associated [template]
-// CHECK:STDOUT:   %.loc8: %.1 = assoc_entity %Associated, element0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8: %.1 = assoc_entity element0, %Associated [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -510,7 +510,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity imports.%import_ref.11, element0 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, imports.%import_ref.11 [template]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
 // CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 2 [template]

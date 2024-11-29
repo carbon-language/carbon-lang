@@ -42,7 +42,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity @I.%F.decl, element0 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -103,7 +103,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param: @F.1.%C.loc14_12.1 (%C.3) = value_param runtime_param0
 // CHECK:STDOUT:     %c: @F.1.%C.loc14_12.1 (%C.3) = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: %.3 = assoc_entity %F.decl, element0 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc14: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

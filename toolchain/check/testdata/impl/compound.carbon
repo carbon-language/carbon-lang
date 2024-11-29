@@ -43,12 +43,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Simple.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity @Simple.%F.decl, element0 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %.3: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %Simple.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity @Simple.%G.decl, element1 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element1, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -147,7 +147,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity %F.decl, element0 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
 // CHECK:STDOUT:     %self.patt: @G.1.%.loc13_14.1 (%.3) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @G.1.%.loc13_14.1 (%.3) = value_param_pattern %self.patt, runtime_param0
@@ -158,7 +158,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %self.param: @G.1.%.loc13_14.1 (%.3) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%.loc13_14.1 (%.3) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: %.4 = assoc_entity %G.decl, element1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

@@ -34,7 +34,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type.2, %F.type [symbolic]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity @I.%F.decl, element0 [symbolic]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @I(%T) [symbolic]
 // CHECK:STDOUT:   %.4: %.type = struct_value () [symbolic]
 // CHECK:STDOUT: }
@@ -83,7 +83,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %.loc13_29.2: type = assoc_entity_type @I.%I.type (%I.type.2), @I.%F.type (%F.type) [symbolic = %.loc13_29.2 (constants.%.2)]
-// CHECK:STDOUT:   %.loc13_29.3: @I.%.loc13_29.2 (%.2) = assoc_entity %F.decl, element0 [symbolic = %.loc13_29.3 (constants.%.3)]
+// CHECK:STDOUT:   %.loc13_29.3: @I.%.loc13_29.2 (%.2) = assoc_entity element0, %F.decl [symbolic = %.loc13_29.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -106,7 +106,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:       %return.param: ref @F.%.loc13_14.1 (%.1) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.%.loc13_14.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc13_29.1: @I.%.loc13_29.2 (%.2) = assoc_entity %F.decl, element0 [symbolic = %.loc13_29.3 (constants.%.3)]
+// CHECK:STDOUT:     %.loc13_29.1: @I.%.loc13_29.2 (%.2) = assoc_entity element0, %F.decl [symbolic = %.loc13_29.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

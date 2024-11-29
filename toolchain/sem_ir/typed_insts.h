@@ -232,8 +232,8 @@ struct AssociatedEntity {
 
   // The type of the associated entity. This is an AssociatedEntityType.
   TypeId type_id;
-  AbsoluteInstId decl_id;
   ElementIndex index;
+  AbsoluteInstId decl_id;
 };
 
 // The type of an expression that names an associated entity, such as

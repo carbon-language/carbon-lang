@@ -39,7 +39,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %AddWith.type.2, %F.type [symbolic]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity @AddWith.%F.decl, element0 [symbolic]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @AddWith.%F.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -65,12 +65,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T.loc4_19.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %.loc5_9.2: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type) [symbolic = %.loc5_9.2 (constants.%.1)]
-// CHECK:STDOUT:   %.loc5_9.3: @AddWith.%.loc5_9.2 (%.1) = assoc_entity %F.decl, element0 [symbolic = %.loc5_9.3 (constants.%.2)]
+// CHECK:STDOUT:   %.loc5_9.3: @AddWith.%.loc5_9.2 (%.1) = assoc_entity element0, %F.decl [symbolic = %.loc5_9.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = @AddWith.%F (constants.%F)] {} {}
-// CHECK:STDOUT:     %.loc5_9.1: @AddWith.%.loc5_9.2 (%.1) = assoc_entity %F.decl, element0 [symbolic = %.loc5_9.3 (constants.%.2)]
+// CHECK:STDOUT:     %.loc5_9.1: @AddWith.%.loc5_9.2 (%.1) = assoc_entity element0, %F.decl [symbolic = %.loc5_9.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -112,14 +112,14 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %AddWith.type.2, %F.type.1 [symbolic]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity imports.%import_ref.5, element0 [symbolic]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, imports.%import_ref.5 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.3: type = facet_type <@AddWith, @AddWith(%C)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity imports.%import_ref.5, element0 [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %.7: %AddWith.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
@@ -157,7 +157,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %.2: @AddWith.%.1 (%.3) = assoc_entity imports.%import_ref.5, element0 [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.2: @AddWith.%.1 (%.3) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:

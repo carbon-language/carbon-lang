@@ -32,7 +32,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %Simple.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity @Simple.%G.decl, element0 [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %.4: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -92,7 +92,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: @G.1.%.loc12_14.1 (%.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%.loc12_14.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity %G.decl, element0 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %G.decl [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
