@@ -1287,8 +1287,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   return ResolveAs<SemIR::AssociatedEntity>(
       resolver, {.type_id = resolver.local_context().GetTypeIdForTypeConstant(
                      type_const_id),
-                 .index = inst.index,
-                 .decl_id = decl_id});
+                 .decl_id = decl_id,
+                 .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

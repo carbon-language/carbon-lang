@@ -126,14 +126,14 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType) [symbolic]
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %IndexWith.type.2, %At.type.1 [symbolic]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @IndexWith.%At.decl [symbolic]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity @IndexWith.%At.decl, element0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type)> [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @IndexWith.%At.decl [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity @IndexWith.%At.decl, element0 [template]
 // CHECK:STDOUT:   %.6: %IndexWith.type.2 = facet_value %empty_tuple.type, %empty_tuple.type [symbolic]
 // CHECK:STDOUT:   %.7: <witness> = interface_witness (%At.2) [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
@@ -179,7 +179,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType.loc5_26.2) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
 // CHECK:STDOUT:   %.loc6_52.2: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type.1) [symbolic = %.loc6_52.2 (constants.%.2)]
-// CHECK:STDOUT:   %.loc6_52.3: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity element0, %At.decl [symbolic = %.loc6_52.3 (constants.%.3)]
+// CHECK:STDOUT:   %.loc6_52.3: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity %At.decl, element0 [symbolic = %.loc6_52.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -205,7 +205,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc6_52.1: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity element0, %At.decl [symbolic = %.loc6_52.3 (constants.%.3)]
+// CHECK:STDOUT:     %.loc6_52.1: @IndexWith.%.loc6_52.2 (%.2) = assoc_entity %At.decl, element0 [symbolic = %.loc6_52.3 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

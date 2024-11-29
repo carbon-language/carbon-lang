@@ -92,7 +92,7 @@ class D {
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @I.%Member, element0 [template]
 // CHECK:STDOUT:   %.Self.1: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
@@ -181,7 +181,7 @@ class D {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity %Member, element0 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -231,7 +231,7 @@ class D {
 // CHECK:STDOUT:   %J.type.1: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type.1, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @J.%Member [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @J.%Member, element0 [template]
 // CHECK:STDOUT:   %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: type = struct_type {} [template]
 // CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
@@ -276,7 +276,7 @@ class D {
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity %Member, element0 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

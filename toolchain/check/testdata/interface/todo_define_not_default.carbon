@@ -27,7 +27,7 @@ interface I {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @I.%F.decl, element0 [template]
 // CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -35,11 +35,11 @@ interface I {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type, %G.type [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element1, @I.%G.decl [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity @I.%G.decl, element1 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %.6: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.7: %.6 = assoc_entity element2, @I.%T [template]
+// CHECK:STDOUT:   %.7: %.6 = assoc_entity @I.%T, element2 [template]
 // CHECK:STDOUT:   %.8: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.3) [template]
@@ -49,7 +49,7 @@ interface I {
 // CHECK:STDOUT:   %.34: <specific function> = specific_function %.33, @Convert.2(%.3) [template]
 // CHECK:STDOUT:   %.35: %i32 = int_value 42 [template]
 // CHECK:STDOUT:   %.36: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %.37: %.36 = assoc_entity element3, @I.%N [template]
+// CHECK:STDOUT:   %.37: %.36 = assoc_entity @I.%N, element3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,7 +73,7 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc13: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: %.1 = assoc_entity %F.decl, element0 [template = constants.%.2]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -101,7 +101,7 @@ interface I {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: %.4 = assoc_entity element1, %G.decl [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14: %.4 = assoc_entity %G.decl, element1 [template = constants.%.5]
 // CHECK:STDOUT:   %.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%.3]
 // CHECK:STDOUT:   %int.make_type_signed.loc18_19: init type = call constants.%Int(%.loc18_19) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_24: Core.IntLiteral = int_value 32 [template = constants.%.3]
@@ -113,7 +113,7 @@ interface I {
 // CHECK:STDOUT:   %.loc18_28.4: type = converted %int.make_type_signed.loc18_24, %.loc18_28.3 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_28.5: type = converted %.loc18_27, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc18_28.6: %.6 = assoc_entity element2, %T [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18_28.6: %.6 = assoc_entity %T, element2 [template = constants.%.7]
 // CHECK:STDOUT:   %.loc19_11.1: Core.IntLiteral = int_value 32 [template = constants.%.3]
 // CHECK:STDOUT:   %int.make_type_signed.loc19: init type = call constants.%Int(%.loc19_11.1) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_11.2: type = value_of_initializer %int.make_type_signed.loc19 [template = constants.%i32]
@@ -126,7 +126,7 @@ interface I {
 // CHECK:STDOUT:   %.loc19_19.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.35]
 // CHECK:STDOUT:   %.loc19_19.5: %i32 = converted %.loc19_17, %.loc19_19.4 [template = constants.%.35]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc19_19.6: %.36 = assoc_entity element3, %N [template = constants.%.37]
+// CHECK:STDOUT:   %.loc19_19.6: %.36 = assoc_entity %N, element3 [template = constants.%.37]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

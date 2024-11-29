@@ -38,7 +38,7 @@ fn H() {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F, @I(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.2, %F.type.1 [symbolic]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [symbolic]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @I.%F.decl, element0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -48,7 +48,7 @@ fn H() {
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%.3)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F, @I(%.3) [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %I.type.3, %F.type.2 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity @I.%F.decl, element0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,7 +84,7 @@ fn H() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @I.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %.loc12_22.2: type = assoc_entity_type @I.%I.type (%I.type.2), @I.%F.type (%F.type.1) [symbolic = %.loc12_22.2 (constants.%.1)]
-// CHECK:STDOUT:   %.loc12_22.3: @I.%.loc12_22.2 (%.1) = assoc_entity element0, %F.decl [symbolic = %.loc12_22.3 (constants.%.2)]
+// CHECK:STDOUT:   %.loc12_22.3: @I.%.loc12_22.2 (%.1) = assoc_entity %F.decl, element0 [symbolic = %.loc12_22.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -100,7 +100,7 @@ fn H() {
 // CHECK:STDOUT:       %return.param: ref @F.%U.loc12_8.1 (%U) = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref @F.%U.loc12_8.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc12_22.1: @I.%.loc12_22.2 (%.1) = assoc_entity element0, %F.decl [symbolic = %.loc12_22.3 (constants.%.2)]
+// CHECK:STDOUT:     %.loc12_22.1: @I.%.loc12_22.2 (%.1) = assoc_entity %F.decl, element0 [symbolic = %.loc12_22.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -124,7 +124,7 @@ fn H() {
 // CHECK:STDOUT:   %I.type.loc19_4.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc15_6.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %.loc19_7.2: type = assoc_entity_type @G.%I.type.loc19_4.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %.loc19_7.2 (constants.%.1)]
-// CHECK:STDOUT:   %.loc19_7.3: @G.%.loc19_7.2 (%.1) = assoc_entity element0, @I.%F.decl [symbolic = %.loc19_7.3 (constants.%.2)]
+// CHECK:STDOUT:   %.loc19_7.3: @G.%.loc19_7.2 (%.1) = assoc_entity @I.%F.decl, element0 [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:

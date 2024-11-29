@@ -46,7 +46,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %UseSelf.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity @UseSelf.%F.decl, element0 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.4: type = struct_type {} [template]
 // CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
@@ -71,7 +71,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.4 [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %.14: type = assoc_entity_type %SelfNested.type, %F.type.4 [template]
-// CHECK:STDOUT:   %.15: %.14 = assoc_entity element0, @SelfNested.%F.decl [template]
+// CHECK:STDOUT:   %.15: %.14 = assoc_entity @SelfNested.%F.decl, element0 [template]
 // CHECK:STDOUT:   %.16: type = ptr_type %C [template]
 // CHECK:STDOUT:   %.17: type = struct_type {.x: %C, .y: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%.16, %.17) [template]
@@ -143,7 +143,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %return.param: ref @F.1.%.loc12_14.1 (%.1) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @F.1.%.loc12_14.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity %F.decl, element0 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -172,7 +172,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:     %x.param: @F.4.%tuple.type (%tuple.type.2) = value_param runtime_param0
 // CHECK:STDOUT:     %x: @F.4.%tuple.type (%tuple.type.2) = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: %.14 = assoc_entity element0, %F.decl [template = constants.%.15]
+// CHECK:STDOUT:   %.loc28: %.14 = assoc_entity %F.decl, element0 [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

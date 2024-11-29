@@ -21,7 +21,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %UseSelf.type, %F.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @UseSelf.%F.decl [template]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity @UseSelf.%F.decl, element0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -50,7 +50,7 @@ interface UseSelf {
 // CHECK:STDOUT:     %return.param: ref @F.%.loc12_14.1 (%.1) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%.loc12_14.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity %F.decl, element0 [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

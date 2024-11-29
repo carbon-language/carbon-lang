@@ -27,7 +27,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %ForwardDeclared.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @ForwardDeclared.%F.decl [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @ForwardDeclared.%F.decl, element0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,7 +51,7 @@ interface ForwardDeclared {
 // CHECK:STDOUT: interface @ForwardDeclared {
 // CHECK:STDOUT:   %Self: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc17: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc17: %.1 = assoc_entity %F.decl, element0 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

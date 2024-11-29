@@ -26,13 +26,13 @@ interface I {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity @I.%F.decl, element0 [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @I.%U [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity @I.%U, element1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.5: type = assoc_entity_type %I.type, %G.type [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element2, @I.%G.decl [template]
+// CHECK:STDOUT:   %.6: %.5 = assoc_entity @I.%G.decl, element2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,9 +51,9 @@ interface I {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12_8.2: type = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc12_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity %F.decl, element0 [template = constants.%.2]
 // CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
-// CHECK:STDOUT:   %.loc13: %.3 = assoc_entity element1, %U [template = constants.%.4]
+// CHECK:STDOUT:   %.loc13: %.3 = assoc_entity %U, element1 [template = constants.%.4]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc16_8.2: type = symbolic_binding_pattern T, 1 [symbolic = %T.patt.loc16_8.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc16_8.2, runtime_param<invalid> [symbolic = %T.patt.loc16_8.1 (constants.%T.patt)]
@@ -61,7 +61,7 @@ interface I {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1, %T.param [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: %.5 = assoc_entity element2, %G.decl [template = constants.%.6]
+// CHECK:STDOUT:   %.loc16: %.5 = assoc_entity %G.decl, element2 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

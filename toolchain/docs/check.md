@@ -84,10 +84,6 @@ instruction, as described in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) (also see
 [adding features for Check](adding_features.md#check)):
 
--   A `Parse::Node parse_node;` member that tracks its location is present on
-    almost all instructions, except instructions like `SemIR::Builtin` that
-    don't have an associated location.
-
 -   A `SemIR::TypeId type_id;` member that describes the type of the instruction
     is present on all instructions that produce a value. This includes namespace
     instructions, which are modeled as producing a value of "namespace" type,
@@ -96,9 +92,19 @@ instruction, as described in
 -   Up to two additional, kind-specific members. For example `SemIR::Assign` has
     members `InstId lhs_id` and `InstId rhs_id`.
 
+-   Optionally, an `ElementIndex index` field for instructions that refer to a
+    single element from a larger set. For example, `SemIR::ClassElementAccess`
+    has an `ElementIndex` into the fields of the class to define which field it
+    is accessing.
+
 Instructions are stored as type-erased `SemIR::Inst` objects, which store the
 instruction kind and the (up to) four fields described above. This balances the
 size of `SemIR::Inst` against the overhead of indirection.
+
+Most instructions have with them a `LocId` that tracks its location, and is
+stored on the `InstStore` and retrieved by `GetLocId()`. The exception to this
+is `SemIR::Builtin` which do come with an associated location (as they do not
+come from source code) and for which `GetLocId()` will return `LocId::Invalid`.
 
 A `SemIR::InstBlock` can represent a code block. However, it can also be created
 when a series of instructions needs to be closely associated, such as a
