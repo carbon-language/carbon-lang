@@ -16,7 +16,6 @@
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/block_value_store.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -278,22 +277,16 @@ class Inst : public Printable<Inst> {
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-  static constexpr auto ToRaw(BuiltinInstKind kind) -> int32_t {
-    return kind.AsInt();
-  }
 
   // Convert a field from its raw representation.
   template <typename T>
+    requires IdKind::Contains<T>
   static constexpr auto FromRaw(int32_t raw) -> T {
     return T(raw);
   }
   template <>
   constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
     return IntId::MakeRaw(raw);
-  }
-  template <>
-  constexpr auto FromRaw<BuiltinInstKind>(int32_t raw) -> BuiltinInstKind {
-    return BuiltinInstKind::FromInt(raw);
   }
 
   int32_t kind_;
