@@ -21,7 +21,8 @@ namespace Carbon::Check {
 struct Unit {
   DiagnosticConsumer* consumer;
   SharedValueStores* value_stores;
-  std::optional<Timings>* timings;
+  // The `timings` may be null if nothing is to be recorded.
+  Timings* timings;
   const Lex::TokenizedBuffer* tokens;
   const Parse::Tree* parse_tree;
 
