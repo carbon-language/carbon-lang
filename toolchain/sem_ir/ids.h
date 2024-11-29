@@ -649,6 +649,7 @@ constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
 struct InstBlockId : public IdBase, public Printable<InstBlockId> {
+  // Constants for BlockValueStore<InstBlockId>.
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
@@ -704,6 +705,7 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 // The ID of a type block.
 struct StructTypeFieldsId : public IdBase,
                             public Printable<StructTypeFieldsId> {
+  // Constants for BlockValueStore<StructTypeFieldsId>.
   using ElementType = StructTypeField;
   using ValueType = llvm::MutableArrayRef<StructTypeField>;
 
@@ -781,6 +783,7 @@ constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
+  // Constants for BlockValueStore<TypeBlockId>.
   using ElementType = TypeId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
