@@ -974,22 +974,22 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %V.loc9_10.1: %S_where.type.1 = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc9_10.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithU.decl: %WithU.type = fn_decl @WithU [template = constants.%WithU] {
-// CHECK:STDOUT:     %W.patt.loc19_10.1: %S_where.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc19_10.2 (constants.%W.patt)]
-// CHECK:STDOUT:     %W.param_patt: %S_where.type.2 = value_param_pattern %W.patt.loc19_10.1, runtime_param<invalid> [symbolic = %W.patt.loc19_10.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.patt.loc11_10.1: %S_where.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
+// CHECK:STDOUT:     %W.param_patt: %S_where.type.2 = value_param_pattern %W.patt.loc11_10.1, runtime_param<invalid> [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:     %.Self: %S.type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %U.ref: %.1 = name_ref U, @S.%.loc6 [template = constants.%.3]
-// CHECK:STDOUT:     %.loc19_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc19_22.2: type = interface_witness_access %.loc19_22.1, element1 [symbolic = constants.%.6]
-// CHECK:STDOUT:     %.loc19_28.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc19_28.2: type = converted %.loc19_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc19_16: type = where_expr %.Self [template = constants.%S_where.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %.loc19_22.2, %.loc19_28.2
+// CHECK:STDOUT:     %.loc11_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.4]
+// CHECK:STDOUT:     %.loc11_22.2: type = interface_witness_access %.loc11_22.1, element1 [symbolic = constants.%.6]
+// CHECK:STDOUT:     %.loc11_28.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_28.2: type = converted %.loc11_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc11_16: type = where_expr %.Self [template = constants.%S_where.type.2] {
+// CHECK:STDOUT:       requirement_rewrite %.loc11_22.2, %.loc11_28.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %S_where.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %W.loc19_10.1: %S_where.type.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc19_10.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc11_10.1: %S_where.type.2 = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc11_10.2 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1019,17 +1019,17 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WithU(%W.loc19_10.1: %S_where.type.2) {
-// CHECK:STDOUT:   %W.loc19_10.2: %S_where.type.2 = bind_symbolic_name W, 0 [symbolic = %W.loc19_10.2 (constants.%W)]
-// CHECK:STDOUT:   %W.patt.loc19_10.2: %S_where.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc19_10.2 (constants.%W.patt)]
+// CHECK:STDOUT: generic fn @WithU(%W.loc11_10.1: %S_where.type.2) {
+// CHECK:STDOUT:   %W.loc11_10.2: %S_where.type.2 = bind_symbolic_name W, 0 [symbolic = %W.loc11_10.2 (constants.%W)]
+// CHECK:STDOUT:   %W.patt.loc11_10.2: %S_where.type.2 = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: %S_where.type.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %WithT.ref: %WithT.type = name_ref WithT, file.%WithT.decl [template = constants.%WithT]
-// CHECK:STDOUT:     %W.ref: %S_where.type.2 = name_ref W, %W.loc19_10.1 [symbolic = %W.loc19_10.2 (constants.%W)]
-// CHECK:STDOUT:     %.loc20: %S_where.type.1 = converted %W.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %W.ref: %S_where.type.2 = name_ref W, %W.loc11_10.1 [symbolic = %W.loc11_10.2 (constants.%W)]
+// CHECK:STDOUT:     %.loc22: %S_where.type.1 = converted %W.ref, <error> [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1040,8 +1040,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithU(constants.%W) {
-// CHECK:STDOUT:   %W.loc19_10.2 => constants.%W
-// CHECK:STDOUT:   %W.patt.loc19_10.2 => constants.%W
+// CHECK:STDOUT:   %W.loc11_10.2 => constants.%W
+// CHECK:STDOUT:   %W.patt.loc11_10.2 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_rewrites.carbon
