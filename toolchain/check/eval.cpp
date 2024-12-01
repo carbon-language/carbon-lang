@@ -445,9 +445,15 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   return info;
 }
 
-static auto CanonicalizeFacetTypeInfo(SemIR::FacetTypeInfo* info) {
-  std::sort(info->impls_constraints.begin(), info->impls_constraints.end());
-  std::sort(info->rewrite_constraints.begin(), info->rewrite_constraints.end());
+template <typename VecT>
+static auto SortAndDeduplicate(VecT* vec) -> void {
+  std::sort(vec->begin(), vec->end());
+  vec->erase(std::unique(vec->begin(), vec->end()), vec->end());
+}
+
+static auto CanonicalizeFacetTypeInfo(SemIR::FacetTypeInfo* info) -> void {
+  SortAndDeduplicate(&info->impls_constraints);
+  SortAndDeduplicate(&info->rewrite_constraints);
   // TODO: Canonicalize other requirements.
 }
 
