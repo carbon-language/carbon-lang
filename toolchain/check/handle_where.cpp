@@ -27,9 +27,6 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
   context.scope_stack().Push();
-  // FIXME: Try deleting!
-  // Create a generic region containing `.Self` and the constraints.
-  StartGenericDecl(context);
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto entity_name_id = context.entity_names().Add(
@@ -122,10 +119,6 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  // FIXME: Try deleting!
-  // Discard the generic region containing `.Self` and the constraints.
-  // TODO: Decide if we want to build a `Generic` object for this.
-  DiscardGenericDecl(context);
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();

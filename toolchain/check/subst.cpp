@@ -206,7 +206,6 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         new_facet_type_info.rewrite_constraints[i].rhs_const_id = rhs_id;
         new_facet_type_info.rewrite_constraints[i].lhs_const_id = lhs_id;
       }
-      // FIXME: sort (and deduplicate)
       for (auto i : llvm::reverse(
                llvm::seq(old_facet_type_info.impls_constraints.size()))) {
         auto specific_id = PopOperand(
@@ -215,7 +214,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         new_facet_type_info.impls_constraints[i].specific_id =
             SemIR::SpecificId(specific_id);
       }
-      // TODO: sort and deduplicate
+      new_facet_type_info.Canonicalize();
       return context.facet_types().Add(new_facet_type_info).index;
     }
     default:

@@ -206,7 +206,7 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     CARBON_CHECK(constant_id.is_symbolic());
     if (eval_context.constant_values()
             .GetSymbolicConstant(constant_id)
-            .dot_self) {
+            .period_self) {
       return Phase::PeriodSelfSymbolic;
     } else {
       return Phase::Symbolic;
@@ -443,18 +443,6 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   }
   // TODO: Process other requirements.
   return info;
-}
-
-template <typename VecT>
-static auto SortAndDeduplicate(VecT* vec) -> void {
-  std::sort(vec->begin(), vec->end());
-  vec->erase(std::unique(vec->begin(), vec->end()), vec->end());
-}
-
-static auto CanonicalizeFacetTypeInfo(SemIR::FacetTypeInfo* info) -> void {
-  SortAndDeduplicate(&info->impls_constraints);
-  SortAndDeduplicate(&info->rewrite_constraints);
-  // TODO: Canonicalize other requirements.
 }
 
 // Replaces the specified field of the given typed instruction with its constant
@@ -1510,7 +1498,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       Phase phase = Phase::Template;
       SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
           eval_context, facet_type.facet_type_id, &phase);
-      CanonicalizeFacetTypeInfo(&info);
+      info.Canonicalize();
       // TODO: Reuse `inst` if we can detect that nothing has changed.
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
@@ -1746,7 +1734,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           }
         }
       }
-      CanonicalizeFacetTypeInfo(&info);
+      info.Canonicalize();
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 

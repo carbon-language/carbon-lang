@@ -101,16 +101,16 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty]
 // CHECK:STDOUT:     %T.ref.loc18_25: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:     %Empty.type.loc18_24.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_24.2 (constants.%Empty.type.3)]
-// CHECK:STDOUT:     %.Self.1: %Empty.type.3 = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.Self.ref: %Empty.type.3 = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.loc18_34.1: %.3 = specific_constant @Empty.%.loc12_15.1, @Empty(constants.%T) [symbolic = constants.%.4]
-// CHECK:STDOUT:     %A.ref: %.3 = name_ref A, %.loc18_34.1 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc18_34.2: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc18_34.3: type = interface_witness_access %.loc18_34.2, element0 [symbolic = constants.%.6]
-// CHECK:STDOUT:     %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc18_40: type = ptr_type %T [symbolic = constants.%.7]
-// CHECK:STDOUT:     %.loc18_28.1: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
-// CHECK:STDOUT:       requirement_rewrite %.loc18_34.3, %.loc18_40
+// CHECK:STDOUT:     %.Self.1: @H.%Empty.type.loc18_24.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.Self.ref: @H.%Empty.type.loc18_24.2 (%Empty.type.3) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:     %.loc18_34.1: @H.%.loc18_34.4 (%.3) = specific_constant @Empty.%.loc12_15.1, @Empty(constants.%T) [symbolic = %.loc18_34.5 (constants.%.4)]
+// CHECK:STDOUT:     %A.ref: @H.%.loc18_34.4 (%.3) = name_ref A, %.loc18_34.1 [symbolic = %.loc18_34.5 (constants.%.4)]
+// CHECK:STDOUT:     %.loc18_34.2: <witness> = facet_access_witness %.Self.ref [symbolic = %.loc18_34.6 (constants.%.5)]
+// CHECK:STDOUT:     %.loc18_34.3: type = interface_witness_access %.loc18_34.2, element0 [symbolic = %.loc18_34.7 (constants.%.6)]
+// CHECK:STDOUT:     %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
+// CHECK:STDOUT:     %.loc18_40.1: type = ptr_type %T [symbolic = %.loc18_40.2 (constants.%.7)]
+// CHECK:STDOUT:     %.loc18_28: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
+// CHECK:STDOUT:       requirement_rewrite %.loc18_34.3, %.loc18_40.1
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_6.2 (constants.%T)]
@@ -174,11 +174,13 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.loc18_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc18_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %Empty.type.loc18_24.2: type = facet_type <@Empty, @Empty(%T.loc18_6.2)> [symbolic = %Empty.type.loc18_24.2 (constants.%Empty.type.3)]
-// CHECK:STDOUT:   %.Self.loc18: @H.%Empty.type.loc18_24.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.loc18 (constants.%.Self.1)]
-// CHECK:STDOUT:   %.loc18_28.2: <witness> = facet_access_witness %.Self.loc18 [symbolic = %.loc18_28.2 (constants.%.5)]
-// CHECK:STDOUT:   %.loc18_28.3: type = interface_witness_access %.loc18_28.2, element0 [symbolic = %.loc18_28.3 (constants.%.6)]
-// CHECK:STDOUT:   %.loc18_28.4: type = ptr_type @H.%T.loc18_6.2 (%T) [symbolic = %.loc18_28.4 (constants.%.7)]
-// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %.loc18_28.3 (constants.%.6) = %.loc18_28.4 (constants.%.7)> [symbolic = %Empty_where.type (constants.%Empty_where.type.1)]
+// CHECK:STDOUT:   %.Self.2: @H.%Empty.type.loc18_24.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:   %.loc18_34.4: type = assoc_entity_type @H.%Empty.type.loc18_24.2 (%Empty.type.3), type [symbolic = %.loc18_34.4 (constants.%.3)]
+// CHECK:STDOUT:   %.loc18_34.5: @H.%.loc18_34.4 (%.3) = assoc_entity element0, @Empty.%A [symbolic = %.loc18_34.5 (constants.%.4)]
+// CHECK:STDOUT:   %.loc18_34.6: <witness> = facet_access_witness %.Self.2 [symbolic = %.loc18_34.6 (constants.%.5)]
+// CHECK:STDOUT:   %.loc18_34.7: type = interface_witness_access %.loc18_34.6, element0 [symbolic = %.loc18_34.7 (constants.%.6)]
+// CHECK:STDOUT:   %.loc18_40.2: type = ptr_type @H.%T.loc18_6.2 (%T) [symbolic = %.loc18_40.2 (constants.%.7)]
+// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc18_6.2) where %.loc18_34.7 (constants.%.6) = %.loc18_40.2 (constants.%.7)> [symbolic = %Empty_where.type (constants.%Empty_where.type.1)]
 // CHECK:STDOUT:   %V.loc18_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc18_43.2 (constants.%V)]
 // CHECK:STDOUT:   %V.patt.loc18_43.2: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:
@@ -236,10 +238,12 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T
 // CHECK:STDOUT:   %Empty.type.loc18_24.2 => constants.%Empty.type.3
-// CHECK:STDOUT:   %.Self.loc18 => constants.%.Self.1
-// CHECK:STDOUT:   %.loc18_28.2 => constants.%.5
-// CHECK:STDOUT:   %.loc18_28.3 => constants.%.6
-// CHECK:STDOUT:   %.loc18_28.4 => constants.%.7
+// CHECK:STDOUT:   %.Self.2 => constants.%.Self.1
+// CHECK:STDOUT:   %.loc18_34.4 => constants.%.3
+// CHECK:STDOUT:   %.loc18_34.5 => constants.%.4
+// CHECK:STDOUT:   %.loc18_34.6 => constants.%.5
+// CHECK:STDOUT:   %.loc18_34.7 => constants.%.6
+// CHECK:STDOUT:   %.loc18_40.2 => constants.%.7
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.1
 // CHECK:STDOUT:   %V.loc18_43.2 => constants.%V
 // CHECK:STDOUT:   %V.patt.loc18_43.2 => constants.%V
@@ -260,10 +264,12 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.loc18_6.2 => constants.%i32
 // CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%i32
 // CHECK:STDOUT:   %Empty.type.loc18_24.2 => constants.%Empty.type.4
-// CHECK:STDOUT:   %.Self.loc18 => constants.%.Self.2
-// CHECK:STDOUT:   %.loc18_28.2 => constants.%.11
-// CHECK:STDOUT:   %.loc18_28.3 => constants.%.12
-// CHECK:STDOUT:   %.loc18_28.4 => constants.%.13
+// CHECK:STDOUT:   %.Self.2 => constants.%.Self.2
+// CHECK:STDOUT:   %.loc18_34.4 => constants.%.9
+// CHECK:STDOUT:   %.loc18_34.5 => constants.%.10
+// CHECK:STDOUT:   %.loc18_34.6 => constants.%.11
+// CHECK:STDOUT:   %.loc18_34.7 => constants.%.12
+// CHECK:STDOUT:   %.loc18_40.2 => constants.%.13
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.2
 // CHECK:STDOUT:   %V.loc18_43.2 => bool
 // CHECK:STDOUT:   %V.patt.loc18_43.2 => bool

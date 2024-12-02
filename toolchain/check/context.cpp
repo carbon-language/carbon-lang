@@ -115,7 +115,8 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
-  if (types().GetConstantId(inst.type_id()).is_symbolic()) {
+  if (constant_values().DependsOnGenericParameter(
+          types().GetConstantId(inst.type_id()))) {
     dep_kind |= GenericRegionStack::DependencyKind::SymbolicType;
   }
 
@@ -128,7 +129,7 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
     // If the constant value is symbolic, track that we need to substitute into
     // it.
-    if (const_id.is_symbolic()) {
+    if (constant_values().DependsOnGenericParameter(const_id)) {
       dep_kind |= GenericRegionStack::DependencyKind::SymbolicConstant;
     }
   }

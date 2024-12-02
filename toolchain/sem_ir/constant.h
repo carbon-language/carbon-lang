@@ -25,12 +25,12 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   // constants, or invalid if `generic_id` is invalid.
   GenericInstIndex index;
   // True if this is constant is symbolic just because it uses `.Self`.
-  bool dot_self;
+  bool period_self;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << ", .Self: " << (dot_self ? "true" : "false")
-        << "}";
+        << ", index: " << index
+        << ", .Self: " << (period_self ? "true" : "false") << "}";
   }
 };
 
@@ -103,6 +103,12 @@ class ConstantValueStore {
   auto GetSymbolicConstant(ConstantId const_id) const
       -> const SymbolicConstant& {
     return symbolic_constants_[const_id.symbolic_index()];
+  }
+
+  // Returns true for symbolic constants other than those that are only symbolic
+  // because they depend on `.Self`.
+  auto DependsOnGenericParameter(ConstantId const_id) const -> bool {
+    return const_id.is_symbolic() && !GetSymbolicConstant(const_id).period_self;
   }
 
   // Collects memory usage of members.

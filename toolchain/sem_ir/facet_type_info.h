@@ -62,6 +62,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   bool other_requirements;
   // TODO: Add optional resolved facet type.
 
+  // Sorts and deduplicates constraints.
+  auto Canonicalize() -> void;
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // TODO: Update callers to be able to deal with facet types that aren't a

@@ -81,7 +81,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
           context_.insts().Get(inst_id));
       return true;
     }
-    if (!const_id.is_symbolic()) {
+    if (!context_.constant_values().DependsOnGenericParameter(const_id)) {
       // This instruction doesn't have a symbolic constant value, so can't
       // contain any bindings that need to be substituted.
       return true;
