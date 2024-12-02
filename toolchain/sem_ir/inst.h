@@ -128,7 +128,7 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
-  // Makes the an instruction for a singleton. This exists to support simple
+  // Makes an instruction for a singleton. This exists to support simple
   // construction of all singletons by File.
   static auto MakeSingleton(InstKind kind) -> Inst {
     CARBON_CHECK(IsSingletonInstKind(kind));
