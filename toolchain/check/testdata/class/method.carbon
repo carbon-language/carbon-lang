@@ -422,13 +422,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallFOnInitializingExpr() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc54_14.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc54_14.1
-// CHECK:STDOUT:   %.loc54_14.2: ref %Class = temporary %.loc54_14.1, %Make.call
+// CHECK:STDOUT:   %.loc54_15.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc54_15.1
+// CHECK:STDOUT:   %.loc54_15.2: ref %Class = temporary %.loc54_15.1, %Make.call
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_14.2, %F.ref
-// CHECK:STDOUT:   %.loc54_14.3: %Class = bind_value %.loc54_14.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc54_16(%.loc54_14.3)
+// CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_15.2, %F.ref
+// CHECK:STDOUT:   %.loc54_15.3: %Class = bind_value %.loc54_15.2
+// CHECK:STDOUT:   %F.call: init %i32 = call %.loc54_16(%.loc54_15.3)
 // CHECK:STDOUT:   %.loc54_20.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc54_20.2: %i32 = converted %F.call, %.loc54_20.1
 // CHECK:STDOUT:   return %.loc54_20.2
@@ -437,13 +437,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallGOnInitializingExpr() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc58_14.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_14.1
-// CHECK:STDOUT:   %.loc58_14.2: ref %Class = temporary %.loc58_14.1, %Make.call
+// CHECK:STDOUT:   %.loc58_15.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_15.1
+// CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc58_16: <bound method> = bound_method %.loc58_14.2, %G.ref
-// CHECK:STDOUT:   %.loc58_14.3: %.2 = addr_of %.loc58_14.2
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc58_16(%.loc58_14.3)
+// CHECK:STDOUT:   %.loc58_16: <bound method> = bound_method %.loc58_15.2, %G.ref
+// CHECK:STDOUT:   %.loc58_15.3: %.2 = addr_of %.loc58_15.2
+// CHECK:STDOUT:   %G.call: init %i32 = call %.loc58_16(%.loc58_15.3)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %G.call, %.loc58_20.1
 // CHECK:STDOUT:   return %.loc58_20.2

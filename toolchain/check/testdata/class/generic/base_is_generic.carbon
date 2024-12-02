@@ -592,23 +592,23 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc8_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X.loc9_17.2: type = class_type @X, @X(%T.loc8_9.2) [symbolic = %X.loc9_17.2 (constants.%X.3)]
+// CHECK:STDOUT:   %X.loc9_19.2: type = class_type @X, @X(%T.loc8_9.2) [symbolic = %X.loc9_19.2 (constants.%X.3)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc8_9.2) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %.loc9_20.2: type = unbound_element_type @C.%C (%C.2), @C.%X.loc9_17.2 (%X.3) [symbolic = %.loc9_20.2 (constants.%.5)]
-// CHECK:STDOUT:   %.loc10_1.2: type = struct_type {.base: @C.%X.loc9_17.2 (%X.3)} [symbolic = %.loc10_1.2 (constants.%.6)]
+// CHECK:STDOUT:   %.loc9_20.2: type = unbound_element_type @C.%C (%C.2), @C.%X.loc9_19.2 (%X.3) [symbolic = %.loc9_20.2 (constants.%.5)]
+// CHECK:STDOUT:   %.loc10_1.2: type = struct_type {.base: @C.%X.loc9_19.2 (%X.3)} [symbolic = %.loc10_1.2 (constants.%.6)]
 // CHECK:STDOUT:   %.loc10_1.3: <witness> = complete_type_witness @C.%.loc10_1.2 (%.6) [symbolic = %.loc10_1.3 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %X.ref: %X.type = name_ref X, file.%X.decl [template = constants.%X.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_9.1 [symbolic = %T.loc8_9.2 (constants.%T)]
-// CHECK:STDOUT:     %X.loc9_17.1: type = class_type @X, @X(constants.%T) [symbolic = %X.loc9_17.2 (constants.%X.3)]
-// CHECK:STDOUT:     %.loc9_20.1: @C.%.loc9_20.2 (%.5) = base_decl %X.loc9_17.1, element0 [template]
+// CHECK:STDOUT:     %X.loc9_19.1: type = class_type @X, @X(constants.%T) [symbolic = %X.loc9_19.2 (constants.%X.3)]
+// CHECK:STDOUT:     %.loc9_20.1: @C.%.loc9_20.2 (%.5) = base_decl %X.loc9_19.1, element0 [template]
 // CHECK:STDOUT:     %.loc10_1.1: <witness> = complete_type_witness %.6 [symbolic = %.loc10_1.3 (constants.%.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     .base = %.loc9_20.1
-// CHECK:STDOUT:     extend %X.loc9_17.1
+// CHECK:STDOUT:     extend %X.loc9_19.1
 // CHECK:STDOUT:     complete_type_witness = %.loc10_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -642,8 +642,8 @@ fn H() {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc13_18: Core.IntLiteral = int_value 32 [template = constants.%.8]
 // CHECK:STDOUT:   %int.make_type_signed.loc13_18: init type = call constants.%Int(%.loc13_18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_17.1: type = value_of_initializer %int.make_type_signed.loc13_18 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_17.2: type = converted %int.make_type_signed.loc13_18, %.loc13_17.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed.loc13_18 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed.loc13_18, %.loc13_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.3]
 // CHECK:STDOUT:   %.loc13_22.1: %G.type.3 = specific_constant @X.%G.decl, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc13_22.1 [template = constants.%G.3]
@@ -716,7 +716,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X.loc9_17.2 => constants.%X.4
+// CHECK:STDOUT:   %X.loc9_19.2 => constants.%X.4
 // CHECK:STDOUT:   %C => constants.%C.3
 // CHECK:STDOUT:   %.loc9_20.2 => constants.%.9
 // CHECK:STDOUT:   %.loc10_1.2 => constants.%.10
@@ -854,8 +854,8 @@ fn H() {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.1]
 // CHECK:STDOUT:   %.loc7_18: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:   %int.make_type_signed.loc7_18: init type = call constants.%Int(%.loc7_18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_17.1: type = value_of_initializer %int.make_type_signed.loc7_18 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_17.2: type = converted %int.make_type_signed.loc7_18, %.loc7_17.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_21.1: type = value_of_initializer %int.make_type_signed.loc7_18 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_21.2: type = converted %int.make_type_signed.loc7_18, %.loc7_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.3]
 // CHECK:STDOUT:   %.loc7_22.1: %G.type.3 = specific_constant imports.%import_ref.7, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc7_22.1 [template = constants.%G.3]

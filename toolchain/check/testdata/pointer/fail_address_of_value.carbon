@@ -247,9 +247,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc53_3: %.6 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
 // CHECK:STDOUT:   %H.call: init %.2 = call %H.ref()
-// CHECK:STDOUT:   %.loc58_5.1: ref %.2 = temporary_storage
-// CHECK:STDOUT:   %.loc58_5.2: ref %.2 = temporary %.loc58_5.1, %H.call
-// CHECK:STDOUT:   %.loc58_7: ref %i32 = struct_access %.loc58_5.2, element0
+// CHECK:STDOUT:   %.loc58_6.1: ref %.2 = temporary_storage
+// CHECK:STDOUT:   %.loc58_6.2: ref %.2 = temporary %.loc58_6.1, %H.call
+// CHECK:STDOUT:   %.loc58_7: ref %i32 = struct_access %.loc58_6.2, element0
 // CHECK:STDOUT:   %.loc58_3: %.18 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %.loc63_9: bool = bool_literal true [template = constants.%.5]
 // CHECK:STDOUT:   %.loc63_5: bool = not %.loc63_9 [template = constants.%.17]

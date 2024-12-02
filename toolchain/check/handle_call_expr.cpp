@@ -26,11 +26,10 @@ auto HandleParseNode(Context& context, Parse::CallExprId node_id) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.
   context.param_and_arg_refs_stack().EndNoPop(Parse::NodeKind::CallExprStart);
-  auto [call_expr_node_id, callee_id] =
-      context.node_stack().PopWithNodeId<Parse::NodeKind::CallExprStart>();
+  auto callee_id = context.node_stack().Pop<Parse::NodeKind::CallExprStart>();
 
   auto call_id = PerformCall(
-      context, call_expr_node_id, callee_id,
+      context, node_id, callee_id,
       context.param_and_arg_refs_stack().PeekCurrentBlockContents());
 
   context.param_and_arg_refs_stack().PopAndDiscard();

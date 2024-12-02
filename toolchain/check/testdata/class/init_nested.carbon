@@ -122,12 +122,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc24_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [template = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.1: ref %Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %MakeInner.call.loc24_25: init %Inner = call %MakeInner.ref.loc24_16() to %.loc24_45.1
+// CHECK:STDOUT:   %MakeInner.call.loc24_26: init %Inner = call %MakeInner.ref.loc24_16() to %.loc24_45.1
 // CHECK:STDOUT:   %MakeInner.ref.loc24_34: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [template = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc24_45.2: ref %Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %MakeInner.call.loc24_43: init %Inner = call %MakeInner.ref.loc24_34() to %.loc24_45.2
-// CHECK:STDOUT:   %.loc24_45.3: %.7 = struct_literal (%MakeInner.call.loc24_25, %MakeInner.call.loc24_43)
-// CHECK:STDOUT:   %.loc24_45.4: init %Outer = class_init (%MakeInner.call.loc24_25, %MakeInner.call.loc24_43), %return
+// CHECK:STDOUT:   %MakeInner.call.loc24_44: init %Inner = call %MakeInner.ref.loc24_34() to %.loc24_45.2
+// CHECK:STDOUT:   %.loc24_45.3: %.7 = struct_literal (%MakeInner.call.loc24_26, %MakeInner.call.loc24_44)
+// CHECK:STDOUT:   %.loc24_45.4: init %Outer = class_init (%MakeInner.call.loc24_26, %MakeInner.call.loc24_44), %return
 // CHECK:STDOUT:   %.loc24_46: init %Outer = converted %.loc24_45.3, %.loc24_45.4
 // CHECK:STDOUT:   return %.loc24_46 to %return
 // CHECK:STDOUT: }

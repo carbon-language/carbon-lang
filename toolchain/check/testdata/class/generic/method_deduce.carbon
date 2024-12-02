@@ -214,19 +214,19 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %Get.ref: @Get.%Get.type (%Get.type.1) = name_ref Get, %.loc15_39.1 [symbolic = %Get (constants.%Get.1)]
 // CHECK:STDOUT:     %U.ref.loc15_43: type = name_ref U, %U.loc15_10.2 [symbolic = %U.loc15_10.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc15_39.2: <specific function> = specific_function %Get.ref, @Get(constants.%T, constants.%U) [symbolic = %.loc15_39.3 (constants.%.4)]
-// CHECK:STDOUT:     %.loc15_42.1: ref @Get.%tuple.type (%tuple.type.2) = temporary_storage
-// CHECK:STDOUT:     %Get.call: init @Get.%tuple.type (%tuple.type.2) = call %.loc15_39.2() to %.loc15_42.1
-// CHECK:STDOUT:     %.loc15_42.2: ref @Get.%tuple.type (%tuple.type.2) = temporary %.loc15_42.1, %Get.call
-// CHECK:STDOUT:     %.loc15_42.3: ref @Get.%T (%T) = tuple_access %.loc15_42.2, element0
-// CHECK:STDOUT:     %.loc15_42.4: @Get.%T (%T) = bind_value %.loc15_42.3
-// CHECK:STDOUT:     %.loc15_42.5: ref @Get.%T (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc15_42.6: init @Get.%T (%T) = initialize_from %.loc15_42.4 to %.loc15_42.5
-// CHECK:STDOUT:     %.loc15_42.7: ref @Get.%U.loc15_10.1 (%U) = tuple_access %.loc15_42.2, element1
-// CHECK:STDOUT:     %.loc15_42.8: @Get.%U.loc15_10.1 (%U) = bind_value %.loc15_42.7
-// CHECK:STDOUT:     %.loc15_42.9: ref @Get.%U.loc15_10.1 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc15_42.10: init @Get.%U.loc15_10.1 (%U) = initialize_from %.loc15_42.8 to %.loc15_42.9
-// CHECK:STDOUT:     %.loc15_42.11: init @Get.%tuple.type (%tuple.type.2) = tuple_init (%.loc15_42.6, %.loc15_42.10) to %return
-// CHECK:STDOUT:     %.loc15_45: init @Get.%tuple.type (%tuple.type.2) = converted %Get.call, %.loc15_42.11
+// CHECK:STDOUT:     %.loc15_44.1: ref @Get.%tuple.type (%tuple.type.2) = temporary_storage
+// CHECK:STDOUT:     %Get.call: init @Get.%tuple.type (%tuple.type.2) = call %.loc15_39.2() to %.loc15_44.1
+// CHECK:STDOUT:     %.loc15_44.2: ref @Get.%tuple.type (%tuple.type.2) = temporary %.loc15_44.1, %Get.call
+// CHECK:STDOUT:     %.loc15_44.3: ref @Get.%T (%T) = tuple_access %.loc15_44.2, element0
+// CHECK:STDOUT:     %.loc15_44.4: @Get.%T (%T) = bind_value %.loc15_44.3
+// CHECK:STDOUT:     %.loc15_44.5: ref @Get.%T (%T) = tuple_access %return, element0
+// CHECK:STDOUT:     %.loc15_44.6: init @Get.%T (%T) = initialize_from %.loc15_44.4 to %.loc15_44.5
+// CHECK:STDOUT:     %.loc15_44.7: ref @Get.%U.loc15_10.1 (%U) = tuple_access %.loc15_44.2, element1
+// CHECK:STDOUT:     %.loc15_44.8: @Get.%U.loc15_10.1 (%U) = bind_value %.loc15_44.7
+// CHECK:STDOUT:     %.loc15_44.9: ref @Get.%U.loc15_10.1 (%U) = tuple_access %return, element1
+// CHECK:STDOUT:     %.loc15_44.10: init @Get.%U.loc15_10.1 (%U) = initialize_from %.loc15_44.8 to %.loc15_44.9
+// CHECK:STDOUT:     %.loc15_44.11: init @Get.%tuple.type (%tuple.type.2) = tuple_init (%.loc15_44.6, %.loc15_44.10) to %return
+// CHECK:STDOUT:     %.loc15_45: init @Get.%tuple.type (%tuple.type.2) = converted %Get.call, %.loc15_44.11
 // CHECK:STDOUT:     return %.loc15_45 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -249,19 +249,19 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %x.ref: @GetNoDeduce.%T (%T) = name_ref x, %x
 // CHECK:STDOUT:     %U.ref.loc16_68: type = name_ref U, %U.loc16_24.2 [symbolic = %U.loc16_24.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc16_53.2: <specific function> = specific_function %GetNoDeduce.ref, @GetNoDeduce(constants.%T, constants.%U) [symbolic = %.loc16_53.3 (constants.%.5)]
-// CHECK:STDOUT:     %.loc16_64.1: ref @GetNoDeduce.%tuple.type (%tuple.type.2) = temporary_storage
-// CHECK:STDOUT:     %GetNoDeduce.call: init @GetNoDeduce.%tuple.type (%tuple.type.2) = call %.loc16_53.2(%x.ref) to %.loc16_64.1
-// CHECK:STDOUT:     %.loc16_64.2: ref @GetNoDeduce.%tuple.type (%tuple.type.2) = temporary %.loc16_64.1, %GetNoDeduce.call
-// CHECK:STDOUT:     %.loc16_64.3: ref @GetNoDeduce.%T (%T) = tuple_access %.loc16_64.2, element0
-// CHECK:STDOUT:     %.loc16_64.4: @GetNoDeduce.%T (%T) = bind_value %.loc16_64.3
-// CHECK:STDOUT:     %.loc16_64.5: ref @GetNoDeduce.%T (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc16_64.6: init @GetNoDeduce.%T (%T) = initialize_from %.loc16_64.4 to %.loc16_64.5
-// CHECK:STDOUT:     %.loc16_64.7: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %.loc16_64.2, element1
-// CHECK:STDOUT:     %.loc16_64.8: @GetNoDeduce.%U.loc16_24.1 (%U) = bind_value %.loc16_64.7
-// CHECK:STDOUT:     %.loc16_64.9: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc16_64.10: init @GetNoDeduce.%U.loc16_24.1 (%U) = initialize_from %.loc16_64.8 to %.loc16_64.9
-// CHECK:STDOUT:     %.loc16_64.11: init @GetNoDeduce.%tuple.type (%tuple.type.2) = tuple_init (%.loc16_64.6, %.loc16_64.10) to %return
-// CHECK:STDOUT:     %.loc16_70: init @GetNoDeduce.%tuple.type (%tuple.type.2) = converted %GetNoDeduce.call, %.loc16_64.11
+// CHECK:STDOUT:     %.loc16_69.1: ref @GetNoDeduce.%tuple.type (%tuple.type.2) = temporary_storage
+// CHECK:STDOUT:     %GetNoDeduce.call: init @GetNoDeduce.%tuple.type (%tuple.type.2) = call %.loc16_53.2(%x.ref) to %.loc16_69.1
+// CHECK:STDOUT:     %.loc16_69.2: ref @GetNoDeduce.%tuple.type (%tuple.type.2) = temporary %.loc16_69.1, %GetNoDeduce.call
+// CHECK:STDOUT:     %.loc16_69.3: ref @GetNoDeduce.%T (%T) = tuple_access %.loc16_69.2, element0
+// CHECK:STDOUT:     %.loc16_69.4: @GetNoDeduce.%T (%T) = bind_value %.loc16_69.3
+// CHECK:STDOUT:     %.loc16_69.5: ref @GetNoDeduce.%T (%T) = tuple_access %return, element0
+// CHECK:STDOUT:     %.loc16_69.6: init @GetNoDeduce.%T (%T) = initialize_from %.loc16_69.4 to %.loc16_69.5
+// CHECK:STDOUT:     %.loc16_69.7: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %.loc16_69.2, element1
+// CHECK:STDOUT:     %.loc16_69.8: @GetNoDeduce.%U.loc16_24.1 (%U) = bind_value %.loc16_69.7
+// CHECK:STDOUT:     %.loc16_69.9: ref @GetNoDeduce.%U.loc16_24.1 (%U) = tuple_access %return, element1
+// CHECK:STDOUT:     %.loc16_69.10: init @GetNoDeduce.%U.loc16_24.1 (%U) = initialize_from %.loc16_69.8 to %.loc16_69.9
+// CHECK:STDOUT:     %.loc16_69.11: init @GetNoDeduce.%tuple.type (%tuple.type.2) = tuple_init (%.loc16_69.6, %.loc16_69.10) to %return
+// CHECK:STDOUT:     %.loc16_70: init @GetNoDeduce.%tuple.type (%tuple.type.2) = converted %GetNoDeduce.call, %.loc16_69.11
 // CHECK:STDOUT:     return %.loc16_70 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

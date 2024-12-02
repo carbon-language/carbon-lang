@@ -178,8 +178,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %As.ref: %As.type.1 = name_ref As, file.%As.decl [template = constants.%As]
 // CHECK:STDOUT:     %.loc23_25: Core.IntLiteral = int_value 32 [template = constants.%.10]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc23_25) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_24.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_24.2: type = converted %int.make_type_signed, %.loc23_24.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc23_28.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc23_28.2: type = converted %int.make_type_signed, %.loc23_28.1 [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
@@ -190,8 +190,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, file.%ImplicitAs.decl [template = constants.%ImplicitAs]
 // CHECK:STDOUT:     %.loc27_33: Core.IntLiteral = int_value 32 [template = constants.%.10]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc27_33) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc27_32.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc27_32.2: type = converted %int.make_type_signed, %.loc27_32.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc27_36.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc27_36.2: type = converted %int.make_type_signed, %.loc27_36.1 [template = constants.%i32]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [template = constants.%ImplicitAs.type.3]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
@@ -202,8 +202,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.1 = name_ref ImplicitAs, file.%ImplicitAs.decl [template = constants.%ImplicitAs]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc31_23.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc31_23.2: type = converted %int_literal.make_type, %.loc31_23.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc31_36.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc31_36.2: type = converted %int_literal.make_type, %.loc31_36.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [template = constants.%ImplicitAs.type.4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

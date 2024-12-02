@@ -121,16 +121,16 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc15_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type.loc19_4.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
+// CHECK:STDOUT:   %I.type.loc19_6.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_6.2 (constants.%I.type.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc15_6.2) [symbolic = %F.type (constants.%F.type.1)]
-// CHECK:STDOUT:   %.loc19_7.2: type = assoc_entity_type @G.%I.type.loc19_4.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %.loc19_7.2 (constants.%.1)]
+// CHECK:STDOUT:   %.loc19_7.2: type = assoc_entity_type @G.%I.type.loc19_6.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %.loc19_7.2 (constants.%.1)]
 // CHECK:STDOUT:   %.loc19_7.3: @G.%.loc19_7.2 (%.1) = assoc_entity element0, @I.%F.decl [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
-// CHECK:STDOUT:     %I.type.loc19_4.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc19_4.2 (constants.%I.type.2)]
+// CHECK:STDOUT:     %I.type.loc19_6.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc19_6.2 (constants.%I.type.2)]
 // CHECK:STDOUT:     %.loc19_7.1: @G.%.loc19_7.2 (%.1) = specific_constant @I.%.loc12_22.1, @I(constants.%T) [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:     %F.ref: @G.%.loc19_7.2 (%.1) = name_ref F, %.loc19_7.1 [symbolic = %.loc19_7.3 (constants.%.2)]
 // CHECK:STDOUT:     return
@@ -141,7 +141,7 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc23_6: %.3 = struct_literal ()
-// CHECK:STDOUT:   %.loc23_4: type = converted %.loc23_6, constants.%.3 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc23_7: type = converted %.loc23_6, constants.%.3 [template = constants.%.3]
 // CHECK:STDOUT:   %.loc23_3: <specific function> = specific_function %G.ref, @G(constants.%.3) [template = constants.%.4]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %.loc23_3()
 // CHECK:STDOUT:   return
@@ -185,7 +185,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc15_6.2 => constants.%.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type.loc19_4.2 => constants.%I.type.3
+// CHECK:STDOUT:   %I.type.loc19_6.2 => constants.%I.type.3
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %.loc19_7.2 => constants.%.5
 // CHECK:STDOUT:   %.loc19_7.3 => constants.%.6

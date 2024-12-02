@@ -94,14 +94,14 @@ impl i32 as I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %c.patt: @F.1.%C.loc14_12.1 (%C.3) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @F.1.%C.loc14_12.1 (%C.3) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: @F.1.%C.loc14_17.1 (%C.3) = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: @F.1.%C.loc14_17.1 (%C.3) = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %C.loc14_12.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_12.1 (constants.%C.3)]
-// CHECK:STDOUT:     %c.param: @F.1.%C.loc14_12.1 (%C.3) = value_param runtime_param0
-// CHECK:STDOUT:     %c: @F.1.%C.loc14_12.1 (%C.3) = bind_name c, %c.param
+// CHECK:STDOUT:     %C.loc14_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_17.1 (constants.%C.3)]
+// CHECK:STDOUT:     %c.param: @F.1.%C.loc14_17.1 (%C.3) = value_param runtime_param0
+// CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.3) = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: %.3 = assoc_entity element0, %F.decl [template = constants.%.4]
 // CHECK:STDOUT:
@@ -149,9 +149,9 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %C.loc14_12.1: type = class_type @C, @C(constants.%I.type, %Self) [symbolic = %C.loc14_12.1 (constants.%C.3)]
+// CHECK:STDOUT:   %C.loc14_17.1: type = class_type @C, @C(constants.%I.type, %Self) [symbolic = %C.loc14_17.1 (constants.%C.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param_patt: @F.1.%C.loc14_12.1 (%C.3));
+// CHECK:STDOUT:   fn(%c.param_patt: @F.1.%C.loc14_17.1 (%C.3));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c.param_patt: %C.4);
@@ -179,7 +179,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %C.loc14_12.1 => constants.%C.3
+// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(type, constants.%i32) {
@@ -191,7 +191,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%.6) {
 // CHECK:STDOUT:   %Self => constants.%.6
-// CHECK:STDOUT:   %C.loc14_12.1 => constants.%C.5
+// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%.6) {

@@ -75,10 +75,10 @@ fn WithInteger(Q:! O where .P = i32) {}
 fn WithBool(R:! O where .P = bool) {
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `O where .(O.P) = bool` to `O where .(O.P) = i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithInteger(R);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithInteger(R);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,10 +100,10 @@ fn WithT(V:! S where .T = ()) {}
 fn WithU(W:! S where .U = ()) {
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `S where .(S.U) = ()` to `S where .(S.T) = ()` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithT(W);
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: note: type `S where .(S.U) = ()` does not implement interface `ImplicitAs(S where .(S.T) = ())` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithT(W);
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,10 +124,10 @@ import library "nested_rewrites";
 fn Calls() {
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `N where .(N.P) = {}` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Equal(bool);
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(N where .(N.P) = {})` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Equal(bool);
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-10]]:1: in import [InImport]
   // CHECK:STDERR: equal_constraint.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn Equal(T:! N where .P = {});
@@ -137,10 +137,10 @@ fn Calls() {
 
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `A where .(A.C) = () and .(A.B) = bool` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   NestedRewrite(i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(A where .(A.C) = () and .(A.B) = bool)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   NestedRewrite(i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-23]]:1: in import [InImport]
   // CHECK:STDERR: nested_rewrites.carbon:9:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn NestedRewrite(D:! (A where .B = bool) where .C = ());
@@ -1140,7 +1140,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %.loc35_17: Core.IntLiteral = int_value 32 [template = constants.%.29]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc35_17) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc35_16: %A_where.type.2 = converted %int.make_type_signed, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc35_20: %A_where.type.2 = converted %int.make_type_signed, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

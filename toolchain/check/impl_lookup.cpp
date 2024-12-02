@@ -36,6 +36,21 @@ static auto FindAssociatedImportIRs(Context& context,
   worklist.push_back(context.constant_values().GetInstId(type_const_id));
   worklist.push_back(context.constant_values().GetInstId(interface_const_id));
 
+  // Push the contents of an instruction block onto our worklist.
+  auto push_block = [&](SemIR::InstBlockId block_id) {
+    if (block_id.is_valid()) {
+      auto block = context.inst_blocks().Get(block_id);
+      worklist.append(block.begin(), block.end());
+    }
+  };
+
+  // Add the arguments of a specific to the worklist.
+  auto push_args = [&](SemIR::SpecificId specific_id) {
+    if (specific_id.is_valid()) {
+      push_block(context.specifics().Get(specific_id).args_id);
+    }
+  };
+
   while (!worklist.empty()) {
     auto inst_id = worklist.pop_back_val();
 
@@ -52,10 +67,7 @@ static auto FindAssociatedImportIRs(Context& context,
           break;
         }
         case SemIR::IdKind::For<SemIR::InstBlockId>: {
-          if (auto id = SemIR::InstBlockId(arg); id.is_valid()) {
-            auto block = context.inst_blocks().Get(id);
-            worklist.append(block.begin(), block.end());
-          }
+          push_block(SemIR::InstBlockId(arg));
           break;
         }
         case SemIR::IdKind::For<SemIR::ClassId>: {
@@ -71,11 +83,16 @@ static auto FindAssociatedImportIRs(Context& context,
               context.facet_types().Get(SemIR::FacetTypeId(arg));
           for (const auto& impl : facet_type_info.impls_constraints) {
             add_entity(context.interfaces().Get(impl.interface_id));
+            push_args(impl.specific_id);
           }
           break;
         }
         case SemIR::IdKind::For<SemIR::FunctionId>: {
           add_entity(context.functions().Get(SemIR::FunctionId(arg)));
+          break;
+        }
+        case SemIR::IdKind::For<SemIR::SpecificId>: {
+          push_args(SemIR::SpecificId(arg));
           break;
         }
         default: {

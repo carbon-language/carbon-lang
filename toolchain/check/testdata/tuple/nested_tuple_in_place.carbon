@@ -132,12 +132,12 @@ fn H() {
 // CHECK:STDOUT:   %v: ref %tuple.type.4 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_48: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_56.1: ref %tuple.type.2 = tuple_access %v.var, element0
-// CHECK:STDOUT:   %F.call.loc14_49: init %tuple.type.2 = call %F.ref.loc14_48() to %.loc14_56.1
+// CHECK:STDOUT:   %F.call.loc14_50: init %tuple.type.2 = call %F.ref.loc14_48() to %.loc14_56.1
 // CHECK:STDOUT:   %F.ref.loc14_53: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_56.2: ref %tuple.type.2 = tuple_access %v.var, element1
-// CHECK:STDOUT:   %F.call.loc14_54: init %tuple.type.2 = call %F.ref.loc14_53() to %.loc14_56.2
-// CHECK:STDOUT:   %.loc14_56.3: %tuple.type.4 = tuple_literal (%F.call.loc14_49, %F.call.loc14_54)
-// CHECK:STDOUT:   %.loc14_56.4: init %tuple.type.4 = tuple_init (%F.call.loc14_49, %F.call.loc14_54) to %v.var
+// CHECK:STDOUT:   %F.call.loc14_55: init %tuple.type.2 = call %F.ref.loc14_53() to %.loc14_56.2
+// CHECK:STDOUT:   %.loc14_56.3: %tuple.type.4 = tuple_literal (%F.call.loc14_50, %F.call.loc14_55)
+// CHECK:STDOUT:   %.loc14_56.4: init %tuple.type.4 = tuple_init (%F.call.loc14_50, %F.call.loc14_55) to %v.var
 // CHECK:STDOUT:   %.loc14_57: init %tuple.type.4 = converted %.loc14_56.3, %.loc14_56.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_57
 // CHECK:STDOUT:   return

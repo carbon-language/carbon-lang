@@ -34,7 +34,7 @@ import library "types";
 
 // CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR: var invalid_float: Float(32);
-// CHECK:STDERR:                    ^~~~~~
+// CHECK:STDERR:                    ^~~~~~~~~
 // CHECK:STDERR:
 var invalid_float: Float(32);
 

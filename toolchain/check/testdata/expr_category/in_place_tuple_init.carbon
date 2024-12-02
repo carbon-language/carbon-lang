@@ -135,11 +135,11 @@ fn H() -> i32 {
 // CHECK:STDOUT: fn @H() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc20_11.1: ref %tuple.type.2 = temporary_storage
-// CHECK:STDOUT:   %G.call: init %tuple.type.2 = call %G.ref() to %.loc20_11.1
+// CHECK:STDOUT:   %.loc20_12.1: ref %tuple.type.2 = temporary_storage
+// CHECK:STDOUT:   %G.call: init %tuple.type.2 = call %G.ref() to %.loc20_12.1
 // CHECK:STDOUT:   %.loc20_14: Core.IntLiteral = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc20_11.2: ref %tuple.type.2 = temporary %.loc20_11.1, %G.call
-// CHECK:STDOUT:   %.loc20_13.1: ref %i32 = tuple_access %.loc20_11.2, element0
+// CHECK:STDOUT:   %.loc20_12.2: ref %tuple.type.2 = temporary %.loc20_12.1, %G.call
+// CHECK:STDOUT:   %.loc20_13.1: ref %i32 = tuple_access %.loc20_12.2, element0
 // CHECK:STDOUT:   %.loc20_13.2: %i32 = bind_value %.loc20_13.1
 // CHECK:STDOUT:   return %.loc20_13.2
 // CHECK:STDOUT: }
