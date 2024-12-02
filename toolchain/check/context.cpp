@@ -1282,7 +1282,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
         ResolveSpecificDefinition(*this, interface.specific_id);
       }
     }
-    // TODO: Process other requirements.
+    // TODO: Finish facet type resolution.
   }
 
   return true;
