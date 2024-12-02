@@ -208,9 +208,7 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto kind() const -> InstKind {
-    return InstKind::Make(static_cast<InstKind::RawEnumType>(kind_));
-  }
+  auto kind() const -> InstKind { return InstKind::FromInt(kind_); }
 
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }

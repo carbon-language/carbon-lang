@@ -103,7 +103,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   constexpr auto Define(DefinitionInfo info) const -> Definition<TypedNodeId>;
 
   using EnumBase::AsInt;
-  using EnumBase::Make;
+  using EnumBase::FromInt;
 
   // Returns true if the kind matches any of the provided instructions' kinds.
   template <typename... InstT>
