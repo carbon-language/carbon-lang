@@ -1639,6 +1639,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
       bind.value_id = SemIR::InstId::Invalid;
+      if (!ReplaceFieldWithConstantValue(
+              eval_context, &bind, &SemIR::BindSymbolicName::type_id, &phase)) {
+        return MakeNonConstantResult(phase);
+      }
       return MakeConstantResult(eval_context.context(), bind, phase);
     }
 

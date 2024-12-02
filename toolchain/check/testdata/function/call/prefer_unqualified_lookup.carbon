@@ -47,11 +47,11 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.28: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.29: <bound method> = bound_method %.4, %Convert.14 [template]
-// CHECK:STDOUT:   %.30: <specific function> = specific_function %.29, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.31: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.32: <specific function> = specific_function %F.2, @F(%F.1) [symbolic]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %.4, %Convert.14 [template]
+// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.2(%.1) [template]
+// CHECK:STDOUT:   %.29: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %.30: <specific function> = specific_function %F.2, @F(%F.1) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -155,12 +155,12 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_28: Core.IntLiteral = int_value 0 [template = constants.%.4]
-// CHECK:STDOUT:     %.loc8_29.1: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %.loc8_29.2: <bound method> = bound_method %.loc8_28, %.loc8_29.1 [template = constants.%.29]
-// CHECK:STDOUT:     %.loc8_29.3: <specific function> = specific_function %.loc8_29.2, @Convert.2(constants.%.1) [template = constants.%.30]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %.loc8_29.3(%.loc8_28) [template = constants.%.31]
-// CHECK:STDOUT:     %.loc8_29.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
-// CHECK:STDOUT:     %.loc8_29.5: %i32 = converted %.loc8_28, %.loc8_29.4 [template = constants.%.31]
+// CHECK:STDOUT:     %.loc8_29.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %.loc8_29.2: <bound method> = bound_method %.loc8_28, %.loc8_29.1 [template = constants.%.27]
+// CHECK:STDOUT:     %.loc8_29.3: <specific function> = specific_function %.loc8_29.2, @Convert.2(constants.%.1) [template = constants.%.28]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %.loc8_29.3(%.loc8_28) [template = constants.%.29]
+// CHECK:STDOUT:     %.loc8_29.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.29]
+// CHECK:STDOUT:     %.loc8_29.5: %i32 = converted %.loc8_28, %.loc8_29.4 [template = constants.%.29]
 // CHECK:STDOUT:     return %.loc8_29.5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -170,13 +170,13 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %F.loc13_46.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc13_46.1 (constants.%F.1)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc13_46.1) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F.loc13_46.2: @G.%F.type (%F.type) = struct_value () [symbolic = %F.loc13_46.2 (constants.%F.2)]
-// CHECK:STDOUT:   %.loc13_46.3: <specific function> = specific_function %F.loc13_46.2, @F(%F.loc13_46.1) [symbolic = %.loc13_46.3 (constants.%.32)]
+// CHECK:STDOUT:   %.loc13_46.3: <specific function> = specific_function %F.loc13_46.2, @F(%F.loc13_46.1) [symbolic = %.loc13_46.3 (constants.%.30)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc13_46.1: @G.%F.type (%F.type) = specific_constant @Inner.%F.decl, @Inner(constants.%F.1) [symbolic = %F.loc13_46.2 (constants.%F.2)]
 // CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type) = name_ref F, %.loc13_46.1 [symbolic = %F.loc13_46.2 (constants.%F.2)]
-// CHECK:STDOUT:     %.loc13_46.2: <specific function> = specific_function %F.ref, @F(constants.%F.1) [symbolic = %.loc13_46.3 (constants.%.32)]
+// CHECK:STDOUT:     %.loc13_46.2: <specific function> = specific_function %F.ref, @F(constants.%F.1) [symbolic = %.loc13_46.3 (constants.%.30)]
 // CHECK:STDOUT:     %F.call: init %i32 = call %.loc13_46.2()
 // CHECK:STDOUT:     %.loc13_49.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:     %.loc13_49.2: %i32 = converted %F.call, %.loc13_49.1

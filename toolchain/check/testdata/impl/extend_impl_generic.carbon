@@ -85,11 +85,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.2(%.3) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.39: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.40: <bound method> = bound_method %.14, %Convert.14 [template]
-// CHECK:STDOUT:   %.41: <specific function> = specific_function %.40, @Convert.2(%.3) [template]
-// CHECK:STDOUT:   %.42: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %Param = struct_value (%.42) [template]
+// CHECK:STDOUT:   %.37: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.38: <bound method> = bound_method %.14, %Convert.14 [template]
+// CHECK:STDOUT:   %.39: <specific function> = specific_function %.38, @Convert.2(%.3) [template]
+// CHECK:STDOUT:   %.40: %i32 = int_value 2 [template]
+// CHECK:STDOUT:   %struct: %Param = struct_value (%.40) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -217,13 +217,13 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_20: Core.IntLiteral = int_value 2 [template = constants.%.14]
 // CHECK:STDOUT:   %.loc15_21.1: %.15 = struct_literal (%.loc15_20)
-// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.39, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.40]
-// CHECK:STDOUT:   %.loc15_21.4: <specific function> = specific_function %.loc15_21.3, @Convert.2(constants.%.3) [template = constants.%.41]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc15_21.4(%.loc15_20) [template = constants.%.42]
-// CHECK:STDOUT:   %.loc15_21.5: init %i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.42]
+// CHECK:STDOUT:   %.loc15_21.2: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_21.3: <bound method> = bound_method %.loc15_20, %.loc15_21.2 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc15_21.4: <specific function> = specific_function %.loc15_21.3, @Convert.2(constants.%.3) [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc15_21.4(%.loc15_20) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_21.5: init %i32 = converted %.loc15_20, %int.convert_checked [template = constants.%.40]
 // CHECK:STDOUT:   %.loc15_21.6: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc15_21.7: init %i32 = initialize_from %.loc15_21.5 to %.loc15_21.6 [template = constants.%.42]
+// CHECK:STDOUT:   %.loc15_21.7: init %i32 = initialize_from %.loc15_21.5 to %.loc15_21.6 [template = constants.%.40]
 // CHECK:STDOUT:   %.loc15_21.8: init %Param = class_init (%.loc15_21.7), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.8 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc15_22 to %return

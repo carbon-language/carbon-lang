@@ -251,7 +251,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %DeriveFromNonType: type = class_type @DeriveFromNonType [template]
 // CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %.25: type = ptr_type %DeriveFromNonType [template]
+// CHECK:STDOUT:   %.23: type = ptr_type %DeriveFromNonType [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
@@ -277,19 +277,19 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %DeriveFromNonType.decl: type = class_decl @DeriveFromNonType [template = constants.%DeriveFromNonType] {} {}
 // CHECK:STDOUT:   %AccessMemberWithInvalidBasNonType.decl: %AccessMemberWithInvalidBasNonType.type = fn_decl @AccessMemberWithInvalidBasNonType [template = constants.%AccessMemberWithInvalidBasNonType] {
-// CHECK:STDOUT:     %p.patt: %.25 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.25 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %.23 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.23 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %DeriveFromNonType.ref: type = name_ref DeriveFromNonType, file.%DeriveFromNonType.decl [template = constants.%DeriveFromNonType]
-// CHECK:STDOUT:     %.loc15_58: type = ptr_type %DeriveFromNonType [template = constants.%.25]
+// CHECK:STDOUT:     %.loc15_58: type = ptr_type %DeriveFromNonType [template = constants.%.23]
 // CHECK:STDOUT:     %.loc15_64.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc15_64.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_64.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_64.3: type = converted %int.make_type_signed, %.loc15_64.2 [template = constants.%i32]
-// CHECK:STDOUT:     %p.param: %.25 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.25 = bind_name p, %p.param
+// CHECK:STDOUT:     %p.param: %.23 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.23 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -308,9 +308,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessMemberWithInvalidBasNonType(%p.param_patt: %.25) -> %i32 {
+// CHECK:STDOUT: fn @AccessMemberWithInvalidBasNonType(%p.param_patt: %.23) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.25 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.23 = name_ref p, %p
 // CHECK:STDOUT:   %.loc15_78: ref %DeriveFromNonType = deref %p.ref
 // CHECK:STDOUT:   %n.ref: <error> = name_ref n, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -430,10 +430,10 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.5: type = ptr_type %tuple.type.2 [template]
 // CHECK:STDOUT:   %ConvertToBadBaseTuple.type: type = fn_type @ConvertToBadBaseTuple [template]
 // CHECK:STDOUT:   %ConvertToBadBaseTuple: %ConvertToBadBaseTuple.type = struct_value () [template]
-// CHECK:STDOUT:   %.29: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.27: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.29 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.27 [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseTuple.type: type = fn_type @AccessMemberWithInvalidBaseTuple [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseTuple: %AccessMemberWithInvalidBaseTuple.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -483,7 +483,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %DeriveFromTuple.ref: type = name_ref DeriveFromTuple, file.%DeriveFromTuple.decl [template = constants.%DeriveFromTuple]
 // CHECK:STDOUT:     %.loc23_55: type = ptr_type %DeriveFromTuple [template = constants.%.4]
-// CHECK:STDOUT:     %.loc23_61.1: Core.IntLiteral = int_value 32 [template = constants.%.29]
+// CHECK:STDOUT:     %.loc23_61.1: Core.IntLiteral = int_value 32 [template = constants.%.27]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc23_61.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc23_61.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc23_61.3: type = converted %int.make_type_signed, %.loc23_61.2 [template = constants.%i32]
@@ -652,10 +652,10 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.2: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT:   %ConvertToBadBaseIncomplete.type: type = fn_type @ConvertToBadBaseIncomplete [template]
 // CHECK:STDOUT:   %ConvertToBadBaseIncomplete: %ConvertToBadBaseIncomplete.type = struct_value () [template]
-// CHECK:STDOUT:   %.26: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.24: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.26 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %.24 [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseIncomplete.type: type = fn_type @AccessMemberWithInvalidBaseIncomplete [template]
 // CHECK:STDOUT:   %AccessMemberWithInvalidBaseIncomplete: %AccessMemberWithInvalidBaseIncomplete.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -703,7 +703,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %DeriveFromIncomplete.ref: type = name_ref DeriveFromIncomplete, file.%DeriveFromIncomplete.decl [template = constants.%DeriveFromIncomplete]
 // CHECK:STDOUT:     %.loc30_65: type = ptr_type %DeriveFromIncomplete [template = constants.%.1]
-// CHECK:STDOUT:     %.loc30_71.1: Core.IntLiteral = int_value 32 [template = constants.%.26]
+// CHECK:STDOUT:     %.loc30_71.1: Core.IntLiteral = int_value 32 [template = constants.%.24]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc30_71.1) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc30_71.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc30_71.3: type = converted %int.make_type_signed, %.loc30_71.2 [template = constants.%i32]
