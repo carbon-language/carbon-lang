@@ -572,7 +572,8 @@ static auto PerformAggregateAccess(EvalContext& eval_context, SemIR::Inst inst)
       return eval_context.GetConstantValue(elements[index]);
     } else {
       CARBON_CHECK(phase != Phase::Template,
-                   "Failed to evaluate template constant {0}", inst);
+                   "Failed to evaluate template constant {0} arg0: {1}", inst,
+                   eval_context.insts().Get(access_inst.aggregate_id));
     }
     return MakeConstantResult(eval_context.context(), access_inst, phase);
   }
@@ -1619,23 +1620,25 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       const auto& bind_name =
           eval_context.entity_names().Get(bind.entity_name_id);
 
-      // If we know which specific we're evaluating within and this is an
-      // argument of that specific, its constant value is the corresponding
-      // argument value.
-      if (auto value =
-              eval_context.GetCompileTimeBindValue(bind_name.bind_index);
-          value.is_valid()) {
-        return value;
+      Phase phase;
+      if (bind_name.name_id == SemIR::NameId::PeriodSelf) {
+        phase = Phase::PeriodSelfSymbolic;
+      } else {
+        // If we know which specific we're evaluating within and this is an
+        // argument of that specific, its constant value is the corresponding
+        // argument value.
+        if (auto value =
+                eval_context.GetCompileTimeBindValue(bind_name.bind_index);
+            value.is_valid()) {
+          return value;
+        }
+        phase = Phase::Symbolic;
       }
-
       // The constant form of a symbolic binding is an idealized form of the
       // original, with no equivalent value.
       bind.entity_name_id =
           eval_context.entity_names().MakeCanonical(bind.entity_name_id);
       bind.value_id = SemIR::InstId::Invalid;
-      Phase phase = bind_name.name_id == SemIR::NameId::PeriodSelf
-                        ? Phase::PeriodSelfSymbolic
-                        : Phase::Symbolic;
       return MakeConstantResult(eval_context.context(), bind, phase);
     }
 
