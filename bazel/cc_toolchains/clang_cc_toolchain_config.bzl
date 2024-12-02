@@ -103,8 +103,52 @@ def _impl(ctx):
     std_compile_flags = ["-std=c++20"]
 
     # libc++ is only used on non-Windows platforms.
-    if ctx.attr.target_os != "windows":
+    use_libcpp = ctx.attr.target_os != "windows"
+
+    if use_libcpp:
+        if clang_version and clang_version <= 16:
+            libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
+            libcpp_release_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=0"]
+        elif clang_version and clang_version <= 17:
+            # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
+            # HARDENED_MODE and DEBUG_MODE.
+            libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
+            libcpp_release_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
+        else:
+            # Clang 18 changes HARDENED_MODE to use 4 values:
+            # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
+            libcpp_debug_flags = [
+                "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+            ]
+            libcpp_release_flags = [
+                "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
+            ]
+
+        # This needs to appear earlier in the command line, so we can't put it in libcpp_flags.
         std_compile_flags.append("-stdlib=libc++")
+
+        # Configure libc++ based on debug or release build.
+        libcpp_flags = feature(
+            name = "libcpp_flags",
+            flag_sets = [
+                flag_set(
+                    actions = all_cpp_compile_actions,
+                    flag_groups = [flag_group(flags = libcpp_release_flags)],
+                    with_features = [
+                        with_feature_set(features = ["opt"]),
+                    ],
+                ),
+                flag_set(
+                    actions = all_cpp_compile_actions,
+                    flag_groups = [flag_group(flags = libcpp_debug_flags)],
+                    with_features = [
+                        with_feature_set(not_features = ["opt"]),
+                    ],
+                ),
+            ],
+        )
+    else:
+        libcpp_flags = []
 
     # TODO: Regression that warns on anonymous unions; remove depending on fix.
     # Sets the flag for unknown clang versions, which are assumed to be at head.
@@ -651,26 +695,6 @@ def _impl(ctx):
         )],
     )
 
-    if clang_version and clang_version <= 16:
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=0"]
-    elif clang_version and clang_version <= 17:
-        # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
-        # HARDENED_MODE and DEBUG_MODE.
-        libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-        libcpp_release_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
-    else:
-        # Clang 18 changes HARDENED_MODE to use 4 values:
-        # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
-        libcpp_debug_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=\
-            _LIBCPP_HARDENING_MODE_EXTENSIVE",
-        ]
-        libcpp_release_flags = [
-            "-D_LIBCPP_ENABLE_HARDENED_MODE=\
-            _LIBCPP_HARDENING_MODE_FAST",
-        ]
-
     linux_flags_feature = feature(
         name = "linux_flags",
         enabled = True,
@@ -708,20 +732,6 @@ def _impl(ctx):
                         ],
                     ),
                 ]),
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_debug_flags)],
-                with_features = [
-                    with_feature_set(not_features = ["opt"]),
-                ],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_release_flags)],
-                with_features = [
-                    with_feature_set(features = ["opt"]),
-                ],
             ),
             flag_set(
                 actions = [
@@ -1152,6 +1162,9 @@ def _impl(ctx):
         use_module_maps,
         default_archiver_flags_feature,
     ]
+
+    if use_libcpp:
+        features.append(libcpp_flags)
 
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive. We also setup the sysroot here.
