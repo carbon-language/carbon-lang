@@ -10,6 +10,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 
 // Representations for specific kinds of instructions.
 //
@@ -17,6 +18,7 @@
 //
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
+// - Optionally, a `SingletonInstId` if it is a singleton instruction.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -46,26 +48,25 @@
 namespace Carbon::SemIR {
 
 // Used for the type of patterns that do not match a fixed type.
-//
-// This is a singleton instruction.
 struct AutoType {
   static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
 
 // The type of bool literals and branch conditions, bool.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct BoolType {
   static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
       {.ir_name = "bool",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -396,15 +397,15 @@ struct BoundMethod {
 };
 
 // The type of bound method values.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct BoundMethodType {
   static constexpr auto Kind =
       InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<bound method>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -579,13 +580,12 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-//
-// This is a singleton instruction.
 struct ErrorInst {
   static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -698,15 +698,15 @@ struct FloatType {
 // The legacy float type. This is currently used for real literals, and is
 // treated as f64. It's separate from `FloatType`, and should change to mirror
 // integers, likely replacing this with a `FloatLiteralType`.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct LegacyFloatType {
   static constexpr auto Kind =
       InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
           {.ir_name = "f64",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -894,15 +894,15 @@ struct IntValue {
 // literals and as the parameter type of `Core.Int` and `Core.Float`. This type
 // only provides compile-time operations, and is represented as an empty type at
 // runtime.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct IntLiteralType {
   static constexpr auto Kind =
       InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
           {.ir_name = "Core.IntLiteral",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -948,15 +948,15 @@ struct Namespace {
 };
 
 // The type of namespace and imported package names.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct NamespaceType {
   static constexpr auto Kind =
       InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<namespace>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1180,15 +1180,15 @@ struct SpecificFunction {
 };
 
 // The type of specific functions.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct SpecificFunctionType {
   static constexpr auto Kind =
       InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<specific function>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1218,15 +1218,15 @@ struct StringLiteral {
 };
 
 // The type of string values and String literals.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct StringType {
   static constexpr auto Kind =
       InstKind::StringType.Define<Parse::InvalidNodeId>(
           {.ir_name = "String",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1365,13 +1365,12 @@ struct TupleValue {
 
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
-//
-// This is a singleton instruction.
 struct TypeType {
   static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1439,15 +1438,15 @@ struct VarStorage {
 };
 
 // The type of virtual function tables.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct VtableType {
   static constexpr auto Kind =
       InstKind::VtableType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<vtable>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1467,15 +1466,15 @@ struct WhereExpr {
 };
 
 // The type of witnesses.
-//
-// This is a singleton instruction. However, it may still evolve to a more
-// standard type and be removed.
 struct WitnessType {
   static constexpr auto Kind =
       InstKind::WitnessType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<witness>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };

@@ -7,7 +7,6 @@
 
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
-#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -48,17 +47,20 @@ static constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
   return Internal::GetSingletonInstIndex(kind) >= 0;
 }
 
-// Provides the InstId for singleton instructions. For example,
-// `InstId error_inst_id = SingletonInstId<ErrorInst>;`.
-template <typename InstT>
-  requires(IsSingletonInstKind(InstT::Kind))
-static constexpr InstId SingletonInstId =
-    InstId(Internal::GetSingletonInstIndex(InstT::Kind));
+// Provides the InstId for singleton instructions. These are exposed as
+// `InstT::SingletonInstId` in `typed_insts.h`.
+template <InstKind::RawEnumType Kind>
+  requires(IsSingletonInstKind(InstKind::Make(Kind)))
+static constexpr auto MakeSingletonInstId() -> InstId {
+  auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
+  return InstId(index);
+}
 
 // TODO: This verifies values match while working on removing
 // `CARBON_SEM_IR_BUILTIN_INST_KIND`.
 #define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
-  static_assert(InstId::Builtin##Name == SingletonInstId<Name>);
+  static_assert(InstId::Builtin##Name ==      \
+                MakeSingletonInstId<InstKind::RawEnumType::Name>());
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::SemIR
