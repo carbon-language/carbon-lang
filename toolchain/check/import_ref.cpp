@@ -614,10 +614,12 @@ class ImportRefResolver : public ImportContext {
 };
 }  // namespace
 
-static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
+static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
+                         SemIR::EntityNameId entity_name_id =
+                             SemIR::EntityNameId::Invalid) -> SemIR::InstId {
   return AddImportRef(context.local_context(),
-                      {.ir_id = context.import_ir_id(), .inst_id = inst_id});
+                      {.ir_id = context.import_ir_id(), .inst_id = inst_id},
+                      entity_name_id);
 }
 
 static auto AddLoadedImportRef(ImportContext& context, SemIR::TypeId type_id,
@@ -1208,6 +1210,7 @@ static auto AddNameScopeImportRefs(ImportContext& context,
 // Given a block ID for a list of associated entities of a witness, returns a
 // version localized to the current IR.
 static auto AddAssociatedEntities(ImportContext& context,
+                                  SemIR::NameScopeId local_name_scope_id,
                                   SemIR::InstBlockId associated_entities_id)
     -> SemIR::InstBlockId {
   if (associated_entities_id == SemIR::InstBlockId::Empty) {
@@ -1218,7 +1221,28 @@ static auto AddAssociatedEntities(ImportContext& context,
   llvm::SmallVector<SemIR::InstId> new_associated_entities;
   new_associated_entities.reserve(associated_entities.size());
   for (auto inst_id : associated_entities) {
-    new_associated_entities.push_back(AddImportRef(context, inst_id));
+    // Determine the name of the associated entity, by switching on its type.
+    SemIR::NameId import_name_id = SemIR::NameId::Invalid;
+    if (auto associated_const =
+            context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
+                inst_id)) {
+      import_name_id = associated_const->name_id;
+    } else if (auto function_decl =
+                   context.import_insts().TryGetAs<SemIR::FunctionDecl>(
+                       inst_id)) {
+      auto function =
+          context.import_functions().Get(function_decl->function_id);
+      import_name_id = function.name_id;
+    } else {
+      CARBON_CHECK("Unhandled associated entity type");
+    }
+    auto name_id = GetLocalNameId(context, import_name_id);
+    auto entity_name_id = context.local_entity_names().Add(
+        {.name_id = name_id,
+         .parent_scope_id = local_name_scope_id,
+         .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+    new_associated_entities.push_back(
+        AddImportRef(context, inst_id, entity_name_id));
   }
   return context.local_inst_blocks().Add(new_associated_entities);
 }
@@ -1987,8 +2011,8 @@ static auto AddInterfaceDefinition(ImportContext& context,
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
   AddNameScopeImportRefs(context, import_scope, new_scope);
-  new_interface.associated_entities_id =
-      AddAssociatedEntities(context, import_interface.associated_entities_id);
+  new_interface.associated_entities_id = AddAssociatedEntities(
+      context, new_interface.scope_id, import_interface.associated_entities_id);
   new_interface.body_block_id =
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;

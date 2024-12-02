@@ -292,12 +292,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ImportRefUnloaded inst): {
-        // Shouldn't get here. But if we do, don't crash trying to access the
-        // constant value of this instruction.
         if (inst.entity_name_id.is_valid()) {
           auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
-          out << "<import ref unloaded: "
-              << sem_ir.names().GetFormatted(name_id) << ">";
+          out << sem_ir.names().GetFormatted(name_id);
         } else {
           out << "<import ref unloaded invalid entity name>";
         }
@@ -344,9 +341,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             auto function = sem_ir.functions().Get(function_decl->function_id);
             step_stack.PushNameId(function.name_id);
           } else {
-            step_stack.PushString(">");
             step_stack.PushInstId(entity_inst_id);
-            step_stack.PushString("<TODO: ");
           }
           step_stack.PushString(".");
           step_stack.PushNameId(interface.name_id);
