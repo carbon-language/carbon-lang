@@ -22,8 +22,6 @@ of:
             `bazelisk` install.
         -   Contribution tools documentation includes `bazelisk` setup:
             https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md
-    -   Make sure `bazelisk --version` (or `bazel --version`) matches the
-        version in `.bazeliskrc`.
 3.  The host platform hasn't yet been added to the lock file.
     -   Platforms tested with GitHub actions are kept up-to-date. Other
         platforms may fall out of sync due to `bazel` or dependency changes,
