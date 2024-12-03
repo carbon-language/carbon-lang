@@ -182,19 +182,19 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %Outer.loc9: type = class_type @Outer, @Outer(constants.%.3) [template = constants.%Outer.3]
 // CHECK:STDOUT:   %v.var: ref %Outer.3 = var v
 // CHECK:STDOUT:   %v: ref %Outer.3 = bind_name v, %v.var
-// CHECK:STDOUT:   %Outer.ref.loc18: %Outer.type = name_ref Outer, %Outer.decl [template = constants.%Outer.1]
-// CHECK:STDOUT:   %.loc18_15: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc18_16.1: type = converted %.loc18_15, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_16.2: type = ptr_type %.1 [template = constants.%.3]
-// CHECK:STDOUT:   %Outer.loc18: type = class_type @Outer, @Outer(constants.%.3) [template = constants.%Outer.3]
-// CHECK:STDOUT:   %.loc18_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.3) [template = constants.%Inner.3]
-// CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc18_18 [template = constants.%Inner.3]
-// CHECK:STDOUT:   %.loc18_30.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc18_30.1) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_30.3: type = converted %int.make_type_signed, %.loc18_30.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_33: type = struct_type {.a: %i32} [template = constants.%.5]
-// CHECK:STDOUT:   %.loc18_34: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %Outer.ref.loc19: %Outer.type = name_ref Outer, %Outer.decl [template = constants.%Outer.1]
+// CHECK:STDOUT:   %.loc19_15: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc19_16.1: type = converted %.loc19_15, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc19_16.2: type = ptr_type %.1 [template = constants.%.3]
+// CHECK:STDOUT:   %Outer.loc19: type = class_type @Outer, @Outer(constants.%.3) [template = constants.%Outer.3]
+// CHECK:STDOUT:   %.loc19_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.3) [template = constants.%Inner.3]
+// CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc19_18 [template = constants.%Inner.3]
+// CHECK:STDOUT:   %.loc19_30.1: Core.IntLiteral = int_value 32 [template = constants.%.4]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc19_30.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc19_30.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc19_30.3: type = converted %int.make_type_signed, %.loc19_30.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc19_33: type = struct_type {.a: %i32} [template = constants.%.5]
+// CHECK:STDOUT:   %.loc19_34: type = ptr_type %.5 [template = constants.%.6]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.3, constants.%.6) [template = constants.%Inner.4]
 // CHECK:STDOUT:   %w.var: ref %Inner.4 = var w
 // CHECK:STDOUT:   %w: ref %Inner.4 = bind_name w, %w.var
@@ -243,7 +243,7 @@ var v: C(123) = ();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %Outer.3 = name_ref v, file.%v
-// CHECK:STDOUT:   %.loc18: %Inner.4 = converted %v.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: %Inner.4 = converted %v.ref, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -333,13 +333,13 @@ var v: C(123) = ();
 // CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_9.2 (constants.%N.1)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc6_10: Core.IntLiteral = int_value 123 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc6_13.1: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc6_13.2: <bound method> = bound_method %.loc6_10, %.loc6_13.1 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc6_13.3: <specific function> = specific_function %.loc6_13.2, @Convert.2(constants.%.1) [template = constants.%.30]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc6_13.3(%.loc6_10) [template = constants.%.31]
-// CHECK:STDOUT:   %.loc6_13.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
-// CHECK:STDOUT:   %.loc6_13.5: %i32 = converted %.loc6_10, %.loc6_13.4 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc12_10: Core.IntLiteral = int_value 123 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc12_13.1: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc12_13.2: <bound method> = bound_method %.loc12_10, %.loc12_13.1 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc12_13.3: <specific function> = specific_function %.loc12_13.2, @Convert.2(constants.%.1) [template = constants.%.30]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc12_13.3(%.loc12_10) [template = constants.%.31]
+// CHECK:STDOUT:   %.loc12_13.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%.31]
+// CHECK:STDOUT:   %.loc12_13.5: %i32 = converted %.loc12_10, %.loc12_13.4 [template = constants.%.31]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%.31) [template = constants.%C.3]
 // CHECK:STDOUT:   %v.var: ref %C.3 = var v
 // CHECK:STDOUT:   %v: ref %C.3 = bind_name v, %v.var
@@ -362,8 +362,8 @@ var v: C(123) = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_18: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_19: %C.3 = converted %.loc6_18, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc12_18: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_19: %C.3 = converted %.loc12_18, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%v.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
