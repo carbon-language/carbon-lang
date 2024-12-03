@@ -18,8 +18,8 @@ let d: c = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,7 +42,7 @@ let d: c = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -51,7 +51,7 @@ let d: c = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc15_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_13.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc15_13.3: init %C = class_init (), %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.2, %.loc15_13.3

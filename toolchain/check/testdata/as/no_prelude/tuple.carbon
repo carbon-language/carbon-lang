@@ -28,8 +28,8 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %Let.type: type = fn_type @Let [template]
@@ -61,7 +61,7 @@ fn Var() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X

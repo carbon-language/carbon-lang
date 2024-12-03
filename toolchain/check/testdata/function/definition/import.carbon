@@ -122,7 +122,7 @@ fn D() {}
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.c: %i32} [template]
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
@@ -170,8 +170,8 @@ fn D() {}
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.2 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %tuple.type.2 = value_param_pattern %c.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %struct_type.c = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %struct_type.c = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed.loc6_10: init type = call constants.%Int(%int.32.loc6_10) [template = constants.%i32]
@@ -183,11 +183,11 @@ fn D() {}
 // CHECK:STDOUT:     %int.make_type_signed.loc6_25: init type = call constants.%Int(%int.32.loc6_25) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_signed.loc6_25 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_signed.loc6_25, %.loc6_25.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_28: type = struct_type {.c: %i32} [template = constants.%.1]
+// CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
@@ -203,14 +203,14 @@ fn D() {}
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %.1 {
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %struct_type.c {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %tuple.type.2 = name_ref c, %c
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
 // CHECK:STDOUT:   %.loc6_46: %i32 = tuple_access %c.ref, element0
-// CHECK:STDOUT:   %.loc6_48: %.1 = struct_literal (%.loc6_46)
-// CHECK:STDOUT:   %struct: %.1 = struct_value (%.loc6_46)
-// CHECK:STDOUT:   %.loc6_49: %.1 = converted %.loc6_48, %struct
+// CHECK:STDOUT:   %.loc6_48: %struct_type.c = struct_literal (%.loc6_46)
+// CHECK:STDOUT:   %struct: %struct_type.c = struct_value (%.loc6_46)
+// CHECK:STDOUT:   %.loc6_49: %struct_type.c = converted %.loc6_48, %struct
 // CHECK:STDOUT:   return %.loc6_49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,7 +261,7 @@ fn D() {}
 // CHECK:STDOUT:   %.25: <bound method> = bound_method %int.1.1, %Convert.14 [template]
 // CHECK:STDOUT:   %.26: <specific function> = specific_function %.25, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.27: type = struct_type {.c: %i32} [template]
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (%i32) [template]
@@ -309,16 +309,16 @@ fn D() {}
 // CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int.32.loc8) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_signed.loc8, %.loc8_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_16: type = struct_type {.c: %i32} [template = constants.%.27]
-// CHECK:STDOUT:   %c.var: ref %.27 = var c
-// CHECK:STDOUT:   %c: ref %.27 = bind_name c, %c.var
+// CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
+// CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
+// CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %.27;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -346,7 +346,7 @@ fn D() {}
 // CHECK:STDOUT:   %.loc8_25.6: %i32 = converted %int.1.loc8, %.loc8_25.5 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %tuple: %tuple.type.1 = tuple_value (%.loc8_25.6) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc8_25.7: %tuple.type.1 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %.27 = call %C.ref(%.loc8_25.7)
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc8_25.7)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

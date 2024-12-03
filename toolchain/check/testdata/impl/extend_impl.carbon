@@ -38,8 +38,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.3: %HasF.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -96,7 +96,7 @@ fn G(c: C) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %empty_struct_type [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

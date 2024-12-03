@@ -610,17 +610,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(StructType inst): {
-        const auto& fields = context_.struct_type_fields().Get(inst.fields_id);
+        const auto& fields = sem_ir_.struct_type_fields().Get(inst.fields_id);
         if (fields.empty()) {
           add_inst_name("empty_struct_type");
           continue;
         }
-        std::string name;
-        llvm::raw_string_ostream out(name);
-        out << "struct_type";
+        std::string name = "struct_type";
         for (auto field : fields) {
-          out << "."
-              << sem_ir_.names().GetIRBaseName(field.name_id);  // .str();
+          name += ".";
+          name += sem_ir_.names().GetIRBaseName(field.name_id).str();
         }
         add_inst_name(std::move(name));
         continue;

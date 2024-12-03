@@ -192,8 +192,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,7 +216,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -238,8 +238,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Var.type: type = fn_type @Var [template]
 // CHECK:STDOUT:   %Var: %Var.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -263,7 +263,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -282,8 +282,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -314,7 +314,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -333,8 +333,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,7 +357,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -378,8 +378,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Param.type: type = fn_type @Param [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Param: %Param.type = struct_value () [template]
@@ -422,7 +422,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -443,23 +443,23 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %Abstract [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Abstract, .d: %i32} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.11: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %int.7: Core.IntLiteral = int_value 7 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.base: %.11, .d: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %struct_type.a, .d: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -491,7 +491,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -500,13 +500,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.3 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.5 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_8: %.4 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -519,9 +519,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
-// CHECK:STDOUT:   %.loc22_26: %.11 = struct_literal (%int.1)
+// CHECK:STDOUT:   %.loc22_26: %struct_type.a = struct_literal (%int.1)
 // CHECK:STDOUT:   %int.7: Core.IntLiteral = int_value 7 [template = constants.%int.7]
-// CHECK:STDOUT:   %.loc22_35: %.12 = struct_literal (%.loc22_26, %int.7)
+// CHECK:STDOUT:   %.loc22_35: %struct_type.base.d.3 = struct_literal (%.loc22_26, %int.7)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,17 +529,17 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %Abstract [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.6: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %i32} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %struct_type.base.d [template]
 // CHECK:STDOUT:   %Return.type: type = fn_type @Return [template]
 // CHECK:STDOUT:   %Return: %Return.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -578,7 +578,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -587,13 +587,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.3 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.5 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc10_8: %.4 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %struct_type.base.d [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -618,13 +618,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Abstract, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Abstract [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %Abstract, .d: %i32} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Abstract, .d: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -671,7 +671,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_signed, %.loc5_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %struct_type.a [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -681,13 +681,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc9: %.5 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %.4 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.2: type = converted %int.make_type_signed, %.loc11_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_8: %.6 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc11_8: %.5 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -700,7 +700,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %.5 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
+// CHECK:STDOUT:   %base.ref: %.4 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -710,8 +710,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -735,7 +735,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -745,7 +745,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %l: %Abstract = bind_name l, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -754,8 +754,8 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ReturnAbstract.type: type = fn_type @ReturnAbstract [template]
 // CHECK:STDOUT:   %ReturnAbstract: %ReturnAbstract.type = struct_value () [template]
 // CHECK:STDOUT:   %CallReturnAbstract.type: type = fn_type @CallReturnAbstract [template]
@@ -790,7 +790,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract

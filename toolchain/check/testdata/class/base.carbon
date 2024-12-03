@@ -53,29 +53,29 @@ class Derived {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.b: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.b.1 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %Base, .d: %i32} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Base, .d: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %int.4.1: Core.IntLiteral = int_value 4 [template]
-// CHECK:STDOUT:   %.12: type = struct_type {.b: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.b.2: type = struct_type {.b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %int.7.1: Core.IntLiteral = int_value 7 [template]
-// CHECK:STDOUT:   %.13: type = struct_type {.base: %.12, .d: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %struct_type.b.2, .d: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.37: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.38: <bound method> = bound_method %int.4.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.39: <specific function> = specific_function %.38, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %.32: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.33: <bound method> = bound_method %int.4.1, %Convert.14 [template]
+// CHECK:STDOUT:   %.34: <specific function> = specific_function %.33, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.4.2: %i32 = int_value 4 [template]
 // CHECK:STDOUT:   %struct.1: %Base = struct_value (%int.4.2) [template]
-// CHECK:STDOUT:   %.40: <bound method> = bound_method %int.7.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.41: <specific function> = specific_function %.40, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %.35: <bound method> = bound_method %int.7.1, %Convert.14 [template]
+// CHECK:STDOUT:   %.36: <specific function> = specific_function %.35, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.7.2: %i32 = int_value 7 [template]
 // CHECK:STDOUT:   %struct.2: %Derived = struct_value (%struct.1, %int.7.2) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
@@ -142,7 +142,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc4_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_10.2: type = converted %int.make_type_signed, %.loc4_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_8: %.1 = field_decl b, element0 [template]
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %struct_type.b.1 [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -152,13 +152,13 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc8: %.5 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.4 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.6 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc10_8: %.5 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -171,12 +171,12 @@ class Derived {
 // CHECK:STDOUT: fn @Make() -> %return: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.4: Core.IntLiteral = int_value 4 [template = constants.%int.4.1]
-// CHECK:STDOUT:   %.loc14_26.1: %.12 = struct_literal (%int.4)
+// CHECK:STDOUT:   %.loc14_26.1: %struct_type.b.2 = struct_literal (%int.4)
 // CHECK:STDOUT:   %int.7: Core.IntLiteral = int_value 7 [template = constants.%int.7.1]
-// CHECK:STDOUT:   %.loc14_35.1: %.13 = struct_literal (%.loc14_26.1, %int.7)
-// CHECK:STDOUT:   %.loc14_26.2: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc14_26.3: <bound method> = bound_method %int.4, %.loc14_26.2 [template = constants.%.38]
-// CHECK:STDOUT:   %.loc14_26.4: <specific function> = specific_function %.loc14_26.3, @Convert.2(constants.%int.32) [template = constants.%.39]
+// CHECK:STDOUT:   %.loc14_35.1: %struct_type.base.d.3 = struct_literal (%.loc14_26.1, %int.7)
+// CHECK:STDOUT:   %.loc14_26.2: %Convert.type.2 = interface_witness_access constants.%.32, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc14_26.3: <bound method> = bound_method %int.4, %.loc14_26.2 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc14_26.4: <specific function> = specific_function %.loc14_26.3, @Convert.2(constants.%int.32) [template = constants.%.34]
 // CHECK:STDOUT:   %int.convert_checked.loc14_26: init %i32 = call %.loc14_26.4(%int.4) [template = constants.%int.4.2]
 // CHECK:STDOUT:   %.loc14_26.5: init %i32 = converted %int.4, %int.convert_checked.loc14_26 [template = constants.%int.4.2]
 // CHECK:STDOUT:   %.loc14_35.2: ref %Base = class_element_access %return, element0
@@ -184,9 +184,9 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_26.7: init %i32 = initialize_from %.loc14_26.5 to %.loc14_26.6 [template = constants.%int.4.2]
 // CHECK:STDOUT:   %.loc14_26.8: init %Base = class_init (%.loc14_26.7), %.loc14_35.2 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc14_35.3: init %Base = converted %.loc14_26.1, %.loc14_26.8 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc14_35.4: %Convert.type.2 = interface_witness_access constants.%.37, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc14_35.5: <bound method> = bound_method %int.7, %.loc14_35.4 [template = constants.%.40]
-// CHECK:STDOUT:   %.loc14_35.6: <specific function> = specific_function %.loc14_35.5, @Convert.2(constants.%int.32) [template = constants.%.41]
+// CHECK:STDOUT:   %.loc14_35.4: %Convert.type.2 = interface_witness_access constants.%.32, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc14_35.5: <bound method> = bound_method %int.7, %.loc14_35.4 [template = constants.%.35]
+// CHECK:STDOUT:   %.loc14_35.6: <specific function> = specific_function %.loc14_35.5, @Convert.2(constants.%int.32) [template = constants.%.36]
 // CHECK:STDOUT:   %int.convert_checked.loc14_35: init %i32 = call %.loc14_35.6(%int.7) [template = constants.%int.7.2]
 // CHECK:STDOUT:   %.loc14_35.7: init %i32 = converted %int.7, %int.convert_checked.loc14_35 [template = constants.%int.7.2]
 // CHECK:STDOUT:   %.loc14_35.8: ref %i32 = class_element_access %return, element1
@@ -199,11 +199,11 @@ class Derived {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc18_12: %.6 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
+// CHECK:STDOUT:   %d.ref.loc18_12: %.5 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %d.ref.loc18_11, element1
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   %d.ref.loc18_16: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %.5 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
+// CHECK:STDOUT:   %base.ref: %.4 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
 // CHECK:STDOUT:   %.loc18_17.1: ref %Base = class_element_access %d.ref.loc18_16, element0
 // CHECK:STDOUT:   %.loc18_17.2: %Base = bind_value %.loc18_17.1
 // CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @Base.%.loc4_8 [template = @Base.%.loc4_8]
@@ -223,16 +223,16 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.d: %i32} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.d: type = struct_type {.d: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.d [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -255,7 +255,7 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -267,9 +267,9 @@ class Derived {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_signed, %.loc7_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_8: %.3 = field_decl d, element0 [template]
+// CHECK:STDOUT:   %.loc7_8: %.2 = field_decl d, element0 [template]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %struct_type.d [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived

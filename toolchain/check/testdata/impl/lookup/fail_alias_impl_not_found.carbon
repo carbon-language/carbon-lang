@@ -38,8 +38,8 @@ fn F(c: C) {
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -86,7 +86,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %.1 = name_ref F, @I.%.loc12 [template = constants.%.2]
 // CHECK:STDOUT:   %F: %.1 = bind_alias F, @I.%.loc12 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

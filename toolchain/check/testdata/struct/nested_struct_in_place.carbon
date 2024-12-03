@@ -27,7 +27,7 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template]
+// CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,18 +101,18 @@ fn G() {
 // CHECK:STDOUT:   %.loc14_50.6: type = value_of_initializer %int.make_type_signed.loc14_47 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_50.7: type = converted %int.make_type_signed.loc14_47, %.loc14_50.6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_50.8: type = converted %.loc14_50.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc14_51: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template = constants.%.1]
-// CHECK:STDOUT:   %v.var: ref %.1 = var v
-// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %tuple.type.2, .b: %tuple.type.2} [template = constants.%struct_type.a.b.1]
+// CHECK:STDOUT:   %v.var: ref %struct_type.a.b.1 = var v
+// CHECK:STDOUT:   %v: ref %struct_type.a.b.1 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_61: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_74.1: ref %tuple.type.2 = struct_access %v.var, element0
 // CHECK:STDOUT:   %F.call.loc14_63: init %tuple.type.2 = call %F.ref.loc14_61() to %.loc14_74.1
 // CHECK:STDOUT:   %F.ref.loc14_71: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_74.2: ref %tuple.type.2 = struct_access %v.var, element1
 // CHECK:STDOUT:   %F.call.loc14_73: init %tuple.type.2 = call %F.ref.loc14_71() to %.loc14_74.2
-// CHECK:STDOUT:   %.loc14_74.3: %.1 = struct_literal (%F.call.loc14_63, %F.call.loc14_73)
-// CHECK:STDOUT:   %.loc14_74.4: init %.1 = struct_init (%F.call.loc14_63, %F.call.loc14_73) to %v.var
-// CHECK:STDOUT:   %.loc14_75: init %.1 = converted %.loc14_74.3, %.loc14_74.4
+// CHECK:STDOUT:   %.loc14_74.3: %struct_type.a.b.1 = struct_literal (%F.call.loc14_63, %F.call.loc14_73)
+// CHECK:STDOUT:   %.loc14_74.4: init %struct_type.a.b.1 = struct_init (%F.call.loc14_63, %F.call.loc14_73) to %v.var
+// CHECK:STDOUT:   %.loc14_75: init %struct_type.a.b.1 = converted %.loc14_74.3, %.loc14_74.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_75
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

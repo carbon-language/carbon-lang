@@ -336,7 +336,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.Self: %N.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %N.type.2: type = facet_type <@N where TODO> [template]
 // CHECK:STDOUT:   %T: %N.type.2 = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %N.type.2 = symbolic_binding_pattern T, 0 [symbolic]
@@ -369,8 +369,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %P.ref: %.1 = name_ref P, @N.%.loc5 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc8_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
 // CHECK:STDOUT:     %.loc8_22.2: type = interface_witness_access %.loc8_22.1, element0 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc8_28.1: %.5 = struct_literal ()
-// CHECK:STDOUT:     %.loc8_28.2: type = converted %.loc8_28.1, constants.%.5 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc8_28.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc8_28.2: type = converted %.loc8_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc8_16: type = where_expr %.Self [template = constants.%N.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %.loc8_22.2, %.loc8_28.2
 // CHECK:STDOUT:     }
@@ -761,10 +761,10 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %J.type.1: type = facet_type <@J> [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %DoesNotImplI.type: type = fn_type @DoesNotImplI [template]
 // CHECK:STDOUT:   %DoesNotImplI: %DoesNotImplI.type = struct_value () [template]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
@@ -823,7 +823,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type.1]
 // CHECK:STDOUT:     %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc26_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc26_38: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = constants.%J.type.2] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
@@ -840,14 +840,14 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %J.ref {
-// CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -900,9 +900,9 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %Self.1: %A.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %.2: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT: }
@@ -946,14 +946,14 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %D.ref as %A.ref {
-// CHECK:STDOUT:   %.loc6: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %.loc6: <witness> = interface_witness () [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D

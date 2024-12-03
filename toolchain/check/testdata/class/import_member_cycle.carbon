@@ -32,8 +32,8 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Cycle, %.1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: %.1} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %.1} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,7 +56,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [template = constants.%Cycle]
 // CHECK:STDOUT:   %.loc5_15: type = ptr_type %Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %.loc5_8: %.2 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %struct_type.a [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
@@ -71,8 +71,8 @@ fn Run() {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %.1} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,7 +81,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+11, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+11, loaded [template = constants.%.2]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+9, unloaded
 // CHECK:STDOUT: }

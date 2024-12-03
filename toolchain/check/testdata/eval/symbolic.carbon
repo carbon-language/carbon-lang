@@ -26,9 +26,9 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.2: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%.1, %.2) [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {.a: %T} [symbolic]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template]
-// CHECK:STDOUT:   %.5: type = array_type %int.5, %T [symbolic]
+// CHECK:STDOUT:   %.4: type = array_type %int.5, %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -61,8 +61,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %.loc13_12.2: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_12.2 (constants.%.1)]
 // CHECK:STDOUT:   %.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_15.2 (constants.%.2)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%.loc13_12.2 (%.1), @F.%.loc13_15.2 (%.2)) [symbolic = %tuple.type (constants.%tuple.type.2)]
-// CHECK:STDOUT:   %.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %.loc14_16.2 (constants.%.4)]
-// CHECK:STDOUT:   %.loc15_15.2: type = array_type constants.%int.5, @F.%T.loc12_6.2 (%T) [symbolic = %.loc15_15.2 (constants.%.5)]
+// CHECK:STDOUT:   %struct_type.a.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:   %.loc15_15.2: type = array_type constants.%int.5, @F.%T.loc12_6.2 (%T) [symbolic = %.loc15_15.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -75,14 +75,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.2) = var u
 // CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.2) = bind_name u, %u.var
 // CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc14_16.1: type = struct_type {.a: %T} [symbolic = %.loc14_16.2 (constants.%.4)]
-// CHECK:STDOUT:     %v.var: ref @F.%.loc14_16.2 (%.4) = var v
-// CHECK:STDOUT:     %v: ref @F.%.loc14_16.2 (%.4) = bind_name v, %v.var
+// CHECK:STDOUT:     %struct_type.a.loc14_16.1: type = struct_type {.a: %T} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = var v
+// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc14_16.2 (%struct_type.a) = bind_name v, %v.var
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:     %int.5: Core.IntLiteral = int_value 5 [template = constants.%int.5]
-// CHECK:STDOUT:     %.loc15_15.1: type = array_type %int.5, %T [symbolic = %.loc15_15.2 (constants.%.5)]
-// CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.5) = var w
-// CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.5) = bind_name w, %w.var
+// CHECK:STDOUT:     %.loc15_15.1: type = array_type %int.5, %T [symbolic = %.loc15_15.2 (constants.%.4)]
+// CHECK:STDOUT:     %w.var: ref @F.%.loc15_15.2 (%.4) = var w
+// CHECK:STDOUT:     %w: ref @F.%.loc15_15.2 (%.4) = bind_name w, %w.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

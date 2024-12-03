@@ -21,14 +21,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.x: %i32, .y: %i32, .z: %i32} [template]
+// CHECK:STDOUT:   %struct_type.x.y.z: type = struct_type {.x: %i32, .y: %i32, .z: %i32} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: Core.IntLiteral, .b: %.1, .c: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.a.b.c.1: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,8 +47,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %struct_type.x.y.z = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %struct_type.x.y.z = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.32.loc11_16: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed.loc11_16: init type = call constants.%Int(%int.32.loc11_16) [template = constants.%i32]
@@ -62,9 +62,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:     %int.make_type_signed.loc11_34: init type = call constants.%Int(%int.32.loc11_34) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_signed.loc11_34 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_signed.loc11_34, %.loc11_34.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_37: type = struct_type {.x: %i32, .y: %i32, .z: %i32} [template = constants.%.1]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %struct_type.x.y.z: type = struct_type {.x: %i32, .y: %i32, .z: %i32} [template = constants.%struct_type.x.y.z]
+// CHECK:STDOUT:     %return.param: ref %struct_type.x.y.z = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %struct_type.x.y.z = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -79,28 +79,28 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %.1;
+// CHECK:STDOUT: fn @G() -> %struct_type.x.y.z;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc14_26.1: ref %.1 = temporary_storage
-// CHECK:STDOUT:   %G.call: init %.1 = call %G.ref() to %.loc14_26.1
+// CHECK:STDOUT:   %.loc14_26.1: ref %struct_type.x.y.z = temporary_storage
+// CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref() to %.loc14_26.1
 // CHECK:STDOUT:   %int.3: Core.IntLiteral = int_value 3 [template = constants.%int.3]
-// CHECK:STDOUT:   %.loc14_35.1: %.3 = struct_literal (%int.1, %G.call, %int.3)
-// CHECK:STDOUT:   %.loc14_26.2: ref %.1 = temporary %.loc14_26.1, %G.call
+// CHECK:STDOUT:   %.loc14_35.1: %struct_type.a.b.c.1 = struct_literal (%int.1, %G.call, %int.3)
+// CHECK:STDOUT:   %.loc14_26.2: ref %struct_type.x.y.z = temporary %.loc14_26.1, %G.call
 // CHECK:STDOUT:   %.loc14_26.3: ref %i32 = struct_access %.loc14_26.2, element0
 // CHECK:STDOUT:   %.loc14_26.4: %i32 = bind_value %.loc14_26.3
 // CHECK:STDOUT:   %.loc14_26.5: ref %i32 = struct_access %.loc14_26.2, element1
 // CHECK:STDOUT:   %.loc14_26.6: %i32 = bind_value %.loc14_26.5
 // CHECK:STDOUT:   %.loc14_26.7: ref %i32 = struct_access %.loc14_26.2, element2
 // CHECK:STDOUT:   %.loc14_26.8: %i32 = bind_value %.loc14_26.7
-// CHECK:STDOUT:   %struct.loc14_26: %.1 = struct_value (%.loc14_26.4, %.loc14_26.6, %.loc14_26.8)
-// CHECK:STDOUT:   %.loc14_35.2: %.1 = converted %G.call, %struct.loc14_26
-// CHECK:STDOUT:   %struct.loc14_35: %.3 = struct_value (%int.1, %.loc14_35.2, %int.3)
-// CHECK:STDOUT:   %.loc14_35.3: %.3 = converted %.loc14_35.1, %struct.loc14_35
-// CHECK:STDOUT:   %.loc14_36: %.1 = struct_access %.loc14_35.3, element1
+// CHECK:STDOUT:   %struct.loc14_26: %struct_type.x.y.z = struct_value (%.loc14_26.4, %.loc14_26.6, %.loc14_26.8)
+// CHECK:STDOUT:   %.loc14_35.2: %struct_type.x.y.z = converted %G.call, %struct.loc14_26
+// CHECK:STDOUT:   %struct.loc14_35: %struct_type.a.b.c.1 = struct_value (%int.1, %.loc14_35.2, %int.3)
+// CHECK:STDOUT:   %.loc14_35.3: %struct_type.a.b.c.1 = converted %.loc14_35.1, %struct.loc14_35
+// CHECK:STDOUT:   %.loc14_36: %struct_type.x.y.z = struct_access %.loc14_35.3, element1
 // CHECK:STDOUT:   %.loc14_38: %i32 = struct_access %.loc14_36, element1
 // CHECK:STDOUT:   return %.loc14_38
 // CHECK:STDOUT: }

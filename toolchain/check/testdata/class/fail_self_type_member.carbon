@@ -32,8 +32,8 @@ fn F() -> bool {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class, bool [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.b: bool} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: bool} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.b [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
@@ -43,7 +43,7 @@ fn F() -> bool {
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %bool.make_type, %.loc12_10.1 [template = bool]
 // CHECK:STDOUT:   %.loc12_8: %.1 = field_decl b, element0 [template]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %struct_type.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

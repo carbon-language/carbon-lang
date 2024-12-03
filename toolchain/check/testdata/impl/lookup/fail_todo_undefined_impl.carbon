@@ -38,8 +38,8 @@ impl C as I {
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -48,8 +48,8 @@ impl C as I {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.6: %I.type = facet_value %C, %C [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %.5: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -102,7 +102,7 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %C.ref as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {} {}
-// CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc27: <witness> = interface_witness (%F.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -114,7 +114,7 @@ impl C as I {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -141,5 +141,5 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.6) {}
+// CHECK:STDOUT: specific @F.1(constants.%.5) {}
 // CHECK:STDOUT:

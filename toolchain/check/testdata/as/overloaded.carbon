@@ -31,28 +31,28 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %X, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
 // CHECK:STDOUT:   %As: %As.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %As.type.3: type = facet_type <@As, @As(%X)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.1, @As(%X) [template]
-// CHECK:STDOUT:   %.11: <witness> = interface_witness (%Convert.2) [template]
+// CHECK:STDOUT:   %.10: <witness> = interface_witness (%Convert.2) [template]
 // CHECK:STDOUT:   %As.type.4: type = facet_type <@As, @As(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %.16: <witness> = interface_witness (%Convert.4) [template]
+// CHECK:STDOUT:   %.15: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %int.4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.type.17: type = fn_type @Convert.9, @impl.7(%int.32) [template]
 // CHECK:STDOUT:   %Convert.17: %Convert.type.17 = struct_value () [template]
-// CHECK:STDOUT:   %.34: <witness> = interface_witness (%Convert.17) [template]
-// CHECK:STDOUT:   %.35: <bound method> = bound_method %int.4.1, %Convert.17 [template]
-// CHECK:STDOUT:   %.36: <specific function> = specific_function %.35, @Convert.9(%int.32) [template]
+// CHECK:STDOUT:   %.33: <witness> = interface_witness (%Convert.17) [template]
+// CHECK:STDOUT:   %.34: <bound method> = bound_method %int.4.1, %Convert.17 [template]
+// CHECK:STDOUT:   %.35: <specific function> = specific_function %.34, @Convert.9(%int.32) [template]
 // CHECK:STDOUT:   %int.4.2: %i32 = int_value 4 [template]
-// CHECK:STDOUT:   %.37: <bound method> = bound_method %int.4.2, %Convert.2 [template]
+// CHECK:STDOUT:   %.36: <bound method> = bound_method %int.4.2, %Convert.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,7 +116,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc15_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.10]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Convert.decl
@@ -140,7 +140,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.16]
+// CHECK:STDOUT:   %.loc19_24: <witness> = interface_witness (%Convert.decl) [template = constants.%.15]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Convert = %Convert.decl
@@ -153,7 +153,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_8: %.1 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %struct_type.n [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -164,7 +164,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: %i32]() -> %return: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
-// CHECK:STDOUT:   %.loc16_51.1: %.2 = struct_literal (%self.ref)
+// CHECK:STDOUT:   %.loc16_51.1: %struct_type.n = struct_literal (%self.ref)
 // CHECK:STDOUT:   %.loc16_51.2: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc16_51.3: init %i32 = initialize_from %self.ref to %.loc16_51.2
 // CHECK:STDOUT:   %.loc16_51.4: init %X = class_init (%.loc16_51.3), %return
@@ -188,15 +188,15 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int.make_type_signed.loc23_21: init type = call constants.%Int(%int.32.loc23_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_signed.loc23_21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_signed.loc23_21, %.loc23_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_18.1: %Convert.type.5 = interface_witness_access constants.%.34, element0 [template = constants.%Convert.17]
-// CHECK:STDOUT:   %.loc23_18.2: <bound method> = bound_method %int.4, %.loc23_18.1 [template = constants.%.35]
-// CHECK:STDOUT:   %.loc23_18.3: <specific function> = specific_function %.loc23_18.2, @Convert.9(constants.%int.32) [template = constants.%.36]
+// CHECK:STDOUT:   %.loc23_18.1: %Convert.type.5 = interface_witness_access constants.%.33, element0 [template = constants.%Convert.17]
+// CHECK:STDOUT:   %.loc23_18.2: <bound method> = bound_method %int.4, %.loc23_18.1 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc23_18.3: <specific function> = specific_function %.loc23_18.2, @Convert.9(constants.%int.32) [template = constants.%.35]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc23_18.3(%int.4) [template = constants.%int.4.2]
 // CHECK:STDOUT:   %.loc23_18.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.4.2]
 // CHECK:STDOUT:   %.loc23_18.5: %i32 = converted %int.4, %.loc23_18.4 [template = constants.%int.4.2]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc23_26.1: %Convert.type.3 = interface_witness_access constants.%.11, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %.loc23_26.2: <bound method> = bound_method %.loc23_18.5, %.loc23_26.1 [template = constants.%.37]
+// CHECK:STDOUT:   %.loc23_26.1: %Convert.type.3 = interface_witness_access constants.%.10, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %.loc23_26.2: <bound method> = bound_method %.loc23_18.5, %.loc23_26.1 [template = constants.%.36]
 // CHECK:STDOUT:   %.loc23_26.3: ref %X = temporary_storage
 // CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %.loc23_26.2(%.loc23_18.5) to %.loc23_26.3
 // CHECK:STDOUT:   %.loc23_26.4: init %X = converted %.loc23_18.5, %Convert.call.loc23_26
@@ -204,7 +204,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int.make_type_signed.loc23_35: init type = call constants.%Int(%int.32.loc23_35) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.1: type = value_of_initializer %int.make_type_signed.loc23_35 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.2: type = converted %int.make_type_signed.loc23_35, %.loc23_35.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_32.1: %Convert.type.5 = interface_witness_access constants.%.16, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %.loc23_32.1: %Convert.type.5 = interface_witness_access constants.%.15, element0 [template = constants.%Convert.4]
 // CHECK:STDOUT:   %.loc23_32.2: <bound method> = bound_method %.loc23_26.4, %.loc23_32.1
 // CHECK:STDOUT:   %.loc23_26.5: ref %X = temporary %.loc23_26.3, %.loc23_26.4
 // CHECK:STDOUT:   %.loc23_26.6: %X = bind_value %.loc23_26.5

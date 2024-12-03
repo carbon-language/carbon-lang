@@ -20,7 +20,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -38,7 +38,7 @@ var x: {.a = 1};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
-// CHECK:STDOUT:   %.loc17_15.1: %.1 = struct_literal (%int.1)
+// CHECK:STDOUT:   %.loc17_15.1: %struct_type.a = struct_literal (%int.1)
 // CHECK:STDOUT:   %.loc17_15.2: type = converted %.loc17_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var

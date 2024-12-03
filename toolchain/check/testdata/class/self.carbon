@@ -55,8 +55,8 @@ class Class {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, %i32 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -150,7 +150,7 @@ class Class {
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_signed, %.loc8_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_8: %.2 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %struct_type.n [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -185,8 +185,8 @@ class Class {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.24: type = struct_type {} [template]
-// CHECK:STDOUT:   %.25: <witness> = complete_type_witness %.24 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.24: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -221,7 +221,7 @@ class Class {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.24 [template = constants.%.25]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %empty_struct_type [template = constants.%.24]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

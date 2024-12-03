@@ -136,10 +136,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
+// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -151,18 +151,18 @@ var n: {} = i32;
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_8.1, runtime_param<invalid> [symbolic = %T.patt.loc4_8.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc4_18.1: @Int.%T.loc4_8.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: @Int.%T.loc4_8.2 (%T) = value_param_pattern %N.patt.loc4_18.1, runtime_param<invalid> [symbolic = %N.patt.loc4_18.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_8.1 [symbolic = %T.loc4_8.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc4_29.1: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_8.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_8.2 (constants.%T)]
 // CHECK:STDOUT:     %N.param: @Int.%T.loc4_8.2 (%T) = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc4_18.1: @Int.%T.loc4_8.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc4_18.2 (constants.%N)]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,11 +174,11 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc4_8.2 (%T)) -> %.1 {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc4_8.2 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc4_41: %.1 = struct_literal ()
-// CHECK:STDOUT:     %struct: %.1 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc4_42: %.1 = converted %.loc4_41, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc4_41: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:     %.loc4_42: %empty_struct_type = converted %.loc4_41, %struct [template = constants.%struct]
 // CHECK:STDOUT:     return %.loc4_42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -193,7 +193,7 @@ var n: {} = i32;
 // CHECK:STDOUT: --- use_fake_int.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -202,7 +202,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -218,10 +218,10 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc6_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %n.var: ref %.1 = var n
-// CHECK:STDOUT:   %n: ref %.1 = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc6_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(constants.%T: type, constants.%N.1: @Int.%T (%T)) {
@@ -232,14 +232,14 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T (%T)) -> %.1;
+// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T (%T)) -> %empty_struct_type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.2]
-// CHECK:STDOUT:   %Int.call: init %.1 = call %.1()
+// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.1]
+// CHECK:STDOUT:   %Int.call: init %empty_struct_type = call %.1()
 // CHECK:STDOUT:   assign file.%n.var, %Int.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -353,12 +353,12 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
+// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -374,23 +374,23 @@ var n: {} = i32;
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc7_13.1, runtime_param<invalid> [symbolic = %T.patt.loc7_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc7_23.1: @Int.%T.loc7_13.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc7_23.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: @Int.%T.loc7_13.2 (%T) = value_param_pattern %N.patt.loc7_23.1, runtime_param<invalid> [symbolic = %N.patt.loc7_23.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_13.1 [symbolic = %T.loc7_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_34.1: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc7_34.2: type = converted %.loc7_34.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc7_34.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc7_34.2: type = converted %.loc7_34.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc7_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_13.2 (constants.%T)]
 // CHECK:STDOUT:     %N.param: @Int.%T.loc7_13.2 (%T) = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc7_23.1: @Int.%T.loc7_13.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc7_23.2 (constants.%N)]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %n.var: ref %.1 = var n
-// CHECK:STDOUT:   %n: ref %.1 = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc9_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(%T.loc7_13.1: type, %N.loc7_23.1: @Int.%T.loc7_13.2 (%T)) {
@@ -401,11 +401,11 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc7_13.2 (%T)) -> %.1 {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc7_13.2 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc7_46: %.1 = struct_literal ()
-// CHECK:STDOUT:     %struct: %.1 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc7_47: %.1 = converted %.loc7_46, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc7_46: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:     %.loc7_47: %empty_struct_type = converted %.loc7_46, %struct [template = constants.%struct]
 // CHECK:STDOUT:     return %.loc7_47
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -413,8 +413,8 @@ var n: {} = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.2]
-// CHECK:STDOUT:   %Int.call: init %.1 = call %.1()
+// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.1]
+// CHECK:STDOUT:   %Int.call: init %empty_struct_type = call %.1()
 // CHECK:STDOUT:   assign file.%n.var, %Int.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -443,11 +443,11 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -457,10 +457,10 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {} {}
-// CHECK:STDOUT:   %.loc12_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %n.var: ref %.1 = var n
-// CHECK:STDOUT:   %n: ref %.1 = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc12_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Core {
@@ -469,20 +469,20 @@ var n: {} = i32;
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6_10.2, runtime_param<invalid> [symbolic = %T.patt.loc6_10.1 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc6_20.2: @Int.%T.loc6_10.1 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_20.1 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: @Int.%T.loc6_10.1 (%T) = value_param_pattern %N.patt.loc6_20.2, runtime_param<invalid> [symbolic = %N.patt.loc6_20.1 (constants.%N.patt)]
-// CHECK:STDOUT:     %return.patt: %.1 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.1 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_10.2 [symbolic = %T.loc6_10.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_31.1: %.1 = struct_literal ()
-// CHECK:STDOUT:     %.loc6_31.2: type = converted %.loc6_31.1, constants.%.1 [template = constants.%.1]
+// CHECK:STDOUT:     %.loc6_31.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_31.2: type = converted %.loc6_31.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc6_10.2: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:     %N.param: @Int.%T.loc6_10.1 (%T) = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc6_20.2: @Int.%T.loc6_10.1 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc6_20.1 (constants.%N)]
-// CHECK:STDOUT:     %return.param: ref %.1 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.1 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Core
@@ -498,11 +498,11 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc6_10.1 (%T)) -> %.1 {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc6_10.1 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc6_43: %.1 = struct_literal ()
-// CHECK:STDOUT:     %struct: %.1 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc6_44: %.1 = converted %.loc6_43, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %.loc6_43: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
+// CHECK:STDOUT:     %.loc6_44: %empty_struct_type = converted %.loc6_43, %struct [template = constants.%struct]
 // CHECK:STDOUT:     return %.loc6_44
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

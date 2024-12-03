@@ -45,8 +45,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [template]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [template]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
@@ -119,7 +119,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -144,7 +144,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc32_15.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc32_16

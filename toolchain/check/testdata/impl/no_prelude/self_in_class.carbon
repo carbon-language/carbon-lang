@@ -33,13 +33,13 @@ class A {
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
 // CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.6: %DefaultConstructible.type = facet_value %C, %C [template]
-// CHECK:STDOUT:   %.7: <witness> = interface_witness (%Make.2) [template]
+// CHECK:STDOUT:   %.5: %DefaultConstructible.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.6: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,7 +83,7 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.7]
+// CHECK:STDOUT:   %.loc18: <witness> = interface_witness (%Make.decl) [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %Make.decl
@@ -91,7 +91,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %empty_struct_type [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -103,7 +103,7 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [template = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc23: <witness> = complete_type_witness %empty_struct_type [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -119,7 +119,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_33.1: %.4 = struct_literal ()
+// CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc21_34 to %return
@@ -130,8 +130,8 @@ class A {
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%.6) {
-// CHECK:STDOUT:   %Self => constants.%.6
+// CHECK:STDOUT: specific @Make.1(constants.%.5) {
+// CHECK:STDOUT:   %Self => constants.%.5
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -23,8 +23,8 @@ let c_var: c = d;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %struct: %D = struct_value () [template]
 // CHECK:STDOUT: }
@@ -48,7 +48,7 @@ let c_var: c = d;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -56,7 +56,7 @@ let c_var: c = d;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -65,7 +65,7 @@ let c_var: c = d;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc15_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14

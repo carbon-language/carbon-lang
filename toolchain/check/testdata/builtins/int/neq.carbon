@@ -36,8 +36,8 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [template]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [template]
 // CHECK:STDOUT:   %True: type = class_type @True [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -45,16 +45,16 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.27: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.28: <bound method> = bound_method %int.1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.29: <specific function> = specific_function %.28, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.27: <bound method> = bound_method %int.1.1, %Convert.14 [template]
+// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.30: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.29: bool = bool_literal false [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.31: <bound method> = bound_method %int.2.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.32: <specific function> = specific_function %.31, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %.30: <bound method> = bound_method %int.2.1, %Convert.14 [template]
+// CHECK:STDOUT:   %.31: <specific function> = specific_function %.30, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.33: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.32: bool = bool_literal true [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -149,7 +149,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @True {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%True
@@ -157,7 +157,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @False {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%False
@@ -172,21 +172,21 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref.loc8: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
 // CHECK:STDOUT:   %int.1.loc8_21: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %int.1.loc8_24: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
-// CHECK:STDOUT:   %.loc8_21.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc8_21.2: <bound method> = bound_method %int.1.loc8_21, %.loc8_21.1 [template = constants.%.28]
-// CHECK:STDOUT:   %.loc8_21.3: <specific function> = specific_function %.loc8_21.2, @Convert.2(constants.%int.32) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_21.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc8_21.2: <bound method> = bound_method %int.1.loc8_21, %.loc8_21.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc8_21.3: <specific function> = specific_function %.loc8_21.2, @Convert.2(constants.%int.32) [template = constants.%.28]
 // CHECK:STDOUT:   %int.convert_checked.loc8_21: init %i32 = call %.loc8_21.3(%int.1.loc8_21) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc8_21.4: %i32 = value_of_initializer %int.convert_checked.loc8_21 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc8_21.5: %i32 = converted %int.1.loc8_21, %.loc8_21.4 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc8_24.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc8_24.2: <bound method> = bound_method %int.1.loc8_24, %.loc8_24.1 [template = constants.%.28]
-// CHECK:STDOUT:   %.loc8_24.3: <specific function> = specific_function %.loc8_24.2, @Convert.2(constants.%int.32) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_24.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc8_24.2: <bound method> = bound_method %int.1.loc8_24, %.loc8_24.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc8_24.3: <specific function> = specific_function %.loc8_24.2, @Convert.2(constants.%int.32) [template = constants.%.28]
 // CHECK:STDOUT:   %int.convert_checked.loc8_24: init %i32 = call %.loc8_24.3(%int.1.loc8_24) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc8_24.4: %i32 = value_of_initializer %int.convert_checked.loc8_24 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc8_24.5: %i32 = converted %int.1.loc8_24, %.loc8_24.4 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %int.neq.loc8: init bool = call %Neq.ref.loc8(%.loc8_21.5, %.loc8_24.5) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %int.neq.loc8 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc8_14.2: bool = converted %int.neq.loc8, %.loc8_14.1 [template = constants.%.30]
+// CHECK:STDOUT:   %int.neq.loc8: init bool = call %Neq.ref.loc8(%.loc8_21.5, %.loc8_24.5) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_14.1: bool = value_of_initializer %int.neq.loc8 [template = constants.%.29]
+// CHECK:STDOUT:   %.loc8_14.2: bool = converted %int.neq.loc8, %.loc8_14.1 [template = constants.%.29]
 // CHECK:STDOUT:   if %.loc8_14.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
@@ -203,21 +203,21 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref.loc9: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
 // CHECK:STDOUT:   %int.1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
-// CHECK:STDOUT:   %.loc9_20.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc9_20.2: <bound method> = bound_method %int.1.loc9, %.loc9_20.1 [template = constants.%.28]
-// CHECK:STDOUT:   %.loc9_20.3: <specific function> = specific_function %.loc9_20.2, @Convert.2(constants.%int.32) [template = constants.%.29]
+// CHECK:STDOUT:   %.loc9_20.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc9_20.2: <bound method> = bound_method %int.1.loc9, %.loc9_20.1 [template = constants.%.27]
+// CHECK:STDOUT:   %.loc9_20.3: <specific function> = specific_function %.loc9_20.2, @Convert.2(constants.%int.32) [template = constants.%.28]
 // CHECK:STDOUT:   %int.convert_checked.loc9_20: init %i32 = call %.loc9_20.3(%int.1.loc9) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc9_20.4: %i32 = value_of_initializer %int.convert_checked.loc9_20 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc9_20.5: %i32 = converted %int.1.loc9, %.loc9_20.4 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc9_23.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc9_23.2: <bound method> = bound_method %int.2, %.loc9_23.1 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc9_23.3: <specific function> = specific_function %.loc9_23.2, @Convert.2(constants.%int.32) [template = constants.%.32]
+// CHECK:STDOUT:   %.loc9_23.1: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc9_23.2: <bound method> = bound_method %int.2, %.loc9_23.1 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc9_23.3: <specific function> = specific_function %.loc9_23.2, @Convert.2(constants.%int.32) [template = constants.%.31]
 // CHECK:STDOUT:   %int.convert_checked.loc9_23: init %i32 = call %.loc9_23.3(%int.2) [template = constants.%int.2.2]
 // CHECK:STDOUT:   %.loc9_23.4: %i32 = value_of_initializer %int.convert_checked.loc9_23 [template = constants.%int.2.2]
 // CHECK:STDOUT:   %.loc9_23.5: %i32 = converted %int.2, %.loc9_23.4 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %int.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_20.5, %.loc9_23.5) [template = constants.%.33]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.neq.loc9 [template = constants.%.33]
-// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.neq.loc9, %.loc9_13.1 [template = constants.%.33]
+// CHECK:STDOUT:   %int.neq.loc9: init bool = call %Neq.ref.loc9(%.loc9_20.5, %.loc9_23.5) [template = constants.%.32]
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.neq.loc9 [template = constants.%.32]
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.neq.loc9, %.loc9_13.1 [template = constants.%.32]
 // CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:

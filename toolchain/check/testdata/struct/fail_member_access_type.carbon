@@ -20,9 +20,9 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %int.64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: f64} [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 4 [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value (%.2) [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: f64} [template]
+// CHECK:STDOUT:   %.1: f64 = float_literal 4 [template]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.1) [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -49,9 +49,9 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int.64) [template = f64]
 // CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [template = f64]
-// CHECK:STDOUT:   %.loc11_16: type = struct_type {.a: f64} [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: f64} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
+// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
@@ -62,12 +62,12 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_26: f64 = float_literal 4 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc11_29.1: %.1 = struct_literal (%.loc11_26)
-// CHECK:STDOUT:   %.loc11_29.2: init %.1 = struct_init (%.loc11_26) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_30: init %.1 = converted %.loc11_29.1, %.loc11_29.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_26: f64 = float_literal 4 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc11_29.1: %struct_type.a = struct_literal (%.loc11_26)
+// CHECK:STDOUT:   %.loc11_29.2: init %struct_type.a = struct_init (%.loc11_26) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_30: init %struct_type.a = converted %.loc11_29.1, %.loc11_29.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_30
-// CHECK:STDOUT:   %x.ref: ref %.1 = name_ref x, file.%x
+// CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

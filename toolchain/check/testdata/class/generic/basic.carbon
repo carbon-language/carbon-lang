@@ -38,8 +38,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class.2, %T [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {.k: %T} [symbolic]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [symbolic]
+// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %T} [symbolic]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %struct_type.k [symbolic]
 // CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [template]
 // CHECK:STDOUT:   %Declaration.1: %Declaration.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -85,8 +85,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.loc21_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc11_13.2 (%T) [symbolic = %.loc21_8.2 (constants.%.3)]
-// CHECK:STDOUT:   %.loc22_1.2: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %.loc22_1.2 (constants.%.4)]
-// CHECK:STDOUT:   %.loc22_1.3: <witness> = complete_type_witness @Class.%.loc22_1.2 (%.4) [symbolic = %.loc22_1.3 (constants.%.5)]
+// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
+// CHECK:STDOUT:   %.loc22_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k) [symbolic = %.loc22_1.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr)] {
@@ -122,7 +122,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_8.1: @Class.%.loc21_8.2 (%.3) = field_decl k, element0 [template]
-// CHECK:STDOUT:     %.loc22_1.1: <witness> = complete_type_witness %.4 [symbolic = %.loc22_1.3 (constants.%.5)]
+// CHECK:STDOUT:     %.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %.loc22_1.2 (constants.%.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
@@ -188,8 +188,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue => constants.%GetValue
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.loc21_8.2 => constants.%.3
+// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k
 // CHECK:STDOUT:   %.loc22_1.2 => constants.%.4
-// CHECK:STDOUT:   %.loc22_1.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(@GetAddr.%T) {

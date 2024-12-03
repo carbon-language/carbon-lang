@@ -94,8 +94,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %Generic.1: %Generic.type = struct_value () [template]
 // CHECK:STDOUT:   %Generic.2: type = class_type @Generic, @Generic(%T) [symbolic]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -134,7 +134,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Generic.2
@@ -156,8 +156,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T) [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -192,7 +192,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.2
@@ -223,8 +223,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T, %N.2) [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -282,7 +282,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.2
@@ -318,8 +318,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T, %U) [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -376,7 +376,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12_29: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12_29: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.2
@@ -412,8 +412,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T.2) [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -464,7 +464,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12_19: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc12_19: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.2
@@ -494,8 +494,8 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%U) [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -541,7 +541,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.2

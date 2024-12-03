@@ -152,8 +152,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %StaticMemberFunction: %StaticMemberFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %AdapterMethod.type: type = fn_type @AdapterMethod [template]
 // CHECK:STDOUT:   %AdapterMethod: %AdapterMethod.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a.b [template]
 // CHECK:STDOUT:   %TestStaticMemberFunction.type: type = fn_type @TestStaticMemberFunction [template]
 // CHECK:STDOUT:   %TestStaticMemberFunction: %TestStaticMemberFunction.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAdapterMethod.type: type = fn_type @TestAdapterMethod [template]
@@ -201,7 +201,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
-// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc17: <witness> = complete_type_witness %struct_type.a.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -229,7 +229,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %self.param: %SomeClassAdapter = value_param runtime_param0
 // CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %struct_type.a.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -268,8 +268,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
@@ -312,7 +312,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %self.param: %SomeClass = value_param runtime_param0
 // CHECK:STDOUT:     %self: %SomeClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -323,7 +323,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -352,8 +352,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %SomeClass, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a.b [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -407,7 +407,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_signed.loc6, %.loc6_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_8: %.1 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %struct_type.a.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -419,7 +419,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %struct_type.a.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -444,8 +444,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a.b [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -493,13 +493,13 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc5_30: init type = call constants.%Int(%int.32.loc5_30) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_30.1: type = value_of_initializer %int.make_type_signed.loc5_30 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_30.2: type = converted %int.make_type_signed.loc5_30, %.loc5_30.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_33: type = struct_type {.a: %i32, .b: %i32} [template = constants.%.1]
-// CHECK:STDOUT:   adapt_decl %.loc5_33 [template]
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.3]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b]
+// CHECK:STDOUT:   adapt_decl %struct_type.a.b [template]
+// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %struct_type.a.b [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
-// CHECK:STDOUT:   extend %.loc5_33
+// CHECK:STDOUT:   extend %struct_type.a.b
 // CHECK:STDOUT:   complete_type_witness = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

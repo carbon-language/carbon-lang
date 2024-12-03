@@ -39,15 +39,15 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B1: type = class_type @B1 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B1 [template]
-// CHECK:STDOUT:   %.5: type = struct_type {.base: %B1} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %C, %B1 [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B1} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type %D, %B1 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %D, %B1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,7 +73,7 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
@@ -81,7 +81,7 @@ class D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
-// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
@@ -90,9 +90,9 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc15: %.4 = base_decl %B1.ref, element0 [template]
+// CHECK:STDOUT:   %.loc15: %.3 = base_decl %B1.ref, element0 [template]
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
-// CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc24: <witness> = complete_type_witness %struct_type.base [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -103,9 +103,9 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B1.ref.loc28: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc28: %.7 = base_decl %B1.ref.loc28, element0 [template]
+// CHECK:STDOUT:   %.loc28: %.5 = base_decl %B1.ref.loc28, element0 [template]
 // CHECK:STDOUT:   %B1.ref.loc35: type = name_ref B1, file.%B1.decl [template = constants.%B1]
-// CHECK:STDOUT:   %.loc36: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc36: <witness> = complete_type_witness %struct_type.base [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D

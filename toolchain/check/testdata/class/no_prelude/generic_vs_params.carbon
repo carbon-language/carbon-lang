@@ -57,8 +57,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NotGenericNoParams: type = class_type @NotGenericNoParams [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %NotGenericButParams.type: type = generic_class_type @NotGenericButParams [template]
 // CHECK:STDOUT:   %NotGenericButParams.1: %NotGenericButParams.type = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericButParams.2: type = class_type @NotGenericButParams [template]
@@ -150,7 +150,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericNoParams {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NotGenericNoParams
@@ -158,7 +158,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericButParams {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NotGenericButParams.2
@@ -172,7 +172,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericAndParams.2
@@ -197,7 +197,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc10_26.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc10_26.2 (constants.%U)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
@@ -211,7 +211,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc9: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericNoParams.2
@@ -226,7 +226,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc10: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericAndParams.4
@@ -235,7 +235,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -244,23 +244,23 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_30.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc15_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_30.2: init %NotGenericNoParams = class_init (), file.%a.var [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc15_31: init %NotGenericNoParams = converted %.loc15_30.1, %.loc15_30.2 [template = constants.%struct.1]
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_31
-// CHECK:STDOUT:   %.loc16_33.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc16_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_33.2: init %NotGenericButParams.2 = class_init (), file.%b.var [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc16_34: init %NotGenericButParams.2 = converted %.loc16_33.1, %.loc16_33.2 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign file.%b.var, %.loc16_34
-// CHECK:STDOUT:   %.loc17_31.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc17_31.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.5 = class_init (), file.%c.var [template = constants.%struct.3]
 // CHECK:STDOUT:   %.loc17_32: init %GenericAndParams.5 = converted %.loc17_31.1, %.loc17_31.2 [template = constants.%struct.3]
 // CHECK:STDOUT:   assign file.%c.var, %.loc17_32
-// CHECK:STDOUT:   %.loc18_32.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc18_32.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.1 = class_init (), file.%d.var [template = constants.%struct.4]
 // CHECK:STDOUT:   %.loc18_33: init %GenericNoParams.1 = converted %.loc18_32.1, %.loc18_32.2 [template = constants.%struct.4]
 // CHECK:STDOUT:   assign file.%d.var, %.loc18_33
-// CHECK:STDOUT:   %.loc19_36.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc19_36.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.7 = class_init (), file.%e.var [template = constants.%struct.5]
 // CHECK:STDOUT:   %.loc19_37: init %GenericAndParams.7 = converted %.loc19_36.1, %.loc19_36.2 [template = constants.%struct.5]
 // CHECK:STDOUT:   assign file.%e.var, %.loc19_37
@@ -318,8 +318,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -330,7 +330,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2
@@ -343,8 +343,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.1: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.2: type = class_type @A [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -367,7 +367,7 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A.2

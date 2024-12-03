@@ -25,8 +25,8 @@ class C {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -68,7 +68,7 @@ class C {
 // CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_signed, %.loc14_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_8: %.1 = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %struct_type.a [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

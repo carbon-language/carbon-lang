@@ -35,8 +35,8 @@ var b: i32 = a.({.index = 1}.index);
 // CHECK:STDOUT:   %int.34.2: %i32 = int_value 34 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int.12.2, %int.34.2) [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.30: type = struct_type {.index: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %struct: %.30 = struct_value (%int.1) [template]
+// CHECK:STDOUT:   %struct_type.index: type = struct_type {.index: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int.1) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -99,9 +99,9 @@ var b: i32 = a.({.index = 1}.index);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
-// CHECK:STDOUT:   %.loc12_28.1: %.30 = struct_literal (%int.1)
-// CHECK:STDOUT:   %struct: %.30 = struct_value (%int.1) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_28.2: %.30 = converted %.loc12_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_28.1: %struct_type.index = struct_literal (%int.1)
+// CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int.1) [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_28.2: %struct_type.index = converted %.loc12_28.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_29: Core.IntLiteral = struct_access %.loc12_28.2, element0 [template = constants.%int.1]
 // CHECK:STDOUT:   %.loc12_15.1: ref %i32 = tuple_access %a.ref, element1
 // CHECK:STDOUT:   %.loc12_15.2: %i32 = bind_value %.loc12_15.1

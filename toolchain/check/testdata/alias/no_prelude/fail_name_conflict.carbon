@@ -33,8 +33,8 @@ alias b = C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +58,7 @@ alias b = C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -67,11 +67,11 @@ alias b = C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc21_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc21_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc21_13.2: init %C = class_init (), file.%a.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc21_14: init %C = converted %.loc21_13.1, %.loc21_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc21_14
-// CHECK:STDOUT:   %.loc23_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc23_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_13.2: init %C = class_init (), file.%b.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc23_14: init %C = converted %.loc23_13.1, %.loc23_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%b.var, %.loc23_14

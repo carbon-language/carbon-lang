@@ -55,8 +55,8 @@ class Class {
 // CHECK:STDOUT:   %.28: <bound method> = bound_method %int.1.1, %Convert.14 [template]
 // CHECK:STDOUT:   %.29: <specific function> = specific_function %.28, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.30: type = struct_type {.j: %i32, .k: %i32} [template]
-// CHECK:STDOUT:   %.31: <witness> = complete_type_witness %.30 [template]
+// CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [template]
+// CHECK:STDOUT:   %.30: <witness> = complete_type_witness %struct_type.j.k [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -112,7 +112,7 @@ class Class {
 // CHECK:STDOUT:   %.loc34_23.4: %i32 = value_of_initializer %int.convert_checked.loc34 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc34_23.5: %i32 = converted %int.1, %.loc34_23.4 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc34_23.5
-// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %.30 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc35: <witness> = complete_type_witness %struct_type.j.k [template = constants.%.30]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

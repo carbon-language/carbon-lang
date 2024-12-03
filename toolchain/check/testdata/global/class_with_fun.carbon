@@ -19,8 +19,8 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ret_a.type: type = fn_type @ret_a [template]
 // CHECK:STDOUT:   %ret_a: %ret_a.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %A = struct_value () [template]
@@ -56,7 +56,7 @@ var a: A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -65,7 +65,7 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ret_a() -> %return: %A {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc13_11.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc13_11.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_11.2: init %A = class_init (), %return [template = constants.%struct]
 // CHECK:STDOUT:   %.loc13_12: init %A = converted %.loc13_11.1, %.loc13_11.2 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc13_12 to %return
@@ -73,7 +73,7 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_13.1: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc16_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_13.2: init %A = class_init (), file.%a.var [template = constants.%struct]
 // CHECK:STDOUT:   %.loc16_14: init %A = converted %.loc16_13.1, %.loc16_13.2 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc16_14

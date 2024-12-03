@@ -25,8 +25,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C, %empty_tuple.type [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.v: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.v [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -63,7 +63,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc11_19.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc11_16: %.1 = field_decl v, element0 [template]
-// CHECK:STDOUT:   %.loc11_22: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc11_22: <witness> = complete_type_witness %struct_type.v [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -74,7 +74,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT: fn @F() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_18.1: %.2 = struct_literal (%.loc19_17.1)
+// CHECK:STDOUT:   %.loc19_18.1: %struct_type.v = struct_literal (%.loc19_17.1)
 // CHECK:STDOUT:   %.loc19_18.2: ref %empty_tuple.type = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc19_17.2: init %empty_tuple.type = tuple_init () to %.loc19_18.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_18.3: init %empty_tuple.type = converted %.loc19_17.1, %.loc19_17.2 [template = constants.%empty_tuple]
@@ -86,7 +86,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc16_22.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_23.1: %.2 = struct_literal (%.loc16_22.1)
+// CHECK:STDOUT:   %.loc16_23.1: %struct_type.v = struct_literal (%.loc16_22.1)
 // CHECK:STDOUT:   %.loc16_23.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc16_23.3: ref %empty_tuple.type = class_element_access %.loc16_23.2, element0
 // CHECK:STDOUT:   %.loc16_22.2: init %empty_tuple.type = tuple_init () to %.loc16_23.3 [template = constants.%empty_tuple]

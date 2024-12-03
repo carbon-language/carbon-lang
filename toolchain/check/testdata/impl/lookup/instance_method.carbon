@@ -43,8 +43,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %.4: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %.5: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %.6: type = struct_type {} [template]
-// CHECK:STDOUT:   %.7: <witness> = complete_type_witness %.6 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -143,7 +143,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %.6 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc21: <witness> = complete_type_witness %empty_struct_type [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

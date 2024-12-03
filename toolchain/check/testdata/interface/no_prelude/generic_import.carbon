@@ -100,8 +100,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %AddWith.type.1: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %AddWith: %AddWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -111,17 +111,17 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self.2: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %AddWith.type.2, %F.type.1 [symbolic]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %AddWith.type.2, %F.type.1 [symbolic]
+// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, imports.%import_ref.5 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.3: type = facet_type <@AddWith, @AddWith(%C)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
-// CHECK:STDOUT:   %.6: %.5 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.7: %AddWith.type.2 = facet_value %C, %C [symbolic]
-// CHECK:STDOUT:   %.8: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %.4: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %.6: %AddWith.type.2 = facet_value %C, %C [symbolic]
+// CHECK:STDOUT:   %.7: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -156,8 +156,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type.1) [symbolic = %.1 (constants.%.3)]
-// CHECK:STDOUT:   %.2: @AddWith.%.1 (%.3) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.2 (constants.%.4)]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type.1) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.2: @AddWith.%.1 (%.2) = assoc_entity element0, imports.%import_ref.5 [symbolic = %.2 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -169,7 +169,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%F.decl) [template = constants.%.8]
+// CHECK:STDOUT:   %.loc7: <witness> = interface_witness (%F.decl) [template = constants.%.7]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -177,7 +177,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -215,9 +215,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %Self => constants.%Self.2
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.1 => constants.%.5
-// CHECK:STDOUT:   %.2 => constants.%.6
+// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %.2 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C, constants.%.7) {}
+// CHECK:STDOUT: specific @F.1(constants.%C, constants.%.6) {}
 // CHECK:STDOUT:

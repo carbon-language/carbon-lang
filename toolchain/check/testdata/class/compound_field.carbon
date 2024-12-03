@@ -46,19 +46,19 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.a.b.c [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [template]
-// CHECK:STDOUT:   %.8: <witness> = complete_type_witness %.7 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.e.1: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [template]
+// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %struct_type.base.d.e.1 [template]
 // CHECK:STDOUT:   %AccessDerived.type: type = fn_type @AccessDerived [template]
 // CHECK:STDOUT:   %AccessDerived: %AccessDerived.type = struct_value () [template]
 // CHECK:STDOUT:   %AccessBase.type: type = fn_type @AccessBase [template]
 // CHECK:STDOUT:   %AccessBase: %AccessBase.type = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %Derived [template]
-// CHECK:STDOUT:   %.13: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.9: type = ptr_type %Derived [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %AccessDerivedIndirect.type: type = fn_type @AccessDerivedIndirect [template]
 // CHECK:STDOUT:   %AccessDerivedIndirect: %AccessDerivedIndirect.type = struct_value () [template]
 // CHECK:STDOUT:   %AccessBaseIndirect.type: type = fn_type @AccessBaseIndirect [template]
@@ -119,40 +119,40 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessDerivedIndirect.decl: %AccessDerivedIndirect.type = fn_decl @AccessDerivedIndirect [template = constants.%AccessDerivedIndirect] {
-// CHECK:STDOUT:     %p.patt: %.12 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.12 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.13 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.13 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %.9 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.9 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.10 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.10 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref.loc32: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.12]
+// CHECK:STDOUT:     %.loc32_36: type = ptr_type %Derived [template = constants.%.9]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc32_45.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc32_45.2: type = converted %int.make_type_signed, %.loc32_45.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_45.3: type = ptr_type %i32 [template = constants.%.13]
-// CHECK:STDOUT:     %p.param: %.12 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.12 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.13 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.13 = return_slot %return.param
+// CHECK:STDOUT:     %.loc32_45.3: type = ptr_type %i32 [template = constants.%.10]
+// CHECK:STDOUT:     %p.param: %.9 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.9 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.10 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.10 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AccessBaseIndirect.decl: %AccessBaseIndirect.type = fn_decl @AccessBaseIndirect [template = constants.%AccessBaseIndirect] {
-// CHECK:STDOUT:     %p.patt: %.12 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.12 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.13 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.13 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %.9 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.9 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %.10 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %.10 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.12]
+// CHECK:STDOUT:     %.loc36_33: type = ptr_type %Derived [template = constants.%.9]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc36_42.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc36_42.2: type = converted %int.make_type_signed, %.loc36_42.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc36_42.3: type = ptr_type %i32 [template = constants.%.13]
-// CHECK:STDOUT:     %p.param: %.12 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.12 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.13 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.13 = return_slot %return.param
+// CHECK:STDOUT:     %.loc36_42.3: type = ptr_type %i32 [template = constants.%.10]
+// CHECK:STDOUT:     %p.param: %.9 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.9 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %.10 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %.10 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_signed.loc14, %.loc14_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_8: %.1 = field_decl c, element2 [template]
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -184,18 +184,18 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc18: %.5 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.4 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %int.32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%int.32.loc20) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.2: type = converted %int.make_type_signed.loc20, %.loc20_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc20_8: %.6 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc20_8: %.5 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %int.32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int.32.loc21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_signed.loc21, %.loc21_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8: %.6 = field_decl e, element2 [template]
-// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.7 [template = constants.%.8]
+// CHECK:STDOUT:   %.loc21_8: %.5 = field_decl e, element2 [template]
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %struct_type.base.d.e.1 [template = constants.%.6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -210,7 +210,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc25_10: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Derived.ref.loc25: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref.loc25_20: %.6 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
+// CHECK:STDOUT:   %d.ref.loc25_20: %.5 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc25_11.1: ref %i32 = class_element_access %d.ref.loc25_10, element1
 // CHECK:STDOUT:   %.loc25_11.2: %i32 = bind_value %.loc25_11.1
 // CHECK:STDOUT:   return %.loc25_11.2
@@ -228,27 +228,27 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   return %.loc29_11.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessDerivedIndirect(%p.param_patt: %.12) -> %.13 {
+// CHECK:STDOUT: fn @AccessDerivedIndirect(%p.param_patt: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.12 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
 // CHECK:STDOUT:   %Derived.ref.loc33: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref: %.6 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
+// CHECK:STDOUT:   %d.ref: %.5 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc33_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc33_12.2: ref %i32 = class_element_access %.loc33_12.1, element1
-// CHECK:STDOUT:   %.loc33_10: %.13 = addr_of %.loc33_12.2
+// CHECK:STDOUT:   %.loc33_10: %.10 = addr_of %.loc33_12.2
 // CHECK:STDOUT:   return %.loc33_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessBaseIndirect(%p.param_patt: %.12) -> %.13 {
+// CHECK:STDOUT: fn @AccessBaseIndirect(%p.param_patt: %.9) -> %.10 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.12 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %.9 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc37_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc37_12.2: ref %Base = class_element_access %.loc37_12.1, element0
 // CHECK:STDOUT:   %.loc37_12.3: ref %Base = converted %.loc37_12.1, %.loc37_12.2
 // CHECK:STDOUT:   %.loc37_12.4: ref %i32 = class_element_access %.loc37_12.3, element1
-// CHECK:STDOUT:   %.loc37_10: %.13 = addr_of %.loc37_12.4
+// CHECK:STDOUT:   %.loc37_10: %.10 = addr_of %.loc37_12.4
 // CHECK:STDOUT:   return %.loc37_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

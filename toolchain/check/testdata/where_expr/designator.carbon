@@ -233,7 +233,7 @@ class D {
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type.1, type [template]
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @J.%Member [template]
 // CHECK:STDOUT:   %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
 // CHECK:STDOUT:   %W: %J.type.2 = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %J.type.2 = symbolic_binding_pattern W, 0 [symbolic]
@@ -264,7 +264,7 @@ class D {
 // CHECK:STDOUT:     %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc12_44: %.3 = struct_literal ()
+// CHECK:STDOUT:     %.loc12_44: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = constants.%J.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
 // CHECK:STDOUT:     }
@@ -384,8 +384,8 @@ class D {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -413,7 +413,7 @@ class D {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -433,8 +433,8 @@ class D {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -462,7 +462,7 @@ class D {
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D

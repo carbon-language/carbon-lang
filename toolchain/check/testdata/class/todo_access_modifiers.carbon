@@ -32,8 +32,8 @@ class Access {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Access, %i32 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.k: %i32, .l: %i32} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [template]
+// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.k.l [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -66,7 +66,7 @@ class Access {
 // CHECK:STDOUT:   %.loc19_20.1: type = value_of_initializer %int.make_type_signed.loc19 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_20.2: type = converted %int.make_type_signed.loc19, %.loc19_20.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_18: %.1 = field_decl l, element1 [template]
-// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc20: <witness> = complete_type_witness %struct_type.k.l [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access

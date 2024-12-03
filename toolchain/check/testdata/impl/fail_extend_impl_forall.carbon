@@ -39,8 +39,8 @@ class C {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.3: %GenericInterface.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %.4: <witness> = interface_witness (%F.2) [symbolic]
-// CHECK:STDOUT:   %.5: type = struct_type {} [template]
-// CHECK:STDOUT:   %.6: <witness> = complete_type_witness %.5 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -138,7 +138,7 @@ class C {
 // CHECK:STDOUT:     %T.loc19_23.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_23.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = specific_constant @impl.%GenericInterface.type.loc19_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.2]
-// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc22: <witness> = complete_type_witness %empty_struct_type [template = constants.%.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

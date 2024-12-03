@@ -23,7 +23,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -45,9 +45,9 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_13.2: type = converted %int.make_type_signed, %.loc17_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_16: type = struct_type {.a: %i32} [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
+// CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -56,8 +56,8 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_25.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_25.2: type = converted %int.make_type_signed, %.loc17_25.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_28: type = struct_type {.a: %i32} [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_29: %.1 = converted %.loc17_28, <error> [template = <error>]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   %.loc17_29: %struct_type.a = converted %struct_type.a, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

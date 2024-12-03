@@ -44,15 +44,15 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [template]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [template]
 // CHECK:STDOUT:   %True: type = class_type @True [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.6: f64 = float_literal 2 [template]
-// CHECK:STDOUT:   %.7: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.3: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %.4: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.5: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %.6: bool = bool_literal false [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -146,7 +146,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @True {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%True
@@ -154,7 +154,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @False {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%False
@@ -167,11 +167,11 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
-// CHECK:STDOUT:   %.loc8_19: f64 = float_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc8_24: f64 = float_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %float.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_24) [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %float.eq.loc8 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc8_13.2: bool = converted %float.eq.loc8, %.loc8_13.1 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc8_19: f64 = float_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc8_24: f64 = float_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %float.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_24) [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %float.eq.loc8 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc8_13.2: bool = converted %float.eq.loc8, %.loc8_13.1 [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc8_13.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
@@ -186,11 +186,11 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %.loc8_13.3: type = block_arg !if.expr.result.loc8 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Eq.ref.loc9: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
-// CHECK:STDOUT:   %.loc9_20: f64 = float_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_25: f64 = float_literal 2 [template = constants.%.6]
-// CHECK:STDOUT:   %float.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_25) [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.eq.loc9 [template = constants.%.7]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.eq.loc9, %.loc9_14.1 [template = constants.%.7]
+// CHECK:STDOUT:   %.loc9_20: f64 = float_literal 1 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc9_25: f64 = float_literal 2 [template = constants.%.5]
+// CHECK:STDOUT:   %float.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_25) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.eq.loc9 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.eq.loc9, %.loc9_14.1 [template = constants.%.6]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:

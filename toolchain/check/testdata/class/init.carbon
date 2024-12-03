@@ -32,13 +32,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %.2: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class, %.2 [template]
-// CHECK:STDOUT:   %.4: type = struct_type {.n: %i32, .next: %.2} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %.2} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %struct_type.n.next [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [template]
 // CHECK:STDOUT:   %MakeReorder: %MakeReorder.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = struct_type {.next: %.2, .n: %i32} [template]
+// CHECK:STDOUT:   %struct_type.next.n: type = struct_type {.next: %.2, .n: %i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,7 +113,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_18: type = ptr_type %Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_11: %.3 = field_decl next, element1 [template]
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %struct_type.n.next [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -126,7 +126,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %.2 = name_ref next, %next
-// CHECK:STDOUT:   %.loc17_31.1: %.4 = struct_literal (%n.ref, %next.ref)
+// CHECK:STDOUT:   %.loc17_31.1: %struct_type.n.next = struct_literal (%n.ref, %next.ref)
 // CHECK:STDOUT:   %.loc17_31.2: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc17_31.3: init %i32 = initialize_from %n.ref to %.loc17_31.2
 // CHECK:STDOUT:   %.loc17_31.4: ref %.2 = class_element_access %return, element1
@@ -140,7 +140,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %.2 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc21_31.1: %.7 = struct_literal (%next.ref, %n.ref)
+// CHECK:STDOUT:   %.loc21_31.1: %struct_type.next.n = struct_literal (%next.ref, %n.ref)
 // CHECK:STDOUT:   %.loc21_31.2: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc21_31.3: init %i32 = initialize_from %n.ref to %.loc21_31.2
 // CHECK:STDOUT:   %.loc21_31.4: ref %.2 = class_element_access %return, element0
