@@ -692,12 +692,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %elt0.1: %.1 = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %elt0.1: %assoc_type = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %elt1: %.11 = assoc_entity element1, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
+// CHECK:STDOUT:   %elt1: %F.assoc_type = assoc_entity element1, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -725,17 +725,17 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc5_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_21.2: type = converted %int.make_type_signed, %.loc5_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %T [template = constants.%elt0.1]
+// CHECK:STDOUT:   %elt0: %assoc_type = assoc_entity element0, %T [template = constants.%elt0.1]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%elt0 [template = constants.%elt0.1]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @I.%elt0 [template = constants.%elt0.1]
 // CHECK:STDOUT:     %.loc13: type = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt1: %.11 = assoc_entity element1, %F.decl [template = constants.%elt1]
+// CHECK:STDOUT:   %elt1: %F.assoc_type = assoc_entity element1, %F.decl [template = constants.%elt1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

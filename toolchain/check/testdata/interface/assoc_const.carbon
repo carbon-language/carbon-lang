@@ -18,14 +18,14 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %assoc_type.1: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %elt0: %assoc_type.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %elt1: %.2 = assoc_entity element1, @I.%N [template]
+// CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %elt1: %assoc_type.2 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -48,13 +48,13 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %T [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %assoc_type.1 = assoc_entity element0, %T [template = constants.%elt0]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_signed, %.loc13_11.1 [template = constants.%i32]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %elt1: %.2 = assoc_entity element1, %N [template = constants.%elt1]
+// CHECK:STDOUT:   %elt1: %assoc_type.2 = assoc_entity element1, %N [template = constants.%elt1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

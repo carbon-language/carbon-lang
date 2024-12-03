@@ -35,8 +35,8 @@ impl C as I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -48,7 +48,7 @@ impl C as I {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.2: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,7 +90,7 @@ impl C as I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -130,7 +130,7 @@ impl C as I {
 // CHECK:STDOUT: fn @F.2() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref: %.1 = name_ref F, @I.%elt0 [template = constants.%elt0]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%elt0 [template = constants.%elt0]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,5 +141,5 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.3) {}
+// CHECK:STDOUT: specific @F.1(constants.%.2) {}
 // CHECK:STDOUT:

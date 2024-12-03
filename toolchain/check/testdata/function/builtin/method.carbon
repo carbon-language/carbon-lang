@@ -26,15 +26,15 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0.1: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
+// CHECK:STDOUT:   %elt0.1: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %.2: %I.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
@@ -61,7 +61,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.17 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.5(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.14: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %.7: type = array_type %int.3.2, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,7 +103,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %.loc19_19.2: %i32 = value_of_initializer %int.convert_checked.loc19_19 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc19_19.3: %i32 = converted %int.1, %.loc19_19.2 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%elt0 [template = constants.%elt0.1]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%elt0 [template = constants.%elt0.1]
 // CHECK:STDOUT:   %.loc19_26: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc19_19.3, %.loc19_26 [template = constants.%F.bound]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
@@ -124,9 +124,9 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %int.convert_checked.loc19_34: init Core.IntLiteral = call %Convert.specific_fn.loc19_34(%.loc19_34.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_34 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.5: Core.IntLiteral = converted %int.sadd, %.loc19_34.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.14]
-// CHECK:STDOUT:   %arr.var: ref %.14 = var arr
-// CHECK:STDOUT:   %arr: ref %.14 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.7]
+// CHECK:STDOUT:   %arr.var: ref %.7 = var arr
+// CHECK:STDOUT:   %arr: ref %.7 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -155,7 +155,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:     %return.param: ref @F.1.%.loc12_14.1 (%.1) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @F.1.%.loc12_14.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %F.decl [template = constants.%elt0.1]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -212,8 +212,8 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.3) {
-// CHECK:STDOUT:   %Self => constants.%.3
+// CHECK:STDOUT: specific @F.1(constants.%.2) {
+// CHECK:STDOUT:   %Self => constants.%.2
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

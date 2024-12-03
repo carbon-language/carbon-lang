@@ -51,7 +51,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.10: type = unbound_element_type %C, %i32 [template]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -111,12 +111,12 @@ fn G() -> C {
 // CHECK:STDOUT:   %int.make_type_signed.loc23_18: init type = call constants.%Int(%int.32.loc23_18) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_18.1: type = value_of_initializer %int.make_type_signed.loc23_18 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_18.2: type = converted %int.make_type_signed.loc23_18, %.loc23_18.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_16: %.10 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc23_16: %.5 = field_decl a, element0 [template]
 // CHECK:STDOUT:   %int.32.loc23_30: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc23_30: init type = call constants.%Int(%int.32.loc23_30) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_30.1: type = value_of_initializer %int.make_type_signed.loc23_30 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_30.2: type = converted %int.make_type_signed.loc23_30, %.loc23_30.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_28: %.10 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc23_28: %.5 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

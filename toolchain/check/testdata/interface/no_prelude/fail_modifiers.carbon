@@ -155,8 +155,8 @@ interface I {
 // CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -178,7 +178,7 @@ interface I {
 // CHECK:STDOUT:     %self.param: @F.%.loc9_22.1 (%.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.%.loc9_22.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -206,8 +206,8 @@ interface I {
 // CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -229,7 +229,7 @@ interface I {
 // CHECK:STDOUT:     %self.param: @F.%.loc8_24.1 (%.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @F.%.loc8_24.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

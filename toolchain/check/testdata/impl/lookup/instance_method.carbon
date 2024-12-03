@@ -37,11 +37,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.2: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -106,7 +106,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -163,7 +163,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: fn @F.3(%c.param_patt: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%elt0 [template = constants.%elt0]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%elt0 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc24_11: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %.loc24_11
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
@@ -177,8 +177,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.3) {
-// CHECK:STDOUT:   %Self => constants.%.3
+// CHECK:STDOUT: specific @F.1(constants.%.2) {
+// CHECK:STDOUT:   %Self => constants.%.2
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

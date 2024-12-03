@@ -133,7 +133,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %A = struct_value (%int.1.2, %int.2.2) [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %B [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -165,7 +165,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %A.ref.loc18: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %B.ref.loc21: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc22: type = ptr_type %B [template = constants.%.12]
+// CHECK:STDOUT:   %.loc22: type = ptr_type %B [template = constants.%.7]
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_factory.var: ref %B = var b_factory
 // CHECK:STDOUT:   %b_factory: ref %B = bind_name b_factory, %b_factory.var
@@ -268,8 +268,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc22_25.1: ref %B = as_compatible %a_ref.ref.loc22
 // CHECK:STDOUT:   %.loc22_25.2: ref %B = converted %a_ref.ref.loc22, %.loc22_25.1
-// CHECK:STDOUT:   %.loc22_17: %.12 = addr_of %.loc22_25.2
-// CHECK:STDOUT:   %b_ptr: %.12 = bind_name b_ptr, %.loc22_17
+// CHECK:STDOUT:   %.loc22_17: %.7 = addr_of %.loc22_25.2
+// CHECK:STDOUT:   %b_ptr: %.7 = bind_name b_ptr, %.loc22_17
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @A.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc24_5: ref %B = splice_block file.%b_factory.var {}

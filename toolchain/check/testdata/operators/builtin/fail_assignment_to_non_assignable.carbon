@@ -90,11 +90,11 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.3: %tuple.type.2 = tuple_value (%int.1.2, %int.2.2) [template]
-// CHECK:STDOUT:   %.12: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.7: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: Core.IntLiteral, .y: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct.1: %struct_type.x.y = struct_value (%int.3.1, %int.4) [template]
 // CHECK:STDOUT:   %struct.2: %struct_type.x.y = struct_value (%int.1.1, %int.2.1) [template]
-// CHECK:STDOUT:   %.14: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.9: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.3.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
@@ -211,7 +211,7 @@ fn Main() {
 // CHECK:STDOUT:   %int.make_type_signed.loc39_9: init type = call constants.%Int(%int.32.loc39_9) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc39_12.1: type = value_of_initializer %int.make_type_signed.loc39_9 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc39_12.2: type = converted %int.make_type_signed.loc39_9, %.loc39_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc39_12.3: type = ptr_type %i32 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc39_12.3: type = ptr_type %i32 [template = constants.%.7]
 // CHECK:STDOUT:   assign %int.make_type_signed.loc39_3, %.loc39_12.3
 // CHECK:STDOUT:   %int.1.loc44: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %int.2.loc44: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
@@ -228,7 +228,7 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc44_18.1, %.loc44_20
 // CHECK:STDOUT:   %struct: %struct_type.x.y = struct_value (%int.1.loc44, %int.2.loc44) [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc44_18.2: %struct_type.x.y = converted %.loc44_18.1, %struct [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc49_7: bool = bool_literal true [template = constants.%.14]
+// CHECK:STDOUT:   %.loc49_7: bool = bool_literal true [template = constants.%.9]
 // CHECK:STDOUT:   if %.loc49_7 br !if.expr.then.loc49 else br !if.expr.else.loc49
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc49:
@@ -266,7 +266,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc52_10.2: type = converted %int.make_type_signed.loc52, %.loc52_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc56_7: bool = bool_literal true [template = constants.%.14]
+// CHECK:STDOUT:   %.loc56_7: bool = bool_literal true [template = constants.%.9]
 // CHECK:STDOUT:   if %.loc56_7 br !if.expr.then.loc56 else br !if.expr.else.loc56
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc56:

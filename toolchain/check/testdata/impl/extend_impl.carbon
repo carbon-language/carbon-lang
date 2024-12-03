@@ -31,12 +31,12 @@ fn G(c: C) {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %HasF.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %HasF.type, %F.type.1 [template]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.1: %HasF.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -74,7 +74,7 @@ fn G(c: C) {
 // CHECK:STDOUT: interface @HasF {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -117,11 +117,11 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc22: %.1 = name_ref F, @HasF.%elt0 [template = constants.%elt0]
+// CHECK:STDOUT:   %F.ref.loc22: %F.assoc_type = name_ref F, @HasF.%elt0 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc22: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %.loc22()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc23: %.1 = name_ref F, @HasF.%elt0 [template = constants.%elt0]
+// CHECK:STDOUT:   %F.ref.loc23: %F.assoc_type = name_ref F, @HasF.%elt0 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc23: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %.loc23()
 // CHECK:STDOUT:   return
@@ -129,5 +129,5 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.2) {}
+// CHECK:STDOUT: specific @F.1(constants.%.1) {}
 // CHECK:STDOUT:

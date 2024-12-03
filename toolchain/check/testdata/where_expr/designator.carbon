@@ -91,8 +91,8 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type.1, type [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type.1, type [template]
+// CHECK:STDOUT:   %elt0: %assoc_type = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.Self.1: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
@@ -100,8 +100,8 @@ class D {
 // CHECK:STDOUT:   %T.patt: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %.3: type = interface_witness_access %.2, element0 [symbolic]
+// CHECK:STDOUT:   %.1: <witness> = facet_access_witness %.Self.1 [symbolic]
+// CHECK:STDOUT:   %.2: type = interface_witness_access %.1, element0 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I.type.3 = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic]
@@ -153,9 +153,9 @@ class D {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type.1]
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%elt0 [template = constants.%elt0]
-// CHECK:STDOUT:     %.loc10_29.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.2]
-// CHECK:STDOUT:     %.loc10_29.2: type = interface_witness_access %.loc10_29.1, element0 [symbolic = constants.%.3]
+// CHECK:STDOUT:     %Member.ref: %assoc_type = name_ref Member, @I.%elt0 [template = constants.%elt0]
+// CHECK:STDOUT:     %.loc10_29.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.1]
+// CHECK:STDOUT:     %.loc10_29.2: type = interface_witness_access %.loc10_29.1, element0 [symbolic = constants.%.2]
 // CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.3] {
 // CHECK:STDOUT:       requirement_equivalent %.loc10_29.2, %.loc10_41
@@ -181,7 +181,7 @@ class D {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %Member [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %assoc_type = assoc_entity element0, %Member [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -230,8 +230,8 @@ class D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type.1: type = facet_type <@J> [template]
 // CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %J.type.1, type [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @J.%Member [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %J.type.1, type [template]
+// CHECK:STDOUT:   %elt0: %assoc_type = assoc_entity element0, @J.%Member [template]
 // CHECK:STDOUT:   %.Self: %J.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %J.type.2: type = facet_type <@J where TODO> [template]
@@ -276,7 +276,7 @@ class D {
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %Member [template = constants.%elt0]
+// CHECK:STDOUT:   %elt0: %assoc_type = assoc_entity element0, %Member [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

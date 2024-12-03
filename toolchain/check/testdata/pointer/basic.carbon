@@ -32,7 +32,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.10: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.5: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,14 +82,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int.32.loc13) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_13.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_signed.loc13, %.loc13_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_13.3: type = ptr_type %i32 [template = constants.%.10]
-// CHECK:STDOUT:   %p.var: ref %.10 = var p
-// CHECK:STDOUT:   %p: ref %.10 = bind_name p, %p.var
+// CHECK:STDOUT:   %.loc13_13.3: type = ptr_type %i32 [template = constants.%.5]
+// CHECK:STDOUT:   %p.var: ref %.5 = var p
+// CHECK:STDOUT:   %p: ref %.5 = bind_name p, %p.var
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_17: %.10 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_17: %.5 = addr_of %n.ref
 // CHECK:STDOUT:   assign %p.var, %.loc13_17
-// CHECK:STDOUT:   %p.ref: ref %.10 = name_ref p, %p
-// CHECK:STDOUT:   %.loc15_11: %.10 = bind_value %p.ref
+// CHECK:STDOUT:   %p.ref: ref %.5 = name_ref p, %p
+// CHECK:STDOUT:   %.loc15_11: %.5 = bind_value %p.ref
 // CHECK:STDOUT:   %.loc15_10.1: ref %i32 = deref %.loc15_11
 // CHECK:STDOUT:   %.loc15_10.2: %i32 = bind_value %.loc15_10.1
 // CHECK:STDOUT:   return %.loc15_10.2

@@ -424,6 +424,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name(std::move(name));
         continue;
       }
+      case CARBON_KIND(AssociatedEntityType inst): {
+        // TODO: Try to get the name of the interface associated with
+        // `inst.interface_type_id`.
+        if (auto fn_ty =
+                sem_ir_.types().TryGetAs<FunctionType>(inst.entity_type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".assoc_type");
+        } else {
+          add_inst_name("assoc_type");
+        }
+        continue;
+      }
       case BindAlias::Kind:
       case BindName::Kind:
       case BindSymbolicName::Kind:

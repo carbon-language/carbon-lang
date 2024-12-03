@@ -31,8 +31,8 @@ interface I {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %elt0.1: %.1 = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %assoc_type.1: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %elt0.1: %assoc_type.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %int.42.1: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -41,8 +41,8 @@ interface I {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.42.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.42.2: %i32 = int_value 42 [template]
-// CHECK:STDOUT:   %.11: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %elt1: %.11 = assoc_entity element1, @I.%N [template]
+// CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %elt1: %assoc_type.2 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,7 +76,7 @@ interface I {
 // CHECK:STDOUT:   %.loc16_36.4: type = converted %int.make_type_signed.loc16_32, %.loc16_36.3 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_36.5: type = converted %.loc16_35, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %T [template = constants.%elt0.1]
+// CHECK:STDOUT:   %elt0: %assoc_type.1 = assoc_entity element0, %T [template = constants.%elt0.1]
 // CHECK:STDOUT:   %int.32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%int.32.loc20) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_19.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
@@ -89,7 +89,7 @@ interface I {
 // CHECK:STDOUT:   %.loc20_27.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.42.2]
 // CHECK:STDOUT:   %.loc20_27.3: %i32 = converted %int.42, %.loc20_27.2 [template = constants.%int.42.2]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %elt1: %.11 = assoc_entity element1, %N [template = constants.%elt1]
+// CHECK:STDOUT:   %elt1: %assoc_type.2 = assoc_entity element1, %N [template = constants.%elt1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

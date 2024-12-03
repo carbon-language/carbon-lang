@@ -34,7 +34,7 @@ fn Main() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.4: type = array_type %int.2, %i32 [template]
+// CHECK:STDOUT:   %.3: type = array_type %int.2, %i32 [template]
 // CHECK:STDOUT:   %int.5.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -44,7 +44,7 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.5.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.5.2: %i32 = int_value 5 [template]
-// CHECK:STDOUT:   %array: %.4 = tuple_value (%int.5.2, %int.5.2) [template]
+// CHECK:STDOUT:   %array: %.3 = tuple_value (%int.5.2, %int.5.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,9 +75,9 @@ fn Main() {
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2]
 // CHECK:STDOUT:   %.loc18_19.1: type = value_of_initializer %int.make_type_signed.loc18 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_19.2: type = converted %int.make_type_signed.loc18, %.loc18_19.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_25: type = array_type %int.2, %i32 [template = constants.%.4]
-// CHECK:STDOUT:   %non_tuple.var: ref %.4 = var non_tuple
-// CHECK:STDOUT:   %non_tuple: ref %.4 = bind_name non_tuple, %non_tuple.var
+// CHECK:STDOUT:   %.loc18_25: type = array_type %int.2, %i32 [template = constants.%.3]
+// CHECK:STDOUT:   %non_tuple.var: ref %.3 = var non_tuple
+// CHECK:STDOUT:   %non_tuple: ref %.3 = bind_name non_tuple, %non_tuple.var
 // CHECK:STDOUT:   %int.5.loc18_30: Core.IntLiteral = int_value 5 [template = constants.%int.5.1]
 // CHECK:STDOUT:   %int.5.loc18_33: Core.IntLiteral = int_value 5 [template = constants.%int.5.1]
 // CHECK:STDOUT:   %.loc18_34.1: %tuple.type = tuple_literal (%int.5.loc18_30, %int.5.loc18_33)
@@ -97,8 +97,8 @@ fn Main() {
 // CHECK:STDOUT:   %int.1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %.loc18_34.8: ref %i32 = array_index %non_tuple.var, %int.1.loc18
 // CHECK:STDOUT:   %.loc18_34.9: init %i32 = initialize_from %.loc18_34.7 to %.loc18_34.8 [template = constants.%int.5.2]
-// CHECK:STDOUT:   %.loc18_34.10: init %.4 = array_init (%.loc18_34.5, %.loc18_34.9) to %non_tuple.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc18_35: init %.4 = converted %.loc18_34.1, %.loc18_34.10 [template = constants.%array]
+// CHECK:STDOUT:   %.loc18_34.10: init %.3 = array_init (%.loc18_34.5, %.loc18_34.9) to %non_tuple.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc18_35: init %.3 = converted %.loc18_34.1, %.loc18_34.10 [template = constants.%array]
 // CHECK:STDOUT:   assign %non_tuple.var, %.loc18_35
 // CHECK:STDOUT:   %int.32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc22: init type = call constants.%Int(%int.32.loc22) [template = constants.%i32]
@@ -106,7 +106,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc22_14.2: type = converted %int.make_type_signed.loc22, %.loc22_14.1 [template = constants.%i32]
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
 // CHECK:STDOUT:   %first: ref %i32 = bind_name first, %first.var
-// CHECK:STDOUT:   %non_tuple.ref: ref %.4 = name_ref non_tuple, %non_tuple
+// CHECK:STDOUT:   %non_tuple.ref: ref %.3 = name_ref non_tuple, %non_tuple
 // CHECK:STDOUT:   %int.0.loc22: Core.IntLiteral = int_value 0 [template = constants.%int.0]
 // CHECK:STDOUT:   assign %first.var, <error>
 // CHECK:STDOUT:   return
