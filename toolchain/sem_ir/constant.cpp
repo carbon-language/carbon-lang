@@ -8,7 +8,7 @@
 
 namespace Carbon::SemIR {
 
-auto ConstantStore::GetOrAdd(Inst inst, PhaseType phase) -> ConstantId {
+auto ConstantStore::GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId {
   auto result = map_.Insert(inst, [&] {
     auto inst_id = sem_ir_->insts().AddInNoBlock(LocIdAndInst::NoLoc(inst));
     ConstantId const_id = ConstantId::Invalid;

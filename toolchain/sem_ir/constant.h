@@ -160,8 +160,8 @@ class ConstantStore {
   //
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  enum PhaseType { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
-  auto GetOrAdd(Inst inst, PhaseType phase) -> ConstantId;
+  enum PhaseKind { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
+  auto GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

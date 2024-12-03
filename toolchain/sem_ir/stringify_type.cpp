@@ -321,10 +321,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             sem_ir.insts().Get(witness.facet_value_inst_id).type_id();
         auto facet_type = sem_ir.types().GetAs<FacetType>(witness_type_id);
         // TODO: Support != 1 interface better.
+        step_stack.PushString(")");
         if (auto impls_constraint = sem_ir.facet_types()
                                         .Get(facet_type.facet_type_id)
                                         .TryAsSingleInterface()) {
-          step_stack.PushString(")");
           const auto& interface =
               sem_ir.interfaces().Get(impls_constraint->interface_id);
           auto entities =
