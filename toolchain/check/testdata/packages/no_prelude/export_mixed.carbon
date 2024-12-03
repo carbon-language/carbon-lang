@@ -118,11 +118,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %empty_tuple.type [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %D.elt: type = unbound_element_type %D, %empty_tuple.type [template]
+// CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT: }
@@ -139,7 +139,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %C.elt = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -151,7 +151,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %.loc9_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc9_11.2: type = converted %.loc9_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc9_8: %D.elt = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc9_8: %D.elem = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

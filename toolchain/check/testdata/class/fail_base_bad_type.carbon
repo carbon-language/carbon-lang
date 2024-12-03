@@ -751,11 +751,11 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %Final.elt: type = unbound_element_type %Final, %i32 [template]
+// CHECK:STDOUT:   %Final.elem: type = unbound_element_type %Final, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %DeriveFromFinal: type = class_type @DeriveFromFinal [template]
-// CHECK:STDOUT:   %DeriveFromFinal.elt: type = unbound_element_type %DeriveFromFinal, %Final [template]
+// CHECK:STDOUT:   %DeriveFromFinal.elem: type = unbound_element_type %DeriveFromFinal, %Final [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Final} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %DeriveFromFinal [template]
@@ -844,7 +844,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc3_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc3_10.2: type = converted %int.make_type_signed, %.loc3_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc3_8: %Final.elt = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc3_8: %Final.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -855,7 +855,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
 // CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final.decl [template = constants.%Final]
-// CHECK:STDOUT:   %.loc11: %DeriveFromFinal.elt = base_decl %Final.ref, element0 [template]
+// CHECK:STDOUT:   %.loc11: %DeriveFromFinal.elem = base_decl %Final.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -879,7 +879,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc20_11: ref %DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %a.ref: %Final.elt = name_ref a, @Final.%.loc3_8 [template = @Final.%.loc3_8]
+// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc3_8 [template = @Final.%.loc3_8]
 // CHECK:STDOUT:   %.loc20_14.1: ref %Final = class_element_access %.loc20_11, element0
 // CHECK:STDOUT:   %.loc20_14.2: ref %Final = converted %.loc20_11, %.loc20_14.1
 // CHECK:STDOUT:   %.loc20_14.3: ref %i32 = class_element_access %.loc20_14.2, element0

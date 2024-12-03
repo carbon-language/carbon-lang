@@ -301,20 +301,20 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc22: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %ielt0.loc22: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %ielt0.loc22()
+// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc23: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %ielt0.loc23: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %ielt0.loc23()
+// CHECK:STDOUT:   %impl.elem0.loc23: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %ielt0.loc24: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %ielt0.loc24()
+// CHECK:STDOUT:   %impl.elem0.loc24: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %ielt0.loc25: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %ielt0.loc25()
+// CHECK:STDOUT:   %impl.elem0.loc25: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -496,7 +496,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
-// CHECK:STDOUT:   %E.elt: type = unbound_element_type %E, %B [template]
+// CHECK:STDOUT:   %E.elem: type = unbound_element_type %E, %B [template]
 // CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
 // CHECK:STDOUT:   %I.2: %I.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %HasI.facet: %HasI.type = facet_value %E, %E [template]
@@ -568,7 +568,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc13: %E.elt = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc13: %E.elem = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [template = constants.%HasI.type]
@@ -602,12 +602,12 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %I.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0.loc20: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
-// CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %ielt0.loc20()
+// CHECK:STDOUT:   %impl.elem0.loc20: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
 // CHECK:STDOUT:   %I.ref.loc21: %I.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0.loc21: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
-// CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %ielt0.loc21()
+// CHECK:STDOUT:   %impl.elem0.loc21: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
 // CHECK:STDOUT:   %J.call.loc22: init %empty_tuple.type = call %J.ref.loc22()
@@ -636,7 +636,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %HasK.type, %K.type.2 [template]
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @HasK.%K.decl [template]
 // CHECK:STDOUT:   %L: type = class_type @L [template]
-// CHECK:STDOUT:   %L.elt: type = unbound_element_type %L, %Base [template]
+// CHECK:STDOUT:   %L.elem: type = unbound_element_type %L, %Base [template]
 // CHECK:STDOUT:   %K.type.3: type = fn_type @K.3 [template]
 // CHECK:STDOUT:   %K.3: %K.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %HasK.facet: %HasK.type = facet_value %L, %L [template]
@@ -708,7 +708,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: %L.elt = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc13: %L.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [template = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [template = constants.%HasK.type]
@@ -773,7 +773,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.assoc_type.2: type = assoc_entity_type %HasN2.type, %N.type.3 [template]
 // CHECK:STDOUT:   %assoc0.2: %N.assoc_type.2 = assoc_entity element0, @HasN2.%N.decl [template]
 // CHECK:STDOUT:   %O: type = class_type @O [template]
-// CHECK:STDOUT:   %O.elt: type = unbound_element_type %O, %NBase [template]
+// CHECK:STDOUT:   %O.elem: type = unbound_element_type %O, %NBase [template]
 // CHECK:STDOUT:   %N.type.4: type = fn_type @N.4 [template]
 // CHECK:STDOUT:   %N.4: %N.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %HasN1.facet: %HasN1.type = facet_value %O, %O [template]
@@ -873,7 +873,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
 // CHECK:STDOUT:   %NBase.ref: type = name_ref NBase, file.%NBase.decl [template = constants.%NBase]
-// CHECK:STDOUT:   %.loc17: %O.elt = base_decl %NBase.ref, element0 [template]
+// CHECK:STDOUT:   %.loc17: %O.elem = base_decl %NBase.ref, element0 [template]
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [template = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [template = constants.%HasN1.type]

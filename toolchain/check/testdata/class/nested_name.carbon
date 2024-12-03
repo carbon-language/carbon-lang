@@ -31,7 +31,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %Inner.elt: type = unbound_element_type %Inner, %i32 [template]
+// CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -101,7 +101,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_12.2: type = converted %int.make_type_signed, %.loc13_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10: %Inner.elt = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc13_10: %Inner.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -113,7 +113,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @F(%oi.param_patt: %Inner) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
-// CHECK:STDOUT:   %n.ref: %Inner.elt = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
+// CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13_10 [template = @Inner.%.loc13_10]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   return %.loc18_12.2

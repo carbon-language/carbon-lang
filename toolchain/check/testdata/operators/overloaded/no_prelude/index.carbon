@@ -267,8 +267,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %.loc15_11.2: %empty_tuple.type = converted %.loc15_11.1, %empty_tuple.loc15_11 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc15_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_15: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %ielt0: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %ielt0 [template = constants.%At.bound]
+// CHECK:STDOUT:   %impl.elem0: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %impl.elem0 [template = constants.%At.bound]
 // CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc15_11.2, %.loc15_15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

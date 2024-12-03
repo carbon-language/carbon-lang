@@ -219,8 +219,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [template = constants.%Action.type.3]
 // CHECK:STDOUT:   %.loc16: %Op.assoc_type.2 = specific_constant @Action.%assoc0.loc5_10.1, @Action(constants.%B) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %Op.ref: %Op.assoc_type.2 = name_ref Op, %.loc16 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %ielt0: %Op.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %Op.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -375,8 +375,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Action.type: type = facet_type <@Action, @Action(constants.%B)> [template = constants.%Action.type.3]
 // CHECK:STDOUT:   %.loc4: %Op.assoc_type.2 = specific_constant imports.%import_ref.9, @Action(constants.%B) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %Op.ref: %Op.assoc_type.2 = name_ref Op, %.loc4 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %ielt0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -860,9 +860,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [template = constants.%Factory.type.3]
 // CHECK:STDOUT:   %.loc5: %Make.assoc_type.2 = specific_constant imports.%import_ref.7, @Factory(constants.%B) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %Make.ref: %Make.assoc_type.2 = name_ref Make, %.loc5 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %ielt0: %Make.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Make.3]
+// CHECK:STDOUT:   %impl.elem0: %Make.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Make.3]
 // CHECK:STDOUT:   %.loc4_16.2: ref %B = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %B = call %ielt0() to %.loc4_16.2
+// CHECK:STDOUT:   %Make.call: init %B = call %impl.elem0() to %.loc4_16.2
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

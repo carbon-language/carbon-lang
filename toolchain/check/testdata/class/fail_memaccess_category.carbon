@@ -49,7 +49,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %A} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.a.1 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -110,7 +110,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %B.elt = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc16: %B.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -129,7 +129,7 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.bound.loc28: <bound method> = bound_method %.loc28, %F.ref.loc28
 // CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(<error>)
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
-// CHECK:STDOUT:   %a.ref: %B.elt = name_ref a, @B.%.loc16 [template = @B.%.loc16]
+// CHECK:STDOUT:   %a.ref: %B.elem = name_ref a, @B.%.loc16 [template = @B.%.loc16]
 // CHECK:STDOUT:   %.loc38_4.1: ref %A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1
 // CHECK:STDOUT:   %F.ref.loc38: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]

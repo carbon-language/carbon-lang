@@ -31,7 +31,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Member: %Member.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %C [template]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %ptr.1 [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %ptr.1 [template]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.1} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
@@ -75,7 +75,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %ptr: type = ptr_type %C [template = constants.%ptr.1]
-// CHECK:STDOUT:   %.loc13: %C.elt = field_decl field, element0 [template]
+// CHECK:STDOUT:   %.loc13: %C.elem = field_decl field, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -103,19 +103,19 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Member.call.loc18: init %empty_tuple.type = call %Member.bound.loc18(%.loc18_6.2)
 // CHECK:STDOUT:   %ptr.ref.loc20: %ptr.1 = name_ref ptr, %ptr.loc16_8
 // CHECK:STDOUT:   %.loc20_4: ref %C = deref %ptr.ref.loc20
-// CHECK:STDOUT:   %field.ref.loc20: %C.elt = name_ref field, @C.%.loc13 [template = @C.%.loc13]
+// CHECK:STDOUT:   %field.ref.loc20: %C.elem = name_ref field, @C.%.loc13 [template = @C.%.loc13]
 // CHECK:STDOUT:   %.loc20_9: ref %ptr.1 = class_element_access %.loc20_4, element0
 // CHECK:STDOUT:   %ptr.ref.loc21: %ptr.1 = name_ref ptr, %ptr.loc16_8
 // CHECK:STDOUT:   %.loc21_6.1: ref %C = deref %ptr.ref.loc21
-// CHECK:STDOUT:   %field.ref.loc21: %C.elt = name_ref field, @C.%.loc13 [template = @C.%.loc13]
+// CHECK:STDOUT:   %field.ref.loc21: %C.elem = name_ref field, @C.%.loc13 [template = @C.%.loc13]
 // CHECK:STDOUT:   %.loc21_6.2: ref %ptr.1 = class_element_access %.loc21_6.1, element0
 // CHECK:STDOUT:   %ptr.ref.loc23: %ptr.1 = name_ref ptr, %ptr.loc16_8
 // CHECK:STDOUT:   %.loc23_6.1: ref %C = deref %ptr.ref.loc23
-// CHECK:STDOUT:   %field.ref.loc23_6: %C.elt = name_ref field, @C.%.loc13 [template = @C.%.loc13]
+// CHECK:STDOUT:   %field.ref.loc23_6: %C.elem = name_ref field, @C.%.loc13 [template = @C.%.loc13]
 // CHECK:STDOUT:   %.loc23_6.2: ref %ptr.1 = class_element_access %.loc23_6.1, element0
 // CHECK:STDOUT:   %.loc23_6.3: %ptr.1 = bind_value %.loc23_6.2
 // CHECK:STDOUT:   %.loc23_13.1: ref %C = deref %.loc23_6.3
-// CHECK:STDOUT:   %field.ref.loc23_13: %C.elt = name_ref field, @C.%.loc13 [template = @C.%.loc13]
+// CHECK:STDOUT:   %field.ref.loc23_13: %C.elem = name_ref field, @C.%.loc13 [template = @C.%.loc13]
 // CHECK:STDOUT:   %.loc23_13.2: ref %ptr.1 = class_element_access %.loc23_13.1, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

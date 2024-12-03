@@ -24,7 +24,7 @@ class C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT: }
@@ -57,7 +57,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc17: %C.elt = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc17: %C.elem = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

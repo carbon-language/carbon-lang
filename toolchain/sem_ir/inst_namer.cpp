@@ -660,7 +660,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(InterfaceWitnessAccess inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "ielt" << inst.index.index;
+        out << "impl.elem" << inst.index.index;
         add_inst_name(std::move(name));
         continue;
       }
@@ -773,7 +773,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(TupleAccess inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "telt" << inst.index.index;
+        out << "tuple.elem" << inst.index.index;
         add_inst_name(std::move(name));
         continue;
       }
@@ -799,9 +799,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (auto class_ty =
                 sem_ir_.types().TryGetAs<ClassType>(inst.class_type_id)) {
           add_inst_name_id(sem_ir_.classes().Get(class_ty->class_id).name_id,
-                           ".elt");
+                           ".elem");
         } else {
-          add_inst_name("elt_type");
+          add_inst_name("elem_type");
         }
         continue;
       }

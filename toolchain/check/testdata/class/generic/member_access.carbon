@@ -56,7 +56,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.1: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %Class.elt.1: type = unbound_element_type %Class.1, %T [symbolic]
+// CHECK:STDOUT:   %Class.elem.1: type = unbound_element_type %Class.1, %T [symbolic]
 // CHECK:STDOUT:   %Get.type.1: type = fn_type @Get, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Get.1: %Get.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Class.1 [symbolic]
@@ -72,7 +72,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%i32) [template]
 // CHECK:STDOUT:   %DirectFieldAccess.type: type = fn_type @DirectFieldAccess [template]
 // CHECK:STDOUT:   %DirectFieldAccess: %DirectFieldAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.elt.2: type = unbound_element_type %Class.2, %i32 [template]
+// CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %i32 [template]
 // CHECK:STDOUT:   %Get.type.2: type = fn_type @Get, @Class(%i32) [template]
 // CHECK:STDOUT:   %Get.2: %Get.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %GetAddr.type.2: type = fn_type @GetAddr, @Class(%i32) [template]
@@ -183,7 +183,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc2_13.2) [symbolic = %Class (constants.%Class.1)]
-// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @Class.%Class (%Class.1), @Class.%T.loc2_13.2 (%T) [symbolic = %Class.elt (constants.%Class.elt.1)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class.1), @Class.%T.loc2_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T.loc2_13.2) [symbolic = %Get.type (constants.%Get.type.1)]
 // CHECK:STDOUT:   %Get: @Class.%Get.type (%Get.type.1) = struct_value () [symbolic = %Get (constants.%Get.1)]
 // CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr, @Class(%T.loc2_13.2) [symbolic = %GetAddr.type (constants.%GetAddr.type.1)]
@@ -193,7 +193,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc2_13.1 [symbolic = %T.loc2_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc3: @Class.%Class.elt (%Class.elt.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc3: @Class.%Class.elem (%Class.elem.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.1)] {
 // CHECK:STDOUT:       %self.patt: @Get.%Class (%Class.1) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @Get.%Class (%Class.1) = value_param_pattern %self.patt, runtime_param0
@@ -241,12 +241,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @Get.%Class (%Class.1), @Get.%T (%T) [symbolic = %Class.elt (constants.%Class.elt.1)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Get.%Class (%Class.1), @Get.%T (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Get.%Class (%Class.1)]() -> @Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Get.%Class (%Class.1) = name_ref self, %self
-// CHECK:STDOUT:     %x.ref: @Get.%Class.elt (%Class.elt.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:     %x.ref: @Get.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:     %.loc5_42.1: ref @Get.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc5_42.2: @Get.%T (%T) = bind_value %.loc5_42.1
 // CHECK:STDOUT:     return %.loc5_42.2
@@ -260,13 +260,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1: type = ptr_type @GetAddr.%T (%T) [symbolic = %ptr.loc7_38.1 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @GetAddr.%Class (%Class.1), @GetAddr.%T (%T) [symbolic = %Class.elt (constants.%Class.elt.1)]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetAddr.%Class (%Class.1), @GetAddr.%T (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc7_29.1 (%ptr.1)]() -> @GetAddr.%ptr.loc7_38.1 (%ptr.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc7_29.1 (%ptr.1) = name_ref self, %self
 // CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.1) = deref %self.ref
-// CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elt (%Class.elt.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:     %.loc7_54.2: ref @GetAddr.%T (%T) = class_element_access %.loc7_54.1, element0
 // CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc7_38.1 (%ptr.2) = addr_of %.loc7_54.2
 // CHECK:STDOUT:     return %addr
@@ -276,7 +276,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: fn @DirectFieldAccess(%x.param_patt: %Class.2) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11_10: %Class.2 = name_ref x, %x
-// CHECK:STDOUT:   %x.ref.loc11_11: %Class.elt.2 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:   %x.ref.loc11_11: %Class.elem.2 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:   %.loc11_11.1: ref %i32 = class_element_access %x.ref.loc11_10, element0
 // CHECK:STDOUT:   %.loc11_11.2: %i32 = bind_value %.loc11_11.1
 // CHECK:STDOUT:   return %.loc11_11.2
@@ -318,7 +318,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.1
-// CHECK:STDOUT:   %Class.elt => constants.%Class.elt.1
+// CHECK:STDOUT:   %Class.elem => constants.%Class.elem.1
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.1
 // CHECK:STDOUT:   %Get => constants.%Get.1
 // CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.1
@@ -360,7 +360,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.2
-// CHECK:STDOUT:   %Class.elt => constants.%Class.elt.2
+// CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.2
 // CHECK:STDOUT:   %Get => constants.%Get.2
 // CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.2
@@ -374,7 +374,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.elt => constants.%Class.elt.2
+// CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%i32) {
@@ -384,7 +384,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.elt => constants.%Class.elt.2
+// CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_static_member_fn_call.carbon

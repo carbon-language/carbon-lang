@@ -69,7 +69,7 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_signed.loc17_32, %.loc17_35.4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %.loc17_23: %tuple.type.2 = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:   %telt0: %i32 = tuple_access %.loc17_23, element0 [template = <error>]
+// CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access %.loc17_23, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %tuple.type.2 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -34,7 +34,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %Class.elt: type = unbound_element_type %Class, %i32 [template]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %i32} [template]
@@ -77,7 +77,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_14.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_14.2: type = converted %int.make_type_signed, %.loc12_14.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_12: %Class.elt = field_decl field, element0 [template]
+// CHECK:STDOUT:   %.loc12_12: %Class.elem = field_decl field, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -100,14 +100,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %field.ref: %Class.elt = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
+// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %field.ref: %Class.elt = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
+// CHECK:STDOUT:   %field.ref: %Class.elem = name_ref field, @Class.%.loc12_12 [template = @Class.%.loc12_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

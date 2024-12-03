@@ -34,11 +34,11 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %i32 [template]
+// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [template]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.b [template]
 // CHECK:STDOUT:   %AccessBInA.type: type = fn_type @AccessBInA [template]
@@ -87,7 +87,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %A.elt = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %A.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -101,7 +101,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_signed, %.loc16_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_8: %B.elt = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc16_8: %B.elem = field_decl b, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -114,7 +114,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %b.ref: %B.elt = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
+// CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16_8 [template = @B.%.loc16_8]
 // CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc26_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>

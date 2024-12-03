@@ -43,7 +43,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %D.elt: type = unbound_element_type %D, %B [template]
+// CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %B [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
@@ -96,7 +96,7 @@ fn D.C.F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc20: %D.elt = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc20: %D.elem = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

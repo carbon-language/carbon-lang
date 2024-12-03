@@ -23,17 +23,17 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %telt0.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
-// CHECK:STDOUT:   %telt0.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %telt0.loc12_17.tuple.elem.load = load i32, ptr %telt0.loc12_17.tuple.elem, align 4, !dbg !8
-// CHECK:STDOUT:   %telt1.loc12_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   %telt1.loc12_22.tuple.elem.load = load i32, ptr %telt1.loc12_22.tuple.elem, align 4, !dbg !9
-// CHECK:STDOUT:   %telt0.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %telt0.loc12_12.tuple.elem, ptr %telt0.loc12_24.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %telt1.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %telt0.loc12_17.tuple.elem.load, ptr %telt1.loc12_24.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %telt2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   store i32 %telt1.loc12_22.tuple.elem.load, ptr %telt2.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem0.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
+// CHECK:STDOUT:   %tuple.elem0.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc12_17.tuple.elem.load = load i32, ptr %tuple.elem0.loc12_17.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.loc12_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.loc12_22.tuple.elem.load = load i32, ptr %tuple.elem1.loc12_22.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %tuple.elem0.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem0.loc12_12.tuple.elem, ptr %tuple.elem0.loc12_24.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem1.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem0.loc12_17.tuple.elem.load, ptr %tuple.elem1.loc12_24.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem1.loc12_22.tuple.elem.load, ptr %tuple.elem2.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

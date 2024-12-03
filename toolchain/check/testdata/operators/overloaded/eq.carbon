@@ -235,8 +235,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %ielt0: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %ielt0
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
 // CHECK:STDOUT:   %.loc12_16.2: bool = converted %Equal.call, %.loc12_16.1
@@ -247,8 +247,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %ielt1: %NotEqual.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%NotEqual.1]
-// CHECK:STDOUT:   %NotEqual.bound: <bound method> = bound_method %a.ref, %ielt1
+// CHECK:STDOUT:   %impl.elem1: %NotEqual.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%NotEqual.1]
+// CHECK:STDOUT:   %NotEqual.bound: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %NotEqual.call: init bool = call %NotEqual.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
 // CHECK:STDOUT:   %.loc16_16.2: bool = converted %NotEqual.call, %.loc16_16.1
@@ -515,8 +515,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %ielt0: %Equal.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %ielt0
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23_15: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, <error>)
 // CHECK:STDOUT:   %.loc23_16.1: bool = value_of_initializer %Equal.call

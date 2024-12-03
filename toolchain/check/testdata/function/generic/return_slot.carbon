@@ -41,7 +41,7 @@ fn G() {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [template]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %array_type [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %array_type [template]
 // CHECK:STDOUT:   %struct_type.arr.1: type = struct_type {.arr: %array_type} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.arr.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -120,7 +120,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc15_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_21.2: type = converted %int.make_type_signed, %.loc15_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [template = constants.%array_type]
-// CHECK:STDOUT:   %.loc15_18: %C.elt = field_decl arr, element0 [template]
+// CHECK:STDOUT:   %.loc15_18: %C.elem = field_decl arr, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

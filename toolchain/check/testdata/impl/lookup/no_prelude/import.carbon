@@ -505,8 +505,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageA.ref.loc7: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.4 [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,8 +646,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [template = imports.%PackageA]
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, imports.%import_ref.4 [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -787,8 +787,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.ref: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
 // CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.4 [template = constants.%HasG.type]
 // CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %G.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %G.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -915,8 +915,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageB.ref.loc7: <namespace> = name_ref PackageB, imports.%PackageB [template = imports.%PackageB]
 // CHECK:STDOUT:   %HasG.ref: type = name_ref HasG, imports.%import_ref.4 [template = constants.%HasG.type]
 // CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %G.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%G.2]
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %G.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1048,8 +1048,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageAssociatedInterface.ref: <namespace> = name_ref PackageAssociatedInterface, imports.%PackageAssociatedInterface [template = imports.%PackageAssociatedInterface]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, imports.%import_ref.1 [template = constants.%Z.type]
 // CHECK:STDOUT:   %H.ref: %H.assoc_type = name_ref H, imports.%import_ref.3 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %H.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%H.2]
-// CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %H.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%H.2]
+// CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1298,8 +1298,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.4 [template = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %K.assoc_type = name_ref K, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %K.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%K.1]
-// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %K.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%K.1]
+// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1467,8 +1467,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc10: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.6 [template = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %K.assoc_type = name_ref K, imports.%import_ref.8 [template = constants.%assoc0]
-// CHECK:STDOUT:   %ielt0: %K.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%K.2]
-// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %ielt0()
+// CHECK:STDOUT:   %impl.elem0: %K.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%K.2]
+// CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
