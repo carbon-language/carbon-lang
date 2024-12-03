@@ -325,7 +325,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
                                         .Get(facet_type.facet_type_id)
                                         .TryAsSingleInterface()) {
           step_stack.PushString(")");
-          auto interface =
+          const auto& interface =
               sem_ir.interfaces().Get(impls_constraint->interface_id);
           auto entities =
               sem_ir.inst_blocks().Get(interface.associated_entities_id);
@@ -338,7 +338,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             step_stack.PushNameId(associated_const->name_id);
           } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
                          entity_inst_id)) {
-            auto function = sem_ir.functions().Get(function_decl->function_id);
+            const auto& function = sem_ir.functions().Get(function_decl->function_id);
             step_stack.PushNameId(function.name_id);
           } else {
             step_stack.PushInstId(entity_inst_id);
