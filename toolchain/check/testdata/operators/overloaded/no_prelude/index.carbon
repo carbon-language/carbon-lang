@@ -139,7 +139,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: <bound method> = bound_method %empty_tuple, %At.2 [template]
+// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %empty_tuple, %At.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -268,8 +268,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %empty_tuple.loc15_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_15.1: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_15.2: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %.loc15_15.3: <bound method> = bound_method %.loc15_11.2, %.loc15_15.2 [template = constants.%.7]
-// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %.loc15_15.3(%.loc15_11.2, %.loc15_15.1)
+// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %.loc15_15.2 [template = constants.%At.bound]
+// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc15_11.2, %.loc15_15.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

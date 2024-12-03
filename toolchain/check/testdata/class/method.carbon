@@ -86,8 +86,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.19: <bound method> = bound_method %int.1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.19, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.1.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct: %Class = struct_value (%int.1.2) [template]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [template]
@@ -333,8 +333,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc27_11: <bound method> = bound_method %c.ref, %F.ref
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc27_11(%c.ref)
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %F.ref
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
 // CHECK:STDOUT:   %.loc27_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc27_15.2: %i32 = converted %F.call, %.loc27_15.1
 // CHECK:STDOUT:   return %.loc27_15.2
@@ -344,8 +344,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %F.type = name_ref A, @Class.%A [template = constants.%F]
-// CHECK:STDOUT:   %.loc31_11: <bound method> = bound_method %c.ref, %A.ref
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc31_11(%c.ref)
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %A.ref
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
 // CHECK:STDOUT:   %.loc31_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc31_15.2: %i32 = converted %F.call, %.loc31_15.1
 // CHECK:STDOUT:   return %.loc31_15.2
@@ -357,20 +357,20 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc35_18.1: %struct_type.k.2 = struct_literal (%int.1)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc35_18.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc35_18.3: <bound method> = bound_method %int.1, %.loc35_18.2 [template = constants.%.19]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc35_18.3, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.1, %.loc35_18.2 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.1) [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc35_18.4: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc35_18.5: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc35_18.6: ref %i32 = class_element_access %.loc35_18.5, element0
-// CHECK:STDOUT:   %.loc35_18.7: init %i32 = initialize_from %.loc35_18.4 to %.loc35_18.6 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc35_18.8: init %Class = class_init (%.loc35_18.7), %.loc35_18.5 [template = constants.%struct]
-// CHECK:STDOUT:   %.loc35_18.9: ref %Class = temporary %.loc35_18.5, %.loc35_18.8
-// CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.9
+// CHECK:STDOUT:   %.loc35_18.3: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc35_18.4: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc35_18.5: ref %i32 = class_element_access %.loc35_18.4, element0
+// CHECK:STDOUT:   %.loc35_18.6: init %i32 = initialize_from %.loc35_18.3 to %.loc35_18.5 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc35_18.7: init %Class = class_init (%.loc35_18.6), %.loc35_18.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc35_18.8: ref %Class = temporary %.loc35_18.4, %.loc35_18.7
+// CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.8
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc35_29: <bound method> = bound_method %.loc35_20.1, %F.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc35_20.1, %F.ref
 // CHECK:STDOUT:   %.loc35_20.2: %Class = bind_value %.loc35_20.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc35_29(%.loc35_20.2)
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc35_20.2)
 // CHECK:STDOUT:   %.loc35_33.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc35_33.2: %i32 = converted %F.call, %.loc35_33.1
 // CHECK:STDOUT:   return %.loc35_33.2
@@ -383,9 +383,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc40_11: <bound method> = bound_method %c.ref, %G.ref
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref, %G.ref
 // CHECK:STDOUT:   %.loc40_10: %.1 = addr_of %c.ref
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc40_11(%.loc40_10)
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc40_10)
 // CHECK:STDOUT:   %.loc40_15.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc40_15.2: %i32 = converted %G.call, %.loc40_15.1
 // CHECK:STDOUT:   return %.loc40_15.2
@@ -396,9 +396,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc44_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc44_14: <bound method> = bound_method %.loc44_11.1, %F.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc44_11.1, %F.ref
 // CHECK:STDOUT:   %.loc44_11.2: %Class = bind_value %.loc44_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc44_14(%.loc44_11.2)
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc44_11.2)
 // CHECK:STDOUT:   %.loc44_18.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc44_18.2: %i32 = converted %F.call, %.loc44_18.1
 // CHECK:STDOUT:   return %.loc44_18.2
@@ -409,9 +409,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc48_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc48_14: <bound method> = bound_method %.loc48_11.1, %G.ref
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc48_11.1, %G.ref
 // CHECK:STDOUT:   %.loc48_11.2: %.1 = addr_of %.loc48_11.1
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc48_14(%.loc48_11.2)
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc48_11.2)
 // CHECK:STDOUT:   %.loc48_18.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc48_18.2: %i32 = converted %G.call, %.loc48_18.1
 // CHECK:STDOUT:   return %.loc48_18.2
@@ -426,9 +426,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc54_15.1
 // CHECK:STDOUT:   %.loc54_15.2: ref %Class = temporary %.loc54_15.1, %Make.call
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc54_16: <bound method> = bound_method %.loc54_15.2, %F.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc54_15.2, %F.ref
 // CHECK:STDOUT:   %.loc54_15.3: %Class = bind_value %.loc54_15.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc54_16(%.loc54_15.3)
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc54_15.3)
 // CHECK:STDOUT:   %.loc54_20.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc54_20.2: %i32 = converted %F.call, %.loc54_20.1
 // CHECK:STDOUT:   return %.loc54_20.2
@@ -441,9 +441,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_15.1
 // CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc58_16: <bound method> = bound_method %.loc58_15.2, %G.ref
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc58_15.2, %G.ref
 // CHECK:STDOUT:   %.loc58_15.3: %.1 = addr_of %.loc58_15.2
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc58_16(%.loc58_15.3)
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %G.call, %.loc58_20.1
 // CHECK:STDOUT:   return %.loc58_20.2

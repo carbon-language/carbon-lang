@@ -246,11 +246,11 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @Base.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc26_11: <bound method> = bound_method %a.ref, %F.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %F.ref
 // CHECK:STDOUT:   %.loc26_10.1: ref %Base = class_element_access %a.ref, element0
 // CHECK:STDOUT:   %.loc26_10.2: ref %Base = converted %a.ref, %.loc26_10.1
 // CHECK:STDOUT:   %.loc26_10.3: %Base = bind_value %.loc26_10.2
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc26_11(%.loc26_10.3)
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc26_10.3)
 // CHECK:STDOUT:   %.loc26_22.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc26_22.2: %i32 = converted %F.call, %.loc26_22.1
 // CHECK:STDOUT:   return %.loc26_22.2
@@ -262,11 +262,11 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @Base.%F.decl [template = constants.%F.1]
 // CHECK:STDOUT:   %.loc30_11.1: ref %Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc30_11.2: <bound method> = bound_method %.loc30_11.1, %F.ref
-// CHECK:STDOUT:   %.loc30_11.3: ref %Base = class_element_access %.loc30_11.1, element0
-// CHECK:STDOUT:   %.loc30_11.4: ref %Base = converted %.loc30_11.1, %.loc30_11.3
-// CHECK:STDOUT:   %.loc30_11.5: %Base = bind_value %.loc30_11.4
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc30_11.2(%.loc30_11.5)
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc30_11.1, %F.ref
+// CHECK:STDOUT:   %.loc30_11.2: ref %Base = class_element_access %.loc30_11.1, element0
+// CHECK:STDOUT:   %.loc30_11.3: ref %Base = converted %.loc30_11.1, %.loc30_11.2
+// CHECK:STDOUT:   %.loc30_11.4: %Base = bind_value %.loc30_11.3
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc30_11.4)
 // CHECK:STDOUT:   %.loc30_23.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc30_23.2: %i32 = converted %F.call, %.loc30_23.1
 // CHECK:STDOUT:   return %.loc30_23.2
@@ -277,8 +277,8 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %G.ref: %G.type.1 = name_ref G, @Base.%G.decl [template = constants.%G.1]
-// CHECK:STDOUT:   %.loc34_11: <bound method> = bound_method %a.ref, %G.ref
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc34_11(%a.ref)
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %a.ref, %G.ref
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%a.ref)
 // CHECK:STDOUT:   %.loc34_22.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc34_22.2: %i32 = converted %G.call, %.loc34_22.1
 // CHECK:STDOUT:   return %.loc34_22.2
@@ -290,9 +290,9 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %G.ref: %G.type.1 = name_ref G, @Base.%G.decl [template = constants.%G.1]
 // CHECK:STDOUT:   %.loc38_11.1: ref %Derived = deref %p.ref
-// CHECK:STDOUT:   %.loc38_11.2: <bound method> = bound_method %.loc38_11.1, %G.ref
-// CHECK:STDOUT:   %.loc38_11.3: %Derived = bind_value %.loc38_11.1
-// CHECK:STDOUT:   %G.call: init %i32 = call %.loc38_11.2(%.loc38_11.3)
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc38_11.1, %G.ref
+// CHECK:STDOUT:   %.loc38_11.2: %Derived = bind_value %.loc38_11.1
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc38_11.2)
 // CHECK:STDOUT:   %.loc38_23.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc38_23.2: %i32 = converted %G.call, %.loc38_23.1
 // CHECK:STDOUT:   return %.loc38_23.2

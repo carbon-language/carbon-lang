@@ -256,8 +256,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %AdapterMethod.ref: %AdapterMethod.type = name_ref AdapterMethod, @SomeClass.%AdapterMethod.decl [template = constants.%AdapterMethod]
-// CHECK:STDOUT:   %.loc24: <bound method> = bound_method %a.ref, %AdapterMethod.ref
-// CHECK:STDOUT:   %AdapterMethod.call: init %empty_tuple.type = call %.loc24(%a.ref)
+// CHECK:STDOUT:   %AdapterMethod.bound: <bound method> = bound_method %a.ref, %AdapterMethod.ref
+// CHECK:STDOUT:   %AdapterMethod.call: init %empty_tuple.type = call %AdapterMethod.bound(%a.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -337,9 +337,9 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.1 = name_ref F, @SomeClass.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc23_4: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc23_3: %SomeClass = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %.loc23_4(<error>)
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %F.ref
+// CHECK:STDOUT:   %.loc23: %SomeClass = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

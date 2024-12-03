@@ -164,9 +164,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @I.%.loc14 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc24_11.1: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc24_11.2: <bound method> = bound_method %c.ref, %.loc24_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc24_11.2(%c.ref)
+// CHECK:STDOUT:   %.loc24_11: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %.loc24_11
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc24_15.2: %i32 = converted %F.call, %.loc24_15.1
 // CHECK:STDOUT:   return %.loc24_15.2

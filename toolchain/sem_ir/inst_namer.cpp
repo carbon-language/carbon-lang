@@ -433,6 +433,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id, ".patt");
         continue;
       }
+      case CARBON_KIND(BoundMethod inst): {
+        auto type_id = sem_ir_.insts().Get(inst.function_id).type_id();
+        if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".bound");
+        } else {
+          add_inst_name("bound_method");
+        }
+        continue;
+      }
       case CARBON_KIND(Call inst): {
         auto callee_function =
             SemIR::GetCalleeFunction(sem_ir_, inst.callee_id);

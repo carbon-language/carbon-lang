@@ -235,9 +235,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc12_12.1: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %.loc12_12.2: <bound method> = bound_method %a.ref, %.loc12_12.1
-// CHECK:STDOUT:   %Equal.call: init bool = call %.loc12_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc12_12: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %.loc12_12
+// CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
 // CHECK:STDOUT:   %.loc12_16.2: bool = converted %Equal.call, %.loc12_16.1
 // CHECK:STDOUT:   return %.loc12_16.2
@@ -247,9 +247,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc16_12.1: %NotEqual.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%NotEqual.1]
-// CHECK:STDOUT:   %.loc16_12.2: <bound method> = bound_method %a.ref, %.loc16_12.1
-// CHECK:STDOUT:   %NotEqual.call: init bool = call %.loc16_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc16_12: %NotEqual.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%NotEqual.1]
+// CHECK:STDOUT:   %NotEqual.bound: <bound method> = bound_method %a.ref, %.loc16_12
+// CHECK:STDOUT:   %NotEqual.call: init bool = call %NotEqual.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
 // CHECK:STDOUT:   %.loc16_16.2: bool = converted %NotEqual.call, %.loc16_16.1
 // CHECK:STDOUT:   return %.loc16_16.2
@@ -515,10 +515,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %.loc23_12.1: %Equal.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Equal.1]
-// CHECK:STDOUT:   %.loc23_12.2: <bound method> = bound_method %a.ref, %.loc23_12.1
+// CHECK:STDOUT:   %.loc23_12: %Equal.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %.loc23_12
 // CHECK:STDOUT:   %.loc23_15: %C = converted %b.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %Equal.call: init bool = call %.loc23_12.2(%a.ref, <error>)
+// CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, <error>)
 // CHECK:STDOUT:   %.loc23_16.1: bool = value_of_initializer %Equal.call
 // CHECK:STDOUT:   %.loc23_16.2: bool = converted %Equal.call, %.loc23_16.1
 // CHECK:STDOUT:   return %.loc23_16.2

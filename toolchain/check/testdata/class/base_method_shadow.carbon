@@ -202,31 +202,31 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %a.ref: %.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc30_4.1: ref %A = deref %a.ref
 // CHECK:STDOUT:   %F.ref.loc30: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc30_7: <bound method> = bound_method %.loc30_4.1, %F.ref.loc30
+// CHECK:STDOUT:   %F.bound.loc30: <bound method> = bound_method %.loc30_4.1, %F.ref.loc30
 // CHECK:STDOUT:   %.loc30_4.2: %.1 = addr_of %.loc30_4.1
-// CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %.loc30_7(%.loc30_4.2)
+// CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %F.bound.loc30(%.loc30_4.2)
 // CHECK:STDOUT:   %b.ref: %.4 = name_ref b, %b
 // CHECK:STDOUT:   %.loc31_4.1: ref %B = deref %b.ref
 // CHECK:STDOUT:   %F.ref.loc31: %F.type.2 = name_ref F, @B.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc31_7: <bound method> = bound_method %.loc31_4.1, %F.ref.loc31
+// CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %.loc31_4.1, %F.ref.loc31
 // CHECK:STDOUT:   %.loc31_4.2: %.4 = addr_of %.loc31_4.1
-// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %.loc31_7(%.loc31_4.2)
+// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%.loc31_4.2)
 // CHECK:STDOUT:   %c.ref: %.7 = name_ref c, %c
 // CHECK:STDOUT:   %.loc32_4.1: ref %C = deref %c.ref
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.3 = name_ref F, @C.%F.decl [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
+// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32_4.2: %.7 = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %.loc32_7(%.loc32_4.2)
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%.loc32_4.2)
 // CHECK:STDOUT:   %d.ref: %.9 = name_ref d, %d
 // CHECK:STDOUT:   %.loc33_4.1: ref %D = deref %d.ref
 // CHECK:STDOUT:   %F.ref.loc33: %F.type.2 = name_ref F, @B.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc33_7: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
+// CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
 // CHECK:STDOUT:   %.loc33_4.2: %.9 = addr_of %.loc33_4.1
 // CHECK:STDOUT:   %.loc33_4.3: ref %D = deref %.loc33_4.2
 // CHECK:STDOUT:   %.loc33_4.4: ref %B = class_element_access %.loc33_4.3, element0
 // CHECK:STDOUT:   %.loc33_4.5: %.4 = addr_of %.loc33_4.4
 // CHECK:STDOUT:   %.loc33_4.6: %.4 = converted %.loc33_4.2, %.loc33_4.5
-// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %.loc33_7(%.loc33_4.6)
+// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%.loc33_4.6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

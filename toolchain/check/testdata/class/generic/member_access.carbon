@@ -285,10 +285,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: fn @MethodCall(%x.param_patt: %Class.3) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Class.3 = name_ref x, %x
-// CHECK:STDOUT:   %.loc15_11.1: %Get.type.2 = specific_constant @Class.%Get.decl, @Class(constants.%i32) [template = constants.%Get.2]
-// CHECK:STDOUT:   %Get.ref: %Get.type.2 = name_ref Get, %.loc15_11.1 [template = constants.%Get.2]
-// CHECK:STDOUT:   %.loc15_11.2: <bound method> = bound_method %x.ref, %Get.ref
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %.loc15_11.2, @Get(constants.%i32)
+// CHECK:STDOUT:   %.loc15_11: %Get.type.2 = specific_constant @Class.%Get.decl, @Class(constants.%i32) [template = constants.%Get.2]
+// CHECK:STDOUT:   %Get.ref: %Get.type.2 = name_ref Get, %.loc15_11 [template = constants.%Get.2]
+// CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %x.ref, %Get.ref
+// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.bound, @Get(constants.%i32)
 // CHECK:STDOUT:   %Get.call: init %i32 = call %Get.specific_fn(%x.ref)
 // CHECK:STDOUT:   %.loc15_17.1: %i32 = value_of_initializer %Get.call
 // CHECK:STDOUT:   %.loc15_17.2: %i32 = converted %Get.call, %.loc15_17.1
@@ -301,10 +301,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc19_12.1: ref %Class.3 = deref %p.ref
 // CHECK:STDOUT:   %.loc19_12.2: %GetAddr.type.2 = specific_constant @Class.%GetAddr.decl, @Class(constants.%i32) [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.2 = name_ref GetAddr, %.loc19_12.2 [template = constants.%GetAddr.2]
-// CHECK:STDOUT:   %.loc19_12.3: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
-// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %.loc19_12.3, @GetAddr(constants.%i32)
-// CHECK:STDOUT:   %.loc19_12.4: %.7 = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %.8 = call %GetAddr.specific_fn(%.loc19_12.4)
+// CHECK:STDOUT:   %GetAddr.bound: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
+// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.bound, @GetAddr(constants.%i32)
+// CHECK:STDOUT:   %.loc19_12.3: %.7 = addr_of %.loc19_12.1
+// CHECK:STDOUT:   %GetAddr.call: init %.8 = call %GetAddr.specific_fn(%.loc19_12.3)
 // CHECK:STDOUT:   %.loc19_22.1: %.8 = value_of_initializer %GetAddr.call
 // CHECK:STDOUT:   %.loc19_22.2: %.8 = converted %GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2

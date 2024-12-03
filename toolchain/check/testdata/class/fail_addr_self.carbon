@@ -117,24 +117,24 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc27: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
-// CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %.loc27(<error>)
+// CHECK:STDOUT:   %F.bound.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
+// CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %F.bound.loc27(<error>)
 // CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc29: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
-// CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %.loc29(%c.ref.loc29)
+// CHECK:STDOUT:   %G.bound.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
+// CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %G.bound.loc29(%c.ref.loc29)
 // CHECK:STDOUT:   %p.ref.loc32: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc32_4.1: ref %Class = deref %p.ref.loc32
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc32_7: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
+// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32_4.2: %.1 = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %.loc32_7(%.loc32_4.2)
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%.loc32_4.2)
 // CHECK:STDOUT:   %p.ref.loc34: %.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc34_4.1: ref %Class = deref %p.ref.loc34
 // CHECK:STDOUT:   %G.ref.loc34: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc34_7: <bound method> = bound_method %.loc34_4.1, %G.ref.loc34
+// CHECK:STDOUT:   %G.bound.loc34: <bound method> = bound_method %.loc34_4.1, %G.ref.loc34
 // CHECK:STDOUT:   %.loc34_4.2: %Class = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %G.call.loc34: init %empty_tuple.type = call %.loc34_7(%.loc34_4.2)
+// CHECK:STDOUT:   %G.call.loc34: init %empty_tuple.type = call %G.bound.loc34(%.loc34_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

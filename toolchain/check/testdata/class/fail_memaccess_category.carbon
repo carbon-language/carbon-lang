@@ -124,17 +124,17 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: fn @F.2(%s.param_patt: %struct_type.a.1, %b.param_patt: %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %struct_type.a.1 = name_ref s, %s
-// CHECK:STDOUT:   %.loc28_4: %A = struct_access %s.ref, element0
+// CHECK:STDOUT:   %.loc28: %A = struct_access %s.ref, element0
 // CHECK:STDOUT:   %F.ref.loc28: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc28_6: <bound method> = bound_method %.loc28_4, %F.ref.loc28
-// CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %.loc28_6(<error>)
+// CHECK:STDOUT:   %F.bound.loc28: <bound method> = bound_method %.loc28, %F.ref.loc28
+// CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(<error>)
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: %.3 = name_ref a, @B.%.loc16 [template = @B.%.loc16]
 // CHECK:STDOUT:   %.loc38_4.1: ref %A = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1
 // CHECK:STDOUT:   %F.ref.loc38: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %.loc38_6: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
-// CHECK:STDOUT:   %F.call.loc38: init %empty_tuple.type = call %.loc38_6(<error>)
+// CHECK:STDOUT:   %F.bound.loc38: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
+// CHECK:STDOUT:   %F.call.loc38: init %empty_tuple.type = call %F.bound.loc38(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

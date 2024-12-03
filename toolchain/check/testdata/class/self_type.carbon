@@ -119,9 +119,9 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.loc22_16.2: %.1 = bind_value %.loc22_16.1
 // CHECK:STDOUT:   %.loc22_11.1: ref %Class = deref %.loc22_16.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc22_19: <bound method> = bound_method %.loc22_11.1, %F.ref
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc22_11.1, %F.ref
 // CHECK:STDOUT:   %.loc22_11.2: %Class = bind_value %.loc22_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %.loc22_19(%.loc22_11.2)
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc22_11.2)
 // CHECK:STDOUT:   %.loc22_23.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc22_23.2: %i32 = converted %F.call, %.loc22_23.1
 // CHECK:STDOUT:   return %.loc22_23.2

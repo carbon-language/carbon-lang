@@ -419,9 +419,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %x.ref: %empty_struct_type = name_ref x, %x
 // CHECK:STDOUT:   %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   %F.ref: %.2 = name_ref F, @HasF.%.loc5 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc13_11.1: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc13_11.2: <bound method> = bound_method %x.ref, %.loc13_11.1
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %.loc13_11.2, @F.2(constants.%empty_struct_type)
+// CHECK:STDOUT:   %.loc13_11: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %x.ref, %.loc13_11
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.bound, @F.2(constants.%empty_struct_type)
 // CHECK:STDOUT:   %F.call: init %empty_struct_type = call %F.specific_fn(%x.ref)
 // CHECK:STDOUT:   %.loc13_21.1: ref %empty_struct_type = temporary_storage
 // CHECK:STDOUT:   %.loc13_21.2: ref %empty_struct_type = temporary %.loc13_21.1, %F.call

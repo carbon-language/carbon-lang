@@ -35,8 +35,8 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.16: <bound method> = bound_method %int.2.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.16, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.2.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,11 +90,11 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc13_19.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc13_19.2: <bound method> = bound_method %int.2, %.loc13_19.1 [template = constants.%.16]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc13_19.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.2, %.loc13_19.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.2) [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc13_19.3: init %i32 = converted %int.2, %int.convert_checked [template = constants.%int.2.2]
-// CHECK:STDOUT:   assign %n.var, %.loc13_19.3
+// CHECK:STDOUT:   %.loc13_19.2: init %i32 = converted %int.2, %int.convert_checked [template = constants.%int.2.2]
+// CHECK:STDOUT:   assign %n.var, %.loc13_19.2
 // CHECK:STDOUT:   %n.ref.loc14: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc14: %i32 = bind_value %n.ref.loc14
 // CHECK:STDOUT:   return %.loc14

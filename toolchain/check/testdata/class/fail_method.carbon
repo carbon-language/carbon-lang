@@ -120,8 +120,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf.call.loc19: init %empty_tuple.type = call %NoSelf.ref.loc19()
 // CHECK:STDOUT:   %c.ref.loc20: %Class = name_ref c, %c
 // CHECK:STDOUT:   %WithSelf.ref.loc20: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
-// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
-// CHECK:STDOUT:   %WithSelf.call.loc20: init %empty_tuple.type = call %.loc20(%c.ref.loc20)
+// CHECK:STDOUT:   %WithSelf.bound: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
+// CHECK:STDOUT:   %WithSelf.call.loc20: init %empty_tuple.type = call %WithSelf.bound(%c.ref.loc20)
 // CHECK:STDOUT:   %Class.ref.loc22: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %NoSelf.ref.loc22: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%NoSelf]
 // CHECK:STDOUT:   %NoSelf.call.loc22: init %empty_tuple.type = call %NoSelf.ref.loc22()

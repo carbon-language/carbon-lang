@@ -173,9 +173,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc30_3.1: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc30_3.2: <bound method> = bound_method %a.ref, %.loc30_3.1
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %.loc30_3.2(<error>)
+// CHECK:STDOUT:   %.loc30: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %.loc30
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,9 +183,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc40_5.1: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %.loc40_5.2: <bound method> = bound_method %a.ref, %.loc40_5.1
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %.loc40_5.2(<error>, %b.ref)
+// CHECK:STDOUT:   %.loc40: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %.loc40
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -92,15 +92,15 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %ptr.ref.loc17: %.1 = name_ref ptr, %ptr
 // CHECK:STDOUT:   %.loc17_4.1: ref %C = deref %ptr.ref.loc17
 // CHECK:STDOUT:   %Member.ref.loc17: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
-// CHECK:STDOUT:   %.loc17_9: <bound method> = bound_method %.loc17_4.1, %Member.ref.loc17
+// CHECK:STDOUT:   %Member.bound.loc17: <bound method> = bound_method %.loc17_4.1, %Member.ref.loc17
 // CHECK:STDOUT:   %.loc17_4.2: %C = bind_value %.loc17_4.1
-// CHECK:STDOUT:   %Member.call.loc17: init %empty_tuple.type = call %.loc17_9(%.loc17_4.2)
+// CHECK:STDOUT:   %Member.call.loc17: init %empty_tuple.type = call %Member.bound.loc17(%.loc17_4.2)
 // CHECK:STDOUT:   %ptr.ref.loc18: %.1 = name_ref ptr, %ptr
 // CHECK:STDOUT:   %.loc18_6.1: ref %C = deref %ptr.ref.loc18
 // CHECK:STDOUT:   %Member.ref.loc18: %Member.type = name_ref Member, @C.%Member.decl [template = constants.%Member]
-// CHECK:STDOUT:   %.loc18_6.2: <bound method> = bound_method %.loc18_6.1, %Member.ref.loc18
-// CHECK:STDOUT:   %.loc18_6.3: %C = bind_value %.loc18_6.1
-// CHECK:STDOUT:   %Member.call.loc18: init %empty_tuple.type = call %.loc18_6.2(%.loc18_6.3)
+// CHECK:STDOUT:   %Member.bound.loc18: <bound method> = bound_method %.loc18_6.1, %Member.ref.loc18
+// CHECK:STDOUT:   %.loc18_6.2: %C = bind_value %.loc18_6.1
+// CHECK:STDOUT:   %Member.call.loc18: init %empty_tuple.type = call %Member.bound.loc18(%.loc18_6.2)
 // CHECK:STDOUT:   %ptr.ref.loc20: %.1 = name_ref ptr, %ptr
 // CHECK:STDOUT:   %.loc20_4: ref %C = deref %ptr.ref.loc20
 // CHECK:STDOUT:   %field.ref.loc20: %.2 = name_ref field, @C.%.loc13_12 [template = @C.%.loc13_12]
