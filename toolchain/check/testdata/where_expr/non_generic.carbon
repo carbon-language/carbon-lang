@@ -18,15 +18,15 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.5 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
@@ -55,13 +55,13 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc14_27.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
-// CHECK:STDOUT:     %.loc14_27.2: type = interface_witness_access %.loc14_27.1, element0 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc14_33: Core.IntLiteral = int_value 32 [template = constants.%.5]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc14_33) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_equivalent %.loc14_27.2, %int.make_type_signed
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %int.make_type_signed
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param0
 // CHECK:STDOUT:     %U: %I_where.type = bind_name U, %U.param
@@ -71,11 +71,11 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc11: %.1 = assoc_entity element0, %T [template = constants.%.2]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc11
+// CHECK:STDOUT:   .T = %assoc0
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

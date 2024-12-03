@@ -20,14 +20,14 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%T [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %.4 = bool> [template]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = bool> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,14 +52,14 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc16_22.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
-// CHECK:STDOUT:     %.loc16_22.2: type = interface_witness_access %.loc16_22.1, element0 [symbolic = constants.%.4]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %bool.make_type.loc16_27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:     %.loc16_27.1: type = value_of_initializer %bool.make_type.loc16_27 [template = bool]
 // CHECK:STDOUT:     %.loc16_27.2: type = converted %bool.make_type.loc16_27, %.loc16_27.1 [template = bool]
 // CHECK:STDOUT:     %.loc16_16: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %.loc16_22.2, %.loc16_27.2
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc16_27.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -67,11 +67,11 @@ impl bool as I where .T = bool {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc11: %.1 = assoc_entity element0, %T [template = constants.%.2]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .T = %.loc11
+// CHECK:STDOUT:   .T = %assoc0
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -41,20 +41,20 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: --- fail_let_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 6 [template]
+// CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16: Core.IntLiteral = int_value 6 [template = constants.%.2]
+// CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @HalfDozen() -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc28: Core.IntLiteral = int_value 6 [template = constants.%.2]
+// CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

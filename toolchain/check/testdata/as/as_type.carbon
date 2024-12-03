@@ -13,10 +13,10 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: --- as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT: }
@@ -39,10 +39,10 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_16: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc11_16: init type = call constants.%Int(%.loc11_16) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc11_21: init type = call constants.%Int(%.loc11_21) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc11_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc11_16: init type = call constants.%Int(%int_32.loc11_16) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc11_21: init type = call constants.%Int(%int_32.loc11_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_24: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc11_16, %int.make_type_signed.loc11_21)
 // CHECK:STDOUT:   %.loc11_26.1: type = value_of_initializer %int.make_type_signed.loc11_16 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_26.2: type = converted %int.make_type_signed.loc11_16, %.loc11_26.1 [template = constants.%i32]

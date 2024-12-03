@@ -23,7 +23,7 @@ fn While() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %While.type: type = fn_type @While [template]
 // CHECK:STDOUT:   %While: %While.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %str: String = string_literal "Hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -48,8 +48,8 @@ fn While() {
 // CHECK:STDOUT:   br !while.cond
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
-// CHECK:STDOUT:   %.loc18_10: String = string_literal "Hello" [template = constants.%.2]
-// CHECK:STDOUT:   %.loc18_17: bool = converted %.loc18_10, <error> [template = <error>]
+// CHECK:STDOUT:   %str: String = string_literal "Hello" [template = constants.%str]
+// CHECK:STDOUT:   %.loc18: bool = converted %str, <error> [template = <error>]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

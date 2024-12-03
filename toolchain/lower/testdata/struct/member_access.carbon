@@ -24,7 +24,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc12_48.8.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc12_48.5.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc12_49, i64 16, i1 false), !dbg !9
 // CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc13_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11

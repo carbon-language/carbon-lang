@@ -78,8 +78,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Ordered.type: type = facet_type <@Ordered> [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -95,7 +95,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %LessOrEquivalent.type.2: type = fn_type @LessOrEquivalent.2 [template]
 // CHECK:STDOUT:   %Greater.type.2: type = fn_type @Greater.2 [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.2: type = fn_type @GreaterOrEquivalent.2 [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%Less.1, %LessOrEquivalent.1, %Greater.1, %GreaterOrEquivalent.1) [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Less.1, %LessOrEquivalent.1, %Greater.1, %GreaterOrEquivalent.1) [template]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [template]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [template]
@@ -295,22 +295,22 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Less.decl, %LessOrEquivalent.decl, %Greater.decl, %GreaterOrEquivalent.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Less = %Less.decl
 // CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %Greater.decl
 // CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent.decl
-// CHECK:STDOUT:   witness = %.loc6
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %.loc4
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Less.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
@@ -325,9 +325,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc14_12.1: %Less.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Less.1]
-// CHECK:STDOUT:   %.loc14_12.2: <bound method> = bound_method %a.ref, %.loc14_12.1
-// CHECK:STDOUT:   %Less.call: init bool = call %.loc14_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %impl.elem0: %Less.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Less.1]
+// CHECK:STDOUT:   %Less.bound: <bound method> = bound_method %a.ref, %impl.elem0
+// CHECK:STDOUT:   %Less.call: init bool = call %Less.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
 // CHECK:STDOUT:   %.loc14_15.2: bool = converted %Less.call, %.loc14_15.1
 // CHECK:STDOUT:   return %.loc14_15.2
@@ -337,9 +337,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc18_12.1: %LessOrEquivalent.type.2 = interface_witness_access constants.%.5, element1 [template = constants.%LessOrEquivalent.1]
-// CHECK:STDOUT:   %.loc18_12.2: <bound method> = bound_method %a.ref, %.loc18_12.1
-// CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %.loc18_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %impl.elem1: %LessOrEquivalent.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%LessOrEquivalent.1]
+// CHECK:STDOUT:   %LessOrEquivalent.bound: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %LessOrEquivalent.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
 // CHECK:STDOUT:   %.loc18_16.2: bool = converted %LessOrEquivalent.call, %.loc18_16.1
 // CHECK:STDOUT:   return %.loc18_16.2
@@ -349,9 +349,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc22_12.1: %Greater.type.2 = interface_witness_access constants.%.5, element2 [template = constants.%Greater.1]
-// CHECK:STDOUT:   %.loc22_12.2: <bound method> = bound_method %a.ref, %.loc22_12.1
-// CHECK:STDOUT:   %Greater.call: init bool = call %.loc22_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %impl.elem2: %Greater.type.2 = interface_witness_access constants.%interface, element2 [template = constants.%Greater.1]
+// CHECK:STDOUT:   %Greater.bound: <bound method> = bound_method %a.ref, %impl.elem2
+// CHECK:STDOUT:   %Greater.call: init bool = call %Greater.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
 // CHECK:STDOUT:   %.loc22_15.2: bool = converted %Greater.call, %.loc22_15.1
 // CHECK:STDOUT:   return %.loc22_15.2
@@ -361,9 +361,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc26_12.1: %GreaterOrEquivalent.type.2 = interface_witness_access constants.%.5, element3 [template = constants.%GreaterOrEquivalent.1]
-// CHECK:STDOUT:   %.loc26_12.2: <bound method> = bound_method %a.ref, %.loc26_12.1
-// CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %.loc26_12.2(%a.ref, %b.ref)
+// CHECK:STDOUT:   %impl.elem3: %GreaterOrEquivalent.type.2 = interface_witness_access constants.%interface, element3 [template = constants.%GreaterOrEquivalent.1]
+// CHECK:STDOUT:   %GreaterOrEquivalent.bound: <bound method> = bound_method %a.ref, %impl.elem3
+// CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %GreaterOrEquivalent.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call
 // CHECK:STDOUT:   %.loc26_16.2: bool = converted %GreaterOrEquivalent.call, %.loc26_16.1
 // CHECK:STDOUT:   return %.loc26_16.2
@@ -373,8 +373,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [template]
@@ -490,11 +490,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   complete_type_witness = %.loc4
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param_patt: %D, %b.param_patt: %D) -> bool {

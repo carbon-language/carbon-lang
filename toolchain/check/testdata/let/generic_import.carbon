@@ -35,10 +35,10 @@ var b: T = *a;
 // CHECK:STDOUT: --- fail_implicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,8 +59,8 @@ var b: T = *a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_16: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc8_16) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_19.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_19.2: type = converted %int.make_type_signed, %.loc8_19.1 [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_name T, %.loc8_19.2
@@ -88,7 +88,7 @@ var b: T = *a;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, imports.%import_ref
-// CHECK:STDOUT:   %.loc8: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref

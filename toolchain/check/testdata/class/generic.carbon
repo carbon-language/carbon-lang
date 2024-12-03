@@ -14,7 +14,7 @@ class C[]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -30,7 +30,7 @@ class C[]();
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {} {}
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;

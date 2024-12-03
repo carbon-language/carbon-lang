@@ -55,8 +55,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf: %NoSelf.type = struct_value () [template]
 // CHECK:STDOUT:   %WithSelf.type: type = fn_type @WithSelf [template]
 // CHECK:STDOUT:   %WithSelf: %WithSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -100,13 +100,13 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .NoSelf = %NoSelf.decl
 // CHECK:STDOUT:   .WithSelf = %WithSelf.decl
-// CHECK:STDOUT:   complete_type_witness = %.loc14
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NoSelf();
@@ -120,8 +120,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %NoSelf.call.loc19: init %empty_tuple.type = call %NoSelf.ref.loc19()
 // CHECK:STDOUT:   %c.ref.loc20: %Class = name_ref c, %c
 // CHECK:STDOUT:   %WithSelf.ref.loc20: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
-// CHECK:STDOUT:   %.loc20: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
-// CHECK:STDOUT:   %WithSelf.call.loc20: init %empty_tuple.type = call %.loc20(%c.ref.loc20)
+// CHECK:STDOUT:   %WithSelf.bound: <bound method> = bound_method %c.ref.loc20, %WithSelf.ref.loc20
+// CHECK:STDOUT:   %WithSelf.call.loc20: init %empty_tuple.type = call %WithSelf.bound(%c.ref.loc20)
 // CHECK:STDOUT:   %Class.ref.loc22: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %NoSelf.ref.loc22: %NoSelf.type = name_ref NoSelf, @Class.%NoSelf.decl [template = constants.%NoSelf]
 // CHECK:STDOUT:   %NoSelf.call.loc22: init %empty_tuple.type = call %NoSelf.ref.loc22()

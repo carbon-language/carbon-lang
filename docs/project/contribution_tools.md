@@ -81,8 +81,8 @@ pre-commit install
 Although the `run_bazelisk` script can make it easy to get started, if you're
 frequently building Carbon, it can be a bit much to type. Consider either
 aliasing `bazel` to the `run_bazelisk.py` script, or
-[downloading a bazelisk release](https://github.com/bazelbuild/bazelisk) and
-adding it to your `$PATH`.
+[downloading a bazelisk release](https://github.com/bazelbuild/bazelisk), adding
+it to your `$PATH`, and aliasing `bazel` to it.
 
 #### Old `clang` versions
 
@@ -131,7 +131,7 @@ gh repo fork --clone carbon-language/carbon-lang
 cd carbon-lang
 pre-commit install
 
-# Run tests.
+# Run tests. Note homebrew makes `bazel` an alias to `bazelisk`.
 bazel test //...:all
 ```
 

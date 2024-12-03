@@ -28,14 +28,14 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness (%Op.1) [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.1) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -91,36 +91,36 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = interface_witness (%Op.decl) [template = constants.%.5]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %.loc17
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %.loc15
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.1[%self.param_patt: %C]() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc19_14: init %C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_14: init %C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc19_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %.loc24_10.1: %Op.type.2 = interface_witness_access constants.%.5, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %.loc24_10.2: <bound method> = bound_method %a.ref, %.loc24_10.1
+// CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %.loc24_10.2(%a.ref) to %.loc23_17.2
+// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23_17.2
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

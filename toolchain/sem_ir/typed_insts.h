@@ -25,8 +25,6 @@
 // - Up to two members describing the contents of the struct. These are types
 //   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
 //
-// TODO: There are some `int32_t` fields, which breaks the above rule, how/why?
-//
 // The field names here matter -- the fields must have the names specified
 // above, when present. When converting to a `SemIR::Inst`, the `kind` and
 // `type_id` fields will become the kind and type associated with the
@@ -82,7 +80,7 @@ struct AnyFoundationDecl {
   InstKind kind;
   InstId foundation_type_inst_id;
   // Kind-specific data.
-  int32_t arg1;
+  AnyRawId arg1;
 };
 
 // An adapted type declaration in a class, of the form `adapt T;`.
@@ -422,7 +420,7 @@ struct AnyBranch {
   // Branches don't produce a value, so have no type.
   InstBlockId target_id;
   // Kind-specific data.
-  int32_t arg1;
+  AnyRawId arg1;
 };
 
 // Control flow to branch to the target block.

@@ -566,6 +566,7 @@ constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an instruction block.
 struct InstBlockId : public IdBase, public Printable<InstBlockId> {
+  // Types for BlockValueStore<InstBlockId>.
   using ElementType = InstId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
@@ -606,6 +607,7 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 // The ID of a type block.
 struct StructTypeFieldsId : public IdBase,
                             public Printable<StructTypeFieldsId> {
+  // Types for BlockValueStore<StructTypeFieldsId>.
   using ElementType = StructTypeField;
   using ValueType = llvm::MutableArrayRef<StructTypeField>;
 
@@ -670,6 +672,7 @@ constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.
 struct TypeBlockId : public IdBase, public Printable<TypeBlockId> {
+  // Types for BlockValueStore<TypeBlockId>.
   using ElementType = TypeId;
   using ValueType = llvm::MutableArrayRef<ElementType>;
 
@@ -819,6 +822,25 @@ struct LocId : public IdBase, public Printable<LocId> {
 };
 
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);
+
+// Polymorphic id for fields in `Any[...]` typed instruction category. Used for
+// fields where the specific instruction structs have different field types in
+// that position or do not have a field in that position at all. Allows
+// conversion with `Inst::As<>` from the specific typed instruction to the
+// `Any[...]` instruction category.
+//
+// This type participates in `Inst::FromRaw` in order to convert from specific
+// instructions to an `Any[...]` instruction category:
+// - In the case the specific instruction has a field of some `IdKind` in the
+//   same position, the `Any[...]` type will hold its raw value in the
+//   `AnyRawId` field.
+// - In the case the specific instruction has no field in the same position, the
+//   `Any[...]` type will hold a default constructed `AnyRawId` with an invalid
+//   value.
+struct AnyRawId : public IdBase {
+  constexpr AnyRawId() : IdBase(IdBase::InvalidIndex) {}
+  constexpr explicit AnyRawId(int32_t id) : IdBase(id) {}
+};
 
 }  // namespace Carbon::SemIR
 

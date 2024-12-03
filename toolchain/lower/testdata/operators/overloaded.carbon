@@ -82,9 +82,9 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_10.3.temp = alloca { i1 }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.3.temp, ptr %a), !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core"(ptr %return, ptr %.loc28_10.3.temp, ptr %b), !dbg !22
+// CHECK:STDOUT:   %.loc28_10.1.temp = alloca { i1 }, align 8, !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.1.temp, ptr %a), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core"(ptr %return, ptr %.loc28_10.1.temp, ptr %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

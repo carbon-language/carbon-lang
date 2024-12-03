@@ -16,9 +16,9 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: --- fail_assign_to_empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -34,16 +34,16 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc14_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_19: Core.IntLiteral = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_20: %.3 = struct_literal (%.loc14_19)
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %.loc14: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -407,14 +407,52 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       add_inst_name(std::move(name));
     };
+    auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
+      if (auto name = sem_ir_.insts().TryGetAs<NameRef>(facet_value_inst_id)) {
+        return name->name_id;
+      } else if (auto symbolic = sem_ir_.insts().TryGetAs<BindSymbolicName>(
+                     facet_value_inst_id)) {
+        return sem_ir_.entity_names().Get(symbolic->entity_name_id).name_id;
+      }
+      return NameId::Invalid;
+    };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
       AddBlockLabel(scope_id, sem_ir_.insts().GetLocId(inst_id), *branch);
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {
+      case AddrOf::Kind: {
+        add_inst_name("addr");
+        continue;
+      }
+      case ArrayType::Kind: {
+        // TODO: Can we figure out the name of the type this is an array of?
+        add_inst_name("array_type");
+        continue;
+      }
       case CARBON_KIND(AssociatedConstantDecl inst): {
         add_inst_name_id(inst.name_id);
+        continue;
+      }
+      case CARBON_KIND(AssociatedEntity inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "assoc" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
+      case CARBON_KIND(AssociatedEntityType inst): {
+        // TODO: Try to get the name of the interface associated with
+        // `inst.interface_type_id`.
+        if (auto fn_ty =
+                sem_ir_.types().TryGetAs<FunctionType>(inst.entity_type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".assoc_type");
+        } else {
+          // TODO: Handle other cases.
+          add_inst_name("assoc_type");
+        }
         continue;
       }
       case BindAlias::Kind:
@@ -431,6 +469,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         auto inst = untyped_inst.As<AnyBindingPattern>();
         add_inst_name_id(
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id, ".patt");
+        continue;
+      }
+      case CARBON_KIND(BoolLiteral inst): {
+        if (inst.value.ToBool()) {
+          add_inst_name("true");
+        } else {
+          add_inst_name("false");
+        }
+        continue;
+      }
+      case CARBON_KIND(BoundMethod inst): {
+        auto type_id = sem_ir_.insts().Get(inst.function_id).type_id();
+        if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".bound");
+        } else {
+          add_inst_name("bound_method");
+        }
         continue;
       }
       case CARBON_KIND(Call inst): {
@@ -465,6 +521,34 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
         continue;
       }
+      case CompleteTypeWitness::Kind: {
+        // TODO: Can we figure out the name of the type this is a witness for?
+        add_inst_name("complete_type");
+        continue;
+      }
+      case ConstType::Kind: {
+        // TODO: Can we figure out the name of the type argument?
+        add_inst_name("const");
+        continue;
+      }
+      case CARBON_KIND(FacetAccessType inst): {
+        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        if (name_id.is_valid()) {
+          add_inst_name_id(name_id, ".as_type");
+        } else {
+          add_inst_name("as_type");
+        }
+        continue;
+      }
+      case CARBON_KIND(FacetAccessWitness inst): {
+        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        if (name_id.is_valid()) {
+          add_inst_name_id(name_id, ".as_wit");
+        } else {
+          add_inst_name("as_wit");
+        }
+        continue;
+      }
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_.facet_types().Get(inst.facet_type_id);
@@ -480,6 +564,25 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         } else {
           add_inst_name("facet_type");
         }
+        continue;
+      }
+      case CARBON_KIND(FacetValue inst): {
+        if (auto facet_type =
+                sem_ir_.types().TryGetAs<FacetType>(inst.type_id)) {
+          const auto& facet_type_info =
+              sem_ir_.facet_types().Get(facet_type->facet_type_id);
+          if (auto interface = facet_type_info.TryAsSingleInterface()) {
+            const auto& interface_info =
+                sem_ir_.interfaces().Get(interface->interface_id);
+            add_inst_name_id(interface_info.name_id, ".facet");
+            continue;
+          }
+        }
+        add_inst_name("facet_value");
+        continue;
+      }
+      case FloatLiteral::Kind: {
+        add_inst_name("float");
         continue;
       }
       case CARBON_KIND(FloatType inst): {
@@ -521,7 +624,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         } else {
           add_inst_name("default.import");
         }
-        break;
+        continue;
       }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
@@ -548,9 +651,28 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
         continue;
       }
+      case InterfaceWitness::Kind: {
+        // TODO: Include name of interface.
+        add_inst_name("interface");
+        continue;
+      }
+      case CARBON_KIND(InterfaceWitnessAccess inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "impl.elem" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
       case CARBON_KIND(IntType inst): {
         add_int_or_float_type_name(inst.int_kind == IntKind::Signed ? 'i' : 'u',
                                    inst.bit_width_id);
+        continue;
+      }
+      case CARBON_KIND(IntValue inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "int_" << sem_ir_.ints().Get(inst.int_id);
+        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(NameRef inst): {
@@ -572,33 +694,86 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(
             SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
             ".param_patt");
-        break;
+        continue;
+      }
+      case PointerType::Kind: {
+        add_inst_name("ptr");
+        continue;
       }
       case InstKind::ReturnSlotPattern: {
         add_inst_name_id(NameId::ReturnSlot, ".patt");
-        break;
+        continue;
+      }
+      case CARBON_KIND(SpecificFunction inst): {
+        InstId callee_id = inst.callee_id;
+        if (auto method = sem_ir_.insts().TryGetAs<BoundMethod>(callee_id)) {
+          callee_id = method->function_id;
+        }
+        auto type_id = sem_ir_.insts().Get(callee_id).type_id();
+        if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".specific_fn");
+        } else {
+          add_inst_name("specific_fn");
+        }
+        continue;
       }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);
         break;
       }
+      case StringLiteral::Kind: {
+        add_inst_name("str");
+        continue;
+      }
       case CARBON_KIND(StructValue inst): {
         if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(inst.type_id)) {
           add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id);
+        } else if (auto class_ty =
+                       sem_ir_.types().TryGetAs<ClassType>(inst.type_id)) {
+          add_inst_name_id(sem_ir_.classes().Get(class_ty->class_id).name_id,
+                           ".val");
         } else if (auto generic_class_ty =
                        sem_ir_.types().TryGetAs<GenericClassType>(
                            inst.type_id)) {
           add_inst_name_id(
-              sem_ir_.classes().Get(generic_class_ty->class_id).name_id);
+              sem_ir_.classes().Get(generic_class_ty->class_id).name_id,
+              ".generic");
         } else if (auto generic_interface_ty =
                        sem_ir_.types().TryGetAs<GenericInterfaceType>(
                            inst.type_id)) {
           add_inst_name_id(sem_ir_.interfaces()
                                .Get(generic_interface_ty->interface_id)
-                               .name_id);
+                               .name_id,
+                           ".generic");
         } else {
-          add_inst_name("struct");
+          if (sem_ir_.inst_blocks().Get(inst.elements_id).empty()) {
+            add_inst_name("empty_struct");
+          } else {
+            add_inst_name("struct");
+          }
         }
+        continue;
+      }
+      case CARBON_KIND(StructType inst): {
+        const auto& fields = sem_ir_.struct_type_fields().Get(inst.fields_id);
+        if (fields.empty()) {
+          add_inst_name("empty_struct_type");
+          continue;
+        }
+        std::string name = "struct_type";
+        for (auto field : fields) {
+          name += ".";
+          name += sem_ir_.names().GetIRBaseName(field.name_id).str();
+        }
+        add_inst_name(std::move(name));
+        continue;
+      }
+      case CARBON_KIND(TupleAccess inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "tuple.elem" << inst.index.index;
+        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(TupleType inst): {
@@ -616,6 +791,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           add_inst_name("empty_tuple");
         } else {
           add_inst_name("tuple");
+        }
+        continue;
+      }
+      case CARBON_KIND(UnboundElementType inst): {
+        if (auto class_ty =
+                sem_ir_.types().TryGetAs<ClassType>(inst.class_type_id)) {
+          add_inst_name_id(sem_ir_.classes().Get(class_ty->class_id).name_id,
+                           ".elem");
+        } else {
+          add_inst_name("elem_type");
         }
         continue;
       }

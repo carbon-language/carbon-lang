@@ -123,11 +123,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Self.1: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.2: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %assoc_type.1: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type.1 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type, %J.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @I.%Second [template]
+// CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %I.type, %J.type [template]
+// CHECK:STDOUT:   %assoc1: %assoc_type.2 = assoc_entity element1, @I.%Second [template]
 // CHECK:STDOUT:   %.Self.1: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
@@ -135,15 +135,15 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %EqualEqual.type: type = fn_type @EqualEqual [template]
 // CHECK:STDOUT:   %EqualEqual: %EqualEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self.2: %J.type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.5: type = facet_access_type %.Self.2 [symbolic]
+// CHECK:STDOUT:   %.Self.as_type.1: type = facet_access_type %.Self.2 [symbolic]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where TODO> [template]
 // CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = facet_access_type %.Self.1 [symbolic]
-// CHECK:STDOUT:   %.7: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %.8: type = interface_witness_access %.7, element0 [symbolic]
+// CHECK:STDOUT:   %.Self.as_type.2: type = facet_access_type %.Self.1 [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self.1 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %W: %I_where.type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %I_where.type = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %And.type: type = fn_type @And [template]
@@ -191,10 +191,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.loc13_22.1: type = facet_access_type %.Self.ref [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc13_22.2: type = converted %.Self.ref, %.loc13_22.1 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type.1]
+// CHECK:STDOUT:     %.loc13_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type.1]
 // CHECK:STDOUT:     %.loc13_16: type = where_expr %.Self [template = constants.%J_where.type] {
-// CHECK:STDOUT:       requirement_impls %.loc13_22.2, %I.ref
+// CHECK:STDOUT:       requirement_impls %.loc13_22, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %J_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %V.loc13_10.1: %J_where.type = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc13_10.2 (constants.%V)]
@@ -207,16 +207,16 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref.loc15_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:     %.loc15_20.1: type = facet_access_type %.Self.ref.loc15_20 [symbolic = constants.%.6]
-// CHECK:STDOUT:     %.loc15_20.2: type = converted %.Self.ref.loc15_20, %.loc15_20.1 [symbolic = constants.%.6]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref.loc15_20 [symbolic = constants.%.Self.as_type.2]
+// CHECK:STDOUT:     %.loc15_20: type = converted %.Self.ref.loc15_20, %.Self.as_type [symbolic = constants.%.Self.as_type.2]
 // CHECK:STDOUT:     %.Self.ref.loc15_38: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc7 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_38.1: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.7]
-// CHECK:STDOUT:     %.loc15_38.2: type = interface_witness_access %.loc15_38.1, element0 [symbolic = constants.%.8]
+// CHECK:STDOUT:     %Member.ref: %assoc_type.1 = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc15_50: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_14: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_impls %.loc15_20.2, %J.ref
-// CHECK:STDOUT:       requirement_equivalent %.loc15_38.2, %.loc15_50
+// CHECK:STDOUT:       requirement_impls %.loc15_20, %J.ref
+// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %.loc15_50
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %I_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc15_8.1: %I_where.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc15_8.2 (constants.%W)]
@@ -234,15 +234,15 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %.loc7: %.1 = assoc_entity element0, %Member [template = constants.%.2]
+// CHECK:STDOUT:   %assoc0: %assoc_type.1 = assoc_entity element0, %Member [template = constants.%assoc0]
 // CHECK:STDOUT:   %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:   %Second: %J.type = assoc_const_decl Second [template]
-// CHECK:STDOUT:   %.loc8: %.3 = assoc_entity element1, %Second [template = constants.%.4]
+// CHECK:STDOUT:   %assoc1: %assoc_type.2 = assoc_entity element1, %Second [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Member = %.loc7
-// CHECK:STDOUT:   .Second = %.loc8
+// CHECK:STDOUT:   .Member = %assoc0
+// CHECK:STDOUT:   .Second = %assoc1
 // CHECK:STDOUT:   witness = (%Member, %Second)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -291,12 +291,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Self.2: %M.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [template]
 // CHECK:STDOUT:   %Self.3: %K.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %K.type, %L.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @K.%Associated [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %K.type, %L.type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @K.%Associated [template]
 // CHECK:STDOUT:   %.Self: %K.type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %.4: %L.type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %.5: type = facet_access_type %.4 [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %L.type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0 [symbolic]
 // CHECK:STDOUT:   %K_where.type: type = facet_type <@K where TODO> [template]
 // CHECK:STDOUT:   %W: %K_where.type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %K_where.type = symbolic_binding_pattern W, 0 [symbolic]
@@ -330,14 +330,14 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:     %.Self: %K.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %K.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %Associated.ref: %.1 = name_ref Associated, @K.%.loc8 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc11_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
-// CHECK:STDOUT:     %.loc11_36.2: %L.type = interface_witness_access %.loc11_36.1, element0 [symbolic = constants.%.4]
+// CHECK:STDOUT:     %Associated.ref: %assoc_type = name_ref Associated, @K.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: %L.type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [template = constants.%M.type]
-// CHECK:STDOUT:     %.loc11_36.3: type = facet_access_type %.loc11_36.2 [symbolic = constants.%.5]
-// CHECK:STDOUT:     %.loc11_36.4: type = converted %.loc11_36.2, %.loc11_36.3 [symbolic = constants.%.5]
+// CHECK:STDOUT:     %as_type: type = facet_access_type %impl.elem0 [symbolic = constants.%as_type]
+// CHECK:STDOUT:     %.loc11_36: type = converted %impl.elem0, %as_type [symbolic = constants.%as_type]
 // CHECK:STDOUT:     %.loc11_30: type = where_expr %.Self [template = constants.%K_where.type] {
-// CHECK:STDOUT:       requirement_impls %.loc11_36.4, %M.ref
+// CHECK:STDOUT:       requirement_impls %.loc11_36, %M.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: %K_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %W.loc11_24.1: %K_where.type = bind_symbolic_name W, 0, %W.param [symbolic = %W.loc11_24.2 (constants.%W)]
@@ -364,11 +364,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %L.ref: type = name_ref L, file.%L.decl [template = constants.%L.type]
 // CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl Associated [template]
-// CHECK:STDOUT:   %.loc8: %.1 = assoc_entity element0, %Associated [template = constants.%.2]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Associated [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Associated = %.loc8
+// CHECK:STDOUT:   .Associated = %assoc0
 // CHECK:STDOUT:   witness = (%Associated)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -388,7 +388,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -415,8 +415,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_32.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_32.2: type = converted %.loc11_32.1, <error> [template = <error>]
+// CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7]
+// CHECK:STDOUT:     %.loc11_32: type = converted %int_7, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls <error>, type
 // CHECK:STDOUT:     }
@@ -441,7 +441,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
+// CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -469,8 +469,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_44.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_44.2: type = converted %.loc11_44.1, <error> [template = <error>]
+// CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7]
+// CHECK:STDOUT:     %.loc11_44: type = converted %int_7, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
@@ -495,10 +495,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -526,10 +526,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc8_51.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_51.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.3: type = converted %int.make_type_signed, %.loc8_51.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_51.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_51.2: type = converted %int.make_type_signed, %.loc8_51.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8_33: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
@@ -554,10 +554,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
-// CHECK:STDOUT:   %.3: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %interface.1: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %DoesNotImplI.type: type = fn_type @DoesNotImplI [template]
 // CHECK:STDOUT:   %DoesNotImplI: %DoesNotImplI.type = struct_value () [template]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
@@ -616,7 +616,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc26_38: %.1 = struct_literal ()
+// CHECK:STDOUT:     %.loc26_38: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc26_22: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:     }
@@ -633,18 +633,18 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %J.ref {
-// CHECK:STDOUT:   %.loc8: <witness> = interface_witness () [template = constants.%.3]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc8
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %.loc7
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DoesNotImplI() {

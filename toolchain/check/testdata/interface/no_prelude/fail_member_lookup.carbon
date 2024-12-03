@@ -42,10 +42,10 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Self.1: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = assoc_entity_type %Interface.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Interface.%F.decl [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %Interface.type, type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @Interface.%T [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type.1 [template]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %Interface.type, type [template]
+// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, @Interface.%T [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [template]
@@ -75,7 +75,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [template = constants.%Different.type]
 // CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc36_6.1 [symbolic = %U.loc36_6.2 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:     %T.ref: %.3 = name_ref T, @Interface.%.loc14 [template = constants.%.4]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @Interface.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:     %U.param: %Different.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc36_6.1: %Different.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc36_6.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
@@ -86,14 +86,14 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc12: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %.loc14: %.3 = assoc_entity element1, %T [template = constants.%.4]
+// CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, %T [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc12
-// CHECK:STDOUT:   .T = %.loc14
+// CHECK:STDOUT:   .F = %assoc0
+// CHECK:STDOUT:   .T = %assoc1
 // CHECK:STDOUT:   witness = (%F.decl, %T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -113,9 +113,9 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:   %F.ref: %.1 = name_ref F, @Interface.%.loc12 [template = constants.%.2]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:   %Interface.ref.loc28: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:   %T.ref: %.3 = name_ref T, @Interface.%.loc14 [template = constants.%.4]
+// CHECK:STDOUT:   %T.ref: %assoc_type = name_ref T, @Interface.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:   %.loc28: type = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var

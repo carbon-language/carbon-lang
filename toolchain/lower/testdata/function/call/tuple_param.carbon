@@ -17,7 +17,7 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.2.loc14_20.12 = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.2.loc14_20.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main({ i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -26,7 +26,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.2.loc14_20.12), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.2.loc14_20.6), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

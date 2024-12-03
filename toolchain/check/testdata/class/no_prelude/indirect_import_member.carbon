@@ -106,8 +106,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,12 +119,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   complete_type_witness = %.loc6
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -149,13 +149,13 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+3, unloaded
 // CHECK:STDOUT: }
@@ -193,13 +193,13 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//c, inst+9, unloaded
 // CHECK:STDOUT: }
@@ -216,12 +216,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %C: type = bind_alias C, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .C = %C
-// CHECK:STDOUT:   complete_type_witness = %.loc8
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -249,15 +249,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//a, inst+3, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -297,15 +297,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//c, inst+9, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -345,15 +345,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+7, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+8, unloaded
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Main//c, inst+9, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -393,8 +393,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -402,10 +402,10 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//e, inst+3, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//e, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//e, inst+13, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//e, inst+10, unloaded
 // CHECK:STDOUT:   %import_ref.7: %F.type = import_ref Main//e, inst+11, loaded [template = constants.%F]
 // CHECK:STDOUT: }
@@ -453,8 +453,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -462,10 +462,10 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//e, inst+3, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//e, inst+14, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//e, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//e, inst+13, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//e, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//e, inst+10, unloaded
 // CHECK:STDOUT:   %import_ref.7: %F.type = import_ref Main//e, inst+11, loaded [template = constants.%F]
 // CHECK:STDOUT: }

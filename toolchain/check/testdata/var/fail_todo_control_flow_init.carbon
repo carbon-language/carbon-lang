@@ -59,7 +59,7 @@ var y2: bool = false or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -103,7 +103,7 @@ var y2: bool = false or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc23 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

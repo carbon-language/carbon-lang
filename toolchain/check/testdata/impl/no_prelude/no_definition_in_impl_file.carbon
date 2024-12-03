@@ -114,7 +114,7 @@ impl () as D;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -149,10 +149,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 {
-// CHECK:STDOUT:   %.loc6_14: <witness> = interface_witness () [template = constants.%.1]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc6_14
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon

@@ -21,7 +21,7 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -29,7 +29,7 @@ alias A(T:! type) = T*;
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %.loc18: type = ptr_type %T [symbolic = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic = constants.%ptr]
 // CHECK:STDOUT:   %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
 // CHECK:STDOUT:   %A: <error> = bind_alias A, <error> [template = <error>]
