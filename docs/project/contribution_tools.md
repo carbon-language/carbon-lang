@@ -82,7 +82,7 @@ Although the `run_bazelisk` script can make it easy to get started, if you're
 frequently building Carbon, it can be a bit much to type. Consider either
 aliasing `bazel` to the `run_bazelisk.py` script, or
 [downloading a bazelisk release](https://github.com/bazelbuild/bazelisk), adding
-it to your `$PATH` and aliasing `bazel` to it.
+it to your `$PATH`, and aliasing `bazel` to it.
 
 #### Old `clang` versions
 
