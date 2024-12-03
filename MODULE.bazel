@@ -7,7 +7,7 @@
 `MODULE.bazel.lock` may change locally when `bazel` is executed. This means one
 of:
 
-1.  `MODULE.bazel` is changing.
+1.  Either `MODULE.bazel` or `.bazelversion` is changing.
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; include the changes.
     -   GitHub test actions may also identify platform-specific lockfile
@@ -19,7 +19,6 @@ of:
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; create a PR with those changes in order to include
         the host platform.
-3.  The `.bazelversion` is being updated.
 """
 
 module(name = "carbon")
