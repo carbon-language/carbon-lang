@@ -113,10 +113,10 @@ fn Initializing() {
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %ptr.loc22: type = ptr_type %X [template = constants.%ptr.2]
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
+// CHECK:STDOUT:   %.loc22: ref %X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc22_15: %ptr.2 = addr_of %.loc22_17
-// CHECK:STDOUT:   %q: %ptr.2 = bind_name q, %.loc22_15
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %.loc22
+// CHECK:STDOUT:   %q: %ptr.2 = bind_name q, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

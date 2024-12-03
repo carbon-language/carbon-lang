@@ -204,12 +204,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @TestAssign(%a.param_patt: %ptr.2, %b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.2 = name_ref a, %a
-// CHECK:STDOUT:   %.loc31_3.1: ref %C = deref %a.ref
+// CHECK:STDOUT:   %.loc31: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %elt0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc31_3.1, %elt0
-// CHECK:STDOUT:   %.loc31_3.2: %ptr.2 = addr_of %.loc31_3.1
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%.loc31_3.2, %b.ref)
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc31, %elt0
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %.loc31
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

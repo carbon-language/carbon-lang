@@ -133,10 +133,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return
 // CHECK:STDOUT:   %s.ref.loc15_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc15_16: ref %Class = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_15: %ptr.1 = addr_of %s.ref.loc15_16
-// CHECK:STDOUT:   %.loc15_17.1: %struct_type.p = struct_literal (%.loc15_15)
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %s.ref.loc15_16
+// CHECK:STDOUT:   %.loc15_17.1: %struct_type.p = struct_literal (%addr)
 // CHECK:STDOUT:   %.loc15_17.2: ref %ptr.1 = class_element_access %s.ref.loc15_5, element0
-// CHECK:STDOUT:   %.loc15_17.3: init %ptr.1 = initialize_from %.loc15_15 to %.loc15_17.2
+// CHECK:STDOUT:   %.loc15_17.3: init %ptr.1 = initialize_from %addr to %.loc15_17.2
 // CHECK:STDOUT:   %.loc15_17.4: init %Class = class_init (%.loc15_17.3), %s.ref.loc15_5
 // CHECK:STDOUT:   %.loc15_7: init %Class = converted %.loc15_17.1, %.loc15_17.4
 // CHECK:STDOUT:   assign %s.ref.loc15_5, %.loc15_7

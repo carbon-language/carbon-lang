@@ -235,8 +235,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %d.ref: %Derived.elt.2 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc33_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc33_12.2: ref %i32 = class_element_access %.loc33_12.1, element1
-// CHECK:STDOUT:   %.loc33_10: %ptr.5 = addr_of %.loc33_12.2
-// CHECK:STDOUT:   return %.loc33_10
+// CHECK:STDOUT:   %addr: %ptr.5 = addr_of %.loc33_12.2
+// CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBaseIndirect(%p.param_patt: %ptr.4) -> %ptr.5 {
@@ -248,7 +248,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc37_12.2: ref %Base = class_element_access %.loc37_12.1, element0
 // CHECK:STDOUT:   %.loc37_12.3: ref %Base = converted %.loc37_12.1, %.loc37_12.2
 // CHECK:STDOUT:   %.loc37_12.4: ref %i32 = class_element_access %.loc37_12.3, element1
-// CHECK:STDOUT:   %.loc37_10: %ptr.5 = addr_of %.loc37_12.4
-// CHECK:STDOUT:   return %.loc37_10
+// CHECK:STDOUT:   %addr: %ptr.5 = addr_of %.loc37_12.4
+// CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

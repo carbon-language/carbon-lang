@@ -268,8 +268,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc22_25.1: ref %B = as_compatible %a_ref.ref.loc22
 // CHECK:STDOUT:   %.loc22_25.2: ref %B = converted %a_ref.ref.loc22, %.loc22_25.1
-// CHECK:STDOUT:   %.loc22_17: %ptr.2 = addr_of %.loc22_25.2
-// CHECK:STDOUT:   %b_ptr: %ptr.2 = bind_name b_ptr, %.loc22_17
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %.loc22_25.2
+// CHECK:STDOUT:   %b_ptr: %ptr.2 = bind_name b_ptr, %addr
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @A.%Make.decl [template = constants.%Make]
 // CHECK:STDOUT:   %.loc24_5: ref %B = splice_block file.%b_factory.var {}

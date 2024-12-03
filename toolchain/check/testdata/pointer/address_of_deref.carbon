@@ -77,10 +77,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12_17: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign %n.var, %.loc12_17
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_13: %ptr = addr_of %n.ref
-// CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %.loc13_13
-// CHECK:STDOUT:   %.loc13_11: %ptr = addr_of %.loc13_12
-// CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %.loc13_11
+// CHECK:STDOUT:   %addr.loc13_13: %ptr = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %addr.loc13_13
+// CHECK:STDOUT:   %addr.loc13_11: %ptr = addr_of %.loc13_12
+// CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %addr.loc13_11
 // CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2
 // CHECK:STDOUT: }

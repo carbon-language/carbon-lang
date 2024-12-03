@@ -215,12 +215,12 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc31_4.1: ref %Derived = deref %p.ref.loc31
 // CHECK:STDOUT:   %AddrSelfBase.ref: %AddrSelfBase.type = name_ref AddrSelfBase, @Derived.%AddrSelfBase.decl [template = constants.%AddrSelfBase]
 // CHECK:STDOUT:   %AddrSelfBase.bound: <bound method> = bound_method %.loc31_4.1, %AddrSelfBase.ref
-// CHECK:STDOUT:   %.loc31_4.2: %ptr.3 = addr_of %.loc31_4.1
-// CHECK:STDOUT:   %.loc31_4.3: ref %Derived = deref %.loc31_4.2
-// CHECK:STDOUT:   %.loc31_4.4: ref %Base = class_element_access %.loc31_4.3, element0
-// CHECK:STDOUT:   %.loc31_4.5: %ptr.2 = addr_of %.loc31_4.4
-// CHECK:STDOUT:   %.loc31_4.6: %ptr.2 = converted %.loc31_4.2, %.loc31_4.5
-// CHECK:STDOUT:   %AddrSelfBase.call: init %empty_tuple.type = call %AddrSelfBase.bound(%.loc31_4.6)
+// CHECK:STDOUT:   %addr.loc31_4.1: %ptr.3 = addr_of %.loc31_4.1
+// CHECK:STDOUT:   %.loc31_4.2: ref %Derived = deref %addr.loc31_4.1
+// CHECK:STDOUT:   %.loc31_4.3: ref %Base = class_element_access %.loc31_4.2, element0
+// CHECK:STDOUT:   %addr.loc31_4.2: %ptr.2 = addr_of %.loc31_4.3
+// CHECK:STDOUT:   %.loc31_4.4: %ptr.2 = converted %addr.loc31_4.1, %addr.loc31_4.2
+// CHECK:STDOUT:   %AddrSelfBase.call: init %empty_tuple.type = call %AddrSelfBase.bound(%.loc31_4.4)
 // CHECK:STDOUT:   %p.ref.loc32: %ptr.3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc32_11.1: ref %Derived = deref %p.ref.loc32
 // CHECK:STDOUT:   %SelfBase.ref: %SelfBase.type = name_ref SelfBase, @Derived.%SelfBase.decl [template = constants.%SelfBase]

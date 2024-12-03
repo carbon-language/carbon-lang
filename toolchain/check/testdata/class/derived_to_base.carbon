@@ -250,9 +250,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %p.ref: %ptr.4 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc25_39.2: ref %B = class_element_access %.loc25_39.1, element0
-// CHECK:STDOUT:   %.loc25_39.3: %ptr.5 = addr_of %.loc25_39.2
-// CHECK:STDOUT:   %.loc25_39.4: %ptr.5 = converted %p.ref, %.loc25_39.3
-// CHECK:STDOUT:   return %.loc25_39.4
+// CHECK:STDOUT:   %addr: %ptr.5 = addr_of %.loc25_39.2
+// CHECK:STDOUT:   %.loc25_39.3: %ptr.5 = converted %p.ref, %addr
+// CHECK:STDOUT:   return %.loc25_39.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertBToA(%p.param_patt: %ptr.5) -> %ptr.8 {
@@ -260,9 +260,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %p.ref: %ptr.5 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26_39.1: ref %B = deref %p.ref
 // CHECK:STDOUT:   %.loc26_39.2: ref %A = class_element_access %.loc26_39.1, element0
-// CHECK:STDOUT:   %.loc26_39.3: %ptr.8 = addr_of %.loc26_39.2
-// CHECK:STDOUT:   %.loc26_39.4: %ptr.8 = converted %p.ref, %.loc26_39.3
-// CHECK:STDOUT:   return %.loc26_39.4
+// CHECK:STDOUT:   %addr: %ptr.8 = addr_of %.loc26_39.2
+// CHECK:STDOUT:   %.loc26_39.3: %ptr.8 = converted %p.ref, %addr
+// CHECK:STDOUT:   return %.loc26_39.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToA(%p.param_patt: %ptr.4) -> %ptr.8 {
@@ -271,9 +271,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc27_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc27_39.2: ref %B = class_element_access %.loc27_39.1, element0
 // CHECK:STDOUT:   %.loc27_39.3: ref %A = class_element_access %.loc27_39.2, element0
-// CHECK:STDOUT:   %.loc27_39.4: %ptr.8 = addr_of %.loc27_39.3
-// CHECK:STDOUT:   %.loc27_39.5: %ptr.8 = converted %p.ref, %.loc27_39.4
-// CHECK:STDOUT:   return %.loc27_39.5
+// CHECK:STDOUT:   %addr: %ptr.8 = addr_of %.loc27_39.3
+// CHECK:STDOUT:   %.loc27_39.4: %ptr.8 = converted %p.ref, %addr
+// CHECK:STDOUT:   return %.loc27_39.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c.param_patt: %C) {
@@ -296,8 +296,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc34_15.1: ref %B = class_element_access %.loc34_12, element0
 // CHECK:STDOUT:   %.loc34_15.2: ref %A = class_element_access %.loc34_15.1, element0
 // CHECK:STDOUT:   %.loc34_15.3: ref %A = converted %.loc34_12, %.loc34_15.2
-// CHECK:STDOUT:   %.loc34_10: %ptr.8 = addr_of %.loc34_15.3
-// CHECK:STDOUT:   return %.loc34_10
+// CHECK:STDOUT:   %addr: %ptr.8 = addr_of %.loc34_15.3
+// CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {

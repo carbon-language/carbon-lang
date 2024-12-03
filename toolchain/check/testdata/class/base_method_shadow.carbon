@@ -200,33 +200,33 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: fn @Call(%a.param_patt: %ptr.1, %b.param_patt: %ptr.3, %c.param_patt: %ptr.5, %d.param_patt: %ptr.6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.1 = name_ref a, %a
-// CHECK:STDOUT:   %.loc30_4.1: ref %A = deref %a.ref
+// CHECK:STDOUT:   %.loc30: ref %A = deref %a.ref
 // CHECK:STDOUT:   %F.ref.loc30: %F.type.1 = name_ref F, @A.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %F.bound.loc30: <bound method> = bound_method %.loc30_4.1, %F.ref.loc30
-// CHECK:STDOUT:   %.loc30_4.2: %ptr.1 = addr_of %.loc30_4.1
-// CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %F.bound.loc30(%.loc30_4.2)
+// CHECK:STDOUT:   %F.bound.loc30: <bound method> = bound_method %.loc30, %F.ref.loc30
+// CHECK:STDOUT:   %addr.loc30: %ptr.1 = addr_of %.loc30
+// CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %F.bound.loc30(%addr.loc30)
 // CHECK:STDOUT:   %b.ref: %ptr.3 = name_ref b, %b
-// CHECK:STDOUT:   %.loc31_4.1: ref %B = deref %b.ref
+// CHECK:STDOUT:   %.loc31: ref %B = deref %b.ref
 // CHECK:STDOUT:   %F.ref.loc31: %F.type.2 = name_ref F, @B.%F.decl [template = constants.%F.2]
-// CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %.loc31_4.1, %F.ref.loc31
-// CHECK:STDOUT:   %.loc31_4.2: %ptr.3 = addr_of %.loc31_4.1
-// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%.loc31_4.2)
+// CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %.loc31, %F.ref.loc31
+// CHECK:STDOUT:   %addr.loc31: %ptr.3 = addr_of %.loc31
+// CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%addr.loc31)
 // CHECK:STDOUT:   %c.ref: %ptr.5 = name_ref c, %c
-// CHECK:STDOUT:   %.loc32_4.1: ref %C = deref %c.ref
+// CHECK:STDOUT:   %.loc32: ref %C = deref %c.ref
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.3 = name_ref F, @C.%F.decl [template = constants.%F.3]
-// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
-// CHECK:STDOUT:   %.loc32_4.2: %ptr.5 = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%.loc32_4.2)
+// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
+// CHECK:STDOUT:   %addr.loc32: %ptr.5 = addr_of %.loc32
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32)
 // CHECK:STDOUT:   %d.ref: %ptr.6 = name_ref d, %d
 // CHECK:STDOUT:   %.loc33_4.1: ref %D = deref %d.ref
 // CHECK:STDOUT:   %F.ref.loc33: %F.type.2 = name_ref F, @B.%F.decl [template = constants.%F.2]
 // CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
-// CHECK:STDOUT:   %.loc33_4.2: %ptr.6 = addr_of %.loc33_4.1
-// CHECK:STDOUT:   %.loc33_4.3: ref %D = deref %.loc33_4.2
-// CHECK:STDOUT:   %.loc33_4.4: ref %B = class_element_access %.loc33_4.3, element0
-// CHECK:STDOUT:   %.loc33_4.5: %ptr.3 = addr_of %.loc33_4.4
-// CHECK:STDOUT:   %.loc33_4.6: %ptr.3 = converted %.loc33_4.2, %.loc33_4.5
-// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%.loc33_4.6)
+// CHECK:STDOUT:   %addr.loc33_4.1: %ptr.6 = addr_of %.loc33_4.1
+// CHECK:STDOUT:   %.loc33_4.2: ref %D = deref %addr.loc33_4.1
+// CHECK:STDOUT:   %.loc33_4.3: ref %B = class_element_access %.loc33_4.2, element0
+// CHECK:STDOUT:   %addr.loc33_4.2: %ptr.3 = addr_of %.loc33_4.3
+// CHECK:STDOUT:   %.loc33_4.4: %ptr.3 = converted %addr.loc33_4.1, %addr.loc33_4.2
+// CHECK:STDOUT:   %F.call.loc33: init %empty_tuple.type = call %F.bound.loc33(%.loc33_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

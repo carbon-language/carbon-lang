@@ -192,8 +192,8 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %array_type = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc5: %ptr = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %addr: %ptr = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -63,7 +63,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc21: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %addr: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

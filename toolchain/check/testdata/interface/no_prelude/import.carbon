@@ -292,9 +292,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f.1 = name_ref f_ref, imports.%import_ref.4
-// CHECK:STDOUT:   %.loc16_33: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %.loc16_27: %ptr = addr_of %.loc16_33
-// CHECK:STDOUT:   assign file.%f.var, %.loc16_27
+// CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16
+// CHECK:STDOUT:   assign file.%f.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

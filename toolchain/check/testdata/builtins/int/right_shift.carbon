@@ -227,8 +227,8 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %array_type = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc5: %ptr = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %.loc5
+// CHECK:STDOUT:   %addr: %ptr = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,11 +445,11 @@ let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr1.ref: ref %array_type.1 = name_ref arr1, file.%arr1
-// CHECK:STDOUT:   %.loc11: %ptr.1 = addr_of %arr1.ref
-// CHECK:STDOUT:   %arr1_p: %ptr.1 = bind_name arr1_p, %.loc11
+// CHECK:STDOUT:   %addr.loc11: %ptr.1 = addr_of %arr1.ref
+// CHECK:STDOUT:   %arr1_p: %ptr.1 = bind_name arr1_p, %addr.loc11
 // CHECK:STDOUT:   %arr2.ref: ref %array_type.2 = name_ref arr2, file.%arr2
-// CHECK:STDOUT:   %.loc15: %ptr.2 = addr_of %arr2.ref
-// CHECK:STDOUT:   %arr2_p: %ptr.2 = bind_name arr2_p, %.loc15
+// CHECK:STDOUT:   %addr.loc15: %ptr.2 = addr_of %arr2.ref
+// CHECK:STDOUT:   %arr2_p: %ptr.2 = bind_name arr2_p, %addr.loc15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

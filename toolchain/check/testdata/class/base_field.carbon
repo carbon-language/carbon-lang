@@ -143,7 +143,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc25_15.1: ref %Base = class_element_access %.loc25_12, element0
 // CHECK:STDOUT:   %.loc25_15.2: ref %Base = converted %.loc25_12, %.loc25_15.1
 // CHECK:STDOUT:   %.loc25_15.3: ref %i32 = class_element_access %.loc25_15.2, element2
-// CHECK:STDOUT:   %.loc25_10: %ptr.3 = addr_of %.loc25_15.3
-// CHECK:STDOUT:   return %.loc25_10
+// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc25_15.3
+// CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

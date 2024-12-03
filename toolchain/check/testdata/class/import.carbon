@@ -312,15 +312,15 @@ fn Run() {
 // CHECK:STDOUT:   %c.ref.loc14: ref %ForwardDeclared.1 = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.49 [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref.loc14, %G.ref
-// CHECK:STDOUT:   %.loc14: %ptr.3 = addr_of %c.ref.loc14
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(%.loc14)
+// CHECK:STDOUT:   %addr.loc14: %ptr.3 = addr_of %c.ref.loc14
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(%addr.loc14)
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.1]
 // CHECK:STDOUT:   %ptr.loc16: type = ptr_type %ForwardDeclared.1 [template = constants.%ptr.3]
 // CHECK:STDOUT:   %d.var: ref %ptr.3 = var d
 // CHECK:STDOUT:   %d: ref %ptr.3 = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.1 = name_ref c, %c
-// CHECK:STDOUT:   %.loc16: %ptr.3 = addr_of %c.ref.loc16
-// CHECK:STDOUT:   assign %d.var, %.loc16
+// CHECK:STDOUT:   %addr.loc16: %ptr.3 = addr_of %c.ref.loc16
+// CHECK:STDOUT:   assign %d.var, %addr.loc16
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%import_ref.4 [template = constants.%Incomplete]
 // CHECK:STDOUT:   %ptr.loc18: type = ptr_type %Incomplete [template = constants.%ptr.4]
 // CHECK:STDOUT:   %e.var: ref %ptr.4 = var e

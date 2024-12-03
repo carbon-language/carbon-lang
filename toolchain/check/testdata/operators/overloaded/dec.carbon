@@ -106,8 +106,8 @@ fn TestOp() {
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %elt0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.ref, %elt0
-// CHECK:STDOUT:   %.loc23: %ptr.1 = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%.loc23)
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %c.ref
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

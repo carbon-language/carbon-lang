@@ -50,8 +50,8 @@ fn F() {
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
-// CHECK:STDOUT:   %.loc13_16: %ptr = addr_of %a.ref
-// CHECK:STDOUT:   assign %b.var, %.loc13_16
+// CHECK:STDOUT:   %addr: %ptr = addr_of %a.ref
+// CHECK:STDOUT:   assign %b.var, %addr
 // CHECK:STDOUT:   %b.ref: ref %ptr = name_ref b, %b
 // CHECK:STDOUT:   %.loc17_14: %ptr = bind_value %b.ref
 // CHECK:STDOUT:   %.loc17_13: ref %empty_tuple.type = deref %.loc17_14

@@ -92,8 +92,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %F.call: init %const = call %F.ref()
 // CHECK:STDOUT:   assign file.%a_ref.var, %F.call
 // CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, file.%a_ref
-// CHECK:STDOUT:   %.loc7: %ptr = addr_of %a_ref.ref
-// CHECK:STDOUT:   assign file.%a_ptr_ref.var, %.loc7
+// CHECK:STDOUT:   %addr: %ptr = addr_of %a_ref.ref
+// CHECK:STDOUT:   assign file.%a_ptr_ref.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,8 +152,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc6: %ptr = addr_of %a_ref.ref
-// CHECK:STDOUT:   assign file.%a.var, %.loc6
+// CHECK:STDOUT:   %addr: %ptr = addr_of %a_ref.ref
+// CHECK:STDOUT:   assign file.%a.var, %addr
 // CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%import_ref.3
 // CHECK:STDOUT:   %.loc7: %ptr = bind_value %a_ptr_ref.ref
 // CHECK:STDOUT:   assign file.%a_ptr.var, %.loc7

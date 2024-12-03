@@ -451,7 +451,7 @@ class C {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @IncompleteAddrSelf.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc148: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc148, %F.ref
-// CHECK:STDOUT:   %.1: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %addr: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

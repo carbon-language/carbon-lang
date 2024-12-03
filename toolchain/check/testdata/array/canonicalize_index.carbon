@@ -231,11 +231,11 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %.loc14_36: init %array_type = converted %.loc14_35.1, %.loc14_35.11 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc14_36
 // CHECK:STDOUT:   %a.ref.loc15: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc15: %ptr = addr_of %a.ref.loc15
-// CHECK:STDOUT:   %b: %ptr = bind_name b, %.loc15
+// CHECK:STDOUT:   %addr.loc15: %ptr = addr_of %a.ref.loc15
+// CHECK:STDOUT:   %b: %ptr = bind_name b, %addr.loc15
 // CHECK:STDOUT:   %a.ref.loc16: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc16: %ptr = addr_of %a.ref.loc16
-// CHECK:STDOUT:   %c: %ptr = bind_name c, %.loc16
+// CHECK:STDOUT:   %addr.loc16: %ptr = addr_of %a.ref.loc16
+// CHECK:STDOUT:   %c: %ptr = bind_name c, %addr.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

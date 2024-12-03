@@ -870,9 +870,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_11.1: ref %DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %.loc16_11.2: ref %Final = class_element_access %.loc16_11.1, element0
-// CHECK:STDOUT:   %.loc16_11.3: %ptr.3 = addr_of %.loc16_11.2
-// CHECK:STDOUT:   %.loc16_11.4: %ptr.3 = converted %p.ref, %.loc16_11.3
-// CHECK:STDOUT:   return %.loc16_11.4
+// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc16_11.2
+// CHECK:STDOUT:   %.loc16_11.3: %ptr.3 = converted %p.ref, %addr
+// CHECK:STDOUT:   return %.loc16_11.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_WithMember(%p.param_patt: %ptr.2) -> %i32 {

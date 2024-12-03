@@ -186,8 +186,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_18
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %.loc9: %ptr.2 = addr_of %b_val.ref
-// CHECK:STDOUT:   assign file.%b_ptr.var, %.loc9
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %b_val.ref
+// CHECK:STDOUT:   assign file.%b_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -245,8 +245,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_18
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %.loc9: %ptr.2 = addr_of %c_val.ref
-// CHECK:STDOUT:   assign file.%c_ptr.var, %.loc9
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %c_val.ref
+// CHECK:STDOUT:   assign file.%c_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -307,8 +307,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
-// CHECK:STDOUT:   assign file.%ptr.var, %.loc8
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -369,8 +369,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
-// CHECK:STDOUT:   assign file.%ptr.var, %.loc8
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -435,8 +435,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
-// CHECK:STDOUT:   assign file.%ptr.var, %.loc8
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -501,8 +501,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
-// CHECK:STDOUT:   assign file.%ptr.var, %.loc8
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -124,11 +124,11 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.bound.loc29: <bound method> = bound_method %c.ref.loc29, %G.ref.loc29
 // CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %G.bound.loc29(%c.ref.loc29)
 // CHECK:STDOUT:   %p.ref.loc32: %ptr.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc32_4.1: ref %Class = deref %p.ref.loc32
+// CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref.loc32
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.1 = name_ref F, @Class.%F.decl [template = constants.%F.1]
-// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32_4.1, %F.ref.loc32
-// CHECK:STDOUT:   %.loc32_4.2: %ptr.1 = addr_of %.loc32_4.1
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%.loc32_4.2)
+// CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %.loc32
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr)
 // CHECK:STDOUT:   %p.ref.loc34: %ptr.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc34_4.1: ref %Class = deref %p.ref.loc34
 // CHECK:STDOUT:   %G.ref.loc34: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]

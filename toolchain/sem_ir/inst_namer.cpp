@@ -422,6 +422,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {
+      case AddrOf::Kind: {
+        add_inst_name("addr");
+        continue;
+      }
       case ArrayType::Kind: {
         // TODO: Can we figure out the name of the type this is an array of?
         add_inst_name("array_type");

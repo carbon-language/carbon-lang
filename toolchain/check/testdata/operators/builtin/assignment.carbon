@@ -233,8 +233,8 @@ fn Main() {
 // CHECK:STDOUT:   %p.var: ref %ptr.3 = var p
 // CHECK:STDOUT:   %p: ref %ptr.3 = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc23: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc23_17: %ptr.3 = addr_of %a.ref.loc23
-// CHECK:STDOUT:   assign %p.var, %.loc23_17
+// CHECK:STDOUT:   %addr.loc23: %ptr.3 = addr_of %a.ref.loc23
+// CHECK:STDOUT:   assign %p.var, %addr.loc23
 // CHECK:STDOUT:   %p.ref.loc24: ref %ptr.3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc24_4: %ptr.3 = bind_value %p.ref.loc24
 // CHECK:STDOUT:   %.loc24_3: ref %i32 = deref %.loc24_4
@@ -255,8 +255,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %a.ref.loc26: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc26_25: %ptr.3 = addr_of %a.ref.loc26
-// CHECK:STDOUT:   br !if.expr.result(%.loc26_25)
+// CHECK:STDOUT:   %addr.loc26: %ptr.3 = addr_of %a.ref.loc26
+// CHECK:STDOUT:   br !if.expr.result(%addr.loc26)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc26_5: %ptr.3 = block_arg !if.expr.result

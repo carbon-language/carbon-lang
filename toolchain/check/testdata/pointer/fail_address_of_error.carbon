@@ -50,10 +50,10 @@ fn Test() {
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
+// CHECK:STDOUT:   %addr.loc16: <error> = addr_of %undeclared.ref.loc16 [template = <error>]
 // CHECK:STDOUT:   %undeclared.ref.loc24: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc24_5: <error> = addr_of %undeclared.ref.loc24 [template = <error>]
-// CHECK:STDOUT:   %.loc24_3: <error> = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %addr.loc24_5: <error> = addr_of %undeclared.ref.loc24 [template = <error>]
+// CHECK:STDOUT:   %addr.loc24_3: <error> = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

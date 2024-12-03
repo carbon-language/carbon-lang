@@ -130,8 +130,8 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc19_22.1: ref %array_type = value_as_ref %b.ref.loc19
 // CHECK:STDOUT:   %.loc19_22.2: ref %i32 = array_index %.loc19_22.1, %.loc19_21.2
 // CHECK:STDOUT:   %.loc19_22.3: %i32 = bind_value %.loc19_22.2
-// CHECK:STDOUT:   %.loc19_18: %ptr.2 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   assign %pb.var, %.loc19_18
+// CHECK:STDOUT:   %addr.loc19: %ptr.2 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   assign %pb.var, %addr.loc19
 // CHECK:STDOUT:   %b.ref.loc24: %array_type = name_ref b, %b
 // CHECK:STDOUT:   %int_0.loc24: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %elt0.loc24_5: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -170,8 +170,8 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc32_23.2: %i32 = converted %int_0.loc32, %.loc32_23.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc32_24.1: ref %i32 = array_index %.loc32_21.2, %.loc32_23.2
 // CHECK:STDOUT:   %.loc32_24.2: %i32 = bind_value %.loc32_24.1
-// CHECK:STDOUT:   %.loc32_18: %ptr.2 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   assign %pf.var, %.loc32_18
+// CHECK:STDOUT:   %addr.loc32: %ptr.2 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   assign %pf.var, %addr.loc32
 // CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc36_5.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call.loc36: init %array_type = call %F.ref.loc36() to %.loc36_5.1

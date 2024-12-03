@@ -270,8 +270,8 @@ var d: D* = &c;
 // CHECK:STDOUT:   %.loc7_14: init %C = converted %.loc7_13.1, %.loc7_13.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_14
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
-// CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %c.ref
-// CHECK:STDOUT:   assign file.%d.var, %.loc8
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %c.ref
+// CHECK:STDOUT:   assign file.%d.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

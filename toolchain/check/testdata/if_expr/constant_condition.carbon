@@ -285,8 +285,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %ptr = var w
 // CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %.loc24_40: %ptr = addr_of %v.ref
-// CHECK:STDOUT:   assign %w.var, %.loc24_40
+// CHECK:STDOUT:   %addr: %ptr = addr_of %v.ref
+// CHECK:STDOUT:   assign %w.var, %addr
 // CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
 // CHECK:STDOUT:   %.loc25_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc25_10.1: ref %i32 = deref %.loc25_11
@@ -341,8 +341,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %ptr = var w
 // CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %.loc30_38: %ptr = addr_of %v.ref
-// CHECK:STDOUT:   assign %w.var, %.loc30_38
+// CHECK:STDOUT:   %addr: %ptr = addr_of %v.ref
+// CHECK:STDOUT:   assign %w.var, %addr
 // CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
 // CHECK:STDOUT:   %.loc31_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc31_10.1: ref %i32 = deref %.loc31_11

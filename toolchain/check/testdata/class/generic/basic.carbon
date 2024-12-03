@@ -155,8 +155,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class) = deref %self.ref
 // CHECK:STDOUT:     %k.ref: @GetAddr.%Class.elt (%Class.elt) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
 // CHECK:STDOUT:     %.loc13_17.2: ref @GetAddr.%T (%T) = class_element_access %.loc13_17.1, element0
-// CHECK:STDOUT:     %.loc13_12: @GetAddr.%ptr.loc12_38.1 (%ptr.2) = addr_of %.loc13_17.2
-// CHECK:STDOUT:     return %.loc13_12
+// CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc12_38.1 (%ptr.2) = addr_of %.loc13_17.2
+// CHECK:STDOUT:     return %addr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

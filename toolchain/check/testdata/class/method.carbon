@@ -384,8 +384,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref, %G.ref
-// CHECK:STDOUT:   %.loc40_10: %ptr.1 = addr_of %c.ref
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc40_10)
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %c.ref
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
 // CHECK:STDOUT:   %.loc40_15.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc40_15.2: %i32 = converted %G.call, %.loc40_15.1
 // CHECK:STDOUT:   return %.loc40_15.2
@@ -407,11 +407,11 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %ptr.1) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc48_11.1: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %.loc48_11: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc48_11.1, %G.ref
-// CHECK:STDOUT:   %.loc48_11.2: %ptr.1 = addr_of %.loc48_11.1
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc48_11.2)
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc48_11, %G.ref
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %.loc48_11
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
 // CHECK:STDOUT:   %.loc48_18.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc48_18.2: %i32 = converted %G.call, %.loc48_18.1
 // CHECK:STDOUT:   return %.loc48_18.2
@@ -442,8 +442,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc58_15.2, %G.ref
-// CHECK:STDOUT:   %.loc58_15.3: %ptr.1 = addr_of %.loc58_15.2
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc58_15.3)
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %.loc58_15.2
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %G.call, %.loc58_20.1
 // CHECK:STDOUT:   return %.loc58_20.2

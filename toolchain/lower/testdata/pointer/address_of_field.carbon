@@ -28,8 +28,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_46.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc14_46.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc14_47, i64 8, i1 false), !dbg !9
-// CHECK:STDOUT:   %.loc15_7.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc15_7.b), !dbg !11
+// CHECK:STDOUT:   %.loc15.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc15.b), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

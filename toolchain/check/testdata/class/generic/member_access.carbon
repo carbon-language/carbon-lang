@@ -268,8 +268,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.1) = deref %self.ref
 // CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elt (%Class.elt.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:     %.loc7_54.2: ref @GetAddr.%T (%T) = class_element_access %.loc7_54.1, element0
-// CHECK:STDOUT:     %.loc7_49: @GetAddr.%ptr.loc7_38.1 (%ptr.2) = addr_of %.loc7_54.2
-// CHECK:STDOUT:     return %.loc7_49
+// CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc7_38.1 (%ptr.2) = addr_of %.loc7_54.2
+// CHECK:STDOUT:     return %addr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,8 +303,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.2 = name_ref GetAddr, %.loc19_12.2 [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %GetAddr.bound: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
 // CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.bound, @GetAddr(constants.%i32)
-// CHECK:STDOUT:   %.loc19_12.3: %ptr.5 = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %ptr.6 = call %GetAddr.specific_fn(%.loc19_12.3)
+// CHECK:STDOUT:   %addr: %ptr.5 = addr_of %.loc19_12.1
+// CHECK:STDOUT:   %GetAddr.call: init %ptr.6 = call %GetAddr.specific_fn(%addr)
 // CHECK:STDOUT:   %.loc19_22.1: %ptr.6 = value_of_initializer %GetAddr.call
 // CHECK:STDOUT:   %.loc19_22.2: %ptr.6 = converted %GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2

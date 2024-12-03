@@ -188,8 +188,8 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc17_21.1: %i32 = value_of_initializer %int.convert_checked.loc17 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc17_21.2: %i32 = converted %int_0.loc17, %.loc17_21.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc17_22: ref %i32 = array_index %a.ref.loc17, %.loc17_21.2
-// CHECK:STDOUT:   %.loc17_18: %ptr.2 = addr_of %.loc17_22
-// CHECK:STDOUT:   assign %pa.var, %.loc17_18
+// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %.loc17_22
+// CHECK:STDOUT:   assign %pa.var, %addr
 // CHECK:STDOUT:   %a.ref.loc18: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %elt0.loc18_5: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]

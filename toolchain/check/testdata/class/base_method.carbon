@@ -157,12 +157,12 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc26_4.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Base.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc26_4.1, %F.ref
-// CHECK:STDOUT:   %.loc26_4.2: %ptr.3 = addr_of %.loc26_4.1
-// CHECK:STDOUT:   %.loc26_4.3: ref %Derived = deref %.loc26_4.2
-// CHECK:STDOUT:   %.loc26_4.4: ref %Base = class_element_access %.loc26_4.3, element0
-// CHECK:STDOUT:   %.loc26_4.5: %ptr.1 = addr_of %.loc26_4.4
-// CHECK:STDOUT:   %.loc26_4.6: %ptr.1 = converted %.loc26_4.2, %.loc26_4.5
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%.loc26_4.6)
+// CHECK:STDOUT:   %addr.loc26_4.1: %ptr.3 = addr_of %.loc26_4.1
+// CHECK:STDOUT:   %.loc26_4.2: ref %Derived = deref %addr.loc26_4.1
+// CHECK:STDOUT:   %.loc26_4.3: ref %Base = class_element_access %.loc26_4.2, element0
+// CHECK:STDOUT:   %addr.loc26_4.2: %ptr.1 = addr_of %.loc26_4.3
+// CHECK:STDOUT:   %.loc26_4.4: %ptr.1 = converted %addr.loc26_4.1, %addr.loc26_4.2
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%.loc26_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

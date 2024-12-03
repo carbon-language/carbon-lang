@@ -80,8 +80,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
 // CHECK:STDOUT:   %a_orig.ref: ref %i32 = name_ref a_orig, file.%a_orig
-// CHECK:STDOUT:   %.loc5: %ptr = addr_of %a_orig.ref
-// CHECK:STDOUT:   assign file.%a_ref.var, %.loc5
+// CHECK:STDOUT:   %addr: %ptr = addr_of %a_orig.ref
+// CHECK:STDOUT:   assign file.%a_ref.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

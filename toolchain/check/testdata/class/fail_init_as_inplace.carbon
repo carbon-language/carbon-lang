@@ -142,8 +142,8 @@ fn F() {
 // CHECK:STDOUT:   assign %c.var, <error>
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %.loc26: %ptr.1 = addr_of %c.ref
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(%.loc26)
+// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %c.ref
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
