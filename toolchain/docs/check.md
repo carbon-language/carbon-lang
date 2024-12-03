@@ -110,9 +110,8 @@ instructions needs to be closely associated, such as a parameter list.
 A number of instruction types in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) are builtin
 instructions, such as `SemIR::TypeType` which represents the unconstrained facet
-type `type`. We will also have built-in functions which would need to form the
-implementation of some library types, such as `i32`. Built-ins have stable ids
-in the `SemIR::InstStore` across `SemIR` instances.
+type `type`. Builtins have stable ids in the `SemIR::InstStore` across `SemIR`
+instances.
 
 ### Instruction operands
 
