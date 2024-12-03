@@ -449,7 +449,7 @@ class CompilationUnit {
     sem_ir_converter_.emplace(node_converters, &*sem_ir_);
     return {.consumer = consumer_,
             .value_stores = &value_stores_,
-            .timings = &timings_,
+            .timings = timings_ ? &*timings_ : nullptr,
             .tokens = &*tokens_,
             .parse_tree = &*parse_tree_,
             .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
@@ -657,7 +657,7 @@ class CompilationUnit {
                llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
       -> void {
     CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
-    Timings::ScopedTiming timing(&timings_, timing_label);
+    Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
     fn();
     CARBON_VLOG("*** {0} done ***\n", logging_label);
   }

@@ -8,6 +8,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
@@ -133,7 +134,10 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     case CARBON_KIND(SemIR::ArrayType array_type): {
       auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
-          context, index_loc_id, index_inst_id, context.GetInt32Type());
+          context, index_loc_id, index_inst_id,
+          // TODO: Replace this with impl lookup rather than hardcoding `i32`.
+          MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                      context.ints().Add(32)));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {

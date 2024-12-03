@@ -10,6 +10,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 
 // Representations for specific kinds of instructions.
 //
@@ -17,10 +18,14 @@
 //
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
+// - Optionally, a `SingletonInstId` if it is a singleton instruction.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
-// - Up to two `[...]Id` members describing the contents of the struct.
+// - Up to two members describing the contents of the struct. These are types
+//   listed in the `SemIR::IdKind` type-enum, typically derived from `IdBase`.
+//
+// TODO: There are some `int32_t` fields, which breaks the above rule, how/why?
 //
 // The field names here matter -- the fields must have the names specified
 // above, when present. When converting to a `SemIR::Inst`, the `kind` and
@@ -32,42 +37,39 @@
 // enumeration. This `Kind` declaration also defines the instruction kind by
 // calling `InstKind::Define` and specifying additional information about the
 // instruction kind. This information is available through the member functions
-// of the `InstKind` value declared in `inst_kind.h`, and includes the name
-// used in textual IR and whether the instruction is a terminator instruction.
+// of the `InstKind` value declared in `inst_kind.h`, and includes the name used
+// in textual IR and whether the instruction is a terminator instruction.
 //
 // Struct types can also be provided for categories of instructions with a
 // common representation, to allow the common representation to be accessed
 // conveniently. In this case, instead of providing a constant `Kind` member,
 // the struct should have a constant `InstKind Kinds[];` member that lists the
-// kinds of instructions in the category, and an `InstKind kind;` member that
-// is used to identify the specific kind of the instruction. Separate struct
-// types still need to be defined for each instruction kind in the category.
+// kinds of instructions in the category, and an `InstKind kind;` member that is
+// used to identify the specific kind of the instruction. Separate struct types
+// still need to be defined for each instruction kind in the category.
 
 namespace Carbon::SemIR {
 
 // Used for the type of patterns that do not match a fixed type.
-//
-// TODO: Annotate as a builtin.
 struct AutoType {
   static constexpr auto Kind = InstKind::AutoType.Define<Parse::InvalidNodeId>(
       {.ir_name = "auto",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
 
 // The type of bool literals and branch conditions, bool.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
-//
-// TODO: Annotate as a builtin.
 struct BoolType {
   static constexpr auto Kind = InstKind::BoolType.Define<Parse::InvalidNodeId>(
       {.ir_name = "bool",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -398,15 +400,15 @@ struct BoundMethod {
 };
 
 // The type of bound method values.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct BoundMethodType {
   static constexpr auto Kind =
       InstKind::BoundMethodType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<bound method>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -581,13 +583,12 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-//
-// TODO: Annotate as a builtin.
 struct ErrorInst {
   static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::InvalidNodeId>(
       {.ir_name = "<error>",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -700,15 +701,15 @@ struct FloatType {
 // The legacy float type. This is currently used for real literals, and is
 // treated as f64. It's separate from `FloatType`, and should change to mirror
 // integers, likely replacing this with a `FloatLiteralType`.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct LegacyFloatType {
   static constexpr auto Kind =
       InstKind::LegacyFloatType.Define<Parse::InvalidNodeId>(
           {.ir_name = "f64",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -896,15 +897,15 @@ struct IntValue {
 // literals and as the parameter type of `Core.Int` and `Core.Float`. This type
 // only provides compile-time operations, and is represented as an empty type at
 // runtime.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct IntLiteralType {
   static constexpr auto Kind =
       InstKind::IntLiteralType.Define<Parse::InvalidNodeId>(
           {.ir_name = "Core.IntLiteral",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -950,15 +951,15 @@ struct Namespace {
 };
 
 // The type of namespace and imported package names.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct NamespaceType {
   static constexpr auto Kind =
       InstKind::NamespaceType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<namespace>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1182,15 +1183,15 @@ struct SpecificFunction {
 };
 
 // The type of specific functions.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct SpecificFunctionType {
   static constexpr auto Kind =
       InstKind::SpecificFunctionType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<specific function>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1220,15 +1221,15 @@ struct StringLiteral {
 };
 
 // The type of string values and String literals.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct StringType {
   static constexpr auto Kind =
       InstKind::StringType.Define<Parse::InvalidNodeId>(
           {.ir_name = "String",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1367,13 +1368,12 @@ struct TupleValue {
 
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
-//
-// TODO: Annotate as a builtin.
 struct TypeType {
   static constexpr auto Kind = InstKind::TypeType.Define<Parse::InvalidNodeId>(
       {.ir_name = "type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1441,15 +1441,15 @@ struct VarStorage {
 };
 
 // The type of virtual function tables.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct VtableType {
   static constexpr auto Kind =
       InstKind::VtableType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<vtable>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };
@@ -1469,15 +1469,15 @@ struct WhereExpr {
 };
 
 // The type of witnesses.
-//
-// Although this is a builtin, it may still evolve to a more standard type and
-// be removed.
 struct WitnessType {
   static constexpr auto Kind =
       InstKind::WitnessType.Define<Parse::InvalidNodeId>(
           {.ir_name = "<witness>",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
   TypeId type_id;
 };

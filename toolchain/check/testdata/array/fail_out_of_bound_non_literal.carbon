@@ -116,15 +116,19 @@ var b: i32 = a[{.index = 3}.index];
 // CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_3.loc15) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_27.2: %struct_type.index = converted %.loc15_27.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %.loc15_28.1: Core.IntLiteral = struct_access %.loc15_27.2, element0 [template = constants.%int_3.1]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_34.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_34.2: type = converted %int.make_type_signed, %.loc15_34.1 [template = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %.loc15_28.1, %impl.elem0.loc15 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(%.loc15_28.1) [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc15_28.2: %i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc15_28.3: %i32 = converted %.loc15_28.1, %.loc15_28.2 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc15_34.1: ref %i32 = array_index %a.ref, %.loc15_28.3 [template = <error>]
-// CHECK:STDOUT:   %.loc15_34.2: %i32 = bind_value %.loc15_34.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc15_34.2
+// CHECK:STDOUT:   %.loc15_34.3: ref %i32 = array_index %a.ref, %.loc15_28.3 [template = <error>]
+// CHECK:STDOUT:   %.loc15_34.4: %i32 = bind_value %.loc15_34.3
+// CHECK:STDOUT:   assign file.%b.var, %.loc15_34.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

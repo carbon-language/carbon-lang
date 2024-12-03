@@ -19,6 +19,7 @@
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -127,6 +128,18 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
+  // Makes an instruction for a singleton. This exists to support simple
+  // construction of all singletons by File.
+  static auto MakeSingleton(InstKind kind) -> Inst {
+    CARBON_CHECK(IsSingletonInstKind(kind));
+    // Error uses a self-referential type so that it's not accidentally treated
+    // as a normal type. Every other builtin is a type, including the
+    // self-referential TypeType.
+    auto type_id =
+        kind == InstKind::ErrorInst ? TypeId::Error : TypeId::TypeType;
+    return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
+  }
+
   template <typename TypedInst>
     requires Internal::InstLikeType<TypedInst>
   // NOLINTNEXTLINE(google-explicit-constructor)

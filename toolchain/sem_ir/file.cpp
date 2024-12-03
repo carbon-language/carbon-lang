@@ -11,7 +11,6 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -42,23 +41,12 @@ File::File(CheckIRId check_ir_id,
   types_.SetValueRepr(TypeId::Error,
                       {.kind = ValueRepr::Copy, .type_id = TypeId::Error});
 
-  insts_.Reserve(BuiltinInstKind::ValidCount);
-// Error uses a self-referential type so that it's not accidentally treated as
-// a normal type. Every other builtin is a type, including the
-// self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name)                         \
-  insts_.AddInNoBlock(LocIdAndInst::NoLoc<Name>(                      \
-      {.type_id = BuiltinInstKind::Name == BuiltinInstKind::ErrorInst \
-                      ? TypeId::Error                                 \
-                      : TypeId::TypeType}));
-#include "toolchain/sem_ir/inst_kind.def"
-  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
-               "Builtins should produce {0} insts, actual: {1}",
-               BuiltinInstKind::ValidCount, insts_.size());
-  for (auto i : llvm::seq(BuiltinInstKind::ValidCount)) {
-    auto builtin_id = SemIR::InstId(i);
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
+  insts_.Reserve(SingletonInstKinds.size());
+  for (auto kind : SingletonInstKinds) {
+    auto inst_id =
+        insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
+    constant_values_.Set(inst_id,
+                         SemIR::ConstantId::ForTemplateConstant(inst_id));
   }
 }
 
@@ -99,9 +87,9 @@ auto File::Verify() const -> ErrorOr<Success> {
   return Success();
 }
 
-auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
-  return Yaml::OutputMapping([this,
-                              include_builtins](Yaml::OutputMapping::Map map) {
+auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([this, include_singletons](
+                                 Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add(
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
@@ -118,7 +106,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add(
               "insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                int start = include_builtins ? 0 : BuiltinInstKind::ValidCount;
+                int start = include_singletons ? 0 : SingletonInstKinds.size();
                 for (int i : llvm::seq(start, insts_.size())) {
                   auto id = InstId(i);
                   map.Add(PrintToString(id),
@@ -128,7 +116,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("constant_values",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                     int start =
-                        include_builtins ? 0 : BuiltinInstKind::ValidCount;
+                        include_singletons ? 0 : SingletonInstKinds.size();
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);

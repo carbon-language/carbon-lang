@@ -113,15 +113,19 @@ var b: i32 = a[{.index = 2}.index];
 // CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_2.loc12) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_27.2: %struct_type.index = converted %.loc12_27.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %.loc12_28.1: Core.IntLiteral = struct_access %.loc12_27.2, element0 [template = constants.%int_2.1]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_34.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_34.2: type = converted %int.make_type_signed, %.loc12_34.1 [template = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0.loc12: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %.loc12_28.1, %impl.elem0.loc12 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12: <specific function> = specific_function %Convert.bound.loc12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %Convert.specific_fn.loc12(%.loc12_28.1) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc12_28.2: %i32 = value_of_initializer %int.convert_checked.loc12 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc12_28.3: %i32 = converted %.loc12_28.1, %.loc12_28.2 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc12_34.1: ref %i32 = array_index %a.ref, %.loc12_28.3
-// CHECK:STDOUT:   %.loc12_34.2: %i32 = bind_value %.loc12_34.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc12_34.2
+// CHECK:STDOUT:   %.loc12_34.3: ref %i32 = array_index %a.ref, %.loc12_28.3
+// CHECK:STDOUT:   %.loc12_34.4: %i32 = bind_value %.loc12_34.3
+// CHECK:STDOUT:   assign file.%b.var, %.loc12_34.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -5,6 +5,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
@@ -38,8 +39,10 @@ static auto DecayIntLiteralToSizedInt(Context& context, Parse::NodeId node_id,
     -> SemIR::InstId {
   if (context.types().GetInstId(context.insts().Get(operand_id).type_id()) ==
       SemIR::InstId::BuiltinIntLiteralType) {
-    operand_id = ConvertToValueOfType(context, node_id, operand_id,
-                                      context.GetInt32Type());
+    operand_id = ConvertToValueOfType(
+        context, node_id, operand_id,
+        MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                    context.ints().Add(32)));
   }
   return operand_id;
 }

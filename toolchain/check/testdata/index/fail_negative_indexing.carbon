@@ -98,9 +98,13 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %.loc15_19.1: ref %i32 = array_index %c.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc15_19.2: %i32 = bind_value %.loc15_19.1
-// CHECK:STDOUT:   assign file.%d.var, %.loc15_19.2
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_19.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_19.2: type = converted %int.make_type_signed, %.loc15_19.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc15_19.3: ref %i32 = array_index %c.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_19.4: %i32 = bind_value %.loc15_19.3
+// CHECK:STDOUT:   assign file.%d.var, %.loc15_19.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -111,10 +111,14 @@ fn G() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %array_type = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: %i32 = name_ref i, %i
-// CHECK:STDOUT:   %.loc12_15.1: ref %array_type = value_as_ref %arr.ref
-// CHECK:STDOUT:   %.loc12_15.2: ref %i32 = array_index %.loc12_15.1, %i.ref
-// CHECK:STDOUT:   %.loc12_15.3: %i32 = bind_value %.loc12_15.2
-// CHECK:STDOUT:   return %.loc12_15.3
+// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_15.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_15.2: type = converted %int.make_type_signed.loc12, %.loc12_15.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12_15.3: ref %array_type = value_as_ref %arr.ref
+// CHECK:STDOUT:   %.loc12_15.4: ref %i32 = array_index %.loc12_15.3, %i.ref
+// CHECK:STDOUT:   %.loc12_15.5: %i32 = bind_value %.loc12_15.4
+// CHECK:STDOUT:   return %.loc12_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
