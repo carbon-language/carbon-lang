@@ -16,12 +16,12 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (self_type_id != SemIR::TypeId::Error &&
+  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
       !context.IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
-    self_type_id = SemIR::TypeId::Error;
+    self_type_id = SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
@@ -94,7 +94,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
-  if (rhs_as_type.type_id != SemIR::TypeId::Error &&
+  if (rhs_as_type.type_id != SemIR::ErrorInst::SingletonTypeId &&
       !context.IsFacetType(rhs_as_type.type_id)) {
     CARBON_DIAGNOSTIC(
         ImplsOnNonFacetType, Error,
@@ -126,7 +126,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
   context.AddInstAndPush<SemIR::WhereExpr>(
-      node_id, {.type_id = SemIR::TypeId::TypeType,
+      node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .period_self_id = period_self_id,
                 .requirements_id = requirements_id});
   return true;

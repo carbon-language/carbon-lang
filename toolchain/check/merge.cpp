@@ -183,7 +183,8 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
     if (param_patterns_id.is_valid() &&
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
-        if (context.insts().Get(param_id).type_id() == SemIR::TypeId::Error) {
+        if (context.insts().Get(param_id).type_id() ==
+            SemIR::ErrorInst::SingletonTypeId) {
           return true;
         }
       }

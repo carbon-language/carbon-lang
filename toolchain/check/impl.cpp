@@ -170,7 +170,7 @@ static auto BuildInterfaceWitness(
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
-        if (struct_value.type_id == SemIR::TypeId::Error) {
+        if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
           return SemIR::InstId::BuiltinErrorInst;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
@@ -229,7 +229,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   CARBON_CHECK(impl.is_being_defined());
 
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
-  if (facet_type_id == SemIR::TypeId::Error) {
+  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::InstId::BuiltinErrorInst;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);

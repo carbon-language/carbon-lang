@@ -215,8 +215,8 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
   auto value_id = context.node_stack().PopExpr();
   auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
   context.AddInstAndPush<SemIR::PointerType>(
-      node_id,
-      {.type_id = SemIR::TypeId::TypeType, .pointee_id = inner_type_id});
+      node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
+                .pointee_id = inner_type_id});
   return true;
 }
 
@@ -268,7 +268,8 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
   }
   auto inner_type_id = ExprAsType(context, node_id, value_id).type_id;
   context.AddInstAndPush<SemIR::ConstType>(
-      node_id, {.type_id = SemIR::TypeId::TypeType, .inner_id = inner_type_id});
+      node_id,
+      {.type_id = SemIR::TypeType::SingletonTypeId, .inner_id = inner_type_id});
   return true;
 }
 
@@ -314,7 +315,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
             TokenOnly(node_id), DerefOfNonPointer, not_pointer_type_id);
 
         // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeId::TypeType) {
+        if (not_pointer_type_id == SemIR::TypeType::SingletonTypeId) {
           CARBON_DIAGNOSTIC(
               DerefOfType, Note,
               "to form a pointer type, write the `*` after the pointee type");

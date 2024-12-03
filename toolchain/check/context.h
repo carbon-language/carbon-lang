@@ -362,12 +362,12 @@ class Context {
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
                ? type_id
-               : SemIR::TypeId::Error;
+               : SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
-    return type_id == SemIR::TypeId::TypeType ||
+    return type_id == SemIR::TypeType::SingletonTypeId ||
            types().Is<SemIR::FacetType>(type_id);
   }
 

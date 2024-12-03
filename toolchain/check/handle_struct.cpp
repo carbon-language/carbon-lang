@@ -169,7 +169,8 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
     context.AddInstAndPush<SemIR::StructType>(
-        node_id, {.type_id = SemIR::TypeId::TypeType, .fields_id = fields_id});
+        node_id,
+        {.type_id = SemIR::TypeType::SingletonTypeId, .fields_id = fields_id});
   }
 
   context.struct_type_fields_stack().PopArray();

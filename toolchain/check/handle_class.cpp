@@ -206,9 +206,10 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Add the class declaration.
-  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeId::TypeType,
-                                     .class_id = SemIR::ClassId::Invalid,
-                                     .decl_block_id = decl_block_id};
+  auto class_decl =
+      SemIR::ClassDecl{.type_id = SemIR::TypeType::SingletonTypeId,
+                       .class_id = SemIR::ClassId::Invalid,
+                       .decl_block_id = decl_block_id};
   auto class_decl_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, class_decl));
 
@@ -250,11 +251,11 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     auto& class_info = context.classes().Get(class_decl.class_id);
     auto specific_id =
         context.generics().GetSelfSpecific(class_info.generic_id);
-    class_info.self_type_id = context.GetTypeIdForTypeConstant(
-        TryEvalInst(context, SemIR::InstId::Invalid,
-                    SemIR::ClassType{.type_id = SemIR::TypeId::TypeType,
-                                     .class_id = class_decl.class_id,
-                                     .specific_id = specific_id}));
+    class_info.self_type_id = context.GetTypeIdForTypeConstant(TryEvalInst(
+        context, SemIR::InstId::Invalid,
+        SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
+                         .class_id = class_decl.class_id,
+                         .specific_id = specific_id}));
   }
 
   if (!is_definition && context.IsImplFile() && !is_extern) {
@@ -398,7 +399,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
         return context.emitter().Build(node_id, AbstractTypeInAdaptDecl,
                                        adapted_inst_id);
       });
-  if (adapted_type_id == SemIR::TypeId::Error) {
+  if (adapted_type_id == SemIR::ErrorInst::SingletonTypeId) {
     adapted_inst_id = SemIR::InstId::BuiltinErrorInst;
   }
 
@@ -436,7 +437,7 @@ struct BaseInfo {
   SemIR::InstId inst_id;
 };
 constexpr BaseInfo BaseInfo::Error = {
-    .type_id = SemIR::TypeId::Error,
+    .type_id = SemIR::ErrorInst::SingletonTypeId,
     .scope_id = SemIR::NameScopeId::Invalid,
     .inst_id = SemIR::InstId::BuiltinErrorInst};
 }  // namespace
@@ -463,7 +464,7 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
                                    base_type_inst_id);
   });
 
-  if (base_type_id == SemIR::TypeId::Error) {
+  if (base_type_id == SemIR::ErrorInst::SingletonTypeId) {
     return BaseInfo::Error;
   }
 
@@ -538,7 +539,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
                 .base_type_inst_id = base_info.inst_id,
                 .index = SemIR::ElementIndex::Invalid});
 
-  if (base_info.type_id != SemIR::TypeId::Error) {
+  if (base_info.type_id != SemIR::ErrorInst::SingletonTypeId) {
     auto base_class_info = context.classes().Get(
         context.types().GetAs<SemIR::ClassType>(base_info.type_id).class_id);
     class_info.is_dynamic |= base_class_info.is_dynamic;
@@ -631,9 +632,10 @@ static auto AddStructTypeFields(
     field_decl.index =
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     context.ReplaceInstPreservingConstantValue(field_decl_id, field_decl);
-    if (field_decl.type_id == SemIR::TypeId::Error) {
+    if (field_decl.type_id == SemIR::ErrorInst::SingletonTypeId) {
       struct_type_fields.push_back(
-          {.name_id = field_decl.name_id, .type_id = SemIR::TypeId::Error});
+          {.name_id = field_decl.name_id,
+           .type_id = SemIR::ErrorInst::SingletonTypeId});
       continue;
     }
     auto unbound_element_type =

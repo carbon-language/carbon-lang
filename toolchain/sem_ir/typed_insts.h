@@ -19,6 +19,7 @@
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
 // - Optionally, a `SingletonInstId` if it is a singleton instruction.
+//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -55,6 +56,8 @@ struct AutoType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
 
   TypeId type_id;
 };
@@ -587,6 +590,10 @@ struct ErrorInst {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonConstantId =
+      ConstantId::ForTemplateConstant(SingletonInstId);
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(SingletonConstantId);
 
   TypeId type_id;
 };
@@ -1372,6 +1379,8 @@ struct TypeType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
 
   TypeId type_id;
 };
