@@ -195,14 +195,14 @@ fn G() -> C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.1) = name_ref a, %a
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:     %.loc6_43.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %.loc6_43.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.3: %i32 = converted %int_0, %.loc6_43.2 [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.1) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.3
+// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.2
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
 // CHECK:STDOUT:   }
@@ -322,13 +322,13 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %int.make_type_signed.loc10_10, %.loc10_10.1 [template = constants.%i32]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %N.ref.loc10_22: %i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N.1)]
-// CHECK:STDOUT:     %.loc10_22.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %Convert.bound.loc10_22.1: <bound method> = bound_method %N.ref.loc10_22, %.loc10_22.1 [symbolic = %Convert.bound.loc10_22.2 (constants.%Convert.bound)]
+// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:     %Convert.bound.loc10_22.1: <bound method> = bound_method %N.ref.loc10_22, %elt0 [symbolic = %Convert.bound.loc10_22.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:     %Convert.specific_fn.loc10_22.1: <specific function> = specific_function %Convert.bound.loc10_22.1, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc10_22.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:     %int.convert_checked.loc10_22.1: init Core.IntLiteral = call %Convert.specific_fn.loc10_22.1(%N.ref.loc10_22) [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_22.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_22.3: Core.IntLiteral = converted %N.ref.loc10_22, %.loc10_22.2 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc10_22.3, %C [template = <error>]
+// CHECK:STDOUT:     %.loc10_22.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc10_22.2: Core.IntLiteral = converted %N.ref.loc10_22, %.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc10_22.2, %C [template = <error>]
 // CHECK:STDOUT:     %int_32.loc10_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc10_29: init type = call constants.%Int(%int_32.loc10_29) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_signed.loc10_29 [template = constants.%i32]
@@ -482,13 +482,13 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_20.2: type = converted %int.make_type_signed, %.loc10_20.1 [template = constants.%i32]
 // CHECK:STDOUT:     %T.ref.loc10_29: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc10_16.1 [symbolic = %N.loc10_16.2 (constants.%N.1)]
-// CHECK:STDOUT:     %.loc10_32.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %Convert.bound.loc10_32.1: <bound method> = bound_method %N.ref, %.loc10_32.1 [symbolic = %Convert.bound.loc10_32.2 (constants.%Convert.bound)]
+// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:     %Convert.bound.loc10_32.1: <bound method> = bound_method %N.ref, %elt0 [symbolic = %Convert.bound.loc10_32.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:     %Convert.specific_fn.loc10_32.1: <specific function> = specific_function %Convert.bound.loc10_32.1, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc10_32.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:     %int.convert_checked.loc10_32.1: init Core.IntLiteral = call %Convert.specific_fn.loc10_32.1(%N.ref) [symbolic = %int.convert_checked.loc10_32.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_32.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_32.1 [symbolic = %int.convert_checked.loc10_32.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_32.3: Core.IntLiteral = converted %N.ref, %.loc10_32.2 [symbolic = %int.convert_checked.loc10_32.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc10_32.3, %T [template = <error>]
+// CHECK:STDOUT:     %.loc10_32.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_32.1 [symbolic = %int.convert_checked.loc10_32.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc10_32.2: Core.IntLiteral = converted %N.ref, %.loc10_32.1 [symbolic = %int.convert_checked.loc10_32.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc10_32.2, %T [template = <error>]
 // CHECK:STDOUT:     %T.ref.loc10_39: type = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc10_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc10_6.2 (constants.%T)]
@@ -669,14 +669,14 @@ fn G() -> C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.1) = name_ref a, %a
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:     %.loc6_43.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %.loc6_43.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.3: %i32 = converted %int_0, %.loc6_43.2 [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.1) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.3
+// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.2
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
 // CHECK:STDOUT:   }
@@ -799,13 +799,13 @@ fn G() -> C {
 // CHECK:STDOUT:     %.loc10_10.2: type = converted %int.make_type_signed.loc10_10, %.loc10_10.1 [template = constants.%i32]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %N.ref.loc10_22: %i32 = name_ref N, %N.loc10_6.1 [symbolic = %N.loc10_6.2 (constants.%N.1)]
-// CHECK:STDOUT:     %.loc10_22.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %Convert.bound.loc10_22.1: <bound method> = bound_method %N.ref.loc10_22, %.loc10_22.1 [symbolic = %Convert.bound.loc10_22.2 (constants.%Convert.bound)]
+// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:     %Convert.bound.loc10_22.1: <bound method> = bound_method %N.ref.loc10_22, %elt0 [symbolic = %Convert.bound.loc10_22.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:     %Convert.specific_fn.loc10_22.1: <specific function> = specific_function %Convert.bound.loc10_22.1, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc10_22.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:     %int.convert_checked.loc10_22.1: init Core.IntLiteral = call %Convert.specific_fn.loc10_22.1(%N.ref.loc10_22) [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_22.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc10_22.3: Core.IntLiteral = converted %N.ref.loc10_22, %.loc10_22.2 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc10_22.3, %C [template = <error>]
+// CHECK:STDOUT:     %.loc10_22.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc10_22.2: Core.IntLiteral = converted %N.ref.loc10_22, %.loc10_22.1 [symbolic = %int.convert_checked.loc10_22.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc10_22.2, %C [template = <error>]
 // CHECK:STDOUT:     %int_32.loc10_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc10_29: init type = call constants.%Int(%int_32.loc10_29) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_29.1: type = value_of_initializer %int.make_type_signed.loc10_29 [template = constants.%i32]

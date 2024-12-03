@@ -73,12 +73,12 @@ var a: i32* = a_ref;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc4_20.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %.loc4_20.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc4_20.2: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign file.%a_orig.var, %.loc4_20.2
+// CHECK:STDOUT:   %.loc4: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign file.%a_orig.var, %.loc4
 // CHECK:STDOUT:   %a_orig.ref: ref %i32 = name_ref a_orig, file.%a_orig
 // CHECK:STDOUT:   %.loc5: %ptr = addr_of %a_orig.ref
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc5
@@ -101,7 +101,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
-// CHECK:STDOUT:   %elt0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.9 [symbolic]
+// CHECK:STDOUT:   %assoc0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.9 [symbolic]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%Convert.2) [symbolic]
@@ -118,7 +118,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.2: type = assoc_entity_type %ImplicitAs.type.5, %Convert.type.5 [template]
-// CHECK:STDOUT:   %elt0.2: %Convert.assoc_type.2 = assoc_entity element0, imports.%import_ref.16 [template]
+// CHECK:STDOUT:   %assoc0.2: %Convert.assoc_type.2 = assoc_entity element0, imports.%import_ref.16 [template]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.5, @impl.4(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%Convert.6) [symbolic]
@@ -130,7 +130,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type.3: type = facet_access_type %Self.4 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.3: type = assoc_entity_type %As.type.2, %Convert.type.7 [symbolic]
-// CHECK:STDOUT:   %elt0.3: %Convert.assoc_type.3 = assoc_entity element0, imports.%import_ref.26 [symbolic]
+// CHECK:STDOUT:   %assoc0.3: %Convert.assoc_type.3 = assoc_entity element0, imports.%import_ref.26 [symbolic]
 // CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.7, @impl.5(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.8) [symbolic]
@@ -146,7 +146,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.6, @As(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.4: type = assoc_entity_type %As.type.5, %Convert.type.11 [template]
-// CHECK:STDOUT:   %elt0.4: %Convert.assoc_type.4 = assoc_entity element0, imports.%import_ref.33 [template]
+// CHECK:STDOUT:   %assoc0.4: %Convert.assoc_type.4 = assoc_entity element0, imports.%import_ref.33 [template]
 // CHECK:STDOUT:   %Convert.type.12: type = fn_type @Convert.10, @impl.8(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.12: %Convert.type.12 = struct_value () [symbolic]
 // CHECK:STDOUT:   %interface.8: <witness> = interface_witness (%Convert.12) [symbolic]
@@ -228,7 +228,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @ImplicitAs(%Dest) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.1) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.1)]
-// CHECK:STDOUT:   %elt0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.1) = assoc_entity element0, imports.%import_ref.9 [symbolic = %elt0 (constants.%elt0.1)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%Convert.assoc_type (%Convert.assoc_type.1) = assoc_entity element0, imports.%import_ref.9 [symbolic = %assoc0 (constants.%assoc0.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -248,7 +248,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.6, @As(%Dest) [symbolic = %Convert.type (constants.%Convert.type.7)]
 // CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type.7) = struct_value () [symbolic = %Convert (constants.%Convert.7)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @As.%As.type (%As.type.2), @As.%Convert.type (%Convert.type.7) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.3)]
-// CHECK:STDOUT:   %elt0: @As.%Convert.assoc_type (%Convert.assoc_type.3) = assoc_entity element0, imports.%import_ref.26 [symbolic = %elt0 (constants.%elt0.3)]
+// CHECK:STDOUT:   %assoc0: @As.%Convert.assoc_type (%Convert.assoc_type.3) = assoc_entity element0, imports.%import_ref.26 [symbolic = %assoc0 (constants.%assoc0.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -578,7 +578,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.5
 // CHECK:STDOUT:   %Convert => constants.%Convert.5
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.2
-// CHECK:STDOUT:   %elt0 => constants.%elt0.2
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.3(constants.%N) {
@@ -705,7 +705,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.11
 // CHECK:STDOUT:   %Convert => constants.%Convert.11
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.4
-// CHECK:STDOUT:   %elt0 => constants.%elt0.4
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.7(constants.%N) {

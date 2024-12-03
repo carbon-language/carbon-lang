@@ -325,8 +325,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc14_12: %Less.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Less.1]
-// CHECK:STDOUT:   %Less.bound: <bound method> = bound_method %a.ref, %.loc14_12
+// CHECK:STDOUT:   %elt0: %Less.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Less.1]
+// CHECK:STDOUT:   %Less.bound: <bound method> = bound_method %a.ref, %elt0
 // CHECK:STDOUT:   %Less.call: init bool = call %Less.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
 // CHECK:STDOUT:   %.loc14_15.2: bool = converted %Less.call, %.loc14_15.1
@@ -337,8 +337,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc18_12: %LessOrEquivalent.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%LessOrEquivalent.1]
-// CHECK:STDOUT:   %LessOrEquivalent.bound: <bound method> = bound_method %a.ref, %.loc18_12
+// CHECK:STDOUT:   %elt1: %LessOrEquivalent.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%LessOrEquivalent.1]
+// CHECK:STDOUT:   %LessOrEquivalent.bound: <bound method> = bound_method %a.ref, %elt1
 // CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %LessOrEquivalent.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
 // CHECK:STDOUT:   %.loc18_16.2: bool = converted %LessOrEquivalent.call, %.loc18_16.1
@@ -349,8 +349,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc22_12: %Greater.type.2 = interface_witness_access constants.%interface, element2 [template = constants.%Greater.1]
-// CHECK:STDOUT:   %Greater.bound: <bound method> = bound_method %a.ref, %.loc22_12
+// CHECK:STDOUT:   %elt2: %Greater.type.2 = interface_witness_access constants.%interface, element2 [template = constants.%Greater.1]
+// CHECK:STDOUT:   %Greater.bound: <bound method> = bound_method %a.ref, %elt2
 // CHECK:STDOUT:   %Greater.call: init bool = call %Greater.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
 // CHECK:STDOUT:   %.loc22_15.2: bool = converted %Greater.call, %.loc22_15.1
@@ -361,8 +361,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %.loc26_12: %GreaterOrEquivalent.type.2 = interface_witness_access constants.%interface, element3 [template = constants.%GreaterOrEquivalent.1]
-// CHECK:STDOUT:   %GreaterOrEquivalent.bound: <bound method> = bound_method %a.ref, %.loc26_12
+// CHECK:STDOUT:   %elt3: %GreaterOrEquivalent.type.2 = interface_witness_access constants.%interface, element3 [template = constants.%GreaterOrEquivalent.1]
+// CHECK:STDOUT:   %GreaterOrEquivalent.bound: <bound method> = bound_method %a.ref, %elt3
 // CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %GreaterOrEquivalent.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call
 // CHECK:STDOUT:   %.loc26_16.2: bool = converted %GreaterOrEquivalent.call, %.loc26_16.1

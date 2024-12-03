@@ -33,13 +33,13 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type [template]
-// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %T: %Interface.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %Interface.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CallStatic.type: type = fn_type @CallStatic [template]
 // CHECK:STDOUT:   %CallStatic: %CallStatic.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: <witness> = facet_access_witness %T [symbolic]
-// CHECK:STDOUT:   %.2: %F.type = interface_witness_access %.1, element0 [symbolic]
+// CHECK:STDOUT:   %elt0: %F.type = interface_witness_access %.1, element0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %CallFacet.type: type = fn_type @CallFacet [template]
 // CHECK:STDOUT:   %CallFacet: %CallFacet.type = struct_value () [template]
@@ -80,11 +80,11 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,15 +98,15 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.patt.loc13_15.2: %Interface.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc18_4.3: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %.loc18_4.3 (constants.%.1)]
-// CHECK:STDOUT:   %.loc18_4.4: %F.type = interface_witness_access %.loc18_4.3, element0 [symbolic = %.loc18_4.4 (constants.%.2)]
+// CHECK:STDOUT:   %.loc18_4.2: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %.loc18_4.2 (constants.%.1)]
+// CHECK:STDOUT:   %elt0.loc18_4.2: %F.type = interface_witness_access %.loc18_4.2, element0 [symbolic = %elt0.loc18_4.2 (constants.%elt0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
-// CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, @Interface.%elt0 [template = constants.%elt0]
-// CHECK:STDOUT:     %.loc18_4.1: <witness> = facet_access_witness %T.ref [symbolic = %.loc18_4.3 (constants.%.1)]
-// CHECK:STDOUT:     %.loc18_4.2: %F.type = interface_witness_access %.loc18_4.1, element0 [symbolic = %.loc18_4.4 (constants.%.2)]
+// CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.loc18_4.1: <witness> = facet_access_witness %T.ref [symbolic = %.loc18_4.2 (constants.%.1)]
+// CHECK:STDOUT:     %elt0.loc18_4.1: %F.type = interface_witness_access %.loc18_4.1, element0 [symbolic = %elt0.loc18_4.2 (constants.%elt0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

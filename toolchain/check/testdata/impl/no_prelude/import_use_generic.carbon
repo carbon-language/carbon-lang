@@ -54,7 +54,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %C [symbolic]
@@ -90,11 +90,11 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,7 +197,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, imports.%import_ref.8 [template]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
@@ -215,7 +215,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, inst+15, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, inst+25, loaded [template = constants.%elt0]
+// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, inst+25, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, inst+21, unloaded
 // CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.1)]
 // CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
@@ -242,9 +242,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.ref: ref %C.2 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%elt0]
-// CHECK:STDOUT:     %.loc15_12: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
-// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %.loc15_12, @F.2(constants.%empty_struct_type) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%assoc0]
+// CHECK:STDOUT:     %elt0: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
+// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %elt0, @F.2(constants.%empty_struct_type) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:     %.loc15_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc15_19.2: ref %empty_tuple.type = temporary %.loc15_19.1, %F.call

@@ -852,12 +852,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc9_31.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %.loc9_31.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc9_31.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc9_31.3: %i32 = converted %int_0, %.loc9_31.2 [template = constants.%int_0.2]
+// CHECK:STDOUT:   %.loc9_31.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:   %.loc9_31.2: %i32 = converted %int_0, %.loc9_31.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%int_0.2) [template = constants.%WithNontype.2]
 // CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.2 = temporary_storage
 // CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.2 = class_init (), %.loc9_13.2 [template = constants.%WithNontype.val]

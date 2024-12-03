@@ -425,7 +425,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(AssociatedEntity inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "elt" << inst.index.index;
+        out << "assoc" << inst.index.index;
         add_inst_name(std::move(name));
         continue;
       }
@@ -638,6 +638,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case InterfaceWitness::Kind: {
         // TODO: Include name of interface.
         add_inst_name("interface");
+        continue;
+      }
+      case CARBON_KIND(InterfaceWitnessAccess inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "elt" << inst.index.index;
+        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(IntType inst): {

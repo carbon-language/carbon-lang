@@ -96,16 +96,16 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc11_22.1: %tuple.type.1 = tuple_literal (%int_1.loc11)
-// CHECK:STDOUT:   %.loc11_22.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.loc11, %.loc11_22.2 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.loc11, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1.loc11) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_22.3: init %i32 = converted %int_1.loc11, %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_1.loc11, %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   %int_0.loc11: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc11_22.4: ref %i32 = array_index file.%a.var, %int_0.loc11
-// CHECK:STDOUT:   %.loc11_22.5: init %i32 = initialize_from %.loc11_22.3 to %.loc11_22.4 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_22.6: init %array_type.1 = array_init (%.loc11_22.5) to file.%a.var [template = constants.%array.1]
-// CHECK:STDOUT:   %.loc11_23: init %array_type.1 = converted %.loc11_22.1, %.loc11_22.6 [template = constants.%array.1]
+// CHECK:STDOUT:   %.loc11_22.3: ref %i32 = array_index file.%a.var, %int_0.loc11
+// CHECK:STDOUT:   %.loc11_22.4: init %i32 = initialize_from %.loc11_22.2 to %.loc11_22.3 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc11_22.5: init %array_type.1 = array_init (%.loc11_22.4) to file.%a.var [template = constants.%array.1]
+// CHECK:STDOUT:   %.loc11_23: init %array_type.1 = converted %.loc11_22.1, %.loc11_22.5 [template = constants.%array.1]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_23
 // CHECK:STDOUT:   %float.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%float.1]
 // CHECK:STDOUT:   %float.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%float.2]

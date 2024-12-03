@@ -32,7 +32,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Simple.type, %G.type.1 [template]
-// CHECK:STDOUT:   %elt0: %G.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -92,11 +92,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc12_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .G = %elt0
+// CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,9 +129,9 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @Simple.%elt0 [template = constants.%elt0]
-// CHECK:STDOUT:   %.loc23: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %.loc23
+// CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:   %elt0: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %elt0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

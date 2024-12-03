@@ -162,25 +162,25 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc11_25.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %.loc11_25.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %elt0 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_25.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_25.3: %i32 = converted %int_1, %.loc11_25.2 [template = constants.%int_1.2]
-// CHECK:STDOUT:   return %.loc11_25.3
+// CHECK:STDOUT:   %.loc11_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc11_25.2: %i32 = converted %int_1, %.loc11_25.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:   return %.loc11_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %.loc12_25.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %.loc12_25.1 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %elt0 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc12_25.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc12_25.3: %i32 = converted %int_2, %.loc12_25.2 [template = constants.%int_2.2]
-// CHECK:STDOUT:   return %.loc12_25.3
+// CHECK:STDOUT:   %.loc12_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc12_25.2: %i32 = converted %int_2, %.loc12_25.1 [template = constants.%int_2.2]
+// CHECK:STDOUT:   return %.loc12_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
@@ -256,12 +256,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc23_40.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %.loc23_40.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %elt0 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc23_40.2: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %v.var, %.loc23_40.2
+// CHECK:STDOUT:   %.loc23_40: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %v.var, %.loc23_40
 // CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   if %false br !if.expr.then.loc24 else br !if.expr.else.loc24
 // CHECK:STDOUT:
@@ -315,12 +315,12 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc29_37.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %.loc29_37.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %elt0 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc29_37.2: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %v.var, %.loc29_37.2
+// CHECK:STDOUT:   %.loc29_37: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %v.var, %.loc29_37
 // CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   if %false br !if.expr.then.loc30 else br !if.expr.else.loc30
 // CHECK:STDOUT:

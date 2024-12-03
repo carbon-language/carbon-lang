@@ -73,12 +73,12 @@ var test_type: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc11_22.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %.loc11_22.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign file.%test_i32.var, %.loc11_22.2
+// CHECK:STDOUT:   %.loc11: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign file.%test_i32.var, %.loc11
 // CHECK:STDOUT:   %float: f64 = float_literal 0.10000000000000001 [template = constants.%float]
 // CHECK:STDOUT:   assign file.%test_f64.var, %float
 // CHECK:STDOUT:   %.loc13: String = string_literal "Test" [template = constants.%.1]

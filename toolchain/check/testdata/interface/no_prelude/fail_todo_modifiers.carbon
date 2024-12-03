@@ -28,11 +28,11 @@ interface Modifiers {
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %Final: %Final.type = struct_value () [template]
 // CHECK:STDOUT:   %Final.assoc_type: type = assoc_entity_type %Modifiers.type, %Final.type [template]
-// CHECK:STDOUT:   %elt0: %Final.assoc_type = assoc_entity element0, @Modifiers.%Final.decl [template]
+// CHECK:STDOUT:   %assoc0: %Final.assoc_type = assoc_entity element0, @Modifiers.%Final.decl [template]
 // CHECK:STDOUT:   %Default.type: type = fn_type @Default [template]
 // CHECK:STDOUT:   %Default: %Default.type = struct_value () [template]
 // CHECK:STDOUT:   %Default.assoc_type: type = assoc_entity_type %Modifiers.type, %Default.type [template]
-// CHECK:STDOUT:   %elt1: %Default.assoc_type = assoc_entity element1, @Modifiers.%Default.decl [template]
+// CHECK:STDOUT:   %assoc1: %Default.assoc_type = assoc_entity element1, @Modifiers.%Default.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,14 +45,14 @@ interface Modifiers {
 // CHECK:STDOUT: interface @Modifiers {
 // CHECK:STDOUT:   %Self: %Modifiers.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {} {}
-// CHECK:STDOUT:   %elt0: %Final.assoc_type = assoc_entity element0, %Final.decl [template = constants.%elt0]
+// CHECK:STDOUT:   %assoc0: %Final.assoc_type = assoc_entity element0, %Final.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %Default.decl: %Default.type = fn_decl @Default [template = constants.%Default] {} {}
-// CHECK:STDOUT:   %elt1: %Default.assoc_type = assoc_entity element1, %Default.decl [template = constants.%elt1]
+// CHECK:STDOUT:   %assoc1: %Default.assoc_type = assoc_entity element1, %Default.decl [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Final = %elt0
-// CHECK:STDOUT:   .Default = %elt1
+// CHECK:STDOUT:   .Final = %assoc0
+// CHECK:STDOUT:   .Default = %assoc1
 // CHECK:STDOUT:   witness = (%Final.decl, %Default.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

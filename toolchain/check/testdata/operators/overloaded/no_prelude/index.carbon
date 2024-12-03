@@ -126,14 +126,14 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type.1: type = fn_type @At.1, @IndexWith(%SubscriptType) [symbolic]
 // CHECK:STDOUT:   %At.1: %At.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %At.assoc_type.1: type = assoc_entity_type %IndexWith.type.2, %At.type.1 [symbolic]
-// CHECK:STDOUT:   %elt0.1: %At.assoc_type.1 = assoc_entity element0, @IndexWith.%At.decl [symbolic]
+// CHECK:STDOUT:   %assoc0.1: %At.assoc_type.1 = assoc_entity element0, @IndexWith.%At.decl [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type)> [template]
 // CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
 // CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %At.assoc_type.2: type = assoc_entity_type %IndexWith.type.3, %At.type.3 [template]
-// CHECK:STDOUT:   %elt0.2: %At.assoc_type.2 = assoc_entity element0, @IndexWith.%At.decl [template]
+// CHECK:STDOUT:   %assoc0.2: %At.assoc_type.2 = assoc_entity element0, @IndexWith.%At.decl [template]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.2 = facet_value %empty_tuple.type, %empty_tuple.type [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%At.2) [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
@@ -179,7 +179,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type: type = fn_type @At.1, @IndexWith(%SubscriptType.loc5_26.2) [symbolic = %At.type (constants.%At.type.1)]
 // CHECK:STDOUT:   %At: @IndexWith.%At.type (%At.type.1) = struct_value () [symbolic = %At (constants.%At.1)]
 // CHECK:STDOUT:   %At.assoc_type: type = assoc_entity_type @IndexWith.%IndexWith.type (%IndexWith.type.2), @IndexWith.%At.type (%At.type.1) [symbolic = %At.assoc_type (constants.%At.assoc_type.1)]
-// CHECK:STDOUT:   %elt0.loc6_52.2: @IndexWith.%At.assoc_type (%At.assoc_type.1) = assoc_entity element0, %At.decl [symbolic = %elt0.loc6_52.2 (constants.%elt0.1)]
+// CHECK:STDOUT:   %assoc0.loc6_52.2: @IndexWith.%At.assoc_type (%At.assoc_type.1) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
@@ -205,11 +205,11 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %elt0.loc6_52.1: @IndexWith.%At.assoc_type (%At.assoc_type.1) = assoc_entity element0, %At.decl [symbolic = %elt0.loc6_52.2 (constants.%elt0.1)]
+// CHECK:STDOUT:     %assoc0.loc6_52.1: @IndexWith.%At.assoc_type (%At.assoc_type.1) = assoc_entity element0, %At.decl [symbolic = %assoc0.loc6_52.2 (constants.%assoc0.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .At = %elt0.loc6_52.1
+// CHECK:STDOUT:     .At = %assoc0.loc6_52.1
 // CHECK:STDOUT:     witness = (%At.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -266,10 +266,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %empty_tuple.loc15_11: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_11.2: %empty_tuple.type = converted %.loc15_11.1, %empty_tuple.loc15_11 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc15_14: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_15.1: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_15.2: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
-// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %.loc15_15.2 [template = constants.%At.bound]
-// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc15_11.2, %.loc15_15.1)
+// CHECK:STDOUT:   %.loc15_15: %empty_tuple.type = converted %.loc15_14, %empty_tuple.loc15_14 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %elt0: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %At.bound: <bound method> = bound_method %.loc15_11.2, %elt0 [template = constants.%At.bound]
+// CHECK:STDOUT:   %At.call: init %empty_tuple.type = call %At.bound(%.loc15_11.2, %.loc15_15)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,7 +305,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %At.type => constants.%At.type.3
 // CHECK:STDOUT:   %At => constants.%At.3
 // CHECK:STDOUT:   %At.assoc_type => constants.%At.assoc_type.2
-// CHECK:STDOUT:   %elt0.loc6_52.2 => constants.%elt0.2
+// CHECK:STDOUT:   %assoc0.loc6_52.2 => constants.%assoc0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @At.1(constants.%empty_tuple.type, constants.%IndexWith.facet) {

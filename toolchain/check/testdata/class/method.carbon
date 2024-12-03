@@ -356,17 +356,17 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc35_18.1: %struct_type.k.2 = struct_literal (%int_1)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %.loc35_18.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %.loc35_18.2 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc35_18.3: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc35_18.4: ref %Class = temporary_storage
-// CHECK:STDOUT:   %.loc35_18.5: ref %i32 = class_element_access %.loc35_18.4, element0
-// CHECK:STDOUT:   %.loc35_18.6: init %i32 = initialize_from %.loc35_18.3 to %.loc35_18.5 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc35_18.7: init %Class = class_init (%.loc35_18.6), %.loc35_18.4 [template = constants.%Class.val]
-// CHECK:STDOUT:   %.loc35_18.8: ref %Class = temporary %.loc35_18.4, %.loc35_18.7
-// CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.8
+// CHECK:STDOUT:   %.loc35_18.2: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc35_18.3: ref %Class = temporary_storage
+// CHECK:STDOUT:   %.loc35_18.4: ref %i32 = class_element_access %.loc35_18.3, element0
+// CHECK:STDOUT:   %.loc35_18.5: init %i32 = initialize_from %.loc35_18.2 to %.loc35_18.4 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc35_18.6: init %Class = class_init (%.loc35_18.5), %.loc35_18.3 [template = constants.%Class.val]
+// CHECK:STDOUT:   %.loc35_18.7: ref %Class = temporary %.loc35_18.3, %.loc35_18.6
+// CHECK:STDOUT:   %.loc35_20.1: ref %Class = converted %.loc35_18.1, %.loc35_18.7
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc35_20.1, %F.ref
 // CHECK:STDOUT:   %.loc35_20.2: %Class = bind_value %.loc35_20.1

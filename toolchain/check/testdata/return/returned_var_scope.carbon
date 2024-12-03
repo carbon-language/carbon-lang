@@ -116,12 +116,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc13_28.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc13: <bound method> = bound_method %int_0.loc13, %.loc13_28.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc13: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc13: <bound method> = bound_method %int_0.loc13, %elt0.loc13 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13: <specific function> = specific_function %Convert.bound.loc13, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %Convert.specific_fn.loc13(%int_0.loc13) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc13_28.2: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign %v.var, %.loc13_28.2
+// CHECK:STDOUT:   %.loc13_28: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign %v.var, %.loc13_28
 // CHECK:STDOUT:   br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
@@ -136,23 +136,23 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc16_28.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc16: <bound method> = bound_method %int_1, %.loc16_28.1 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %elt0.loc16: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc16: <bound method> = bound_method %int_1, %elt0.loc16 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc16: <specific function> = specific_function %Convert.bound.loc16, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %Convert.specific_fn.loc16(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc16_28.2: init %i32 = converted %int_1, %int.convert_checked.loc16 [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %w.var, %.loc16_28.2
+// CHECK:STDOUT:   %.loc16_28: init %i32 = converted %int_1, %int.convert_checked.loc16 [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %w.var, %.loc16_28
 // CHECK:STDOUT:   br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
 // CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc18_11.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_0.loc18, %.loc18_11.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc18: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_0.loc18, %elt0.loc18 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18: <specific function> = specific_function %Convert.bound.loc18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %Convert.specific_fn.loc18(%int_0.loc18) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc18_11.2: %i32 = value_of_initializer %int.convert_checked.loc18 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc18_11.3: %i32 = converted %int_0.loc18, %.loc18_11.2 [template = constants.%int_0.2]
-// CHECK:STDOUT:   return %.loc18_11.3
+// CHECK:STDOUT:   %.loc18_11.1: %i32 = value_of_initializer %int.convert_checked.loc18 [template = constants.%int_0.2]
+// CHECK:STDOUT:   %.loc18_11.2: %i32 = converted %int_0.loc18, %.loc18_11.1 [template = constants.%int_0.2]
+// CHECK:STDOUT:   return %.loc18_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EnclosingButAfter(%b.param_patt: bool) -> %i32 {
@@ -168,12 +168,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc23_28.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc23: <bound method> = bound_method %int_0, %.loc23_28.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc23: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc23: <bound method> = bound_method %int_0, %elt0.loc23 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc23: <specific function> = specific_function %Convert.bound.loc23, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %Convert.specific_fn.loc23(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc23_28.2: init %i32 = converted %int_0, %int.convert_checked.loc23 [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign %v.var, %.loc23_28.2
+// CHECK:STDOUT:   %.loc23_28: init %i32 = converted %int_0, %int.convert_checked.loc23 [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign %v.var, %.loc23_28
 // CHECK:STDOUT:   %.loc23_18: %i32 = bind_value %v
 // CHECK:STDOUT:   return %.loc23_18
 // CHECK:STDOUT:
@@ -185,12 +185,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc26_26.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc26: <bound method> = bound_method %int_1, %.loc26_26.1 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %elt0.loc26: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc26: <bound method> = bound_method %int_1, %elt0.loc26 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc26: <specific function> = specific_function %Convert.bound.loc26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc26: init %i32 = call %Convert.specific_fn.loc26(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc26_26.2: init %i32 = converted %int_1, %int.convert_checked.loc26 [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %w.var, %.loc26_26.2
+// CHECK:STDOUT:   %.loc26_26: init %i32 = converted %int_1, %int.convert_checked.loc26 [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %w.var, %.loc26_26
 // CHECK:STDOUT:   %.loc26_16: %i32 = bind_value %w
 // CHECK:STDOUT:   return %.loc26_16
 // CHECK:STDOUT: }

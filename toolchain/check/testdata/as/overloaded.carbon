@@ -188,30 +188,30 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int.make_type_signed.loc23_21: init type = call constants.%Int(%int_32.loc23_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_signed.loc23_21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_signed.loc23_21, %.loc23_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_18.1: %Convert.type.5 = interface_witness_access constants.%interface.11, element0 [template = constants.%Convert.17]
-// CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %.loc23_18.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc23_18: %Convert.type.5 = interface_witness_access constants.%interface.11, element0 [template = constants.%Convert.17]
+// CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %elt0.loc23_18 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.9(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc23_18.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc23_18.3: %i32 = converted %int_4, %.loc23_18.2 [template = constants.%int_4.2]
+// CHECK:STDOUT:   %.loc23_18.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.2]
+// CHECK:STDOUT:   %.loc23_18.2: %i32 = converted %int_4, %.loc23_18.1 [template = constants.%int_4.2]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc23_26.1: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %Convert.bound.loc23_26: <bound method> = bound_method %.loc23_18.3, %.loc23_26.1 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %.loc23_26.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %Convert.bound.loc23_26(%.loc23_18.3) to %.loc23_26.2
-// CHECK:STDOUT:   %.loc23_26.3: init %X = converted %.loc23_18.3, %Convert.call.loc23_26
+// CHECK:STDOUT:   %elt0.loc23_26: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %Convert.bound.loc23_26: <bound method> = bound_method %.loc23_18.2, %elt0.loc23_26 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %.loc23_26.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %Convert.bound.loc23_26(%.loc23_18.2) to %.loc23_26.1
+// CHECK:STDOUT:   %.loc23_26.2: init %X = converted %.loc23_18.2, %Convert.call.loc23_26
 // CHECK:STDOUT:   %int_32.loc23_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc23_35: init type = call constants.%Int(%int_32.loc23_35) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.1: type = value_of_initializer %int.make_type_signed.loc23_35 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.2: type = converted %int.make_type_signed.loc23_35, %.loc23_35.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_32.1: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %Convert.bound.loc23_32: <bound method> = bound_method %.loc23_26.3, %.loc23_32.1
-// CHECK:STDOUT:   %.loc23_26.4: ref %X = temporary %.loc23_26.2, %.loc23_26.3
-// CHECK:STDOUT:   %.loc23_26.5: %X = bind_value %.loc23_26.4
-// CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %Convert.bound.loc23_32(%.loc23_26.5)
-// CHECK:STDOUT:   %.loc23_32.2: %i32 = value_of_initializer %Convert.call.loc23_32
-// CHECK:STDOUT:   %.loc23_32.3: %i32 = converted %.loc23_26.3, %.loc23_32.2
-// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc23_32.3
+// CHECK:STDOUT:   %elt0.loc23_32: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %Convert.bound.loc23_32: <bound method> = bound_method %.loc23_26.2, %elt0.loc23_32
+// CHECK:STDOUT:   %.loc23_26.3: ref %X = temporary %.loc23_26.1, %.loc23_26.2
+// CHECK:STDOUT:   %.loc23_26.4: %X = bind_value %.loc23_26.3
+// CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %Convert.bound.loc23_32(%.loc23_26.4)
+// CHECK:STDOUT:   %.loc23_32.1: %i32 = value_of_initializer %Convert.call.loc23_32
+// CHECK:STDOUT:   %.loc23_32.2: %i32 = converted %.loc23_26.2, %.loc23_32.1
+// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc23_32.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

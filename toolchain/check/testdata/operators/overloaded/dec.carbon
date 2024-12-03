@@ -104,10 +104,10 @@ fn TestOp() {
 // CHECK:STDOUT:   %.loc22_16: init %C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc22_16
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %.loc23_3: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.ref, %.loc23_3
-// CHECK:STDOUT:   %.loc23_5: %ptr.1 = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%.loc23_5)
+// CHECK:STDOUT:   %elt0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.ref, %elt0
+// CHECK:STDOUT:   %.loc23: %ptr.1 = addr_of %c.ref
+// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%.loc23)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

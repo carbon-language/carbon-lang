@@ -98,22 +98,22 @@ fn Test() {
 // CHECK:STDOUT:   %j.ref.loc18: %Class.elt = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_5: ref %i32 = class_element_access %cv.ref.loc18, element0
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc18_8.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_1, %.loc18_8.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc18: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_1, %elt0.loc18 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18: <specific function> = specific_function %Convert.bound.loc18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %Convert.specific_fn.loc18(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc18_8.2: init %i32 = converted %int_1, %int.convert_checked.loc18 [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %.loc18_5, %.loc18_8.2
+// CHECK:STDOUT:   %.loc18_8: init %i32 = converted %int_1, %int.convert_checked.loc18 [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %.loc18_5, %.loc18_8
 // CHECK:STDOUT:   %cv.ref.loc19: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %k.ref.loc19: %Class.elt = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc19_5: ref %i32 = class_element_access %cv.ref.loc19, element1
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %.loc19_8.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc19: <bound method> = bound_method %int_2, %.loc19_8.1 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %elt0.loc19: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc19: <bound method> = bound_method %int_2, %elt0.loc19 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc19: <specific function> = specific_function %Convert.bound.loc19, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc19: init %i32 = call %Convert.specific_fn.loc19(%int_2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc19_8.2: init %i32 = converted %int_2, %int.convert_checked.loc19 [template = constants.%int_2.2]
-// CHECK:STDOUT:   assign %.loc19_5, %.loc19_8.2
+// CHECK:STDOUT:   %.loc19_8: init %i32 = converted %int_2, %int.convert_checked.loc19 [template = constants.%int_2.2]
+// CHECK:STDOUT:   assign %.loc19_5, %.loc19_8
 // CHECK:STDOUT:   %Class.ref.loc20: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %cv.ref.loc20: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %.loc20: %Class = bind_value %cv.ref.loc20

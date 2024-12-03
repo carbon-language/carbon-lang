@@ -76,13 +76,13 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed.loc12, %.loc12_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %.loc12_17.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc12_17.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc12_17.3: %i32 = converted %int_1, %.loc12_17.2 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %a.loc12: %i32 = bind_name a, %.loc12_17.3
+// CHECK:STDOUT:   %.loc12_17.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc12_17.2: %i32 = converted %int_1, %.loc12_17.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %a.loc12: %i32 = bind_name a, %.loc12_17.2
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a.loc12
 // CHECK:STDOUT:   return %a.ref
 // CHECK:STDOUT: }

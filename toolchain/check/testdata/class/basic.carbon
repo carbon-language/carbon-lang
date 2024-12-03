@@ -173,13 +173,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
-// CHECK:STDOUT:   %.loc26_18.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_4, %.loc26_18.1 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_4, %elt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc26_18.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc26_18.3: %i32 = converted %int_4, %.loc26_18.2 [template = constants.%int_4.2]
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc26_18.3)
+// CHECK:STDOUT:   %.loc26_18.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.2]
+// CHECK:STDOUT:   %.loc26_18.2: %i32 = converted %int_4, %.loc26_18.1 [template = constants.%int_4.2]
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc26_18.2)
 // CHECK:STDOUT:   %.loc26_20.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc26_20.2: %i32 = converted %F.call, %.loc26_20.1
 // CHECK:STDOUT:   return %.loc26_20.2

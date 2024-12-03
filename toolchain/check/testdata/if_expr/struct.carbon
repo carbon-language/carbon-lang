@@ -109,22 +109,22 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc14_46.1: %struct_type.a.b.2 = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %.loc14_46.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc14_46.1: <bound method> = bound_method %int_1, %.loc14_46.2 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc14_46.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc14_46.1: <bound method> = bound_method %int_1, %elt0.loc14_46.1 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_46.1: <specific function> = specific_function %Convert.bound.loc14_46.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc14_46.1: init %i32 = call %Convert.specific_fn.loc14_46.1(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc14_46.3: init %i32 = converted %int_1, %int.convert_checked.loc14_46.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc14_46.4: ref %i32 = struct_access %a.var, element0
-// CHECK:STDOUT:   %.loc14_46.5: init %i32 = initialize_from %.loc14_46.3 to %.loc14_46.4 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc14_46.6: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc14_46.2: <bound method> = bound_method %int_2, %.loc14_46.6 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %.loc14_46.2: init %i32 = converted %int_1, %int.convert_checked.loc14_46.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc14_46.3: ref %i32 = struct_access %a.var, element0
+// CHECK:STDOUT:   %.loc14_46.4: init %i32 = initialize_from %.loc14_46.2 to %.loc14_46.3 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %elt0.loc14_46.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc14_46.2: <bound method> = bound_method %int_2, %elt0.loc14_46.2 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_46.2: <specific function> = specific_function %Convert.bound.loc14_46.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc14_46.2: init %i32 = call %Convert.specific_fn.loc14_46.2(%int_2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc14_46.7: init %i32 = converted %int_2, %int.convert_checked.loc14_46.2 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc14_46.8: ref %i32 = struct_access %a.var, element1
-// CHECK:STDOUT:   %.loc14_46.9: init %i32 = initialize_from %.loc14_46.7 to %.loc14_46.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc14_46.10: init %struct_type.a.b.1 = struct_init (%.loc14_46.5, %.loc14_46.9) to %a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_47: init %struct_type.a.b.1 = converted %.loc14_46.1, %.loc14_46.10 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_46.5: init %i32 = converted %int_2, %int.convert_checked.loc14_46.2 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc14_46.6: ref %i32 = struct_access %a.var, element1
+// CHECK:STDOUT:   %.loc14_46.7: init %i32 = initialize_from %.loc14_46.5 to %.loc14_46.6 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc14_46.8: init %struct_type.a.b.1 = struct_init (%.loc14_46.4, %.loc14_46.7) to %a.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_47: init %struct_type.a.b.1 = converted %.loc14_46.1, %.loc14_46.8 [template = constants.%struct]
 // CHECK:STDOUT:   assign %a.var, %.loc14_47
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond

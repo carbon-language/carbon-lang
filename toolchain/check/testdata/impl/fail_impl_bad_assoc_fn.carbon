@@ -221,7 +221,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.1: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %elt0.1: %F.assoc_type.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %NoF: type = class_type @NoF [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -249,7 +249,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.type.5: type = fn_type @F.5 [template]
 // CHECK:STDOUT:   %F.6: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %J.type, %F.type.5 [template]
-// CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, @J.%F.decl [template]
+// CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @J.%F.decl [template]
 // CHECK:STDOUT:   %FMissingParam: type = class_type @FMissingParam [template]
 // CHECK:STDOUT:   %F.type.6: type = fn_type @F.6 [template]
 // CHECK:STDOUT:   %F.7: %F.type.6 = struct_value () [template]
@@ -294,7 +294,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.type.13: type = fn_type @F.13 [template]
 // CHECK:STDOUT:   %F.14: %F.type.13 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.3: type = assoc_entity_type %SelfNested.type, %F.type.13 [template]
-// CHECK:STDOUT:   %elt0.3: %F.assoc_type.3 = assoc_entity element0, @SelfNested.%F.decl [template]
+// CHECK:STDOUT:   %assoc0.3: %F.assoc_type.3 = assoc_entity element0, @SelfNested.%F.decl [template]
 // CHECK:STDOUT:   %SelfNestedBadParam: type = class_type @SelfNestedBadParam [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %SelfNestedBadParam [template]
 // CHECK:STDOUT:   %struct_type.x.y.2: type = struct_type {.x: %i32, .y: %i32} [template]
@@ -372,11 +372,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %elt0: %F.assoc_type.1 = assoc_entity element0, %F.decl [template = constants.%elt0.1]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type.1 = assoc_entity element0, %F.decl [template = constants.%assoc0.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,11 +406,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %F.assoc_type.2 = assoc_entity element0, %F.decl [template = constants.%elt0.2]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type.2 = assoc_entity element0, %F.decl [template = constants.%assoc0.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,11 +446,11 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:     %return.param: ref @F.13.%array_type.loc188_52.1 (%array_type.1) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.13.%array_type.loc188_52.1 (%array_type.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %elt0: %F.assoc_type.3 = assoc_entity element0, %F.decl [template = constants.%elt0.3]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type.3 = assoc_entity element0, %F.decl [template = constants.%assoc0.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -81,24 +81,24 @@ fn Main() {
 // CHECK:STDOUT:   %int_5.loc18_30: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %int_5.loc18_33: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %.loc18_34.1: %tuple.type = tuple_literal (%int_5.loc18_30, %int_5.loc18_33)
-// CHECK:STDOUT:   %.loc18_34.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc18_34.1: <bound method> = bound_method %int_5.loc18_30, %.loc18_34.2 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0.loc18_34.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc18_34.1: <bound method> = bound_method %int_5.loc18_30, %elt0.loc18_34.1 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_34.1: <specific function> = specific_function %Convert.bound.loc18_34.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc18_34.1: init %i32 = call %Convert.specific_fn.loc18_34.1(%int_5.loc18_30) [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc18_34.3: init %i32 = converted %int_5.loc18_30, %int.convert_checked.loc18_34.1 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %.loc18_34.2: init %i32 = converted %int_5.loc18_30, %int.convert_checked.loc18_34.1 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc18_34.4: ref %i32 = array_index %non_tuple.var, %int_0.loc18
-// CHECK:STDOUT:   %.loc18_34.5: init %i32 = initialize_from %.loc18_34.3 to %.loc18_34.4 [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc18_34.6: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc18_34.2: <bound method> = bound_method %int_5.loc18_33, %.loc18_34.6 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %.loc18_34.3: ref %i32 = array_index %non_tuple.var, %int_0.loc18
+// CHECK:STDOUT:   %.loc18_34.4: init %i32 = initialize_from %.loc18_34.2 to %.loc18_34.3 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %elt0.loc18_34.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc18_34.2: <bound method> = bound_method %int_5.loc18_33, %elt0.loc18_34.2 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_34.2: <specific function> = specific_function %Convert.bound.loc18_34.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc18_34.2: init %i32 = call %Convert.specific_fn.loc18_34.2(%int_5.loc18_33) [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc18_34.7: init %i32 = converted %int_5.loc18_33, %int.convert_checked.loc18_34.2 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %.loc18_34.5: init %i32 = converted %int_5.loc18_33, %int.convert_checked.loc18_34.2 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc18_34.8: ref %i32 = array_index %non_tuple.var, %int_1.loc18
-// CHECK:STDOUT:   %.loc18_34.9: init %i32 = initialize_from %.loc18_34.7 to %.loc18_34.8 [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc18_34.10: init %array_type = array_init (%.loc18_34.5, %.loc18_34.9) to %non_tuple.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc18_35: init %array_type = converted %.loc18_34.1, %.loc18_34.10 [template = constants.%array]
+// CHECK:STDOUT:   %.loc18_34.6: ref %i32 = array_index %non_tuple.var, %int_1.loc18
+// CHECK:STDOUT:   %.loc18_34.7: init %i32 = initialize_from %.loc18_34.5 to %.loc18_34.6 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %.loc18_34.8: init %array_type = array_init (%.loc18_34.4, %.loc18_34.7) to %non_tuple.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc18_35: init %array_type = converted %.loc18_34.1, %.loc18_34.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %non_tuple.var, %.loc18_35
 // CHECK:STDOUT:   %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc22: init type = call constants.%Int(%int_32.loc22) [template = constants.%i32]

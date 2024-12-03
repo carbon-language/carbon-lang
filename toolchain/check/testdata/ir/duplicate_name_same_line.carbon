@@ -65,12 +65,12 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %n.var.loc11_26: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_26: ref %i32 = bind_name n, %n.var.loc11_26
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc11_36.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc11_36: <bound method> = bound_method %int_1, %.loc11_36.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %elt0.loc11_36: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc11_36: <bound method> = bound_method %int_1, %elt0.loc11_36 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11_36: <specific function> = specific_function %Convert.bound.loc11_36, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc11_36: init %i32 = call %Convert.specific_fn.loc11_36(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_36.2: init %i32 = converted %int_1, %int.convert_checked.loc11_36 [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %n.var.loc11_26, %.loc11_36.2
+// CHECK:STDOUT:   %.loc11_36: init %i32 = converted %int_1, %int.convert_checked.loc11_36 [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %n.var.loc11_26, %.loc11_36
 // CHECK:STDOUT:   br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_18:
@@ -85,12 +85,12 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %n.var.loc11_56: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_56: ref %i32 = bind_name n, %n.var.loc11_56
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %.loc11_66.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc11_66: <bound method> = bound_method %int_2, %.loc11_66.1 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %elt0.loc11_66: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc11_66: <bound method> = bound_method %int_2, %elt0.loc11_66 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11_66: <specific function> = specific_function %Convert.bound.loc11_66, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc11_66: init %i32 = call %Convert.specific_fn.loc11_66(%int_2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_66.2: init %i32 = converted %int_2, %int.convert_checked.loc11_66 [template = constants.%int_2.2]
-// CHECK:STDOUT:   assign %n.var.loc11_56, %.loc11_66.2
+// CHECK:STDOUT:   %.loc11_66: init %i32 = converted %int_2, %int.convert_checked.loc11_66 [template = constants.%int_2.2]
+// CHECK:STDOUT:   assign %n.var.loc11_56, %.loc11_66
 // CHECK:STDOUT:   br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_48:
