@@ -40,7 +40,7 @@ class A {
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Make.2) [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -120,8 +120,8 @@ class A {
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc21_33.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc21_33.2: init %C = class_init (), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc21_34: init %C = converted %.loc21_33.1, %.loc21_33.2 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc21_34 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

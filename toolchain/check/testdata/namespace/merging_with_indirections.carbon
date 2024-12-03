@@ -85,7 +85,7 @@ fn Run() {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %A = struct_value () [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,8 +144,8 @@ fn Run() {
 // CHECK:STDOUT: fn @F() -> %return: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [template = constants.%A.val]
 // CHECK:STDOUT:   return %.loc8_28 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

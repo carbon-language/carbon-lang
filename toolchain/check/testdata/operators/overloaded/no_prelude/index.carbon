@@ -119,7 +119,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %SubscriptType.patt: type = symbolic_binding_pattern SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %IndexWith: %IndexWith.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %IndexWith.type.2: type = facet_type <@IndexWith, @IndexWith(%SubscriptType)> [symbolic]
 // CHECK:STDOUT:   %Self: %IndexWith.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -150,7 +150,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %Core: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.1 = interface_decl @IndexWith [template = constants.%IndexWith] {
+// CHECK:STDOUT:   %IndexWith.decl: %IndexWith.type.1 = interface_decl @IndexWith [template = constants.%IndexWith.generic] {
 // CHECK:STDOUT:     %SubscriptType.patt.loc5_26.1: type = symbolic_binding_pattern SubscriptType, 0 [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:     %SubscriptType.param_patt: type = value_param_pattern %SubscriptType.patt.loc5_26.1, runtime_param<invalid> [symbolic = %SubscriptType.patt.loc5_26.2 (constants.%SubscriptType.patt)]
 // CHECK:STDOUT:   } {
@@ -161,7 +161,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %.loc9_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, file.%Core [template = file.%Core]
-// CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.1 = name_ref IndexWith, file.%IndexWith.decl [template = constants.%IndexWith]
+// CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.1 = name_ref IndexWith, file.%IndexWith.decl [template = constants.%IndexWith.generic]
 // CHECK:STDOUT:     %.loc9_28: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_29: type = converted %.loc9_28, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type)> [template = constants.%IndexWith.type.3]

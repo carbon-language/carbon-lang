@@ -94,7 +94,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %.type.6: type = fn_type @.6 [template]
 // CHECK:STDOUT:   %.6: %.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -225,8 +225,8 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT: fn @.6() -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc65_24: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc65_25: %empty_struct_type = converted %.loc65_24, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc65_25: %empty_struct_type = converted %.loc65_24, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc65_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

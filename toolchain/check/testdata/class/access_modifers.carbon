@@ -173,7 +173,7 @@ class A {
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %struct_type.radius.2: type = struct_type {.radius: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %struct: %Circle = struct_value (%int_5.2) [template]
+// CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.2) [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -269,8 +269,8 @@ class A {
 // CHECK:STDOUT:   %.loc13_24.3: init %i32 = converted %int_5, %int.convert_checked [template = constants.%int_5.2]
 // CHECK:STDOUT:   %.loc13_24.4: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc13_24.5: init %i32 = initialize_from %.loc13_24.3 to %.loc13_24.4 [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc13_24.6: init %Circle = class_init (%.loc13_24.5), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.6 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_24.6: init %Circle = class_init (%.loc13_24.5), %return [template = constants.%Circle.val]
+// CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.6 [template = constants.%Circle.val]
 // CHECK:STDOUT:   return %.loc13_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

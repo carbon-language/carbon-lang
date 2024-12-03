@@ -90,9 +90,9 @@ fn H() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
-// CHECK:STDOUT:   %Base.1: %Base.type = struct_value () [template]
-// CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%T) [symbolic]
-// CHECK:STDOUT:   %Base.elt.1: type = unbound_element_type %Base.2, %T [symbolic]
+// CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [template]
+// CHECK:STDOUT:   %Base.1: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.elt.1: type = unbound_element_type %Base.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
@@ -104,12 +104,12 @@ fn H() {
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %Base.3: type = class_type @Base, @Base(%Param) [template]
-// CHECK:STDOUT:   %Base.elt.2: type = unbound_element_type %Base.3, %Param [template]
+// CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%Param) [template]
+// CHECK:STDOUT:   %Base.elt.2: type = unbound_element_type %Base.2, %Param [template]
 // CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Param} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.2 [template]
-// CHECK:STDOUT:   %Derived.elt: type = unbound_element_type %Derived, %Base.3 [template]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base.3} [template]
+// CHECK:STDOUT:   %Derived.elt: type = unbound_element_type %Derived, %Base.2 [template]
+// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base.2} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %DoubleFieldAccess.type: type = fn_type @DoubleFieldAccess [template]
 // CHECK:STDOUT:   %DoubleFieldAccess: %DoubleFieldAccess.type = struct_value () [template]
@@ -132,7 +132,7 @@ fn H() {
 // CHECK:STDOUT:     .DoubleFieldAccess = %DoubleFieldAccess.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [template = constants.%Base.1] {
+// CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [template = constants.%Base.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_17.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_17.1, runtime_param<invalid> [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -164,8 +164,8 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc4_17.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_17.2) [symbolic = %Base (constants.%Base.2)]
-// CHECK:STDOUT:   %Base.elt: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T.loc4_17.2 (%T) [symbolic = %Base.elt (constants.%Base.elt.1)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_17.2) [symbolic = %Base (constants.%Base.1)]
+// CHECK:STDOUT:   %Base.elt: type = unbound_element_type @Base.%Base (%Base.1), @Base.%T.loc4_17.2 (%T) [symbolic = %Base.elt (constants.%Base.elt.1)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Base.%T.loc4_17.2 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.1)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Base.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -175,7 +175,7 @@ fn H() {
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Base.2
+// CHECK:STDOUT:     .Self = constants.%Base.1
 // CHECK:STDOUT:     .x = %.loc5
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
@@ -196,9 +196,9 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Base.ref: %Base.type = name_ref Base, file.%Base.decl [template = constants.%Base.1]
+// CHECK:STDOUT:   %Base.ref: %Base.type = name_ref Base, file.%Base.decl [template = constants.%Base.generic]
 // CHECK:STDOUT:   %Param.ref: type = name_ref Param, file.%Param.decl [template = constants.%Param]
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%Param) [template = constants.%Base.3]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%Param) [template = constants.%Base.2]
 // CHECK:STDOUT:   %.loc13: %Derived.elt = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
@@ -213,8 +213,8 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elt.2 = name_ref x, @Base.%.loc5 [template = @Base.%.loc5]
-// CHECK:STDOUT:   %.loc17_11.1: ref %Base.3 = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc17_11.2: ref %Base.3 = converted %d.ref, %.loc17_11.1
+// CHECK:STDOUT:   %.loc17_11.1: ref %Base.2 = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc17_11.2: ref %Base.2 = converted %d.ref, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elt = name_ref y, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
@@ -237,7 +237,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%Param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base => constants.%Base.3
+// CHECK:STDOUT:   %Base => constants.%Base.2
 // CHECK:STDOUT:   %Base.elt => constants.%Base.elt.2
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.3
@@ -255,13 +255,13 @@ fn H() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
-// CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.1: type = class_type @Base, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %Base.3: type = class_type @Base, @Base(%Param) [template]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base.3} [template]
+// CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%Param) [template]
+// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base.2} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.1 [template]
-// CHECK:STDOUT:   %Base.elt.1: type = unbound_element_type %Base.2, %T [symbolic]
-// CHECK:STDOUT:   %Base.elt.2: type = unbound_element_type %Base.3, %Param [template]
+// CHECK:STDOUT:   %Base.elt.1: type = unbound_element_type %Base.1, %T [symbolic]
+// CHECK:STDOUT:   %Base.elt.2: type = unbound_element_type %Base.2, %Param [template]
 // CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Param} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -290,7 +290,7 @@ fn H() {
 // CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_base, inst+63, loaded [template = constants.%complete_type.3]
 // CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_base, inst+49, unloaded
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_base, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, inst+52, loaded [template = constants.%Base.3]
+// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, inst+52, loaded [template = constants.%Base.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -342,8 +342,8 @@ fn H() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.2)]
-// CHECK:STDOUT:   %Base.elt: type = unbound_element_type @Base.%Base (%Base.2), @Base.%T (%T) [symbolic = %Base.elt (constants.%Base.elt.1)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.1)]
+// CHECK:STDOUT:   %Base.elt: type = unbound_element_type @Base.%Base (%Base.1), @Base.%T (%T) [symbolic = %Base.elt (constants.%Base.elt.1)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Base.%T (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.1)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness @Base.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type (constants.%complete_type.2)]
 // CHECK:STDOUT:
@@ -359,8 +359,8 @@ fn H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elt.2 = name_ref x, imports.%import_ref.10 [template = imports.%.2]
-// CHECK:STDOUT:   %.loc7_11.1: ref %Base.3 = class_element_access %d.ref, element0
-// CHECK:STDOUT:   %.loc7_11.2: ref %Base.3 = converted %d.ref, %.loc7_11.1
+// CHECK:STDOUT:   %.loc7_11.1: ref %Base.2 = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc7_11.2: ref %Base.2 = converted %d.ref, %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elt = name_ref y, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
@@ -378,7 +378,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt => constants.%Param
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Base => constants.%Base.3
+// CHECK:STDOUT:   %Base => constants.%Base.2
 // CHECK:STDOUT:   %Base.elt => constants.%Base.elt.2
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.4
@@ -395,8 +395,8 @@ fn H() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -404,7 +404,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%X) [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -422,7 +422,7 @@ fn H() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_9.1, runtime_param<invalid> [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -445,7 +445,7 @@ fn H() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     .Self = constants.%C.1
 // CHECK:STDOUT:     .base = %.loc8
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -469,9 +469,9 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%X) [template = constants.%C.3]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%X) [template = constants.%C.2]
 // CHECK:STDOUT:   %G.ref: <error> = name_ref G, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -494,8 +494,8 @@ fn H() {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %X.type: type = generic_class_type @X [template]
-// CHECK:STDOUT:   %X.1: %X.type = struct_value () [template]
-// CHECK:STDOUT:   %X.2: type = class_type @X, @X(%U) [symbolic]
+// CHECK:STDOUT:   %X.generic: %X.type = struct_value () [template]
+// CHECK:STDOUT:   %X.1: type = class_type @X, @X(%U) [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G, @X(%U) [symbolic]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -504,13 +504,13 @@ fn H() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
-// CHECK:STDOUT:   %X.3: type = class_type @X, @X(%T) [symbolic]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %X.2: type = class_type @X, @X(%T) [symbolic]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G, @X(%T) [symbolic]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %C.elt.1: type = unbound_element_type %C.2, %X.3 [symbolic]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %X.3} [symbolic]
+// CHECK:STDOUT:   %C.elt.1: type = unbound_element_type %C.1, %X.2 [symbolic]
+// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %X.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -518,10 +518,10 @@ fn H() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%i32) [template]
-// CHECK:STDOUT:   %X.4: type = class_type @X, @X(%i32) [template]
-// CHECK:STDOUT:   %C.elt.2: type = unbound_element_type %C.3, %X.4 [template]
-// CHECK:STDOUT:   %struct_type.base.2: type = struct_type {.base: %X.4} [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%i32) [template]
+// CHECK:STDOUT:   %X.3: type = class_type @X, @X(%i32) [template]
+// CHECK:STDOUT:   %C.elt.2: type = unbound_element_type %C.2, %X.3 [template]
+// CHECK:STDOUT:   %struct_type.base.2: type = struct_type {.base: %X.3} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.2 [template]
 // CHECK:STDOUT:   %G.type.3: type = fn_type @G, @X(%i32) [template]
 // CHECK:STDOUT:   %G.3: %G.type.3 = struct_value () [template]
@@ -544,14 +544,14 @@ fn H() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %X.decl: %X.type = class_decl @X [template = constants.%X.1] {
+// CHECK:STDOUT:   %X.decl: %X.type = class_decl @X [template = constants.%X.generic] {
 // CHECK:STDOUT:     %U.patt.loc4_14.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc4_14.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc4_14.1, runtime_param<invalid> [symbolic = %U.patt.loc4_14.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc4_14.1: type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc4_14.2 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc8_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_9.1, runtime_param<invalid> [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -581,7 +581,7 @@ fn H() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%X.2
+// CHECK:STDOUT:     .Self = constants.%X.1
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
@@ -592,21 +592,21 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc8_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X.loc9_19.2: type = class_type @X, @X(%T.loc8_9.2) [symbolic = %X.loc9_19.2 (constants.%X.3)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc8_9.2) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type @C.%C (%C.2), @C.%X.loc9_19.2 (%X.3) [symbolic = %C.elt (constants.%C.elt.1)]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @C.%X.loc9_19.2 (%X.3)} [symbolic = %struct_type.base (constants.%struct_type.base.1)]
+// CHECK:STDOUT:   %X.loc9_19.2: type = class_type @X, @X(%T.loc8_9.2) [symbolic = %X.loc9_19.2 (constants.%X.2)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc8_9.2) [symbolic = %C (constants.%C.1)]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type @C.%C (%C.1), @C.%X.loc9_19.2 (%X.2) [symbolic = %C.elt (constants.%C.elt.1)]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @C.%X.loc9_19.2 (%X.2)} [symbolic = %struct_type.base (constants.%struct_type.base.1)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness @C.%struct_type.base (%struct_type.base.1) [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %X.ref: %X.type = name_ref X, file.%X.decl [template = constants.%X.1]
+// CHECK:STDOUT:     %X.ref: %X.type = name_ref X, file.%X.decl [template = constants.%X.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_9.1 [symbolic = %T.loc8_9.2 (constants.%T)]
-// CHECK:STDOUT:     %X.loc9_19.1: type = class_type @X, @X(constants.%T) [symbolic = %X.loc9_19.2 (constants.%X.3)]
+// CHECK:STDOUT:     %X.loc9_19.1: type = class_type @X, @X(constants.%T) [symbolic = %X.loc9_19.2 (constants.%X.2)]
 // CHECK:STDOUT:     %.loc9: @C.%C.elt (%C.elt.1) = base_decl %X.loc9_19.1, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc10_1.1: <witness> = complete_type_witness %struct_type.base.1 [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     .Self = constants.%C.1
 // CHECK:STDOUT:     .base = %.loc9
 // CHECK:STDOUT:     extend %X.loc9_19.1
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc10_1.1
@@ -639,12 +639,12 @@ fn H() {
 // CHECK:STDOUT:   %int.make_type_signed.loc13_10: init type = call constants.%Int(%int_32.loc13_10) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13_10 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13_10, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc13_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc13_18: init type = call constants.%Int(%int_32.loc13_18) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed.loc13_18 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed.loc13_18, %.loc13_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.3]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc13_22: %G.type.3 = specific_constant @X.%G.decl, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc13_22 [template = constants.%G.3]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%i32) [template = constants.%G.specific_fn.2]
@@ -716,8 +716,8 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X.loc9_19.2 => constants.%X.4
-// CHECK:STDOUT:   %C => constants.%C.3
+// CHECK:STDOUT:   %X.loc9_19.2 => constants.%X.3
+// CHECK:STDOUT:   %C => constants.%C.2
 // CHECK:STDOUT:   %C.elt => constants.%C.elt.2
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.2
 // CHECK:STDOUT:   %complete_type.loc10_1.2 => constants.%complete_type.3
@@ -751,16 +751,16 @@ fn H() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
-// CHECK:STDOUT:   %X.3: type = class_type @X, @X(%T) [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
-// CHECK:STDOUT:   %C.elt.1: type = unbound_element_type %C.2, %X.3 [symbolic]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %X.3} [symbolic]
+// CHECK:STDOUT:   %X.2: type = class_type @X, @X(%T) [symbolic]
+// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.elt.1: type = unbound_element_type %C.1, %X.2 [symbolic]
+// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %X.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G, @X(%U) [symbolic]
@@ -768,10 +768,10 @@ fn H() {
 // CHECK:STDOUT:   %G.specific_fn.1: <specific function> = specific_function %G.1, @G(%U) [symbolic]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G, @X(%T) [symbolic]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%i32) [template]
-// CHECK:STDOUT:   %X.4: type = class_type @X, @X(%i32) [template]
-// CHECK:STDOUT:   %C.elt.2: type = unbound_element_type %C.3, %X.4 [template]
-// CHECK:STDOUT:   %struct_type.base.2: type = struct_type {.base: %X.4} [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%i32) [template]
+// CHECK:STDOUT:   %X.3: type = class_type @X, @X(%i32) [template]
+// CHECK:STDOUT:   %C.elt.2: type = unbound_element_type %C.2, %X.3 [template]
+// CHECK:STDOUT:   %struct_type.base.2: type = struct_type {.base: %X.3} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.2 [template]
 // CHECK:STDOUT:   %G.type.3: type = fn_type @G, @X(%i32) [template]
 // CHECK:STDOUT:   %G.3: %G.type.3 = struct_value () [template]
@@ -780,7 +780,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_symbolic_base, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//extend_generic_symbolic_base, inst+47, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//extend_generic_symbolic_base, inst+47, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_generic_symbolic_base, inst+70, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.4
@@ -793,7 +793,7 @@ fn H() {
 // CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//extend_generic_symbolic_base, inst+63, loaded [symbolic = @C.%complete_type (constants.%complete_type.2)]
 // CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_symbolic_base, inst+52, unloaded
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//extend_generic_symbolic_base, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//extend_generic_symbolic_base, inst+55, loaded [symbolic = @C.%X (constants.%X.3)]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//extend_generic_symbolic_base, inst+55, loaded [symbolic = @C.%X (constants.%X.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -814,10 +814,10 @@ fn H() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X: type = class_type @X, @X(%T) [symbolic = %X (constants.%X.3)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %C.elt: type = unbound_element_type @C.%C (%C.2), @C.%X (%X.3) [symbolic = %C.elt (constants.%C.elt.1)]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @C.%X (%X.3)} [symbolic = %struct_type.base (constants.%struct_type.base.1)]
+// CHECK:STDOUT:   %X: type = class_type @X, @X(%T) [symbolic = %X (constants.%X.2)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.1)]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type @C.%C (%C.1), @C.%X (%X.2) [symbolic = %C.elt (constants.%C.elt.1)]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @C.%X (%X.2)} [symbolic = %struct_type.base (constants.%struct_type.base.1)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness @C.%struct_type.base (%struct_type.base.1) [symbolic = %complete_type (constants.%complete_type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -851,12 +851,12 @@ fn H() {
 // CHECK:STDOUT:   %int.make_type_signed.loc7_10: init type = call constants.%Int(%int_32.loc7_10) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_signed.loc7_10 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_signed.loc7_10, %.loc7_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.1]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc7_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc7_18: init type = call constants.%Int(%int_32.loc7_18) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_21.1: type = value_of_initializer %int.make_type_signed.loc7_18 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_21.2: type = converted %int.make_type_signed.loc7_18, %.loc7_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.3]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc7_22: %G.type.3 = specific_constant imports.%import_ref.7, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc7_22 [template = constants.%G.3]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%i32) [template = constants.%G.specific_fn.2]
@@ -939,8 +939,8 @@ fn H() {
 // CHECK:STDOUT:   %T.patt => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %X => constants.%X.4
-// CHECK:STDOUT:   %C => constants.%C.3
+// CHECK:STDOUT:   %X => constants.%X.3
+// CHECK:STDOUT:   %C => constants.%C.2
 // CHECK:STDOUT:   %C.elt => constants.%C.elt.2
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.2
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.3

@@ -1070,8 +1070,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
 // CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.type: type = generic_class_type @AnyParam [template]
-// CHECK:STDOUT:   %AnyParam.1: %AnyParam.type = struct_value () [template]
-// CHECK:STDOUT:   %AnyParam.2: type = class_type @AnyParam, @AnyParam(%T, %X) [symbolic]
+// CHECK:STDOUT:   %AnyParam.generic: %AnyParam.type = struct_value () [template]
+// CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(%T, %X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [template]
@@ -1087,7 +1087,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     .AnyParam = %AnyParam.decl
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AnyParam.decl: %AnyParam.type = class_decl @AnyParam [template = constants.%AnyParam.1] {
+// CHECK:STDOUT:   %AnyParam.decl: %AnyParam.type = class_decl @AnyParam [template = constants.%AnyParam.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_16.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_16.1, runtime_param<invalid> [symbolic = %T.patt.loc4_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %X.patt.loc4_26.1: @AnyParam.%T.loc4_16.2 (%T) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc4_26.2 (constants.%X.patt)]
@@ -1125,7 +1125,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%AnyParam.2
+// CHECK:STDOUT:     .Self = constants.%AnyParam
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1155,11 +1155,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.1: type = generic_interface_type @GenericInterface [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %GenericInterface: %GenericInterface.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %GenericInterface.generic: %GenericInterface.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %GenericInterface.type.2: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic]
 // CHECK:STDOUT:   %Self.1: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.type: type = generic_class_type @AnyParam [template]
-// CHECK:STDOUT:   %AnyParam.1: %AnyParam.type = struct_value () [template]
+// CHECK:STDOUT:   %AnyParam.generic: %AnyParam.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -1167,18 +1167,18 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X.2: @AnyParam.%T (%T) = bind_symbolic_name X, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt.2: %T = symbolic_binding_pattern X, 1 [symbolic]
-// CHECK:STDOUT:   %AnyParam.3: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface) [template]
+// CHECK:STDOUT:   %AnyParam.2: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface.generic) [template]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [template]
 // CHECK:STDOUT:   %Self.2: %Y.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type.1: type = fn_type @K.1 [template]
 // CHECK:STDOUT:   %K.1: %K.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %K.type.2: type = fn_type @K.2 [template]
 // CHECK:STDOUT:   %K.2: %K.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.3, %AnyParam.3 [template]
+// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.2, %AnyParam.2 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%K.1) [template]
 // CHECK:STDOUT:   %L.type: type = fn_type @L [template]
 // CHECK:STDOUT:   %L: %L.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %AnyParam.3 = struct_value () [template]
+// CHECK:STDOUT:   %AnyParam.val: %AnyParam.2 = struct_value () [template]
 // CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %Y.type, %K.type.2 [template]
 // CHECK:STDOUT:   %elt0: %K.assoc_type = assoc_entity element0, imports.%import_ref.8 [template]
 // CHECK:STDOUT: }
@@ -1189,7 +1189,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     .Y = %import_ref.4
 // CHECK:STDOUT:     import PackageHasParam//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.1]
+// CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.generic]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageHasParam//default, inst+24, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref PackageHasParam//default, inst+22, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
@@ -1205,7 +1205,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     .L = %L.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PackageHasParam.import = import PackageHasParam
-// CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.1 = interface_decl @GenericInterface [template = constants.%GenericInterface] {
+// CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.1 = interface_decl @GenericInterface [template = constants.%GenericInterface.generic] {
 // CHECK:STDOUT:     %U.patt.loc6_28.1: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_28.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc6_28.1, runtime_param<invalid> [symbolic = %U.patt.loc6_28.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
@@ -1214,9 +1214,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %PackageHasParam.ref.loc8_6: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.1]
-// CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) [template = constants.%AnyParam.3]
+// CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.generic]
+// CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface.generic]
+// CHECK:STDOUT:     %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) [template = constants.%AnyParam.2]
 // CHECK:STDOUT:     %PackageHasParam.ref.loc8_52: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, imports.%import_ref.4 [template = constants.%Y.type]
 // CHECK:STDOUT:   }
@@ -1285,16 +1285,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @L() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %PackageHasParam.ref.loc13: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:   %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.1]
-// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface]
-// CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) [template = constants.%AnyParam.3]
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.3 = var obj
-// CHECK:STDOUT:   %obj: ref %AnyParam.3 = bind_name obj, %obj.var
+// CHECK:STDOUT:   %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.generic]
+// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, file.%GenericInterface.decl [template = constants.%GenericInterface.generic]
+// CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) [template = constants.%AnyParam.2]
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.2 = var obj
+// CHECK:STDOUT:   %obj: ref %AnyParam.2 = bind_name obj, %obj.var
 // CHECK:STDOUT:   %.loc13_58.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.3 = class_init (), %obj.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc13_59: init %AnyParam.3 = converted %.loc13_58.1, %.loc13_58.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.2 = class_init (), %obj.var [template = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc13_59: init %AnyParam.2 = converted %.loc13_58.1, %.loc13_58.2 [template = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc13_59
-// CHECK:STDOUT:   %obj.ref: ref %AnyParam.3 = name_ref obj, %obj
+// CHECK:STDOUT:   %obj.ref: ref %AnyParam.2 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.4 [template = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %K.assoc_type = name_ref K, imports.%import_ref.6 [template = constants.%elt0]
@@ -1327,11 +1327,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X.patt => constants.%X.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) {
+// CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) {
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.1
 // CHECK:STDOUT:   %T.patt => constants.%GenericInterface.type.1
-// CHECK:STDOUT:   %X => constants.%GenericInterface
-// CHECK:STDOUT:   %X.patt => constants.%GenericInterface
+// CHECK:STDOUT:   %X => constants.%GenericInterface.generic
+// CHECK:STDOUT:   %X.patt => constants.%GenericInterface.generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1347,7 +1347,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %M: %M.type = struct_value () [template]
 // CHECK:STDOUT:   %AnyParam.type: type = generic_class_type @AnyParam [template]
-// CHECK:STDOUT:   %AnyParam.1: %AnyParam.type = struct_value () [template]
+// CHECK:STDOUT:   %AnyParam.generic: %AnyParam.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -1356,13 +1356,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt.2: %T = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.1: type = generic_interface_type @GenericInterface [template]
-// CHECK:STDOUT:   %GenericInterface: %GenericInterface.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %GenericInterface.generic: %GenericInterface.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.2: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %Self.2: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %AnyParam.3: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface) [template]
-// CHECK:STDOUT:   %struct: %AnyParam.3 = struct_value () [template]
+// CHECK:STDOUT:   %AnyParam.2: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface.generic) [template]
+// CHECK:STDOUT:   %AnyParam.val: %AnyParam.2 = struct_value () [template]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [template]
 // CHECK:STDOUT:   %Self.3: %Y.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type.1: type = fn_type @K.1 [template]
@@ -1383,16 +1383,16 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     .GenericInterface = %import_ref.4
 // CHECK:STDOUT:     import PackageGenericInterface//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.1]
+// CHECK:STDOUT:   %import_ref.1: %AnyParam.type = import_ref PackageHasParam//default, inst+14, loaded [template = constants.%AnyParam.generic]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref PackageHasParam//default, inst+24, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref PackageHasParam//default, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.4: %GenericInterface.type.1 = import_ref PackageGenericInterface//default, inst+9, loaded [template = constants.%GenericInterface]
+// CHECK:STDOUT:   %import_ref.4: %GenericInterface.type.1 = import_ref PackageGenericInterface//default, inst+9, loaded [template = constants.%GenericInterface.generic]
 // CHECK:STDOUT:   %import_ref.5 = import_ref PackageGenericInterface//default, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.6: type = import_ref PackageHasParam//default, inst+26, loaded [template = constants.%Y.type]
 // CHECK:STDOUT:   %import_ref.7 = import_ref PackageHasParam//default, inst+28, unloaded
 // CHECK:STDOUT:   %import_ref.8: %K.assoc_type = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%elt0]
 // CHECK:STDOUT:   %import_ref.9 = import_ref PackageHasParam//default, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageGenericInterface//default, inst+46, loaded [template = constants.%AnyParam.3]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageGenericInterface//default, inst+46, loaded [template = constants.%AnyParam.2]
 // CHECK:STDOUT:   %import_ref.12: type = import_ref PackageGenericInterface//default, inst+56, loaded [template = constants.%Y.type]
 // CHECK:STDOUT:   %import_ref.13: <witness> = import_ref PackageGenericInterface//default, inst+65, loaded [template = constants.%interface]
 // CHECK:STDOUT: }
@@ -1453,17 +1453,17 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @M() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %PackageHasParam.ref.loc8: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
-// CHECK:STDOUT:   %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.1]
+// CHECK:STDOUT:   %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%import_ref.1 [template = constants.%AnyParam.generic]
 // CHECK:STDOUT:   %PackageGenericInterface.ref: <namespace> = name_ref PackageGenericInterface, imports.%PackageGenericInterface [template = imports.%PackageGenericInterface]
-// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, imports.%import_ref.4 [template = constants.%GenericInterface]
-// CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) [template = constants.%AnyParam.3]
-// CHECK:STDOUT:   %obj.var: ref %AnyParam.3 = var obj
-// CHECK:STDOUT:   %obj: ref %AnyParam.3 = bind_name obj, %obj.var
+// CHECK:STDOUT:   %GenericInterface.ref: %GenericInterface.type.1 = name_ref GenericInterface, imports.%import_ref.4 [template = constants.%GenericInterface.generic]
+// CHECK:STDOUT:   %AnyParam: type = class_type @AnyParam, @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) [template = constants.%AnyParam.2]
+// CHECK:STDOUT:   %obj.var: ref %AnyParam.2 = var obj
+// CHECK:STDOUT:   %obj: ref %AnyParam.2 = bind_name obj, %obj.var
 // CHECK:STDOUT:   %.loc9_50.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.3 = class_init (), %obj.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_51: init %AnyParam.3 = converted %.loc9_50.1, %.loc9_50.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.2 = class_init (), %obj.var [template = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc9_51: init %AnyParam.2 = converted %.loc9_50.1, %.loc9_50.2 [template = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc9_51
-// CHECK:STDOUT:   %obj.ref: ref %AnyParam.3 = name_ref obj, %obj
+// CHECK:STDOUT:   %obj.ref: ref %AnyParam.2 = name_ref obj, %obj
 // CHECK:STDOUT:   %PackageHasParam.ref.loc10: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [template = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%import_ref.6 [template = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %K.assoc_type = name_ref K, imports.%import_ref.8 [template = constants.%elt0]
@@ -1504,11 +1504,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U.patt => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface) {
+// CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) {
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.1
 // CHECK:STDOUT:   %T.patt => constants.%GenericInterface.type.1
-// CHECK:STDOUT:   %X => constants.%GenericInterface
-// CHECK:STDOUT:   %X.patt => constants.%GenericInterface
+// CHECK:STDOUT:   %X => constants.%GenericInterface.generic
+// CHECK:STDOUT:   %X.patt => constants.%GenericInterface.generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -1537,8 +1537,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
@@ -1549,10 +1549,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type, type, type, type, type, type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%Extra1.type, %Extra2.type, %Extra3.type, %Extra4.type, %Extra5.type, %Extra6.type, %Extra7.type, %Extra8.type) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple.type.2) [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%tuple.type.2) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.3, %C.3 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.2, %C.2 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1577,7 +1577,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Extra6.decl: type = interface_decl @Extra6 [template = constants.%Extra6.type] {} {}
 // CHECK:STDOUT:   %Extra7.decl: type = interface_decl @Extra7 [template = constants.%Extra7.type] {} {}
 // CHECK:STDOUT:   %Extra8.decl: type = interface_decl @Extra8 [template = constants.%Extra8.type] {} {}
-// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc13_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc13_9.1, runtime_param<invalid> [symbolic = %T.patt.loc13_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -1586,7 +1586,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.1]
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %Extra1.ref: type = name_ref Extra1, file.%Extra1.decl [template = constants.%Extra1.type]
 // CHECK:STDOUT:     %Extra2.ref: type = name_ref Extra2, file.%Extra2.decl [template = constants.%Extra2.type]
 // CHECK:STDOUT:     %Extra3.ref: type = name_ref Extra3, file.%Extra3.decl [template = constants.%Extra3.type]
@@ -1597,7 +1597,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %Extra8.ref: type = name_ref Extra8, file.%Extra8.decl [template = constants.%Extra8.type]
 // CHECK:STDOUT:     %.loc16_71: %tuple.type.1 = tuple_literal (%Extra1.ref, %Extra2.ref, %Extra3.ref, %Extra4.ref, %Extra5.ref, %Extra6.ref, %Extra7.ref, %Extra8.ref)
 // CHECK:STDOUT:     %.loc16_72: type = converted %.loc16_71, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.type.2) [template = constants.%C.3]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%tuple.type.2) [template = constants.%C.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1696,7 +1696,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     .Self = constants.%C.1
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1729,12 +1729,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(type) [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(type) [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
@@ -1751,7 +1751,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Extra2.type: type = facet_type <@Extra2> [template]
 // CHECK:STDOUT:   %Extra1.type: type = facet_type <@Extra1> [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%Extra1.type, %Extra2.type, %Extra3.type, %Extra4.type, %Extra5.type, %Extra6.type, %Extra7.type, %Extra8.type) [template]
-// CHECK:STDOUT:   %C.4: type = class_type @C, @C(%tuple.type) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple.type) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1760,7 +1760,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     .I = %import_ref.4
 // CHECK:STDOUT:     import HasExtraInterfaces//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref HasExtraInterfaces//default, inst+39, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref HasExtraInterfaces//default, inst+39, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref HasExtraInterfaces//default, inst+47, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref HasExtraInterfaces//default, inst+45, unloaded
 // CHECK:STDOUT:   %import_ref.4: type = import_ref HasExtraInterfaces//default, inst+49, loaded [template = constants.%I.type]
@@ -1775,7 +1775,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %import_ref.14 = import_ref HasExtraInterfaces//default, inst+11, unloaded
 // CHECK:STDOUT:   %import_ref.15 = import_ref HasExtraInterfaces//default, inst+7, unloaded
 // CHECK:STDOUT:   %import_ref.16 = import_ref HasExtraInterfaces//default, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.17: type = import_ref HasExtraInterfaces//default, inst+72, loaded [template = constants.%C.4]
+// CHECK:STDOUT:   %import_ref.17: type = import_ref HasExtraInterfaces//default, inst+72, loaded [template = constants.%C.3]
 // CHECK:STDOUT:   %import_ref.18: type = import_ref HasExtraInterfaces//default, inst+74, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %import_ref.19 = import_ref HasExtraInterfaces//default, inst+80, unloaded
 // CHECK:STDOUT: }
@@ -1787,14 +1787,14 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasExtraInterfaces.import = import HasExtraInterfaces
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
-// CHECK:STDOUT:     %c.patt: %C.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C.3 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: %C.2 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %C.2 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %HasExtraInterfaces.ref.loc5: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [template = imports.%HasExtraInterfaces]
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.1]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(type) [template = constants.%C.3]
-// CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.generic]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(type) [template = constants.%C.2]
+// CHECK:STDOUT:     %c.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %C.2 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1871,9 +1871,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test(%c.param_patt: %C.3) {
+// CHECK:STDOUT: fn @Test(%c.param_patt: %C.2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %C.3 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %C.2 = name_ref c, %c
 // CHECK:STDOUT:   %HasExtraInterfaces.ref.loc11: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [template = imports.%HasExtraInterfaces]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%import_ref.4 [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%elt0]

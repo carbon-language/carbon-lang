@@ -43,7 +43,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %Class = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %Class.val: %Class = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,7 +117,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc17_26.8: init %i32 = converted %int_2, %int.convert_checked.loc17_26.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc17_26.9: ref %i32 = class_element_access %.loc17_26.4, element1
 // CHECK:STDOUT:   %.loc17_26.10: init %i32 = initialize_from %.loc17_26.8 to %.loc17_26.9 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_26.11: init %Class = class_init (%.loc17_26.6, %.loc17_26.10), %.loc17_26.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_26.11: init %Class = class_init (%.loc17_26.6, %.loc17_26.10), %.loc17_26.4 [template = constants.%Class.val]
 // CHECK:STDOUT:   %.loc17_26.12: ref %Class = temporary %.loc17_26.4, %.loc17_26.11
 // CHECK:STDOUT:   %.loc17_28: ref %Class = converted %.loc17_26.1, %.loc17_26.12
 // CHECK:STDOUT:   %a.ref: %Class.elt = name_ref a, @Class.%.loc12_8 [template = @Class.%.loc12_8]

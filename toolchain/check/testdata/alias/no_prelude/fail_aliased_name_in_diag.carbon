@@ -26,7 +26,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %struct: %D = struct_value () [template]
+// CHECK:STDOUT:   %D.val: %D = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -66,8 +66,8 @@ let c_var: c = d;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc15_13.2: init %D = class_init (), file.%d.var [template = constants.%D.val]
+// CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%D.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
 // CHECK:STDOUT:   %.loc20: %C = converted %d.ref, <error> [template = <error>]

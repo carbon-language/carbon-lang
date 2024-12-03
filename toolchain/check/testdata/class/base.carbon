@@ -73,11 +73,11 @@ class Derived {
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_4.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_4.2: %i32 = int_value 4 [template]
-// CHECK:STDOUT:   %struct.1: %Base = struct_value (%int_4.2) [template]
+// CHECK:STDOUT:   %Base.val: %Base = struct_value (%int_4.2) [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_7.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_7.2: %i32 = int_value 7 [template]
-// CHECK:STDOUT:   %struct.2: %Derived = struct_value (%struct.1, %int_7.2) [template]
+// CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val, %int_7.2) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
@@ -182,8 +182,8 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_35.2: ref %Base = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc14_26.4: ref %i32 = class_element_access %.loc14_35.2, element0
 // CHECK:STDOUT:   %.loc14_26.5: init %i32 = initialize_from %.loc14_26.3 to %.loc14_26.4 [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc14_26.6: init %Base = class_init (%.loc14_26.5), %.loc14_35.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc14_35.3: init %Base = converted %.loc14_26.1, %.loc14_26.6 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc14_26.6: init %Base = class_init (%.loc14_26.5), %.loc14_35.2 [template = constants.%Base.val]
+// CHECK:STDOUT:   %.loc14_35.3: init %Base = converted %.loc14_26.1, %.loc14_26.6 [template = constants.%Base.val]
 // CHECK:STDOUT:   %.loc14_35.4: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc14_35: <bound method> = bound_method %int_7, %.loc14_35.4 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_35: <specific function> = specific_function %Convert.bound.loc14_35, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
@@ -191,8 +191,8 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_35.5: init %i32 = converted %int_7, %int.convert_checked.loc14_35 [template = constants.%int_7.2]
 // CHECK:STDOUT:   %.loc14_35.6: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc14_35.7: init %i32 = initialize_from %.loc14_35.5 to %.loc14_35.6 [template = constants.%int_7.2]
-// CHECK:STDOUT:   %.loc14_35.8: init %Derived = class_init (%.loc14_35.3, %.loc14_35.7), %return [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc14_36: init %Derived = converted %.loc14_35.1, %.loc14_35.8 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc14_35.8: init %Derived = class_init (%.loc14_35.3, %.loc14_35.7), %return [template = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc14_36: init %Derived = converted %.loc14_35.1, %.loc14_35.8 [template = constants.%Derived.val]
 // CHECK:STDOUT:   return %.loc14_36 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

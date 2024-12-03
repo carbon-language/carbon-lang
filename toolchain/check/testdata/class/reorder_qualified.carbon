@@ -89,25 +89,25 @@ class A {
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %struct.1: %A = struct_value (%int_1.2) [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.2) [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.b.2: type = struct_type {.b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct.2: %B = struct_value (%int_2.2) [template]
+// CHECK:STDOUT:   %B.val: %B = struct_value (%int_2.2) [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %struct_type.c.2: type = struct_type {.c: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_3.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_3.2: %i32 = int_value 3 [template]
-// CHECK:STDOUT:   %struct.3: %C = struct_value (%int_3.2) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%int_3.2) [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %struct_type.d.2: type = struct_type {.d: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int_4.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_4.2: %i32 = int_value 4 [template]
-// CHECK:STDOUT:   %struct.4: %D = struct_value (%int_4.2) [template]
+// CHECK:STDOUT:   %D.val: %D = struct_value (%int_4.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -220,8 +220,8 @@ class A {
 // CHECK:STDOUT:   %.loc29_25.3: init %i32 = converted %int_1, %int.convert_checked.loc29 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc29_25.4: ref %i32 = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc29_25.5: init %i32 = initialize_from %.loc29_25.3 to %.loc29_25.4 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc29_25.6: init %A = class_init (%.loc29_25.5), %a.var [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc29_26: init %A = converted %.loc29_25.1, %.loc29_25.6 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc29_25.6: init %A = class_init (%.loc29_25.5), %a.var [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc29_26: init %A = converted %.loc29_25.1, %.loc29_25.6 [template = constants.%A.val]
 // CHECK:STDOUT:   assign %a.var, %.loc29_26
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref %B = var b
@@ -235,8 +235,8 @@ class A {
 // CHECK:STDOUT:   %.loc30_25.3: init %i32 = converted %int_2, %int.convert_checked.loc30 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc30_25.4: ref %i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc30_25.5: init %i32 = initialize_from %.loc30_25.3 to %.loc30_25.4 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc30_25.6: init %B = class_init (%.loc30_25.5), %b.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc30_26: init %B = converted %.loc30_25.1, %.loc30_25.6 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc30_25.6: init %B = class_init (%.loc30_25.5), %b.var [template = constants.%B.val]
+// CHECK:STDOUT:   %.loc30_26: init %B = converted %.loc30_25.1, %.loc30_25.6 [template = constants.%B.val]
 // CHECK:STDOUT:   assign %b.var, %.loc30_26
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
@@ -250,8 +250,8 @@ class A {
 // CHECK:STDOUT:   %.loc31_25.3: init %i32 = converted %int_3, %int.convert_checked.loc31 [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc31_25.4: ref %i32 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc31_25.5: init %i32 = initialize_from %.loc31_25.3 to %.loc31_25.4 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc31_25.6: init %C = class_init (%.loc31_25.5), %c.var [template = constants.%struct.3]
-// CHECK:STDOUT:   %.loc31_26: init %C = converted %.loc31_25.1, %.loc31_25.6 [template = constants.%struct.3]
+// CHECK:STDOUT:   %.loc31_25.6: init %C = class_init (%.loc31_25.5), %c.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc31_26: init %C = converted %.loc31_25.1, %.loc31_25.6 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc31_26
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref %D = var d
@@ -265,8 +265,8 @@ class A {
 // CHECK:STDOUT:   %.loc32_25.3: init %i32 = converted %int_4, %int.convert_checked.loc32 [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc32_25.4: ref %i32 = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc32_25.5: init %i32 = initialize_from %.loc32_25.3 to %.loc32_25.4 [template = constants.%int_4.2]
-// CHECK:STDOUT:   %.loc32_25.6: init %D = class_init (%.loc32_25.5), %d.var [template = constants.%struct.4]
-// CHECK:STDOUT:   %.loc32_26: init %D = converted %.loc32_25.1, %.loc32_25.6 [template = constants.%struct.4]
+// CHECK:STDOUT:   %.loc32_25.6: init %D = class_init (%.loc32_25.5), %d.var [template = constants.%D.val]
+// CHECK:STDOUT:   %.loc32_26: init %D = converted %.loc32_25.1, %.loc32_25.6 [template = constants.%D.val]
 // CHECK:STDOUT:   assign %d.var, %.loc32_26
 // CHECK:STDOUT:   %AF.ref: %AF.type = name_ref AF, @A.%AF.decl [template = constants.%AF]
 // CHECK:STDOUT:   %AF.call: init %empty_tuple.type = call %AF.ref()

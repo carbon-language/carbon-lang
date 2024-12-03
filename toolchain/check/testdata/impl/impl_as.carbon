@@ -37,7 +37,7 @@ class C {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,8 +101,8 @@ class C {
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc19_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc19_19.2: init %C = class_init (), %c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc19_20: init %C = converted %.loc19_19.1, %.loc19_19.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_19.2: init %C = class_init (), %c.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_20: init %C = converted %.loc19_19.1, %.loc19_19.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc19_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

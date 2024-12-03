@@ -57,7 +57,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T) [symbolic]
@@ -65,8 +65,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type.2, %F.type [symbolic]
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
@@ -78,14 +78,14 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: %I.type.1 = interface_decl @I [template = constants.%I] {
+// CHECK:STDOUT:   %I.decl: %I.type.1 = interface_decl @I [template = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_13.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_13.1, runtime_param<invalid> [symbolic = %T.patt.loc4_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_13.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.1] {
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt.loc5_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc5_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc5_9.1, runtime_param<invalid> [symbolic = %T.patt.loc5_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -129,7 +129,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.2
+// CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -172,7 +172,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic]
@@ -194,7 +194,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I]
+// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I.generic]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//types, inst+32, unloaded
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//types, inst+41, loaded [template = constants.%X]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//types, inst+43, loaded [template = constants.%complete_type]
@@ -216,7 +216,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %InInterfaceArgs.decl: type = class_decl @InInterfaceArgs [template = constants.%InInterfaceArgs] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
-// CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I]
+// CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I.generic]
 // CHECK:STDOUT:     %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, file.%InInterfaceArgs.decl [template = constants.%InInterfaceArgs]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   }
@@ -312,7 +312,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic]
@@ -335,7 +335,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I]
+// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I.generic]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//types, inst+32, unloaded
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//types, inst+41, loaded [template = constants.%X]
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//impl_in_interface_args, inst+5, loaded [template = constants.%InInterfaceArgs]
@@ -411,7 +411,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: fn @G(%x.param_patt: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
-// CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I]
+// CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I.generic]
 // CHECK:STDOUT:   %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, imports.%import_ref.4 [template = constants.%InInterfaceArgs]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   %.loc6_35: %F.assoc_type.2 = specific_constant imports.%import_ref.8, @I(constants.%InInterfaceArgs) [template = constants.%elt0.2]
@@ -460,12 +460,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%InClassArgs) [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%InClassArgs) [template]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -481,13 +481,13 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.9 [template]
-// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %C.3, %C.3 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %C.2, %C.2 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I]
-// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//types, inst+32, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//types, inst+32, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//types, inst+41, loaded [template = constants.%X]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//types, inst+39, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//types, inst+37, unloaded
@@ -509,10 +509,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %InClassArgs.decl: type = class_decl @InClassArgs [template = constants.%InClassArgs] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.1]
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
 // CHECK:STDOUT:     %InClassArgs.ref: type = name_ref InClassArgs, file.%InClassArgs.decl [template = constants.%InClassArgs]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.3]
-// CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.2]
+// CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%X)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   }
@@ -626,17 +626,17 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %InClassArgs: type = class_type @InClassArgs [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%InClassArgs) [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%InClassArgs) [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
-// CHECK:STDOUT:   %I: %I.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.1: @I.%I.type (%I.type.2) = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
@@ -657,8 +657,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I]
-// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//types, inst+32, loaded [template = constants.%C.1]
+// CHECK:STDOUT:   %import_ref.1: %I.type.1 = import_ref Main//types, inst+7, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//types, inst+32, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.3: type = import_ref Main//types, inst+41, loaded [template = constants.%X]
 // CHECK:STDOUT:   %import_ref.4: type = import_ref Main//impl_in_class_args, inst+5, loaded [template = constants.%InClassArgs]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//types, inst+39, loaded [template = constants.%complete_type]
@@ -671,7 +671,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//types, inst+16, unloaded
 // CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//types, inst+43, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.14 = import_ref Main//types, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.16: type = import_ref Main//impl_in_class_args, inst+25, loaded [template = constants.%C.3]
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Main//impl_in_class_args, inst+25, loaded [template = constants.%C.2]
 // CHECK:STDOUT:   %import_ref.17: type = import_ref Main//impl_in_class_args, inst+58, loaded [template = constants.%I.type.3]
 // CHECK:STDOUT:   %import_ref.18: <witness> = import_ref Main//impl_in_class_args, inst+69, loaded [template = constants.%interface]
 // CHECK:STDOUT: }
@@ -686,14 +686,14 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
-// CHECK:STDOUT:     %c.patt: %C.3 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %C.3 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: %C.2 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %C.2 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.1]
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
 // CHECK:STDOUT:     %InClassArgs.ref: type = name_ref InClassArgs, imports.%import_ref.4 [template = constants.%InClassArgs]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.3]
-// CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.2]
+// CHECK:STDOUT:     %c.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %c: %C.2 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -747,10 +747,10 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H(%c.param_patt: %C.3) {
+// CHECK:STDOUT: fn @H(%c.param_patt: %C.2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %C.3 = name_ref c, %c
-// CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I]
+// CHECK:STDOUT:   %c.ref: %C.2 = name_ref c, %c
+// CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%X)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   %.loc6_34: %F.assoc_type.2 = specific_constant imports.%import_ref.10, @I(constants.%X) [template = constants.%elt0.2]

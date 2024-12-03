@@ -24,7 +24,7 @@ fn Main() {
 // CHECK:STDOUT:   %Echo: %Echo.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,8 +60,8 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [template = constants.%Echo]
 // CHECK:STDOUT:   %.loc16_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc16_9.2: %empty_struct_type = converted %.loc16_9.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_9.2: %empty_struct_type = converted %.loc16_9.1, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:   %Echo.call: init %empty_struct_type = call %Echo.ref(%.loc16_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

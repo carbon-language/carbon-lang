@@ -158,8 +158,8 @@ fn Run() {
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_1.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %struct.1: %Base = struct_value (%int_0.2, %int_1.2) [template]
-// CHECK:STDOUT:   %struct.2: %Child = struct_value (%struct.1) [template]
+// CHECK:STDOUT:   %Base.val: %Base = struct_value (%int_0.2, %int_1.2) [template]
+// CHECK:STDOUT:   %Child.val: %Child = struct_value (%Base.val) [template]
 // CHECK:STDOUT:   %Base.elt: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_2.1, %Convert.14 [template]
@@ -243,10 +243,10 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_47.7: init %i32 = converted %int_1, %int.convert_checked.loc7_47.2 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc7_47.8: ref %i32 = class_element_access %.loc7_48.2, element1
 // CHECK:STDOUT:   %.loc7_47.9: init %i32 = initialize_from %.loc7_47.7 to %.loc7_47.8 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc7_47.10: init %Base = class_init (%.loc7_47.5, %.loc7_47.9), %.loc7_48.2 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc7_48.3: init %Base = converted %.loc7_47.1, %.loc7_47.10 [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc7_48.4: init %Child = class_init (%.loc7_48.3), %a.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc7_47.10: init %Base = class_init (%.loc7_47.5, %.loc7_47.9), %.loc7_48.2 [template = constants.%Base.val]
+// CHECK:STDOUT:   %.loc7_48.3: init %Base = converted %.loc7_47.1, %.loc7_47.10 [template = constants.%Base.val]
+// CHECK:STDOUT:   %.loc7_48.4: init %Child = class_init (%.loc7_48.3), %a.var [template = constants.%Child.val]
+// CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_49
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elt = name_ref x, imports.%import_ref.7 [template = imports.%.1]

@@ -33,14 +33,14 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.2.loc22_36 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
+// CHECK:STDOUT: @Derived.val.loc22_36 = internal constant { { i32 }, i32 } { { i32 } { i32 4 }, i32 7 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ { i32 }, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_35.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc22_26.4.b = getelementptr inbounds nuw { i32 }, ptr %.loc22_35.2.base, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc22_35.6.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @struct.2.loc22_36, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @Derived.val.loc22_36, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

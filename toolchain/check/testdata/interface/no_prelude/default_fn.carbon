@@ -40,7 +40,7 @@ class C {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,8 +93,8 @@ class C {
 // CHECK:STDOUT:     %c.var: ref %C = var c
 // CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:     %.loc16_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%struct]
-// CHECK:STDOUT:     %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%struct]
+// CHECK:STDOUT:     %.loc16_19.2: init %C = class_init (), %c.var [template = constants.%C.val]
+// CHECK:STDOUT:     %.loc16_20: init %C = converted %.loc16_19.1, %.loc16_19.2 [template = constants.%C.val]
 // CHECK:STDOUT:     assign %c.var, %.loc16_20
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%I.type]

@@ -49,7 +49,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
@@ -138,8 +138,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc17_43.7: init %i32 = converted %int_2, %int.convert_checked.loc17_43.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc17_43.8: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc17_43.9: init %i32 = initialize_from %.loc17_43.7 to %.loc17_43.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_43.10: init %C = class_init (%.loc17_43.5, %.loc17_43.9), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc17_44: init %C = converted %.loc17_43.1, %.loc17_43.10 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_43.10: init %C = class_init (%.loc17_43.5, %.loc17_43.9), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc17_44: init %C = converted %.loc17_43.1, %.loc17_43.10 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %return, %.loc17_44
 // CHECK:STDOUT:   return %result to %return
 // CHECK:STDOUT: }

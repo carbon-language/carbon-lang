@@ -53,7 +53,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [template]
 // CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [template]
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -145,8 +145,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a.var: ref %C = var a
 // CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

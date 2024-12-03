@@ -28,7 +28,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -78,8 +78,8 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc19_18.2: ref %empty_tuple.type = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc19_17.2: init %empty_tuple.type = tuple_init () to %.loc19_18.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_18.3: init %empty_tuple.type = converted %.loc19_17.1, %.loc19_17.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_18.4: init %C = class_init (%.loc19_18.3), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc19_19: init %C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc19_18.4: init %C = class_init (%.loc19_18.3), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_19: init %C = converted %.loc19_18.1, %.loc19_18.4 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc19_19 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,7 +91,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc16_23.3: ref %empty_tuple.type = class_element_access %.loc16_23.2, element0
 // CHECK:STDOUT:   %.loc16_22.2: init %empty_tuple.type = tuple_init () to %.loc16_23.3 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc16_23.4: init %empty_tuple.type = converted %.loc16_22.1, %.loc16_22.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_23.5: init %C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_23.5: init %C = class_init (%.loc16_23.4), %.loc16_23.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc16_23.6: ref %C = temporary %.loc16_23.2, %.loc16_23.5
 // CHECK:STDOUT:   %.loc16_24.1: ref %C = converted %.loc16_23.1, %.loc16_23.6
 // CHECK:STDOUT:   %.loc16_24.2: %C = bind_value %.loc16_24.1

@@ -138,7 +138,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,8 +182,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_17.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%b_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%b_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_18
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
 // CHECK:STDOUT:   %.loc9: %ptr.2 = addr_of %b_val.ref
@@ -197,7 +197,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,8 +241,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_17.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%c_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%c_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_18
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
 // CHECK:STDOUT:   %.loc9: %ptr.2 = addr_of %c_val.ref
@@ -256,7 +256,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,8 +303,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
 // CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
@@ -318,7 +318,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,8 +365,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
 // CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
@@ -380,7 +380,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -431,8 +431,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
 // CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref
@@ -446,7 +446,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -497,8 +497,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
 // CHECK:STDOUT:   %.loc8: %ptr.2 = addr_of %val.ref

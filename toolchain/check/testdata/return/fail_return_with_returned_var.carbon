@@ -64,7 +64,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -166,8 +166,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc25_38.7: init %i32 = converted %int_2, %int.convert_checked.loc25_38.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc25_38.8: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc25_38.9: init %i32 = initialize_from %.loc25_38.7 to %.loc25_38.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc25_38.10: init %C = class_init (%.loc25_38.5, %.loc25_38.9), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc25_39: init %C = converted %.loc25_38.1, %.loc25_38.10 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc25_38.10: init %C = class_init (%.loc25_38.5, %.loc25_38.9), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc25_39: init %C = converted %.loc25_38.1, %.loc25_38.10 [template = constants.%C.val]
 // CHECK:STDOUT:   assign %return, %.loc25_39
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>

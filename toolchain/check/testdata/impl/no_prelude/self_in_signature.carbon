@@ -55,12 +55,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %UseSelf.facet.1: %UseSelf.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %struct.1: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %UseSelf.facet.2: %UseSelf.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.3) [template]
-// CHECK:STDOUT:   %struct.2: %D = struct_value () [template]
+// CHECK:STDOUT:   %D.val: %D = struct_value () [template]
 // CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [template]
 // CHECK:STDOUT:   %Self.2: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.2 [symbolic]
@@ -304,16 +304,16 @@ impl D as SelfNested {
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %C](%x.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20_38.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), %return [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc20_39: init %C = converted %.loc20_38.1, %.loc20_38.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc20_39: init %C = converted %.loc20_38.1, %.loc20_38.2 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc20_39 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3[%self.param_patt: %D](%x.param_patt: %D) -> %return: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_47.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), %return [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc24_48: init %D = converted %.loc24_47.1, %.loc24_47.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), %return [template = constants.%D.val]
+// CHECK:STDOUT:   %.loc24_48: init %D = converted %.loc24_47.1, %.loc24_47.2 [template = constants.%D.val]
 // CHECK:STDOUT:   return %.loc24_48 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

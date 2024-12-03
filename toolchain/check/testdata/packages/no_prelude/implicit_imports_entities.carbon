@@ -324,9 +324,9 @@ import Other library "o1";
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct.1: %C1 = struct_value () [template]
+// CHECK:STDOUT:   %C1.val: %C1 = struct_value () [template]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
-// CHECK:STDOUT:   %struct.2: %C2 = struct_value () [template]
+// CHECK:STDOUT:   %C2.val: %C2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -370,12 +370,12 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc6_16: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [template = constants.%C1.val]
+// CHECK:STDOUT:   %.loc6_16: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [template = constants.%C1.val]
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_16
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_15.2: init %C2 = class_init (), file.%c2.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc7_16: init %C2 = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc7_15.2: init %C2 = class_init (), file.%c2.var [template = constants.%C2.val]
+// CHECK:STDOUT:   %.loc7_16: init %C2 = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C2.val]
 // CHECK:STDOUT:   assign file.%c2.var, %.loc7_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -399,7 +399,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C1 = struct_value () [template]
+// CHECK:STDOUT:   %C1.val: %C1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -429,8 +429,8 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_15.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_16: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [template = constants.%C1.val]
+// CHECK:STDOUT:   %.loc6_16: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [template = constants.%C1.val]
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -457,7 +457,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,8 +492,8 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc4_17: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%c.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc4_17: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -519,9 +519,9 @@ import Other library "o1";
 // CHECK:STDOUT:   %O1: type = class_type @O1 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct.1: %O1 = struct_value () [template]
+// CHECK:STDOUT:   %O1.val: %O1 = struct_value () [template]
 // CHECK:STDOUT:   %O2: type = class_type @O2 [template]
-// CHECK:STDOUT:   %struct.2: %O2 = struct_value () [template]
+// CHECK:STDOUT:   %O2.val: %O2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -573,12 +573,12 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [template = constants.%struct.1]
-// CHECK:STDOUT:   %.loc6_22: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [template = constants.%struct.1]
+// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [template = constants.%O1.val]
+// CHECK:STDOUT:   %.loc6_22: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [template = constants.%O1.val]
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_22
 // CHECK:STDOUT:   %.loc7_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_21.2: init %O2 = class_init (), file.%o2.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc7_22: init %O2 = converted %.loc7_21.1, %.loc7_21.2 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc7_21.2: init %O2 = class_init (), file.%o2.var [template = constants.%O2.val]
+// CHECK:STDOUT:   %.loc7_22: init %O2 = converted %.loc7_21.1, %.loc7_21.2 [template = constants.%O2.val]
 // CHECK:STDOUT:   assign file.%o2.var, %.loc7_22
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -604,7 +604,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %O1: type = class_type @O1 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %O1 = struct_value () [template]
+// CHECK:STDOUT:   %O1.val: %O1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -640,8 +640,8 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc6_22: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [template = constants.%O1.val]
+// CHECK:STDOUT:   %.loc6_22: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [template = constants.%O1.val]
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_22
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

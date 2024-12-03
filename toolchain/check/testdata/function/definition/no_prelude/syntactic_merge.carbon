@@ -695,7 +695,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %C = struct_value () [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -736,8 +736,8 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: fn @Foo() -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc8_26 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

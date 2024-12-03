@@ -131,7 +131,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %A = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %B [template]
 // CHECK:STDOUT: }
@@ -229,8 +229,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc9_27.7: init %i32 = converted %int_2, %int.convert_checked.loc9_27.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc9_27.8: ref %i32 = class_element_access %return, element1
 // CHECK:STDOUT:   %.loc9_27.9: init %i32 = initialize_from %.loc9_27.7 to %.loc9_27.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc9_27.10: init %A = class_init (%.loc9_27.5, %.loc9_27.9), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_28: init %A = converted %.loc9_27.1, %.loc9_27.10 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_27.10: init %A = class_init (%.loc9_27.5, %.loc9_27.9), %return [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc9_28: init %A = converted %.loc9_27.1, %.loc9_27.10 [template = constants.%A.val]
 // CHECK:STDOUT:   return %.loc9_28 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,8 +253,8 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc17_31.7: init %i32 = converted %int_2, %int.convert_checked.loc17_31.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc17_31.8: ref %i32 = class_element_access file.%a_ref.var, element1
 // CHECK:STDOUT:   %.loc17_31.9: init %i32 = initialize_from %.loc17_31.7 to %.loc17_31.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_31.10: init %A = class_init (%.loc17_31.5, %.loc17_31.9), file.%a_ref.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc17_32: init %A = converted %.loc17_31.1, %.loc17_31.10 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc17_31.10: init %A = class_init (%.loc17_31.5, %.loc17_31.9), file.%a_ref.var [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc17_32: init %A = converted %.loc17_31.1, %.loc17_31.10 [template = constants.%A.val]
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc17_32
 // CHECK:STDOUT:   %a_ref.ref.loc18: ref %A = name_ref a_ref, file.%a_ref
 // CHECK:STDOUT:   %.loc18: %A = bind_value %a_ref.ref.loc18
@@ -375,7 +375,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -447,9 +447,9 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc9_13: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_15.1: %D = as_compatible %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_15.2: %D = converted %.loc9_13, %.loc9_15.1 [template = constants.%struct]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_15.1: %D = as_compatible %empty_struct [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_15.2: %D = converted %.loc9_13, %.loc9_15.1 [template = constants.%empty_struct]
 // CHECK:STDOUT:   %d: %D = bind_name d, %.loc9_15.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -479,7 +479,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %A = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -559,7 +559,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc13_34.8: init %i32 = converted %int_2.loc13, %int.convert_checked.loc13_34.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc13_34.9: ref %i32 = class_element_access %.loc13_34.4, element1
 // CHECK:STDOUT:   %.loc13_34.10: init %i32 = initialize_from %.loc13_34.8 to %.loc13_34.9 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_34.11: init %A = class_init (%.loc13_34.6, %.loc13_34.10), %.loc13_34.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_34.11: init %A = class_init (%.loc13_34.6, %.loc13_34.10), %.loc13_34.4 [template = constants.%A.val]
 // CHECK:STDOUT:   %.loc13_34.12: ref %A = temporary %.loc13_34.4, %.loc13_34.11
 // CHECK:STDOUT:   %.loc13_36: ref %A = converted %.loc13_34.1, %.loc13_34.12
 // CHECK:STDOUT:   %B.ref.loc13: type = name_ref B, file.%B.decl [template = constants.%B]
@@ -586,7 +586,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc24_33.8: init %i32 = converted %int_2.loc24, %int.convert_checked.loc24_33.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc24_33.9: ref %i32 = class_element_access %.loc24_33.4, element1
 // CHECK:STDOUT:   %.loc24_33.10: init %i32 = initialize_from %.loc24_33.8 to %.loc24_33.9 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc24_33.11: init %A = class_init (%.loc24_33.6, %.loc24_33.10), %.loc24_33.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc24_33.11: init %A = class_init (%.loc24_33.6, %.loc24_33.10), %.loc24_33.4 [template = constants.%A.val]
 // CHECK:STDOUT:   %.loc24_33.12: ref %A = temporary %.loc24_33.4, %.loc24_33.11
 // CHECK:STDOUT:   %.loc24_35: ref %A = converted %.loc24_33.1, %.loc24_33.12
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, file.%B.decl [template = constants.%B]

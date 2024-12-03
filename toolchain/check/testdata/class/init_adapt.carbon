@@ -116,7 +116,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [template]
@@ -229,7 +229,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.8: init %i32 = converted %int_2, %int.convert_checked.loc13_27.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc13_27.9: ref %i32 = class_element_access %.loc13_27.4, element1
 // CHECK:STDOUT:   %.loc13_27.10: init %i32 = initialize_from %.loc13_27.8 to %.loc13_27.9 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_27.11: init %C = class_init (%.loc13_27.6, %.loc13_27.10), %.loc13_27.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_27.11: init %C = class_init (%.loc13_27.6, %.loc13_27.10), %.loc13_27.4 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.12: ref %C = temporary %.loc13_27.4, %.loc13_27.11
 // CHECK:STDOUT:   %.loc13_28.1: ref %C = converted %.loc13_27.1, %.loc13_27.12
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1
@@ -286,7 +286,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%int_1.2, %int_2.2) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [template]
 // CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeAdaptC.type: type = fn_type @MakeAdaptC [template]
@@ -399,7 +399,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.8: init %i32 = converted %int_2, %int.convert_checked.loc13_27.2 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc13_27.9: ref %i32 = class_element_access %.loc13_27.4, element1
 // CHECK:STDOUT:   %.loc13_27.10: init %i32 = initialize_from %.loc13_27.8 to %.loc13_27.9 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_27.11: init %C = class_init (%.loc13_27.6, %.loc13_27.10), %.loc13_27.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc13_27.11: init %C = class_init (%.loc13_27.6, %.loc13_27.10), %.loc13_27.4 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_27.12: ref %C = temporary %.loc13_27.4, %.loc13_27.11
 // CHECK:STDOUT:   %.loc13_28.1: ref %C = converted %.loc13_27.1, %.loc13_27.12
 // CHECK:STDOUT:   %.loc13_28.2: %C = bind_value %.loc13_28.1

@@ -17,7 +17,7 @@ var a: A = {};
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %A = struct_value () [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,8 +51,8 @@ var a: A = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_14: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc12_14: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%A.val]
 // CHECK:STDOUT:   assign file.%a.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

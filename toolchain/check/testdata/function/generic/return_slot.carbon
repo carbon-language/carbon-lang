@@ -27,8 +27,8 @@ fn G() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Wrap.type: type = generic_class_type @Wrap [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Wrap.1: %Wrap.type = struct_value () [template]
-// CHECK:STDOUT:   %Wrap.2: type = class_type @Wrap, @Wrap(%T) [symbolic]
+// CHECK:STDOUT:   %Wrap.generic: %Wrap.type = struct_value () [template]
+// CHECK:STDOUT:   %Wrap.1: type = class_type @Wrap, @Wrap(%T) [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make, @Wrap(%T) [symbolic]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -46,15 +46,15 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.arr.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %Wrap.3: type = class_type @Wrap, @Wrap(%i32) [template]
+// CHECK:STDOUT:   %Wrap.2: type = class_type @Wrap, @Wrap(%i32) [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make, @Wrap(%i32) [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn.2: <specific function> = specific_function %Make.2, @Make(%i32) [template]
-// CHECK:STDOUT:   %Wrap.4: type = class_type @Wrap, @Wrap(%empty_tuple.type) [template]
+// CHECK:STDOUT:   %Wrap.3: type = class_type @Wrap, @Wrap(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %Make.type.3: type = fn_type @Make, @Wrap(%empty_tuple.type) [template]
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn.3: <specific function> = specific_function %Make.3, @Make(%empty_tuple.type) [template]
-// CHECK:STDOUT:   %Wrap.5: type = class_type @Wrap, @Wrap(%C) [template]
+// CHECK:STDOUT:   %Wrap.4: type = class_type @Wrap, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.type.4: type = fn_type @Make, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.4: %Make.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn.4: <specific function> = specific_function %Make.4, @Make(%C) [template]
@@ -76,7 +76,7 @@ fn G() {
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [template = constants.%Wrap.1] {
+// CHECK:STDOUT:   %Wrap.decl: %Wrap.type = class_decl @Wrap [template = constants.%Wrap.generic] {
 // CHECK:STDOUT:     %T.patt.loc11_12.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc11_12.1, runtime_param<invalid> [symbolic = %T.patt.loc11_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -107,7 +107,7 @@ fn G() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Wrap.2
+// CHECK:STDOUT:     .Self = constants.%Wrap.1
 // CHECK:STDOUT:     .Make = %Make.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
@@ -157,12 +157,12 @@ fn G() {
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_signed.loc18_10, %.loc18_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.generic]
 // CHECK:STDOUT:   %int_32.loc18_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc18_21: init type = call constants.%Int(%int_32.loc18_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_24.1: type = value_of_initializer %int.make_type_signed.loc18_21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_24.2: type = converted %int.make_type_signed.loc18_21, %.loc18_24.1 [template = constants.%i32]
-// CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(constants.%i32) [template = constants.%Wrap.3]
+// CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(constants.%i32) [template = constants.%Wrap.2]
 // CHECK:STDOUT:   %.loc18_25: %Make.type.2 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%i32) [template = constants.%Make.2]
 // CHECK:STDOUT:   %Make.ref.loc18: %Make.type.2 = name_ref Make, %.loc18_25 [template = constants.%Make.2]
 // CHECK:STDOUT:   %Make.specific_fn.loc18: <specific function> = specific_function %Make.ref.loc18, @Make(constants.%i32) [template = constants.%Make.specific_fn.2]
@@ -172,10 +172,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc19_11.2: type = converted %.loc19_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
-// CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %Wrap.ref.loc19: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.generic]
 // CHECK:STDOUT:   %.loc19_21: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_22: type = converted %.loc19_21, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Wrap.loc19: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [template = constants.%Wrap.4]
+// CHECK:STDOUT:   %Wrap.loc19: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [template = constants.%Wrap.3]
 // CHECK:STDOUT:   %.loc19_23: %Make.type.3 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%empty_tuple.type) [template = constants.%Make.3]
 // CHECK:STDOUT:   %Make.ref.loc19: %Make.type.3 = name_ref Make, %.loc19_23 [template = constants.%Make.3]
 // CHECK:STDOUT:   %Make.specific_fn.loc19: <specific function> = specific_function %Make.ref.loc19, @Make(constants.%empty_tuple.type) [template = constants.%Make.specific_fn.3]
@@ -184,9 +184,9 @@ fn G() {
 // CHECK:STDOUT:   %C.ref.loc20_10: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
+// CHECK:STDOUT:   %Wrap.ref.loc20: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.generic]
 // CHECK:STDOUT:   %C.ref.loc20_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Wrap.loc20: type = class_type @Wrap, @Wrap(constants.%C) [template = constants.%Wrap.5]
+// CHECK:STDOUT:   %Wrap.loc20: type = class_type @Wrap, @Wrap(constants.%C) [template = constants.%Wrap.4]
 // CHECK:STDOUT:   %.loc20_21: %Make.type.4 = specific_constant @Wrap.%Make.decl, @Wrap(constants.%C) [template = constants.%Make.4]
 // CHECK:STDOUT:   %Make.ref.loc20: %Make.type.4 = name_ref Make, %.loc20_21 [template = constants.%Make.4]
 // CHECK:STDOUT:   %Make.specific_fn.loc20: <specific function> = specific_function %Make.ref.loc20, @Make(constants.%C) [template = constants.%Make.specific_fn.4]

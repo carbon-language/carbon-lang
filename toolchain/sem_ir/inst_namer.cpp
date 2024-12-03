@@ -693,19 +693,29 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(StructValue inst): {
         if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(inst.type_id)) {
           add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id);
+        } else if (auto class_ty =
+                       sem_ir_.types().TryGetAs<ClassType>(inst.type_id)) {
+          add_inst_name_id(sem_ir_.classes().Get(class_ty->class_id).name_id,
+                           ".val");
         } else if (auto generic_class_ty =
                        sem_ir_.types().TryGetAs<GenericClassType>(
                            inst.type_id)) {
           add_inst_name_id(
-              sem_ir_.classes().Get(generic_class_ty->class_id).name_id);
+              sem_ir_.classes().Get(generic_class_ty->class_id).name_id,
+              ".generic");
         } else if (auto generic_interface_ty =
                        sem_ir_.types().TryGetAs<GenericInterfaceType>(
                            inst.type_id)) {
           add_inst_name_id(sem_ir_.interfaces()
                                .Get(generic_interface_ty->interface_id)
-                               .name_id);
+                               .name_id,
+                           ".generic");
         } else {
-          add_inst_name("struct");
+          if (sem_ir_.inst_blocks().Get(inst.elements_id).empty()) {
+            add_inst_name("empty_struct");
+          } else {
+            add_inst_name("struct");
+          }
         }
         continue;
       }

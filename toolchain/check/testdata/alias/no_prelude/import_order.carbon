@@ -79,7 +79,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,8 +135,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc7_24.2: ref %empty_tuple.type = class_element_access file.%d_val.var, element0
 // CHECK:STDOUT:   %.loc7_23.2: init %empty_tuple.type = tuple_init () to %.loc7_24.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.3: init %empty_tuple.type = converted %.loc7_23.1, %.loc7_23.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_24.4: init %C = class_init (%.loc7_24.3), file.%d_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc7_25: init %C = converted %.loc7_24.1, %.loc7_24.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc7_24.4: init %C = class_init (%.loc7_24.3), file.%d_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_25: init %C = converted %.loc7_24.1, %.loc7_24.4 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%d_val.var, %.loc7_25
 // CHECK:STDOUT:   %d_val.ref: ref %C = name_ref d_val, file.%d_val
 // CHECK:STDOUT:   %v.ref.loc8: %C.elt = name_ref v, imports.%import_ref.8 [template = imports.%.1]
@@ -145,8 +145,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc8_29.2: ref %empty_tuple.type = class_element_access file.%c_val.var, element0
 // CHECK:STDOUT:   %.loc8_27.2: init %empty_tuple.type = tuple_init () to %.loc8_29.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_29.3: init %empty_tuple.type = converted %.loc8_27.1, %.loc8_27.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_29.4: init %C = class_init (%.loc8_29.3), file.%c_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc8_30: init %C = converted %.loc8_29.1, %.loc8_29.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc8_29.4: init %C = class_init (%.loc8_29.3), file.%c_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_30: init %C = converted %.loc8_29.1, %.loc8_29.4 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_30
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
 // CHECK:STDOUT:   %v.ref.loc9: %C.elt = name_ref v, imports.%import_ref.8 [template = imports.%.1]
@@ -155,8 +155,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc9_29.2: ref %empty_tuple.type = class_element_access file.%b_val.var, element0
 // CHECK:STDOUT:   %.loc9_27.2: init %empty_tuple.type = tuple_init () to %.loc9_29.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_29.3: init %empty_tuple.type = converted %.loc9_27.1, %.loc9_27.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc9_29.4: init %C = class_init (%.loc9_29.3), file.%b_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_30: init %C = converted %.loc9_29.1, %.loc9_29.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_29.4: init %C = class_init (%.loc9_29.3), file.%b_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc9_30: init %C = converted %.loc9_29.1, %.loc9_29.4 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc9_30
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
 // CHECK:STDOUT:   %v.ref.loc10: %C.elt = name_ref v, imports.%import_ref.8 [template = imports.%.1]
@@ -165,8 +165,8 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc10_29.2: ref %empty_tuple.type = class_element_access file.%a_val.var, element0
 // CHECK:STDOUT:   %.loc10_27.2: init %empty_tuple.type = tuple_init () to %.loc10_29.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_29.3: init %empty_tuple.type = converted %.loc10_27.1, %.loc10_27.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_29.4: init %C = class_init (%.loc10_29.3), file.%a_val.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc10_30: init %C = converted %.loc10_29.1, %.loc10_29.4 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc10_29.4: init %C = class_init (%.loc10_29.3), file.%a_val.var [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc10_30: init %C = converted %.loc10_29.1, %.loc10_29.4 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%a_val.var, %.loc10_30
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

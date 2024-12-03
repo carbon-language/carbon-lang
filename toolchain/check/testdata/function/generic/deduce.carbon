@@ -519,7 +519,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced.type: type = fn_type @CallExplicitAndAlsoDeduced [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced: %CallExplicitAndAlsoDeduced.type = struct_value () [template]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.2: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%A) [template]
-// CHECK:STDOUT:   %struct: %A = struct_value () [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -603,7 +603,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %.loc11_37.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn: <specific function> = specific_function %ExplicitAndAlsoDeduced.ref, @ExplicitAndAlsoDeduced(constants.%A) [template = constants.%ExplicitAndAlsoDeduced.specific_fn.2]
 // CHECK:STDOUT:   %.loc11_37.2: ref %A = temporary_storage
-// CHECK:STDOUT:   %.loc11_37.3: init %A = class_init (), %.loc11_37.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_37.3: init %A = class_init (), %.loc11_37.2 [template = constants.%A.val]
 // CHECK:STDOUT:   %.loc11_37.4: ref %A = temporary %.loc11_37.2, %.loc11_37.3
 // CHECK:STDOUT:   %.loc11_37.5: ref %A = converted %.loc11_37.1, %.loc11_37.4
 // CHECK:STDOUT:   %.loc11_37.6: %A = bind_value %.loc11_37.5

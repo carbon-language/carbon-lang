@@ -139,7 +139,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -177,8 +177,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc4_8.2 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_41: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc4_42: %empty_struct_type = converted %.loc4_41, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_42: %empty_struct_type = converted %.loc4_41, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:     return %.loc4_42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -356,7 +356,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
 // CHECK:STDOUT: }
@@ -404,8 +404,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc7_13.2 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc7_46: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc7_47: %empty_struct_type = converted %.loc7_46, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc7_47: %empty_struct_type = converted %.loc7_46, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:     return %.loc7_47
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -447,7 +447,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -501,8 +501,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   fn[%T.param_patt: type](%N.param_patt: @Int.%T.loc6_10.1 (%T)) -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc6_43: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %struct: %empty_struct_type = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:     %.loc6_44: %empty_struct_type = converted %.loc6_43, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc6_44: %empty_struct_type = converted %.loc6_43, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:     return %.loc6_44
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
