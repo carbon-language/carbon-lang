@@ -202,15 +202,12 @@ static auto GetPhase(EvalContext& eval_context, SemIR::ConstantId constant_id)
     return Phase::UnknownDueToError;
   } else if (constant_id.is_template()) {
     return Phase::Template;
+  } else if (eval_context.constant_values().DependsOnGenericParameter(
+                 constant_id)) {
+    return Phase::Symbolic;
   } else {
     CARBON_CHECK(constant_id.is_symbolic());
-    if (eval_context.constant_values()
-            .GetSymbolicConstant(constant_id)
-            .period_self) {
-      return Phase::PeriodSelfSymbolic;
-    } else {
-      return Phase::Symbolic;
-    }
+    return Phase::PeriodSelfSymbolic;
   }
 }
 

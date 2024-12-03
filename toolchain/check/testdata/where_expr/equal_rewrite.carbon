@@ -1138,11 +1138,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%import_ref.2 [template = constants.%Equal]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc22: %N_where.type = converted %bool.make_type, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: %N_where.type = converted %bool.make_type, <error> [template = <error>]
 // CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
-// CHECK:STDOUT:   %.loc35_17: Core.IntLiteral = int_value 32 [template = constants.%.29]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc35_17) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc35_20: %A_where.type.2 = converted %int.make_type_signed, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc32_17: Core.IntLiteral = int_value 32 [template = constants.%.29]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc32_17) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc32_20: %A_where.type.2 = converted %int.make_type_signed, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1203,19 +1203,19 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [template = constants.%RewriteTypeMismatch] {
-// CHECK:STDOUT:     %X.patt.loc21_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc21_24.1, runtime_param<invalid> [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc16_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<invalid> [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc21_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
-// CHECK:STDOUT:     %.loc21_36.2: type = interface_witness_access %.loc21_36.1, element0 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc21_46.1: Core.IntLiteral = int_value 2 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc21_46.2: type = converted %.loc21_46.1, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc21_30: type = where_expr %.Self [template = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %.loc21_36.2, <error>
+// CHECK:STDOUT:     %.loc16_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc16_36.2: type = interface_witness_access %.loc16_36.1, element0 [symbolic = constants.%.4]
+// CHECK:STDOUT:     %.loc16_46.1: Core.IntLiteral = int_value 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc16_46.2: type = converted %.loc16_46.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc16_30: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %.loc16_36.2, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %X: <error> = bind_symbolic_name X, 0, %X.param [template = <error>]
@@ -1226,25 +1226,21 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
 // CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
-// CHECK:STDOUT:   %J.ref: <error> = name_ref J, <error> [template = <error>]
-// CHECK:STDOUT:   %Second: <error> = assoc_const_decl Second [template]
-// CHECK:STDOUT:   %.loc10: <error> = assoc_entity element1, %Second [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Member = %.loc5
-// CHECK:STDOUT:   .Second = %.loc10
-// CHECK:STDOUT:   witness = (%Member, %Second)
+// CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X: <error>) {
-// CHECK:STDOUT:   %X.patt.loc21_24.2: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt.loc16_24.2: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%X.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RewriteTypeMismatch(<error>) {
-// CHECK:STDOUT:   %X.patt.loc21_24.2 => <error>
+// CHECK:STDOUT:   %X.patt.loc16_24.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_let.carbon
