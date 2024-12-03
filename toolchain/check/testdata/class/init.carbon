@@ -33,7 +33,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.2: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Class, %.2 [template]
 // CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %.2} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %struct_type.n.next [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [template]
@@ -113,13 +113,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %.loc13_18: type = ptr_type %Class [template = constants.%.2]
 // CHECK:STDOUT:   %.loc13_11: %.3 = field_decl next, element1 [template]
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %struct_type.n.next [template = constants.%.4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT:   .next = %.loc13_11
-// CHECK:STDOUT:   complete_type_witness = %.loc14
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %.2) -> %return: %Class {

@@ -33,10 +33,10 @@ fn Initializing() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [template]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %X [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %X [template]
 // CHECK:STDOUT:   %Reference.type: type = fn_type @Reference [template]
 // CHECK:STDOUT:   %Reference: %Reference.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -72,13 +72,13 @@ fn Initializing() {
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
-// CHECK:STDOUT:     %p.patt: %.3 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.3 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %.2 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %.2 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.3]
-// CHECK:STDOUT:     %p.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
+// CHECK:STDOUT:     %.loc21: type = ptr_type %X [template = constants.%.2]
+// CHECK:STDOUT:     %p.param: %.2 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %.2 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
@@ -92,11 +92,11 @@ fn Initializing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc15: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   complete_type_witness = %.loc15
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Value(%n.param_patt: %X) {
@@ -108,15 +108,15 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.param_patt: %.3) {
+// CHECK:STDOUT: fn @Reference(%p.param_patt: %.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc22_10: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.3]
-// CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
+// CHECK:STDOUT:   %.loc22_11: type = ptr_type %X [template = constants.%.2]
+// CHECK:STDOUT:   %p.ref: %.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_17: ref %X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc22_23: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc22_15: %.3 = addr_of %.loc22_17
-// CHECK:STDOUT:   %q: %.3 = bind_name q, %.loc22_15
+// CHECK:STDOUT:   %.loc22_15: %.2 = addr_of %.loc22_17
+// CHECK:STDOUT:   %q: %.2 = bind_name q, %.loc22_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

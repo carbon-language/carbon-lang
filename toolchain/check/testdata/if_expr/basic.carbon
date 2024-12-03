@@ -31,9 +31,9 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.26: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.27: <bound method> = bound_method %int.0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.28: <specific function> = specific_function %.27, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %.18: <bound method> = bound_method %int.0.1, %Convert.14 [template]
+// CHECK:STDOUT:   %.19: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.1 = tuple_value (%int.0.2) [template]
 // CHECK:STDOUT: }
@@ -102,9 +102,9 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
 // CHECK:STDOUT:   %int.0.loc12_22: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:   %.loc12_24.1: %tuple.type = tuple_literal (%int.0.loc12_22)
-// CHECK:STDOUT:   %.loc12_24.2: %Convert.type.2 = interface_witness_access constants.%.26, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc12_24.3: <bound method> = bound_method %int.0.loc12_22, %.loc12_24.2 [template = constants.%.27]
-// CHECK:STDOUT:   %.loc12_24.4: <specific function> = specific_function %.loc12_24.3, @Convert.2(constants.%int.32) [template = constants.%.28]
+// CHECK:STDOUT:   %.loc12_24.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc12_24.3: <bound method> = bound_method %int.0.loc12_22, %.loc12_24.2 [template = constants.%.18]
+// CHECK:STDOUT:   %.loc12_24.4: <specific function> = specific_function %.loc12_24.3, @Convert.2(constants.%int.32) [template = constants.%.19]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc12_24.4(%int.0.loc12_22) [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc12_24.5: init %i32 = converted %int.0.loc12_22, %int.convert_checked [template = constants.%int.0.2]
 // CHECK:STDOUT:   %int.0.loc12_24: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]

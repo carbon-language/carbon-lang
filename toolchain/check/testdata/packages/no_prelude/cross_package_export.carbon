@@ -198,7 +198,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -212,12 +212,12 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %.1 = field_decl x, element0 [template]
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %struct_type.x [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .x = %.loc5_8
-// CHECK:STDOUT:   complete_type_witness = %.loc6
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
@@ -284,12 +284,12 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -315,12 +315,12 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -346,12 +346,12 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst+10, unloaded
 // CHECK:STDOUT: }
@@ -377,7 +377,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -389,7 +389,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -432,7 +432,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -445,7 +445,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -488,7 +488,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -501,7 +501,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, inst+9, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst+2, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, inst+7, unloaded
 // CHECK:STDOUT: }
@@ -544,7 +544,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -555,7 +555,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst+10, unloaded
 // CHECK:STDOUT: }
@@ -598,7 +598,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -610,7 +610,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst+10, unloaded
 // CHECK:STDOUT: }
@@ -653,7 +653,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -664,7 +664,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name_indirect, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name_indirect, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name_indirect, inst+10, unloaded
 // CHECK:STDOUT: }
@@ -707,7 +707,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
@@ -724,7 +724,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst+10, unloaded
 // CHECK:STDOUT: }
@@ -830,7 +830,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -840,7 +840,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, inst+11, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst+8, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst+10, unloaded
 // CHECK:STDOUT: }

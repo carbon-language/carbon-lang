@@ -99,7 +99,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -153,11 +153,11 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc37: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   complete_type_witness = %.loc37
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnCUnused() -> %C;
@@ -191,7 +191,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -204,7 +204,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//incomplete_return, inst+27, loaded [template = constants.%ReturnDUnused]
 // CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//incomplete_return, inst+35, loaded [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//incomplete_return, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//incomplete_return, inst+48, loaded [template = constants.%.1]
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//incomplete_return, inst+48, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//incomplete_return, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

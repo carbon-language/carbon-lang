@@ -141,11 +141,11 @@ class C {
 // CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template = constants.%int.100]
 // CHECK:STDOUT:   %.loc12: type = converted %int.100, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error> [template]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
-// CHECK:STDOUT:   complete_type_witness = %.loc13
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
@@ -194,12 +194,12 @@ class C {
 // CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template = constants.%int.100]
 // CHECK:STDOUT:   %.loc12: type = converted %int.100, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error> [template]
-// CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Bad
 // CHECK:STDOUT:   extend <error>
-// CHECK:STDOUT:   complete_type_witness = %.loc13
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use(%b.param_patt: %Bad) {
@@ -215,7 +215,7 @@ class C {
 // CHECK:STDOUT:   %MultipleAdapts: type = class_type @MultipleAdapts [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_tuple.type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template]
 // CHECK:STDOUT:   %MultipleAdaptsSameType: type = class_type @MultipleAdaptsSameType [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,11 +242,11 @@ class C {
 // CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   adapt_decl %.loc5_11 [template]
 // CHECK:STDOUT:   %.loc13: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %empty_tuple.type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MultipleAdapts
-// CHECK:STDOUT:   complete_type_witness = %.loc14
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MultipleAdaptsSameType {
@@ -254,11 +254,11 @@ class C {
 // CHECK:STDOUT:   %.loc17_11: type = converted %.loc17_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   adapt_decl %.loc17_11 [template]
 // CHECK:STDOUT:   %.loc25: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc26: <witness> = complete_type_witness %empty_tuple.type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MultipleAdaptsSameType
-// CHECK:STDOUT:   complete_type_witness = %.loc26
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_scope.carbon
@@ -270,7 +270,7 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I.2> [template]
 // CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -312,11 +312,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%I.type.2] {} {}
-// CHECK:STDOUT:   %.loc25: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .I = %I.decl
-// CHECK:STDOUT:   complete_type_witness = %.loc25
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

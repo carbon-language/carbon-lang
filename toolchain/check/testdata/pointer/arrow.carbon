@@ -33,7 +33,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %.1: type = ptr_type %C [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.field [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -76,13 +76,13 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc13_15: type = ptr_type %C [template = constants.%.1]
 // CHECK:STDOUT:   %.loc13_12: %.2 = field_decl field, element0 [template]
-// CHECK:STDOUT:   %.loc14: <witness> = complete_type_witness %struct_type.field [template = constants.%.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %Member.decl
 // CHECK:STDOUT:   .field = %.loc13_12
-// CHECK:STDOUT:   complete_type_witness = %.loc14
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Member[%self.param_patt: %C]();

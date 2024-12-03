@@ -35,14 +35,14 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%T, %X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%I.type, %Self) [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -50,8 +50,8 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(type, %i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: %I.type = facet_value %i32, %i32 [template]
-// CHECK:STDOUT:   %C.5: type = class_type @C, @C(%I.type, %.4) [template]
+// CHECK:STDOUT:   %.3: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %C.5: type = class_type @C, @C(%I.type, %.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,7 +103,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param: @F.1.%C.loc14_17.1 (%C.3) = value_param runtime_param0
 // CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.3) = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: %.2 = assoc_entity element0, %F.decl [template = constants.%.3]
+// CHECK:STDOUT:   %.loc14: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -123,11 +123,11 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param: %C.4 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C.4 = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_15: <witness> = interface_witness (<error>) [template = <error>]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %.loc17_15
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc11_9.1: type, %X.loc11_19.1: @C.%T.loc11_9.2 (%T)) {
@@ -139,11 +139,11 @@ impl i32 as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
-// CHECK:STDOUT:     complete_type_witness = %.loc11
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,15 +189,15 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.4) {
-// CHECK:STDOUT:   %Self => constants.%.4
+// CHECK:STDOUT: specific @F.1(constants.%.3) {
+// CHECK:STDOUT:   %Self => constants.%.3
 // CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%I.type, constants.%.4) {
+// CHECK:STDOUT: specific @C(constants.%I.type, constants.%.3) {
 // CHECK:STDOUT:   %T.loc11_9.2 => constants.%I.type
 // CHECK:STDOUT:   %T.patt.loc11_9.2 => constants.%I.type
-// CHECK:STDOUT:   %X.loc11_19.2 => constants.%.4
-// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%.4
+// CHECK:STDOUT:   %X.loc11_19.2 => constants.%.3
+// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

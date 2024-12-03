@@ -39,7 +39,7 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %.1} [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Cycle, %struct_type.b [template]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.c [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,12 +70,12 @@ fn Run() {
 // CHECK:STDOUT:   %.loc10_20: type = ptr_type %Cycle [template = constants.%.1]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %.1} [template = constants.%struct_type.b]
 // CHECK:STDOUT:   %.loc10_8: %.2 = field_decl c, element0 [template]
-// CHECK:STDOUT:   %.loc11: <witness> = complete_type_witness %struct_type.c [template = constants.%.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .c = %.loc10_8
-// CHECK:STDOUT:   complete_type_witness = %.loc11
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -87,8 +87,8 @@ fn Run() {
 // CHECK:STDOUT:   %.1: type = ptr_type %Cycle [template]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %.1} [template]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.c [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %Cycle, %struct_type.b [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Cycle, %struct_type.b [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -98,9 +98,9 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+19, loaded [template = constants.%.2]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+19, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.5: %.4 = import_ref Main//a, inst+17, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.5: %.3 = import_ref Main//a, inst+17, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -130,7 +130,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_12.1: ref %.1 = struct_access %a.ref.loc7_11, element0
 // CHECK:STDOUT:   %.loc7_12.2: %.1 = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
-// CHECK:STDOUT:   %c.ref: %.4 = name_ref c, imports.%import_ref.5 [template = imports.%.1]
+// CHECK:STDOUT:   %c.ref: %.3 = name_ref c, imports.%import_ref.5 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_15: ref %struct_type.b = class_element_access %.loc7_10, element0
 // CHECK:STDOUT:   %.loc7_17.1: ref %.1 = struct_access %.loc7_15, element0
 // CHECK:STDOUT:   %.loc7_17.2: %.1 = bind_value %.loc7_17.1

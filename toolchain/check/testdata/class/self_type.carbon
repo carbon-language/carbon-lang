@@ -37,7 +37,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %Class, %.1 [template]
 // CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %.1} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %struct_type.p [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,14 +101,14 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %.loc18_14: type = ptr_type %Class [template = constants.%.1]
 // CHECK:STDOUT:   %.loc18_8: %.2 = field_decl p, element0 [template]
-// CHECK:STDOUT:   %.loc19: <witness> = complete_type_witness %struct_type.p [template = constants.%.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Make = %Make.decl
 // CHECK:STDOUT:   .p = %.loc18_8
-// CHECK:STDOUT:   complete_type_witness = %.loc19
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {

@@ -68,10 +68,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %.3: <specific function> = specific_function %Function, @Function(%.2) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %CallSpecific.type: type = fn_type @CallSpecific [template]
 // CHECK:STDOUT:   %CallSpecific: %CallSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: <specific function> = specific_function %Function, @Function(%C) [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %Function, @Function(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -152,11 +152,11 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %empty_struct_type [template = constants.%.4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %.loc16
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Function(%T.loc4_13.1: type) {
@@ -219,7 +219,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc18_23.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Function.call: init %C = call %.loc19(%x.ref) to %.loc18_23.2
 // CHECK:STDOUT:   return %Function.call to %return
@@ -283,10 +283,10 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %.3: <specific function> = specific_function %Function, @Function(%.2) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %CallSpecific.type: type = fn_type @CallSpecific [template]
 // CHECK:STDOUT:   %CallSpecific: %CallSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: <specific function> = specific_function %Function, @Function(%C) [template]
+// CHECK:STDOUT:   %.5: <specific function> = specific_function %Function, @Function(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -367,11 +367,11 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness %empty_struct_type [template = constants.%.4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   complete_type_witness = %.loc16
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Function(%T.loc4_13.1: type) {
@@ -430,7 +430,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.6]
+// CHECK:STDOUT:   %.loc19: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%.5]
 // CHECK:STDOUT:   %.loc18_23.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Function.call: init %C = call %.loc19(%x.ref) to %.loc18_23.2
 // CHECK:STDOUT:   return %Function.call to %return

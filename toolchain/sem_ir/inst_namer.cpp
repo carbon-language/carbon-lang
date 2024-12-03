@@ -465,6 +465,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(sem_ir_.classes().Get(inst.class_id).name_id);
         continue;
       }
+      case CompleteTypeWitness::Kind: {
+        // TODO: Can we figure out the name of the type this is a witness for?
+        add_inst_name("complete_type");
+        continue;
+      }
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_.facet_types().Get(inst.facet_type_id);
@@ -522,7 +527,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         } else {
           add_inst_name("default.import");
         }
-        break;
+        continue;
       }
       case ImportRefUnloaded::Kind:
       case ImportRefLoaded::Kind: {
@@ -547,6 +552,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(interface_scope_id,
                             interface_info.pattern_block_id);
         CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
+        continue;
+      }
+      case InterfaceWitness::Kind: {
+        // TODO: Include name of interface.
+        add_inst_name("interface");
         continue;
       }
       case CARBON_KIND(IntType inst): {
@@ -580,11 +590,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(
             SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
             ".param_patt");
-        break;
+        continue;
       }
       case InstKind::ReturnSlotPattern: {
         add_inst_name_id(NameId::ReturnSlot, ".patt");
-        break;
+        continue;
       }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);

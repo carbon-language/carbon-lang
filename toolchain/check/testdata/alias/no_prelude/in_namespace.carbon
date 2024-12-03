@@ -26,7 +26,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.v [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %struct: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -63,12 +63,12 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   %.loc11_19.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc11_16: %.1 = field_decl v, element0 [template]
-// CHECK:STDOUT:   %.loc11_22: <witness> = complete_type_witness %struct_type.v [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .v = %.loc11_16
-// CHECK:STDOUT:   complete_type_witness = %.loc11_22
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %C {

@@ -88,7 +88,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T.4: %L.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.4: %L.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.4: type = facet_access_type %T.4 [symbolic]
-// CHECK:STDOUT:   %.5: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -282,10 +282,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc18_36: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %.loc18_36
+// CHECK:STDOUT:     witness = %interface
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,10 +297,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc19_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc19_36: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %.loc19_36
+// CHECK:STDOUT:     witness = %interface
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,10 +312,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc20_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc20_36: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %.loc20_36
+// CHECK:STDOUT:     witness = %interface
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,10 +327,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc21_21.2 as %Interface.ref {
-// CHECK:STDOUT:     %.loc21_36: <witness> = interface_witness () [template = constants.%.5]
+// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %.loc21_36
+// CHECK:STDOUT:     witness = %interface
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -468,7 +468,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [template]
@@ -506,17 +506,17 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %I.ref {
-// CHECK:STDOUT:   %.loc13: <witness> = interface_witness () [template = constants.%.1]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc13
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc14_12 as %I.ref {
-// CHECK:STDOUT:   %.loc14_20: <witness> = interface_witness () [template = constants.%.1]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %.loc14_20
+// CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;

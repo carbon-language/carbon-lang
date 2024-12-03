@@ -50,7 +50,7 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NoParams: type = class_type @NoParams [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %EmptyParams.type: type = generic_class_type @EmptyParams [template]
 // CHECK:STDOUT:   %EmptyParams.1: %EmptyParams.type = struct_value () [template]
 // CHECK:STDOUT:   %EmptyParams.2: type = class_type @EmptyParams [template]
@@ -85,19 +85,19 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoParams {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NoParams
-// CHECK:STDOUT:   complete_type_witness = %.loc4
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @EmptyParams {
-// CHECK:STDOUT:   %.loc5: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%EmptyParams.2
-// CHECK:STDOUT:   complete_type_witness = %.loc5
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -122,18 +122,18 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Inner.1: %Inner.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.2: type = class_type @Inner, @Inner(%T, %U) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %empty_struct_type [template]
-// CHECK:STDOUT:   %Outer.3: type = class_type @Outer, @Outer(%.2) [template]
-// CHECK:STDOUT:   %Inner.type.2: type = generic_class_type @Inner, @Outer(%.2) [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %.1: type = ptr_type %empty_struct_type [template]
+// CHECK:STDOUT:   %Outer.3: type = class_type @Outer, @Outer(%.1) [template]
+// CHECK:STDOUT:   %Inner.type.2: type = generic_class_type @Inner, @Outer(%.1) [template]
 // CHECK:STDOUT:   %Inner.3: %Inner.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %struct_type.a [template]
-// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.2, %.3) [template]
+// CHECK:STDOUT:   %.2: type = ptr_type %struct_type.a [template]
+// CHECK:STDOUT:   %Inner.4: type = class_type @Inner, @Inner(%.1, %.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,24 +163,24 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %Outer.ref.loc9: %Outer.type = name_ref Outer, %Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:   %.loc9_15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_16.1: type = converted %.loc9_15, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc9_16.2: type = ptr_type %empty_struct_type [template = constants.%.2]
-// CHECK:STDOUT:   %Outer.loc9: type = class_type @Outer, @Outer(constants.%.2) [template = constants.%Outer.3]
+// CHECK:STDOUT:   %.loc9_16.2: type = ptr_type %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %Outer.loc9: type = class_type @Outer, @Outer(constants.%.1) [template = constants.%Outer.3]
 // CHECK:STDOUT:   %v.var: ref %Outer.3 = var v
 // CHECK:STDOUT:   %v: ref %Outer.3 = bind_name v, %v.var
 // CHECK:STDOUT:   %Outer.ref.loc18: %Outer.type = name_ref Outer, %Outer.decl [template = constants.%Outer.1]
 // CHECK:STDOUT:   %.loc18_15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc18_16.1: type = converted %.loc18_15, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc18_16.2: type = ptr_type %empty_struct_type [template = constants.%.2]
-// CHECK:STDOUT:   %Outer.loc18: type = class_type @Outer, @Outer(constants.%.2) [template = constants.%Outer.3]
-// CHECK:STDOUT:   %.loc18_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.2) [template = constants.%Inner.3]
+// CHECK:STDOUT:   %.loc18_16.2: type = ptr_type %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:   %Outer.loc18: type = class_type @Outer, @Outer(constants.%.1) [template = constants.%Outer.3]
+// CHECK:STDOUT:   %.loc18_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%.1) [template = constants.%Inner.3]
 // CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc18_18 [template = constants.%Inner.3]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_30.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_30.2: type = converted %int.make_type_signed, %.loc18_30.1 [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
-// CHECK:STDOUT:   %.loc18_34: type = ptr_type %struct_type.a [template = constants.%.3]
-// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.2, constants.%.3) [template = constants.%Inner.4]
+// CHECK:STDOUT:   %.loc18_34: type = ptr_type %struct_type.a [template = constants.%.2]
+// CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%.1, constants.%.2) [template = constants.%Inner.4]
 // CHECK:STDOUT:   %w.var: ref %Inner.4 = var w
 // CHECK:STDOUT:   %w: ref %Inner.4 = bind_name w, %w.var
 // CHECK:STDOUT: }
@@ -201,12 +201,12 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:       %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc5_15.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc5_15.2 (constants.%U)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Outer.2
 // CHECK:STDOUT:     .Inner = %Inner.decl
-// CHECK:STDOUT:     complete_type_witness = %.loc7
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,11 +217,11 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %empty_struct_type [template = constants.%.1]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.2
-// CHECK:STDOUT:     complete_type_witness = %.loc6
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -248,18 +248,18 @@ var w: Outer({}*).Inner({.a: i32}*) = v;
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(constants.%.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%.2
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%.2
+// CHECK:STDOUT: specific @Outer(constants.%.1) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%.1
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.2
 // CHECK:STDOUT:   %Inner => constants.%Inner.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(constants.%.2, constants.%.3) {
-// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.3
-// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.3
+// CHECK:STDOUT: specific @Inner(constants.%.1, constants.%.2) {
+// CHECK:STDOUT:   %U.loc5_15.2 => constants.%.2
+// CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

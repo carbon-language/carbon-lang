@@ -52,7 +52,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.n [symbolic]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,7 +89,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:   %.loc13_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc4_13.2 (%T) [symbolic = %.loc13_8.2 (constants.%.1)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
-// CHECK:STDOUT:   %.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.n (%struct_type.n) [symbolic = %.loc14_1.2 (constants.%.2)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.n (%struct_type.n) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
@@ -121,14 +121,14 @@ class C(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc13_8.1: @Class.%.loc13_8.2 (%.1) = field_decl n, element0 [template]
-// CHECK:STDOUT:     %.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %.loc14_1.2 (constants.%.2)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .n = %.loc13_8.1
-// CHECK:STDOUT:     complete_type_witness = %.loc14_1.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,7 +173,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %.loc13_8.2 => constants.%.1
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
-// CHECK:STDOUT:   %.loc14_1.2 => constants.%.2
+// CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -208,7 +208,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %.1: type = unbound_element_type %C.2, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %struct_type.data: type = struct_type {.data: %empty_struct_type} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %struct_type.data [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.data [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -248,13 +248,13 @@ class C(T:! type) {
 // CHECK:STDOUT:     %.loc11_14.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc11_11.1: @C.%.loc11_11.2 (%.1) = field_decl data, element0 [template]
-// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %struct_type.data [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .data = %.loc11_11.1
-// CHECK:STDOUT:     complete_type_witness = %.loc12
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
