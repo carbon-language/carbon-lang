@@ -338,7 +338,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             step_stack.PushNameId(associated_const->name_id);
           } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
                          entity_inst_id)) {
-            const auto& function = sem_ir.functions().Get(function_decl->function_id);
+            const auto& function =
+                sem_ir.functions().Get(function_decl->function_id);
             step_stack.PushNameId(function.name_id);
           } else {
             step_stack.PushInstId(entity_inst_id);
