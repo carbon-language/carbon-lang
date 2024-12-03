@@ -21,8 +21,8 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %array_type: type = array_type %int.0, %T [symbolic]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int_0, %T [symbolic]
 // CHECK:STDOUT:   %array: %array_type = tuple_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,14 +53,14 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc13_17.2: type = array_type constants.%int.0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
+// CHECK:STDOUT:   %array_type.loc13_17.2: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc13_17.2 (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
-// CHECK:STDOUT:     %array_type.loc13_17.1: type = array_type %int.0, %T [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:     %array_type.loc13_17.1: type = array_type %int_0, %T [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
 // CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc13_17.2 (%array_type) = var arr
 // CHECK:STDOUT:     %arr: ref @G.%array_type.loc13_17.2 (%array_type) = bind_name arr, %arr.var
 // CHECK:STDOUT:     %.loc13_22.1: %empty_tuple.type = tuple_literal ()

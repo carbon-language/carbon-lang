@@ -55,10 +55,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.k.1 [symbolic]
 // CHECK:STDOUT:   %InitFromStructGeneric.type: type = fn_type @InitFromStructGeneric [template]
 // CHECK:STDOUT:   %InitFromStructGeneric: %InitFromStructGeneric.type = struct_value () [template]
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %InitFromStructSpecific.type: type = fn_type @InitFromStructSpecific [template]
 // CHECK:STDOUT:   %InitFromStructSpecific: %InitFromStructSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%i32) [template]
@@ -113,12 +113,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.32.loc13_30: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_30: init type = call constants.%Int(%int.32.loc13_30) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc13_30: init type = call constants.%Int(%int_32.loc13_30) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_30.1: type = value_of_initializer %int.make_type_signed.loc13_30 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_30.2: type = converted %int.make_type_signed.loc13_30, %.loc13_30.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int.32.loc13_38: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_38: init type = call constants.%Int(%int.32.loc13_38) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc13_38: init type = call constants.%Int(%int_32.loc13_38) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_38.1: type = value_of_initializer %int.make_type_signed.loc13_38 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_38.2: type = converted %int.make_type_signed.loc13_38, %.loc13_38.1 [template = constants.%i32]
 // CHECK:STDOUT:     %x.param: %i32 = value_param runtime_param0
@@ -184,8 +184,8 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:   %int.32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int.32.loc14) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int_32.loc14) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_19.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_19.2: type = converted %int.make_type_signed.loc14, %.loc14_19.1 [template = constants.%i32]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.3]
@@ -253,10 +253,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %T [symbolic]
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.type: type = fn_type @InitFromAdaptedGeneric [template]
 // CHECK:STDOUT:   %InitFromAdaptedGeneric: %InitFromAdaptedGeneric.type = struct_value () [template]
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.type: type = fn_type @InitFromAdaptedSpecific [template]
 // CHECK:STDOUT:   %InitFromAdaptedSpecific: %InitFromAdaptedSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %Adapt.3: type = class_type @Adapt, @Adapt(%i32) [template]
@@ -309,12 +309,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.32.loc12_31: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_31: init type = call constants.%Int(%int.32.loc12_31) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc12_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc12_31: init type = call constants.%Int(%int_32.loc12_31) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_31.1: type = value_of_initializer %int.make_type_signed.loc12_31 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_31.2: type = converted %int.make_type_signed.loc12_31, %.loc12_31.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int.32.loc12_39: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_39: init type = call constants.%Int(%int.32.loc12_39) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc12_39: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc12_39: init type = call constants.%Int(%int_32.loc12_39) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_39.1: type = value_of_initializer %int.make_type_signed.loc12_39 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_39.2: type = converted %int.make_type_signed.loc12_39, %.loc12_39.1 [template = constants.%i32]
 // CHECK:STDOUT:     %x.param: %i32 = value_param runtime_param0
@@ -368,15 +368,15 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [template = constants.%Adapt.1]
-// CHECK:STDOUT:   %int.32.loc13_22: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13_22: init type = call constants.%Int(%int.32.loc13_22) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc13_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc13_22: init type = call constants.%Int(%int_32.loc13_22) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_25.1: type = value_of_initializer %int.make_type_signed.loc13_22 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_25.2: type = converted %int.make_type_signed.loc13_22, %.loc13_25.1 [template = constants.%i32]
 // CHECK:STDOUT:   %Adapt: type = class_type @Adapt, @Adapt(constants.%i32) [template = constants.%Adapt.3]
 // CHECK:STDOUT:   %.loc13_13.1: %Adapt.3 = as_compatible %x.ref
 // CHECK:STDOUT:   %.loc13_13.2: %Adapt.3 = converted %x.ref, %.loc13_13.1
-// CHECK:STDOUT:   %int.32.loc13_31: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13_31: init type = call constants.%Int(%int.32.loc13_31) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc13_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc13_31: init type = call constants.%Int(%int_32.loc13_31) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_31.1: type = value_of_initializer %int.make_type_signed.loc13_31 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_31.2: type = converted %int.make_type_signed.loc13_31, %.loc13_31.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_28.1: %i32 = as_compatible %.loc13_13.2

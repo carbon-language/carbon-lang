@@ -25,10 +25,10 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT: --- fail_collapse.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %.1: type = const_type %i32 [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %ptr.1 [template]
@@ -59,16 +59,16 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %return.patt: %ptr.4 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ptr.4 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.32.loc15_22: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc15_22: init type = call constants.%Int(%int.32.loc15_22) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc15_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc15_22: init type = call constants.%Int(%int_32.loc15_22) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_signed.loc15_22 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_signed.loc15_22, %.loc15_16.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_16.3: type = const_type %i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_9: type = const_type %.1 [template = constants.%.1]
 // CHECK:STDOUT:     %ptr.loc15_26: type = ptr_type %.1 [template = constants.%ptr.1]
 // CHECK:STDOUT:     %ptr.loc15_27: type = ptr_type %ptr.1 [template = constants.%ptr.2]
-// CHECK:STDOUT:     %int.32.loc15_33: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc15_33: init type = call constants.%Int(%int.32.loc15_33) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc15_33: init type = call constants.%Int(%int_32.loc15_33) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_36.1: type = value_of_initializer %int.make_type_signed.loc15_33 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %int.make_type_signed.loc15_33, %.loc15_36.1 [template = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [template = constants.%ptr.3]

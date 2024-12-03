@@ -46,10 +46,10 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT: --- fail_impl_as_false.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,8 +69,8 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc11: type = converted @impl.9.%false, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
-// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_signed, %.loc11_6.1 [template = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [template = constants.%false]
@@ -117,7 +117,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT: --- fail_impl_as_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int.64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
@@ -138,8 +138,8 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %int.64: Core.IntLiteral = int_value 64 [template = constants.%int.64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int.64) [template = f64]
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
 // CHECK:STDOUT:     %.loc10_6.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc10_6.2: type = converted %float.make_type, %.loc10_6.1 [template = f64]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]

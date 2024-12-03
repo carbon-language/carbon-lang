@@ -35,12 +35,12 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Make.specific_fn.1: <specific function> = specific_function %Make.1, @Make(%T) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template]
-// CHECK:STDOUT:   %array_type: type = array_type %int.100, %i32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [template]
 // CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %array_type [template]
 // CHECK:STDOUT:   %struct_type.arr.1: type = struct_type {.arr: %array_type} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.arr.1 [template]
@@ -114,12 +114,12 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
-// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template = constants.%int.100]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [template = constants.%int_100]
 // CHECK:STDOUT:   %.loc15_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_21.2: type = converted %int.make_type_signed, %.loc15_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %array_type: type = array_type %int.100, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %.loc15_18: %C.elt = field_decl arr, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -151,15 +151,15 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.32.loc18_10: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc18_10: init type = call constants.%Int(%int.32.loc18_10) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc18_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc18_10: init type = call constants.%Int(%int_32.loc18_10) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_signed.loc18_10 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_signed.loc18_10, %.loc18_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %Wrap.ref.loc18: %Wrap.type = name_ref Wrap, file.%Wrap.decl [template = constants.%Wrap.1]
-// CHECK:STDOUT:   %int.32.loc18_21: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc18_21: init type = call constants.%Int(%int.32.loc18_21) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc18_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc18_21: init type = call constants.%Int(%int_32.loc18_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_24.1: type = value_of_initializer %int.make_type_signed.loc18_21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_24.2: type = converted %int.make_type_signed.loc18_21, %.loc18_24.1 [template = constants.%i32]
 // CHECK:STDOUT:   %Wrap.loc18: type = class_type @Wrap, @Wrap(constants.%i32) [template = constants.%Wrap.3]

@@ -20,13 +20,13 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT: --- reorder_fields.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [template]
 // CHECK:STDOUT:   %MakeI32: %MakeI32.type = struct_value () [template]
-// CHECK:STDOUT:   %int.64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeF64.type: type = fn_type @MakeF64 [template]
@@ -58,8 +58,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_17.2: type = converted %int.make_type_signed, %.loc11_17.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
@@ -69,8 +69,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: f64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: f64 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.64: Core.IntLiteral = int_value 64 [template = constants.%int.64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int.64) [template = f64]
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %float.make_type, %.loc12_17.1 [template = f64]
 // CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param0
@@ -80,12 +80,12 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.patt: %struct_type.a.b = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %struct_type.a.b = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int.32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc14: init type = call constants.%Int(%int.32.loc14) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc14: init type = call constants.%Int(%int_32.loc14) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_16.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_16.2: type = converted %int.make_type_signed.loc14, %.loc14_16.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int.64.loc14: Core.IntLiteral = int_value 64 [template = constants.%int.64]
-// CHECK:STDOUT:     %float.make_type.loc14: init type = call constants.%Float(%int.64.loc14) [template = f64]
+// CHECK:STDOUT:     %int_64.loc14: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc14: init type = call constants.%Float(%int_64.loc14) [template = f64]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %float.make_type.loc14 [template = f64]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %float.make_type.loc14, %.loc14_25.1 [template = f64]
 // CHECK:STDOUT:     %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: f64} [template = constants.%struct_type.a.b]
@@ -100,12 +100,12 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%int.32.loc15) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%int_32.loc15) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_15.1: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_15.2: type = converted %int.make_type_signed.loc15, %.loc15_15.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int.64.loc15: Core.IntLiteral = int_value 64 [template = constants.%int.64]
-// CHECK:STDOUT:   %float.make_type.loc15: init type = call constants.%Float(%int.64.loc15) [template = f64]
+// CHECK:STDOUT:   %int_64.loc15: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:   %float.make_type.loc15: init type = call constants.%Float(%int_64.loc15) [template = f64]
 // CHECK:STDOUT:   %.loc15_24.1: type = value_of_initializer %float.make_type.loc15 [template = f64]
 // CHECK:STDOUT:   %.loc15_24.2: type = converted %float.make_type.loc15, %.loc15_24.1 [template = f64]
 // CHECK:STDOUT:   %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: f64} [template = constants.%struct_type.a.b]
@@ -121,12 +121,12 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %struct.loc15: %struct_type.a.b = struct_value (%.loc15_62.3, %.loc15_62.5)
 // CHECK:STDOUT:   %.loc15_63: %struct_type.a.b = converted %.loc15_62.1, %struct.loc15
 // CHECK:STDOUT:   %x: %struct_type.a.b = bind_name x, %.loc15_63
-// CHECK:STDOUT:   %int.64.loc16: Core.IntLiteral = int_value 64 [template = constants.%int.64]
-// CHECK:STDOUT:   %float.make_type.loc16: init type = call constants.%Float(%int.64.loc16) [template = f64]
+// CHECK:STDOUT:   %int_64.loc16: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:   %float.make_type.loc16: init type = call constants.%Float(%int_64.loc16) [template = f64]
 // CHECK:STDOUT:   %.loc16_15.1: type = value_of_initializer %float.make_type.loc16 [template = f64]
 // CHECK:STDOUT:   %.loc16_15.2: type = converted %float.make_type.loc16, %.loc16_15.1 [template = f64]
-// CHECK:STDOUT:   %int.32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int.32.loc16) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int_32.loc16) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_24.1: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_24.2: type = converted %int.make_type_signed.loc16, %.loc16_24.1 [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: f64, .a: %i32} [template = constants.%struct_type.b.a]

@@ -65,10 +65,10 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %GetAddr.1: %GetAddr.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
-// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%i32) [template]
 // CHECK:STDOUT:   %DirectFieldAccess.type: type = fn_type @DirectFieldAccess [template]
 // CHECK:STDOUT:   %DirectFieldAccess: %DirectFieldAccess.type = struct_value () [template]
@@ -118,13 +118,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:     %int.32.loc10_31: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc10_31: init type = call constants.%Int(%int.32.loc10_31) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc10_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_31: init type = call constants.%Int(%int_32.loc10_31) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_34.1: type = value_of_initializer %int.make_type_signed.loc10_31 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_34.2: type = converted %int.make_type_signed.loc10_31, %.loc10_34.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.3]
-// CHECK:STDOUT:     %int.32.loc10_40: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc10_40: init type = call constants.%Int(%int.32.loc10_40) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc10_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_40: init type = call constants.%Int(%int_32.loc10_40) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_40.1: type = value_of_initializer %int.make_type_signed.loc10_40 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10_40.2: type = converted %int.make_type_signed.loc10_40, %.loc10_40.1 [template = constants.%i32]
 // CHECK:STDOUT:     %x.param: %Class.3 = value_param runtime_param0
@@ -139,13 +139,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:     %int.32.loc14_24: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc14_24: init type = call constants.%Int(%int.32.loc14_24) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_24: init type = call constants.%Int(%int_32.loc14_24) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_27.1: type = value_of_initializer %int.make_type_signed.loc14_24 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %int.make_type_signed.loc14_24, %.loc14_27.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.3]
-// CHECK:STDOUT:     %int.32.loc14_33: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc14_33: init type = call constants.%Int(%int.32.loc14_33) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc14_33: init type = call constants.%Int(%int_32.loc14_33) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_33.1: type = value_of_initializer %int.make_type_signed.loc14_33 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_33.2: type = converted %int.make_type_signed.loc14_33, %.loc14_33.1 [template = constants.%i32]
 // CHECK:STDOUT:     %x.param: %Class.3 = value_param runtime_param0
@@ -160,14 +160,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
-// CHECK:STDOUT:     %int.32.loc18_28: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc18_28: init type = call constants.%Int(%int.32.loc18_28) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc18_28: init type = call constants.%Int(%int_32.loc18_28) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc18_31.1: type = value_of_initializer %int.make_type_signed.loc18_28 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc18_31.2: type = converted %int.make_type_signed.loc18_28, %.loc18_31.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.3]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Class.3 [template = constants.%ptr.5]
-// CHECK:STDOUT:     %int.32.loc18_38: Core.IntLiteral = int_value 32 [template = constants.%int.32]
-// CHECK:STDOUT:     %int.make_type_signed.loc18_38: init type = call constants.%Int(%int.32.loc18_38) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc18_38: init type = call constants.%Int(%int_32.loc18_38) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc18_38.1: type = value_of_initializer %int.make_type_signed.loc18_38 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc18_38.2: type = converted %int.make_type_signed.loc18_38, %.loc18_38.1 [template = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.5 = value_param runtime_param0

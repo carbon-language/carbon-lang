@@ -25,7 +25,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %int.123: Core.IntLiteral = int_value 123 [template]
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,8 +67,8 @@ fn Make() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int.123: Core.IntLiteral = int_value 123 [template = constants.%int.123]
-// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int.123)
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123]
+// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_123)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
