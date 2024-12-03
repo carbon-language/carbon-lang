@@ -114,14 +114,14 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %.loc12_32.3: ref %i32 = struct_access file.%y.var, element0
 // CHECK:STDOUT:   %.loc12_32.4: init %i32 = initialize_from %.loc12_32.2 to %.loc12_32.3
 // CHECK:STDOUT:   %.loc12_32.5: ref %tuple.type.2 = struct_access %x.ref, element1
-// CHECK:STDOUT:   %.loc12_32.6: ref %i32 = tuple_access %.loc12_32.5, element0
-// CHECK:STDOUT:   %.loc12_32.7: %i32 = bind_value %.loc12_32.6
-// CHECK:STDOUT:   %.loc12_32.8: ref %tuple.type.2 = struct_access file.%y.var, element1
-// CHECK:STDOUT:   %.loc12_32.9: init %tuple.type.2 = tuple_init (%.loc12_32.7) to %.loc12_32.8
-// CHECK:STDOUT:   %.loc12_32.10: init %tuple.type.2 = converted %.loc12_32.5, %.loc12_32.9
-// CHECK:STDOUT:   %.loc12_32.11: init %tuple.type.2 = initialize_from %.loc12_32.10 to %.loc12_32.8
-// CHECK:STDOUT:   %.loc12_32.12: init %struct_type.a.b.1 = struct_init (%.loc12_32.4, %.loc12_32.11) to file.%y.var
-// CHECK:STDOUT:   %.loc12_33: init %struct_type.a.b.1 = converted %x.ref, %.loc12_32.12
+// CHECK:STDOUT:   %elt0.loc12: ref %i32 = tuple_access %.loc12_32.5, element0
+// CHECK:STDOUT:   %.loc12_32.6: %i32 = bind_value %elt0.loc12
+// CHECK:STDOUT:   %.loc12_32.7: ref %tuple.type.2 = struct_access file.%y.var, element1
+// CHECK:STDOUT:   %.loc12_32.8: init %tuple.type.2 = tuple_init (%.loc12_32.6) to %.loc12_32.7
+// CHECK:STDOUT:   %.loc12_32.9: init %tuple.type.2 = converted %.loc12_32.5, %.loc12_32.8
+// CHECK:STDOUT:   %.loc12_32.10: init %tuple.type.2 = initialize_from %.loc12_32.9 to %.loc12_32.7
+// CHECK:STDOUT:   %.loc12_32.11: init %struct_type.a.b.1 = struct_init (%.loc12_32.4, %.loc12_32.10) to file.%y.var
+// CHECK:STDOUT:   %.loc12_33: init %struct_type.a.b.1 = converted %x.ref, %.loc12_32.11
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_33
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

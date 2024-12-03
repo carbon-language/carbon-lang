@@ -148,8 +148,8 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %str.loc18_23: String = string_literal "Hello" [template = constants.%str.1]
 // CHECK:STDOUT:   %str.loc18_32: String = string_literal "World" [template = constants.%str.2]
 // CHECK:STDOUT:   %.loc18_39.1: %tuple.type.1 = tuple_literal (%int_1.loc18, %str.loc18_23, %str.loc18_32)
-// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.loc18, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0.loc18: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.loc18, %elt0.loc18 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1.loc18) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc18_39.2: init %i32 = converted %int_1.loc18, %int.convert_checked [template = constants.%int_1.2]
@@ -159,13 +159,13 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %.loc18_39.5: %i32 = converted %str.loc18_23, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %t1.ref: ref %tuple.type.3 = name_ref t1, file.%t1
-// CHECK:STDOUT:   %.loc28_19.1: ref %i32 = tuple_access %t1.ref, element0
-// CHECK:STDOUT:   %.loc28_19.2: %i32 = bind_value %.loc28_19.1
+// CHECK:STDOUT:   %elt0.loc28: ref %i32 = tuple_access %t1.ref, element0
+// CHECK:STDOUT:   %.loc28_19.1: %i32 = bind_value %elt0.loc28
 // CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc28_19.3: ref %i32 = array_index file.%b.var, %int_0.loc28
-// CHECK:STDOUT:   %.loc28_19.4: init %i32 = initialize_from %.loc28_19.2 to %.loc28_19.3
-// CHECK:STDOUT:   %.loc28_19.5: ref String = tuple_access %t1.ref, element1
-// CHECK:STDOUT:   %.loc28_19.6: %i32 = converted %.loc28_19.5, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc28_19.2: ref %i32 = array_index file.%b.var, %int_0.loc28
+// CHECK:STDOUT:   %.loc28_19.3: init %i32 = initialize_from %.loc28_19.1 to %.loc28_19.2
+// CHECK:STDOUT:   %elt1: ref String = tuple_access %t1.ref, element1
+// CHECK:STDOUT:   %.loc28_19.4: %i32 = converted %elt1, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]

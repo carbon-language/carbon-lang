@@ -288,7 +288,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_10.2: %tuple.type = converted %.loc92_10.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc92_11: Core.IntLiteral = tuple_access %.loc92_10.2, element0 [template = constants.%int_1]
+// CHECK:STDOUT:   %elt0: Core.IntLiteral = tuple_access %.loc92_10.2, element0 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc92_3: %ptr.1 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

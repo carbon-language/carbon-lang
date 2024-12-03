@@ -347,8 +347,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %tuple.type.2 = name_ref self, %self
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc6: %i32 = tuple_access %self.ref, element0
-// CHECK:STDOUT:   return %.loc6
+// CHECK:STDOUT:   %elt0: %i32 = tuple_access %self.ref, element0
+// CHECK:STDOUT:   return %elt0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

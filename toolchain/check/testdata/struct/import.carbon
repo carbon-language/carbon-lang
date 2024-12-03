@@ -773,20 +773,20 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %.loc5_47.5: ref %i32 = struct_access %.loc5_47.4, element0
 // CHECK:STDOUT:   %.loc5_47.6: init %i32 = initialize_from %.loc5_47.3 to %.loc5_47.5
 // CHECK:STDOUT:   %.loc5_47.7: ref %tuple.type.2 = struct_access %.loc5_47.1, element1
-// CHECK:STDOUT:   %.loc5_47.8: ref %i32 = tuple_access %.loc5_47.7, element0
-// CHECK:STDOUT:   %.loc5_47.9: %i32 = bind_value %.loc5_47.8
-// CHECK:STDOUT:   %.loc5_47.10: ref %tuple.type.2 = struct_access %.loc5_47.4, element1
-// CHECK:STDOUT:   %.loc5_47.11: init %tuple.type.2 = tuple_init (%.loc5_47.9) to %.loc5_47.10
-// CHECK:STDOUT:   %.loc5_47.12: init %tuple.type.2 = converted %.loc5_47.7, %.loc5_47.11
-// CHECK:STDOUT:   %.loc5_47.13: init %tuple.type.2 = initialize_from %.loc5_47.12 to %.loc5_47.10
-// CHECK:STDOUT:   %.loc5_47.14: init %struct_type.b.c = struct_init (%.loc5_47.6, %.loc5_47.13) to %.loc5_47.4
-// CHECK:STDOUT:   %.loc5_47.15: init %struct_type.b.c = converted %.loc5_47.1, %.loc5_47.14
-// CHECK:STDOUT:   %.loc5_47.16: ref %i32 = struct_access %b_ref.ref, element1
-// CHECK:STDOUT:   %.loc5_47.17: %i32 = bind_value %.loc5_47.16
-// CHECK:STDOUT:   %.loc5_47.18: ref %i32 = struct_access file.%b.var, element1
-// CHECK:STDOUT:   %.loc5_47.19: init %i32 = initialize_from %.loc5_47.17 to %.loc5_47.18
-// CHECK:STDOUT:   %.loc5_47.20: init %struct_type.a.d.1 = struct_init (%.loc5_47.15, %.loc5_47.19) to file.%b.var
-// CHECK:STDOUT:   %.loc5_52: init %struct_type.a.d.1 = converted %b_ref.ref, %.loc5_47.20
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %.loc5_47.7, element0
+// CHECK:STDOUT:   %.loc5_47.8: %i32 = bind_value %elt0
+// CHECK:STDOUT:   %.loc5_47.9: ref %tuple.type.2 = struct_access %.loc5_47.4, element1
+// CHECK:STDOUT:   %.loc5_47.10: init %tuple.type.2 = tuple_init (%.loc5_47.8) to %.loc5_47.9
+// CHECK:STDOUT:   %.loc5_47.11: init %tuple.type.2 = converted %.loc5_47.7, %.loc5_47.10
+// CHECK:STDOUT:   %.loc5_47.12: init %tuple.type.2 = initialize_from %.loc5_47.11 to %.loc5_47.9
+// CHECK:STDOUT:   %.loc5_47.13: init %struct_type.b.c = struct_init (%.loc5_47.6, %.loc5_47.12) to %.loc5_47.4
+// CHECK:STDOUT:   %.loc5_47.14: init %struct_type.b.c = converted %.loc5_47.1, %.loc5_47.13
+// CHECK:STDOUT:   %.loc5_47.15: ref %i32 = struct_access %b_ref.ref, element1
+// CHECK:STDOUT:   %.loc5_47.16: %i32 = bind_value %.loc5_47.15
+// CHECK:STDOUT:   %.loc5_47.17: ref %i32 = struct_access file.%b.var, element1
+// CHECK:STDOUT:   %.loc5_47.18: init %i32 = initialize_from %.loc5_47.16 to %.loc5_47.17
+// CHECK:STDOUT:   %.loc5_47.19: init %struct_type.a.d.1 = struct_init (%.loc5_47.14, %.loc5_47.18) to file.%b.var
+// CHECK:STDOUT:   %.loc5_52: init %struct_type.a.d.1 = converted %b_ref.ref, %.loc5_47.19
 // CHECK:STDOUT:   assign file.%b.var, %.loc5_52
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %.loc6: ref %C.2 = splice_block file.%c.var {}

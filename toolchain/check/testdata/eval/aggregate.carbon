@@ -156,14 +156,14 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %.loc11_35.5: %i32 = converted %int_2.loc11, %.loc11_35.4 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %tuple.loc11: %tuple.type.2 = tuple_value (%.loc11_35.3, %.loc11_35.5) [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc11_37.1: %tuple.type.2 = converted %.loc11_35.1, %tuple.loc11 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc11_37.2: %i32 = tuple_access %.loc11_37.1, element0 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_37.3: ref %i32 = tuple_access file.%tuple_copy.var, element0
-// CHECK:STDOUT:   %.loc11_37.4: init %i32 = initialize_from %.loc11_37.2 to %.loc11_37.3 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_37.5: %i32 = tuple_access %.loc11_37.1, element1 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_37.6: ref %i32 = tuple_access file.%tuple_copy.var, element1
-// CHECK:STDOUT:   %.loc11_37.7: init %i32 = initialize_from %.loc11_37.5 to %.loc11_37.6 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_37.8: init %tuple.type.2 = tuple_init (%.loc11_37.4, %.loc11_37.7) to file.%tuple_copy.var [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc11_50: init %tuple.type.2 = converted %.loc11_37.1, %.loc11_37.8 [template = constants.%tuple.1]
+// CHECK:STDOUT:   %elt0.loc11_37.1: %i32 = tuple_access %.loc11_37.1, element0 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %elt0.loc11_37.2: ref %i32 = tuple_access file.%tuple_copy.var, element0
+// CHECK:STDOUT:   %.loc11_37.2: init %i32 = initialize_from %elt0.loc11_37.1 to %elt0.loc11_37.2 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %elt1.loc11_37.1: %i32 = tuple_access %.loc11_37.1, element1 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %elt1.loc11_37.2: ref %i32 = tuple_access file.%tuple_copy.var, element1
+// CHECK:STDOUT:   %.loc11_37.3: init %i32 = initialize_from %elt1.loc11_37.1 to %elt1.loc11_37.2 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc11_37.4: init %tuple.type.2 = tuple_init (%.loc11_37.2, %.loc11_37.3) to file.%tuple_copy.var [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc11_50: init %tuple.type.2 = converted %.loc11_37.1, %.loc11_37.4 [template = constants.%tuple.1]
 // CHECK:STDOUT:   assign file.%tuple_copy.var, %.loc11_50
 // CHECK:STDOUT:   %int_3.loc13: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %int_2.loc13: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
@@ -226,10 +226,10 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %int_2.loc15: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %tuple.loc15: %tuple.type.5 = tuple_value (%int_5, %int_7, %int_1.loc15, %int_9) [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc15_54.2: %tuple.type.5 = converted %.loc15_54.1, %tuple.loc15 [template = constants.%tuple.2]
-// CHECK:STDOUT:   %.loc15_55: Core.IntLiteral = tuple_access %.loc15_54.2, element2 [template = constants.%int_1.1]
+// CHECK:STDOUT:   %elt2: Core.IntLiteral = tuple_access %.loc15_54.2, element2 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc15_38.1: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_38.2: type = converted %int.make_type_signed.loc15, %.loc15_38.1 [template = constants.%i32]
-// CHECK:STDOUT:   %array_type.loc15: type = array_type %.loc15_55, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %array_type.loc15: type = array_type %elt2, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %elt0.loc15: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %int_0.loc15_30, %elt0.loc15 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]

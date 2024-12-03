@@ -106,18 +106,18 @@ fn Var() {
 // CHECK:STDOUT:   %b.var: ref %tuple.type.2 = var b
 // CHECK:STDOUT:   %b: ref %tuple.type.2 = bind_name b, %b.var
 // CHECK:STDOUT:   %Make.ref.loc24_20: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc24_34.1: ref %X = tuple_access %b.var, element0
-// CHECK:STDOUT:   %Make.call.loc24_25: init %X = call %Make.ref.loc24_20() to %.loc24_34.1
+// CHECK:STDOUT:   %elt0: ref %X = tuple_access %b.var, element0
+// CHECK:STDOUT:   %Make.call.loc24_25: init %X = call %Make.ref.loc24_20() to %elt0
 // CHECK:STDOUT:   %Make.ref.loc24_28: %Make.type = name_ref Make, file.%Make.decl [template = constants.%Make]
-// CHECK:STDOUT:   %.loc24_34.2: ref %X = tuple_access %b.var, element1
-// CHECK:STDOUT:   %Make.call.loc24_33: init %X = call %Make.ref.loc24_28() to %.loc24_34.2
-// CHECK:STDOUT:   %.loc24_34.3: %tuple.type.2 = tuple_literal (%Make.call.loc24_25, %Make.call.loc24_33)
+// CHECK:STDOUT:   %elt1: ref %X = tuple_access %b.var, element1
+// CHECK:STDOUT:   %Make.call.loc24_33: init %X = call %Make.ref.loc24_28() to %elt1
+// CHECK:STDOUT:   %.loc24_34.1: %tuple.type.2 = tuple_literal (%Make.call.loc24_25, %Make.call.loc24_33)
 // CHECK:STDOUT:   %X.ref.loc24_40: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %X.ref.loc24_43: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %.loc24_44.1: %tuple.type.1 = tuple_literal (%X.ref.loc24_40, %X.ref.loc24_43)
 // CHECK:STDOUT:   %.loc24_44.2: type = converted %.loc24_44.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc24_34.4: init %tuple.type.2 = tuple_init (%Make.call.loc24_25, %Make.call.loc24_33) to %b.var
-// CHECK:STDOUT:   %.loc24_45: init %tuple.type.2 = converted %.loc24_34.3, %.loc24_34.4
+// CHECK:STDOUT:   %.loc24_34.2: init %tuple.type.2 = tuple_init (%Make.call.loc24_25, %Make.call.loc24_33) to %b.var
+// CHECK:STDOUT:   %.loc24_45: init %tuple.type.2 = converted %.loc24_34.1, %.loc24_34.2
 // CHECK:STDOUT:   assign %b.var, %.loc24_45
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

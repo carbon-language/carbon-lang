@@ -207,9 +207,9 @@ fn D() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %tuple.type.2 = name_ref c, %c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc6_46: %i32 = tuple_access %c.ref, element0
-// CHECK:STDOUT:   %.loc6_48: %struct_type.c = struct_literal (%.loc6_46)
-// CHECK:STDOUT:   %struct: %struct_type.c = struct_value (%.loc6_46)
+// CHECK:STDOUT:   %elt0: %i32 = tuple_access %c.ref, element0
+// CHECK:STDOUT:   %.loc6_48: %struct_type.c = struct_literal (%elt0)
+// CHECK:STDOUT:   %struct: %struct_type.c = struct_value (%elt0)
 // CHECK:STDOUT:   %.loc6_49: %struct_type.c = converted %.loc6_48, %struct
 // CHECK:STDOUT:   return %.loc6_49
 // CHECK:STDOUT: }

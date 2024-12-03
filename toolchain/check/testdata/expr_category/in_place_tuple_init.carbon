@@ -139,8 +139,8 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %G.call: init %tuple.type.2 = call %G.ref() to %.loc20_12.1
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc20_12.2: ref %tuple.type.2 = temporary %.loc20_12.1, %G.call
-// CHECK:STDOUT:   %.loc20_13.1: ref %i32 = tuple_access %.loc20_12.2, element0
-// CHECK:STDOUT:   %.loc20_13.2: %i32 = bind_value %.loc20_13.1
-// CHECK:STDOUT:   return %.loc20_13.2
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %.loc20_12.2, element0
+// CHECK:STDOUT:   %.loc20_13: %i32 = bind_value %elt0
+// CHECK:STDOUT:   return %.loc20_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -51,10 +51,10 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT:   %.loc26_17.1.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc26_22.1.b = getelementptr inbounds nuw { i32 }, ptr %.loc26_17.1.base, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc26_22.2 = load i32, ptr %.loc26_22.1.b, align 4, !dbg !12
-// CHECK:STDOUT:   %.loc26_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   store i32 %.loc26_12.2, ptr %.loc26_24.2.tuple.elem, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc26_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   store i32 %.loc26_22.2, ptr %.loc26_24.4.tuple.elem, align 4, !dbg !13
+// CHECK:STDOUT:   %elt0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   store i32 %.loc26_12.2, ptr %elt0.tuple.elem, align 4, !dbg !13
+// CHECK:STDOUT:   %elt1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !13
+// CHECK:STDOUT:   store i32 %.loc26_22.2, ptr %elt1.tuple.elem, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

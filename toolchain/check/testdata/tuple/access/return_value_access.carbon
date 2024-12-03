@@ -103,8 +103,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %.loc14_12.1: ref %tuple.type.2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_12.2: ref %tuple.type.2 = temporary %.loc14_12.1, %F.call
-// CHECK:STDOUT:   %.loc14_13.1: ref %i32 = tuple_access %.loc14_12.2, element0
-// CHECK:STDOUT:   %.loc14_13.2: %i32 = bind_value %.loc14_13.1
-// CHECK:STDOUT:   return %.loc14_13.2
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %.loc14_12.2, element0
+// CHECK:STDOUT:   %.loc14_13: %i32 = bind_value %elt0
+// CHECK:STDOUT:   return %.loc14_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

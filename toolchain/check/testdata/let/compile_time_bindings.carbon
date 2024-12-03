@@ -298,10 +298,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [template]
 // CHECK:STDOUT:   %tuple.2: %tuple.type.3 = tuple_value (%empty_tuple, %empty_tuple) [template]
 // CHECK:STDOUT:   %c: %tuple.type.3 = bind_symbolic_name c, 1 [symbolic]
-// CHECK:STDOUT:   %.1: %empty_tuple.type = tuple_access %b, element0 [symbolic]
+// CHECK:STDOUT:   %elt0.1: %empty_tuple.type = tuple_access %b, element0 [symbolic]
 // CHECK:STDOUT:   %tuple.3: %tuple.type.1 = tuple_value (%empty_tuple) [template]
-// CHECK:STDOUT:   %.2: %empty_tuple.type = tuple_access %c, element0 [symbolic]
-// CHECK:STDOUT:   %.3: %empty_tuple.type = tuple_access %c, element1 [symbolic]
+// CHECK:STDOUT:   %elt0.2: %empty_tuple.type = tuple_access %c, element0 [symbolic]
+// CHECK:STDOUT:   %elt1: %empty_tuple.type = tuple_access %c, element1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -375,9 +375,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %c.loc11_9.2: %tuple.type.3 = bind_symbolic_name c, 1 [symbolic = %c.loc11_9.2 (constants.%c)]
-// CHECK:STDOUT:   %.loc14_21.6: %empty_tuple.type = tuple_access %b.loc10_8.1, element0 [symbolic = %.loc14_21.6 (constants.%.1)]
-// CHECK:STDOUT:   %.loc15_24.10: %empty_tuple.type = tuple_access %c.loc11_9.2, element0 [symbolic = %.loc15_24.10 (constants.%.2)]
-// CHECK:STDOUT:   %.loc15_24.11: %empty_tuple.type = tuple_access %c.loc11_9.2, element1 [symbolic = %.loc15_24.11 (constants.%.3)]
+// CHECK:STDOUT:   %elt0.loc14_21.3: %empty_tuple.type = tuple_access %b.loc10_8.1, element0 [symbolic = %elt0.loc14_21.3 (constants.%elt0.1)]
+// CHECK:STDOUT:   %elt0.loc15_24.3: %empty_tuple.type = tuple_access %c.loc11_9.2, element0 [symbolic = %elt0.loc15_24.3 (constants.%elt0.2)]
+// CHECK:STDOUT:   %elt1.loc15_24.3: %empty_tuple.type = tuple_access %c.loc11_9.2, element1 [symbolic = %elt1.loc15_24.3 (constants.%elt1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%b.param_patt: %tuple.type.1) {
 // CHECK:STDOUT:   !entry:
@@ -412,12 +412,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %b1.var: ref %tuple.type.1 = var b1
 // CHECK:STDOUT:     %b1: ref %tuple.type.1 = bind_name b1, %b1.var
 // CHECK:STDOUT:     %b.ref: %tuple.type.1 = name_ref b, %b.loc10_8.2 [symbolic = %b.loc10_8.1 (constants.%b)]
-// CHECK:STDOUT:     %.loc14_21.1: %empty_tuple.type = tuple_access %b.ref, element0 [symbolic = %.loc14_21.6 (constants.%.1)]
-// CHECK:STDOUT:     %.loc14_21.2: ref %empty_tuple.type = tuple_access %b1.var, element0
-// CHECK:STDOUT:     %.loc14_21.3: init %empty_tuple.type = tuple_init () to %.loc14_21.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc14_21.4: init %empty_tuple.type = converted %.loc14_21.1, %.loc14_21.3 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc14_21.5: init %tuple.type.1 = tuple_init (%.loc14_21.4) to %b1.var [template = constants.%tuple.3]
-// CHECK:STDOUT:     %.loc14_22: init %tuple.type.1 = converted %b.ref, %.loc14_21.5 [template = constants.%tuple.3]
+// CHECK:STDOUT:     %elt0.loc14_21.1: %empty_tuple.type = tuple_access %b.ref, element0 [symbolic = %elt0.loc14_21.3 (constants.%elt0.1)]
+// CHECK:STDOUT:     %elt0.loc14_21.2: ref %empty_tuple.type = tuple_access %b1.var, element0
+// CHECK:STDOUT:     %.loc14_21.1: init %empty_tuple.type = tuple_init () to %elt0.loc14_21.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc14_21.2: init %empty_tuple.type = converted %elt0.loc14_21.1, %.loc14_21.1 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc14_21.3: init %tuple.type.1 = tuple_init (%.loc14_21.2) to %b1.var [template = constants.%tuple.3]
+// CHECK:STDOUT:     %.loc14_22: init %tuple.type.1 = converted %b.ref, %.loc14_21.3 [template = constants.%tuple.3]
 // CHECK:STDOUT:     assign %b1.var, %.loc14_22
 // CHECK:STDOUT:     %.loc15_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_19: %empty_tuple.type = tuple_literal ()
@@ -428,16 +428,16 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %c1.var: ref %tuple.type.3 = var c1
 // CHECK:STDOUT:     %c1: ref %tuple.type.3 = bind_name c1, %c1.var
 // CHECK:STDOUT:     %c.ref: %tuple.type.3 = name_ref c, %c.loc11_9.1 [symbolic = %c.loc11_9.2 (constants.%c)]
-// CHECK:STDOUT:     %.loc15_24.1: %empty_tuple.type = tuple_access %c.ref, element0 [symbolic = %.loc15_24.10 (constants.%.2)]
-// CHECK:STDOUT:     %.loc15_24.2: ref %empty_tuple.type = tuple_access %c1.var, element0
-// CHECK:STDOUT:     %.loc15_24.3: init %empty_tuple.type = tuple_init () to %.loc15_24.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_24.4: init %empty_tuple.type = converted %.loc15_24.1, %.loc15_24.3 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_24.5: %empty_tuple.type = tuple_access %c.ref, element1 [symbolic = %.loc15_24.11 (constants.%.3)]
-// CHECK:STDOUT:     %.loc15_24.6: ref %empty_tuple.type = tuple_access %c1.var, element1
-// CHECK:STDOUT:     %.loc15_24.7: init %empty_tuple.type = tuple_init () to %.loc15_24.6 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_24.8: init %empty_tuple.type = converted %.loc15_24.5, %.loc15_24.7 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_24.9: init %tuple.type.3 = tuple_init (%.loc15_24.4, %.loc15_24.8) to %c1.var [template = constants.%tuple.2]
-// CHECK:STDOUT:     %.loc15_25: init %tuple.type.3 = converted %c.ref, %.loc15_24.9 [template = constants.%tuple.2]
+// CHECK:STDOUT:     %elt0.loc15_24.1: %empty_tuple.type = tuple_access %c.ref, element0 [symbolic = %elt0.loc15_24.3 (constants.%elt0.2)]
+// CHECK:STDOUT:     %elt0.loc15_24.2: ref %empty_tuple.type = tuple_access %c1.var, element0
+// CHECK:STDOUT:     %.loc15_24.1: init %empty_tuple.type = tuple_init () to %elt0.loc15_24.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_24.2: init %empty_tuple.type = converted %elt0.loc15_24.1, %.loc15_24.1 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %elt1.loc15_24.1: %empty_tuple.type = tuple_access %c.ref, element1 [symbolic = %elt1.loc15_24.3 (constants.%elt1)]
+// CHECK:STDOUT:     %elt1.loc15_24.2: ref %empty_tuple.type = tuple_access %c1.var, element1
+// CHECK:STDOUT:     %.loc15_24.3: init %empty_tuple.type = tuple_init () to %elt1.loc15_24.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_24.4: init %empty_tuple.type = converted %elt1.loc15_24.1, %.loc15_24.3 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_24.5: init %tuple.type.3 = tuple_init (%.loc15_24.2, %.loc15_24.4) to %c1.var [template = constants.%tuple.2]
+// CHECK:STDOUT:     %.loc15_25: init %tuple.type.3 = converted %c.ref, %.loc15_24.5 [template = constants.%tuple.2]
 // CHECK:STDOUT:     assign %c1.var, %.loc15_25
 // CHECK:STDOUT:     %.loc16_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc16_19: %empty_tuple.type = tuple_literal ()
@@ -450,20 +450,20 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %d1.var: ref %tuple.type.2 = var d1
 // CHECK:STDOUT:     %d1: ref %tuple.type.2 = bind_name d1, %d1.var
 // CHECK:STDOUT:     %d.ref: %tuple.type.2 = name_ref d, @C.%d
-// CHECK:STDOUT:     %.loc16_28.1: %empty_tuple.type = tuple_access %d.ref, element0
-// CHECK:STDOUT:     %.loc16_28.2: ref %empty_tuple.type = tuple_access %d1.var, element0
-// CHECK:STDOUT:     %.loc16_28.3: init %empty_tuple.type = tuple_init () to %.loc16_28.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.4: init %empty_tuple.type = converted %.loc16_28.1, %.loc16_28.3 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.5: %empty_tuple.type = tuple_access %d.ref, element1
-// CHECK:STDOUT:     %.loc16_28.6: ref %empty_tuple.type = tuple_access %d1.var, element1
-// CHECK:STDOUT:     %.loc16_28.7: init %empty_tuple.type = tuple_init () to %.loc16_28.6 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.8: init %empty_tuple.type = converted %.loc16_28.5, %.loc16_28.7 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.9: %empty_tuple.type = tuple_access %d.ref, element2
-// CHECK:STDOUT:     %.loc16_28.10: ref %empty_tuple.type = tuple_access %d1.var, element2
-// CHECK:STDOUT:     %.loc16_28.11: init %empty_tuple.type = tuple_init () to %.loc16_28.10 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.12: init %empty_tuple.type = converted %.loc16_28.9, %.loc16_28.11 [template = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_28.13: init %tuple.type.2 = tuple_init (%.loc16_28.4, %.loc16_28.8, %.loc16_28.12) to %d1.var [template = constants.%tuple.1]
-// CHECK:STDOUT:     %.loc16_29: init %tuple.type.2 = converted %d.ref, %.loc16_28.13 [template = constants.%tuple.1]
+// CHECK:STDOUT:     %elt0.loc16_28.1: %empty_tuple.type = tuple_access %d.ref, element0
+// CHECK:STDOUT:     %elt0.loc16_28.2: ref %empty_tuple.type = tuple_access %d1.var, element0
+// CHECK:STDOUT:     %.loc16_28.1: init %empty_tuple.type = tuple_init () to %elt0.loc16_28.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_28.2: init %empty_tuple.type = converted %elt0.loc16_28.1, %.loc16_28.1 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %elt1.loc16_28.1: %empty_tuple.type = tuple_access %d.ref, element1
+// CHECK:STDOUT:     %elt1.loc16_28.2: ref %empty_tuple.type = tuple_access %d1.var, element1
+// CHECK:STDOUT:     %.loc16_28.3: init %empty_tuple.type = tuple_init () to %elt1.loc16_28.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_28.4: init %empty_tuple.type = converted %elt1.loc16_28.1, %.loc16_28.3 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %elt2.loc16_28.1: %empty_tuple.type = tuple_access %d.ref, element2
+// CHECK:STDOUT:     %elt2.loc16_28.2: ref %empty_tuple.type = tuple_access %d1.var, element2
+// CHECK:STDOUT:     %.loc16_28.5: init %empty_tuple.type = tuple_init () to %elt2.loc16_28.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_28.6: init %empty_tuple.type = converted %elt2.loc16_28.1, %.loc16_28.5 [template = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_28.7: init %tuple.type.2 = tuple_init (%.loc16_28.2, %.loc16_28.4, %.loc16_28.6) to %d1.var [template = constants.%tuple.1]
+// CHECK:STDOUT:     %.loc16_29: init %tuple.type.2 = converted %d.ref, %.loc16_28.7 [template = constants.%tuple.1]
 // CHECK:STDOUT:     assign %d1.var, %.loc16_29
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

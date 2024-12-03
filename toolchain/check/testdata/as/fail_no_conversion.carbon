@@ -68,8 +68,8 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %.loc17_35.4: type = value_of_initializer %int.make_type_signed.loc17_32 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_35.5: type = converted %int.make_type_signed.loc17_32, %.loc17_35.4 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_35.6: type = converted %.loc17_35.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc17_23.1: %tuple.type.2 = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc17_23.2: %i32 = tuple_access %.loc17_23.1, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc17_23: %tuple.type.2 = converted %int_1, <error> [template = <error>]
+// CHECK:STDOUT:   %elt0: %i32 = tuple_access %.loc17_23, element0 [template = <error>]
 // CHECK:STDOUT:   %n: %tuple.type.2 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

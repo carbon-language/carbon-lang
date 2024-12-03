@@ -210,12 +210,12 @@ class Derived {
 // CHECK:STDOUT:   %.loc18_22.1: ref %i32 = class_element_access %.loc18_17.2, element0
 // CHECK:STDOUT:   %.loc18_22.2: %i32 = bind_value %.loc18_22.1
 // CHECK:STDOUT:   %.loc18_24.1: %tuple.type.2 = tuple_literal (%.loc18_12.2, %.loc18_22.2)
-// CHECK:STDOUT:   %.loc18_24.2: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %.loc18_12.2 to %.loc18_24.2
-// CHECK:STDOUT:   %.loc18_24.4: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc18_24.5: init %i32 = initialize_from %.loc18_22.2 to %.loc18_24.4
-// CHECK:STDOUT:   %.loc18_24.6: init %tuple.type.2 = tuple_init (%.loc18_24.3, %.loc18_24.5) to %return
-// CHECK:STDOUT:   %.loc18_25: init %tuple.type.2 = converted %.loc18_24.1, %.loc18_24.6
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc18_24.2: init %i32 = initialize_from %.loc18_12.2 to %elt0
+// CHECK:STDOUT:   %elt1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %.loc18_22.2 to %elt1
+// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.2 = tuple_init (%.loc18_24.2, %.loc18_24.3) to %return
+// CHECK:STDOUT:   %.loc18_25: init %tuple.type.2 = converted %.loc18_24.1, %.loc18_24.4
 // CHECK:STDOUT:   return %.loc18_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

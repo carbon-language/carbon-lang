@@ -766,6 +766,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name(std::move(name));
         continue;
       }
+      case CARBON_KIND(TupleAccess inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "elt" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
       case CARBON_KIND(TupleType inst): {
         if (inst.elements_id == TypeBlockId::Empty) {
           add_inst_name("empty_tuple.type");

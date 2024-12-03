@@ -606,16 +606,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.loc13_70.1: ref @F.%tuple.type (%tuple.type.2) = temporary_storage
 // CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.2) = call %F.specific_fn.loc13_67.1(%p.ref) to %.loc13_70.1
 // CHECK:STDOUT:     %.loc13_70.2: ref @F.%tuple.type (%tuple.type.2) = temporary %.loc13_70.1, %F.call
-// CHECK:STDOUT:     %.loc13_70.3: ref @F.%T.loc13_6.2 (%T) = tuple_access %.loc13_70.2, element0
-// CHECK:STDOUT:     %.loc13_70.4: @F.%T.loc13_6.2 (%T) = bind_value %.loc13_70.3
-// CHECK:STDOUT:     %.loc13_70.5: ref @F.%T.loc13_6.2 (%T) = tuple_access %return, element0
-// CHECK:STDOUT:     %.loc13_70.6: init @F.%T.loc13_6.2 (%T) = initialize_from %.loc13_70.4 to %.loc13_70.5
-// CHECK:STDOUT:     %.loc13_70.7: ref @F.%U.loc13_16.2 (%U) = tuple_access %.loc13_70.2, element1
-// CHECK:STDOUT:     %.loc13_70.8: @F.%U.loc13_16.2 (%U) = bind_value %.loc13_70.7
-// CHECK:STDOUT:     %.loc13_70.9: ref @F.%U.loc13_16.2 (%U) = tuple_access %return, element1
-// CHECK:STDOUT:     %.loc13_70.10: init @F.%U.loc13_16.2 (%U) = initialize_from %.loc13_70.8 to %.loc13_70.9
-// CHECK:STDOUT:     %.loc13_70.11: init @F.%tuple.type (%tuple.type.2) = tuple_init (%.loc13_70.6, %.loc13_70.10) to %return
-// CHECK:STDOUT:     %.loc13_71: init @F.%tuple.type (%tuple.type.2) = converted %F.call, %.loc13_70.11
+// CHECK:STDOUT:     %elt0.loc13_70.1: ref @F.%T.loc13_6.2 (%T) = tuple_access %.loc13_70.2, element0
+// CHECK:STDOUT:     %.loc13_70.3: @F.%T.loc13_6.2 (%T) = bind_value %elt0.loc13_70.1
+// CHECK:STDOUT:     %elt0.loc13_70.2: ref @F.%T.loc13_6.2 (%T) = tuple_access %return, element0
+// CHECK:STDOUT:     %.loc13_70.4: init @F.%T.loc13_6.2 (%T) = initialize_from %.loc13_70.3 to %elt0.loc13_70.2
+// CHECK:STDOUT:     %elt1.loc13_70.1: ref @F.%U.loc13_16.2 (%U) = tuple_access %.loc13_70.2, element1
+// CHECK:STDOUT:     %.loc13_70.5: @F.%U.loc13_16.2 (%U) = bind_value %elt1.loc13_70.1
+// CHECK:STDOUT:     %elt1.loc13_70.2: ref @F.%U.loc13_16.2 (%U) = tuple_access %return, element1
+// CHECK:STDOUT:     %.loc13_70.6: init @F.%U.loc13_16.2 (%U) = initialize_from %.loc13_70.5 to %elt1.loc13_70.2
+// CHECK:STDOUT:     %.loc13_70.7: init @F.%tuple.type (%tuple.type.2) = tuple_init (%.loc13_70.4, %.loc13_70.6) to %return
+// CHECK:STDOUT:     %.loc13_71: init @F.%tuple.type (%tuple.type.2) = converted %F.call, %.loc13_70.7
 // CHECK:STDOUT:     return %.loc13_71 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

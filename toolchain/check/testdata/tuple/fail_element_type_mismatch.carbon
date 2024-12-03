@@ -71,14 +71,14 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template = constants.%float]
 // CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%int_2, %float)
-// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %elt0.loc17_30.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %elt0.loc17_30.1 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc17_30.2: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_30.3: ref %i32 = tuple_access file.%x.var, element0
-// CHECK:STDOUT:   %.loc17_30.4: init %i32 = initialize_from %.loc17_30.2 to %.loc17_30.3 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_30.5: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %elt0.loc17_30.2: ref %i32 = tuple_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc17_30.3: init %i32 = initialize_from %.loc17_30.2 to %elt0.loc17_30.2 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc17_30.4: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

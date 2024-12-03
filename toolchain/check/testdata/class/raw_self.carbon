@@ -190,12 +190,12 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %.loc22_15.2: %i32 = bind_value %.loc22_15.1
 // CHECK:STDOUT:   %self.ref.loc22_19: %i32 = name_ref r#self, %self.loc21_24
 // CHECK:STDOUT:   %.loc22_25.1: %tuple.type.2 = tuple_literal (%.loc22_15.2, %self.ref.loc22_19)
-// CHECK:STDOUT:   %.loc22_25.2: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc22_25.3: init %i32 = initialize_from %.loc22_15.2 to %.loc22_25.2
-// CHECK:STDOUT:   %.loc22_25.4: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc22_25.5: init %i32 = initialize_from %self.ref.loc22_19 to %.loc22_25.4
-// CHECK:STDOUT:   %.loc22_25.6: init %tuple.type.2 = tuple_init (%.loc22_25.3, %.loc22_25.5) to %return
-// CHECK:STDOUT:   %.loc22_26: init %tuple.type.2 = converted %.loc22_25.1, %.loc22_25.6
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc22_25.2: init %i32 = initialize_from %.loc22_15.2 to %elt0
+// CHECK:STDOUT:   %elt1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc22_25.3: init %i32 = initialize_from %self.ref.loc22_19 to %elt1
+// CHECK:STDOUT:   %.loc22_25.4: init %tuple.type.2 = tuple_init (%.loc22_25.2, %.loc22_25.3) to %return
+// CHECK:STDOUT:   %.loc22_26: init %tuple.type.2 = converted %.loc22_25.1, %.loc22_25.4
 // CHECK:STDOUT:   return %.loc22_26 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

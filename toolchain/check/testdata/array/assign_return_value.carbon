@@ -102,13 +102,13 @@ fn Run() {
 // CHECK:STDOUT:   %F.call: init %tuple.type.2 = call %F.ref()
 // CHECK:STDOUT:   %.loc14_23.1: ref %tuple.type.2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_23.2: ref %tuple.type.2 = temporary %.loc14_23.1, %F.call
-// CHECK:STDOUT:   %.loc14_23.3: ref %i32 = tuple_access %.loc14_23.2, element0
-// CHECK:STDOUT:   %.loc14_23.4: %i32 = bind_value %.loc14_23.3
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %.loc14_23.2, element0
+// CHECK:STDOUT:   %.loc14_23.3: %i32 = bind_value %elt0
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc14_23.5: ref %i32 = array_index %t.var, %int_0
-// CHECK:STDOUT:   %.loc14_23.6: init %i32 = initialize_from %.loc14_23.4 to %.loc14_23.5
-// CHECK:STDOUT:   %.loc14_23.7: init %array_type = array_init (%.loc14_23.6) to %t.var
-// CHECK:STDOUT:   %.loc14_24: init %array_type = converted %F.call, %.loc14_23.7
+// CHECK:STDOUT:   %.loc14_23.4: ref %i32 = array_index %t.var, %int_0
+// CHECK:STDOUT:   %.loc14_23.5: init %i32 = initialize_from %.loc14_23.3 to %.loc14_23.4
+// CHECK:STDOUT:   %.loc14_23.6: init %array_type = array_init (%.loc14_23.5) to %t.var
+// CHECK:STDOUT:   %.loc14_24: init %array_type = converted %F.call, %.loc14_23.6
 // CHECK:STDOUT:   assign %t.var, %.loc14_24
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

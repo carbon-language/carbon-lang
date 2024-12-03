@@ -335,13 +335,13 @@ class B {
 // CHECK:STDOUT:   %.loc13_25.3: ref %i32 = class_element_access %.loc13_25.2, element1
 // CHECK:STDOUT:   %.loc13_27.1: %tuple.type.2 = tuple_literal (%.loc13_17.3, %.loc13_25.3)
 // CHECK:STDOUT:   %.loc13_17.4: %i32 = bind_value %.loc13_17.3
-// CHECK:STDOUT:   %.loc13_27.2: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %.loc13_17.4 to %.loc13_27.2
+// CHECK:STDOUT:   %elt0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc13_27.2: init %i32 = initialize_from %.loc13_17.4 to %elt0
 // CHECK:STDOUT:   %.loc13_25.4: %i32 = bind_value %.loc13_25.3
-// CHECK:STDOUT:   %.loc13_27.4: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc13_27.5: init %i32 = initialize_from %.loc13_25.4 to %.loc13_27.4
-// CHECK:STDOUT:   %.loc13_27.6: init %tuple.type.2 = tuple_init (%.loc13_27.3, %.loc13_27.5) to %return
-// CHECK:STDOUT:   %.loc13_28: init %tuple.type.2 = converted %.loc13_27.1, %.loc13_27.6
+// CHECK:STDOUT:   %elt1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %.loc13_25.4 to %elt1
+// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.2 = tuple_init (%.loc13_27.2, %.loc13_27.3) to %return
+// CHECK:STDOUT:   %.loc13_28: init %tuple.type.2 = converted %.loc13_27.1, %.loc13_27.4
 // CHECK:STDOUT:   return %.loc13_28 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
