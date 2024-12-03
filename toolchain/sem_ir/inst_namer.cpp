@@ -413,6 +413,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
     }
 
     CARBON_KIND_SWITCH(untyped_inst) {
+      case ArrayType::Kind: {
+        // TODO: Can we figure out the name of the type this is an array of?
+        add_inst_name("array_type");
+        continue;
+      }
       case CARBON_KIND(AssociatedConstantDecl inst): {
         add_inst_name_id(inst.name_id);
         continue;
@@ -634,7 +639,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(IntValue inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "int." << sem_ir_.ints().Get(inst.int_id);
+        out << "int_" << sem_ir_.ints().Get(inst.int_id);
         add_inst_name(std::move(name));
         continue;
       }

@@ -41,7 +41,7 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.15 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.4(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.3.2, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -115,9 +115,9 @@ var arr: [i32; Add(1, 2)];
 // CHECK:STDOUT:   %int.convert_checked.loc13_24: init Core.IntLiteral = call %Convert.specific_fn.loc13_24(%.loc13_24.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc13_24.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc13_24 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc13_24.5: Core.IntLiteral = converted %int.sadd, %.loc13_24.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc13_25: type = array_type %.loc13_24.5, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %arr.var: ref %.1 = var arr
-// CHECK:STDOUT:   %arr: ref %.1 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %array_type: type = array_type %.loc13_24.5, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";

@@ -98,7 +98,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:   %int.convert_checked.loc16_22: init Core.IntLiteral = call %Convert.specific_fn.loc16_22(%.loc16_22.3) [template = constants.%int.-1.2]
 // CHECK:STDOUT:   %.loc16_22.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_22 [template = constants.%int.-1.2]
 // CHECK:STDOUT:   %.loc16_22.5: Core.IntLiteral = converted %int.snegate, %.loc16_22.4 [template = constants.%int.-1.2]
-// CHECK:STDOUT:   %.loc16_23: type = array_type %.loc16_22.5, %i32 [template = <error>]
+// CHECK:STDOUT:   %array_type: type = array_type %.loc16_22.5, %i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

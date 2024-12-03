@@ -25,7 +25,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.1, %Incomplete [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %Incomplete [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
@@ -48,7 +48,7 @@ var p: Incomplete* = &a[0];
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
-// CHECK:STDOUT:   %.loc19: type = array_type %int.1, %Incomplete [template = constants.%.1]
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %Incomplete [template = constants.%array_type]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]

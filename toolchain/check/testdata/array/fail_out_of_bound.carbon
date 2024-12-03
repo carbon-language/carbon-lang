@@ -21,7 +21,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.1, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %i32 [template]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %int.3: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [template]
@@ -46,9 +46,9 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %.loc14_9.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_9.2: type = converted %int.make_type_signed, %.loc14_9.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_15: type = array_type %int.1, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

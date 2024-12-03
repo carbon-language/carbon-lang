@@ -25,7 +25,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.1, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %i32 [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -35,7 +35,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %array: %.1 = tuple_value (%int.0.2) [template]
+// CHECK:STDOUT:   %array: %array_type = tuple_value (%int.0.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -97,9 +97,9 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %.loc12_11.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_11.2: type = converted %int.make_type_signed.loc12, %.loc12_11.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_17: type = array_type %int.1, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %array_type: type = array_type %int.1, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %x.var: ref %array_type = var x
+// CHECK:STDOUT:   %x: ref %array_type = bind_name x, %x.var
 // CHECK:STDOUT:   %int.0.loc12_22: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:   %.loc12_24.1: %tuple.type = tuple_literal (%int.0.loc12_22)
 // CHECK:STDOUT:   %.loc12_24.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -110,21 +110,21 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int.0.loc12_24: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:   %.loc12_24.4: ref %i32 = array_index %x.var, %int.0.loc12_24
 // CHECK:STDOUT:   %.loc12_24.5: init %i32 = initialize_from %.loc12_24.3 to %.loc12_24.4 [template = constants.%int.0.2]
-// CHECK:STDOUT:   %.loc12_24.6: init %.1 = array_init (%.loc12_24.5) to %x.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc12_25: init %.1 = converted %.loc12_24.1, %.loc12_24.6 [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_24.6: init %array_type = array_init (%.loc12_24.5) to %x.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_25: init %array_type = converted %.loc12_24.1, %.loc12_24.6 [template = constants.%array]
 // CHECK:STDOUT:   assign %x.var, %.loc12_25
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %x.ref.loc13_20: ref %.1 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc13_20: ref %array_type = name_ref x, %x
 // CHECK:STDOUT:   %m.ref: %i32 = name_ref m, %m
 // CHECK:STDOUT:   %.loc13_23.1: ref %i32 = array_index %x.ref.loc13_20, %m.ref
 // CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_23.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %x.ref.loc13_30: ref %.1 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc13_30: ref %array_type = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc13_33.1: ref %i32 = array_index %x.ref.loc13_30, %n.ref
 // CHECK:STDOUT:   %.loc13_33.2: %i32 = bind_value %.loc13_33.1

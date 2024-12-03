@@ -18,7 +18,7 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %int.9.1: Core.IntLiteral = int_value 9 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.9.1, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.9.1, %i32 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %int.3.1: Core.IntLiteral = int_value 3 [template]
@@ -60,7 +60,7 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %Convert.bound.9: <bound method> = bound_method %int.9.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.9: <specific function> = specific_function %Convert.bound.9, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.9.2: %i32 = int_value 9 [template]
-// CHECK:STDOUT:   %array: %.1 = tuple_value (%int.1.2, %int.2.2, %int.3.2, %int.4.2, %int.5.2, %int.6.2, %int.7.2, %int.8.2, %int.9.2) [template]
+// CHECK:STDOUT:   %array: %array_type = tuple_value (%int.1.2, %int.2.2, %int.3.2, %int.4.2, %int.5.2, %int.6.2, %int.7.2, %int.8.2, %int.9.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,9 +83,9 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int.9: Core.IntLiteral = int_value 9 [template = constants.%int.9.1]
 // CHECK:STDOUT:   %.loc11_9.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_9.2: type = converted %int.make_type_signed, %.loc11_9.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_15: type = array_type %int.9, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %array_type: type = array_type %int.9, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -172,8 +172,8 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:   %int.8.loc11_45: Core.IntLiteral = int_value 8 [template = constants.%int.8.1]
 // CHECK:STDOUT:   %.loc11_45.36: ref %i32 = array_index file.%a.var, %int.8.loc11_45
 // CHECK:STDOUT:   %.loc11_45.37: init %i32 = initialize_from %.loc11_45.35 to %.loc11_45.36 [template = constants.%int.9.2]
-// CHECK:STDOUT:   %.loc11_45.38: init %.1 = array_init (%.loc11_45.5, %.loc11_45.9, %.loc11_45.13, %.loc11_45.17, %.loc11_45.21, %.loc11_45.25, %.loc11_45.29, %.loc11_45.33, %.loc11_45.37) to file.%a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc11_46: init %.1 = converted %.loc11_45.1, %.loc11_45.38 [template = constants.%array]
+// CHECK:STDOUT:   %.loc11_45.38: init %array_type = array_init (%.loc11_45.5, %.loc11_45.9, %.loc11_45.13, %.loc11_45.17, %.loc11_45.21, %.loc11_45.25, %.loc11_45.29, %.loc11_45.33, %.loc11_45.37) to file.%a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc11_46: init %array_type = converted %.loc11_45.1, %.loc11_45.38 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_46
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

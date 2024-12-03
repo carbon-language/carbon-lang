@@ -638,7 +638,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%Convert.7) [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.7 [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.3.2, %i32 [template]
 // CHECK:STDOUT:   %int.4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.3.2, %Convert.6 [template]
 // CHECK:STDOUT:   %Convert.bound.5: <bound method> = bound_method %int.4.1, %Convert.6 [template]
@@ -652,7 +652,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%Convert.8) [template]
 // CHECK:STDOUT:   %Convert.bound.6: <bound method> = bound_method %int.3.2, %Convert.8 [template]
 // CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int.4.1, %Convert.8 [template]
-// CHECK:STDOUT:   %array: %.1 = tuple_value (%int.3.1, %int.4.2, %int.7) [template]
+// CHECK:STDOUT:   %array: %array_type = tuple_value (%int.3.1, %int.4.2, %int.7) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -728,9 +728,9 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %int.convert_checked.loc4_27: init Core.IntLiteral = call %Convert.bound.loc4_27(%.loc4_27.4) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc4_27.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_27 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc4_27.6: Core.IntLiteral = converted %int.sadd, %.loc4_27.5 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc4_39: type = array_type %.loc4_27.6, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %arr.var: ref %.1 = var arr
-// CHECK:STDOUT:   %arr: ref %.1 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %array_type: type = array_type %.loc4_27.6, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(constants.%T: type) {
@@ -880,8 +880,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc4_73.10: ref %i32 = array_index file.%arr.var, %int.2
 // CHECK:STDOUT:   %.loc4_73.11: init %i32 = initialize_from %int.sadd to %.loc4_73.10 [template = constants.%int.7]
-// CHECK:STDOUT:   %.loc4_73.12: init %.1 = array_init (%.loc4_73.5, %.loc4_73.9, %.loc4_73.11) to file.%arr.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc4_74: init %.1 = converted %.loc4_73.1, %.loc4_73.12 [template = constants.%array]
+// CHECK:STDOUT:   %.loc4_73.12: init %array_type = array_init (%.loc4_73.5, %.loc4_73.9, %.loc4_73.11) to file.%arr.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc4_74: init %array_type = converted %.loc4_73.1, %.loc4_73.12 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_74
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

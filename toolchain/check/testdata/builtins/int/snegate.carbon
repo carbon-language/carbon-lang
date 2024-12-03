@@ -140,8 +140,8 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %interface.10: <witness> = interface_witness (%Convert.15) [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.123.2, %Convert.15 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.4(%int.32) [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.123.1, %i32 [template]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.123.1, %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %array_type [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.1.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
@@ -214,16 +214,16 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %int.convert_checked.loc4_34: init Core.IntLiteral = call %Convert.specific_fn.loc4_34(%.loc4_34.3) [template = constants.%int.123.1]
 // CHECK:STDOUT:   %.loc4_34.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_34 [template = constants.%int.123.1]
 // CHECK:STDOUT:   %.loc4_34.5: Core.IntLiteral = converted %int.snegate.loc4_34, %.loc4_34.4 [template = constants.%int.123.1]
-// CHECK:STDOUT:   %.loc4_35: type = array_type %.loc4_34.5, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %arr.var: ref %.1 = var arr
-// CHECK:STDOUT:   %arr: ref %.1 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %array_type.loc4: type = array_type %.loc4_34.5, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int.32.loc5) [template = constants.%i32]
 // CHECK:STDOUT:   %int.123.loc5: Core.IntLiteral = int_value 123 [template = constants.%int.123.1]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_signed.loc5, %.loc5_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_21: type = array_type %int.123.loc5, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.1 [template = constants.%ptr]
+// CHECK:STDOUT:   %array_type.loc5: type = array_type %int.123.loc5, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %ptr: type = ptr_type %array_type [template = constants.%ptr]
 // CHECK:STDOUT:   %int.32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%int.32.loc7) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i32]
@@ -271,7 +271,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: ref %.1 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %arr.ref: ref %array_type = name_ref arr, file.%arr
 // CHECK:STDOUT:   %.loc5: %ptr = addr_of %arr.ref
 // CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %.loc5
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
@@ -479,7 +479,7 @@ let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDOUT:   %int.2.loc44: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc44_16.1: type = value_of_initializer %int.make_type_signed.loc44 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc44_16.2: type = converted %int.make_type_signed.loc44, %.loc44_16.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc44_36: type = array_type <error>, %i32 [template = <error>]
+// CHECK:STDOUT:   %array_type: type = array_type <error>, %i32 [template = <error>]
 // CHECK:STDOUT:   %bad_call.var: ref <error> = var bad_call
 // CHECK:STDOUT:   %bad_call: ref <error> = bind_name bad_call, %bad_call.var
 // CHECK:STDOUT:   %RuntimeCallTooFew.decl: %RuntimeCallTooFew.type = fn_decl @RuntimeCallTooFew [template = constants.%RuntimeCallTooFew] {

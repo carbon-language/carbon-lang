@@ -24,7 +24,7 @@ fn G() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %int.3.1: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.3.1, %i32 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.3.1, %i32 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [template]
@@ -42,7 +42,7 @@ fn G() {
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
-// CHECK:STDOUT:   %array: %.1 = tuple_value (%int.1.2, %int.2.2, %int.3.2) [template]
+// CHECK:STDOUT:   %array: %array_type = tuple_value (%int.1.2, %int.2.2, %int.3.2) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%i32, %i32, %i32) [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.3 = tuple_value (%int.1.2, %int.2.2, %int.3.2) [template]
@@ -73,9 +73,9 @@ fn G() {
 // CHECK:STDOUT:   %int.3.loc13_16: Core.IntLiteral = int_value 3 [template = constants.%int.3.1]
 // CHECK:STDOUT:   %.loc13_11.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_11.2: type = converted %int.make_type_signed.loc13, %.loc13_11.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_17: type = array_type %int.3.loc13_16, %i32 [template = constants.%.1]
-// CHECK:STDOUT:   %a.var: ref %.1 = var a
-// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
+// CHECK:STDOUT:   %array_type: type = array_type %int.3.loc13_16, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   %a.var: ref %array_type = var a
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %int.1.loc13_22: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %int.2.loc13_25: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %int.3.loc13_28: Core.IntLiteral = int_value 3 [template = constants.%int.3.1]
@@ -104,8 +104,8 @@ fn G() {
 // CHECK:STDOUT:   %int.2.loc13_29: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc13_29.12: ref %i32 = array_index %a.var, %int.2.loc13_29
 // CHECK:STDOUT:   %.loc13_29.13: init %i32 = initialize_from %.loc13_29.11 to %.loc13_29.12 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc13_29.14: init %.1 = array_init (%.loc13_29.5, %.loc13_29.9, %.loc13_29.13) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc13_30: init %.1 = converted %.loc13_29.1, %.loc13_29.14 [template = constants.%array]
+// CHECK:STDOUT:   %.loc13_29.14: init %array_type = array_init (%.loc13_29.5, %.loc13_29.9, %.loc13_29.13) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc13_30: init %array_type = converted %.loc13_29.1, %.loc13_29.14 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc13_30
 // CHECK:STDOUT:   %int.32.loc14_11: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc14_11: init type = call constants.%Int(%int.32.loc14_11) [template = constants.%i32]

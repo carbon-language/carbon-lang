@@ -28,7 +28,7 @@ fn G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.1: type = array_type %int.2, %tuple.type.2 [template]
+// CHECK:STDOUT:   %array_type: type = array_type %int.2, %tuple.type.2 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%tuple.type.2, %tuple.type.2) [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
@@ -92,9 +92,9 @@ fn G() {
 // CHECK:STDOUT:   %.loc14_25.6: type = value_of_initializer %int.make_type_signed.loc14_22 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_25.7: type = converted %int.make_type_signed.loc14_22, %.loc14_25.6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_25.8: type = converted %.loc14_25.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc14_29: type = array_type %int.2, %tuple.type.2 [template = constants.%.1]
-// CHECK:STDOUT:   %v.var: ref %.1 = var v
-// CHECK:STDOUT:   %v: ref %.1 = bind_name v, %v.var
+// CHECK:STDOUT:   %array_type: type = array_type %int.2, %tuple.type.2 [template = constants.%array_type]
+// CHECK:STDOUT:   %v.var: ref %array_type = var v
+// CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc14_42.2: ref %tuple.type.2 = splice_block %.loc14_42.1 {
 // CHECK:STDOUT:     %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
@@ -108,8 +108,8 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.call.loc14_41: init %tuple.type.2 = call %F.ref.loc14_39() to %.loc14_42.4
 // CHECK:STDOUT:   %.loc14_42.5: %tuple.type.3 = tuple_literal (%F.call.loc14_36, %F.call.loc14_41)
-// CHECK:STDOUT:   %.loc14_42.6: init %.1 = array_init (%F.call.loc14_36, %F.call.loc14_41) to %v.var
-// CHECK:STDOUT:   %.loc14_43: init %.1 = converted %.loc14_42.5, %.loc14_42.6
+// CHECK:STDOUT:   %.loc14_42.6: init %array_type = array_init (%F.call.loc14_36, %F.call.loc14_41) to %v.var
+// CHECK:STDOUT:   %.loc14_43: init %array_type = converted %.loc14_42.5, %.loc14_42.6
 // CHECK:STDOUT:   assign %v.var, %.loc14_43
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

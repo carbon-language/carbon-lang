@@ -86,7 +86,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int.convert_checked.loc16_16.1: init Core.IntLiteral = call %Convert.specific_fn.loc16_16.1(%N.ref) [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc16_16.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_16.1 [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc16_16.3: Core.IntLiteral = converted %N.ref, %.loc16_16.2 [symbolic = %int.convert_checked.loc16_16.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc16_17: type = array_type %.loc16_16.3, %i32 [template = <error>]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc16_16.3, %i32 [template = <error>]
 // CHECK:STDOUT:     %k.var: ref <error> = var k
 // CHECK:STDOUT:     %k: ref <error> = bind_name k, %k.var
 // CHECK:STDOUT:     return
