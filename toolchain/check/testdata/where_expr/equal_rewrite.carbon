@@ -115,9 +115,6 @@ fn WithU(W:! S where .U = ()) {
 
 library "[[@TEST_NAME]]";
 
-// TODO: Should import successfully and then get errors when calling the
-// imported functions.
-
 import library "equal_constraint";
 import library "nested_rewrites";
 
