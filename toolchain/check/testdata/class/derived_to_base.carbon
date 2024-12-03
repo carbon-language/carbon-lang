@@ -46,17 +46,17 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a.1 [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %B, %A [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %B, %i32 [template]
+// CHECK:STDOUT:   %B.elt.1: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt.2: type = unbound_element_type %B, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.b.1: type = struct_type {.base: %A, .b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.b.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C, %B [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %C, %i32 [template]
+// CHECK:STDOUT:   %C.elt.1: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elt.2: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.c.1: type = struct_type {.base: %B, .c: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.c.1 [template]
 // CHECK:STDOUT:   %ptr.4: type = ptr_type %C [template]
@@ -200,7 +200,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %A.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -211,12 +211,12 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %.2 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc16: %B.elt.1 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_signed, %.loc17_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_8: %.3 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc17_8: %B.elt.2 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -229,12 +229,12 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21: %.4 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc21: %C.elt.1 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc22_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc22_10.2: type = converted %int.make_type_signed, %.loc22_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc22_8: %.5 = field_decl c, element1 [template]
+// CHECK:STDOUT:   %.loc22_8: %C.elt.2 = field_decl c, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

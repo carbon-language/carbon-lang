@@ -234,11 +234,11 @@ class B {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Shape, %i32 [template]
+// CHECK:STDOUT:   %Shape.elt: type = unbound_element_type %Shape, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %i32, .y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.y [template]
 // CHECK:STDOUT:   %Circle: type = class_type @Circle [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Circle, %Shape [template]
+// CHECK:STDOUT:   %Circle.elt: type = unbound_element_type %Circle, %Shape [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %GetPosition.type: type = fn_type @GetPosition [template]
@@ -271,12 +271,12 @@ class B {
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int.32.loc5) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_signed.loc5, %.loc5_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_18: %.1 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_18: %Shape.elt = field_decl x, element0 [template]
 // CHECK:STDOUT:   %int.32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%int.32.loc6) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_20.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_20.2: type = converted %int.make_type_signed.loc6, %.loc6_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_18: %.1 = field_decl y, element1 [template]
+// CHECK:STDOUT:   %.loc6_18: %Shape.elt = field_decl y, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -288,7 +288,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Circle {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc10: %.2 = base_decl %Shape.ref, element0 [template]
+// CHECK:STDOUT:   %.loc10: %Circle.elt = base_decl %Shape.ref, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
@@ -324,12 +324,12 @@ class B {
 // CHECK:STDOUT: fn @GetPosition[%self.param_patt: %Circle]() -> %return: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: %.1 = name_ref x, @Shape.%.loc5_18 [template = @Shape.%.loc5_18]
+// CHECK:STDOUT:   %x.ref: %Shape.elt = name_ref x, @Shape.%.loc5_18 [template = @Shape.%.loc5_18]
 // CHECK:STDOUT:   %.loc13_17.1: ref %Shape = class_element_access %self.ref.loc13_13, element0
 // CHECK:STDOUT:   %.loc13_17.2: ref %Shape = converted %self.ref.loc13_13, %.loc13_17.1
 // CHECK:STDOUT:   %.loc13_17.3: ref %i32 = class_element_access %.loc13_17.2, element0
 // CHECK:STDOUT:   %self.ref.loc13_21: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %y.ref: %.1 = name_ref y, @Shape.%.loc6_18 [template = @Shape.%.loc6_18]
+// CHECK:STDOUT:   %y.ref: %Shape.elt = name_ref y, @Shape.%.loc6_18 [template = @Shape.%.loc6_18]
 // CHECK:STDOUT:   %.loc13_25.1: ref %Shape = class_element_access %self.ref.loc13_21, element0
 // CHECK:STDOUT:   %.loc13_25.2: ref %Shape = converted %self.ref.loc13_21, %.loc13_25.1
 // CHECK:STDOUT:   %.loc13_25.3: ref %i32 = class_element_access %.loc13_25.2, element1
@@ -355,7 +355,7 @@ class B {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -365,7 +365,7 @@ class B {
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.3: type = struct_type {.base: %B} [template]
@@ -406,7 +406,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.1 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %B.elt = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -430,7 +430,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: %.2 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc14: %C.elt = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -492,7 +492,7 @@ class B {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -556,7 +556,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: %.5 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc12: %B.elt = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -627,11 +627,11 @@ class B {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Shape, %i32 [template]
+// CHECK:STDOUT:   %Shape.elt: type = unbound_element_type %Shape, %i32 [template]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT:   %Square: type = class_type @Square [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Square, %Shape [template]
+// CHECK:STDOUT:   %Square.elt: type = unbound_element_type %Square, %Shape [template]
 // CHECK:STDOUT:   %GetPosition.type: type = fn_type @GetPosition [template]
 // CHECK:STDOUT:   %GetPosition: %GetPosition.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Shape} [template]
@@ -662,7 +662,7 @@ class B {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_18.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %int.make_type_signed, %.loc5_18.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_16: %.1 = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc5_16: %Shape.elt = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -673,7 +673,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Square {
 // CHECK:STDOUT:   %Shape.ref: type = name_ref Shape, file.%Shape.decl [template = constants.%Shape]
-// CHECK:STDOUT:   %.loc9: %.2 = base_decl %Shape.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %Square.elt = base_decl %Shape.ref, element0 [template]
 // CHECK:STDOUT:   %GetPosition.decl: %GetPosition.type = fn_decl @GetPosition [template = constants.%GetPosition] {
 // CHECK:STDOUT:     %self.patt: %Square = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Square = value_param_pattern %self.patt, runtime_param0
@@ -824,7 +824,7 @@ class B {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %B} [template]
@@ -861,7 +861,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.1 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %C.elt = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -895,7 +895,7 @@ class B {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %B} [template]
@@ -932,7 +932,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc9: %.1 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %C.elt = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -977,7 +977,7 @@ class B {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Internal: type = class_type @Internal [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B, %Internal [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %Internal [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %SomeFunc.type: type = fn_type @SomeFunc [template]
@@ -1065,7 +1065,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %Internal.ref: type = name_ref Internal, file.%Internal.decl [template = constants.%Internal]
-// CHECK:STDOUT:   %.loc14: %.5 = field_decl internal, element0 [template]
+// CHECK:STDOUT:   %.loc14: %B.elt = field_decl internal, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -1115,7 +1115,7 @@ class B {
 // CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
-// CHECK:STDOUT:   %internal.ref: %.5 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
+// CHECK:STDOUT:   %internal.ref: %B.elt = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [template = <error>]
@@ -1130,11 +1130,11 @@ class B {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %A} [template]
@@ -1165,7 +1165,7 @@ class B {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_18.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %int.make_type_signed, %.loc5_18.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_16: %.1 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_16: %A.elt = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1176,7 +1176,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.2 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %B.elt = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
@@ -1211,11 +1211,11 @@ class B {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %A} [template]
@@ -1246,7 +1246,7 @@ class B {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_signed, %.loc5_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_18: %.1 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_18: %A.elt = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1257,7 +1257,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc9: %.2 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %B.elt = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
@@ -1280,7 +1280,7 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %x.ref: %.1 = name_ref x, @A.%.loc5_18 [template = @A.%.loc5_18]
+// CHECK:STDOUT:   %x.ref: %A.elt = name_ref x, @A.%.loc5_18 [template = @A.%.loc5_18]
 // CHECK:STDOUT:   %.loc12_9.1: ref %A = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc12_9.2: ref %A = converted %self.ref, %.loc12_9.1
 // CHECK:STDOUT:   %.loc12_9.3: ref %i32 = class_element_access %.loc12_9.2, element0

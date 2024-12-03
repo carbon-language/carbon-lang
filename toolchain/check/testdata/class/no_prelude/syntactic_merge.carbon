@@ -1115,14 +1115,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %empty_tuple.type [template]
+// CHECK:STDOUT:   %Base.elt: type = unbound_element_type %Base, %empty_tuple.type [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Base [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1131,7 +1131,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc16: auto = addr_pattern %self.param_patt
@@ -1146,7 +1146,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Base.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
@@ -1172,7 +1172,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.1 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]
+// CHECK:STDOUT:   %a.ref: %Base.elt = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc17_10: ref %empty_tuple.type = class_element_access %.loc17_4, element0
 // CHECK:STDOUT:   %.loc17_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = tuple_init () to %.loc17_10 [template = constants.%empty_tuple]

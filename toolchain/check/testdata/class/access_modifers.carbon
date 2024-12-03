@@ -153,7 +153,7 @@ class A {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Circle, %i32 [template]
+// CHECK:STDOUT:   %Circle.elt: type = unbound_element_type %Circle, %i32 [template]
 // CHECK:STDOUT:   %int.5.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -203,7 +203,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int.32.loc5) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_23.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_23.2: type = converted %int.make_type_signed.loc5, %.loc5_23.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_21: %.1 = field_decl radius, element0 [template]
+// CHECK:STDOUT:   %.loc5_21: %Circle.elt = field_decl radius, element0 [template]
 // CHECK:STDOUT:   %int.32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%int.32.loc6) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_39.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
@@ -310,7 +310,7 @@ class A {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
@@ -341,7 +341,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_20.2: type = converted %int.make_type_signed, %.loc5_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_18: %.1 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_18: %A.elt = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -370,7 +370,7 @@ class A {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Circle, %i32 [template]
+// CHECK:STDOUT:   %Circle.elt: type = unbound_element_type %Circle, %i32 [template]
 // CHECK:STDOUT:   %GetRadius.type: type = fn_type @GetRadius [template]
 // CHECK:STDOUT:   %GetRadius: %GetRadius.type = struct_value () [template]
 // CHECK:STDOUT:   %SomeInternalFunction.type: type = fn_type @SomeInternalFunction [template]
@@ -412,7 +412,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_23.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_23.2: type = converted %int.make_type_signed, %.loc5_23.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_21: %.1 = field_decl radius, element0 [template]
+// CHECK:STDOUT:   %.loc5_21: %Circle.elt = field_decl radius, element0 [template]
 // CHECK:STDOUT:   %GetRadius.decl: %GetRadius.type = fn_decl @GetRadius [template = constants.%GetRadius] {
 // CHECK:STDOUT:     %self.patt: %Circle = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Circle = value_param_pattern %self.patt, runtime_param0
@@ -470,7 +470,7 @@ class A {
 // CHECK:STDOUT: fn @GetRadius[%self.param_patt: %Circle]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
-// CHECK:STDOUT:   %radius.ref: %.1 = name_ref radius, @Circle.%.loc5_21 [template = @Circle.%.loc5_21]
+// CHECK:STDOUT:   %radius.ref: %Circle.elt = name_ref radius, @Circle.%.loc5_21 [template = @Circle.%.loc5_21]
 // CHECK:STDOUT:   %.loc8_16.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc8_16.2: %i32 = bind_value %.loc8_16.1
 // CHECK:STDOUT:   return %.loc8_16.2

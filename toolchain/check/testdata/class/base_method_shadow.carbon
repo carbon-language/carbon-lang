@@ -44,21 +44,21 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %ptr.3: type = ptr_type %B [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %ptr.5: type = ptr_type %C [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.3: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.3 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %D, %B [template]
+// CHECK:STDOUT:   %D.elt: type = unbound_element_type %D, %B [template]
 // CHECK:STDOUT:   %ptr.6: type = ptr_type %D [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
@@ -135,7 +135,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %.1 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc16: %B.elt = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %self.patt: %ptr.3 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.3 = value_param_pattern %self.patt, runtime_param0
@@ -158,7 +158,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21: %.2 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc21: %C.elt = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.3 [template = constants.%F.3] {
 // CHECK:STDOUT:     %self.patt: %ptr.5 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.5 = value_param_pattern %self.patt, runtime_param0
@@ -181,7 +181,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc26: %.3 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc26: %D.elt = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.3 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

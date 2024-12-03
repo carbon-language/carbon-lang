@@ -38,7 +38,7 @@ export C.n;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %C, %empty_struct_type [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %empty_struct_type [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
@@ -53,7 +53,7 @@ export C.n;
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %C.elt = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

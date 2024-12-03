@@ -29,7 +29,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, %i32 [template]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
@@ -73,12 +73,12 @@ fn Run() {
 // CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int.32.loc12) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed.loc12, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %.1 = field_decl j, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elt = field_decl j, element0 [template]
 // CHECK:STDOUT:   %int.32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int.32.loc13) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %.1 = field_decl k, element1 [template]
+// CHECK:STDOUT:   %.loc13_8: %Class.elt = field_decl k, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -94,7 +94,7 @@ fn Run() {
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref.loc18: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %j.ref.loc18: %.1 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %j.ref.loc18: %Class.elt = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc18_4: ref %i32 = class_element_access %c.ref.loc18, element0
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %.loc18_7.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -104,7 +104,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc18_7.2: init %i32 = converted %int.1, %int.convert_checked.loc18 [template = constants.%int.1.2]
 // CHECK:STDOUT:   assign %.loc18_4, %.loc18_7.2
 // CHECK:STDOUT:   %c.ref.loc19: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %k.ref.loc19: %.1 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %k.ref.loc19: %Class.elt = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc19_4: ref %i32 = class_element_access %c.ref.loc19, element1
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc19_7.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -120,7 +120,7 @@ fn Run() {
 // CHECK:STDOUT:   %cj.var: ref %i32 = var cj
 // CHECK:STDOUT:   %cj: ref %i32 = bind_name cj, %cj.var
 // CHECK:STDOUT:   %c.ref.loc20: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %j.ref.loc20: %.1 = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %j.ref.loc20: %Class.elt = name_ref j, @Class.%.loc12_8 [template = @Class.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_18.1: ref %i32 = class_element_access %c.ref.loc20, element0
 // CHECK:STDOUT:   %.loc20_18.2: %i32 = bind_value %.loc20_18.1
 // CHECK:STDOUT:   assign %cj.var, %.loc20_18.2
@@ -131,7 +131,7 @@ fn Run() {
 // CHECK:STDOUT:   %ck.var: ref %i32 = var ck
 // CHECK:STDOUT:   %ck: ref %i32 = bind_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc21: ref %Class = name_ref c, %c
-// CHECK:STDOUT:   %k.ref.loc21: %.1 = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
+// CHECK:STDOUT:   %k.ref.loc21: %Class.elt = name_ref k, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:   %.loc21_18.1: ref %i32 = class_element_access %c.ref.loc21, element1
 // CHECK:STDOUT:   %.loc21_18.2: %i32 = bind_value %.loc21_18.1
 // CHECK:STDOUT:   assign %ck.var, %.loc21_18.2

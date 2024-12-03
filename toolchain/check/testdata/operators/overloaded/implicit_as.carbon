@@ -40,7 +40,7 @@ fn Test() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %X, %i32 [template]
+// CHECK:STDOUT:   %X.elt: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
@@ -198,7 +198,7 @@ fn Test() {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %.1 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %X.elt = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -221,7 +221,7 @@ fn Test() {
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %.1 = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
+// CHECK:STDOUT:   %n.ref: %X.elt = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
 // CHECK:STDOUT:   return %.loc20_45.2

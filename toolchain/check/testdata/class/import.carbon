@@ -60,7 +60,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Field, %i32 [template]
+// CHECK:STDOUT:   %Field.elt: type = unbound_element_type %Field, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %ForwardDeclared: type = class_type @ForwardDeclared [template]
@@ -109,7 +109,7 @@ fn Run() {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_signed, %.loc8_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_8: %.1 = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc8_8: %Field.elt = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -177,7 +177,7 @@ fn Run() {
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.2: %Field = struct_value (%int.1.2) [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %Field, %i32 [template]
+// CHECK:STDOUT:   %Field.elt: type = unbound_element_type %Field, %i32 [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int.32) [template]
@@ -207,7 +207,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//a, inst+29, loaded [template = constants.%complete_type.2]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.9: %.5 = import_ref Main//a, inst+27, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.9: %Field.elt = import_ref Main//a, inst+27, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.46: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst+32, unloaded
 // CHECK:STDOUT:   %import_ref.48: %F.type = import_ref Main//a, inst+39, loaded [template = constants.%F]
@@ -288,7 +288,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_26: init %Field = converted %.loc9_25.1, %.loc9_25.6 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %b.var, %.loc9_26
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
-// CHECK:STDOUT:   %x.ref: %.5 = name_ref x, imports.%import_ref.9 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %Field.elt = name_ref x, imports.%import_ref.9 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc10_7.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]

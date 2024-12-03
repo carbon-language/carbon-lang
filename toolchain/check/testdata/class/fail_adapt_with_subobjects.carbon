@@ -85,7 +85,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %AdaptWithBase, %Base [template]
+// CHECK:STDOUT:   %AdaptWithBase.elt: type = unbound_element_type %AdaptWithBase, %Base [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -122,7 +122,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc10_12.2: type = converted %int.make_type_signed, %.loc10_12.1 [template = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %.loc10_12.2 [template]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc15: %.1 = base_decl %Base.ref, element<invalid> [template]
+// CHECK:STDOUT:   %.loc15: %AdaptWithBase.elt = base_decl %Base.ref, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
@@ -139,9 +139,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %AdaptWithField, %i32 [template]
+// CHECK:STDOUT:   %AdaptWithField.elt: type = unbound_element_type %AdaptWithField, %i32 [template]
 // CHECK:STDOUT:   %AdaptWithFields: type = class_type @AdaptWithFields [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %AdaptWithFields, %i32 [template]
+// CHECK:STDOUT:   %AdaptWithFields.elt: type = unbound_element_type %AdaptWithFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,7 +173,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int.32.loc13) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %.1 = field_decl n, element<invalid> [template]
+// CHECK:STDOUT:   %.loc13_8: %AdaptWithField.elt = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
@@ -191,17 +191,17 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int.make_type_signed.loc25: init type = call constants.%Int(%int.32.loc25) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc25_10.1: type = value_of_initializer %int.make_type_signed.loc25 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc25_10.2: type = converted %int.make_type_signed.loc25, %.loc25_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc25_8: %.2 = field_decl a, element<invalid> [template]
+// CHECK:STDOUT:   %.loc25_8: %AdaptWithFields.elt = field_decl a, element<invalid> [template]
 // CHECK:STDOUT:   %int.32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%int.32.loc26) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc26_10.1: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc26_10.2: type = converted %int.make_type_signed.loc26, %.loc26_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_8: %.2 = field_decl b, element<invalid> [template]
+// CHECK:STDOUT:   %.loc26_8: %AdaptWithFields.elt = field_decl b, element<invalid> [template]
 // CHECK:STDOUT:   %int.32.loc27: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc27: init type = call constants.%Int(%int.32.loc27) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc27_10.1: type = value_of_initializer %int.make_type_signed.loc27 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc27_10.2: type = converted %int.make_type_signed.loc27, %.loc27_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc27_8: %.2 = field_decl c, element<invalid> [template]
+// CHECK:STDOUT:   %.loc27_8: %AdaptWithFields.elt = field_decl c, element<invalid> [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
@@ -218,12 +218,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields: type = class_type @AdaptWithBaseAndFields [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elt.1: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elt.2: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -255,12 +255,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc7: %.1 = base_decl %Base.ref, element<invalid> [template]
+// CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elt.1 = base_decl %Base.ref, element<invalid> [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_signed, %.loc8_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_8: %.2 = field_decl n, element<invalid> [template]
+// CHECK:STDOUT:   %.loc8_8: %AdaptWithBaseAndFields.elt.2 = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc15_11 [template]

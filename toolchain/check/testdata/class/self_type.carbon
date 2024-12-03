@@ -35,7 +35,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, %ptr.1 [template]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type %Class, %ptr.1 [template]
 // CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.1} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template]
 // CHECK:STDOUT: }
@@ -100,7 +100,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class [template = constants.%ptr.1]
-// CHECK:STDOUT:   %.loc18: %.1 = field_decl p, element0 [template]
+// CHECK:STDOUT:   %.loc18: %Class.elt = field_decl p, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -114,7 +114,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc21
-// CHECK:STDOUT:   %p.ref: %.1 = name_ref p, @Class.%.loc18 [template = @Class.%.loc18]
+// CHECK:STDOUT:   %p.ref: %Class.elt = name_ref p, @Class.%.loc18 [template = @Class.%.loc18]
 // CHECK:STDOUT:   %.loc22_16.1: ref %ptr.1 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc22_16.2: %ptr.1 = bind_value %.loc22_16.1
 // CHECK:STDOUT:   %.loc22_11.1: ref %Class = deref %.loc22_16.2

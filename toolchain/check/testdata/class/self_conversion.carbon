@@ -41,11 +41,11 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %i32 [template]
+// CHECK:STDOUT:   %Base.elt: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %Derived.elt: type = unbound_element_type %Derived, %Base [template]
 // CHECK:STDOUT:   %SelfBase.type: type = fn_type @SelfBase [template]
 // CHECK:STDOUT:   %SelfBase: %SelfBase.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %Base [template]
@@ -135,7 +135,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Base.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -146,7 +146,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc16: %.2 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc16: %Derived.elt = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %SelfBase.decl: %SelfBase.type = fn_decl @SelfBase [template = constants.%SelfBase] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
@@ -187,7 +187,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc22
-// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
+// CHECK:STDOUT:   %a.ref: %Base.elt = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc23_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc23_14.2: %i32 = bind_value %.loc23_14.1
 // CHECK:STDOUT:   return %.loc23_14.2
@@ -197,7 +197,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.2 = name_ref self, %self.loc26
 // CHECK:STDOUT:   %.loc27_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
+// CHECK:STDOUT:   %a.ref: %Base.elt = name_ref a, @Base.%.loc12_8 [template = @Base.%.loc12_8]
 // CHECK:STDOUT:   %.loc27_10: ref %i32 = class_element_access %.loc27_4, element0
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %.loc27_13.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]

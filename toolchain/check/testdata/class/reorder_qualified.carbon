@@ -59,7 +59,7 @@ class A {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %B, %i32 [template]
+// CHECK:STDOUT:   %B.elt: type = unbound_element_type %B, %i32 [template]
 // CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.b.1 [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
@@ -67,17 +67,17 @@ class A {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %DF.type: type = fn_type @DF [template]
 // CHECK:STDOUT:   %DF: %DF.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %D, %i32 [template]
+// CHECK:STDOUT:   %D.elt: type = unbound_element_type %D, %i32 [template]
 // CHECK:STDOUT:   %struct_type.d.1: type = struct_type {.d: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.d.1 [template]
 // CHECK:STDOUT:   %CF.type: type = fn_type @CF [template]
 // CHECK:STDOUT:   %CF: %CF.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %C, %i32 [template]
+// CHECK:STDOUT:   %C.elt: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.c.1: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.c.1 [template]
 // CHECK:STDOUT:   %AF.type: type = fn_type @AF [template]
 // CHECK:STDOUT:   %AF: %AF.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %A, %i32 [template]
+// CHECK:STDOUT:   %A.elt: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.a.1 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
@@ -136,7 +136,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc46_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc46_10.2: type = converted %int.make_type_signed, %.loc46_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc46_8: %.4 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc46_8: %A.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -154,7 +154,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_12.2: type = converted %int.make_type_signed, %.loc16_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_10: %.1 = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc16_10: %B.elt = field_decl b, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -173,7 +173,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc42_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc42_12.2: type = converted %int.make_type_signed, %.loc42_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc42_10: %.3 = field_decl c, element0 [template]
+// CHECK:STDOUT:   %.loc42_10: %C.elt = field_decl c, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -191,7 +191,7 @@ class A {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc24_14.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc24_14.2: type = converted %int.make_type_signed, %.loc24_14.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc24_12: %.2 = field_decl d, element0 [template]
+// CHECK:STDOUT:   %.loc24_12: %D.elt = field_decl d, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

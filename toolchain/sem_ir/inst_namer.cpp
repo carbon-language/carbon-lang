@@ -699,6 +699,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(UnboundElementType inst): {
+        if (auto class_ty =
+                sem_ir_.types().TryGetAs<ClassType>(inst.class_type_id)) {
+          add_inst_name_id(sem_ir_.classes().Get(class_ty->class_id).name_id,
+                           ".elt");
+        } else {
+          add_inst_name("elt_type");
+        }
+        continue;
+      }
       case CARBON_KIND(VarStorage inst): {
         add_inst_name_id(inst.name_id, ".var");
         continue;

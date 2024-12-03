@@ -446,12 +446,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %Derived.elt.1: type = unbound_element_type %Derived, %Abstract [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %Derived.elt.2: type = unbound_element_type %Derived, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Abstract, .d: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -500,12 +500,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.1 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %Derived.elt.1 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.2 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc10_8: %Derived.elt.2 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -532,12 +532,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %Derived.elt.1: type = unbound_element_type %Derived, %Abstract [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %Derived.elt.2: type = unbound_element_type %Derived, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: %Abstract, .d: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d [template]
 // CHECK:STDOUT:   %Return.type: type = fn_type @Return [template]
@@ -587,12 +587,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc8: %.1 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %Derived.elt.1 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.2 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc10_8: %Derived.elt.2 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -617,12 +617,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Abstract, %i32 [template]
+// CHECK:STDOUT:   %Abstract.elt: type = unbound_element_type %Abstract, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %Abstract [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %Derived.elt.1: type = unbound_element_type %Derived, %Abstract [template]
+// CHECK:STDOUT:   %Derived.elt.2: type = unbound_element_type %Derived, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Abstract, .d: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
@@ -670,7 +670,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_signed, %.loc5_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Abstract.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -681,12 +681,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [template = constants.%Abstract]
-// CHECK:STDOUT:   %.loc9: %.2 = base_decl %Abstract.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: %Derived.elt.1 = base_decl %Abstract.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_10.2: type = converted %int.make_type_signed, %.loc11_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_8: %.3 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc11_8: %Derived.elt.2 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -700,7 +700,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %.2 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
+// CHECK:STDOUT:   %base.ref: %Derived.elt.1 = name_ref base, @Derived.%.loc9 [template = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>

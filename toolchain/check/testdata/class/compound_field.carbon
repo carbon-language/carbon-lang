@@ -45,12 +45,12 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %i32 [template]
+// CHECK:STDOUT:   %Base.elt: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a.b.c [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %Derived.elt.1: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %Derived.elt.2: type = unbound_element_type %Derived, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.d.e.1: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d.e.1 [template]
 // CHECK:STDOUT:   %AccessDerived.type: type = fn_type @AccessDerived [template]
@@ -161,17 +161,17 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int.32.loc12) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed.loc12, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %Base.elt = field_decl a, element0 [template]
 // CHECK:STDOUT:   %int.32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int.32.loc13) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %.1 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc13_8: %Base.elt = field_decl b, element1 [template]
 // CHECK:STDOUT:   %int.32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int.32.loc14) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_signed.loc14, %.loc14_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_8: %.1 = field_decl c, element2 [template]
+// CHECK:STDOUT:   %.loc14_8: %Base.elt = field_decl c, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -184,17 +184,17 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc18: %.2 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc18: %Derived.elt.1 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %int.32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%int.32.loc20) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_10.2: type = converted %int.make_type_signed.loc20, %.loc20_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc20_8: %.3 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc20_8: %Derived.elt.2 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %int.32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int.32.loc21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_signed.loc21, %.loc21_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8: %.3 = field_decl e, element2 [template]
+// CHECK:STDOUT:   %.loc21_8: %Derived.elt.2 = field_decl e, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -210,7 +210,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc25_10: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Derived.ref.loc25: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref.loc25_20: %.3 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
+// CHECK:STDOUT:   %d.ref.loc25_20: %Derived.elt.2 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc25_11.1: ref %i32 = class_element_access %d.ref.loc25_10, element1
 // CHECK:STDOUT:   %.loc25_11.2: %i32 = bind_value %.loc25_11.1
 // CHECK:STDOUT:   return %.loc25_11.2
@@ -220,7 +220,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
+// CHECK:STDOUT:   %b.ref: %Base.elt = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc29_11.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc29_11.2: ref %Base = converted %d.ref, %.loc29_11.1
 // CHECK:STDOUT:   %.loc29_11.3: ref %i32 = class_element_access %.loc29_11.2, element1
@@ -232,7 +232,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.4 = name_ref p, %p
 // CHECK:STDOUT:   %Derived.ref.loc33: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
-// CHECK:STDOUT:   %d.ref: %.3 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
+// CHECK:STDOUT:   %d.ref: %Derived.elt.2 = name_ref d, @Derived.%.loc20_8 [template = @Derived.%.loc20_8]
 // CHECK:STDOUT:   %.loc33_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc33_12.2: ref %i32 = class_element_access %.loc33_12.1, element1
 // CHECK:STDOUT:   %.loc33_10: %ptr.5 = addr_of %.loc33_12.2
@@ -243,7 +243,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.4 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
+// CHECK:STDOUT:   %b.ref: %Base.elt = name_ref b, @Base.%.loc13_8 [template = @Base.%.loc13_8]
 // CHECK:STDOUT:   %.loc37_12.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %.loc37_12.2: ref %Base = class_element_access %.loc37_12.1, element0
 // CHECK:STDOUT:   %.loc37_12.3: ref %Base = converted %.loc37_12.1, %.loc37_12.2

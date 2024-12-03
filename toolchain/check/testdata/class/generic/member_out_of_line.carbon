@@ -117,7 +117,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
 // CHECK:STDOUT: }
@@ -185,7 +185,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.loc4_13.2) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.loc7_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc4_13.2 (%T) [symbolic = %.loc7_8.2 (constants.%.1)]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc4_13.2 (%T) [symbolic = %Class.elt (constants.%Class.elt)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
 // CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness @Class.%struct_type.n (%struct_type.n) [symbolic = %complete_type.loc8_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -218,14 +218,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %.loc6_22: ref @G.%T.loc6 (%T) = return_slot %return.param.loc6
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_8.1: @Class.%.loc7_8.2 (%.1) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc7: @Class.%Class.elt (%Class.elt) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc8_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .n = %.loc7_8.1
+// CHECK:STDOUT:     .n = %.loc7
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -247,12 +247,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc6) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc15_14.3: type = unbound_element_type @G.%Class (%Class.2), @G.%T.loc6 (%T) [symbolic = %.loc15_14.3 (constants.%.1)]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @G.%Class (%Class.2), @G.%T.loc6 (%T) [symbolic = %Class.elt (constants.%Class.elt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class.2]() -> %T {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class.2) = name_ref self, %self.loc14
-// CHECK:STDOUT:     %n.ref: @G.%.loc15_14.3 (%.1) = name_ref n, @Class.%.loc7_8.1 [template = @Class.%.loc7_8.1]
+// CHECK:STDOUT:     %n.ref: @G.%Class.elt (%Class.elt) = name_ref n, @Class.%.loc7 [template = @Class.%.loc7]
 // CHECK:STDOUT:     %.loc15_14.1: ref @G.%T.loc6 (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc15_14.2: @G.%T.loc6 (%T) = bind_value %.loc15_14.1
 // CHECK:STDOUT:     return %.loc15_14.2
@@ -269,7 +269,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT:   %Class => constants.%Class.2
-// CHECK:STDOUT:   %.loc7_8.2 => constants.%.1
+// CHECK:STDOUT:   %Class.elt => constants.%Class.elt
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type
 // CHECK:STDOUT: }

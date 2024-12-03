@@ -37,7 +37,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr: %GetAddr.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Class.2, %T [symbolic]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type %Class.2, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [symbolic]
 // CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [template]
@@ -84,7 +84,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T.loc11_13.2) [symbolic = %GetValue.type (constants.%GetValue.type)]
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class.2)]
-// CHECK:STDOUT:   %.loc21_8.2: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc11_13.2 (%T) [symbolic = %.loc21_8.2 (constants.%.1)]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @Class.%Class (%Class.2), @Class.%T.loc11_13.2 (%T) [symbolic = %Class.elt (constants.%Class.elt)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
 // CHECK:STDOUT:   %complete_type.loc22_1.2: <witness> = complete_type_witness @Class.%struct_type.k (%struct_type.k) [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -121,14 +121,14 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return: ref @GetValue.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc21_8.1: @Class.%.loc21_8.2 (%.1) = field_decl k, element0 [template]
+// CHECK:STDOUT:     %.loc21: @Class.%Class.elt (%Class.elt) = field_decl k, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.2
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:     .GetValue = %GetValue.decl
-// CHECK:STDOUT:     .k = %.loc21_8.1
+// CHECK:STDOUT:     .k = %.loc21
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc22_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -147,13 +147,13 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %ptr.loc12_38.1: type = ptr_type @GetAddr.%T (%T) [symbolic = %ptr.loc12_38.1 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc13_17.3: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %.loc13_17.3 (constants.%.1)]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @GetAddr.%Class (%Class.2), @GetAddr.%T (%T) [symbolic = %Class.elt (constants.%Class.elt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc12_29.1 (%ptr.1)]() -> @GetAddr.%ptr.loc12_38.1 (%ptr.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc12_29.1 (%ptr.1) = name_ref self, %self
 // CHECK:STDOUT:     %.loc13_17.1: ref @GetAddr.%Class (%Class.2) = deref %self.ref
-// CHECK:STDOUT:     %k.ref: @GetAddr.%.loc13_17.3 (%.1) = name_ref k, @Class.%.loc21_8.1 [template = @Class.%.loc21_8.1]
+// CHECK:STDOUT:     %k.ref: @GetAddr.%Class.elt (%Class.elt) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
 // CHECK:STDOUT:     %.loc13_17.2: ref @GetAddr.%T (%T) = class_element_access %.loc13_17.1, element0
 // CHECK:STDOUT:     %.loc13_12: @GetAddr.%ptr.loc12_38.1 (%ptr.2) = addr_of %.loc13_17.2
 // CHECK:STDOUT:     return %.loc13_12
@@ -165,12 +165,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc18_16.3: type = unbound_element_type @GetValue.%Class (%Class.2), @GetValue.%T (%T) [symbolic = %.loc18_16.3 (constants.%.1)]
+// CHECK:STDOUT:   %Class.elt: type = unbound_element_type @GetValue.%Class (%Class.2), @GetValue.%T (%T) [symbolic = %Class.elt (constants.%Class.elt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @GetValue.%Class (%Class.2)]() -> @GetValue.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetValue.%Class (%Class.2) = name_ref self, %self
-// CHECK:STDOUT:     %k.ref: @GetValue.%.loc18_16.3 (%.1) = name_ref k, @Class.%.loc21_8.1 [template = @Class.%.loc21_8.1]
+// CHECK:STDOUT:     %k.ref: @GetValue.%Class.elt (%Class.elt) = name_ref k, @Class.%.loc21 [template = @Class.%.loc21]
 // CHECK:STDOUT:     %.loc18_16.1: ref @GetValue.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc18_16.2: @GetValue.%T (%T) = bind_value %.loc18_16.1
 // CHECK:STDOUT:     return %.loc18_16.2
@@ -187,7 +187,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetValue.type => constants.%GetValue.type
 // CHECK:STDOUT:   %GetValue => constants.%GetValue
 // CHECK:STDOUT:   %Class => constants.%Class.2
-// CHECK:STDOUT:   %.loc21_8.2 => constants.%.1
+// CHECK:STDOUT:   %Class.elt => constants.%Class.elt
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k
 // CHECK:STDOUT:   %complete_type.loc22_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
