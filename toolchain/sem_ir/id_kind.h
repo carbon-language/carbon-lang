@@ -115,6 +115,11 @@ class TypeEnum {
 };
 
 // An enum of all the ID types used as instruction operands.
+//
+// As instruction operands, the types listed here can appear as fields of typed
+// instructions (`toolchain/sem_ir/typed_insts.h`) and must implement the
+// `FromRaw` and `ToRaw` protocol in `SemIR::Inst`. In most cases this is done
+// by inheriting from `IdBase` or `IndexBase`.
 using IdKind = TypeEnum<
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,

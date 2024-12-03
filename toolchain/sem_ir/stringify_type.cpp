@@ -320,8 +320,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         auto witness_type_id =
             sem_ir.insts().Get(witness.facet_value_inst_id).type_id();
         auto facet_type = sem_ir.types().GetAs<FacetType>(witness_type_id);
-        // TODO: Support != 1 interface better.
         step_stack.PushString(")");
+        // TODO: Support != 1 interface better.
         if (auto impls_constraint = sem_ir.facet_types()
                                         .Get(facet_type.facet_type_id)
                                         .TryAsSingleInterface()) {
@@ -362,6 +362,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         if (!period_self) {
           step_stack.PushInstId(witness.facet_value_inst_id);
         }
+        break;
+      }
+      case CARBON_KIND(IntValue inst): {
+        sem_ir.ints().Get(inst.int_id).print(out, /*isSigned=*/true);
         break;
       }
       case CARBON_KIND(NameRef inst): {
@@ -453,7 +457,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
-      case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case Namespace::Kind:

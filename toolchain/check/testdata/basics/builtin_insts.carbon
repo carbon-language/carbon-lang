@@ -33,31 +33,31 @@
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instTypeType:    {kind: TypeType, type: typeTypeType}
-// CHECK:STDOUT:     instErrorInst:   {kind: ErrorInst, type: typeError}
 // CHECK:STDOUT:     instAutoType:    {kind: AutoType, type: typeTypeType}
 // CHECK:STDOUT:     instBoolType:    {kind: BoolType, type: typeTypeType}
+// CHECK:STDOUT:     instBoundMethodType: {kind: BoundMethodType, type: typeTypeType}
+// CHECK:STDOUT:     instErrorInst:   {kind: ErrorInst, type: typeError}
 // CHECK:STDOUT:     instIntLiteralType: {kind: IntLiteralType, type: typeTypeType}
 // CHECK:STDOUT:     instLegacyFloatType: {kind: LegacyFloatType, type: typeTypeType}
-// CHECK:STDOUT:     instStringType:  {kind: StringType, type: typeTypeType}
-// CHECK:STDOUT:     instBoundMethodType: {kind: BoundMethodType, type: typeTypeType}
-// CHECK:STDOUT:     instSpecificFunctionType: {kind: SpecificFunctionType, type: typeTypeType}
 // CHECK:STDOUT:     instNamespaceType: {kind: NamespaceType, type: typeTypeType}
-// CHECK:STDOUT:     instWitnessType: {kind: WitnessType, type: typeTypeType}
+// CHECK:STDOUT:     instSpecificFunctionType: {kind: SpecificFunctionType, type: typeTypeType}
+// CHECK:STDOUT:     instStringType:  {kind: StringType, type: typeTypeType}
 // CHECK:STDOUT:     instVtableType:  {kind: VtableType, type: typeTypeType}
+// CHECK:STDOUT:     instWitnessType: {kind: WitnessType, type: typeTypeType}
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)
-// CHECK:STDOUT:     instErrorInst:   templateConstant(instErrorInst)
 // CHECK:STDOUT:     instAutoType:    templateConstant(instAutoType)
 // CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
+// CHECK:STDOUT:     instBoundMethodType: templateConstant(instBoundMethodType)
+// CHECK:STDOUT:     instErrorInst:   templateConstant(instErrorInst)
 // CHECK:STDOUT:     instIntLiteralType: templateConstant(instIntLiteralType)
 // CHECK:STDOUT:     instLegacyFloatType: templateConstant(instLegacyFloatType)
-// CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
-// CHECK:STDOUT:     instBoundMethodType: templateConstant(instBoundMethodType)
-// CHECK:STDOUT:     instSpecificFunctionType: templateConstant(instSpecificFunctionType)
 // CHECK:STDOUT:     instNamespaceType: templateConstant(instNamespaceType)
-// CHECK:STDOUT:     instWitnessType: templateConstant(instWitnessType)
+// CHECK:STDOUT:     instSpecificFunctionType: templateConstant(instSpecificFunctionType)
+// CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
 // CHECK:STDOUT:     instVtableType:  templateConstant(instVtableType)
+// CHECK:STDOUT:     instWitnessType: templateConstant(instWitnessType)
 // CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:

@@ -66,18 +66,7 @@ struct InstId : public IdBase, public Printable<InstId> {
     return BuiltinInstKind::FromInt(index);
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "inst";
-    if (!is_valid()) {
-      IdBase::Print(out);
-    } else if (is_builtin()) {
-      out << builtin_inst_kind();
-    } else {
-      // Use the `+` as a small reminder that this is a delta, rather than an
-      // absolute index.
-      out << "+" << index - BuiltinInstKind::ValidCount;
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
@@ -165,23 +154,7 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
   // template constants should be wrapped with "templateConstant(...)" so that
   // they aren't printed the same as an InstId. This can be set to false if
   // there is no risk of ambiguity.
-  auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void {
-    if (!is_valid()) {
-      IdBase::Print(out);
-    } else if (is_template()) {
-      if (disambiguate) {
-        out << "templateConstant(";
-      }
-      out << template_inst_id();
-      if (disambiguate) {
-        out << ")";
-      }
-    } else if (is_symbolic()) {
-      out << "symbolicConstant" << symbolic_index();
-    } else {
-      out << "runtime";
-    }
-  }
+  auto Print(llvm::raw_ostream& out, bool disambiguate = true) const -> void;
 
  private:
   friend class ConstantValueStore;
@@ -266,14 +239,7 @@ struct RuntimeParamIndex : public IndexBase,
 
   using IndexBase::IndexBase;
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "runtime_param";
-    if (*this == Unknown) {
-      out << "<unknown>";
-    } else {
-      IndexBase::Print(out);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr RuntimeParamIndex RuntimeParamIndex::Invalid =
@@ -441,14 +407,7 @@ struct GenericInstIndex : public IndexBase, public Printable<GenericInstIndex> {
     return IndexBase::index >= 0 ? Declaration : Definition;
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "genericInst";
-    if (is_valid()) {
-      out << (region() == Declaration ? "InDecl" : "InDef") << index();
-    } else {
-      out << "<invalid>";
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   static constexpr auto MakeInvalid() -> GenericInstIndex {
@@ -501,15 +460,7 @@ struct BoolValue : public IdBase, public Printable<BoolValue> {
   }
 
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    if (*this == False) {
-      out << "false";
-    } else if (*this == True) {
-      out << "true";
-    } else {
-      CARBON_FATAL("Invalid bool value {0}", index);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr BoolValue BoolValue::False = BoolValue(0);
@@ -528,15 +479,7 @@ struct IntKind : public IdBase, public Printable<IntKind> {
   // Returns whether this type is signed.
   constexpr auto is_signed() -> bool { return *this == Signed; }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    if (*this == Unsigned) {
-      out << "unsigned";
-    } else if (*this == Signed) {
-      out << "signed";
-    } else {
-      CARBON_FATAL("Invalid int kind value {0}", index);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr IntKind IntKind::Unsigned = IntKind(0);
@@ -577,15 +520,7 @@ struct NameId : public IdBase, public Printable<NameId> {
   static const int NonIndexValueCount;
 
   // Returns the NameId corresponding to a particular IdentifierId.
-  static auto ForIdentifier(IdentifierId id) -> NameId {
-    if (id.index >= 0) {
-      return NameId(id.index);
-    } else if (!id.is_valid()) {
-      return NameId::Invalid;
-    } else {
-      CARBON_FATAL("Unexpected identifier ID {0}", id);
-    }
-  }
+  static auto ForIdentifier(IdentifierId id) -> NameId;
 
   using IdBase::IdBase;
 
@@ -595,25 +530,7 @@ struct NameId : public IdBase, public Printable<NameId> {
     return index >= 0 ? IdentifierId(index) : IdentifierId::Invalid;
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "name";
-    if (*this == SelfValue) {
-      out << "SelfValue";
-    } else if (*this == SelfType) {
-      out << "SelfType";
-    } else if (*this == PeriodSelf) {
-      out << "PeriodSelf";
-    } else if (*this == ReturnSlot) {
-      out << "ReturnSlot";
-    } else if (*this == PackageNamespace) {
-      out << "PackageNamespace";
-    } else if (*this == Base) {
-      out << "Base";
-    } else {
-      CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
-      IdBase::Print(out);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr NameId NameId::Invalid = NameId(InvalidIndex);
@@ -676,22 +593,7 @@ struct InstBlockId : public IdBase, public Printable<InstBlockId> {
   static const InstBlockId Unreachable;
 
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    if (*this == Unreachable) {
-      out << "unreachable";
-    } else if (*this == Empty) {
-      out << "empty";
-    } else if (*this == Exports) {
-      out << "exports";
-    } else if (*this == ImportRefs) {
-      out << "import_refs";
-    } else if (*this == GlobalInit) {
-      out << "global_init";
-    } else {
-      out << "block";
-      IdBase::Print(out);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
@@ -756,20 +658,7 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   // Returns the constant ID that defines the type.
   auto AsConstantId() const -> ConstantId { return ConstantId(index); }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "type";
-    if (*this == TypeType) {
-      out << "TypeType";
-    } else if (*this == AutoType) {
-      out << "AutoType";
-    } else if (*this == Error) {
-      out << "Error";
-    } else {
-      out << "(";
-      AsConstantId().Print(out, /*disambiguate=*/false);
-      out << ")";
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
@@ -829,17 +718,7 @@ struct LibraryNameId : public IdBase, public Printable<NameId> {
   static const LibraryNameId Error;
 
   // Returns the LibraryNameId for a library name as a string literal.
-  static auto ForStringLiteralValueId(StringLiteralValueId id)
-      -> LibraryNameId {
-    CARBON_CHECK(id.index >= InvalidIndex, "Unexpected library name ID {0}",
-                 id);
-    if (id == StringLiteralValueId::Invalid) {
-      // Prior to SemIR, we use invalid to indicate `default`.
-      return LibraryNameId::Default;
-    } else {
-      return LibraryNameId(id.index);
-    }
-  }
+  static auto ForStringLiteralValueId(StringLiteralValueId id) -> LibraryNameId;
 
   using IdBase::IdBase;
 
@@ -849,16 +728,7 @@ struct LibraryNameId : public IdBase, public Printable<NameId> {
     return StringLiteralValueId(index);
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "libraryName";
-    if (*this == Default) {
-      out << "Default";
-    } else if (*this == Error) {
-      out << "<error>";
-    } else {
-      IdBase::Print(out);
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr LibraryNameId LibraryNameId::Invalid = LibraryNameId(InvalidIndex);
@@ -945,14 +815,7 @@ struct LocId : public IdBase, public Printable<LocId> {
     return ImportIRInstId(InvalidIndex + ImportIRInstId::InvalidIndex - index);
   }
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "loc_";
-    if (is_node_id() || !is_valid()) {
-      out << node_id();
-    } else {
-      out << import_ir_inst_id();
-    }
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr LocId LocId::Invalid = LocId(Parse::NodeId::Invalid);

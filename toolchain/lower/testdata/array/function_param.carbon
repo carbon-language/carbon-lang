@@ -23,9 +23,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
-// CHECK:STDOUT:   %.loc12_15.3 = load i32, ptr %.loc12_15.2.array.index, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc12_15.3, !dbg !8
+// CHECK:STDOUT:   %.loc12_15.5.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
+// CHECK:STDOUT:   %.loc12_15.6 = load i32, ptr %.loc12_15.5.array.index, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc12_15.6, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {

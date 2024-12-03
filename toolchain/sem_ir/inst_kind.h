@@ -104,6 +104,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
 
   using EnumBase::AsInt;
   using EnumBase::FromInt;
+  using EnumBase::Make;
 
   // Returns true if the kind matches any of the provided instructions' kinds.
   template <typename... InstT>

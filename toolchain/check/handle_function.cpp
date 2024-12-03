@@ -12,6 +12,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -303,8 +304,11 @@ static auto BuildFunctionDecl(Context& context,
         !function_info.param_patterns_id.is_valid() ||
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
-         return_type_id != context.GetInt32Type() &&
-         return_type_id != context.GetTupleType({}))) {
+         return_type_id != context.GetTupleType({}) &&
+         // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
+         // have an interface for this.
+         return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                                       context.ints().Add(32)))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
                         "invalid signature for `Main.Run` function; expected "
                         "`fn ()` or `fn () -> i32`");
