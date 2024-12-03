@@ -7,7 +7,7 @@
 `MODULE.bazel.lock` may change locally when `bazel` is executed. This means one
 of:
 
-1.  Either `MODULE.bazel` or `.bazelversion` is changing.
+1.  An input is changing, typically `MODULE.bazel` or `.bazelversion`.
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; include the changes.
     -   GitHub test actions may also identify platform-specific lockfile
