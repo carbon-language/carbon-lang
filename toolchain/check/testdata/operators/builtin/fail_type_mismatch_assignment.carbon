@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.3.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
-// CHECK:STDOUT:   %.16: f64 = float_literal 5.6000000000000005 [template]
+// CHECK:STDOUT:   %.10: f64 = float_literal 5.6000000000000005 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -73,7 +73,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc12_17.2: init %i32 = converted %int.3, %int.convert_checked [template = constants.%int.3.2]
 // CHECK:STDOUT:   assign %a.var, %.loc12_17.2
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc19_7: f64 = float_literal 5.6000000000000005 [template = constants.%.10]
 // CHECK:STDOUT:   %.loc19_5: %i32 = converted %.loc19_7, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return

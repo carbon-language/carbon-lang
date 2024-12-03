@@ -29,15 +29,15 @@ interface Interface {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %Interface.type, %F.type [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @Interface.%F.decl [template]
+// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = assoc_entity_type %Interface.type, %G.type [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element1, @Interface.%G.decl [template]
+// CHECK:STDOUT:   %.2: type = assoc_entity_type %Interface.type, %G.type [template]
+// CHECK:STDOUT:   %elt1: %.2 = assoc_entity element1, @Interface.%G.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -60,7 +60,7 @@ interface Interface {
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc16: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -88,12 +88,12 @@ interface Interface {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: %.3 = assoc_entity element1, %G.decl [template = constants.%.4]
+// CHECK:STDOUT:   %elt1: %.2 = assoc_entity element1, %G.decl [template = constants.%elt1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc16
-// CHECK:STDOUT:   .G = %.loc21
+// CHECK:STDOUT:   .F = %elt0
+// CHECK:STDOUT:   .G = %elt1
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

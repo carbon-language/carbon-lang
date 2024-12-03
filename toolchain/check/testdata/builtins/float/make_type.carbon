@@ -103,7 +103,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.64.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.64.2: %i32 = int_value 64 [template]
-// CHECK:STDOUT:   %.16: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %.10: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %GetFloat.type: type = fn_type @GetFloat [template]
@@ -173,7 +173,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: f64 = float_literal 0 [template = constants.%.16]
+// CHECK:STDOUT:   %.loc6: f64 = float_literal 0 [template = constants.%.10]
 // CHECK:STDOUT:   assign file.%f.var, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

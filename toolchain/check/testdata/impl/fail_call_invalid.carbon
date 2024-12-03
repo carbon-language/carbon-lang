@@ -32,14 +32,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %Simple.type, %G.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Simple.%G.decl [template]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @Simple.%G.decl [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: %Simple.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %.3: %Simple.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -92,11 +92,11 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: @G.1.%.loc12_14.1 (%.1) = value_param runtime_param0
 // CHECK:STDOUT:     %self: @G.1.%.loc12_14.1 (%.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %G.decl [template = constants.%.3]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %G.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .G = %.loc12
+// CHECK:STDOUT:   .G = %elt0
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,7 +129,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref: %.2 = name_ref G, @Simple.%.loc12 [template = constants.%.3]
+// CHECK:STDOUT:   %G.ref: %.2 = name_ref G, @Simple.%elt0 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc23: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %.loc23
 // CHECK:STDOUT:   return
@@ -140,8 +140,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.4) {
-// CHECK:STDOUT:   %Self => constants.%.4
+// CHECK:STDOUT: specific @G.1(constants.%.3) {
+// CHECK:STDOUT:   %Self => constants.%.3
 // CHECK:STDOUT:   %.loc12_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

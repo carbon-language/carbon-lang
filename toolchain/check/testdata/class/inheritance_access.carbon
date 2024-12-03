@@ -492,7 +492,7 @@ class B {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.17: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %.11: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -556,7 +556,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc12: %.17 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc12: %.11 = base_decl %A.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -977,7 +977,7 @@ class B {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Internal: type = class_type @Internal [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %.17: type = unbound_element_type %B, %Internal [template]
+// CHECK:STDOUT:   %.11: type = unbound_element_type %B, %Internal [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %SomeFunc.type: type = fn_type @SomeFunc [template]
@@ -1065,7 +1065,7 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %Internal.ref: type = name_ref Internal, file.%Internal.decl [template = constants.%Internal]
-// CHECK:STDOUT:   %.loc14: %.17 = field_decl internal, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.11 = field_decl internal, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
@@ -1115,7 +1115,7 @@ class B {
 // CHECK:STDOUT: fn @SomeFunc[%self.param_patt: %B]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
-// CHECK:STDOUT:   %internal.ref: %.17 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
+// CHECK:STDOUT:   %internal.ref: %.11 = name_ref internal, @B.%.loc14 [template = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = bind_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [template = <error>]

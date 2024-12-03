@@ -41,11 +41,11 @@ fn G(c: C) {
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.2: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -63,11 +63,11 @@ fn G(c: C) {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %F.decl [template = constants.%.2]
+// CHECK:STDOUT:   %elt0: %.1 = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .F = %.loc5
+// CHECK:STDOUT:   .F = %elt0
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,7 +105,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.3) {}
+// CHECK:STDOUT: specific @F.1(constants.%.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_imported_class_extend_impl.carbon
 // CHECK:STDOUT:
@@ -120,7 +120,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %I.type, %F.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, imports.%import_ref.9 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
@@ -133,7 +133,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_impl_library, inst+13, unloaded
 // CHECK:STDOUT:   %import_ref.5: type = import_ref Main//extend_impl_library, inst+15, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_impl_library, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.2 = import_ref Main//extend_impl_library, inst+10, loaded [template = constants.%.3]
+// CHECK:STDOUT:   %import_ref.7: %.2 = import_ref Main//extend_impl_library, inst+10, loaded [template = constants.%elt0]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//extend_impl_library, inst+5, unloaded
 // CHECK:STDOUT:   %import_ref.10: type = import_ref Main//extend_impl_library, inst+14, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.11: type = import_ref Main//extend_impl_library, inst+15, loaded [template = constants.%I.type]
@@ -179,11 +179,11 @@ fn G(c: C) {
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc7: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc7: %.2 = name_ref F, imports.%import_ref.7 [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref.loc7: %.2 = name_ref F, imports.%import_ref.7 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc7: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc7: init %empty_tuple.type = call %.loc7()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc8: %.2 = name_ref F, imports.%import_ref.7 [template = constants.%.3]
+// CHECK:STDOUT:   %F.ref.loc8: %.2 = name_ref F, imports.%import_ref.7 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc8: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.call.loc8: init %empty_tuple.type = call %.loc8()
 // CHECK:STDOUT:   return

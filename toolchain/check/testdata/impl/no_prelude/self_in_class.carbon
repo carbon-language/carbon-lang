@@ -31,14 +31,14 @@ class A {
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.4: %DefaultConstructible.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.3: %DefaultConstructible.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
@@ -66,11 +66,11 @@ class A {
 // CHECK:STDOUT:     %return.param: ref @Make.1.%.loc12_16.1 (%.1) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Make.1.%.loc12_16.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: %.2 = assoc_entity element0, %Make.decl [template = constants.%.3]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %Make.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Make = %.loc12
+// CHECK:STDOUT:   .Make = %elt0
 // CHECK:STDOUT:   witness = (%Make.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -130,8 +130,8 @@ class A {
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%.4) {
-// CHECK:STDOUT:   %Self => constants.%.4
+// CHECK:STDOUT: specific @Make.1(constants.%.3) {
+// CHECK:STDOUT:   %Self => constants.%.3
 // CHECK:STDOUT:   %.loc12_16.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

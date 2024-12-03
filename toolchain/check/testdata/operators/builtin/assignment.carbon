@@ -71,12 +71,12 @@ fn Main() {
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%int.1.2, %int.2.2) [template]
-// CHECK:STDOUT:   %.18: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.12: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %int.5.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int.5.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.7: <specific function> = specific_function %Convert.bound.7, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.5.2: %i32 = int_value 5 [template]
-// CHECK:STDOUT:   %.19: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.13: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.10.1: Core.IntLiteral = int_value 10 [template]
 // CHECK:STDOUT:   %Convert.bound.8: <bound method> = bound_method %int.10.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.8: <specific function> = specific_function %Convert.bound.8, @Convert.2(%int.32) [template]
@@ -229,14 +229,14 @@ fn Main() {
 // CHECK:STDOUT:   %int.make_type_signed.loc23: init type = call constants.%Int(%int.32.loc23) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_13.1: type = value_of_initializer %int.make_type_signed.loc23 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_13.2: type = converted %int.make_type_signed.loc23, %.loc23_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_13.3: type = ptr_type %i32 [template = constants.%.18]
-// CHECK:STDOUT:   %p.var: ref %.18 = var p
-// CHECK:STDOUT:   %p: ref %.18 = bind_name p, %p.var
+// CHECK:STDOUT:   %.loc23_13.3: type = ptr_type %i32 [template = constants.%.12]
+// CHECK:STDOUT:   %p.var: ref %.12 = var p
+// CHECK:STDOUT:   %p: ref %.12 = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc23: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc23_17: %.18 = addr_of %a.ref.loc23
+// CHECK:STDOUT:   %.loc23_17: %.12 = addr_of %a.ref.loc23
 // CHECK:STDOUT:   assign %p.var, %.loc23_17
-// CHECK:STDOUT:   %p.ref.loc24: ref %.18 = name_ref p, %p
-// CHECK:STDOUT:   %.loc24_4: %.18 = bind_value %p.ref.loc24
+// CHECK:STDOUT:   %p.ref.loc24: ref %.12 = name_ref p, %p
+// CHECK:STDOUT:   %.loc24_4: %.12 = bind_value %p.ref.loc24
 // CHECK:STDOUT:   %.loc24_3: ref %i32 = deref %.loc24_4
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template = constants.%int.5.1]
 // CHECK:STDOUT:   %.loc24_6.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -245,21 +245,21 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc24: init %i32 = call %Convert.specific_fn.loc24(%int.5) [template = constants.%int.5.2]
 // CHECK:STDOUT:   %.loc24_6.2: init %i32 = converted %int.5, %int.convert_checked.loc24 [template = constants.%int.5.2]
 // CHECK:STDOUT:   assign %.loc24_3, %.loc24_6.2
-// CHECK:STDOUT:   %.loc26_8: bool = bool_literal true [template = constants.%.19]
+// CHECK:STDOUT:   %.loc26_8: bool = bool_literal true [template = constants.%.13]
 // CHECK:STDOUT:   if %.loc26_8 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %p.ref.loc26: ref %.18 = name_ref p, %p
-// CHECK:STDOUT:   %.loc26_18: %.18 = bind_value %p.ref.loc26
+// CHECK:STDOUT:   %p.ref.loc26: ref %.12 = name_ref p, %p
+// CHECK:STDOUT:   %.loc26_18: %.12 = bind_value %p.ref.loc26
 // CHECK:STDOUT:   br !if.expr.result(%.loc26_18)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %a.ref.loc26: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc26_25: %.18 = addr_of %a.ref.loc26
+// CHECK:STDOUT:   %.loc26_25: %.12 = addr_of %a.ref.loc26
 // CHECK:STDOUT:   br !if.expr.result(%.loc26_25)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc26_5: %.18 = block_arg !if.expr.result
+// CHECK:STDOUT:   %.loc26_5: %.12 = block_arg !if.expr.result
 // CHECK:STDOUT:   %.loc26_3: ref %i32 = deref %.loc26_5
 // CHECK:STDOUT:   %int.10: Core.IntLiteral = int_value 10 [template = constants.%int.10.1]
 // CHECK:STDOUT:   %.loc26_29.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]

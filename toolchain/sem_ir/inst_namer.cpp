@@ -417,6 +417,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(inst.name_id);
         continue;
       }
+      case CARBON_KIND(AssociatedEntity inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "elt" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
       case BindAlias::Kind:
       case BindName::Kind:
       case BindSymbolicName::Kind:

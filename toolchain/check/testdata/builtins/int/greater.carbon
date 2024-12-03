@@ -59,12 +59,12 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %.17: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.11: bool = bool_literal false [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.18: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.12: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.-1: %i32 = int_value -1 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
@@ -217,9 +217,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %int.convert_checked.loc9_28: init %i32 = call %Convert.specific_fn.loc9_28(%int.2) [template = constants.%int.2.2]
 // CHECK:STDOUT:   %.loc9_28.2: %i32 = value_of_initializer %int.convert_checked.loc9_28 [template = constants.%int.2.2]
 // CHECK:STDOUT:   %.loc9_28.3: %i32 = converted %int.2, %.loc9_28.2 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %int.greater.loc9: init bool = call %Greater.ref.loc9(%.loc9_25.3, %.loc9_28.3) [template = constants.%.17]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %int.greater.loc9 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %int.greater.loc9, %.loc9_14.1 [template = constants.%.17]
+// CHECK:STDOUT:   %int.greater.loc9: init bool = call %Greater.ref.loc9(%.loc9_25.3, %.loc9_28.3) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %int.greater.loc9 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %int.greater.loc9, %.loc9_14.1 [template = constants.%.11]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -248,9 +248,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %int.convert_checked.loc10_28: init %i32 = call %Convert.specific_fn.loc10_28(%int.1.loc10_28) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc10_28.2: %i32 = value_of_initializer %int.convert_checked.loc10_28 [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc10_28.3: %i32 = converted %int.1.loc10_28, %.loc10_28.2 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %int.greater.loc10: init bool = call %Greater.ref.loc10(%.loc10_25.3, %.loc10_28.3) [template = constants.%.17]
-// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %int.greater.loc10 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc10_14.2: bool = converted %int.greater.loc10, %.loc10_14.1 [template = constants.%.17]
+// CHECK:STDOUT:   %int.greater.loc10: init bool = call %Greater.ref.loc10(%.loc10_25.3, %.loc10_28.3) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %int.greater.loc10 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc10_14.2: bool = converted %int.greater.loc10, %.loc10_14.1 [template = constants.%.11]
 // CHECK:STDOUT:   if %.loc10_14.2 br !if.expr.then.loc10 else br !if.expr.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc10:
@@ -279,9 +279,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %int.convert_checked.loc11_27: init %i32 = call %Convert.specific_fn.loc11_27(%int.0.loc11) [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc11_27.2: %i32 = value_of_initializer %int.convert_checked.loc11_27 [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc11_27.3: %i32 = converted %int.0.loc11, %.loc11_27.2 [template = constants.%int.0.2]
-// CHECK:STDOUT:   %int.greater.loc11: init bool = call %Greater.ref.loc11(%.loc11_24.3, %.loc11_27.3) [template = constants.%.18]
-// CHECK:STDOUT:   %.loc11_13.1: bool = value_of_initializer %int.greater.loc11 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc11_13.2: bool = converted %int.greater.loc11, %.loc11_13.1 [template = constants.%.18]
+// CHECK:STDOUT:   %int.greater.loc11: init bool = call %Greater.ref.loc11(%.loc11_24.3, %.loc11_27.3) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc11_13.1: bool = value_of_initializer %int.greater.loc11 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc11_13.2: bool = converted %int.greater.loc11, %.loc11_13.1 [template = constants.%.12]
 // CHECK:STDOUT:   if %.loc11_13.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
@@ -314,9 +314,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %int.convert_checked.loc12_36: init %i32 = call %Convert.specific_fn.loc12_36(%int.0.loc12) [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc12_36.2: %i32 = value_of_initializer %int.convert_checked.loc12_36 [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc12_36.3: %i32 = converted %int.0.loc12, %.loc12_36.2 [template = constants.%int.0.2]
-// CHECK:STDOUT:   %int.greater.loc12: init bool = call %Greater.ref.loc12(%.loc12_33.2, %.loc12_36.3) [template = constants.%.17]
-// CHECK:STDOUT:   %.loc12_14.1: bool = value_of_initializer %int.greater.loc12 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc12_14.2: bool = converted %int.greater.loc12, %.loc12_14.1 [template = constants.%.17]
+// CHECK:STDOUT:   %int.greater.loc12: init bool = call %Greater.ref.loc12(%.loc12_33.2, %.loc12_36.3) [template = constants.%.11]
+// CHECK:STDOUT:   %.loc12_14.1: bool = value_of_initializer %int.greater.loc12 [template = constants.%.11]
+// CHECK:STDOUT:   %.loc12_14.2: bool = converted %int.greater.loc12, %.loc12_14.1 [template = constants.%.11]
 // CHECK:STDOUT:   if %.loc12_14.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12:
@@ -349,9 +349,9 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %.loc13_24.3: %i32 = converted %int.0.loc13, %.loc13_24.2 [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %int.snegate.loc13 [template = constants.%int.-1]
 // CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %int.snegate.loc13, %.loc13_35.1 [template = constants.%int.-1]
-// CHECK:STDOUT:   %int.greater.loc13: init bool = call %Greater.ref.loc13(%.loc13_24.3, %.loc13_35.2) [template = constants.%.18]
-// CHECK:STDOUT:   %.loc13_13.1: bool = value_of_initializer %int.greater.loc13 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc13_13.2: bool = converted %int.greater.loc13, %.loc13_13.1 [template = constants.%.18]
+// CHECK:STDOUT:   %int.greater.loc13: init bool = call %Greater.ref.loc13(%.loc13_24.3, %.loc13_35.2) [template = constants.%.12]
+// CHECK:STDOUT:   %.loc13_13.1: bool = value_of_initializer %int.greater.loc13 [template = constants.%.12]
+// CHECK:STDOUT:   %.loc13_13.2: bool = converted %int.greater.loc13, %.loc13_13.1 [template = constants.%.12]
 // CHECK:STDOUT:   if %.loc13_13.2 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:

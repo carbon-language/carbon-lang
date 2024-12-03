@@ -30,7 +30,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.16: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.10: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,9 +77,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12_17.2: init %i32 = converted %int.0, %int.convert_checked [template = constants.%int.0.2]
 // CHECK:STDOUT:   assign %n.var, %.loc12_17.2
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_13: %.16 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_13: %.10 = addr_of %n.ref
 // CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %.loc13_13
-// CHECK:STDOUT:   %.loc13_11: %.16 = addr_of %.loc13_12
+// CHECK:STDOUT:   %.loc13_11: %.10 = addr_of %.loc13_12
 // CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %.loc13_11
 // CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2

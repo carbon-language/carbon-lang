@@ -39,7 +39,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Op.type: type = fn_type @Op [template]
 // CHECK:STDOUT:   %Op: %Op.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: type = assoc_entity_type %Add.type, %Op.type [template]
-// CHECK:STDOUT:   %.3: %.2 = assoc_entity element0, @Add.%Op.decl [template]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, @Add.%Op.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,11 +75,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param: ref @Op.%.loc5_15.1 (%.1) = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref @Op.%.loc5_15.1 (%.1) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: %.2 = assoc_entity element0, %Op.decl [template = constants.%.3]
+// CHECK:STDOUT:   %elt0: %.2 = assoc_entity element0, %Op.decl [template = constants.%elt0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .Op = %.loc5
+// CHECK:STDOUT:   .Op = %elt0
 // CHECK:STDOUT:   witness = (%Op.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,13 +112,13 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.3: type = assoc_entity_type %Add.type, %Op.type.2 [template]
-// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %elt0: %.3 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %.3 = import_ref Main//a, inst+34, loaded [template = constants.%.4]
+// CHECK:STDOUT:   %import_ref.3: %.3 = import_ref Main//a, inst+34, loaded [template = constants.%elt0]
 // CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+27, loaded [template = constants.%Op.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,7 +208,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%Add.type]
-// CHECK:STDOUT:   %Op.ref: %.3 = name_ref Op, imports.%import_ref.3 [template = constants.%.4]
+// CHECK:STDOUT:   %Op.ref: %.3 = name_ref Op, imports.%import_ref.3 [template = constants.%elt0]
 // CHECK:STDOUT:   %.loc11_11: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref, %.loc11_11
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
