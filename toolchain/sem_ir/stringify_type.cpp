@@ -283,6 +283,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(IntValue inst): {
+        sem_ir.ints().Get(inst.int_id).print(out, /*isSigned=*/true);
+        break;
+      }
       case CARBON_KIND(NameRef inst): {
         out << sem_ir.names().GetFormatted(inst.name_id);
         break;
@@ -382,7 +386,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImportRefLoaded::Kind:
       case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
-      case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
