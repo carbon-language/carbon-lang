@@ -137,8 +137,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfType.type: type = fn_type @AddressOfType [template]
 // CHECK:STDOUT:   %AddressOfType: %AddressOfType.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.8: type = ptr_type type [template]
-// CHECK:STDOUT:   %.2: type = const_type %i32 [template]
-// CHECK:STDOUT:   %ptr.9: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %const: type = const_type %i32 [template]
+// CHECK:STDOUT:   %ptr.9: type = ptr_type %const [template]
 // CHECK:STDOUT:   %AddressOfTupleElementValue.type: type = fn_type @AddressOfTupleElementValue [template]
 // CHECK:STDOUT:   %AddressOfTupleElementValue: %AddressOfTupleElementValue.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2) [template]
@@ -274,8 +274,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %int.make_type_signed.loc84: init type = call constants.%Int(%int_32.loc84) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc84_5.1: type = value_of_initializer %int.make_type_signed.loc84 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc84_5.2: type = converted %int.make_type_signed.loc84, %.loc84_5.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc84_5.3: type = const_type %i32 [template = constants.%.2]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.2 [template = constants.%ptr.9]
+// CHECK:STDOUT:   %const: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:   %ptr: type = ptr_type %const [template = constants.%ptr.9]
 // CHECK:STDOUT:   %.loc84_3: %ptr.8 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

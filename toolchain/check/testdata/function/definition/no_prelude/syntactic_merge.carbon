@@ -830,11 +830,11 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = const_type %C [template]
+// CHECK:STDOUT:   %const: type = const_type %C [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -844,23 +844,23 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: %const = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.1]
-// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %const: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param0
+// CHECK:STDOUT:     %a: %const = bind_name a, %a.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.2] {
-// CHECK:STDOUT:     %a.patt: %.1 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %a.patt: %const = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc17_18: type = const_type %C [template = constants.%.1]
-// CHECK:STDOUT:     %.loc17_11: type = const_type %.1 [template = constants.%.1]
-// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %.1 = bind_name a, %a.param
+// CHECK:STDOUT:     %const.loc17_18: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %const.loc17_11: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param0
+// CHECK:STDOUT:     %a: %const = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -872,9 +872,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %.1);
+// CHECK:STDOUT: fn @Foo(%a.param_patt: %const);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1(%a.param_patt: %.1) {
+// CHECK:STDOUT: fn @.1(%a.param_patt: %const) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

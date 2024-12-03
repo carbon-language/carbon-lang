@@ -26,8 +26,8 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %Ptr.type: type = fn_type @Ptr [template]
 // CHECK:STDOUT:   %Ptr: %Ptr.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = const_type %i32 [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %const: type = const_type %i32 [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %const [template]
 // CHECK:STDOUT:   %ConstPtr.type: type = fn_type @ConstPtr [template]
 // CHECK:STDOUT:   %ConstPtr: %ConstPtr.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -78,14 +78,14 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:     %int.make_type_signed.loc15_22: init type = call constants.%Int(%int_32.loc15_22) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_16.1: type = value_of_initializer %int.make_type_signed.loc15_22 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_16.2: type = converted %int.make_type_signed.loc15_22, %.loc15_16.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_16.3: type = const_type %i32 [template = constants.%.1]
-// CHECK:STDOUT:     %ptr.loc15_25: type = ptr_type %.1 [template = constants.%ptr.2]
+// CHECK:STDOUT:     %const.loc15_16: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %ptr.loc15_25: type = ptr_type %const [template = constants.%ptr.2]
 // CHECK:STDOUT:     %int_32.loc15_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_38: init type = call constants.%Int(%int_32.loc15_38) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_signed.loc15_38 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %int.make_type_signed.loc15_38, %.loc15_32.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_32.3: type = const_type %i32 [template = constants.%.1]
-// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %.1 [template = constants.%ptr.2]
+// CHECK:STDOUT:     %const.loc15_32: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %const [template = constants.%ptr.2]
 // CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.2 = out_param runtime_param1

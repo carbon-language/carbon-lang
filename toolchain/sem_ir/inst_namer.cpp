@@ -513,6 +513,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name("complete_type");
         continue;
       }
+      case ConstType::Kind: {
+        // TODO: Can we figure out the name of the type argument?
+        add_inst_name("const");
+        continue;
+      }
       case CARBON_KIND(FacetAccessType inst): {
         if (auto name =
                 sem_ir_.insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {

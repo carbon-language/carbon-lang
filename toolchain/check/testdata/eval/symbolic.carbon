@@ -23,9 +23,9 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %.1: type = const_type %T [symbolic]
+// CHECK:STDOUT:   %const: type = const_type %T [symbolic]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%ptr.1, %.1) [symbolic]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%ptr.1, %const) [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_5, %T [symbolic]
@@ -59,8 +59,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc13_12.2: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %ptr.loc13_12.2 (constants.%ptr.1)]
-// CHECK:STDOUT:   %.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %.loc13_15.2 (constants.%.1)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr.loc13_12.2 (%ptr.1), @F.%.loc13_15.2 (%.1)) [symbolic = %tuple.type (constants.%tuple.type.2)]
+// CHECK:STDOUT:   %const.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %const.loc13_15.2 (constants.%const)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr.loc13_12.2 (%ptr.1), @F.%const.loc13_15.2 (%const)) [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:   %struct_type.a.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:   %array_type.loc15_15.2: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type.loc15_15.2 (constants.%array_type)]
 // CHECK:STDOUT:
@@ -69,8 +69,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %T.ref.loc13_11: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc13_12.1: type = ptr_type %T [symbolic = %ptr.loc13_12.2 (constants.%ptr.1)]
 // CHECK:STDOUT:     %T.ref.loc13_21: type = name_ref T, %T.loc12_6.1 [symbolic = %T.loc12_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc13_15.1: type = const_type %T [symbolic = %.loc13_15.2 (constants.%.1)]
-// CHECK:STDOUT:     %.loc13_22.1: %tuple.type.1 = tuple_literal (%ptr.loc13_12.1, %.loc13_15.1)
+// CHECK:STDOUT:     %const.loc13_15.1: type = const_type %T [symbolic = %const.loc13_15.2 (constants.%const)]
+// CHECK:STDOUT:     %.loc13_22.1: %tuple.type.1 = tuple_literal (%ptr.loc13_12.1, %const.loc13_15.1)
 // CHECK:STDOUT:     %.loc13_22.2: type = converted %.loc13_22.1, constants.%tuple.type.2 [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.2) = var u
 // CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.2) = bind_name u, %u.var

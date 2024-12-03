@@ -1033,14 +1033,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = const_type %C [template]
-// CHECK:STDOUT:   %a: %.1 = bind_symbolic_name a, 0 [symbolic]
-// CHECK:STDOUT:   %a.patt: %.1 = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %const: type = const_type %C [template]
+// CHECK:STDOUT:   %a: %const = bind_symbolic_name a, 0 [symbolic]
+// CHECK:STDOUT:   %a.patt: %const = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
 // CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1050,23 +1050,23 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
-// CHECK:STDOUT:     %a.patt.loc6_11.1: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc6_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.1]
-// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6_11.1: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %const: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc6_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %a.patt.loc18_11.1: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %.1 = value_param_pattern %a.patt.loc18_11.1, runtime_param<invalid> [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc18_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc18_11.1, runtime_param<invalid> [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc18_22: type = const_type %C [template = constants.%.1]
-// CHECK:STDOUT:     %.loc18_15: type = const_type %.1 [template = constants.%.1]
-// CHECK:STDOUT:     %a.param: %.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc18_11.1: %.1 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_11.2 (constants.%a)]
+// CHECK:STDOUT:     %const.loc18_22: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %const.loc18_15: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc18_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1078,16 +1078,16 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %.1) {
-// CHECK:STDOUT:   %a.loc6_11.2: %.1 = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc6_11.2: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %const) {
+// CHECK:STDOUT:   %a.loc6_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc6_11.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%a.loc18_11.1: %.1) {
-// CHECK:STDOUT:   %a.loc18_11.2: %.1 = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc18_11.2: %.1 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic class @.1(%a.loc18_11.1: %const) {
+// CHECK:STDOUT:   %a.loc18_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc18_11.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1095,7 +1095,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.2
+// CHECK:STDOUT:     .Self = constants.%.1
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
