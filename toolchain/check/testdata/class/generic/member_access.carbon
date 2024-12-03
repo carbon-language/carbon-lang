@@ -288,8 +288,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc15_11.1: %Get.type.2 = specific_constant @Class.%Get.decl, @Class(constants.%i32) [template = constants.%Get.2]
 // CHECK:STDOUT:   %Get.ref: %Get.type.2 = name_ref Get, %.loc15_11.1 [template = constants.%Get.2]
 // CHECK:STDOUT:   %.loc15_11.2: <bound method> = bound_method %x.ref, %Get.ref
-// CHECK:STDOUT:   %.loc15_11.3: <specific function> = specific_function %.loc15_11.2, @Get(constants.%i32)
-// CHECK:STDOUT:   %Get.call: init %i32 = call %.loc15_11.3(%x.ref)
+// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %.loc15_11.2, @Get(constants.%i32)
+// CHECK:STDOUT:   %Get.call: init %i32 = call %Get.specific_fn(%x.ref)
 // CHECK:STDOUT:   %.loc15_17.1: %i32 = value_of_initializer %Get.call
 // CHECK:STDOUT:   %.loc15_17.2: %i32 = converted %Get.call, %.loc15_17.1
 // CHECK:STDOUT:   return %.loc15_17.2
@@ -302,9 +302,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc19_12.2: %GetAddr.type.2 = specific_constant @Class.%GetAddr.decl, @Class(constants.%i32) [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.2 = name_ref GetAddr, %.loc19_12.2 [template = constants.%GetAddr.2]
 // CHECK:STDOUT:   %.loc19_12.3: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
-// CHECK:STDOUT:   %.loc19_12.4: <specific function> = specific_function %.loc19_12.3, @GetAddr(constants.%i32)
-// CHECK:STDOUT:   %.loc19_12.5: %.7 = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %.8 = call %.loc19_12.4(%.loc19_12.5)
+// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %.loc19_12.3, @GetAddr(constants.%i32)
+// CHECK:STDOUT:   %.loc19_12.4: %.7 = addr_of %.loc19_12.1
+// CHECK:STDOUT:   %GetAddr.call: init %.8 = call %GetAddr.specific_fn(%.loc19_12.4)
 // CHECK:STDOUT:   %.loc19_22.1: %.8 = value_of_initializer %GetAddr.call
 // CHECK:STDOUT:   %.loc19_22.2: %.8 = converted %GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2
@@ -402,7 +402,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %struct: %Class.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [template]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %Make, @Make(%T) [symbolic]
+// CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -495,18 +495,18 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:   %.loc15_18.3: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %.loc15_18.3 (constants.%.2)]
+// CHECK:STDOUT:   %Make.specific_fn.loc15_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %Make.specific_fn.loc15_18.2 (constants.%Make.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %return: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref.loc15: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.1]
 // CHECK:STDOUT:     %T.ref.loc15: type = name_ref T, %T.loc8_29.1 [symbolic = %T.loc8_29.2 (constants.%T)]
 // CHECK:STDOUT:     %Class.loc15: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_49.2 (constants.%Class.2)]
-// CHECK:STDOUT:     %.loc15_18.1: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc15_18.1 [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %.loc15_18.2: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %.loc15_18.3 (constants.%.2)]
+// CHECK:STDOUT:     %.loc15_18: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc15_18 [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:     %Make.specific_fn.loc15_18.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc15_18.2 (constants.%Make.specific_fn)]
 // CHECK:STDOUT:     %.loc15_24: ref @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class.2) = temporary_storage
-// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class.2) = call %.loc15_18.2() to %.loc15_24
+// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class.2) = call %Make.specific_fn.loc15_18.1() to %.loc15_24
 // CHECK:STDOUT:     %.loc15_25: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class.2) = converted %Make.call, <error> [template = <error>]
 // CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }

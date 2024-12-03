@@ -27,8 +27,8 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %Convert.13: %Convert.type.13 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.13) [template]
 // CHECK:STDOUT:   %.14: <bound method> = bound_method %N.1, %Convert.13 [symbolic]
-// CHECK:STDOUT:   %.15: <specific function> = specific_function %.14, @Convert.4(%int.32) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %.15(%N.1) [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.14, @Convert.4(%int.32) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.1) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -64,12 +64,12 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_19.1: type = value_of_initializer %int.make_type_signed.loc14_19 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_19.2: type = converted %int.make_type_signed.loc14_19, %.loc14_19.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_24.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %.loc14_24.2: <bound method> = bound_method %N.ref, %.loc14_24.1 [symbolic = %.loc14_24.6 (constants.%.14)]
-// CHECK:STDOUT:     %.loc14_24.3: <specific function> = specific_function %.loc14_24.2, @Convert.4(constants.%int.32) [symbolic = %.loc14_24.7 (constants.%.15)]
-// CHECK:STDOUT:     %int.convert_checked.loc14_24.1: init Core.IntLiteral = call %.loc14_24.3(%N.ref) [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc14_24.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_24.1 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc14_24.5: Core.IntLiteral = converted %N.ref, %.loc14_24.4 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc14_25: type = array_type %.loc14_24.5, %i32 [template = <error>]
+// CHECK:STDOUT:     %.loc14_24.2: <bound method> = bound_method %N.ref, %.loc14_24.1 [symbolic = %.loc14_24.5 (constants.%.14)]
+// CHECK:STDOUT:     %Convert.specific_fn.loc14_24.1: <specific function> = specific_function %.loc14_24.2, @Convert.4(constants.%int.32) [symbolic = %Convert.specific_fn.loc14_24.2 (constants.%Convert.specific_fn)]
+// CHECK:STDOUT:     %int.convert_checked.loc14_24.1: init Core.IntLiteral = call %Convert.specific_fn.loc14_24.1(%N.ref) [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc14_24.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_24.1 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc14_24.4: Core.IntLiteral = converted %N.ref, %.loc14_24.3 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc14_25: type = array_type %.loc14_24.4, %i32 [template = <error>]
 // CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc14_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_6.2 (constants.%N.1)]
@@ -81,9 +81,9 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: generic fn @F(%N.loc14_6.1: %i32) {
 // CHECK:STDOUT:   %N.loc14_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc14_6.2 (constants.%N.1)]
 // CHECK:STDOUT:   %N.patt.loc14_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc14_6.2 (constants.%N.patt.1)]
-// CHECK:STDOUT:   %.loc14_24.6: <bound method> = bound_method %N.loc14_6.2, constants.%Convert.13 [symbolic = %.loc14_24.6 (constants.%.14)]
-// CHECK:STDOUT:   %.loc14_24.7: <specific function> = specific_function %.loc14_24.6, @Convert.4(constants.%int.32) [symbolic = %.loc14_24.7 (constants.%.15)]
-// CHECK:STDOUT:   %int.convert_checked.loc14_24.2: init Core.IntLiteral = call %.loc14_24.7(%N.loc14_6.2) [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:   %.loc14_24.5: <bound method> = bound_method %N.loc14_6.2, constants.%Convert.13 [symbolic = %.loc14_24.5 (constants.%.14)]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_24.2: <specific function> = specific_function %.loc14_24.5, @Convert.4(constants.%int.32) [symbolic = %Convert.specific_fn.loc14_24.2 (constants.%Convert.specific_fn)]
+// CHECK:STDOUT:   %int.convert_checked.loc14_24.2: init Core.IntLiteral = call %Convert.specific_fn.loc14_24.2(%N.loc14_6.2) [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: %i32, %a.param_patt: <error>);
 // CHECK:STDOUT: }
@@ -91,8 +91,8 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT: specific @F(constants.%N.1) {
 // CHECK:STDOUT:   %N.loc14_6.2 => constants.%N.1
 // CHECK:STDOUT:   %N.patt.loc14_6.2 => constants.%N.1
-// CHECK:STDOUT:   %.loc14_24.6 => constants.%.14
-// CHECK:STDOUT:   %.loc14_24.7 => constants.%.15
+// CHECK:STDOUT:   %.loc14_24.5 => constants.%.14
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_24.2 => constants.%Convert.specific_fn
 // CHECK:STDOUT:   %int.convert_checked.loc14_24.2 => constants.%int.convert_checked
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

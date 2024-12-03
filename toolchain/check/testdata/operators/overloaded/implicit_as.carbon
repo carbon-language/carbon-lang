@@ -63,11 +63,11 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [template]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [template]
-// CHECK:STDOUT:   %.13: <specific function> = specific_function %Source, @Source(%T) [symbolic]
+// CHECK:STDOUT:   %Source.specific_fn.1: <specific function> = specific_function %Source, @Source(%T) [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %.14: <specific function> = specific_function %Source, @Source(%X) [template]
-// CHECK:STDOUT:   %.24: <specific function> = specific_function %Source, @Source(%i32) [template]
+// CHECK:STDOUT:   %Source.specific_fn.2: <specific function> = specific_function %Source, @Source(%X) [template]
+// CHECK:STDOUT:   %Source.specific_fn.3: <specific function> = specific_function %Source, @Source(%i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -236,14 +236,14 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %.loc27_35.2 (constants.%.13)]
+// CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc27_42: type = name_ref T, %T.loc27_11.1 [symbolic = %T.loc27_11.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc27_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T) [symbolic = %.loc27_35.2 (constants.%.13)]
-// CHECK:STDOUT:     %Source.call: init @Source.%T.loc27_11.2 (%T) = call %.loc27_35.1()
+// CHECK:STDOUT:     %Source.specific_fn.loc27_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.1)]
+// CHECK:STDOUT:     %Source.call: init @Source.%T.loc27_11.2 (%T) = call %Source.specific_fn.loc27_35.1()
 // CHECK:STDOUT:     %.loc27_44.1: @Source.%T.loc27_11.2 (%T) = value_of_initializer %Source.call
 // CHECK:STDOUT:     %.loc27_44.2: @Source.%T.loc27_11.2 (%T) = converted %Source.call, %.loc27_44.1
 // CHECK:STDOUT:     return %.loc27_44.2
@@ -255,9 +255,9 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_i32.ref: %Sink_i32.type = name_ref Sink_i32, file.%Sink_i32.decl [template = constants.%Sink_i32]
 // CHECK:STDOUT:   %Source.ref.loc30: %Source.type = name_ref Source, file.%Source.decl [template = constants.%Source]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %.loc30_12: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%.14]
+// CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%Source.specific_fn.2]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Source.call.loc30: init %X = call %.loc30_12() to %.loc30_20.1
+// CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
 // CHECK:STDOUT:   %.loc30_20.2: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
 // CHECK:STDOUT:   %.loc30_20.3: <bound method> = bound_method %Source.call.loc30, %.loc30_20.2
 // CHECK:STDOUT:   %.loc30_20.4: ref %X = temporary %.loc30_20.1, %Source.call.loc30
@@ -272,8 +272,8 @@ fn Test() {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc31_20.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc31_20.2: type = converted %int.make_type_signed, %.loc31_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc31_10: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [template = constants.%.24]
-// CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %.loc31_10()
+// CHECK:STDOUT:   %Source.specific_fn.loc31: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [template = constants.%Source.specific_fn.3]
+// CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %Source.specific_fn.loc31()
 // CHECK:STDOUT:   %.loc31_20.3: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
 // CHECK:STDOUT:   %.loc31_20.4: <bound method> = bound_method %Source.call.loc31, %.loc31_20.3
 // CHECK:STDOUT:   %.loc31_20.5: ref %X = temporary_storage
@@ -292,7 +292,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc27_35.2 => constants.%.13
+// CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(%T.loc27_11.2) {
@@ -305,7 +305,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc27_35.2 => constants.%.14
+// CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%i32) {
@@ -313,6 +313,6 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc27_35.2 => constants.%.24
+// CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

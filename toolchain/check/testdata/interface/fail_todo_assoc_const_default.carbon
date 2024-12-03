@@ -39,10 +39,10 @@ interface I {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.18: <bound method> = bound_method %int.42.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.19: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.42.2: %i32 = int_value 42 [template]
-// CHECK:STDOUT:   %.20: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %.21: %.20 = assoc_entity element1, @I.%N [template]
+// CHECK:STDOUT:   %.19: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %.20: %.19 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -84,17 +84,17 @@ interface I {
 // CHECK:STDOUT:   %int.42: Core.IntLiteral = int_value 42 [template = constants.%int.42.1]
 // CHECK:STDOUT:   %.loc20_27.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc20_27.2: <bound method> = bound_method %int.42, %.loc20_27.1 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc20_27.3: <specific function> = specific_function %.loc20_27.2, @Convert.2(constants.%int.32) [template = constants.%.19]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc20_27.3(%int.42) [template = constants.%int.42.2]
-// CHECK:STDOUT:   %.loc20_27.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.42.2]
-// CHECK:STDOUT:   %.loc20_27.5: %i32 = converted %int.42, %.loc20_27.4 [template = constants.%int.42.2]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc20_27.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.42) [template = constants.%int.42.2]
+// CHECK:STDOUT:   %.loc20_27.3: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.42.2]
+// CHECK:STDOUT:   %.loc20_27.4: %i32 = converted %int.42, %.loc20_27.3 [template = constants.%int.42.2]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %.loc20_27.6: %.20 = assoc_entity element1, %N [template = constants.%.21]
+// CHECK:STDOUT:   %.loc20_27.5: %.19 = assoc_entity element1, %N [template = constants.%.20]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = %.loc16_36.6
-// CHECK:STDOUT:   .N = %.loc20_27.6
+// CHECK:STDOUT:   .N = %.loc20_27.5
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

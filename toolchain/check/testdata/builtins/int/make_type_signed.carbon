@@ -317,7 +317,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function %Symbolic, @Symbolic(%int.24) [template]
+// CHECK:STDOUT:   %Symbolic.specific_fn: <specific function> = specific_function %Symbolic, @Symbolic(%int.24) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -442,8 +442,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Symbolic.ref: %Symbolic.type = name_ref Symbolic, imports.%import_ref.5 [template = constants.%Symbolic]
 // CHECK:STDOUT:   %int.24.loc16: Core.IntLiteral = int_value 24 [template = constants.%int.24]
 // CHECK:STDOUT:   %n.ref: %i24 = name_ref n, %n
-// CHECK:STDOUT:   %.loc16_10: <specific function> = specific_function %Symbolic.ref, @Symbolic(constants.%int.24) [template = constants.%.1]
-// CHECK:STDOUT:   %Symbolic.call: init %i24 = call %.loc16_10(%n.ref)
+// CHECK:STDOUT:   %Symbolic.specific_fn: <specific function> = specific_function %Symbolic.ref, @Symbolic(constants.%int.24) [template = constants.%Symbolic.specific_fn]
+// CHECK:STDOUT:   %Symbolic.call: init %i24 = call %Symbolic.specific_fn(%n.ref)
 // CHECK:STDOUT:   %.loc16_25.1: %i24 = value_of_initializer %Symbolic.call
 // CHECK:STDOUT:   %.loc16_25.2: %i24 = converted %Symbolic.call, %.loc16_25.1
 // CHECK:STDOUT:   return %.loc16_25.2
@@ -528,14 +528,14 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.16: <bound method> = bound_method %int.1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.17: <specific function> = specific_function %.16, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %.16, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %int.-1.1: %i32 = int_value -1 [template]
 // CHECK:STDOUT:   %Convert.type.15: type = fn_type @Convert.4, @impl.3(%int.32) [template]
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [template]
 // CHECK:STDOUT:   %interface.10: <witness> = interface_witness (%Convert.15) [template]
-// CHECK:STDOUT:   %.18: <bound method> = bound_method %int.-1.1, %Convert.15 [template]
-// CHECK:STDOUT:   %.19: <specific function> = specific_function %.18, @Convert.4(%int.32) [template]
+// CHECK:STDOUT:   %.17: <bound method> = bound_method %int.-1.1, %Convert.15 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %.17, @Convert.4(%int.32) [template]
 // CHECK:STDOUT:   %int.-1.2: Core.IntLiteral = int_value -1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,20 +584,20 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %.loc12_19.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc12_19.2: <bound method> = bound_method %int.1, %.loc12_19.1 [template = constants.%.16]
-// CHECK:STDOUT:   %.loc12_19.3: <specific function> = specific_function %.loc12_19.2, @Convert.2(constants.%int.32) [template = constants.%.17]
-// CHECK:STDOUT:   %int.convert_checked.loc12_19: init %i32 = call %.loc12_19.3(%int.1) [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc12_19.4: %i32 = value_of_initializer %int.convert_checked.loc12_19 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc12_19.5: %i32 = converted %int.1, %.loc12_19.4 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc12_19.5) [template = constants.%int.-1.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_19: <specific function> = specific_function %.loc12_19.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_19: init %i32 = call %Convert.specific_fn.loc12_19(%int.1) [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc12_19.3: %i32 = value_of_initializer %int.convert_checked.loc12_19 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc12_19.4: %i32 = converted %int.1, %.loc12_19.3 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc12_19.4) [template = constants.%int.-1.1]
 // CHECK:STDOUT:   %.loc12_20.1: %Convert.type.6 = interface_witness_access constants.%interface.10, element0 [template = constants.%Convert.15]
-// CHECK:STDOUT:   %.loc12_20.2: <bound method> = bound_method %int.snegate, %.loc12_20.1 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc12_20.3: <specific function> = specific_function %.loc12_20.2, @Convert.4(constants.%int.32) [template = constants.%.19]
-// CHECK:STDOUT:   %.loc12_20.4: %i32 = value_of_initializer %int.snegate [template = constants.%int.-1.1]
-// CHECK:STDOUT:   %.loc12_20.5: %i32 = converted %int.snegate, %.loc12_20.4 [template = constants.%int.-1.1]
-// CHECK:STDOUT:   %int.convert_checked.loc12_20: init Core.IntLiteral = call %.loc12_20.3(%.loc12_20.5) [template = constants.%int.-1.2]
-// CHECK:STDOUT:   %.loc12_20.6: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_20 [template = constants.%int.-1.2]
-// CHECK:STDOUT:   %.loc12_20.7: Core.IntLiteral = converted %int.snegate, %.loc12_20.6 [template = constants.%int.-1.2]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_20.7) [template = <error>]
+// CHECK:STDOUT:   %.loc12_20.2: <bound method> = bound_method %int.snegate, %.loc12_20.1 [template = constants.%.17]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_20: <specific function> = specific_function %.loc12_20.2, @Convert.4(constants.%int.32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %.loc12_20.3: %i32 = value_of_initializer %int.snegate [template = constants.%int.-1.1]
+// CHECK:STDOUT:   %.loc12_20.4: %i32 = converted %int.snegate, %.loc12_20.3 [template = constants.%int.-1.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_20: init Core.IntLiteral = call %Convert.specific_fn.loc12_20(%.loc12_20.4) [template = constants.%int.-1.2]
+// CHECK:STDOUT:   %.loc12_20.5: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_20 [template = constants.%int.-1.2]
+// CHECK:STDOUT:   %.loc12_20.6: Core.IntLiteral = converted %int.snegate, %.loc12_20.5 [template = constants.%int.-1.2]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_20.6) [template = <error>]
 // CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %int.make_type_signed [template = <error>]
 // CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_signed, %.loc12_21.1 [template = <error>]
 // CHECK:STDOUT:   %n.var: ref <error> = var n

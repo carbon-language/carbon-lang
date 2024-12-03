@@ -97,7 +97,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -147,14 +147,14 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.loc4_20.2: type = ptr_type @F.%T.loc4_6.2 (%T) [symbolic = %.loc4_20.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %.loc7_10.2 (constants.%.2)]
+// CHECK:STDOUT:   %F.specific_fn.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %.1 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [template = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %.loc7_10.2 (constants.%.2)]
-// CHECK:STDOUT:     %F.call: init @F.%.loc4_20.2 (%.1) = call %.loc7_10.1()
+// CHECK:STDOUT:     %F.specific_fn.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %F.call: init @F.%.loc4_20.2 (%.1) = call %F.specific_fn.loc7_10.1()
 // CHECK:STDOUT:     %.loc7_14.1: @F.%.loc4_20.2 (%.1) = value_of_initializer %F.call
 // CHECK:STDOUT:     %.loc7_14.2: @F.%.loc4_20.2 (%.1) = converted %F.call, %.loc7_14.1
 // CHECK:STDOUT:     return %.loc7_14.2
@@ -167,7 +167,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %.loc4_20.2 => constants.%.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc7_10.2 => constants.%.2
+// CHECK:STDOUT:   %F.specific_fn.loc7_10.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc4_6.2) {

@@ -28,9 +28,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.16: <bound method> = bound_method %int.0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.17: <specific function> = specific_function %.16, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.16, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.18: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.17: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,14 +72,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:   %.loc12_17.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc12_17.2: <bound method> = bound_method %int.0, %.loc12_17.1 [template = constants.%.16]
-// CHECK:STDOUT:   %.loc12_17.3: <specific function> = specific_function %.loc12_17.2, @Convert.2(constants.%int.32) [template = constants.%.17]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc12_17.3(%int.0) [template = constants.%int.0.2]
-// CHECK:STDOUT:   %.loc12_17.4: init %i32 = converted %int.0, %int.convert_checked [template = constants.%int.0.2]
-// CHECK:STDOUT:   assign %n.var, %.loc12_17.4
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc12_17.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.0) [template = constants.%int.0.2]
+// CHECK:STDOUT:   %.loc12_17.3: init %i32 = converted %int.0, %int.convert_checked [template = constants.%int.0.2]
+// CHECK:STDOUT:   assign %n.var, %.loc12_17.3
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_13: %.18 = addr_of %n.ref
+// CHECK:STDOUT:   %.loc13_13: %.17 = addr_of %n.ref
 // CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %.loc13_13
-// CHECK:STDOUT:   %.loc13_11: %.18 = addr_of %.loc13_12
+// CHECK:STDOUT:   %.loc13_11: %.17 = addr_of %.loc13_12
 // CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %.loc13_11
 // CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2

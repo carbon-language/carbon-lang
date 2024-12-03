@@ -30,10 +30,10 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.17: <bound method> = bound_method %int.1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.18: <specific function> = specific_function %.17, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %.17, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %.19: <bound method> = bound_method %int.2.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.20: <specific function> = specific_function %.19, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %.18: <bound method> = bound_method %int.2.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%int.1.2, %int.2.2) [template]
 // CHECK:STDOUT: }
@@ -105,17 +105,17 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc11_44.1: %struct_type.a.b.2 = struct_literal (%int.1.loc11, %int.2.loc11)
 // CHECK:STDOUT:   %.loc11_44.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc11_44.3: <bound method> = bound_method %int.1.loc11, %.loc11_44.2 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc11_44.4: <specific function> = specific_function %.loc11_44.3, @Convert.2(constants.%int.32) [template = constants.%.18]
-// CHECK:STDOUT:   %int.convert_checked.loc11_44.1: init %i32 = call %.loc11_44.4(%int.1.loc11) [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc11_44.5: %i32 = value_of_initializer %int.convert_checked.loc11_44.1 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc11_44.6: %i32 = converted %int.1.loc11, %.loc11_44.5 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc11_44.7: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc11_44.8: <bound method> = bound_method %int.2.loc11, %.loc11_44.7 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc11_44.9: <specific function> = specific_function %.loc11_44.8, @Convert.2(constants.%int.32) [template = constants.%.20]
-// CHECK:STDOUT:   %int.convert_checked.loc11_44.2: init %i32 = call %.loc11_44.9(%int.2.loc11) [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc11_44.10: %i32 = value_of_initializer %int.convert_checked.loc11_44.2 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc11_44.11: %i32 = converted %int.2.loc11, %.loc11_44.10 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%.loc11_44.6, %.loc11_44.11) [template = constants.%struct]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_44.1: <specific function> = specific_function %.loc11_44.3, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc11_44.1: init %i32 = call %Convert.specific_fn.loc11_44.1(%int.1.loc11) [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc11_44.4: %i32 = value_of_initializer %int.convert_checked.loc11_44.1 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc11_44.5: %i32 = converted %int.1.loc11, %.loc11_44.4 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc11_44.6: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc11_44.7: <bound method> = bound_method %int.2.loc11, %.loc11_44.6 [template = constants.%.18]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_44.2: <specific function> = specific_function %.loc11_44.7, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc11_44.2: init %i32 = call %Convert.specific_fn.loc11_44.2(%int.2.loc11) [template = constants.%int.2.2]
+// CHECK:STDOUT:   %.loc11_44.8: %i32 = value_of_initializer %int.convert_checked.loc11_44.2 [template = constants.%int.2.2]
+// CHECK:STDOUT:   %.loc11_44.9: %i32 = converted %int.2.loc11, %.loc11_44.8 [template = constants.%int.2.2]
+// CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%.loc11_44.5, %.loc11_44.9) [template = constants.%struct]
 // CHECK:STDOUT:   %.loc11_45: %struct_type.a.b.1 = converted %.loc11_44.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:   %v: %struct_type.a.b.1 = bind_name v, %.loc11_45
 // CHECK:STDOUT:   %v.ref: %struct_type.a.b.1 = name_ref v, %v
@@ -125,20 +125,20 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc14_44.1: %struct_type.a.b.2 = struct_literal (%int.1.loc14, %int.2.loc14)
 // CHECK:STDOUT:   %.loc14_44.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc14_44.3: <bound method> = bound_method %int.1.loc14, %.loc14_44.2 [template = constants.%.17]
-// CHECK:STDOUT:   %.loc14_44.4: <specific function> = specific_function %.loc14_44.3, @Convert.2(constants.%int.32) [template = constants.%.18]
-// CHECK:STDOUT:   %int.convert_checked.loc14_44.1: init %i32 = call %.loc14_44.4(%int.1.loc14) [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc14_44.5: init %i32 = converted %int.1.loc14, %int.convert_checked.loc14_44.1 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc14_44.6: ref %i32 = struct_access file.%x.var, element0
-// CHECK:STDOUT:   %.loc14_44.7: init %i32 = initialize_from %.loc14_44.5 to %.loc14_44.6 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc14_44.8: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc14_44.9: <bound method> = bound_method %int.2.loc14, %.loc14_44.8 [template = constants.%.19]
-// CHECK:STDOUT:   %.loc14_44.10: <specific function> = specific_function %.loc14_44.9, @Convert.2(constants.%int.32) [template = constants.%.20]
-// CHECK:STDOUT:   %int.convert_checked.loc14_44.2: init %i32 = call %.loc14_44.10(%int.2.loc14) [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc14_44.11: init %i32 = converted %int.2.loc14, %int.convert_checked.loc14_44.2 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc14_44.12: ref %i32 = struct_access file.%x.var, element1
-// CHECK:STDOUT:   %.loc14_44.13: init %i32 = initialize_from %.loc14_44.11 to %.loc14_44.12 [template = constants.%int.2.2]
-// CHECK:STDOUT:   %.loc14_44.14: init %struct_type.a.b.1 = struct_init (%.loc14_44.7, %.loc14_44.13) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_45: init %struct_type.a.b.1 = converted %.loc14_44.1, %.loc14_44.14 [template = constants.%struct]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_44.1: <specific function> = specific_function %.loc14_44.3, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc14_44.1: init %i32 = call %Convert.specific_fn.loc14_44.1(%int.1.loc14) [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc14_44.4: init %i32 = converted %int.1.loc14, %int.convert_checked.loc14_44.1 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc14_44.5: ref %i32 = struct_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc14_44.6: init %i32 = initialize_from %.loc14_44.4 to %.loc14_44.5 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc14_44.7: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc14_44.8: <bound method> = bound_method %int.2.loc14, %.loc14_44.7 [template = constants.%.18]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_44.2: <specific function> = specific_function %.loc14_44.8, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc14_44.2: init %i32 = call %Convert.specific_fn.loc14_44.2(%int.2.loc14) [template = constants.%int.2.2]
+// CHECK:STDOUT:   %.loc14_44.9: init %i32 = converted %int.2.loc14, %int.convert_checked.loc14_44.2 [template = constants.%int.2.2]
+// CHECK:STDOUT:   %.loc14_44.10: ref %i32 = struct_access file.%x.var, element1
+// CHECK:STDOUT:   %.loc14_44.11: init %i32 = initialize_from %.loc14_44.9 to %.loc14_44.10 [template = constants.%int.2.2]
+// CHECK:STDOUT:   %.loc14_44.12: init %struct_type.a.b.1 = struct_init (%.loc14_44.6, %.loc14_44.11) to file.%x.var [template = constants.%struct]
+// CHECK:STDOUT:   %.loc14_45: init %struct_type.a.b.1 = converted %.loc14_44.1, %.loc14_44.12 [template = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc14_45
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.1 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc15_29.1: ref %i32 = struct_access %x.ref, element0

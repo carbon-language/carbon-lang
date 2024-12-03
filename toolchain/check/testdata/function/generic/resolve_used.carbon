@@ -43,7 +43,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%int.0) [template]
+// CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%int.0) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,8 +104,8 @@ fn CallNegative() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
-// CHECK:STDOUT:   %.loc16: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%int.0) [template = constants.%.1]
-// CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %.loc16()
+// CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%int.0) [template = constants.%ErrorIfNIsZero.specific_fn]
+// CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %ErrorIfNIsZero.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

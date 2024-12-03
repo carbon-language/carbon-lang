@@ -49,7 +49,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.18: <bound method> = bound_method %int.4.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.19: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.4.2: %i32 = int_value 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,11 +175,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %int.4: Core.IntLiteral = int_value 4 [template = constants.%int.4.1]
 // CHECK:STDOUT:   %.loc26_18.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc26_18.2: <bound method> = bound_method %int.4, %.loc26_18.1 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc26_18.3: <specific function> = specific_function %.loc26_18.2, @Convert.2(constants.%int.32) [template = constants.%.19]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc26_18.3(%int.4) [template = constants.%int.4.2]
-// CHECK:STDOUT:   %.loc26_18.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.4.2]
-// CHECK:STDOUT:   %.loc26_18.5: %i32 = converted %int.4, %.loc26_18.4 [template = constants.%int.4.2]
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc26_18.5)
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc26_18.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.4) [template = constants.%int.4.2]
+// CHECK:STDOUT:   %.loc26_18.3: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.4.2]
+// CHECK:STDOUT:   %.loc26_18.4: %i32 = converted %int.4, %.loc26_18.3 [template = constants.%int.4.2]
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc26_18.4)
 // CHECK:STDOUT:   %.loc26_20.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc26_20.2: %i32 = converted %F.call, %.loc26_20.1
 // CHECK:STDOUT:   return %.loc26_20.2

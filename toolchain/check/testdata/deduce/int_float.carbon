@@ -52,7 +52,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %i64: type = int_type signed, %int.64 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function %F, @F(%int.64) [template]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int.64) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,8 +144,8 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: %i64 = name_ref a, %a
-// CHECK:STDOUT:   %.loc9_10: <specific function> = specific_function %F.ref, @F(constants.%int.64) [template = constants.%.1]
-// CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %.loc9_10(%a.ref)
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int.64) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:   %.loc9_14.1: Core.IntLiteral = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc9_14.2: Core.IntLiteral = converted %F.call, %.loc9_14.1
 // CHECK:STDOUT:   return %.loc9_14.2

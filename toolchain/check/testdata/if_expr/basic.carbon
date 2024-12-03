@@ -33,7 +33,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.18: <bound method> = bound_method %int.0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.19: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.18, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %array: %.1 = tuple_value (%int.0.2) [template]
 // CHECK:STDOUT: }
@@ -104,14 +104,14 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %.loc12_24.1: %tuple.type = tuple_literal (%int.0.loc12_22)
 // CHECK:STDOUT:   %.loc12_24.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc12_24.3: <bound method> = bound_method %int.0.loc12_22, %.loc12_24.2 [template = constants.%.18]
-// CHECK:STDOUT:   %.loc12_24.4: <specific function> = specific_function %.loc12_24.3, @Convert.2(constants.%int.32) [template = constants.%.19]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc12_24.4(%int.0.loc12_22) [template = constants.%int.0.2]
-// CHECK:STDOUT:   %.loc12_24.5: init %i32 = converted %int.0.loc12_22, %int.convert_checked [template = constants.%int.0.2]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc12_24.3, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.0.loc12_22) [template = constants.%int.0.2]
+// CHECK:STDOUT:   %.loc12_24.4: init %i32 = converted %int.0.loc12_22, %int.convert_checked [template = constants.%int.0.2]
 // CHECK:STDOUT:   %int.0.loc12_24: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
-// CHECK:STDOUT:   %.loc12_24.6: ref %i32 = array_index %x.var, %int.0.loc12_24
-// CHECK:STDOUT:   %.loc12_24.7: init %i32 = initialize_from %.loc12_24.5 to %.loc12_24.6 [template = constants.%int.0.2]
-// CHECK:STDOUT:   %.loc12_24.8: init %.1 = array_init (%.loc12_24.7) to %x.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc12_25: init %.1 = converted %.loc12_24.1, %.loc12_24.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_24.5: ref %i32 = array_index %x.var, %int.0.loc12_24
+// CHECK:STDOUT:   %.loc12_24.6: init %i32 = initialize_from %.loc12_24.4 to %.loc12_24.5 [template = constants.%int.0.2]
+// CHECK:STDOUT:   %.loc12_24.7: init %.1 = array_init (%.loc12_24.6) to %x.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc12_25: init %.1 = converted %.loc12_24.1, %.loc12_24.7 [template = constants.%array]
 // CHECK:STDOUT:   assign %x.var, %.loc12_25
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else

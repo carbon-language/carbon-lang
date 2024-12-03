@@ -318,8 +318,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %F.ref: @TestGeneric.%.loc17_17.2 (%.12) = name_ref F, %.loc17_17.1 [symbolic = %.loc17_17.3 (constants.%.13)]
 // CHECK:STDOUT:     %.loc17_11.1: @TestGeneric.%F.type.loc17_17 (%F.type.4) = interface_witness_access constants.%interface.2, element0 [symbolic = %F (constants.%F.5)]
 // CHECK:STDOUT:     %.loc17_11.2: <bound method> = bound_method %a.ref, %.loc17_11.1
-// CHECK:STDOUT:     %.loc17_11.3: <specific function> = specific_function %.loc17_11.2, @F.2(constants.%W)
-// CHECK:STDOUT:     %F.call: init @TestGeneric.%W.loc16_16.2 (%W) = call %.loc17_11.3(%a.ref)
+// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %.loc17_11.2, @F.2(constants.%W)
+// CHECK:STDOUT:     %F.call: init @TestGeneric.%W.loc16_16.2 (%W) = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:     %.loc17_22.1: @TestGeneric.%W.loc16_16.2 (%W) = value_of_initializer %F.call
 // CHECK:STDOUT:     %.loc17_22.2: @TestGeneric.%W.loc16_16.2 (%W) = converted %F.call, %.loc17_22.1
 // CHECK:STDOUT:     return %.loc17_22.2
@@ -337,8 +337,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.ref: %.16 = name_ref F, %.loc21_18 [template = constants.%.17]
 // CHECK:STDOUT:   %.loc21_11.1: %F.type.6 = interface_witness_access constants.%interface.3, element0 [template = constants.%F.7]
 // CHECK:STDOUT:   %.loc21_11.2: <bound method> = bound_method %a.ref, %.loc21_11.1
-// CHECK:STDOUT:   %.loc21_11.3: <specific function> = specific_function %.loc21_11.2, @F.2(constants.%empty_struct_type)
-// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %.loc21_11.3(%a.ref)
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %.loc21_11.2, @F.2(constants.%empty_struct_type)
+// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:   %.loc21_22.1: ref %empty_struct_type = temporary_storage
 // CHECK:STDOUT:   %.loc21_22.2: ref %empty_struct_type = temporary %.loc21_22.1, %F.call
 // CHECK:STDOUT:   %struct: %empty_struct_type = struct_value () [template = constants.%struct]

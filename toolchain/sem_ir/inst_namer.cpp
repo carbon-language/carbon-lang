@@ -596,6 +596,20 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(NameId::ReturnSlot, ".patt");
         continue;
       }
+      case CARBON_KIND(SpecificFunction inst): {
+        SemIR::InstId callee_id = inst.callee_id;
+        if (auto method = sem_ir_.insts().TryGetAs<BoundMethod>(callee_id)) {
+          callee_id = method->function_id;
+        }
+        auto type_id = sem_ir_.insts().Get(callee_id).type_id();
+        if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(type_id)) {
+          add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
+                           ".specific_fn");
+        } else {
+          add_inst_name("specific_fn");
+        }
+        continue;
+      }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);
         break;

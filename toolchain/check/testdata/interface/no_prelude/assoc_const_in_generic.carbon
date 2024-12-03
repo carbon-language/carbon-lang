@@ -44,11 +44,11 @@ fn H() {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <specific function> = specific_function %G, @G(%empty_struct_type) [template]
+// CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [template]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%empty_struct_type)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F, @I(%empty_struct_type) [template]
-// CHECK:STDOUT:   %.4: type = assoc_entity_type %I.type.3, %F.type.2 [template]
-// CHECK:STDOUT:   %.5: %.4 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %.3: type = assoc_entity_type %I.type.3, %F.type.2 [template]
+// CHECK:STDOUT:   %.4: %.3 = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -142,8 +142,8 @@ fn H() {
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %.loc23_6: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_7: type = converted %.loc23_6, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc23_3: <specific function> = specific_function %G.ref, @G(constants.%empty_struct_type) [template = constants.%.3]
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %.loc23_3()
+// CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%empty_struct_type) [template = constants.%G.specific_fn]
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,8 +187,8 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_6.2 => constants.%I.type.3
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
-// CHECK:STDOUT:   %.loc19_7.2 => constants.%.4
-// CHECK:STDOUT:   %.loc19_7.3 => constants.%.5
+// CHECK:STDOUT:   %.loc19_7.2 => constants.%.3
+// CHECK:STDOUT:   %.loc19_7.3 => constants.%.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {

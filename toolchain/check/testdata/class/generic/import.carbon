@@ -109,7 +109,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.17: <bound method> = bound_method %int.0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.18: <specific function> = specific_function %.17, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.17, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %CompleteClass.3: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -214,11 +214,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:     %.loc8_27.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:     %.loc8_27.2: <bound method> = bound_method %int.0, %.loc8_27.1 [template = constants.%.17]
-// CHECK:STDOUT:     %.loc8_27.3: <specific function> = specific_function %.loc8_27.2, @Convert.2(constants.%int.32) [template = constants.%.18]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %.loc8_27.3(%int.0) [template = constants.%int.0.2]
-// CHECK:STDOUT:     %.loc8_27.4: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.0.2]
-// CHECK:STDOUT:     %.loc8_27.5: %i32 = converted %int.0, %.loc8_27.4 [template = constants.%int.0.2]
-// CHECK:STDOUT:     return %.loc8_27.5
+// CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %.loc8_27.2, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.0) [template = constants.%int.0.2]
+// CHECK:STDOUT:     %.loc8_27.3: %i32 = value_of_initializer %int.convert_checked [template = constants.%int.0.2]
+// CHECK:STDOUT:     %.loc8_27.4: %i32 = converted %int.0, %.loc8_27.3 [template = constants.%int.0.2]
+// CHECK:STDOUT:     return %.loc8_27.4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,7 +355,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
 // CHECK:STDOUT:   %.20: <bound method> = bound_method %int.1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %.21: <specific function> = specific_function %.20, @Convert.2(%int.32) [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.20, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct: %CompleteClass.3 = struct_value (%int.1.2) [template]
 // CHECK:STDOUT: }
@@ -753,13 +753,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.2 = struct_literal (%int.1)
 // CHECK:STDOUT:   %.loc9_17.2: %Convert.type.13 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc9_17.3: <bound method> = bound_method %int.1, %.loc9_17.2 [template = constants.%.20]
-// CHECK:STDOUT:   %.loc9_17.4: <specific function> = specific_function %.loc9_17.3, @Convert.2(constants.%int.32) [template = constants.%.21]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc9_17.4(%int.1) [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc9_17.5: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc9_17.6: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc9_17.7: init %i32 = initialize_from %.loc9_17.5 to %.loc9_17.6 [template = constants.%int.1.2]
-// CHECK:STDOUT:   %.loc9_17.8: init %CompleteClass.3 = class_init (%.loc9_17.7), %return [template = constants.%struct]
-// CHECK:STDOUT:   %.loc9_18: init %CompleteClass.3 = converted %.loc9_17.1, %.loc9_17.8 [template = constants.%struct]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %.loc9_17.3, @Convert.2(constants.%int.32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.1) [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc9_17.4: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc9_17.5: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc9_17.6: init %i32 = initialize_from %.loc9_17.4 to %.loc9_17.5 [template = constants.%int.1.2]
+// CHECK:STDOUT:   %.loc9_17.7: init %CompleteClass.3 = class_init (%.loc9_17.6), %return [template = constants.%struct]
+// CHECK:STDOUT:   %.loc9_18: init %CompleteClass.3 = converted %.loc9_17.1, %.loc9_17.7 [template = constants.%struct]
 // CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1113,7 +1113,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.4: <specific function> = specific_function %F.2, @F.1(%i32) [template]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.2, @F.1(%i32) [template]
 // CHECK:STDOUT:   %UseField.type: type = fn_type @UseField [template]
 // CHECK:STDOUT:   %UseField: %UseField.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -1202,10 +1202,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.3 = call %F.ref.loc6() to %.loc6_7
 // CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.3 = name_ref v, %v
-// CHECK:STDOUT:   %.loc7_11.1: %F.type.2 = specific_constant imports.%import_ref.8, @CompleteClass(constants.%i32) [template = constants.%F.2]
-// CHECK:STDOUT:   %F.ref.loc7: %F.type.2 = name_ref F, %.loc7_11.1 [template = constants.%F.2]
-// CHECK:STDOUT:   %.loc7_11.2: <specific function> = specific_function %F.ref.loc7, @F.1(constants.%i32) [template = constants.%.4]
-// CHECK:STDOUT:   %F.call.loc7: init %i32 = call %.loc7_11.2()
+// CHECK:STDOUT:   %.loc7_11: %F.type.2 = specific_constant imports.%import_ref.8, @CompleteClass(constants.%i32) [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref.loc7: %F.type.2 = name_ref F, %.loc7_11 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref.loc7, @F.1(constants.%i32) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.call.loc7: init %i32 = call %F.specific_fn()
 // CHECK:STDOUT:   %.loc7_15.1: %i32 = value_of_initializer %F.call.loc7
 // CHECK:STDOUT:   %.loc7_15.2: %i32 = converted %F.call.loc7, %.loc7_15.1
 // CHECK:STDOUT:   return %.loc7_15.2

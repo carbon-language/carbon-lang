@@ -102,7 +102,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Receive: %Receive.type = struct_value () [template]
 // CHECK:STDOUT:   %Pass.type: type = fn_type @Pass [template]
 // CHECK:STDOUT:   %Pass: %Pass.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: <specific function> = specific_function %Receive, @Receive(%T.2) [symbolic]
+// CHECK:STDOUT:   %Receive.specific_fn: <specific function> = specific_function %Receive, @Receive(%T.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -303,14 +303,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc25_9.2: %Simple.type.3 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc26_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc25_9.2) [symbolic = %.loc26_3.2 (constants.%.7)]
+// CHECK:STDOUT:   %Receive.specific_fn.loc26_3.2: <specific function> = specific_function constants.%Receive, @Receive(%T.loc25_9.2) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Simple.type.3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Receive.ref: %Receive.type = name_ref Receive, file.%Receive.decl [template = constants.%Receive]
 // CHECK:STDOUT:     %T.ref: %Simple.type.3 = name_ref T, %T.loc25_9.1 [symbolic = %T.loc25_9.2 (constants.%T.2)]
-// CHECK:STDOUT:     %.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.2) [symbolic = %.loc26_3.2 (constants.%.7)]
-// CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %.loc26_3.1()
+// CHECK:STDOUT:     %Receive.specific_fn.loc26_3.1: <specific function> = specific_function %Receive.ref, @Receive(constants.%T.2) [symbolic = %Receive.specific_fn.loc26_3.2 (constants.%Receive.specific_fn)]
+// CHECK:STDOUT:     %Receive.call: init %empty_tuple.type = call %Receive.specific_fn.loc26_3.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
