@@ -20,7 +20,7 @@ impl true as I {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -30,8 +30,8 @@ impl true as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc16_6.1: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:     %.loc16_6.2: type = converted %.loc16_6.1, <error> [template = <error>]
+// CHECK:STDOUT:     %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:     %.loc16: type = converted %true, <error> [template = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

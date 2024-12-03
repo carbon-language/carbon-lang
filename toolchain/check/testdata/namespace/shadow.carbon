@@ -41,7 +41,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -98,8 +98,8 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc20: %A.type.2 = name_ref A, file.%A.decl.loc14 [template = constants.%A.2]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref.loc20()
-// CHECK:STDOUT:   %.loc21: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc21 br !if.then else br !if.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int.32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int.32]

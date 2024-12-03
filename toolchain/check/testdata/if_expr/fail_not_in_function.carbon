@@ -44,7 +44,7 @@ class C {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,8 +73,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc37: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc37 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -84,7 +84,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc23 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

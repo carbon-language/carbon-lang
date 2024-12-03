@@ -50,7 +50,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,13 +67,13 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11: type = converted @impl.9.%.loc11_13, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc11: type = converted @impl.9.%false, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_signed, %.loc11_6.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_13: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:     %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

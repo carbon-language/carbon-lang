@@ -17,7 +17,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: --- fail_bool_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -37,7 +37,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:     .a_test = @__global_init.%a_test
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14: bool = bool_literal false [template = constants.%.1]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]

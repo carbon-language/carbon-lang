@@ -51,8 +51,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %PartialConstant.type: type = fn_type @PartialConstant [template]
 // CHECK:STDOUT:   %PartialConstant: %PartialConstant.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -83,17 +83,17 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9_13: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_18.1: bool = bool_literal false [template = constants.%.2]
-// CHECK:STDOUT:   if %.loc9_13 br !and.rhs else br !and.result(%.loc9_18.1)
+// CHECK:STDOUT:   %true.loc9: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   %false.loc9: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %true.loc9 br !and.rhs else br !and.result(%false.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
 // CHECK:STDOUT:   %x.ref.loc9: bool = name_ref x, %x
 // CHECK:STDOUT:   br !and.result(%x.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc9_18.2: bool = block_arg !and.result
-// CHECK:STDOUT:   if %.loc9_18.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
+// CHECK:STDOUT:   %.loc9_18: bool = block_arg !and.result
+// CHECK:STDOUT:   if %.loc9_18 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
 // CHECK:STDOUT:   %bool.make_type.loc9: init type = call constants.%Bool() [template = bool]
@@ -110,18 +110,18 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %.loc9_10: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc14_13: bool = bool_literal false [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_19.1: bool = not %.loc14_13 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc14_19.2: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc14_19.1 br !or.rhs else br !or.result(%.loc14_19.2)
+// CHECK:STDOUT:   %false.loc14: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   %.loc14_19.1: bool = not %false.loc14 [template = constants.%true]
+// CHECK:STDOUT:   %true.loc14: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %.loc14_19.1 br !or.rhs else br !or.result(%true.loc14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
 // CHECK:STDOUT:   %x.ref.loc14: bool = name_ref x, %x
 // CHECK:STDOUT:   br !or.result(%x.ref.loc14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:
-// CHECK:STDOUT:   %.loc14_19.3: bool = block_arg !or.result
-// CHECK:STDOUT:   if %.loc14_19.3 br !if.expr.then.loc14 else br !if.expr.else.loc14
+// CHECK:STDOUT:   %.loc14_19.2: bool = block_arg !or.result
+// CHECK:STDOUT:   if %.loc14_19.2 br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc14:
 // CHECK:STDOUT:   %bool.make_type.loc14: init type = call constants.%Bool() [template = bool]
@@ -149,8 +149,8 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition.type: type = fn_type @KnownValueButNonConstantCondition [template]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition: %KnownValueButNonConstantCondition.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -182,16 +182,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11: bool = name_ref x, %x
-// CHECK:STDOUT:   %.loc11_15.1: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %x.ref.loc11 br !and.rhs else br !and.result(%.loc11_15.1)
+// CHECK:STDOUT:   %false.loc11_15: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %x.ref.loc11 br !and.rhs else br !and.result(%false.loc11_15)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc11_19: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   br !and.result(%.loc11_19)
+// CHECK:STDOUT:   %false.loc11_19: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   br !and.result(%false.loc11_19)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc11_15.2: bool = block_arg !and.result
-// CHECK:STDOUT:   if %.loc11_15.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
+// CHECK:STDOUT:   %.loc11_15: bool = block_arg !and.result
+// CHECK:STDOUT:   if %.loc11_15 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
 // CHECK:STDOUT:   %bool.make_type.loc11: init type = call constants.%Bool() [template = bool]
@@ -210,16 +210,16 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT:   %x.ref.loc15: bool = name_ref x, %x
 // CHECK:STDOUT:   %.loc15_15.1: bool = not %x.ref.loc15
-// CHECK:STDOUT:   %.loc15_15.2: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   if %.loc15_15.1 br !or.rhs else br !or.result(%.loc15_15.2)
+// CHECK:STDOUT:   %true.loc15_15: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %.loc15_15.1 br !or.rhs else br !or.result(%true.loc15_15)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.rhs:
-// CHECK:STDOUT:   %.loc15_18: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   br !or.result(%.loc15_18)
+// CHECK:STDOUT:   %true.loc15_18: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   br !or.result(%true.loc15_18)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:
-// CHECK:STDOUT:   %.loc15_15.3: bool = block_arg !or.result
-// CHECK:STDOUT:   if %.loc15_15.3 br !if.expr.then.loc15 else br !if.expr.else.loc15
+// CHECK:STDOUT:   %.loc15_15.2: bool = block_arg !or.result
+// CHECK:STDOUT:   if %.loc15_15.2 br !if.expr.then.loc15 else br !if.expr.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc15:
 // CHECK:STDOUT:   %bool.make_type.loc15: init type = call constants.%Bool() [template = bool]

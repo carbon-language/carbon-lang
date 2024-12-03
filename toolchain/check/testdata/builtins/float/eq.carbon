@@ -50,9 +50,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 2 [template]
-// CHECK:STDOUT:   %.4: bool = bool_literal false [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -169,9 +169,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
 // CHECK:STDOUT:   %.loc8_19: f64 = float_literal 1 [template = constants.%.1]
 // CHECK:STDOUT:   %.loc8_24: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %float.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_24) [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %float.eq.loc8 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc8_13.2: bool = converted %float.eq.loc8, %.loc8_13.1 [template = constants.%.2]
+// CHECK:STDOUT:   %float.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19, %.loc8_24) [template = constants.%true]
+// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %float.eq.loc8 [template = constants.%true]
+// CHECK:STDOUT:   %.loc8_13.2: bool = converted %float.eq.loc8, %.loc8_13.1 [template = constants.%true]
 // CHECK:STDOUT:   if %.loc8_13.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc8:
@@ -187,10 +187,10 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %false_.ref: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Eq.ref.loc9: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
 // CHECK:STDOUT:   %.loc9_20: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc9_25: f64 = float_literal 2 [template = constants.%.3]
-// CHECK:STDOUT:   %float.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_25) [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.eq.loc9 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.eq.loc9, %.loc9_14.1 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc9_25: f64 = float_literal 2 [template = constants.%.2]
+// CHECK:STDOUT:   %float.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20, %.loc9_25) [template = constants.%false]
+// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.eq.loc9 [template = constants.%false]
+// CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.eq.loc9, %.loc9_14.1 [template = constants.%false]
 // CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:

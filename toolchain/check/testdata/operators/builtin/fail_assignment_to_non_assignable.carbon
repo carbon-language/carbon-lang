@@ -94,7 +94,7 @@ fn Main() {
 // CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: Core.IntLiteral, .y: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct.1: %struct_type.x.y = struct_value (%int.3.1, %int.4) [template]
 // CHECK:STDOUT:   %struct.2: %struct_type.x.y = struct_value (%int.1.1, %int.2.1) [template]
-// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.3.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
@@ -228,8 +228,8 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc44_18.1, %.loc44_20
 // CHECK:STDOUT:   %struct: %struct_type.x.y = struct_value (%int.1.loc44, %int.2.loc44) [template = constants.%struct.2]
 // CHECK:STDOUT:   %.loc44_18.2: %struct_type.x.y = converted %.loc44_18.1, %struct [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc49_7: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc49_7 br !if.expr.then.loc49 else br !if.expr.else.loc49
+// CHECK:STDOUT:   %true.loc49: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc49 br !if.expr.then.loc49 else br !if.expr.else.loc49
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc49:
 // CHECK:STDOUT:   %int.1.loc49: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
@@ -266,8 +266,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc52_10.2: type = converted %int.make_type_signed.loc52, %.loc52_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc56_7: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc56_7 br !if.expr.then.loc56 else br !if.expr.else.loc56
+// CHECK:STDOUT:   %true.loc56: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc56 br !if.expr.then.loc56 else br !if.expr.else.loc56
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc56:
 // CHECK:STDOUT:   %a.ref.loc56_17: ref %i32 = name_ref a, %a

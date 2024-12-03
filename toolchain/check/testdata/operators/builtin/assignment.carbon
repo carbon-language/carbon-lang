@@ -76,7 +76,7 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int.5.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.7: <specific function> = specific_function %Convert.bound.7, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.5.2: %i32 = int_value 5 [template]
-// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.10.1: Core.IntLiteral = int_value 10 [template]
 // CHECK:STDOUT:   %Convert.bound.8: <bound method> = bound_method %int.10.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.8: <specific function> = specific_function %Convert.bound.8, @Convert.2(%int.32) [template]
@@ -245,8 +245,8 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc24: init %i32 = call %Convert.specific_fn.loc24(%int.5) [template = constants.%int.5.2]
 // CHECK:STDOUT:   %.loc24_6.2: init %i32 = converted %int.5, %int.convert_checked.loc24 [template = constants.%int.5.2]
 // CHECK:STDOUT:   assign %.loc24_3, %.loc24_6.2
-// CHECK:STDOUT:   %.loc26_8: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc26_8 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %p.ref.loc26: ref %ptr.3 = name_ref p, %p

@@ -36,7 +36,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %UnrelatedScopes.type: type = fn_type @UnrelatedScopes [template]
 // CHECK:STDOUT:   %UnrelatedScopes: %UnrelatedScopes.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -105,8 +105,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UnrelatedScopes() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc12 br !if.then.loc12 else br !if.else.loc12
+// CHECK:STDOUT:   %true.loc12: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc12 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
 // CHECK:STDOUT:   %int.32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -125,8 +125,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
-// CHECK:STDOUT:   %.loc15: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc15 br !if.then.loc15 else br !if.else.loc15
+// CHECK:STDOUT:   %true.loc15: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc15 br !if.then.loc15 else br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc15:
 // CHECK:STDOUT:   %int.32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int.32]

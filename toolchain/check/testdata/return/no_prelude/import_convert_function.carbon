@@ -1039,7 +1039,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n.m [template]
 // CHECK:STDOUT:   %F0.type: type = fn_type @F0 [template]
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
@@ -1054,10 +1054,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.2: type = facet_access_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %elt0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.14 [symbolic]
-// CHECK:STDOUT:   %.3: type = facet_access_type %Self.1 [symbolic]
+// CHECK:STDOUT:   %.2: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
@@ -1310,8 +1310,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F0(%n.param_patt: %i32) -> %return: %D {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc8_7 br !if.then.loc8 else br !if.else.loc8
+// CHECK:STDOUT:   %false.loc8: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc8 br !if.then.loc8 else br !if.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc8:
 // CHECK:STDOUT:   %.loc8_24.1: %empty_struct_type = struct_literal ()
@@ -1337,8 +1337,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc8_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
-// CHECK:STDOUT:   %.loc9_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc9_7 br !if.then.loc9 else br !if.else.loc9
+// CHECK:STDOUT:   %false.loc9: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc9 br !if.then.loc9 else br !if.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc9:
 // CHECK:STDOUT:   %.loc9_24.1: %empty_struct_type = struct_literal ()
@@ -1364,8 +1364,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc9_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc9:
-// CHECK:STDOUT:   %.loc10_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc10_7 br !if.then.loc10 else br !if.else.loc10
+// CHECK:STDOUT:   %false.loc10: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc10 br !if.then.loc10 else br !if.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc10:
 // CHECK:STDOUT:   %.loc10_24.1: %empty_struct_type = struct_literal ()
@@ -1391,8 +1391,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc10_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc10:
-// CHECK:STDOUT:   %.loc11_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc11_7 br !if.then.loc11 else br !if.else.loc11
+// CHECK:STDOUT:   %false.loc11: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc11 br !if.then.loc11 else br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11:
 // CHECK:STDOUT:   %.loc11_24.1: %empty_struct_type = struct_literal ()
@@ -1418,8 +1418,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc11_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
-// CHECK:STDOUT:   %.loc12_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc12_7 br !if.then.loc12 else br !if.else.loc12
+// CHECK:STDOUT:   %false.loc12: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc12 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
 // CHECK:STDOUT:   %.loc12_24.1: %empty_struct_type = struct_literal ()
@@ -1445,8 +1445,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc12_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
-// CHECK:STDOUT:   %.loc13_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc13_7 br !if.then.loc13 else br !if.else.loc13
+// CHECK:STDOUT:   %false.loc13: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc13 br !if.then.loc13 else br !if.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc13:
 // CHECK:STDOUT:   %.loc13_24.1: %empty_struct_type = struct_literal ()
@@ -1472,8 +1472,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc13_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc13:
-// CHECK:STDOUT:   %.loc14_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc14_7 br !if.then.loc14 else br !if.else.loc14
+// CHECK:STDOUT:   %false.loc14: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc14 br !if.then.loc14 else br !if.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc14:
 // CHECK:STDOUT:   %.loc14_24.1: %empty_struct_type = struct_literal ()
@@ -1499,8 +1499,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc14_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc14:
-// CHECK:STDOUT:   %.loc15_7: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc15_7 br !if.then.loc15 else br !if.else.loc15
+// CHECK:STDOUT:   %false.loc15: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false.loc15 br !if.then.loc15 else br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc15:
 // CHECK:STDOUT:   %.loc15_24.1: %empty_struct_type = struct_literal ()
@@ -1537,9 +1537,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.2)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.1)]() -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32 = "int.convert_checked";
@@ -1586,7 +1586,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %.1 => constants.%.3
+// CHECK:STDOUT:   %.1 => constants.%.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32) {

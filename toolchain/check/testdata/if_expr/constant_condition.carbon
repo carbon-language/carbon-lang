@@ -56,10 +56,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: bool = bool_literal false [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [template]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
@@ -185,8 +185,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc15_13 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
@@ -209,8 +209,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_13: bool = bool_literal false [template = constants.%.6]
-// CHECK:STDOUT:   if %.loc19_13 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A]
@@ -233,8 +233,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_13: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc23_13 br !if.expr.then.loc23 else br !if.expr.else.loc23
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then.loc23 else br !if.expr.else.loc23
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc23:
 // CHECK:STDOUT:   %int.32.loc23_23: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -262,8 +262,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.1) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc23_40.2: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
 // CHECK:STDOUT:   assign %v.var, %.loc23_40.2
-// CHECK:STDOUT:   %.loc24_13: bool = bool_literal false [template = constants.%.6]
-// CHECK:STDOUT:   if %.loc24_13 br !if.expr.then.loc24 else br !if.expr.else.loc24
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false br !if.expr.then.loc24 else br !if.expr.else.loc24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc24:
 // CHECK:STDOUT:   %int.32.loc24_24: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -296,8 +296,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartiallyConstant(%t.param_patt: type) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc29_13: bool = bool_literal true [template = constants.%.5]
-// CHECK:STDOUT:   if %.loc29_13 br !if.expr.then.loc29 else br !if.expr.else.loc29
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.expr.then.loc29 else br !if.expr.else.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc29:
 // CHECK:STDOUT:   %int.32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -321,8 +321,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int.1) [template = constants.%int.1.2]
 // CHECK:STDOUT:   %.loc29_37.2: init %i32 = converted %int.1, %int.convert_checked [template = constants.%int.1.2]
 // CHECK:STDOUT:   assign %v.var, %.loc29_37.2
-// CHECK:STDOUT:   %.loc30_13: bool = bool_literal false [template = constants.%.6]
-// CHECK:STDOUT:   if %.loc30_13 br !if.expr.then.loc30 else br !if.expr.else.loc30
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %false br !if.expr.then.loc30 else br !if.expr.else.loc30
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc30:
 // CHECK:STDOUT:   %t.ref.loc30: type = name_ref t, %t

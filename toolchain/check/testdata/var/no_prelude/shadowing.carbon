@@ -30,7 +30,7 @@ fn Main() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -65,8 +65,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc17 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_17: init %empty_tuple.type = converted %.loc17_16.1, %.loc17_16.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %x.var.loc17, %.loc17_17
-// CHECK:STDOUT:   %.loc18: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc18 br !if.then else br !if.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %.loc19_13.1: %empty_tuple.type = tuple_literal ()

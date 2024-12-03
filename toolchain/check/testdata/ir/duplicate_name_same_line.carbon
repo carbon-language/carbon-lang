@@ -15,7 +15,7 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -54,8 +54,8 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_14: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
+// CHECK:STDOUT:   %true.loc11_14: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
 // CHECK:STDOUT:   %int.32.loc11_29: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -74,8 +74,8 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11_18:
-// CHECK:STDOUT:   %.loc11_44: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
+// CHECK:STDOUT:   %true.loc11_44: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
 // CHECK:STDOUT:   %int.32.loc11_59: Core.IntLiteral = int_value 32 [template = constants.%int.32]

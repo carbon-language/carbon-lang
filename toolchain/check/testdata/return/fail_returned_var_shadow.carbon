@@ -48,7 +48,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %SameScope.type: type = fn_type @SameScope [template]
 // CHECK:STDOUT:   %SameScope: %SameScope.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -107,8 +107,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SameScope() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc12 br !if.then else br !if.else
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %int.32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -152,8 +152,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DifferentScopes() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc27: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc27 br !if.then.loc27 else br !if.else.loc27
+// CHECK:STDOUT:   %true.loc27: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc27 br !if.then.loc27 else br !if.else.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc27:
 // CHECK:STDOUT:   %int.32.loc28: Core.IntLiteral = int_value 32 [template = constants.%int.32]
@@ -169,8 +169,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %int.convert_checked.loc28: init %i32 = call %Convert.specific_fn.loc28(%int.0.loc28) [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc28_28.2: init %i32 = converted %int.0.loc28, %int.convert_checked.loc28 [template = constants.%int.0.2]
 // CHECK:STDOUT:   assign %v.var, %.loc28_28.2
-// CHECK:STDOUT:   %.loc29: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   if %.loc29 br !if.then.loc29 else br !if.else.loc29
+// CHECK:STDOUT:   %true.loc29: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   if %true.loc29 br !if.then.loc29 else br !if.else.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc29:
 // CHECK:STDOUT:   %int.32.loc36: Core.IntLiteral = int_value 32 [template = constants.%int.32]

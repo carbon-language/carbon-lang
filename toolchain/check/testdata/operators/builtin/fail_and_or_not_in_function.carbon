@@ -51,14 +51,14 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %int.64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block23> [template = constants.%.1]
+// CHECK:STDOUT:   %.loc42_17: bool = block_arg <unexpected instblockref block23> [template = constants.%true]
 // CHECK:STDOUT:   %F.call: init type = call <unexpected>.inst+76.loc42_10(%.loc42_17)
 // CHECK:STDOUT:   %.loc42_24.1: type = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc42_24.2: type = converted %F.call, %.loc42_24.1

@@ -453,6 +453,14 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_.entity_names().Get(inst.entity_name_id).name_id, ".patt");
         continue;
       }
+      case CARBON_KIND(BoolLiteral inst): {
+        if (inst.value.ToBool()) {
+          add_inst_name("true");
+        } else {
+          add_inst_name("false");
+        }
+        continue;
+      }
       case CARBON_KIND(BoundMethod inst): {
         auto type_id = sem_ir_.insts().Get(inst.function_id).type_id();
         if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(type_id)) {

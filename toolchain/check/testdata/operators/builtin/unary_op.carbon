@@ -28,8 +28,8 @@ fn Constant() {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Not.type: type = fn_type @Not [template]
 // CHECK:STDOUT:   %Not: %Not.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [template]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
@@ -87,8 +87,8 @@ fn Constant() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_17: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   %.loc19_13: bool = not %.loc19_17 [template = constants.%.2]
+// CHECK:STDOUT:   %true.loc19: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   %.loc19_13: bool = not %true.loc19 [template = constants.%false]
 // CHECK:STDOUT:   if %.loc19_13 br !if.expr.then.loc19 else br !if.expr.else.loc19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc19:
@@ -110,8 +110,8 @@ fn Constant() {
 // CHECK:STDOUT:   %.loc19_43.2: init %empty_tuple.type = tuple_init () to %a.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_44: init %empty_tuple.type = converted %.loc19_43.1, %.loc19_43.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc19_44
-// CHECK:STDOUT:   %.loc20_17: bool = bool_literal false [template = constants.%.2]
-// CHECK:STDOUT:   %.loc20_13: bool = not %.loc20_17 [template = constants.%.1]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   %.loc20_13: bool = not %false [template = constants.%true]
 // CHECK:STDOUT:   if %.loc20_13 br !if.expr.then.loc20 else br !if.expr.else.loc20
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc20:
@@ -129,19 +129,19 @@ fn Constant() {
 // CHECK:STDOUT:   %.loc20_10: type = block_arg !if.expr.result.loc20 [template = bool]
 // CHECK:STDOUT:   %b.var: ref bool = var b
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc20_43: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   assign %b.var, %.loc20_43
+// CHECK:STDOUT:   %true.loc20: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   assign %b.var, %true.loc20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_26: bool = bool_literal true [template = constants.%.1]
-// CHECK:STDOUT:   %.loc15_22: bool = not %.loc15_26 [template = constants.%.2]
-// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc15_22
-// CHECK:STDOUT:   %.loc16_27: bool = bool_literal false [template = constants.%.2]
-// CHECK:STDOUT:   %.loc16_23: bool = not %.loc16_27 [template = constants.%.1]
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc16_23
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   %.loc15: bool = not %true [template = constants.%false]
+// CHECK:STDOUT:   %not_true: bool = bind_name not_true, %.loc15
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   %.loc16: bool = not %false [template = constants.%true]
+// CHECK:STDOUT:   %not_false: bool = bind_name not_false, %.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
