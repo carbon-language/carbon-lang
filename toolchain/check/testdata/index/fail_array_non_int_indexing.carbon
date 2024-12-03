@@ -37,7 +37,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_12.2: %i32 = int_value 12 [template]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_12.2) [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 2.6000000000000001 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -88,8 +88,8 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc11_24: init %array_type = converted %.loc11_23.1, %.loc11_23.6 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_24
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc18_16.1: f64 = float_literal 2.6000000000000001 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_16.2: %i32 = converted %.loc18_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template = constants.%float]
+// CHECK:STDOUT:   %.loc18_16: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18_19.2: %i32 = bind_value %.loc18_19.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc18_19.2

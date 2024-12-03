@@ -26,7 +26,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 65.890000000000001 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, f64) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
@@ -69,8 +69,8 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %.loc17_25: f64 = float_literal 65.890000000000001 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%int_2, %.loc17_25)
+// CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template = constants.%float]
+// CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%int_2, %float)
 // CHECK:STDOUT:   %.loc17_30.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %.loc17_30.2 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
@@ -78,7 +78,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %.loc17_30.3: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc17_30.4: ref %i32 = tuple_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc17_30.5: init %i32 = initialize_from %.loc17_30.3 to %.loc17_30.4 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc17_30.6: %i32 = converted %.loc17_25, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_30.6: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

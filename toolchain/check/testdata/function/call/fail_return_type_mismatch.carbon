@@ -28,7 +28,7 @@ fn Run() {
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [template]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
@@ -70,8 +70,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_26: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   return %.loc11_26
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
+// CHECK:STDOUT:   return %float
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

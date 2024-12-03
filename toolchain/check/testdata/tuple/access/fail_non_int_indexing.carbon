@@ -40,7 +40,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_6.2: %i32 = int_value 6 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int_12.2, %int_6.2) [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 2.6000000000000001 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -102,8 +102,8 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   %.loc11_28: init %tuple.type.2 = converted %.loc11_27.1, %.loc11_27.10 [template = constants.%tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc18_17.1: f64 = float_literal 2.6000000000000001 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_17.2: Core.IntLiteral = converted %.loc18_17.1, <error> [template = <error>]
+// CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template = constants.%float]
+// CHECK:STDOUT:   %.loc18: Core.IntLiteral = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

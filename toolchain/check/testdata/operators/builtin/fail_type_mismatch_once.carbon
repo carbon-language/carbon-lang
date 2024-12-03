@@ -31,7 +31,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 3.4000000000000004 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,7 +65,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_12.loc21_10: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %.loc21: f64 = float_literal 3.4000000000000004 [template = constants.%.1]
+// CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template = constants.%float]
 // CHECK:STDOUT:   %int_12.loc21_21: Core.IntLiteral = int_value 12 [template = constants.%int_12]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

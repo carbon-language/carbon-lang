@@ -35,7 +35,7 @@ fn F() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,8 +76,8 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
-// CHECK:STDOUT:   %.loc23_5.1: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc23_5.2: %i32 = converted %.loc23_5.1, <error> [template = <error>]
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
+// CHECK:STDOUT:   %.loc23: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

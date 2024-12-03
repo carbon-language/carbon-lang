@@ -27,7 +27,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -60,8 +60,8 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_10: f64 = float_literal 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc18_13: %i32 = converted %.loc18_10, <error> [template = <error>]
+// CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
+// CHECK:STDOUT:   %.loc18: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

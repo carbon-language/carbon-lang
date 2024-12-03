@@ -560,6 +560,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name("facet_value");
         continue;
       }
+      case FloatLiteral::Kind: {
+        add_inst_name("float");
+        continue;
+      }
       case CARBON_KIND(FloatType inst): {
         add_int_or_float_type_name('f', inst.bit_width_id);
         continue;

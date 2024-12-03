@@ -60,9 +60,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 2 [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 0.5 [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.1: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %float.2: f64 = float_literal 0.5 [template]
+// CHECK:STDOUT:   %float.3: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -159,9 +159,9 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
-// CHECK:STDOUT:   %.loc8_18: f64 = float_literal 2 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc8_23: f64 = float_literal 0.5 [template = constants.%.2]
-// CHECK:STDOUT:   %float.mul: init f64 = call %Mul.ref(%.loc8_18, %.loc8_23) [template = constants.%.3]
+// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 0.5 [template = constants.%float.2]
+// CHECK:STDOUT:   %float.mul: init f64 = call %Mul.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.3]
 // CHECK:STDOUT:   assign file.%x.var, %float.mul
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

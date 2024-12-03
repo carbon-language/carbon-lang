@@ -37,10 +37,10 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %array_type.2: type = array_type %int_2, f64 [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 11.100000000000001 [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 2.2000000000000002 [template]
+// CHECK:STDOUT:   %float.1: f64 = float_literal 11.100000000000001 [template]
+// CHECK:STDOUT:   %float.2: f64 = float_literal 2.2000000000000002 [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (f64, f64) [template]
-// CHECK:STDOUT:   %array.2: %array_type.2 = tuple_value (%.1, %.2) [template]
+// CHECK:STDOUT:   %array.2: %array_type.2 = tuple_value (%float.1, %float.2) [template]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %array_type.3: type = array_type %int_5, %empty_tuple.type [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [template]
@@ -107,15 +107,15 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %.loc11_22.6: init %array_type.1 = array_init (%.loc11_22.5) to file.%a.var [template = constants.%array.1]
 // CHECK:STDOUT:   %.loc11_23: init %array_type.1 = converted %.loc11_22.1, %.loc11_22.6 [template = constants.%array.1]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_23
-// CHECK:STDOUT:   %.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc12_30.1: %tuple.type.2 = tuple_literal (%.loc12_20, %.loc12_26)
+// CHECK:STDOUT:   %float.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%float.2]
+// CHECK:STDOUT:   %.loc12_30.1: %tuple.type.2 = tuple_literal (%float.loc12_20, %float.loc12_26)
 // CHECK:STDOUT:   %int_0.loc12: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc12_30.2: ref f64 = array_index file.%b.var, %int_0.loc12
-// CHECK:STDOUT:   %.loc12_30.3: init f64 = initialize_from %.loc12_20 to %.loc12_30.2 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc12_30.3: init f64 = initialize_from %float.loc12_20 to %.loc12_30.2 [template = constants.%float.1]
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc12_30.4: ref f64 = array_index file.%b.var, %int_1.loc12
-// CHECK:STDOUT:   %.loc12_30.5: init f64 = initialize_from %.loc12_26 to %.loc12_30.4 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_30.5: init f64 = initialize_from %float.loc12_26 to %.loc12_30.4 [template = constants.%float.2]
 // CHECK:STDOUT:   %.loc12_30.6: init %array_type.2 = array_init (%.loc12_30.3, %.loc12_30.5) to file.%b.var [template = constants.%array.2]
 // CHECK:STDOUT:   %.loc12_31: init %array_type.2 = converted %.loc12_30.1, %.loc12_30.6 [template = constants.%array.2]
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_31

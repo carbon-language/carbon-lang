@@ -31,7 +31,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,7 +69,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %.loc18_19.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc18_19.2: type = converted %float.make_type, %.loc18_19.1 [template = f64]
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
-// CHECK:STDOUT:   %.loc18_25: f64 = float_literal 0 [template = constants.%.1]
+// CHECK:STDOUT:   %float: f64 = float_literal 0 [template = constants.%float]
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -68,14 +68,14 @@ fn F() {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %array_type.2: type = array_type %int_6, f64 [template]
-// CHECK:STDOUT:   %.1: f64 = float_literal 0.90000000000000002 [template]
-// CHECK:STDOUT:   %.2: f64 = float_literal 8 [template]
-// CHECK:STDOUT:   %.3: f64 = float_literal 80 [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 1.0E+7 [template]
-// CHECK:STDOUT:   %.5: f64 = float_literal 1.0E+8 [template]
-// CHECK:STDOUT:   %.6: f64 = float_literal 1.0E-8 [template]
+// CHECK:STDOUT:   %float.1: f64 = float_literal 0.90000000000000002 [template]
+// CHECK:STDOUT:   %float.2: f64 = float_literal 8 [template]
+// CHECK:STDOUT:   %float.3: f64 = float_literal 80 [template]
+// CHECK:STDOUT:   %float.4: f64 = float_literal 1.0E+7 [template]
+// CHECK:STDOUT:   %float.5: f64 = float_literal 1.0E+8 [template]
+// CHECK:STDOUT:   %float.6: f64 = float_literal 1.0E-8 [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (f64, f64, f64, f64, f64, f64) [template]
-// CHECK:STDOUT:   %array.2: %array_type.2 = tuple_value (%.1, %.2, %.3, %.4, %.5, %.6) [template]
+// CHECK:STDOUT:   %array.2: %array_type.2 = tuple_value (%float.1, %float.2, %float.3, %float.4, %float.5, %float.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,31 +173,31 @@ fn F() {
 // CHECK:STDOUT:   %array_type.loc22: type = array_type %int_6.loc22, f64 [template = constants.%array_type.2]
 // CHECK:STDOUT:   %floats.var: ref %array_type.2 = var floats
 // CHECK:STDOUT:   %floats: ref %array_type.2 = bind_name floats, %floats.var
-// CHECK:STDOUT:   %.loc23: f64 = float_literal 0.90000000000000002 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc24: f64 = float_literal 8 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25: f64 = float_literal 80 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc26: f64 = float_literal 1.0E+7 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc27: f64 = float_literal 1.0E+8 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc28: f64 = float_literal 1.0E-8 [template = constants.%.6]
-// CHECK:STDOUT:   %.loc29_3.1: %tuple.type.2 = tuple_literal (%.loc23, %.loc24, %.loc25, %.loc26, %.loc27, %.loc28)
+// CHECK:STDOUT:   %float.loc23: f64 = float_literal 0.90000000000000002 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc24: f64 = float_literal 8 [template = constants.%float.2]
+// CHECK:STDOUT:   %float.loc25: f64 = float_literal 80 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc26: f64 = float_literal 1.0E+7 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc27: f64 = float_literal 1.0E+8 [template = constants.%float.5]
+// CHECK:STDOUT:   %float.loc28: f64 = float_literal 1.0E-8 [template = constants.%float.6]
+// CHECK:STDOUT:   %.loc29_3.1: %tuple.type.2 = tuple_literal (%float.loc23, %float.loc24, %float.loc25, %float.loc26, %float.loc27, %float.loc28)
 // CHECK:STDOUT:   %int_0.loc29: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc29_3.2: ref f64 = array_index %floats.var, %int_0.loc29
-// CHECK:STDOUT:   %.loc29_3.3: init f64 = initialize_from %.loc23 to %.loc29_3.2 [template = constants.%.1]
+// CHECK:STDOUT:   %.loc29_3.3: init f64 = initialize_from %float.loc23 to %.loc29_3.2 [template = constants.%float.1]
 // CHECK:STDOUT:   %int_1.loc29: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc29_3.4: ref f64 = array_index %floats.var, %int_1.loc29
-// CHECK:STDOUT:   %.loc29_3.5: init f64 = initialize_from %.loc24 to %.loc29_3.4 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc29_3.5: init f64 = initialize_from %float.loc24 to %.loc29_3.4 [template = constants.%float.2]
 // CHECK:STDOUT:   %int_2.loc29: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %.loc29_3.6: ref f64 = array_index %floats.var, %int_2.loc29
-// CHECK:STDOUT:   %.loc29_3.7: init f64 = initialize_from %.loc25 to %.loc29_3.6 [template = constants.%.3]
+// CHECK:STDOUT:   %.loc29_3.7: init f64 = initialize_from %float.loc25 to %.loc29_3.6 [template = constants.%float.3]
 // CHECK:STDOUT:   %int_3.loc29: Core.IntLiteral = int_value 3 [template = constants.%int_3]
 // CHECK:STDOUT:   %.loc29_3.8: ref f64 = array_index %floats.var, %int_3.loc29
-// CHECK:STDOUT:   %.loc29_3.9: init f64 = initialize_from %.loc26 to %.loc29_3.8 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc29_3.9: init f64 = initialize_from %float.loc26 to %.loc29_3.8 [template = constants.%float.4]
 // CHECK:STDOUT:   %int_4.loc29: Core.IntLiteral = int_value 4 [template = constants.%int_4]
 // CHECK:STDOUT:   %.loc29_3.10: ref f64 = array_index %floats.var, %int_4.loc29
-// CHECK:STDOUT:   %.loc29_3.11: init f64 = initialize_from %.loc27 to %.loc29_3.10 [template = constants.%.5]
+// CHECK:STDOUT:   %.loc29_3.11: init f64 = initialize_from %float.loc27 to %.loc29_3.10 [template = constants.%float.5]
 // CHECK:STDOUT:   %int_5.loc29: Core.IntLiteral = int_value 5 [template = constants.%int_5]
 // CHECK:STDOUT:   %.loc29_3.12: ref f64 = array_index %floats.var, %int_5.loc29
-// CHECK:STDOUT:   %.loc29_3.13: init f64 = initialize_from %.loc28 to %.loc29_3.12 [template = constants.%.6]
+// CHECK:STDOUT:   %.loc29_3.13: init f64 = initialize_from %float.loc28 to %.loc29_3.12 [template = constants.%float.6]
 // CHECK:STDOUT:   %.loc29_3.14: init %array_type.2 = array_init (%.loc29_3.3, %.loc29_3.5, %.loc29_3.7, %.loc29_3.9, %.loc29_3.11, %.loc29_3.13) to %floats.var [template = constants.%array.2]
 // CHECK:STDOUT:   %.loc29_4: init %array_type.2 = converted %.loc29_3.1, %.loc29_3.14 [template = constants.%array.2]
 // CHECK:STDOUT:   assign %floats.var, %.loc29_4
