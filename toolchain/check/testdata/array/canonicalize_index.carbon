@@ -49,13 +49,13 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.15 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.4(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.5: type = array_type %int.3.2, %i32 [template]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.1: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.3.2, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int.32) [template]
-// CHECK:STDOUT:   %array: %.5 = tuple_value (%int.1.2, %int.2.2, %int.3.1) [template]
+// CHECK:STDOUT:   %array: %.1 = tuple_value (%int.1.2, %int.2.2, %int.3.1) [template]
 // CHECK:STDOUT:   %int.3.3: %u32 = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.type.16: type = fn_type @Convert.5, @impl.4(%int.32) [template]
 // CHECK:STDOUT:   %Convert.16: %Convert.type.16 = struct_value () [template]
@@ -158,16 +158,16 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int.convert_checked.loc14_22: init Core.IntLiteral = call %Convert.specific_fn.loc14_22(%.loc14_22.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc14_22.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_22 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc14_22.5: Core.IntLiteral = converted %int.sadd, %.loc14_22.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc14_23: type = array_type %.loc14_22.5, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %a.var: ref %.5 = var a
-// CHECK:STDOUT:   %a: ref %.5 = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc14_23: type = array_type %.loc14_22.5, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %a.var: ref %.1 = var a
+// CHECK:STDOUT:   %a: ref %.1 = bind_name a, %a.var
 // CHECK:STDOUT:   %int.32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%int.32.loc15) [template = constants.%i32]
 // CHECK:STDOUT:   %int.3.loc15: Core.IntLiteral = int_value 3 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc15_9.1: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_9.2: type = converted %int.make_type_signed.loc15, %.loc15_9.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_15: type = array_type %int.3.loc15, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %ptr.loc15: type = ptr_type %.5 [template = constants.%ptr]
+// CHECK:STDOUT:   %.loc15_15: type = array_type %int.3.loc15, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr.loc15: type = ptr_type %.1 [template = constants.%ptr]
 // CHECK:STDOUT:   %int.32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int.32.loc16) [template = constants.%i32]
 // CHECK:STDOUT:   %ConvertToU32.ref: %ConvertToU32.type = name_ref ConvertToU32, %ConvertToU32.decl [template = constants.%ConvertToU32]
@@ -189,8 +189,8 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int.convert_checked.loc16_28.2: init Core.IntLiteral = call %Convert.specific_fn.loc16_28(%.loc16_28.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc16_28.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc16_28.2 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc16_28.5: Core.IntLiteral = converted %int.convert_checked.loc16_28.1, %.loc16_28.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc16_29: type = array_type %.loc16_28.5, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %ptr.loc16: type = ptr_type %.5 [template = constants.%ptr]
+// CHECK:STDOUT:   %.loc16_29: type = array_type %.loc16_28.5, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr.loc16: type = ptr_type %.1 [template = constants.%ptr]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Add(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
@@ -227,13 +227,13 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int.2.loc14_35: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc14_35.12: ref %i32 = array_index file.%a.var, %int.2.loc14_35
 // CHECK:STDOUT:   %.loc14_35.13: init %i32 = initialize_from %.loc14_35.11 to %.loc14_35.12 [template = constants.%int.3.1]
-// CHECK:STDOUT:   %.loc14_35.14: init %.5 = array_init (%.loc14_35.5, %.loc14_35.9, %.loc14_35.13) to file.%a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc14_36: init %.5 = converted %.loc14_35.1, %.loc14_35.14 [template = constants.%array]
+// CHECK:STDOUT:   %.loc14_35.14: init %.1 = array_init (%.loc14_35.5, %.loc14_35.9, %.loc14_35.13) to file.%a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc14_36: init %.1 = converted %.loc14_35.1, %.loc14_35.14 [template = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc14_36
-// CHECK:STDOUT:   %a.ref.loc15: ref %.5 = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref.loc15: ref %.1 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc15: %ptr = addr_of %a.ref.loc15
 // CHECK:STDOUT:   %b: %ptr = bind_name b, %.loc15
-// CHECK:STDOUT:   %a.ref.loc16: ref %.5 = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref.loc16: ref %.1 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc16: %ptr = addr_of %a.ref.loc16
 // CHECK:STDOUT:   %c: %ptr = bind_name c, %.loc16
 // CHECK:STDOUT:   return

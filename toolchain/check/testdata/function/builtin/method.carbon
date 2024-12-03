@@ -23,7 +23,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self.1 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
@@ -34,7 +34,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %.1: %I.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
@@ -61,7 +61,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.17 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.5(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.7: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %.2: type = array_type %int.3.2, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,36 +124,36 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %int.convert_checked.loc19_34: init Core.IntLiteral = call %Convert.specific_fn.loc19_34(%.loc19_34.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_34 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.5: Core.IntLiteral = converted %int.sadd, %.loc19_34.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.7]
-// CHECK:STDOUT:   %arr.var: ref %.7 = var arr
-// CHECK:STDOUT:   %arr: ref %.7 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.2]
+// CHECK:STDOUT:   %arr.var: ref %.2 = var arr
+// CHECK:STDOUT:   %arr: ref %.2 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %self.patt: @F.1.%.loc12_14.1 (%.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%.loc12_14.1 (%.1) = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %other.patt: @F.1.%.loc12_14.1 (%.1) = binding_pattern other
-// CHECK:STDOUT:     %other.param_patt: @F.1.%.loc12_14.1 (%.1) = value_param_pattern %other.patt, runtime_param1
-// CHECK:STDOUT:     %return.patt: @F.1.%.loc12_14.1 (%.1) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @F.1.%.loc12_14.1 (%.1) = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %other.patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = binding_pattern other
+// CHECK:STDOUT:     %other.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = value_param_pattern %other.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12_14: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_14.2: type = facet_access_type %Self.ref.loc12_14 [symbolic = %.loc12_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc12_14.3: type = converted %Self.ref.loc12_14, %.loc12_14.2 [symbolic = %.loc12_14.1 (constants.%.1)]
+// CHECK:STDOUT:     %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref.loc12_14 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:     %.loc12_14: type = converted %Self.ref.loc12_14, %Self.as_type.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
 // CHECK:STDOUT:     %Self.ref.loc12_27: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_27.1: type = facet_access_type %Self.ref.loc12_27 [symbolic = %.loc12_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc12_27.2: type = converted %Self.ref.loc12_27, %.loc12_27.1 [symbolic = %.loc12_14.1 (constants.%.1)]
+// CHECK:STDOUT:     %Self.as_type.loc12_27: type = facet_access_type %Self.ref.loc12_27 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:     %.loc12_27: type = converted %Self.ref.loc12_27, %Self.as_type.loc12_27 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
 // CHECK:STDOUT:     %Self.ref.loc12_36: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %.loc12_36.1: type = facet_access_type %Self.ref.loc12_36 [symbolic = %.loc12_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc12_36.2: type = converted %Self.ref.loc12_36, %.loc12_36.1 [symbolic = %.loc12_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %self.param: @F.1.%.loc12_14.1 (%.1) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @F.1.%.loc12_14.1 (%.1) = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: @F.1.%.loc12_14.1 (%.1) = value_param runtime_param1
-// CHECK:STDOUT:     %other: @F.1.%.loc12_14.1 (%.1) = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref @F.1.%.loc12_14.1 (%.1) = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref @F.1.%.loc12_14.1 (%.1) = return_slot %return.param
+// CHECK:STDOUT:     %Self.as_type.loc12_36: type = facet_access_type %Self.ref.loc12_36 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:     %.loc12_36: type = converted %Self.ref.loc12_36, %Self.as_type.loc12_36 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = value_param runtime_param1
+// CHECK:STDOUT:     %other: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: ref @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0.1]
 // CHECK:STDOUT:
@@ -200,20 +200,20 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %.loc12_14.1: type = facet_access_type %Self [symbolic = %.loc12_14.1 (constants.%.1)]
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%.loc12_14.1 (%.1)](%other.param_patt: @F.1.%.loc12_14.1 (%.1)) -> @F.1.%.loc12_14.1 (%.1);
+// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1)](%other.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %i32](%other.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {
 // CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %.loc12_14.1 => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.2) {
-// CHECK:STDOUT:   %Self => constants.%.2
-// CHECK:STDOUT:   %.loc12_14.1 => constants.%i32
+// CHECK:STDOUT: specific @F.1(constants.%.1) {
+// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

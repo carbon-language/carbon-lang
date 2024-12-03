@@ -192,8 +192,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.5: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = class_type @.1, @.1(%b) [symbolic]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -239,7 +239,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param: %C.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc3_9.1: %C.3 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc3_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.5] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %b.patt.loc10_9.1: %C.3 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:     %b.param_patt: %C.3 = value_param_pattern %b.patt.loc10_9.1, runtime_param<invalid> [symbolic = %b.patt.loc10_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
@@ -289,7 +289,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.6
+// CHECK:STDOUT:     .Self = constants.%.2
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

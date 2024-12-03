@@ -508,6 +508,20 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name("complete_type");
         continue;
       }
+      case CARBON_KIND(FacetAccessType inst): {
+        if (auto name =
+                sem_ir_.insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
+          add_inst_name_id(name->name_id, ".as_type");
+        } else if (auto symbolic = sem_ir_.insts().TryGetAs<BindSymbolicName>(
+                       inst.facet_value_inst_id)) {
+          add_inst_name_id(
+              sem_ir_.entity_names().Get(symbolic->entity_name_id).name_id,
+              ".as_type");
+        } else {
+          add_inst_name("as_type");
+        }
+        continue;
+      }
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_.facet_types().Get(inst.facet_type_id);

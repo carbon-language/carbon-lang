@@ -48,8 +48,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.14.1, %Convert.15 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.4(%int.32) [template]
 // CHECK:STDOUT:   %int.14.2: Core.IntLiteral = int_value 14 [template]
-// CHECK:STDOUT:   %.5: type = array_type %int.14.2, %i32 [template]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %.1: type = array_type %int.14.2, %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.1 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -127,16 +127,16 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %int.convert_checked.loc4_25: init Core.IntLiteral = call %Convert.specific_fn.loc4_25(%.loc4_25.3) [template = constants.%int.14.2]
 // CHECK:STDOUT:   %.loc4_25.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_25 [template = constants.%int.14.2]
 // CHECK:STDOUT:   %.loc4_25.5: Core.IntLiteral = converted %int.or, %.loc4_25.4 [template = constants.%int.14.2]
-// CHECK:STDOUT:   %.loc4_26: type = array_type %.loc4_25.5, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %arr.var: ref %.5 = var arr
-// CHECK:STDOUT:   %arr: ref %.5 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc4_26: type = array_type %.loc4_25.5, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %arr.var: ref %.1 = var arr
+// CHECK:STDOUT:   %arr: ref %.1 = bind_name arr, %arr.var
 // CHECK:STDOUT:   %int.32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int.32.loc5) [template = constants.%i32]
 // CHECK:STDOUT:   %int.14: Core.IntLiteral = int_value 14 [template = constants.%int.14.2]
 // CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_signed.loc5, %.loc5_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_20: type = array_type %int.14, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template = constants.%ptr]
+// CHECK:STDOUT:   %.loc5_20: type = array_type %int.14, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.1 [template = constants.%ptr]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -181,7 +181,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
+// CHECK:STDOUT:   %arr.ref: ref %.1 = name_ref arr, file.%arr
 // CHECK:STDOUT:   %.loc5: %ptr = addr_of %arr.ref
 // CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %.loc5
 // CHECK:STDOUT:   return

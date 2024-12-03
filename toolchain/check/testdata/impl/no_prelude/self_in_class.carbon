@@ -27,7 +27,7 @@ class A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [template]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Make.assoc_type: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
@@ -38,7 +38,7 @@ class A {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %DefaultConstructible.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.1: %DefaultConstructible.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
@@ -57,14 +57,14 @@ class A {
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
-// CHECK:STDOUT:     %return.patt: @Make.1.%.loc12_16.1 (%.1) = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: @Make.1.%.loc12_16.1 (%.1) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %DefaultConstructible.type = name_ref Self, @DefaultConstructible.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc12_16.2: type = facet_access_type %Self.ref [symbolic = %.loc12_16.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc12_16.3: type = converted %Self.ref, %.loc12_16.2 [symbolic = %.loc12_16.1 (constants.%.1)]
-// CHECK:STDOUT:     %return.param: ref @Make.1.%.loc12_16.1 (%.1) = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref @Make.1.%.loc12_16.1 (%.1) = return_slot %return.param
+// CHECK:STDOUT:     %Self.as_type.loc12_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %.loc12: type = converted %Self.ref, %Self.as_type.loc12_16.2 [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %return.param: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %elt0: %Make.assoc_type = assoc_entity element0, %Make.decl [template = constants.%elt0]
 // CHECK:STDOUT:
@@ -112,9 +112,9 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make.1(@DefaultConstructible.%Self: %DefaultConstructible.type) {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %.loc12_16.1: type = facet_access_type %Self [symbolic = %.loc12_16.1 (constants.%.1)]
+// CHECK:STDOUT:   %Self.as_type.loc12_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Make.1.%.loc12_16.1 (%.1);
+// CHECK:STDOUT:   fn() -> @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make.2() -> %return: %C {
@@ -127,11 +127,11 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %.loc12_16.1 => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%.2) {
-// CHECK:STDOUT:   %Self => constants.%.2
-// CHECK:STDOUT:   %.loc12_16.1 => constants.%C
+// CHECK:STDOUT: specific @Make.1(constants.%.1) {
+// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

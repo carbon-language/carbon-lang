@@ -30,7 +30,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -41,7 +41,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %.1: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -89,20 +89,20 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
-// CHECK:STDOUT:     %self.patt: @F.1.%.loc14_14.1 (%.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @F.1.%.loc14_14.1 (%.1) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc14_14.2: type = facet_access_type %Self.ref [symbolic = %.loc14_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc14_14.3: type = converted %Self.ref, %.loc14_14.2 [symbolic = %.loc14_14.1 (constants.%.1)]
+// CHECK:STDOUT:     %Self.as_type.loc14_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %.loc14_14: type = converted %Self.ref, %Self.as_type.loc14_14.2 [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_25.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_25.2: type = converted %int.make_type_signed, %.loc14_25.1 [template = constants.%i32]
-// CHECK:STDOUT:     %self.param: @F.1.%.loc14_14.1 (%.1) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @F.1.%.loc14_14.1 (%.1) = bind_name self, %self.param
+// CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -153,9 +153,9 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %.loc14_14.1: type = facet_access_type %Self [symbolic = %.loc14_14.1 (constants.%.1)]
+// CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%.loc14_14.1 (%.1)]() -> %i32;
+// CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type)]() -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %C]() -> %i32;
@@ -174,11 +174,11 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %.loc14_14.1 => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.2) {
-// CHECK:STDOUT:   %Self => constants.%.2
-// CHECK:STDOUT:   %.loc14_14.1 => constants.%C
+// CHECK:STDOUT: specific @F.1(constants.%.1) {
+// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

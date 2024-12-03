@@ -44,7 +44,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Simple.type, %F.type.1 [template]
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @Simple.%F.decl [template]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
 // CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Simple.type, %G.type.1 [template]
@@ -57,7 +57,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %Simple.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %.1: %Simple.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2, %G.2) [template]
 // CHECK:STDOUT:   %NonInstanceCall.type: type = fn_type @NonInstanceCall [template]
 // CHECK:STDOUT:   %NonInstanceCall: %NonInstanceCall.type = struct_value () [template]
@@ -149,14 +149,14 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%elt0]
 // CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {
-// CHECK:STDOUT:     %self.patt: @G.1.%.loc13_14.1 (%.1) = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: @G.1.%.loc13_14.1 (%.1) = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type) = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %.loc13_14.2: type = facet_access_type %Self.ref [symbolic = %.loc13_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %.loc13_14.3: type = converted %Self.ref, %.loc13_14.2 [symbolic = %.loc13_14.1 (constants.%.1)]
-// CHECK:STDOUT:     %self.param: @G.1.%.loc13_14.1 (%.1) = value_param runtime_param0
-// CHECK:STDOUT:     %self: @G.1.%.loc13_14.1 (%.1) = bind_name self, %self.param
+// CHECK:STDOUT:     %Self.as_type.loc13_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %.loc13: type = converted %Self.ref, %Self.as_type.loc13_14.2 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %elt1: %G.assoc_type = assoc_entity element1, %G.decl [template = constants.%elt1]
 // CHECK:STDOUT:
@@ -195,9 +195,9 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %Simple.type) {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %.loc13_14.1: type = facet_access_type %Self [symbolic = %.loc13_14.1 (constants.%.1)]
+// CHECK:STDOUT:   %Self.as_type.loc13_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @G.1.%.loc13_14.1 (%.1)]();
+// CHECK:STDOUT:   fn[%self.param_patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type)]();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2();
@@ -253,13 +253,13 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %.loc13_14.1 => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc13_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.2) {}
+// CHECK:STDOUT: specific @F.1(constants.%.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.2) {
-// CHECK:STDOUT:   %Self => constants.%.2
-// CHECK:STDOUT:   %.loc13_14.1 => constants.%i32
+// CHECK:STDOUT: specific @G.1(constants.%.1) {
+// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self.as_type.loc13_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
