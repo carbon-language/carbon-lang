@@ -305,8 +305,8 @@ static auto BuildFunctionDecl(Context& context,
         !context.inst_blocks().Get(function_info.param_patterns_id).empty() ||
         (return_type_id.is_valid() &&
          return_type_id != context.GetTupleType({}) &&
-         // TODO: Decide on valid return types for `i32`. Perhaps we should have
-         // an interface for this.
+         // TODO: Decide on valid return types for `Main.Run`. Perhaps we should
+         // have an interface for this.
          return_type_id != MakeIntType(context, node_id, SemIR::IntKind::Signed,
                                        context.ints().Add(32)))) {
       CARBON_DIAGNOSTIC(InvalidMainRunSignature, Error,
