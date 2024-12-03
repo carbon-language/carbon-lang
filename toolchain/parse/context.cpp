@@ -481,7 +481,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
                                      Lex::TokenIndex token) const -> void {
-  output << " @ " << tokens_->GetLineNumber(tokens_->GetLine(token)) << ":"
+  output << " @ " << tokens_->GetLineNumber(token) << ":"
          << tokens_->GetColumnNumber(token) << ": token " << token << " : "
          << tokens_->GetKind(token) << "\n";
 }

@@ -11,6 +11,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/dumper.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -457,12 +458,25 @@ class Context {
   // Prints the the formatted sem_ir to stderr.
   LLVM_DUMP_METHOD auto DumpFormattedFile() const -> void;
 
+  // Dumps an object to stderr.
+  //
+  // Defers to the Dumper class so that all dump overloads can grouped together
+  // there, outside of the Check class.
+  template <typename T>
+    requires requires(const Lex::TokenizedBuffer& tokens,
+                      const Parse::Tree& parse_tree, const T& t) {
+      { Dumper::Dump(tokens, parse_tree, t) };
+    }
+  LLVM_DUMP_METHOD auto Dump(const T& t) const -> void {
+    Dumper::Dump(tokens(), t);
+  }
+
   // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
