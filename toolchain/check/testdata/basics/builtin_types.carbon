@@ -32,7 +32,7 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0.10000000000000001 [template]
-// CHECK:STDOUT:   %.1: String = string_literal "Test" [template]
+// CHECK:STDOUT:   %str: String = string_literal "Test" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,8 +81,8 @@ var test_type: type = i32;
 // CHECK:STDOUT:   assign file.%test_i32.var, %.loc11
 // CHECK:STDOUT:   %float: f64 = float_literal 0.10000000000000001 [template = constants.%float]
 // CHECK:STDOUT:   assign file.%test_f64.var, %float
-// CHECK:STDOUT:   %.loc13: String = string_literal "Test" [template = constants.%.1]
-// CHECK:STDOUT:   %test_str: String = bind_name test_str, %.loc13
+// CHECK:STDOUT:   %str: String = string_literal "Test" [template = constants.%str]
+// CHECK:STDOUT:   %test_str: String = bind_name test_str, %str
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %int.make_type_signed

@@ -719,6 +719,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         CollectNamesInBlock(scope_id, inst.block_id);
         break;
       }
+      case StringLiteral::Kind: {
+        add_inst_name("str");
+        continue;
+      }
       case CARBON_KIND(StructValue inst): {
         if (auto fn_ty = sem_ir_.types().TryGetAs<FunctionType>(inst.type_id)) {
           add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id);
