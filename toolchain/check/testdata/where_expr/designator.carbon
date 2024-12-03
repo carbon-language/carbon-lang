@@ -100,8 +100,8 @@ class D {
 // CHECK:STDOUT:   %T.patt: %I.type.2 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [template]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %elt0: type = interface_witness_access %.1, element0 [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self.1 [symbolic]
+// CHECK:STDOUT:   %elt0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I.type.3 = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I.type.3 = symbolic_binding_pattern U, 0 [symbolic]
@@ -154,8 +154,8 @@ class D {
 // CHECK:STDOUT:     %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %.Self.ref: %I.type.1 = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:     %Member.ref: %assoc_type = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.loc10_29: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.1]
-// CHECK:STDOUT:     %elt0: type = interface_witness_access %.loc10_29, element0 [symbolic = constants.%elt0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %elt0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%elt0]
 // CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I.type.3] {
 // CHECK:STDOUT:       requirement_equivalent %elt0, %.loc10_41

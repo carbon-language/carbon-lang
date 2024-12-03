@@ -407,6 +407,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       add_inst_name(std::move(name));
     };
+    auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
+      if (auto name = sem_ir_.insts().TryGetAs<NameRef>(facet_value_inst_id)) {
+        return name->name_id;
+      } else if (auto symbolic = sem_ir_.insts().TryGetAs<BindSymbolicName>(
+                     facet_value_inst_id)) {
+        return sem_ir_.entity_names().Get(symbolic->entity_name_id).name_id;
+      }
+      return NameId::Invalid;
+    };
 
     if (auto branch = untyped_inst.TryAs<AnyBranch>()) {
       AddBlockLabel(scope_id, sem_ir_.insts().GetLocId(inst_id), *branch);
@@ -519,16 +528,20 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(FacetAccessType inst): {
-        if (auto name =
-                sem_ir_.insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-          add_inst_name_id(name->name_id, ".as_type");
-        } else if (auto symbolic = sem_ir_.insts().TryGetAs<BindSymbolicName>(
-                       inst.facet_value_inst_id)) {
-          add_inst_name_id(
-              sem_ir_.entity_names().Get(symbolic->entity_name_id).name_id,
-              ".as_type");
+        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        if (name_id.is_valid()) {
+          add_inst_name_id(name_id, ".as_type");
         } else {
           add_inst_name("as_type");
+        }
+        continue;
+      }
+      case CARBON_KIND(FacetAccessWitness inst): {
+        auto name_id = facet_access_name_id(inst.facet_value_inst_id);
+        if (name_id.is_valid()) {
+          add_inst_name_id(name_id, ".as_wit");
+        } else {
+          add_inst_name("as_wit");
         }
         continue;
       }
@@ -689,7 +702,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(SpecificFunction inst): {
-        SemIR::InstId callee_id = inst.callee_id;
+        InstId callee_id = inst.callee_id;
         if (auto method = sem_ir_.insts().TryGetAs<BoundMethod>(callee_id)) {
           callee_id = method->function_id;
         }
