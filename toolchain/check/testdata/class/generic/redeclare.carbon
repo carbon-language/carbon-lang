@@ -208,10 +208,10 @@ class E(U:! type) {}
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %N.1: %i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt.1: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B [template]
@@ -221,10 +221,10 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, @.1(%T, %N.2) [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T, %N.2) [symbolic]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -245,14 +245,14 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.patt.loc4_9.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.1)]
 // CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_9.1, runtime_param<invalid> [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.1)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc4_13.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_13.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_13.3: type = converted %int.make_type_signed, %.loc4_13.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_13.2: type = converted %int.make_type_signed, %.loc4_13.1 [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_9.2 (constants.%N.1)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %T.patt.loc12_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc12_19.1: @.1.%T.loc12_9.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.2)]
@@ -282,10 +282,10 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.3
+// CHECK:STDOUT:     .Self = constants.%.2
 // CHECK:STDOUT:     complete_type_witness = %.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -309,17 +309,17 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %U: %i32 = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: %i32 = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, @.1(%T, %U) [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T, %U) [symbolic]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -343,16 +343,16 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %T.patt.loc12_9.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc12_19.1: %i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: %i32 = value_param_pattern %U.patt.loc12_19.1, runtime_param<invalid> [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_23.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc12_23.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_23.3: type = converted %int.make_type_signed, %.loc12_23.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_signed, %.loc12_23.1 [template = constants.%i32]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: %i32 = value_param runtime_param<invalid>
@@ -376,10 +376,10 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12_29: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12_29: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.3
+// CHECK:STDOUT:     .Self = constants.%.2
 // CHECK:STDOUT:     complete_type_witness = %.loc12_29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -403,17 +403,17 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.1: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %T.2: %i32 = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.2: %i32 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.2: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = class_type @.1, @.1(%T.2) [symbolic]
-// CHECK:STDOUT:   %.4: type = struct_type {} [template]
-// CHECK:STDOUT:   %.5: <witness> = complete_type_witness %.4 [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%T.2) [symbolic]
+// CHECK:STDOUT:   %.3: type = struct_type {} [template]
+// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -437,14 +437,14 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.2] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.1] {
 // CHECK:STDOUT:     %T.patt.loc12_9.1: %i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: %i32 = value_param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc12_13.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_13.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_13.3: type = converted %int.make_type_signed, %.loc12_13.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_signed, %.loc12_13.1 [template = constants.%i32]
 // CHECK:STDOUT:     %T.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12_9.1: %i32 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_9.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
@@ -464,10 +464,10 @@ class E(U:! type) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc12_19: <witness> = complete_type_witness %.4 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc12_19: <witness> = complete_type_witness %.3 [template = constants.%.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.3
+// CHECK:STDOUT:     .Self = constants.%.2
 // CHECK:STDOUT:     complete_type_witness = %.loc12_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

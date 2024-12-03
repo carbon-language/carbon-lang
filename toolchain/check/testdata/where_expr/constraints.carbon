@@ -513,7 +513,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, imports.%import_ref.11 [template]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %X: %I.type.2 = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt: %I.type.2 = symbolic_binding_pattern X, 0 [symbolic]
@@ -561,8 +561,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, imports.%import_ref.7 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc14_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
 // CHECK:STDOUT:     %.loc14_36.2: type = interface_witness_access %.loc14_36.1, element0 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc14_46.1: Core.IntLiteral = int_value 2 [template = constants.%.5]
-// CHECK:STDOUT:     %.loc14_46.2: type = converted %.loc14_46.1, <error> [template = <error>]
+// CHECK:STDOUT:     %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2]
+// CHECK:STDOUT:     %.loc14_46: type = converted %int.2, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc14_30: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %.loc14_36.2, <error>
 // CHECK:STDOUT:     }
@@ -595,7 +595,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
+// CHECK:STDOUT:   %int.7: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -622,8 +622,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_32.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_32.2: type = converted %.loc11_32.1, <error> [template = <error>]
+// CHECK:STDOUT:     %int.7: Core.IntLiteral = int_value 7 [template = constants.%int.7]
+// CHECK:STDOUT:     %.loc11_32: type = converted %int.7, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls <error>, type
 // CHECK:STDOUT:     }
@@ -648,7 +648,7 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 7 [template]
+// CHECK:STDOUT:   %int.7: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -676,8 +676,8 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc11_44.1: Core.IntLiteral = int_value 7 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_44.2: type = converted %.loc11_44.1, <error> [template = <error>]
+// CHECK:STDOUT:     %int.7: Core.IntLiteral = int_value 7 [template = constants.%int.7]
+// CHECK:STDOUT:     %.loc11_44: type = converted %int.7, <error> [template = <error>]
 // CHECK:STDOUT:     %.loc11_26: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
@@ -702,10 +702,10 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -733,10 +733,10 @@ let B: type where .Self impls A = D;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc8_51.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc8_51.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.3: type = converted %int.make_type_signed, %.loc8_51.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_51.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_51.2: type = converted %int.make_type_signed, %.loc8_51.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8_33: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }

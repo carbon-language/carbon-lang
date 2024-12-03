@@ -17,8 +17,8 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %.2: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -42,8 +42,8 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_19: Core.IntLiteral = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc14_20: %.3 = struct_literal (%.loc14_19)
+// CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
+// CHECK:STDOUT:   %.loc14: %.2 = struct_literal (%int.1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

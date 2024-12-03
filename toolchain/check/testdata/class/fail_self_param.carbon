@@ -24,7 +24,7 @@ var v: C(0);
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%x) [symbolic]
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -50,7 +50,7 @@ var v: C(0);
 // CHECK:STDOUT:     %x.loc14_22.1: <error> = bind_symbolic_name x, 0, %x.param [symbolic = %x.loc14_22.2 (constants.%x)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.1]
-// CHECK:STDOUT:   %.loc15: Core.IntLiteral = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT: }

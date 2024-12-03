@@ -19,11 +19,11 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT: --- fail_type_assign.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
+// CHECK:STDOUT:   %.1: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -41,23 +41,23 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_13.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc17_13.1) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_13.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_13.3: type = converted %int.make_type_signed, %.loc17_13.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_16: type = struct_type {.a: %i32} [template = constants.%.2]
-// CHECK:STDOUT:   %x.var: ref %.2 = var x
-// CHECK:STDOUT:   %x: ref %.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_13.2: type = converted %int.make_type_signed, %.loc17_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_16: type = struct_type {.a: %i32} [template = constants.%.1]
+// CHECK:STDOUT:   %x.var: ref %.1 = var x
+// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_25.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc17_25.1) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_25.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_25.3: type = converted %int.make_type_signed, %.loc17_25.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_28: type = struct_type {.a: %i32} [template = constants.%.2]
-// CHECK:STDOUT:   %.loc17_29: %.2 = converted %.loc17_28, <error> [template = <error>]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_25.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_25.2: type = converted %int.make_type_signed, %.loc17_25.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_28: type = struct_type {.a: %i32} [template = constants.%.1]
+// CHECK:STDOUT:   %.loc17_29: %.1 = converted %.loc17_28, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

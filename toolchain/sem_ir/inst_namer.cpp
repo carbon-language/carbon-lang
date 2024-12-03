@@ -554,6 +554,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
                                    inst.bit_width_id);
         continue;
       }
+      case CARBON_KIND(IntValue inst): {
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "int." << sem_ir_.ints().Get(inst.int_id);
+        add_inst_name(std::move(name));
+        continue;
+      }
       case CARBON_KIND(NameRef inst): {
         add_inst_name_id(inst.name_id, ".ref");
         continue;
@@ -600,6 +607,22 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         } else {
           add_inst_name("struct");
         }
+        continue;
+      }
+      case CARBON_KIND(StructType inst): {
+        const auto& fields = context_.struct_type_fields().Get(inst.fields_id);
+        if (fields.empty()) {
+          add_inst_name("empty_struct_type");
+          continue;
+        }
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "struct_type";
+        for (auto field : fields) {
+          out << "."
+              << sem_ir_.names().GetIRBaseName(field.name_id);  // .str();
+        }
+        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(TupleType inst): {

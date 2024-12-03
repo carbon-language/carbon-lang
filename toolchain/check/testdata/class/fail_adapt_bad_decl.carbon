@@ -106,7 +106,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 100 [template]
+// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -138,8 +138,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc12_9: Core.IntLiteral = int_value 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_12: type = converted %.loc12_9, <error> [template = <error>]
+// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template = constants.%int.100]
+// CHECK:STDOUT:   %.loc12: type = converted %int.100, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error> [template]
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
@@ -159,7 +159,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bad: type = class_type @Bad [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 100 [template]
+// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [template]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -191,8 +191,8 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Bad {
-// CHECK:STDOUT:   %.loc12_16: Core.IntLiteral = int_value 100 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc12_19: type = converted %.loc12_16, <error> [template = <error>]
+// CHECK:STDOUT:   %int.100: Core.IntLiteral = int_value 100 [template = constants.%int.100]
+// CHECK:STDOUT:   %.loc12: type = converted %int.100, <error> [template = <error>]
 // CHECK:STDOUT:   adapt_decl <error> [template]
 // CHECK:STDOUT:   %.loc13: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:

@@ -23,10 +23,10 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %.Self: %I.type.1 = bind_symbolic_name .Self, 0 [symbolic]
 // CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
-// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.5 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
@@ -58,8 +58,8 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %T.ref: %.1 = name_ref T, @I.%.loc11 [template = constants.%.2]
 // CHECK:STDOUT:     %.loc14_27.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
 // CHECK:STDOUT:     %.loc14_27.2: type = interface_witness_access %.loc14_27.1, element0 [symbolic = constants.%.4]
-// CHECK:STDOUT:     %.loc14_33: Core.IntLiteral = int_value 32 [template = constants.%.5]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc14_33) [template = constants.%i32]
+// CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_21: type = where_expr %.Self [template = constants.%I.type.2] {
 // CHECK:STDOUT:       requirement_equivalent %.loc14_27.2, %int.make_type_signed
 // CHECK:STDOUT:     }

@@ -88,14 +88,14 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %n.var: ref <error> = var n
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -109,7 +109,7 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,7 +124,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc10: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %n.var: ref <error> = var n
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -194,7 +194,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -202,7 +202,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %.3: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %.2) [template]
+// CHECK:STDOUT:   %.2: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -237,8 +237,8 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: Core.IntLiteral = int_value 32 [template = constants.%.2]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%.2) [template = constants.%.3]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.2]
 // CHECK:STDOUT:   %Int.call: init %.1 = call %.1()
 // CHECK:STDOUT:   assign file.%n.var, %Int.call
 // CHECK:STDOUT:   return
@@ -251,11 +251,11 @@ var n: {} = i32;
 // CHECK:STDOUT:   %N.patt => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%.2) {
+// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int.32) {
 // CHECK:STDOUT:   %T => Core.IntLiteral
 // CHECK:STDOUT:   %T.patt => Core.IntLiteral
-// CHECK:STDOUT:   %N => constants.%.2
-// CHECK:STDOUT:   %N.patt => constants.%.2
+// CHECK:STDOUT:   %N => constants.%int.32
+// CHECK:STDOUT:   %N.patt => constants.%int.32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -271,8 +271,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %.1) [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,8 +323,8 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%.1) [template = constants.%.2]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.1]
 // CHECK:STDOUT:   %Int.call: init %empty_tuple.type = call %.1()
 // CHECK:STDOUT:   assign file.%n.var, %Int.call
 // CHECK:STDOUT:   return
@@ -337,11 +337,11 @@ var n: {} = i32;
 // CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%.1) {
+// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int.32) {
 // CHECK:STDOUT:   %T.loc8_8.2 => Core.IntLiteral
 // CHECK:STDOUT:   %T.patt.loc8_8.2 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc8_18.2 => constants.%.1
-// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%.1
+// CHECK:STDOUT:   %N.loc8_18.2 => constants.%int.32
+// CHECK:STDOUT:   %N.patt.loc8_18.2 => constants.%int.32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -357,8 +357,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %.3: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %.2) [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %.2: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int.32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -412,8 +412,8 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: Core.IntLiteral = int_value 32 [template = constants.%.2]
-// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%.2) [template = constants.%.3]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
+// CHECK:STDOUT:   %.1: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int.32) [template = constants.%.2]
 // CHECK:STDOUT:   %Int.call: init %.1 = call %.1()
 // CHECK:STDOUT:   assign file.%n.var, %Int.call
 // CHECK:STDOUT:   return
@@ -426,11 +426,11 @@ var n: {} = i32;
 // CHECK:STDOUT:   %N.patt.loc7_23.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%.2) {
+// CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int.32) {
 // CHECK:STDOUT:   %T.loc7_13.2 => Core.IntLiteral
 // CHECK:STDOUT:   %T.patt.loc7_13.2 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc7_23.2 => constants.%.2
-// CHECK:STDOUT:   %N.patt.loc7_23.2 => constants.%.2
+// CHECK:STDOUT:   %N.loc7_23.2 => constants.%int.32
+// CHECK:STDOUT:   %N.patt.loc7_23.2 => constants.%int.32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -448,7 +448,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
 // CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -509,7 +509,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12: Core.IntLiteral = int_value 32 [template = constants.%.3]
+// CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   assign file.%n.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
