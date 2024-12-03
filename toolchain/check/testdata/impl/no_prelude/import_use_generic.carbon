@@ -243,8 +243,8 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %c.ref: ref %C.2 = name_ref c, file.%c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.2 [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.6 [template = constants.%assoc0]
-// CHECK:STDOUT:     %elt0: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
-// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %elt0, @F.2(constants.%empty_struct_type) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:     %ielt0: %F.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%F.3]
+// CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %ielt0, @F.2(constants.%empty_struct_type) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:     %.loc15_19.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:     %.loc15_19.2: ref %empty_tuple.type = temporary %.loc15_19.1, %F.call

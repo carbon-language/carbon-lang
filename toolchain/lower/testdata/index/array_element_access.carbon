@@ -26,8 +26,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CA.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %elt0.loc10_36.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %elt1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %telt0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %telt1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.loc10_37, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
@@ -45,12 +45,12 @@ fn Run() {
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !13
 // CHECK:STDOUT:   %.loc15_23.1.temp = alloca { i32, i32 }, align 8, !dbg !14
 // CHECK:STDOUT:   call void @_CA.Main(ptr %.loc15_23.1.temp), !dbg !14
-// CHECK:STDOUT:   %elt0.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_23.1.temp, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   %.loc15_23.3 = load i32, ptr %elt0.loc15.tuple.elem, align 4, !dbg !14
+// CHECK:STDOUT:   %telt0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_23.1.temp, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   %.loc15_23.3 = load i32, ptr %telt0.tuple.elem, align 4, !dbg !14
 // CHECK:STDOUT:   %.loc15_23.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, {} zeroinitializer, !dbg !14
 // CHECK:STDOUT:   store i32 %.loc15_23.3, ptr %.loc15_23.4.array.index, align 4, !dbg !14
-// CHECK:STDOUT:   %elt1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_23.1.temp, i32 0, i32 1, !dbg !14
-// CHECK:STDOUT:   %.loc15_23.6 = load i32, ptr %elt1.tuple.elem, align 4, !dbg !14
+// CHECK:STDOUT:   %telt1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc15_23.1.temp, i32 0, i32 1, !dbg !14
+// CHECK:STDOUT:   %.loc15_23.6 = load i32, ptr %telt1.tuple.elem, align 4, !dbg !14
 // CHECK:STDOUT:   %.loc15_23.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, {} zeroinitializer, !dbg !14
 // CHECK:STDOUT:   store i32 %.loc15_23.6, ptr %.loc15_23.7.array.index, align 4, !dbg !14
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !15

@@ -65,15 +65,15 @@ var b: i32 = ((2));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %elt0.loc11: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc11: <bound method> = bound_method %int_1, %elt0.loc11 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %ielt0.loc11: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc11: <bound method> = bound_method %int_1, %ielt0.loc11 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11: <specific function> = specific_function %Convert.bound.loc11, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc11: init %i32 = call %Convert.specific_fn.loc11(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc11: init %i32 = converted %int_1, %int.convert_checked.loc11 [template = constants.%int_1.2]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %elt0.loc12: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %int_2, %elt0.loc12 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %ielt0.loc12: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %int_2, %ielt0.loc12 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12: <specific function> = specific_function %Convert.bound.loc12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %Convert.specific_fn.loc12(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc12: init %i32 = converted %int_2, %int.convert_checked.loc12 [template = constants.%int_2.2]

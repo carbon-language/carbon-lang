@@ -173,8 +173,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %elt0: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -183,8 +183,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %elt0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(<error>, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

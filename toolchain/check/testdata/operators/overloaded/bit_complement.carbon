@@ -117,8 +117,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %elt0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23_17.2
 // CHECK:STDOUT:   return %Op.call to %return

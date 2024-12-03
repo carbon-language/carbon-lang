@@ -120,16 +120,16 @@ fn F() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc25_33.1: %struct_type.a.b.2 = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %Class.ref.loc25_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %elt0.loc25_33.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc25_33.1: <bound method> = bound_method %int_1, %elt0.loc25_33.1 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %ielt0.loc25_33.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc25_33.1: <bound method> = bound_method %int_1, %ielt0.loc25_33.1 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc25_33.1: <specific function> = specific_function %Convert.bound.loc25_33.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc25_33.1: init %i32 = call %Convert.specific_fn.loc25_33.1(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc25_33.2: init %i32 = converted %int_1, %int.convert_checked.loc25_33.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc25_33.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc25_33.4: ref %i32 = class_element_access %.loc25_33.3, element0
 // CHECK:STDOUT:   %.loc25_33.5: init %i32 = initialize_from %.loc25_33.2 to %.loc25_33.4 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %elt0.loc25_33.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc25_33.2: <bound method> = bound_method %int_2, %elt0.loc25_33.2 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %ielt0.loc25_33.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc25_33.2: <bound method> = bound_method %int_2, %ielt0.loc25_33.2 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc25_33.2: <specific function> = specific_function %Convert.bound.loc25_33.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc25_33.2: init %i32 = call %Convert.specific_fn.loc25_33.2(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc25_33.6: init %i32 = converted %int_2, %int.convert_checked.loc25_33.2 [template = constants.%int_2.2]

@@ -67,8 +67,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %.loc12_17.1: %struct_type.a.2 = struct_literal (%int_3)
-// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_3, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %ielt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_3, %ielt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_3) [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc12_17.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_3.2]

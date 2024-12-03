@@ -99,8 +99,8 @@ class C {
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %elt0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %elt0()
+// CHECK:STDOUT:     %ielt0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %ielt0()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

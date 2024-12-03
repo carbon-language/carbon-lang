@@ -416,8 +416,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   %.loc6: %F.assoc_type.2 = specific_constant imports.%import_ref.8, @I(constants.%InInterfaceArgs) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type.2 = name_ref F, %.loc6 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %elt0: %F.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %elt0()
+// CHECK:STDOUT:   %ielt0: %F.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %ielt0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -755,8 +755,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%X)> [template = constants.%I.type.3]
 // CHECK:STDOUT:   %.loc6: %F.assoc_type.2 = specific_constant imports.%import_ref.10, @I(constants.%X) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type.2 = name_ref F, %.loc6 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %elt0: %F.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%F.3]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %elt0()
+// CHECK:STDOUT:   %ielt0: %F.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %ielt0()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

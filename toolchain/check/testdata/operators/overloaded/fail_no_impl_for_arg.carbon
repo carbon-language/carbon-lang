@@ -208,8 +208,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %elt0: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %.loc23_21.2: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %.loc34: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref, <error>) to %.loc23_21.2
@@ -227,8 +227,8 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   assign %a.var, %.loc38_16
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %elt0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %addr: %ptr.1 = addr_of %a.ref
 // CHECK:STDOUT:   %.loc48: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, <error>)

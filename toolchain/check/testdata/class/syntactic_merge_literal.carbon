@@ -91,8 +91,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc3: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_1000.loc3: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
-// CHECK:STDOUT:     %elt0.loc3: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound.loc3: <bound method> = bound_method %int_1000.loc3, %elt0.loc3 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %ielt0.loc3: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound.loc3: <bound method> = bound_method %int_1000.loc3, %ielt0.loc3 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn.loc3: <specific function> = specific_function %Convert.bound.loc3, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked.loc3: init %i32 = call %Convert.specific_fn.loc3(%int_1000.loc3) [template = constants.%int_1000.2]
 // CHECK:STDOUT:     %.loc3_20.1: %i32 = value_of_initializer %int.convert_checked.loc3 [template = constants.%int_1000.2]
@@ -107,8 +107,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc4: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_1000.loc4: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
-// CHECK:STDOUT:     %elt0.loc4: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound.loc4: <bound method> = bound_method %int_1000.loc4, %elt0.loc4 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %ielt0.loc4: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound.loc4: <bound method> = bound_method %int_1000.loc4, %ielt0.loc4 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn.loc4: <specific function> = specific_function %Convert.bound.loc4, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked.loc4: init %i32 = call %Convert.specific_fn.loc4(%int_1000.loc4) [template = constants.%int_1000.2]
 // CHECK:STDOUT:     %.loc4_20.1: %i32 = value_of_initializer %int.convert_checked.loc4 [template = constants.%int_1000.2]
@@ -229,8 +229,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
-// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %ielt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %ielt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.2]
 // CHECK:STDOUT:     %.loc3_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1000.2]
@@ -245,8 +245,8 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
-// CHECK:STDOUT:     %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %ielt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %ielt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.2]
 // CHECK:STDOUT:     %.loc10_20.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1000.2]

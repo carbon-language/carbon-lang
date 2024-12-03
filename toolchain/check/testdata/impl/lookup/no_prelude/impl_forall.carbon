@@ -316,8 +316,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %I.type.loc17_16.1: type = facet_type <@I, @I(constants.%W)> [symbolic = %I.type.loc17_16.2 (constants.%I.type.4)]
 // CHECK:STDOUT:     %.loc17_17: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%W) [symbolic = %assoc0 (constants.%assoc0.3)]
 // CHECK:STDOUT:     %F.ref: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = name_ref F, %.loc17_17 [symbolic = %assoc0 (constants.%assoc0.3)]
-// CHECK:STDOUT:     %elt0: @TestGeneric.%F.type.loc17_17 (%F.type.4) = interface_witness_access constants.%interface.2, element0 [symbolic = %F (constants.%F.5)]
-// CHECK:STDOUT:     %F.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:     %ielt0: @TestGeneric.%F.type.loc17_17 (%F.type.4) = interface_witness_access constants.%interface.2, element0 [symbolic = %F (constants.%F.5)]
+// CHECK:STDOUT:     %F.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %F.bound, @F.2(constants.%W)
 // CHECK:STDOUT:     %F.call: init @TestGeneric.%W.loc16_16.2 (%W) = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:     %.loc17_22.1: @TestGeneric.%W.loc16_16.2 (%W) = value_of_initializer %F.call
@@ -335,8 +335,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [template = constants.%I.type.5]
 // CHECK:STDOUT:   %.loc21_18: %F.assoc_type.4 = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%empty_struct_type) [template = constants.%assoc0.4]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type.4 = name_ref F, %.loc21_18 [template = constants.%assoc0.4]
-// CHECK:STDOUT:   %elt0: %F.type.6 = interface_witness_access constants.%interface.3, element0 [template = constants.%F.7]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %elt0
+// CHECK:STDOUT:   %ielt0: %F.type.6 = interface_witness_access constants.%interface.3, element0 [template = constants.%F.7]
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %ielt0
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.bound, @F.2(constants.%empty_struct_type)
 // CHECK:STDOUT:   %F.call: init %empty_struct_type = call %F.specific_fn(%a.ref)
 // CHECK:STDOUT:   %.loc21_22.1: ref %empty_struct_type = temporary_storage

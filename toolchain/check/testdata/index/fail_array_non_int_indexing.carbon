@@ -76,8 +76,8 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12.1]
 // CHECK:STDOUT:   %.loc11_23.1: %tuple.type = tuple_literal (%int_12)
-// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_12, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %ielt0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_12, %ielt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_12) [template = constants.%int_12.2]
 // CHECK:STDOUT:   %.loc11_23.2: init %i32 = converted %int_12, %int.convert_checked [template = constants.%int_12.2]

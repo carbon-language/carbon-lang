@@ -277,8 +277,8 @@ fn Run() {
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc9_25.1: %struct_type.x.2 = struct_literal (%int_1)
-// CHECK:STDOUT:   %elt0.loc9: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc9: <bound method> = bound_method %int_1, %elt0.loc9 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %ielt0.loc9: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc9: <bound method> = bound_method %int_1, %ielt0.loc9 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc9: <specific function> = specific_function %Convert.bound.loc9, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %Convert.specific_fn.loc9(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc9_25.2: init %i32 = converted %int_1, %int.convert_checked.loc9 [template = constants.%int_1.2]
@@ -291,8 +291,8 @@ fn Run() {
 // CHECK:STDOUT:   %x.ref: %Field.elt = name_ref x, imports.%import_ref.9 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc10_4: ref %i32 = class_element_access %b.ref, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %elt0.loc10: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc10: <bound method> = bound_method %int_2, %elt0.loc10 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %ielt0.loc10: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound.loc10: <bound method> = bound_method %int_2, %ielt0.loc10 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10: <specific function> = specific_function %Convert.bound.loc10, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %Convert.specific_fn.loc10(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc10_7: init %i32 = converted %int_2, %int.convert_checked.loc10 [template = constants.%int_2.2]

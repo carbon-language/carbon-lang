@@ -217,8 +217,8 @@ class X(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.2 = struct_literal (%int_2)
-// CHECK:STDOUT:   %elt0: %Convert.type.2 = interface_witness_access constants.%interface.10, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %elt0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %ielt0: %Convert.type.2 = interface_witness_access constants.%interface.10, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %ielt0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.2]
@@ -238,9 +238,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc21_17: %F.assoc_type.2 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %F.ref.loc21: %F.assoc_type.2 = name_ref F, %.loc21_17 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %elt0.loc21: %F.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %ielt0.loc21: %F.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %F.call.loc21: init %Param = call %elt0.loc21() to %.loc21_20.1
+// CHECK:STDOUT:   %F.call.loc21: init %Param = call %ielt0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
 // CHECK:STDOUT:   %x.ref.loc21: %Param.elt = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
@@ -255,9 +255,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc22_17: %F.assoc_type.2 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %F.ref.loc22: %F.assoc_type.2 = name_ref F, %.loc22_17 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %elt0.loc22: %F.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.3]
+// CHECK:STDOUT:   %ielt0.loc22: %F.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %F.call.loc22: init %Param = call %elt0.loc22() to %.loc22_20.1
+// CHECK:STDOUT:   %F.call.loc22: init %Param = call %ielt0.loc22() to %.loc22_20.1
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
 // CHECK:STDOUT:   %x.ref.loc22: %Param.elt = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0

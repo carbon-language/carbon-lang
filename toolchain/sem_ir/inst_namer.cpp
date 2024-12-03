@@ -660,7 +660,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(InterfaceWitnessAccess inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "elt" << inst.index.index;
+        out << "ielt" << inst.index.index;
         add_inst_name(std::move(name));
         continue;
       }
@@ -773,7 +773,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(TupleAccess inst): {
         std::string name;
         llvm::raw_string_ostream out(name);
-        out << "elt" << inst.index.index;
+        out << "telt" << inst.index.index;
         add_inst_name(std::move(name));
         continue;
       }

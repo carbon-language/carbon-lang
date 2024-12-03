@@ -123,12 +123,12 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.ref.loc24: %F.assoc_type = name_ref G, @C.%G [template = constants.%assoc0]
-// CHECK:STDOUT:   %elt0.loc24: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %elt0.loc24()
+// CHECK:STDOUT:   %ielt0.loc24: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc24: init %empty_tuple.type = call %ielt0.loc24()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc25: %F.assoc_type = name_ref G, @C.%G [template = constants.%assoc0]
-// CHECK:STDOUT:   %elt0.loc25: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %elt0.loc25()
+// CHECK:STDOUT:   %ielt0.loc25: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc25: init %empty_tuple.type = call %ielt0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

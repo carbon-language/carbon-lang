@@ -492,7 +492,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc14_7, %C.ref.loc14_10) [template = constants.%tuple]
 // CHECK:STDOUT:     %.loc14_11.2: %tuple.type = converted %.loc14_11.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:     %elt0: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
+// CHECK:STDOUT:     %telt0: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -512,7 +512,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %elt0 as %I.ref {
+// CHECK:STDOUT: impl @impl.2: %telt0 as %I.ref {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

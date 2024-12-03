@@ -258,8 +258,8 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%Source.specific_fn.2]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
-// CHECK:STDOUT:   %elt0.loc30: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
-// CHECK:STDOUT:   %Convert.bound.loc30: <bound method> = bound_method %Source.call.loc30, %elt0.loc30
+// CHECK:STDOUT:   %ielt0.loc30: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %Convert.bound.loc30: <bound method> = bound_method %Source.call.loc30, %ielt0.loc30
 // CHECK:STDOUT:   %.loc30_20.2: ref %X = temporary %.loc30_20.1, %Source.call.loc30
 // CHECK:STDOUT:   %.loc30_20.3: %X = bind_value %.loc30_20.2
 // CHECK:STDOUT:   %Convert.call.loc30: init %i32 = call %Convert.bound.loc30(%.loc30_20.3)
@@ -274,8 +274,8 @@ fn Test() {
 // CHECK:STDOUT:   %.loc31_20.2: type = converted %int.make_type_signed, %.loc31_20.1 [template = constants.%i32]
 // CHECK:STDOUT:   %Source.specific_fn.loc31: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [template = constants.%Source.specific_fn.3]
 // CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %Source.specific_fn.loc31()
-// CHECK:STDOUT:   %elt0.loc31: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
-// CHECK:STDOUT:   %Convert.bound.loc31: <bound method> = bound_method %Source.call.loc31, %elt0.loc31
+// CHECK:STDOUT:   %ielt0.loc31: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %Convert.bound.loc31: <bound method> = bound_method %Source.call.loc31, %ielt0.loc31
 // CHECK:STDOUT:   %.loc31_20.3: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc31_20.4: %i32 = value_of_initializer %Source.call.loc31
 // CHECK:STDOUT:   %.loc31_20.5: %i32 = converted %Source.call.loc31, %.loc31_20.4

@@ -180,12 +180,12 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc7: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc7: %F.assoc_type = name_ref F, imports.%import_ref.7 [template = constants.%assoc0]
-// CHECK:STDOUT:   %elt0.loc7: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc7: init %empty_tuple.type = call %elt0.loc7()
+// CHECK:STDOUT:   %ielt0.loc7: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc7: init %empty_tuple.type = call %ielt0.loc7()
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc8: %F.assoc_type = name_ref F, imports.%import_ref.7 [template = constants.%assoc0]
-// CHECK:STDOUT:   %elt0.loc8: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
-// CHECK:STDOUT:   %F.call.loc8: init %empty_tuple.type = call %elt0.loc8()
+// CHECK:STDOUT:   %ielt0.loc8: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.call.loc8: init %empty_tuple.type = call %ielt0.loc8()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
