@@ -153,13 +153,18 @@ fn Calls() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:1: error: imported API 'Main//state_constraints' not found [ImportNotFound]
-// CHECK:STDERR: import library "state_constraints";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-import library "state_constraints";
+interface I {
+  let Member:! type;
+}
 
 // `2` can't be converted to the type of `I.Member`
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:46: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
+// CHECK:STDERR:                                              ^
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:46: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn RewriteTypeMismatch(X:! I where .Member = 2);
+// CHECK:STDERR:                                              ^
+// CHECK:STDERR:
 fn RewriteTypeMismatch(X:! I where .Member = 2);
 
 // --- fail_todo_let.carbon
@@ -1171,7 +1176,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: --- fail_check_rewrite_constraints.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
+// CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.1: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %.2: %.1 = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %.3: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %.4: type = interface_witness_access %.3, element0 [symbolic]
+// CHECK:STDOUT:   %.5: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %X.patt: <error> = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %RewriteTypeMismatch.type: type = fn_type @RewriteTypeMismatch [template]
 // CHECK:STDOUT:   %RewriteTypeMismatch: %RewriteTypeMismatch.type = struct_value () [template]
@@ -1179,6 +1191,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1187,36 +1200,54 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:     .RewriteTypeMismatch = %RewriteTypeMismatch.decl
-// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %RewriteTypeMismatch.decl: %RewriteTypeMismatch.type = fn_decl @RewriteTypeMismatch [template = constants.%RewriteTypeMismatch] {
-// CHECK:STDOUT:     %X.patt.loc11_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc11_24.2 (constants.%X.patt)]
-// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc11_24.1, runtime_param<invalid> [symbolic = %X.patt.loc11_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.patt.loc21_24.1: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc21_24.1, runtime_param<invalid> [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: <error> = name_ref I, <error> [template = <error>]
-// CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self [template = <error>]
-// CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
-// CHECK:STDOUT:     %Member.ref: <error> = name_ref Member, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc11_46: Core.IntLiteral = int_value 2 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc11_30: type = where_expr %.Self [template = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %Member.ref, <error>
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %Member.ref: %.1 = name_ref Member, @I.%.loc5 [template = constants.%.2]
+// CHECK:STDOUT:     %.loc21_36.1: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.3]
+// CHECK:STDOUT:     %.loc21_36.2: type = interface_witness_access %.loc21_36.1, element0 [symbolic = constants.%.4]
+// CHECK:STDOUT:     %.loc21_46.1: Core.IntLiteral = int_value 2 [template = constants.%.5]
+// CHECK:STDOUT:     %.loc21_46.2: type = converted %.loc21_46.1, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc21_30: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %.loc21_36.2, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %X: <error> = bind_symbolic_name X, 0, %X.param [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
+// CHECK:STDOUT:   %.loc5: %.1 = assoc_entity element0, %Member [template = constants.%.2]
+// CHECK:STDOUT:   %J.ref: <error> = name_ref J, <error> [template = <error>]
+// CHECK:STDOUT:   %Second: <error> = assoc_const_decl Second [template]
+// CHECK:STDOUT:   %.loc10: <error> = assoc_entity element1, %Second [template = <error>]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Member = %.loc5
+// CHECK:STDOUT:   .Second = %.loc10
+// CHECK:STDOUT:   witness = (%Member, %Second)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RewriteTypeMismatch(%X: <error>) {
-// CHECK:STDOUT:   %X.patt.loc11_24.2: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc11_24.2 (constants.%X.patt)]
+// CHECK:STDOUT:   %X.patt.loc21_24.2: <error> = symbolic_binding_pattern X, 0 [symbolic = %X.patt.loc21_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%X.param_patt: <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RewriteTypeMismatch(<error>) {
-// CHECK:STDOUT:   %X.patt.loc11_24.2 => <error>
+// CHECK:STDOUT:   %X.patt.loc21_24.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_let.carbon

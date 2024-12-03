@@ -21,7 +21,7 @@ auto ConstantStore::GetOrAdd(Inst inst, PhaseType phase) -> ConstantId {
           .inst_id = inst_id,
           .generic_id = GenericId::Invalid,
           .index = GenericInstIndex::Invalid,
-          .period_self = (phase == IsPeriodSelfSymbolic)};
+          .period_self_only = (phase == IsPeriodSelfSymbolic)};
       const_id =
           sem_ir_->constant_values().AddSymbolicConstant(symbolic_constant);
     }
