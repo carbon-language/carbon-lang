@@ -56,8 +56,8 @@ class Derived {
 // CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.b.1 [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %Derived, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Base, .d: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d.1 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -152,12 +152,12 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc8: %.3 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc8: %.2 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10_10.2: type = converted %int.make_type_signed, %.loc10_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8: %.4 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc10_8: %.3 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -199,11 +199,11 @@ class Derived {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc18_12: %.4 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
+// CHECK:STDOUT:   %d.ref.loc18_12: %.3 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %d.ref.loc18_11, element1
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   %d.ref.loc18_16: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %base.ref: %.3 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
+// CHECK:STDOUT:   %base.ref: %.2 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
 // CHECK:STDOUT:   %.loc18_17.1: ref %Base = class_element_access %d.ref.loc18_16, element0
 // CHECK:STDOUT:   %.loc18_17.2: %Base = bind_value %.loc18_17.1
 // CHECK:STDOUT:   %b.ref: %.1 = name_ref b, @Base.%.loc4_8 [template = @Base.%.loc4_8]

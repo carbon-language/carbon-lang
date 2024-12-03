@@ -58,15 +58,15 @@ class C4 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C1, %B [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %C1, %B [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %C2, %B [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %C2, %B [template]
 // CHECK:STDOUT:   %C3: type = class_type @C3 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %C3, %B [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %C3, %B [template]
 // CHECK:STDOUT:   %C4: type = class_type @C4 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %C4, %B [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %C4, %B [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,7 +103,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc18: %.2 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc18: %.1 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -115,7 +115,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc30: %.3 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc30: %.2 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -126,7 +126,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc41: %.4 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc41: %.3 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -138,7 +138,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc51: %.5 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc51: %.4 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

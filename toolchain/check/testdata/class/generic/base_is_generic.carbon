@@ -108,7 +108,7 @@ fn H() {
 // CHECK:STDOUT:   %.3: type = unbound_element_type %Base.3, %Param [template]
 // CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Param} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.2 [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %Derived, %Base.3 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Derived, %Base.3 [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base.3} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %DoubleFieldAccess.type: type = fn_type @DoubleFieldAccess [template]
@@ -199,7 +199,7 @@ fn H() {
 // CHECK:STDOUT:   %Base.ref: %Base.type = name_ref Base, file.%Base.decl [template = constants.%Base.1]
 // CHECK:STDOUT:   %Param.ref: type = name_ref Param, file.%Param.decl [template = constants.%Param]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(constants.%Param) [template = constants.%Base.3]
-// CHECK:STDOUT:   %.loc13: %.6 = base_decl %Base, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.4 = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -268,7 +268,7 @@ fn H() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess: %ImportedDoubleFieldAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = unbound_element_type %Param, %i32 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %Param, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -283,7 +283,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_base, inst+46, loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.7 = import_ref Main//extend_generic_base, inst+44, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: %.4 = import_ref Main//extend_generic_base, inst+44, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, inst+20, loaded [symbolic = @Base.%complete_type (constants.%complete_type.2)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.10: @Base.%.1 (%.2) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.2]
@@ -362,7 +362,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_11.1: ref %Base.3 = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc7_11.2: ref %Base.3 = converted %d.ref, %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
-// CHECK:STDOUT:   %y.ref: %.7 = name_ref y, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %y.ref: %.4 = name_ref y, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
 // CHECK:STDOUT:   %.loc7_13.2: %i32 = bind_value %.loc7_13.1
 // CHECK:STDOUT:   return %.loc7_13.2
@@ -509,7 +509,7 @@ fn H() {
 // CHECK:STDOUT:   %X.3: type = class_type @X, @X(%T) [symbolic]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G, @X(%T) [symbolic]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C.2, %X.3 [symbolic]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %C.2, %X.3 [symbolic]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %X.3} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -520,7 +520,7 @@ fn H() {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%i32) [template]
 // CHECK:STDOUT:   %X.4: type = class_type @X, @X(%i32) [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %C.3, %X.4 [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %C.3, %X.4 [template]
 // CHECK:STDOUT:   %struct_type.base.2: type = struct_type {.base: %X.4} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.2 [template]
 // CHECK:STDOUT:   %G.type.3: type = fn_type @G, @X(%i32) [template]
@@ -594,7 +594,7 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %X.loc9_19.2: type = class_type @X, @X(%T.loc8_9.2) [symbolic = %X.loc9_19.2 (constants.%X.3)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc8_9.2) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:   %.loc9_20.2: type = unbound_element_type @C.%C (%C.2), @C.%X.loc9_19.2 (%X.3) [symbolic = %.loc9_20.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc9_20.2: type = unbound_element_type @C.%C (%C.2), @C.%X.loc9_19.2 (%X.3) [symbolic = %.loc9_20.2 (constants.%.1)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @C.%X.loc9_19.2 (%X.3)} [symbolic = %struct_type.base (constants.%struct_type.base.1)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness @C.%struct_type.base (%struct_type.base.1) [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.2)]
 // CHECK:STDOUT:
@@ -602,7 +602,7 @@ fn H() {
 // CHECK:STDOUT:     %X.ref: %X.type = name_ref X, file.%X.decl [template = constants.%X.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_9.1 [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:     %X.loc9_19.1: type = class_type @X, @X(constants.%T) [symbolic = %X.loc9_19.2 (constants.%X.3)]
-// CHECK:STDOUT:     %.loc9_20.1: @C.%.loc9_20.2 (%.2) = base_decl %X.loc9_19.1, element0 [template]
+// CHECK:STDOUT:     %.loc9_20.1: @C.%.loc9_20.2 (%.1) = base_decl %X.loc9_19.1, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc10_1.1: <witness> = complete_type_witness %struct_type.base.1 [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -718,7 +718,7 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %X.loc9_19.2 => constants.%X.4
 // CHECK:STDOUT:   %C => constants.%C.3
-// CHECK:STDOUT:   %.loc9_20.2 => constants.%.3
+// CHECK:STDOUT:   %.loc9_20.2 => constants.%.2
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.2
 // CHECK:STDOUT:   %complete_type.loc10_1.2 => constants.%complete_type.3
 // CHECK:STDOUT: }

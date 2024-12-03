@@ -52,7 +52,7 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %i32, .unused: %i32} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.unused [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Child, %Base [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Child, %Base [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT: }
@@ -116,7 +116,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc13: %.3 = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc13: %.2 = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -160,7 +160,7 @@ fn Run() {
 // CHECK:STDOUT:   %int.1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct.1: %Base = struct_value (%int.0.2, %int.1.2) [template]
 // CHECK:STDOUT:   %struct.2: %Child = struct_value (%struct.1) [template]
-// CHECK:STDOUT:   %.8: type = unbound_element_type %Base, %i32 [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.2.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
@@ -181,7 +181,7 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
 // CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.7: %.8 = import_ref Main//a, inst+38, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: %.6 = import_ref Main//a, inst+38, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+43, unloaded
 // CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, inst+54, loaded [template = constants.%complete_type.2]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+48, unloaded
@@ -249,7 +249,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign %a.var, %.loc7_49
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %.8 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %.6 = name_ref x, imports.%import_ref.7 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0

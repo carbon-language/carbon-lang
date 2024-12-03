@@ -49,8 +49,8 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT:   %int.3: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %.1: type = array_type %int.3, %i32 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.4: String = string_literal "Hello" [template]
-// CHECK:STDOUT:   %.5: String = string_literal "World" [template]
+// CHECK:STDOUT:   %.2: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %.3: String = string_literal "World" [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (Core.IntLiteral, String, String) [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -145,8 +145,8 @@ var d: [i32; 3] = t2;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
-// CHECK:STDOUT:   %.loc18_23: String = string_literal "Hello" [template = constants.%.4]
-// CHECK:STDOUT:   %.loc18_32: String = string_literal "World" [template = constants.%.5]
+// CHECK:STDOUT:   %.loc18_23: String = string_literal "Hello" [template = constants.%.2]
+// CHECK:STDOUT:   %.loc18_32: String = string_literal "World" [template = constants.%.3]
 // CHECK:STDOUT:   %.loc18_39.1: %tuple.type.1 = tuple_literal (%int.1.loc18, %.loc18_23, %.loc18_32)
 // CHECK:STDOUT:   %.loc18_39.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.1.loc18, %.loc18_39.2 [template = constants.%Convert.bound]

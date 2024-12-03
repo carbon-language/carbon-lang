@@ -38,7 +38,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int.1.2, %int.2.2, %int.3.2) [template]
-// CHECK:STDOUT:   %.6: type = array_type %int.3.1, %i32 [template]
+// CHECK:STDOUT:   %.5: type = array_type %int.3.1, %i32 [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,9 +79,9 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %int.3: Core.IntLiteral = int_value 3 [template = constants.%int.3.1]
 // CHECK:STDOUT:   %.loc12_9.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_9.2: type = converted %int.make_type_signed.loc12, %.loc12_9.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_15: type = array_type %int.3, %i32 [template = constants.%.6]
-// CHECK:STDOUT:   %b.var: ref %.6 = var b
-// CHECK:STDOUT:   %b: ref %.6 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc12_15: type = array_type %int.3, %i32 [template = constants.%.5]
+// CHECK:STDOUT:   %b.var: ref %.5 = var b
+// CHECK:STDOUT:   %b: ref %.5 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -130,8 +130,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %int.2.loc12: Core.IntLiteral = int_value 2 [template = constants.%int.2.1]
 // CHECK:STDOUT:   %.loc12_19.11: ref %i32 = array_index file.%b.var, %int.2.loc12
 // CHECK:STDOUT:   %.loc12_19.12: init %i32 = initialize_from %.loc12_19.10 to %.loc12_19.11
-// CHECK:STDOUT:   %.loc12_19.13: init %.6 = array_init (%.loc12_19.4, %.loc12_19.8, %.loc12_19.12) to file.%b.var
-// CHECK:STDOUT:   %.loc12_20: init %.6 = converted %a.ref, %.loc12_19.13
+// CHECK:STDOUT:   %.loc12_19.13: init %.5 = array_init (%.loc12_19.4, %.loc12_19.8, %.loc12_19.12) to file.%b.var
+// CHECK:STDOUT:   %.loc12_20: init %.5 = converted %a.ref, %.loc12_19.13
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -88,7 +88,7 @@ var b: T = *a;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, imports.%import_ref
-// CHECK:STDOUT:   %.loc8: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref

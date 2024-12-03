@@ -36,7 +36,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,9 +65,9 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int.32.loc5) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_15.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_15.2: type = converted %int.make_type_signed.loc5, %.loc5_15.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_15.3: type = ptr_type %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %a_ref.var: ref %.5 = var a_ref
-// CHECK:STDOUT:   %a_ref: ref %.5 = bind_name a_ref, %a_ref.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   %a_ref.var: ref %ptr = var a_ref
+// CHECK:STDOUT:   %a_ref: ref %ptr = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -80,7 +80,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %.loc4_20.2: init %i32 = converted %int.0, %int.convert_checked [template = constants.%int.0.2]
 // CHECK:STDOUT:   assign file.%a_orig.var, %.loc4_20.2
 // CHECK:STDOUT:   %a_orig.ref: ref %i32 = name_ref a_orig, file.%a_orig
-// CHECK:STDOUT:   %.loc5: %.5 = addr_of %a_orig.ref
+// CHECK:STDOUT:   %.loc5: %ptr = addr_of %a_orig.ref
 // CHECK:STDOUT:   assign file.%a_ref.var, %.loc5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -154,12 +154,12 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %.5 = import_ref Implicit//default, inst+332, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %ptr = import_ref Implicit//default, inst+332, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.37
 // CHECK:STDOUT:     import Core//prelude
@@ -213,9 +213,9 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_signed, %.loc4_11.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_11.3: type = ptr_type %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %a.var: ref %.5 = var a
-// CHECK:STDOUT:   %a: ref %.5 = bind_name a, %a.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   %a.var: ref %ptr = var a
+// CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(constants.%Dest: type) {
@@ -482,8 +482,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %.5 = name_ref a_ref, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc4: %.5 = bind_value %a_ref.ref
+// CHECK:STDOUT:   %a_ref.ref: ref %ptr = name_ref a_ref, imports.%import_ref.2
+// CHECK:STDOUT:   %.loc4: %ptr = bind_value %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

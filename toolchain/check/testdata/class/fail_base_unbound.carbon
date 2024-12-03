@@ -26,7 +26,7 @@ let b: B = C.base;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT: }
@@ -61,7 +61,7 @@ let b: B = C.base;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc14: %.2 = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc14: %.1 = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -74,7 +74,7 @@ let b: B = C.base;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %base.ref: %.2 = name_ref base, @C.%.loc14 [template = @C.%.loc14]
+// CHECK:STDOUT:   %base.ref: %.1 = name_ref base, @C.%.loc14 [template = @C.%.loc14]
 // CHECK:STDOUT:   %b: %B = bind_name b, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

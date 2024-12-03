@@ -293,10 +293,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = facet_access_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.2: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %elt0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %.4: type = facet_access_type %Self.1 [symbolic]
+// CHECK:STDOUT:   %.3: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
@@ -317,7 +317,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.3: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.5 [template]
 // CHECK:STDOUT:   %elt0.4: %Convert.assoc_type.3 = assoc_entity element0, imports.%import_ref.6 [template]
-// CHECK:STDOUT:   %.5: %ImplicitAs.type.2 = facet_value %C.3, %C.3 [symbolic]
+// CHECK:STDOUT:   %.4: %ImplicitAs.type.2 = facet_value %C.3, %C.3 [symbolic]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.1.1, %Convert.3 [template]
@@ -325,7 +325,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%int.1.2) [template]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.4 [template]
 // CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.7: %ImplicitAs.type.2 = facet_value %C.4, %C.4 [symbolic]
+// CHECK:STDOUT:   %.5: %ImplicitAs.type.2 = facet_value %C.4, %C.4 [symbolic]
 // CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%Convert.6) [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.2.1, %Convert.3 [template]
@@ -333,7 +333,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.5: type = class_type @C, @C(%int.2.2) [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5 [template]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [template]
-// CHECK:STDOUT:   %.8: %ImplicitAs.type.2 = facet_value %C.5, %C.5 [symbolic]
+// CHECK:STDOUT:   %.6: %ImplicitAs.type.2 = facet_value %C.5, %C.5 [symbolic]
 // CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%Convert.7) [template]
 // CHECK:STDOUT:   %int.3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.3.1, %Convert.3 [template]
@@ -341,7 +341,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.6: type = class_type @C, @C(%int.3.2) [template]
 // CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.6 [template]
 // CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
-// CHECK:STDOUT:   %.9: %ImplicitAs.type.2 = facet_value %C.6, %C.6 [symbolic]
+// CHECK:STDOUT:   %.7: %ImplicitAs.type.2 = facet_value %C.6, %C.6 [symbolic]
 // CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.8) [template]
 // CHECK:STDOUT:   %int.4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.bound.5: <bound method> = bound_method %int.4.1, %Convert.3 [template]
@@ -349,7 +349,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.7: type = class_type @C, @C(%int.4.2) [template]
 // CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.7 [template]
 // CHECK:STDOUT:   %Convert.9: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %.10: %ImplicitAs.type.2 = facet_value %C.7, %C.7 [symbolic]
+// CHECK:STDOUT:   %.8: %ImplicitAs.type.2 = facet_value %C.7, %C.7 [symbolic]
 // CHECK:STDOUT:   %interface.6: <witness> = interface_witness (%Convert.9) [template]
 // CHECK:STDOUT:   %int.5.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %Convert.bound.6: <bound method> = bound_method %int.5.1, %Convert.3 [template]
@@ -357,7 +357,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.8: type = class_type @C, @C(%int.5.2) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.8 [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %.11: %ImplicitAs.type.2 = facet_value %C.8, %C.8 [symbolic]
+// CHECK:STDOUT:   %.9: %ImplicitAs.type.2 = facet_value %C.8, %C.8 [symbolic]
 // CHECK:STDOUT:   %interface.7: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %int.6.1: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int.6.1, %Convert.3 [template]
@@ -365,7 +365,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.9: type = class_type @C, @C(%int.6.2) [template]
 // CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.9 [template]
 // CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
-// CHECK:STDOUT:   %.12: %ImplicitAs.type.2 = facet_value %C.9, %C.9 [symbolic]
+// CHECK:STDOUT:   %.10: %ImplicitAs.type.2 = facet_value %C.9, %C.9 [symbolic]
 // CHECK:STDOUT:   %interface.8: <witness> = interface_witness (%Convert.11) [template]
 // CHECK:STDOUT:   %int.7.1: Core.IntLiteral = int_value 7 [template]
 // CHECK:STDOUT:   %Convert.bound.8: <bound method> = bound_method %int.7.1, %Convert.3 [template]
@@ -373,7 +373,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.10: type = class_type @C, @C(%int.7.2) [template]
 // CHECK:STDOUT:   %Convert.type.12: type = fn_type @Convert.10 [template]
 // CHECK:STDOUT:   %Convert.12: %Convert.type.12 = struct_value () [template]
-// CHECK:STDOUT:   %.13: %ImplicitAs.type.2 = facet_value %C.10, %C.10 [symbolic]
+// CHECK:STDOUT:   %.11: %ImplicitAs.type.2 = facet_value %C.10, %C.10 [symbolic]
 // CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.12) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -791,9 +791,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.3)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.2)]() -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32 = "int.convert_checked";
@@ -886,7 +886,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32) {
@@ -922,10 +922,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %elt0 => constants.%elt0.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.5) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.4) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.5
+// CHECK:STDOUT:   %Self => constants.%.4
 // CHECK:STDOUT:   %.1 => constants.%C.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -936,10 +936,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.7) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.5) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.7
+// CHECK:STDOUT:   %Self => constants.%.5
 // CHECK:STDOUT:   %.1 => constants.%C.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -950,10 +950,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.8) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.6) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.8
+// CHECK:STDOUT:   %Self => constants.%.6
 // CHECK:STDOUT:   %.1 => constants.%C.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -964,10 +964,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.9) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.7) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.9
+// CHECK:STDOUT:   %Self => constants.%.7
 // CHECK:STDOUT:   %.1 => constants.%C.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -978,10 +978,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.10) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.8) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.10
+// CHECK:STDOUT:   %Self => constants.%.8
 // CHECK:STDOUT:   %.1 => constants.%C.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -992,10 +992,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.11) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.9) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.11
+// CHECK:STDOUT:   %Self => constants.%.9
 // CHECK:STDOUT:   %.1 => constants.%C.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1006,10 +1006,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.12) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.10) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.12
+// CHECK:STDOUT:   %Self => constants.%.10
 // CHECK:STDOUT:   %.1 => constants.%C.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1020,10 +1020,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.13) {
+// CHECK:STDOUT: specific @Convert.1(constants.%D, constants.%.11) {
 // CHECK:STDOUT:   %T => constants.%D
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%.13
+// CHECK:STDOUT:   %Self => constants.%.11
 // CHECK:STDOUT:   %.1 => constants.%C.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1039,7 +1039,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n.m [template]
 // CHECK:STDOUT:   %F0.type: type = fn_type @F0 [template]
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.1: %C.type = struct_value () [template]
@@ -1054,10 +1054,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.3: type = facet_access_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %.2: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %elt0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.14 [symbolic]
-// CHECK:STDOUT:   %.4: type = facet_access_type %Self.1 [symbolic]
+// CHECK:STDOUT:   %.3: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
@@ -1310,7 +1310,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F0(%n.param_patt: %i32) -> %return: %D {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc8_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc8_7 br !if.then.loc8 else br !if.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc8:
@@ -1337,7 +1337,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc8_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
-// CHECK:STDOUT:   %.loc9_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc9_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc9_7 br !if.then.loc9 else br !if.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc9:
@@ -1364,7 +1364,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc9_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc9:
-// CHECK:STDOUT:   %.loc10_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc10_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc10_7 br !if.then.loc10 else br !if.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc10:
@@ -1391,7 +1391,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc10_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc10:
-// CHECK:STDOUT:   %.loc11_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc11_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc11_7 br !if.then.loc11 else br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11:
@@ -1418,7 +1418,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc11_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
-// CHECK:STDOUT:   %.loc12_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc12_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc12_7 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
@@ -1445,7 +1445,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc12_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
-// CHECK:STDOUT:   %.loc13_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc13_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc13_7 br !if.then.loc13 else br !if.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc13:
@@ -1472,7 +1472,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc13_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc13:
-// CHECK:STDOUT:   %.loc14_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc14_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc14_7 br !if.then.loc14 else br !if.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc14:
@@ -1499,7 +1499,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %.loc14_35.3 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc14:
-// CHECK:STDOUT:   %.loc15_7: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_7: bool = bool_literal false [template = constants.%.1]
 // CHECK:STDOUT:   if %.loc15_7 br !if.then.loc15 else br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc15:
@@ -1537,9 +1537,9 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
 // CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.3)]
+// CHECK:STDOUT:   %.1: type = facet_access_type %Self [symbolic = %.1 (constants.%.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.3)]() -> @Convert.1.%T (%T);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%.1 (%.2)]() -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.2[%self.param_patt: Core.IntLiteral]() -> %i32 = "int.convert_checked";
@@ -1586,7 +1586,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %.1 => constants.%.4
+// CHECK:STDOUT:   %.1 => constants.%.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%i32) {

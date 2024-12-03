@@ -59,7 +59,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: %i32 = int_value 3 [template]
 // CHECK:STDOUT:   %array: %.1 = tuple_value (%int.1.2, %int.2.2, %int.3.2) [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.0.2: %i32 = int_value 0 [template]
@@ -176,9 +176,9 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %int.make_type_signed.loc17: init type = call constants.%Int(%int.32.loc17) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_14.1: type = value_of_initializer %int.make_type_signed.loc17 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_14.2: type = converted %int.make_type_signed.loc17, %.loc17_14.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_14.3: type = ptr_type %i32 [template = constants.%.7]
-// CHECK:STDOUT:   %pa.var: ref %.7 = var pa
-// CHECK:STDOUT:   %pa: ref %.7 = bind_name pa, %pa.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %pa.var: ref %ptr.2 = var pa
+// CHECK:STDOUT:   %pa: ref %ptr.2 = bind_name pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc17: ref %.1 = name_ref a, %a
 // CHECK:STDOUT:   %int.0.loc17: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]
 // CHECK:STDOUT:   %.loc17_21.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
@@ -188,7 +188,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc17_21.2: %i32 = value_of_initializer %int.convert_checked.loc17 [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc17_21.3: %i32 = converted %int.0.loc17, %.loc17_21.2 [template = constants.%int.0.2]
 // CHECK:STDOUT:   %.loc17_22: ref %i32 = array_index %a.ref.loc17, %.loc17_21.3
-// CHECK:STDOUT:   %.loc17_18: %.7 = addr_of %.loc17_22
+// CHECK:STDOUT:   %.loc17_18: %ptr.2 = addr_of %.loc17_22
 // CHECK:STDOUT:   assign %pa.var, %.loc17_18
 // CHECK:STDOUT:   %a.ref.loc18: ref %.1 = name_ref a, %a
 // CHECK:STDOUT:   %int.0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int.0.1]

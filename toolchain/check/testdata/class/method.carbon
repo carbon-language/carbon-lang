@@ -68,10 +68,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %Class, %i32 [template]
+// CHECK:STDOUT:   %.1: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.k.1: type = struct_type {.k: %i32} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.1 [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
@@ -200,36 +200,36 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallFThroughPointer.decl: %CallFThroughPointer.type = fn_decl @CallFThroughPointer [template = constants.%CallFThroughPointer] {
-// CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.1 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.1 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc43_32: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc43_38.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc43_38.2: type = converted %int.make_type_signed, %.loc43_38.1 [template = constants.%i32]
-// CHECK:STDOUT:     %p.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %p.param
+// CHECK:STDOUT:     %p.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %ptr.1 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGThroughPointer.decl: %CallGThroughPointer.type = fn_decl @CallGThroughPointer [template = constants.%CallGThroughPointer] {
-// CHECK:STDOUT:     %p.patt: %.1 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.1 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.1 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %.loc47_32: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc47_38.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc47_38.2: type = converted %int.make_type_signed, %.loc47_38.1 [template = constants.%i32]
-// CHECK:STDOUT:     %p.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.1 = bind_name p, %p.param
+// CHECK:STDOUT:     %p.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %ptr.1 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -283,20 +283,20 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %.loc12_22: ref %i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc13_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %.loc13_23: type = ptr_type %Class [template = constants.%.1]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_31.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_31.2: type = converted %int.make_type_signed, %.loc13_31.1 [template = constants.%i32]
-// CHECK:STDOUT:     %self.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -306,7 +306,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_10.2: type = converted %int.make_type_signed, %.loc17_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_8: %.2 = field_decl k, element0 [template]
+// CHECK:STDOUT:   %.loc17_8: %.1 = field_decl k, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.1 [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -321,13 +321,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc20
-// CHECK:STDOUT:   %k.ref: %.2 = name_ref k, @Class.%.loc17_8 [template = @Class.%.loc17_8]
+// CHECK:STDOUT:   %k.ref: %.1 = name_ref k, @Class.%.loc17_8 [template = @Class.%.loc17_8]
 // CHECK:STDOUT:   %.loc21_14.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc21_14.2: %i32 = bind_value %.loc21_14.1
 // CHECK:STDOUT:   return %.loc21_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %.1]() -> %i32;
+// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.1]() -> %i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c.param_patt: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -384,16 +384,16 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref, %G.ref
-// CHECK:STDOUT:   %.loc40_10: %.1 = addr_of %c.ref
+// CHECK:STDOUT:   %.loc40_10: %ptr.1 = addr_of %c.ref
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc40_10)
 // CHECK:STDOUT:   %.loc40_15.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc40_15.2: %i32 = converted %G.call, %.loc40_15.1
 // CHECK:STDOUT:   return %.loc40_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFThroughPointer(%p.param_patt: %.1) -> %i32 {
+// CHECK:STDOUT: fn @CallFThroughPointer(%p.param_patt: %ptr.1) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc44_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc44_11.1, %F.ref
@@ -404,13 +404,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   return %.loc44_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %.1) -> %i32 {
+// CHECK:STDOUT: fn @CallGThroughPointer(%p.param_patt: %ptr.1) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.1 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.1 = name_ref p, %p
 // CHECK:STDOUT:   %.loc48_11.1: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc48_11.1, %G.ref
-// CHECK:STDOUT:   %.loc48_11.2: %.1 = addr_of %.loc48_11.1
+// CHECK:STDOUT:   %.loc48_11.2: %ptr.1 = addr_of %.loc48_11.1
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc48_11.2)
 // CHECK:STDOUT:   %.loc48_18.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc48_18.2: %i32 = converted %G.call, %.loc48_18.1
@@ -442,7 +442,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc58_15.2, %G.ref
-// CHECK:STDOUT:   %.loc58_15.3: %.1 = addr_of %.loc58_15.2
+// CHECK:STDOUT:   %.loc58_15.3: %ptr.1 = addr_of %.loc58_15.2
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %G.call, %.loc58_20.1

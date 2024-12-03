@@ -24,7 +24,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
-// CHECK:STDOUT:   %.2: String = string_literal "hello" [template]
+// CHECK:STDOUT:   %.1: String = string_literal "hello" [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,7 +52,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc15_10.2: type = converted %int.make_type_signed, %.loc15_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_16: String = string_literal "hello" [template = constants.%.2]
+// CHECK:STDOUT:   %.loc15_16: String = string_literal "hello" [template = constants.%.1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

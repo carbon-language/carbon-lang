@@ -432,6 +432,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           add_inst_name_id(sem_ir_.functions().Get(fn_ty->function_id).name_id,
                            ".assoc_type");
         } else {
+          // TODO: Handle other cases.
           add_inst_name("assoc_type");
         }
         continue;
@@ -619,6 +620,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name_id(
             SemIR::Function::GetNameFromPatternId(sem_ir_, inst_id),
             ".param_patt");
+        continue;
+      }
+      case PointerType::Kind: {
+        add_inst_name("ptr");
         continue;
       }
       case InstKind::ReturnSlotPattern: {

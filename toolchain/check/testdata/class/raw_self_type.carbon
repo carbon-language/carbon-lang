@@ -31,7 +31,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
 // CHECK:STDOUT:   %Self: type = class_type @Self [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
@@ -114,16 +114,16 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc13: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:   %Self.var: ref %.1 = var r#Self
-// CHECK:STDOUT:   %Self: ref %.1 = bind_name r#Self, %Self.var
+// CHECK:STDOUT:   %ptr.loc13: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:   %Self.var: ref %ptr.1 = var r#Self
+// CHECK:STDOUT:   %Self: ref %ptr.1 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   %Self.ref.loc14_12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %.loc14_16: type = ptr_type %Class [template = constants.%.1]
-// CHECK:STDOUT:   %p.var: ref %.1 = var p
-// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
-// CHECK:STDOUT:   %Self.ref.loc14_20: ref %.1 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc14_20: %.1 = bind_value %Self.ref.loc14_20
-// CHECK:STDOUT:   assign %p.var, %.loc14_20
+// CHECK:STDOUT:   %ptr.loc14: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:   %p.var: ref %ptr.1 = var p
+// CHECK:STDOUT:   %p: ref %ptr.1 = bind_name p, %p.var
+// CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.1 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc14: %ptr.1 = bind_value %Self.ref.loc14_20
+// CHECK:STDOUT:   assign %p.var, %.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

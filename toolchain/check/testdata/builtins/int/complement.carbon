@@ -53,7 +53,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.4(%int.32) [template]
 // CHECK:STDOUT:   %int.15584169.2: Core.IntLiteral = int_value 15584169 [template]
 // CHECK:STDOUT:   %.5: type = array_type %int.15584169.2, %i32 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %.5 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -164,7 +164,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_13.2: type = converted %int.make_type_signed.loc6, %.loc6_13.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_26: type = array_type %int.15584169, %i32 [template = constants.%.5]
-// CHECK:STDOUT:   %.loc6_27: type = ptr_type %.5 [template = constants.%.6]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template = constants.%ptr]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -203,8 +203,8 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %.5 = name_ref arr, file.%arr
-// CHECK:STDOUT:   %.loc6: %.6 = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %.6 = bind_name arr_p, %.loc6
+// CHECK:STDOUT:   %.loc6: %ptr = addr_of %arr.ref
+// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %.loc6
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

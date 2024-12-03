@@ -62,7 +62,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %.6: bool = bool_literal false [template]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [template]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %PartiallyConstant.type: type = fn_type @PartiallyConstant [template]
 // CHECK:STDOUT:   %PartiallyConstant: %PartiallyConstant.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -248,8 +248,8 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc23_32: init type = call constants.%Int(%int.32.loc23_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.1: type = value_of_initializer %int.make_type_signed.loc23_32 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_35.2: type = converted %int.make_type_signed.loc23_32, %.loc23_35.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_35.3: type = ptr_type %i32 [template = constants.%.7]
-// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_35.3)
+// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   br !if.expr.result.loc23(%ptr.loc23)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc23:
 // CHECK:STDOUT:   %.loc23_10: type = block_arg !if.expr.result.loc23 [template = constants.%i32]
@@ -277,18 +277,18 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc24_33: init type = call constants.%Int(%int.32.loc24_33) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc24_36.1: type = value_of_initializer %int.make_type_signed.loc24_33 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc24_36.2: type = converted %int.make_type_signed.loc24_33, %.loc24_36.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc24_36.3: type = ptr_type %i32 [template = constants.%.7]
-// CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_36.3)
+// CHECK:STDOUT:   %ptr.loc24: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   br !if.expr.result.loc24(%ptr.loc24)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc24:
-// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [template = constants.%.7]
-// CHECK:STDOUT:   %w.var: ref %.7 = var w
-// CHECK:STDOUT:   %w: ref %.7 = bind_name w, %w.var
+// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [template = constants.%ptr]
+// CHECK:STDOUT:   %w.var: ref %ptr = var w
+// CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %.loc24_40: %.7 = addr_of %v.ref
+// CHECK:STDOUT:   %.loc24_40: %ptr = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %.loc24_40
-// CHECK:STDOUT:   %w.ref: ref %.7 = name_ref w, %w
-// CHECK:STDOUT:   %.loc25_11: %.7 = bind_value %w.ref
+// CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
+// CHECK:STDOUT:   %.loc25_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc25_10.1: ref %i32 = deref %.loc25_11
 // CHECK:STDOUT:   %.loc25_10.2: %i32 = bind_value %.loc25_10.1
 // CHECK:STDOUT:   return %.loc25_10.2
@@ -333,18 +333,18 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc30: init type = call constants.%Int(%int.32.loc30) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc30_34.1: type = value_of_initializer %int.make_type_signed.loc30 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc30_34.2: type = converted %int.make_type_signed.loc30, %.loc30_34.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc30_34.3: type = ptr_type %i32 [template = constants.%.7]
-// CHECK:STDOUT:   br !if.expr.result.loc30(%.loc30_34.3)
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:   br !if.expr.result.loc30(%ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc30:
-// CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [template = constants.%.7]
-// CHECK:STDOUT:   %w.var: ref %.7 = var w
-// CHECK:STDOUT:   %w: ref %.7 = bind_name w, %w.var
+// CHECK:STDOUT:   %.loc30_10: type = block_arg !if.expr.result.loc30 [template = constants.%ptr]
+// CHECK:STDOUT:   %w.var: ref %ptr = var w
+// CHECK:STDOUT:   %w: ref %ptr = bind_name w, %w.var
 // CHECK:STDOUT:   %v.ref: ref %i32 = name_ref v, %v
-// CHECK:STDOUT:   %.loc30_38: %.7 = addr_of %v.ref
+// CHECK:STDOUT:   %.loc30_38: %ptr = addr_of %v.ref
 // CHECK:STDOUT:   assign %w.var, %.loc30_38
-// CHECK:STDOUT:   %w.ref: ref %.7 = name_ref w, %w
-// CHECK:STDOUT:   %.loc31_11: %.7 = bind_value %w.ref
+// CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
+// CHECK:STDOUT:   %.loc31_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc31_10.1: ref %i32 = deref %.loc31_11
 // CHECK:STDOUT:   %.loc31_10.2: %i32 = bind_value %.loc31_10.1
 // CHECK:STDOUT:   return %.loc31_10.2

@@ -102,7 +102,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T, %N.1) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %int.5.1: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int.32) [template]
@@ -111,7 +111,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int.5.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.5.2: %i32 = int_value 5 [template]
-// CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%.1, %int.5.2) [template]
+// CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%ptr.1, %int.5.2) [template]
 // CHECK:STDOUT:   %int.0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.0.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int.32) [template]
@@ -156,7 +156,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %int.make_type_signed, %.loc6_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_17.3: type = ptr_type %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.1]
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template = constants.%int.5.1]
 // CHECK:STDOUT:   %.loc6_21.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc6: <bound method> = bound_method %int.5, %.loc6_21.1 [template = constants.%Convert.bound.1]
@@ -164,7 +164,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int.convert_checked.loc6: init %i32 = call %Convert.specific_fn.loc6(%int.5) [template = constants.%int.5.2]
 // CHECK:STDOUT:   %.loc6_21.2: %i32 = value_of_initializer %int.convert_checked.loc6 [template = constants.%int.5.2]
 // CHECK:STDOUT:   %.loc6_21.3: %i32 = converted %int.5, %.loc6_21.2 [template = constants.%int.5.2]
-// CHECK:STDOUT:   %Class.loc6: type = class_type @Class, @Class(constants.%.1, constants.%int.5.2) [template = constants.%Class.3]
+// CHECK:STDOUT:   %Class.loc6: type = class_type @Class, @Class(constants.%ptr.1, constants.%int.5.2) [template = constants.%Class.3]
 // CHECK:STDOUT:   %a.var: ref %Class.3 = var a
 // CHECK:STDOUT:   %a: ref %Class.3 = bind_name a, %a.var
 // CHECK:STDOUT:   %Class.ref.loc9: %Class.type = name_ref Class, %Class.decl [template = constants.%Class.1]
@@ -206,9 +206,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%N.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%.1, constants.%int.5.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%.1
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%.1
+// CHECK:STDOUT: specific @Class(constants.%ptr.1, constants.%int.5.2) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.1
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%ptr.1
 // CHECK:STDOUT:   %N.loc4_23.2 => constants.%int.5.2
 // CHECK:STDOUT:   %N.patt.loc4_23.2 => constants.%int.5.2
 // CHECK:STDOUT:
@@ -240,7 +240,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T, %N) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -278,7 +278,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_17.2: type = converted %int.make_type_signed, %.loc13_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_17.3: type = ptr_type %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
@@ -323,7 +323,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%T, %N) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT: }
@@ -363,7 +363,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_17.2: type = converted %int.make_type_signed, %.loc13_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_17.3: type = ptr_type %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
@@ -411,7 +411,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -451,7 +451,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_20.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_20.2: type = converted %int.make_type_signed, %.loc15_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_20.3: type = ptr_type %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:   %.loc15_21: type = converted %int.5, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var

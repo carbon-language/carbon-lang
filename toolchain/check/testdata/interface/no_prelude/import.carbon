@@ -162,7 +162,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %ForwardDeclared.type, %F.type.2 [template]
 // CHECK:STDOUT:   %elt1.2: %F.assoc_type.2 = assoc_entity element1, imports.%import_ref.19 [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %ForwardDeclared.type [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [template]
 // CHECK:STDOUT:   %struct_type.f.1: type = struct_type {.f: %ForwardDeclared.type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -237,9 +237,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %F.ref.loc14: %F.assoc_type.2 = name_ref F, imports.%import_ref.13 [template = constants.%elt1.2]
 // CHECK:STDOUT:   %UseForwardDeclaredF: %F.assoc_type.2 = bind_alias UseForwardDeclaredF, imports.%import_ref.13 [template = constants.%elt1.2]
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %.loc16: type = ptr_type %ForwardDeclared.type [template = constants.%.1]
-// CHECK:STDOUT:   %f.var: ref %.1 = var f
-// CHECK:STDOUT:   %f: ref %.1 = bind_name f, %f.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [template = constants.%ptr]
+// CHECK:STDOUT:   %f.var: ref %ptr = var f
+// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -293,7 +293,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f.1 = name_ref f_ref, imports.%import_ref.4
 // CHECK:STDOUT:   %.loc16_33: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0
-// CHECK:STDOUT:   %.loc16_27: %.1 = addr_of %.loc16_33
+// CHECK:STDOUT:   %.loc16_27: %ptr = addr_of %.loc16_33
 // CHECK:STDOUT:   assign file.%f.var, %.loc16_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -25,7 +25,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -40,9 +40,9 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   %s.var: ref <error> = var s
 // CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.1]
-// CHECK:STDOUT:   %p.var: ref %.1 = var p
-// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template = constants.%ptr]
+// CHECK:STDOUT:   %p.var: ref %ptr = var p
+// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

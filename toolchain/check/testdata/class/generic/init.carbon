@@ -62,7 +62,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromStructSpecific.type: type = fn_type @InitFromStructSpecific [template]
 // CHECK:STDOUT:   %InitFromStructSpecific: %InitFromStructSpecific.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.3: type = class_type @Class, @Class(%i32) [template]
-// CHECK:STDOUT:   %.3: type = unbound_element_type %Class.3, %i32 [template]
+// CHECK:STDOUT:   %.2: type = unbound_element_type %Class.3, %i32 [template]
 // CHECK:STDOUT:   %struct_type.k.2: type = struct_type {.k: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.k.2 [template]
 // CHECK:STDOUT: }
@@ -199,7 +199,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %.loc14_31: init %Class.3 = converted %.loc14_30.1, %.loc14_30.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_31
 // CHECK:STDOUT:   %v.ref: ref %Class.3 = name_ref v, %v
-// CHECK:STDOUT:   %k.ref: %.3 = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
+// CHECK:STDOUT:   %k.ref: %.2 = name_ref k, @Class.%.loc5_8.1 [template = @Class.%.loc5_8.1]
 // CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
 // CHECK:STDOUT:   return %.loc15_11.2
@@ -237,7 +237,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class => constants.%Class.3
-// CHECK:STDOUT:   %.loc5_8.2 => constants.%.3
+// CHECK:STDOUT:   %.loc5_8.2 => constants.%.2
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.2
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.2
 // CHECK:STDOUT: }

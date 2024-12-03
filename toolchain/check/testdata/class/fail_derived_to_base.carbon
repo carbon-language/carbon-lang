@@ -54,17 +54,17 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2: type = class_type @A2 [template]
 // CHECK:STDOUT:   %.2: type = unbound_element_type %A2, %i32 [template]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [template]
-// CHECK:STDOUT:   %.4: type = unbound_element_type %B2, %A2 [template]
-// CHECK:STDOUT:   %.5: type = unbound_element_type %B2, %i32 [template]
+// CHECK:STDOUT:   %.3: type = unbound_element_type %B2, %A2 [template]
+// CHECK:STDOUT:   %.4: type = unbound_element_type %B2, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.b.1: type = struct_type {.base: %A2, .b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.b.1 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %B2 [template]
-// CHECK:STDOUT:   %.7: type = ptr_type %A1 [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %B2 [template]
+// CHECK:STDOUT:   %ptr.3: type = ptr_type %A1 [template]
 // CHECK:STDOUT:   %ConvertUnrelated.type: type = fn_type @ConvertUnrelated [template]
 // CHECK:STDOUT:   %ConvertUnrelated: %ConvertUnrelated.type = struct_value () [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
-// CHECK:STDOUT:   %.14: type = ptr_type %Incomplete [template]
-// CHECK:STDOUT:   %.15: type = ptr_type %A2 [template]
+// CHECK:STDOUT:   %ptr.6: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %ptr.7: type = ptr_type %A2 [template]
 // CHECK:STDOUT:   %ConvertIncomplete.type: type = fn_type @ConvertIncomplete [template]
 // CHECK:STDOUT:   %ConvertIncomplete: %ConvertIncomplete.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -93,35 +93,35 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2.decl: type = class_decl @A2 [template = constants.%A2] {} {}
 // CHECK:STDOUT:   %B2.decl: type = class_decl @B2 [template = constants.%B2] {} {}
 // CHECK:STDOUT:   %ConvertUnrelated.decl: %ConvertUnrelated.type = fn_decl @ConvertUnrelated [template = constants.%ConvertUnrelated] {
-// CHECK:STDOUT:     %p.patt: %.6 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.6 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.7 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.7 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.2 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.2 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.3 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.3 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
-// CHECK:STDOUT:     %.loc31_26: type = ptr_type %B2 [template = constants.%.6]
+// CHECK:STDOUT:     %ptr.loc31_26: type = ptr_type %B2 [template = constants.%ptr.2]
 // CHECK:STDOUT:     %A1.ref: type = name_ref A1, file.%A1.decl [template = constants.%A1]
-// CHECK:STDOUT:     %.loc31_34: type = ptr_type %A1 [template = constants.%.7]
-// CHECK:STDOUT:     %p.param: %.6 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.6 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.7 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.7 = return_slot %return.param
+// CHECK:STDOUT:     %ptr.loc31_34: type = ptr_type %A1 [template = constants.%ptr.3]
+// CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.3 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.3 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %ConvertIncomplete.decl: %ConvertIncomplete.type = fn_decl @ConvertIncomplete [template = constants.%ConvertIncomplete] {
-// CHECK:STDOUT:     %p.patt: %.14 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.14 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.15 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.15 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.6 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.6 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.7 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.7 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc41_35: type = ptr_type %Incomplete [template = constants.%.14]
+// CHECK:STDOUT:     %ptr.loc41_35: type = ptr_type %Incomplete [template = constants.%ptr.6]
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %.loc41_43: type = ptr_type %A2 [template = constants.%.15]
-// CHECK:STDOUT:     %p.param: %.14 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.14 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.15 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.15 = return_slot %return.param
+// CHECK:STDOUT:     %ptr.loc41_43: type = ptr_type %A2 [template = constants.%ptr.7]
+// CHECK:STDOUT:     %p.param: %ptr.6 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %ptr.6 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.7 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.7 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,12 +155,12 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:   %.loc20: %.4 = base_decl %A2.ref, element0 [template]
+// CHECK:STDOUT:   %.loc20: %.3 = base_decl %A2.ref, element0 [template]
 // CHECK:STDOUT:   %int.32: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int.32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_signed, %.loc21_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8: %.5 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc21_8: %.4 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -173,17 +173,17 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertUnrelated(%p.param_patt: %.6) -> %.7 {
+// CHECK:STDOUT: fn @ConvertUnrelated(%p.param_patt: %ptr.2) -> %ptr.3 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.6 = name_ref p, %p
-// CHECK:STDOUT:   %.loc31_46: %.7 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
+// CHECK:STDOUT:   %.loc31_46: %ptr.3 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %.14) -> %.15 {
+// CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %ptr.6) -> %ptr.7 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.14 = name_ref p, %p
-// CHECK:STDOUT:   %.loc41_55: %.15 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %p.ref: %ptr.6 = name_ref p, %p
+// CHECK:STDOUT:   %.loc41_55: %ptr.7 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

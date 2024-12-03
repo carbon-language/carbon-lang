@@ -114,31 +114,31 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfLiteral.type: type = fn_type @AddressOfLiteral [template]
 // CHECK:STDOUT:   %AddressOfLiteral: %AddressOfLiteral.type = struct_value () [template]
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %.1: type = ptr_type Core.IntLiteral [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal true [template]
-// CHECK:STDOUT:   %.3: type = ptr_type bool [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %.5: type = ptr_type f64 [template]
-// CHECK:STDOUT:   %.6: type = ptr_type String [template]
-// CHECK:STDOUT:   %.7: String = string_literal "Hello" [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type Core.IntLiteral [template]
+// CHECK:STDOUT:   %.1: bool = bool_literal true [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type bool [template]
+// CHECK:STDOUT:   %.2: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %ptr.3: type = ptr_type f64 [template]
+// CHECK:STDOUT:   %ptr.4: type = ptr_type String [template]
+// CHECK:STDOUT:   %.3: String = string_literal "Hello" [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
-// CHECK:STDOUT:   %.8: type = ptr_type %tuple.type [template]
+// CHECK:STDOUT:   %ptr.5: type = ptr_type %tuple.type [template]
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %struct_type.a.2: type = struct_type {.a: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %.9: type = ptr_type %struct_type.a.2 [template]
+// CHECK:STDOUT:   %ptr.6: type = ptr_type %struct_type.a.2 [template]
 // CHECK:STDOUT:   %AddressOfOperator.type: type = fn_type @AddressOfOperator [template]
 // CHECK:STDOUT:   %AddressOfOperator: %AddressOfOperator.type = struct_value () [template]
-// CHECK:STDOUT:   %.10: bool = bool_literal false [template]
-// CHECK:STDOUT:   %.11: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %.4: bool = bool_literal false [template]
+// CHECK:STDOUT:   %ptr.7: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %AddressOfCall.type: type = fn_type @AddressOfCall [template]
 // CHECK:STDOUT:   %AddressOfCall: %AddressOfCall.type = struct_value () [template]
 // CHECK:STDOUT:   %AddressOfType.type: type = fn_type @AddressOfType [template]
 // CHECK:STDOUT:   %AddressOfType: %AddressOfType.type = struct_value () [template]
-// CHECK:STDOUT:   %.12: type = ptr_type type [template]
-// CHECK:STDOUT:   %.13: type = const_type %i32 [template]
-// CHECK:STDOUT:   %.14: type = ptr_type %.13 [template]
+// CHECK:STDOUT:   %ptr.8: type = ptr_type type [template]
+// CHECK:STDOUT:   %.5: type = const_type %i32 [template]
+// CHECK:STDOUT:   %ptr.9: type = ptr_type %.5 [template]
 // CHECK:STDOUT:   %AddressOfTupleElementValue.type: type = fn_type @AddressOfTupleElementValue [template]
 // CHECK:STDOUT:   %AddressOfTupleElementValue: %AddressOfTupleElementValue.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int.1, %int.2) [template]
@@ -215,45 +215,45 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfLiteral() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
-// CHECK:STDOUT:   %.loc20: %.1 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc25_4: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc25_3: %.3 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc30_4: f64 = float_literal 1 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc30_3: %.5 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc35_4: String = string_literal "Hello" [template = constants.%.7]
-// CHECK:STDOUT:   %.loc35_3: %.6 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20: %ptr.1 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc25_4: bool = bool_literal true [template = constants.%.1]
+// CHECK:STDOUT:   %.loc25_3: %ptr.2 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc30_4: f64 = float_literal 1 [template = constants.%.2]
+// CHECK:STDOUT:   %.loc30_3: %ptr.3 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc35_4: String = string_literal "Hello" [template = constants.%.3]
+// CHECK:STDOUT:   %.loc35_3: %ptr.4 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template = constants.%int.1]
 // CHECK:STDOUT:   %int.2: Core.IntLiteral = int_value 2 [template = constants.%int.2]
 // CHECK:STDOUT:   %.loc40_9: %tuple.type = tuple_literal (%int.1, %int.2)
-// CHECK:STDOUT:   %.loc40_3: %.8 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc40_3: %ptr.5 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %int.5: Core.IntLiteral = int_value 5 [template = constants.%int.5]
 // CHECK:STDOUT:   %.loc45_11: %struct_type.a.2 = struct_literal (%int.5)
-// CHECK:STDOUT:   %.loc45_3: %.9 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc45_3: %ptr.6 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfOperator() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc53_5: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc53_10.1: bool = bool_literal false [template = constants.%.10]
+// CHECK:STDOUT:   %.loc53_5: bool = bool_literal true [template = constants.%.1]
+// CHECK:STDOUT:   %.loc53_10.1: bool = bool_literal false [template = constants.%.4]
 // CHECK:STDOUT:   if %.loc53_5 br !and.rhs else br !and.result(%.loc53_10.1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %.loc53_14: bool = bool_literal false [template = constants.%.10]
+// CHECK:STDOUT:   %.loc53_14: bool = bool_literal false [template = constants.%.4]
 // CHECK:STDOUT:   br !and.result(%.loc53_14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc53_10.2: bool = block_arg !and.result [template = constants.%.10]
-// CHECK:STDOUT:   %.loc53_3: %.3 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc53_10.2: bool = block_arg !and.result [template = constants.%.4]
+// CHECK:STDOUT:   %.loc53_3: %ptr.2 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
 // CHECK:STDOUT:   %H.call: init %struct_type.a.1 = call %H.ref()
 // CHECK:STDOUT:   %.loc58_6.1: ref %struct_type.a.1 = temporary_storage
 // CHECK:STDOUT:   %.loc58_6.2: ref %struct_type.a.1 = temporary %.loc58_6.1, %H.call
 // CHECK:STDOUT:   %.loc58_7: ref %i32 = struct_access %.loc58_6.2, element0
-// CHECK:STDOUT:   %.loc58_3: %.11 = addr_of <error> [template = <error>]
-// CHECK:STDOUT:   %.loc63_9: bool = bool_literal true [template = constants.%.2]
-// CHECK:STDOUT:   %.loc63_5: bool = not %.loc63_9 [template = constants.%.10]
-// CHECK:STDOUT:   %.loc63_3: %.3 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc58_3: %ptr.7 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc63_9: bool = bool_literal true [template = constants.%.1]
+// CHECK:STDOUT:   %.loc63_5: bool = not %.loc63_9 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc63_3: %ptr.2 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -261,7 +261,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [template = constants.%G]
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.ref()
-// CHECK:STDOUT:   %.loc71: %.11 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc71: %ptr.7 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,14 +269,14 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int.32.loc79: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc79: init type = call constants.%Int(%int.32.loc79) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc79: %.12 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc79: %ptr.8 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %int.32.loc84: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc84: init type = call constants.%Int(%int.32.loc84) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc84_5.1: type = value_of_initializer %int.make_type_signed.loc84 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc84_5.2: type = converted %int.make_type_signed.loc84, %.loc84_5.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc84_5.3: type = const_type %i32 [template = constants.%.13]
-// CHECK:STDOUT:   %.loc84_14: type = ptr_type %.13 [template = constants.%.14]
-// CHECK:STDOUT:   %.loc84_3: %.12 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc84_5.3: type = const_type %i32 [template = constants.%.5]
+// CHECK:STDOUT:   %ptr: type = ptr_type %.5 [template = constants.%ptr.9]
+// CHECK:STDOUT:   %.loc84_3: %ptr.8 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -289,7 +289,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int.1, %int.2) [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_10.2: %tuple.type = converted %.loc92_10.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %.loc92_11: Core.IntLiteral = tuple_access %.loc92_10.2, element0 [template = constants.%int.1]
-// CHECK:STDOUT:   %.loc92_3: %.1 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc92_3: %ptr.1 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -299,11 +299,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %int.make_type_signed.loc99: init type = call constants.%Int(%int.32.loc99) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_signed.loc99 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc99_22.2: type = converted %int.make_type_signed.loc99, %.loc99_22.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc99_22.3: type = ptr_type %i32 [template = constants.%.11]
-// CHECK:STDOUT:   %param_addr.var: ref %.11 = var param_addr
-// CHECK:STDOUT:   %param_addr: ref %.11 = bind_name param_addr, %param_addr.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.7]
+// CHECK:STDOUT:   %param_addr.var: ref %ptr.7 = var param_addr
+// CHECK:STDOUT:   %param_addr: ref %ptr.7 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param
-// CHECK:STDOUT:   %.loc99_26: %.11 = addr_of <error> [template = <error>]
+// CHECK:STDOUT:   %.loc99_26: %ptr.7 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %.loc99_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

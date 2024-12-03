@@ -24,8 +24,8 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %.1: type = const_type %i32 [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %.1 [template]
-// CHECK:STDOUT:   %.3: type = ptr_type %.2 [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %.1 [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %ptr.1 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -45,36 +45,36 @@ fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %.3 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %.3 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.3 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.2 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.2 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int.32.loc15_15: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_15: init type = call constants.%Int(%int.32.loc15_15) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_9.1: type = value_of_initializer %int.make_type_signed.loc15_15 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_9.2: type = converted %int.make_type_signed.loc15_15, %.loc15_9.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_9.3: type = const_type %i32 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_18: type = ptr_type %.1 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_19: type = ptr_type %.2 [template = constants.%.3]
+// CHECK:STDOUT:     %ptr.loc15_18: type = ptr_type %.1 [template = constants.%ptr.1]
+// CHECK:STDOUT:     %ptr.loc15_19: type = ptr_type %ptr.1 [template = constants.%ptr.2]
 // CHECK:STDOUT:     %int.32.loc15_38: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_38: init type = call constants.%Int(%int.32.loc15_38) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_32.1: type = value_of_initializer %int.make_type_signed.loc15_38 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_32.2: type = converted %int.make_type_signed.loc15_38, %.loc15_32.1 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_32.3: type = const_type %i32 [template = constants.%.1]
 // CHECK:STDOUT:     %.loc15_25: type = const_type %.1 [template = constants.%.1]
-// CHECK:STDOUT:     %.loc15_42: type = ptr_type %.1 [template = constants.%.2]
-// CHECK:STDOUT:     %.loc15_43: type = ptr_type %.2 [template = constants.%.3]
-// CHECK:STDOUT:     %p.param: %.3 = value_param runtime_param0
-// CHECK:STDOUT:     %p: %.3 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %.3 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %.3 = return_slot %return.param
+// CHECK:STDOUT:     %ptr.loc15_42: type = ptr_type %.1 [template = constants.%ptr.1]
+// CHECK:STDOUT:     %ptr.loc15_43: type = ptr_type %ptr.1 [template = constants.%ptr.2]
+// CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
+// CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.2 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param_patt: %.3) -> %.3 {
+// CHECK:STDOUT: fn @F(%p.param_patt: %ptr.2) -> %ptr.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %.3 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

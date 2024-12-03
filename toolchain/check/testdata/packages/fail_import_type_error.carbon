@@ -73,7 +73,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var c_ref
 // CHECK:STDOUT:   %c_ref: ref <error> = bind_name c_ref, %c_ref.var
 // CHECK:STDOUT:   %x.ref.loc22: <error> = name_ref x, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc22: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %d_ref.var: ref <error> = var d_ref
 // CHECK:STDOUT:   %d_ref: ref <error> = bind_name d_ref, %d_ref.var
 // CHECK:STDOUT: }

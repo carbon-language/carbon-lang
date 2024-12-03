@@ -74,7 +74,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.4: type = class_type @A, @A(%W) [symbolic]
 // CHECK:STDOUT:   %TestGeneric.type: type = fn_type @TestGeneric [template]
 // CHECK:STDOUT:   %TestGeneric: %TestGeneric.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = unbound_element_type %A.4, %W [symbolic]
+// CHECK:STDOUT:   %.5: type = unbound_element_type %A.4, %W [symbolic]
 // CHECK:STDOUT:   %struct_type.n.3: type = struct_type {.n: %W} [symbolic]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n.3 [symbolic]
 // CHECK:STDOUT:   %I.type.4: type = facet_type <@I, @I(%W)> [symbolic]
@@ -89,7 +89,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.5: type = class_type @A, @A(%empty_struct_type) [template]
 // CHECK:STDOUT:   %TestSpecific.type: type = fn_type @TestSpecific [template]
 // CHECK:STDOUT:   %TestSpecific: %TestSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %.8: type = unbound_element_type %A.5, %empty_struct_type [template]
+// CHECK:STDOUT:   %.6: type = unbound_element_type %A.5, %empty_struct_type [template]
 // CHECK:STDOUT:   %struct_type.n.4: type = struct_type {.n: %empty_struct_type} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.n.4 [template]
 // CHECK:STDOUT:   %I.type.5: type = facet_type <@I, @I(%empty_struct_type)> [template]
@@ -454,7 +454,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.4
-// CHECK:STDOUT:   %.loc3_8.2 => constants.%.6
+// CHECK:STDOUT:   %.loc3_8.2 => constants.%.5
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.3
 // CHECK:STDOUT:   %complete_type.loc4_1.2 => constants.%complete_type.3
 // CHECK:STDOUT: }
@@ -500,7 +500,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A => constants.%A.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc12_16.3 => constants.%.6
+// CHECK:STDOUT:   %.loc12_16.3 => constants.%.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(@TestGeneric.%W.loc16_16.2) {
@@ -521,7 +521,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.5
-// CHECK:STDOUT:   %.loc3_8.2 => constants.%.8
+// CHECK:STDOUT:   %.loc3_8.2 => constants.%.6
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.4
 // CHECK:STDOUT:   %complete_type.loc4_1.2 => constants.%complete_type.4
 // CHECK:STDOUT: }
@@ -556,6 +556,6 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A => constants.%A.5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc12_16.3 => constants.%.8
+// CHECK:STDOUT:   %.loc12_16.3 => constants.%.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

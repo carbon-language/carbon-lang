@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %struct_type.a.b.1 [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %struct_type.a.b.1 [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int.2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
@@ -45,7 +45,7 @@ fn F() {
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int.32) [template]
 // CHECK:STDOUT:   %int.2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%int.1.2, %int.2.2) [template]
-// CHECK:STDOUT:   %.6: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
@@ -113,33 +113,33 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_24.1: type = value_of_initializer %int.make_type_signed.loc14_24 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc14_24.2: type = converted %int.make_type_signed.loc14_24, %.loc14_24.1 [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
-// CHECK:STDOUT:   %.loc14_28: type = ptr_type %struct_type.a.b.1 [template = constants.%.1]
-// CHECK:STDOUT:   %p.var: ref %.1 = var p
-// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
+// CHECK:STDOUT:   %ptr.loc14: type = ptr_type %struct_type.a.b.1 [template = constants.%ptr.1]
+// CHECK:STDOUT:   %p.var: ref %ptr.1 = var p
+// CHECK:STDOUT:   %p: ref %ptr.1 = bind_name p, %p.var
 // CHECK:STDOUT:   %s.ref.loc14: ref %struct_type.a.b.1 = name_ref s, %s
-// CHECK:STDOUT:   %.loc14_32: %.1 = addr_of %s.ref.loc14
+// CHECK:STDOUT:   %.loc14_32: %ptr.1 = addr_of %s.ref.loc14
 // CHECK:STDOUT:   assign %p.var, %.loc14_32
 // CHECK:STDOUT:   %int.32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%int.32.loc15) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_13.1: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc15_13.2: type = converted %int.make_type_signed.loc15, %.loc15_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_13.3: type = ptr_type %i32 [template = constants.%.6]
-// CHECK:STDOUT:   %q.var: ref %.6 = var q
-// CHECK:STDOUT:   %q: ref %.6 = bind_name q, %q.var
+// CHECK:STDOUT:   %ptr.loc15: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %q.var: ref %ptr.2 = var q
+// CHECK:STDOUT:   %q: ref %ptr.2 = bind_name q, %q.var
 // CHECK:STDOUT:   %s.ref.loc15: ref %struct_type.a.b.1 = name_ref s, %s
 // CHECK:STDOUT:   %.loc15_19: ref %i32 = struct_access %s.ref.loc15, element0
-// CHECK:STDOUT:   %.loc15_17: %.6 = addr_of %.loc15_19
+// CHECK:STDOUT:   %.loc15_17: %ptr.2 = addr_of %.loc15_19
 // CHECK:STDOUT:   assign %q.var, %.loc15_17
 // CHECK:STDOUT:   %int.32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int.32.loc16) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_13.1: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_13.2: type = converted %int.make_type_signed.loc16, %.loc16_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_13.3: type = ptr_type %i32 [template = constants.%.6]
-// CHECK:STDOUT:   %r.var: ref %.6 = var r
-// CHECK:STDOUT:   %r: ref %.6 = bind_name r, %r.var
+// CHECK:STDOUT:   %ptr.loc16: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %r.var: ref %ptr.2 = var r
+// CHECK:STDOUT:   %r: ref %ptr.2 = bind_name r, %r.var
 // CHECK:STDOUT:   %s.ref.loc16: ref %struct_type.a.b.1 = name_ref s, %s
 // CHECK:STDOUT:   %.loc16_19: ref %i32 = struct_access %s.ref.loc16, element1
-// CHECK:STDOUT:   %.loc16_17: %.6 = addr_of %.loc16_19
+// CHECK:STDOUT:   %.loc16_17: %ptr.2 = addr_of %.loc16_19
 // CHECK:STDOUT:   assign %r.var, %.loc16_17
 // CHECK:STDOUT:   %int.32.loc18_11: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc18_11: init type = call constants.%Int(%int.32.loc18_11) [template = constants.%i32]
@@ -177,25 +177,25 @@ fn F() {
 // CHECK:STDOUT:   %int.make_type_signed.loc19: init type = call constants.%Int(%int.32.loc19) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_14.1: type = value_of_initializer %int.make_type_signed.loc19 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc19_14.2: type = converted %int.make_type_signed.loc19, %.loc19_14.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc19_14.3: type = ptr_type %i32 [template = constants.%.6]
-// CHECK:STDOUT:   %t0.var: ref %.6 = var t0
-// CHECK:STDOUT:   %t0: ref %.6 = bind_name t0, %t0.var
+// CHECK:STDOUT:   %ptr.loc19: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %t0.var: ref %ptr.2 = var t0
+// CHECK:STDOUT:   %t0: ref %ptr.2 = bind_name t0, %t0.var
 // CHECK:STDOUT:   %t.ref.loc19: ref %tuple.type.2 = name_ref t, %t
 // CHECK:STDOUT:   %int.0: Core.IntLiteral = int_value 0 [template = constants.%int.0]
 // CHECK:STDOUT:   %.loc19_20: ref %i32 = tuple_access %t.ref.loc19, element0
-// CHECK:STDOUT:   %.loc19_18: %.6 = addr_of %.loc19_20
+// CHECK:STDOUT:   %.loc19_18: %ptr.2 = addr_of %.loc19_20
 // CHECK:STDOUT:   assign %t0.var, %.loc19_18
 // CHECK:STDOUT:   %int.32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int.32]
 // CHECK:STDOUT:   %int.make_type_signed.loc20: init type = call constants.%Int(%int.32.loc20) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_14.1: type = value_of_initializer %int.make_type_signed.loc20 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc20_14.2: type = converted %int.make_type_signed.loc20, %.loc20_14.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc20_14.3: type = ptr_type %i32 [template = constants.%.6]
-// CHECK:STDOUT:   %t1.var: ref %.6 = var t1
-// CHECK:STDOUT:   %t1: ref %.6 = bind_name t1, %t1.var
+// CHECK:STDOUT:   %ptr.loc20: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %t1.var: ref %ptr.2 = var t1
+// CHECK:STDOUT:   %t1: ref %ptr.2 = bind_name t1, %t1.var
 // CHECK:STDOUT:   %t.ref.loc20: ref %tuple.type.2 = name_ref t, %t
 // CHECK:STDOUT:   %int.1.loc20: Core.IntLiteral = int_value 1 [template = constants.%int.1.1]
 // CHECK:STDOUT:   %.loc20_20: ref %i32 = tuple_access %t.ref.loc20, element1
-// CHECK:STDOUT:   %.loc20_18: %.6 = addr_of %.loc20_20
+// CHECK:STDOUT:   %.loc20_18: %ptr.2 = addr_of %.loc20_20
 // CHECK:STDOUT:   assign %t1.var, %.loc20_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

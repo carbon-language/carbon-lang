@@ -30,7 +30,7 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %Incomplete) [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT:   %int.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,9 +61,9 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %t.var: ref <error> = var t
 // CHECK:STDOUT:   %t: ref <error> = bind_name t, %t.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.1]
-// CHECK:STDOUT:   %p.var: ref %.1 = var p
-// CHECK:STDOUT:   %p: ref %.1 = bind_name p, %p.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template = constants.%ptr]
+// CHECK:STDOUT:   %p.var: ref %ptr = var p
+// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

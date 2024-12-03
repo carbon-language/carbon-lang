@@ -70,7 +70,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:     %.loc14_24.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_24.1 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc14_24.3: Core.IntLiteral = converted %N.ref, %.loc14_24.2 [symbolic = %int.convert_checked.loc14_24.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc14_25: type = array_type %.loc14_24.3, %i32 [template = <error>]
-// CHECK:STDOUT:     %.loc14_26: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc14_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc14_6.2 (constants.%N.1)]
 // CHECK:STDOUT:     %a.param: <error> = value_param runtime_param0
