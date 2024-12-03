@@ -251,10 +251,17 @@ class Derived {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
+<<<<<<< HEAD
 // CHECK:STDOUT:   %ptr.1: type = ptr_type <vtable> [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.1} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+||||||| parent of f382ad095 (Progress)
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+=======
+// CHECK:STDOUT:   %.1: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5: type = struct_type {} [template]
+>>>>>>> f382ad095 (Progress)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -298,8 +305,18 @@ class Derived {
 // CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   vptr_init
+<<<<<<< HEAD
 // CHECK:STDOUT:   %.loc7_28.2: init %Base = class_init (<unexpected>.inst+25.loc7_28), %v.var
 // CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.2
+||||||| parent of f382ad095 (Progress)
+// CHECK:STDOUT:   %.loc7_28.2: init %Base = class_init (<unexpected>.inst+24.loc7_28), %v.var
+// CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.2
+=======
+// CHECK:STDOUT:   %.loc7_28.2: init %.1 = initialize_from <unexpected>.inst+24.loc7_28 to %.loc7_28.3
+// CHECK:STDOUT:   %.loc7_28.3: ref %.1 = class_element_access %v.var, element0
+// CHECK:STDOUT:   %.loc7_28.4: init %Base = class_init (%.loc7_28.2), %v.var
+// CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.4
+>>>>>>> f382ad095 (Progress)
 // CHECK:STDOUT:   assign %v.var, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -595,14 +612,28 @@ class Derived {
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.1 = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
 // CHECK:STDOUT:   vptr_init
+// CHECK:STDOUT:   %.loc14_35.2: init %.3 = initialize_from <unexpected>.inst+356.loc14_35 to %.loc14_35.3
 // CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
-// CHECK:STDOUT:   %.loc14_35.2: ref %i32 = class_element_access %b1.var, element2
-// CHECK:STDOUT:   %.loc14_35.3: init %i32 = initialize_from %.loc14_34 to %.loc14_35.2
+// CHECK:STDOUT:   %.loc14_35.3: ref %.3 = class_element_access %b1.var, element0
+// CHECK:STDOUT:   %.loc14_35.4: ref %i32 = class_element_access %b1.var, element2
+// CHECK:STDOUT:   %.loc14_35.5: init %i32 = initialize_from %.loc14_34 to %.loc14_35.4
 // CHECK:STDOUT:   %.loc14_25: %i32 = bind_value %i.ref.loc14_25
+<<<<<<< HEAD
 // CHECK:STDOUT:   %.loc14_35.4: ref %i32 = class_element_access %b1.var, element1
 // CHECK:STDOUT:   %.loc14_35.5: init %i32 = initialize_from %.loc14_25 to %.loc14_35.4
 // CHECK:STDOUT:   %.loc14_35.6: init %Base = class_init (<unexpected>.inst+341.loc14_35, %.loc14_35.3, %.loc14_35.5), %b1.var
 // CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.6
+||||||| parent of f382ad095 (Progress)
+// CHECK:STDOUT:   %.loc14_35.4: ref %i32 = class_element_access %b1.var, element1
+// CHECK:STDOUT:   %.loc14_35.5: init %i32 = initialize_from %.loc14_25 to %.loc14_35.4
+// CHECK:STDOUT:   %.loc14_35.6: init %Base = class_init (<unexpected>.inst+356.loc14_35, %.loc14_35.3, %.loc14_35.5), %b1.var
+// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.6
+=======
+// CHECK:STDOUT:   %.loc14_35.6: ref %i32 = class_element_access %b1.var, element1
+// CHECK:STDOUT:   %.loc14_35.7: init %i32 = initialize_from %.loc14_25 to %.loc14_35.6
+// CHECK:STDOUT:   %.loc14_35.8: init %Base = class_init (%.loc14_35.2, %.loc14_35.5, %.loc14_35.7), %b1.var
+// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.8
+>>>>>>> f382ad095 (Progress)
 // CHECK:STDOUT:   assign %b1.var, %.loc14_36
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b2.var: ref %Base = var b2
@@ -611,6 +642,7 @@ class Derived {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.2 = struct_literal (%int_3.loc15, %int_5)
 // CHECK:STDOUT:   vptr_init
+<<<<<<< HEAD
 // CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_35.1: <specific function> = specific_function %Convert.bound.loc15_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
@@ -627,6 +659,43 @@ class Derived {
 // CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc15_35.8: init %Base = class_init (<unexpected>.inst+359.loc15_35, %.loc15_35.4, %.loc15_35.7), %b2.var
 // CHECK:STDOUT:   %.loc15_36: init %Base = converted %.loc15_35.1, %.loc15_35.8
+||||||| parent of f382ad095 (Progress)
+// CHECK:STDOUT:   %.loc15_35.2: %Convert.type.2 = interface_witness_access constants.%.30, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_35.3: <bound method> = bound_method %.loc15_34, %.loc15_35.2 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc15_35.4: <specific function> = specific_function %.loc15_35.3, @Convert.2(constants.%.1) [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %.loc15_35.4(%.loc15_34) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %.loc15_34, %int.convert_checked.loc15_35.1 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
+// CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.8: %Convert.type.2 = interface_witness_access constants.%.30, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_35.9: <bound method> = bound_method %.loc15_25, %.loc15_35.8 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc15_35.10: <specific function> = specific_function %.loc15_35.9, @Convert.2(constants.%.1) [template = constants.%.32]
+// CHECK:STDOUT:   %int.convert_checked.loc15_35.2: init %i32 = call %.loc15_35.10(%.loc15_25) [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.11: init %i32 = converted %.loc15_25, %int.convert_checked.loc15_35.2 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.12: ref %i32 = class_element_access %b2.var, element1
+// CHECK:STDOUT:   %.loc15_35.13: init %i32 = initialize_from %.loc15_35.11 to %.loc15_35.12 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.14: init %Base = class_init (<unexpected>.inst+374.loc15_35, %.loc15_35.7, %.loc15_35.13), %b2.var
+// CHECK:STDOUT:   %.loc15_36: init %Base = converted %.loc15_35.1, %.loc15_35.14
+=======
+// CHECK:STDOUT:   %.loc15_35.2: init %.3 = initialize_from <unexpected>.inst+376.loc15_35 to %.loc15_35.7
+// CHECK:STDOUT:   %.loc15_35.3: %Convert.type.2 = interface_witness_access constants.%.30, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_35.4: <bound method> = bound_method %.loc15_34, %.loc15_35.3 [template = constants.%.38]
+// CHECK:STDOUT:   %.loc15_35.5: <specific function> = specific_function %.loc15_35.4, @Convert.2(constants.%.1) [template = constants.%.39]
+// CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %.loc15_35.5(%.loc15_34) [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.6: init %i32 = converted %.loc15_34, %int.convert_checked.loc15_35.1 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.7: ref %.3 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc15_35.8: ref %i32 = class_element_access %b2.var, element2
+// CHECK:STDOUT:   %.loc15_35.9: init %i32 = initialize_from %.loc15_35.6 to %.loc15_35.8 [template = constants.%.40]
+// CHECK:STDOUT:   %.loc15_35.10: %Convert.type.2 = interface_witness_access constants.%.30, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc15_35.11: <bound method> = bound_method %.loc15_25, %.loc15_35.10 [template = constants.%.31]
+// CHECK:STDOUT:   %.loc15_35.12: <specific function> = specific_function %.loc15_35.11, @Convert.2(constants.%.1) [template = constants.%.32]
+// CHECK:STDOUT:   %int.convert_checked.loc15_35.2: init %i32 = call %.loc15_35.12(%.loc15_25) [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.13: init %i32 = converted %.loc15_25, %int.convert_checked.loc15_35.2 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.14: ref %i32 = class_element_access %b2.var, element1
+// CHECK:STDOUT:   %.loc15_35.15: init %i32 = initialize_from %.loc15_35.13 to %.loc15_35.14 [template = constants.%.33]
+// CHECK:STDOUT:   %.loc15_35.16: init %Base = class_init (%.loc15_35.2, %.loc15_35.9, %.loc15_35.15), %b2.var
+// CHECK:STDOUT:   %.loc15_36: init %Base = converted %.loc15_35.1, %.loc15_35.16
+>>>>>>> f382ad095 (Progress)
 // CHECK:STDOUT:   assign %b2.var, %.loc15_36
 // CHECK:STDOUT:   %b1.ref: ref %Base = name_ref b1, %b1
 // CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6_9 [template = @Base.%.loc6_9]

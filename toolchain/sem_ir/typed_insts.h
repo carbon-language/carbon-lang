@@ -1467,6 +1467,7 @@ struct VtableType {
 struct VptrInit {
   static constexpr auto Kind =
       InstKind::VptrInit.Define<Parse::NodeId>({.ir_name = "vptr_init"});
+  TypeId type_id;
 };
 
 // An `expr where requirements` expression.

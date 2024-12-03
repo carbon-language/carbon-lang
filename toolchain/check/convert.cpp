@@ -461,8 +461,18 @@ static auto ConvertStructToStructOrClass(Context& context,
                             dest_elem_fields.size()});
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
-      // TODO: Initialize the vptr to point to a vtable.
-      new_block.Set(i, context.AddInst<SemIR::VptrInit>(value_loc_id, {}));
+      CARBON_CHECK(ToClass, "Only classes should have vptrs.");
+      auto dest_id = context.AddInst<SemIR::ClassElementAccess>(
+          value_loc_id, {.type_id = dest_field.type_id,
+                         .base_id = target.init_id,
+                         .index = SemIR::ElementIndex(i)});
+      auto vptr_init_id = context.AddInst<SemIR::VptrInit>(
+          value_loc_id, {.type_id = dest_field.type_id});
+      auto init_id = context.AddInst<SemIR::InitializeFrom>(
+          value_loc_id, {.type_id = dest_field.type_id,
+                         .src_id = vptr_init_id,
+                         .dest_id = dest_id});
+      new_block.Set(i, init_id);
       continue;
     }
 
