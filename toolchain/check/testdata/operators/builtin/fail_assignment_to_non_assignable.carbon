@@ -233,13 +233,17 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc49:
 // CHECK:STDOUT:   %.loc49_17: Core.IntLiteral = int_value 1 [template = constants.%.2]
-// CHECK:STDOUT:   %.loc49_12.1: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc49_12.2: <bound method> = bound_method %.loc49_17, %.loc49_12.1 [template = constants.%.28]
-// CHECK:STDOUT:   %.loc49_12.3: <specific function> = specific_function %.loc49_12.2, @Convert.2(constants.%.1) [template = constants.%.29]
-// CHECK:STDOUT:   %int.convert_checked.loc49_12: init %i32 = call %.loc49_12.3(%.loc49_17) [template = constants.%.30]
-// CHECK:STDOUT:   %.loc49_12.4: %i32 = value_of_initializer %int.convert_checked.loc49_12 [template = constants.%.30]
-// CHECK:STDOUT:   %.loc49_12.5: %i32 = converted %.loc49_17, %.loc49_12.4 [template = constants.%.30]
-// CHECK:STDOUT:   br !if.expr.result.loc49(%.loc49_12.5)
+// CHECK:STDOUT:   %.loc49_12.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc49: init type = call constants.%Int(%.loc49_12.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc49_12.2: type = value_of_initializer %int.make_type_signed.loc49 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc49_12.3: type = converted %int.make_type_signed.loc49, %.loc49_12.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc49_12.4: %Convert.type.2 = interface_witness_access constants.%.27, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %.loc49_12.5: <bound method> = bound_method %.loc49_17, %.loc49_12.4 [template = constants.%.28]
+// CHECK:STDOUT:   %.loc49_12.6: <specific function> = specific_function %.loc49_12.5, @Convert.2(constants.%.1) [template = constants.%.29]
+// CHECK:STDOUT:   %int.convert_checked.loc49_12: init %i32 = call %.loc49_12.6(%.loc49_17) [template = constants.%.30]
+// CHECK:STDOUT:   %.loc49_12.7: %i32 = value_of_initializer %int.convert_checked.loc49_12 [template = constants.%.30]
+// CHECK:STDOUT:   %.loc49_12.8: %i32 = converted %.loc49_17, %.loc49_12.7 [template = constants.%.30]
+// CHECK:STDOUT:   br !if.expr.result.loc49(%.loc49_12.8)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc49:
 // CHECK:STDOUT:   %.loc49_24: Core.IntLiteral = int_value 2 [template = constants.%.3]

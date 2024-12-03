@@ -111,6 +111,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %.7: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.7 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.7) [template]
@@ -132,7 +134,8 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -195,16 +198,20 @@ fn G() -> C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
 // CHECK:STDOUT:     %.loc6_43.1: Core.IntLiteral = int_value 0 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc6_44.1: Core.IntLiteral = int_value 32 [template = constants.%.7]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc6_44.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_44.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_44.3: type = converted %int.make_type_signed, %.loc6_44.2 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_43.2: %Convert.type.2 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:     %.loc6_43.3: <bound method> = bound_method %.loc6_43.1, %.loc6_43.2 [template = constants.%.32]
 // CHECK:STDOUT:     %.loc6_43.4: <specific function> = specific_function %.loc6_43.3, @Convert.2(constants.%.7) [template = constants.%.33]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %.loc6_43.4(%.loc6_43.1) [template = constants.%.34]
 // CHECK:STDOUT:     %.loc6_43.5: %i32 = value_of_initializer %int.convert_checked [template = constants.%.34]
 // CHECK:STDOUT:     %.loc6_43.6: %i32 = converted %.loc6_43.1, %.loc6_43.5 [template = constants.%.34]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.6
-// CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
-// CHECK:STDOUT:     return %.loc6_44.3
+// CHECK:STDOUT:     %.loc6_44.4: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
+// CHECK:STDOUT:     %.loc6_44.5: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.4, %.loc6_43.6
+// CHECK:STDOUT:     %.loc6_44.6: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.5
+// CHECK:STDOUT:     return %.loc6_44.6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,6 +591,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %.6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %.7: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %.7 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.7) [template]
@@ -606,7 +615,8 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -669,16 +679,20 @@ fn G() -> C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @F.%.loc6_24.2 (%.4) = name_ref a, %a
 // CHECK:STDOUT:     %.loc6_43.1: Core.IntLiteral = int_value 0 [template = constants.%.6]
+// CHECK:STDOUT:     %.loc6_44.1: Core.IntLiteral = int_value 32 [template = constants.%.7]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc6_44.1) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_44.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_44.3: type = converted %int.make_type_signed, %.loc6_44.2 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_43.2: %Convert.type.2 = interface_witness_access constants.%.31, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:     %.loc6_43.3: <bound method> = bound_method %.loc6_43.1, %.loc6_43.2 [template = constants.%.32]
 // CHECK:STDOUT:     %.loc6_43.4: <specific function> = specific_function %.loc6_43.3, @Convert.2(constants.%.7) [template = constants.%.33]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %.loc6_43.4(%.loc6_43.1) [template = constants.%.34]
 // CHECK:STDOUT:     %.loc6_43.5: %i32 = value_of_initializer %int.convert_checked [template = constants.%.34]
 // CHECK:STDOUT:     %.loc6_43.6: %i32 = converted %.loc6_43.1, %.loc6_43.5 [template = constants.%.34]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
-// CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.6
-// CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
-// CHECK:STDOUT:     return %.loc6_44.3
+// CHECK:STDOUT:     %.loc6_44.4: ref @F.%.loc6_24.2 (%.4) = value_as_ref %a.ref
+// CHECK:STDOUT:     %.loc6_44.5: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.4, %.loc6_43.6
+// CHECK:STDOUT:     %.loc6_44.6: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.5
+// CHECK:STDOUT:     return %.loc6_44.6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

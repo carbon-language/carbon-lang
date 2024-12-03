@@ -89,10 +89,14 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_24
 // CHECK:STDOUT:   %a.ref: ref %.3 = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc18_16.1: f64 = float_literal 2.6000000000000001 [template = constants.%.34]
+// CHECK:STDOUT:   %.loc18_19.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%.loc18_19.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_19.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_19.3: type = converted %int.make_type_signed, %.loc18_19.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_16.2: %i32 = converted %.loc18_16.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.2: %i32 = bind_value %.loc18_19.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc18_19.2
+// CHECK:STDOUT:   %.loc18_19.4: ref %i32 = array_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_19.5: %i32 = bind_value %.loc18_19.4
+// CHECK:STDOUT:   assign file.%b.var, %.loc18_19.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

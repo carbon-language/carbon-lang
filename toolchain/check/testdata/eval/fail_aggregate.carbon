@@ -135,14 +135,18 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.loc16_57.1: init %.10 = converted %.loc16_55.1, %.loc16_55.31 [template = constants.%array]
 // CHECK:STDOUT:   %.loc16_70.1: Core.IntLiteral = int_value 2 [template = constants.%.42]
 // CHECK:STDOUT:   %.loc16_57.2: ref %.10 = temporary %.loc16_55.6, %.loc16_57.1
+// CHECK:STDOUT:   %.loc16_71.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc16_71: init type = call constants.%Int(%.loc16_71.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_71.2: type = value_of_initializer %int.make_type_signed.loc16_71 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_71.3: type = converted %int.make_type_signed.loc16_71, %.loc16_71.2 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_70.2: %Convert.type.2 = interface_witness_access constants.%.35, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %.loc16_70.3: <bound method> = bound_method %.loc16_70.1, %.loc16_70.2 [template = constants.%.50]
 // CHECK:STDOUT:   %.loc16_70.4: <specific function> = specific_function %.loc16_70.3, @Convert.2(constants.%.1) [template = constants.%.51]
 // CHECK:STDOUT:   %int.convert_checked.loc16_70: init %i32 = call %.loc16_70.4(%.loc16_70.1) [template = constants.%.52]
 // CHECK:STDOUT:   %.loc16_70.5: %i32 = value_of_initializer %int.convert_checked.loc16_70 [template = constants.%.52]
 // CHECK:STDOUT:   %.loc16_70.6: %i32 = converted %.loc16_70.1, %.loc16_70.5 [template = constants.%.52]
-// CHECK:STDOUT:   %.loc16_71.1: ref %i32 = array_index %.loc16_57.2, %.loc16_70.6
-// CHECK:STDOUT:   %.loc16_71.2: %i32 = bind_value %.loc16_71.1
+// CHECK:STDOUT:   %.loc16_71.4: ref %i32 = array_index %.loc16_57.2, %.loc16_70.6
+// CHECK:STDOUT:   %.loc16_71.5: %i32 = bind_value %.loc16_71.4
 // CHECK:STDOUT:   %.loc16_38.2: type = value_of_initializer %int.make_type_signed.loc16_38 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc16_38.3: type = converted %int.make_type_signed.loc16_38, %.loc16_38.2 [template = constants.%i32]
 // CHECK:STDOUT:   assign file.%array_index.var, <error>

@@ -119,16 +119,24 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %x.ref.loc13_20: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %m.ref: %i32 = name_ref m, %m
-// CHECK:STDOUT:   %.loc13_23.1: ref %i32 = array_index %x.ref.loc13_20, %m.ref
-// CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc13_23.2)
+// CHECK:STDOUT:   %.loc13_23.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc13_23: init type = call constants.%Int(%.loc13_23.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_23.2: type = value_of_initializer %int.make_type_signed.loc13_23 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_23.3: type = converted %int.make_type_signed.loc13_23, %.loc13_23.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_23.4: ref %i32 = array_index %x.ref.loc13_20, %m.ref
+// CHECK:STDOUT:   %.loc13_23.5: %i32 = bind_value %.loc13_23.4
+// CHECK:STDOUT:   br !if.expr.result(%.loc13_23.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %x.ref.loc13_30: ref %.3 = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc13_33.1: ref %i32 = array_index %x.ref.loc13_30, %n.ref
-// CHECK:STDOUT:   %.loc13_33.2: %i32 = bind_value %.loc13_33.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc13_33.2)
+// CHECK:STDOUT:   %.loc13_33.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
+// CHECK:STDOUT:   %int.make_type_signed.loc13_33: init type = call constants.%Int(%.loc13_33.1) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_33.2: type = value_of_initializer %int.make_type_signed.loc13_33 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_33.3: type = converted %int.make_type_signed.loc13_33, %.loc13_33.2 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_33.4: ref %i32 = array_index %x.ref.loc13_30, %n.ref
+// CHECK:STDOUT:   %.loc13_33.5: %i32 = bind_value %.loc13_33.4
+// CHECK:STDOUT:   br !if.expr.result(%.loc13_33.5)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc13_10: %i32 = block_arg !if.expr.result
