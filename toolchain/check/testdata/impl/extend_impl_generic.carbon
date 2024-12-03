@@ -76,7 +76,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasF.type.2 = facet_value %C, %C [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
@@ -293,7 +293,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %elt0.loc5_14.2 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Param, constants.%.1) {
+// CHECK:STDOUT: specific @F.1(constants.%Param, constants.%HasF.facet) {
 // CHECK:STDOUT:   %T => constants.%Param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%U) [symbolic]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %I.type.2 = facet_value %X.2, %X.2 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %X.2, %X.2 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.3) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -550,10 +550,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %X => constants.%X.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%U, constants.%.1) {
+// CHECK:STDOUT: specific @F.1(constants.%U, constants.%I.facet) {
 // CHECK:STDOUT:   %T => constants.%U
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%X.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

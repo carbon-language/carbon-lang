@@ -36,7 +36,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -129,5 +129,5 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:

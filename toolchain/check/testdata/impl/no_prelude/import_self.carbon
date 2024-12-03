@@ -106,7 +106,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %.1: %Add.type = facet_value %empty_tuple.type, %empty_tuple.type [template]
+// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %empty_tuple.type, %empty_tuple.type [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.1) [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -225,8 +225,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @Op.2(constants.%Add.facet) {
+// CHECK:STDOUT:   %Self => constants.%Add.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%empty_tuple.type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

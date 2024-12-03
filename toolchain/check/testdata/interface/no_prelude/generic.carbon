@@ -89,7 +89,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %WithAssocFn.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, @WithAssocFn.%F.decl [template]
-// CHECK:STDOUT:   %.1: %WithAssocFn.type.2 = facet_value %C, %C [symbolic]
+// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %struct: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N, 1 [symbolic]
@@ -359,7 +359,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %elt0.loc10_14.2 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%C, constants.%WithAssocFn.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithImplicitArgs(constants.%T.1, constants.%N) {
 // CHECK:STDOUT:   %T.loc22_28.2 => constants.%T.1

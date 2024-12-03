@@ -203,7 +203,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,7 +260,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- package_b.carbon
 // CHECK:STDOUT:
@@ -277,7 +277,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasG.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %HasG.facet.1: %HasG.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%G.2) [template]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
 // CHECK:STDOUT:   %Self.2: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
@@ -285,11 +285,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %HasF.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.1) [template]
 // CHECK:STDOUT:   %G.type.3: type = fn_type @G.3 [template]
 // CHECK:STDOUT:   %G.3: %G.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %HasG.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %HasG.facet.2: %HasG.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%G.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -419,13 +419,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.1) {}
+// CHECK:STDOUT: specific @G.1(constants.%HasG.facet.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%.2) {}
+// CHECK:STDOUT: specific @F.2(constants.%HasF.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.3) {}
+// CHECK:STDOUT: specific @G.1(constants.%HasG.facet.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_cf.carbon
 // CHECK:STDOUT:
@@ -941,7 +941,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %elt0: %H.assoc_type = assoc_entity element0, @Z.%H.decl [template]
 // CHECK:STDOUT:   %H.type.2: type = fn_type @H.2 [template]
 // CHECK:STDOUT:   %H.2: %H.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %Z.type = facet_value %empty_tuple.type, %empty_tuple.type [template]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %empty_tuple.type, %empty_tuple.type [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%H.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -989,7 +989,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @H.1(constants.%.1) {}
+// CHECK:STDOUT: specific @H.1(constants.%Z.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_associated_interface.carbon
 // CHECK:STDOUT:
@@ -1174,7 +1174,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %K.1: %K.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %K.type.2: type = fn_type @K.2 [template]
 // CHECK:STDOUT:   %K.2: %K.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %Y.type = facet_value %AnyParam.3, %AnyParam.3 [template]
+// CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.3, %AnyParam.3 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%K.1) [template]
 // CHECK:STDOUT:   %L.type: type = fn_type @L [template]
 // CHECK:STDOUT:   %L: %L.type = struct_value () [template]
@@ -1338,7 +1338,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.2(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.2(constants.%.1) {}
+// CHECK:STDOUT: specific @K.2(constants.%Y.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_generic_interface_as_param.carbon
 // CHECK:STDOUT:
@@ -1552,7 +1552,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%tuple.type.2) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %I.type = facet_value %C.3, %C.3 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.3, %C.3 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1723,7 +1723,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %T.patt.loc13_9.2 => constants.%tuple.type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_has_extra_interfaces.carbon
 // CHECK:STDOUT:

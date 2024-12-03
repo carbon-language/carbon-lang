@@ -48,7 +48,7 @@ impl C as I {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %I.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,5 +141,5 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
 // CHECK:STDOUT:

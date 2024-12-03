@@ -104,7 +104,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Op.3: %Op.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Op.assoc_type.2: type = assoc_entity_type %Action.type.3, %Op.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %Op.assoc_type.2 = assoc_entity element0, @Action.%Op.decl [template]
-// CHECK:STDOUT:   %.1: %Action.type.2 = facet_value %A, %A [symbolic]
+// CHECK:STDOUT:   %Action.facet: %Action.type.2 = facet_value %A, %A [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.2) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -249,7 +249,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %elt0.loc5_10.2 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%B, constants.%.1) {}
+// CHECK:STDOUT: specific @Op.1(constants.%B, constants.%Action.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- action.impl.carbon
 // CHECK:STDOUT:
@@ -606,7 +606,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %Make.3: %Make.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %Make.assoc_type.2: type = assoc_entity_type %Factory.type.3, %Make.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %Make.assoc_type.2 = assoc_entity element0, @Factory.%Make.decl [template]
-// CHECK:STDOUT:   %.1: %Factory.type.2 = facet_value %A, %A [symbolic]
+// CHECK:STDOUT:   %Factory.facet: %Factory.type.2 = facet_value %A, %A [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -731,7 +731,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %elt0.loc5_17.2 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%B, constants.%.1) {
+// CHECK:STDOUT: specific @Make.1(constants.%B, constants.%Factory.facet) {
 // CHECK:STDOUT:   %T => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

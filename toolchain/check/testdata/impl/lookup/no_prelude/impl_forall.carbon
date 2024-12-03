@@ -64,7 +64,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [symbolic]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, @I.%F.decl [symbolic]
-// CHECK:STDOUT:   %.1: %I.type.2 = facet_value %A.3, %A.3 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %A.3, %A.3 [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %A.elt.2: type = unbound_element_type %A.3, %V [symbolic]
 // CHECK:STDOUT:   %struct_type.n.2: type = struct_type {.n: %V} [symbolic]
@@ -434,10 +434,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A => constants.%A.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%V, constants.%.1) {
+// CHECK:STDOUT: specific @F.1(constants.%V, constants.%I.facet) {
 // CHECK:STDOUT:   %U => constants.%V
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc7_14.1 => constants.%A.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -32,7 +32,7 @@ impl C as Simple {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %Simple.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,5 +89,5 @@ impl C as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%Simple.facet) {}
 // CHECK:STDOUT:

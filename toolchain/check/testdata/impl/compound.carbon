@@ -57,7 +57,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %Simple.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2, %G.2) [template]
 // CHECK:STDOUT:   %NonInstanceCall.type: type = fn_type @NonInstanceCall [template]
 // CHECK:STDOUT:   %NonInstanceCall: %NonInstanceCall.type = struct_value () [template]
@@ -256,10 +256,10 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Self.as_type.loc13_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%Simple.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @G.1(constants.%Simple.facet) {
+// CHECK:STDOUT:   %Self => constants.%Simple.facet
 // CHECK:STDOUT:   %Self.as_type.loc13_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

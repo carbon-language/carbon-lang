@@ -120,7 +120,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %AddWith.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.5 [template]
-// CHECK:STDOUT:   %.1: %AddWith.type.2 = facet_value %C, %C [symbolic]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,5 +219,5 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %elt0 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%C, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%C, constants.%AddWith.facet) {}
 // CHECK:STDOUT:

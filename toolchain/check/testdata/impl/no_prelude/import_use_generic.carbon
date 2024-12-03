@@ -57,7 +57,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %elt0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %I.type = facet_value %C.2, %C.2 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.2, %C.2 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T

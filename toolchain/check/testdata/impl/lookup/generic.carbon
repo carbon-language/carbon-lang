@@ -135,7 +135,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %T, %T [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -250,7 +250,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -285,7 +285,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %T, %T [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -449,8 +449,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {
+// CHECK:STDOUT:   %Self => constants.%HasF.facet
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -494,7 +494,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %C.2, %C.2 [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C.2, %C.2 [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%empty_struct_type) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -648,7 +648,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
@@ -695,7 +695,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type.2 = facet_value %empty_struct_type, %empty_struct_type [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %empty_struct_type, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -865,7 +865,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -916,7 +916,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T, %U) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %T, %T [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -1032,7 +1032,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T, constants.%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc9_14.2, %U.loc9_24.2) {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
@@ -1056,7 +1056,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %elt0.1: %F.assoc_type.1 = assoc_entity element0, @HasF.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.1: %HasF.type.2 = facet_value %T, %T [symbolic]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -1240,7 +1240,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%T, constants.%HasF.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(%T.loc8_14.2) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T

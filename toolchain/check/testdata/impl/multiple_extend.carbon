@@ -178,11 +178,11 @@ fn P(o: O) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasF.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %HasG.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %HasG.facet: %HasG.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%G.2) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -322,9 +322,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.2) {}
+// CHECK:STDOUT: specific @G.1(constants.%HasG.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impls.carbon
 // CHECK:STDOUT:
@@ -344,11 +344,11 @@ fn P(o: O) {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %A.type.3: type = fn_type @A.3 [template]
 // CHECK:STDOUT:   %A.3: %A.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasA1.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %HasA1.facet: %HasA1.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%A.3) [template]
 // CHECK:STDOUT:   %A.type.4: type = fn_type @A.4 [template]
 // CHECK:STDOUT:   %A.4: %A.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %HasA2.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %HasA2.facet: %HasA2.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%A.4) [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -476,9 +476,9 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.2(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.1(constants.%.1) {}
+// CHECK:STDOUT: specific @A.1(constants.%HasA1.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.2(constants.%.2) {}
+// CHECK:STDOUT: specific @A.2(constants.%HasA2.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- different_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -499,7 +499,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %E.elt: type = unbound_element_type %E, %B [template]
 // CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
 // CHECK:STDOUT:   %I.2: %I.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasI.type = facet_value %E, %E [template]
+// CHECK:STDOUT:   %HasI.facet: %HasI.type = facet_value %E, %E [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%I.2) [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
@@ -619,7 +619,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.1(constants.%.1) {}
+// CHECK:STDOUT: specific @I.1(constants.%HasI.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_ambiguous_impl_and_base.carbon
 // CHECK:STDOUT:
@@ -639,7 +639,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %L.elt: type = unbound_element_type %L, %Base [template]
 // CHECK:STDOUT:   %K.type.3: type = fn_type @K.3 [template]
 // CHECK:STDOUT:   %K.3: %K.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasK.type = facet_value %L, %L [template]
+// CHECK:STDOUT:   %HasK.facet: %HasK.type = facet_value %L, %L [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%K.3) [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
@@ -749,7 +749,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K.2(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.2(constants.%.1) {}
+// CHECK:STDOUT: specific @K.2(constants.%HasK.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- ambiguity_hidden.carbon
 // CHECK:STDOUT:
@@ -776,11 +776,11 @@ fn P(o: O) {
 // CHECK:STDOUT:   %O.elt: type = unbound_element_type %O, %NBase [template]
 // CHECK:STDOUT:   %N.type.4: type = fn_type @N.4 [template]
 // CHECK:STDOUT:   %N.4: %N.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %HasN1.type = facet_value %O, %O [template]
+// CHECK:STDOUT:   %HasN1.facet: %HasN1.type = facet_value %O, %O [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%N.4) [template]
 // CHECK:STDOUT:   %N.type.5: type = fn_type @N.5 [template]
 // CHECK:STDOUT:   %N.5: %N.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %HasN2.type = facet_value %O, %O [template]
+// CHECK:STDOUT:   %HasN2.facet: %HasN2.type = facet_value %O, %O [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%N.5) [template]
 // CHECK:STDOUT:   %N.type.6: type = fn_type @N.6 [template]
 // CHECK:STDOUT:   %N.6: %N.type.6 = struct_value () [template]
@@ -937,7 +937,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.3(constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.2(constants.%.1) {}
+// CHECK:STDOUT: specific @N.2(constants.%HasN1.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.3(constants.%.2) {}
+// CHECK:STDOUT: specific @N.3(constants.%HasN2.facet) {}
 // CHECK:STDOUT:

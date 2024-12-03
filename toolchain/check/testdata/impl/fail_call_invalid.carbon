@@ -39,7 +39,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %Simple.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -140,8 +140,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @G.1(constants.%Simple.facet) {
+// CHECK:STDOUT:   %Self => constants.%Simple.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

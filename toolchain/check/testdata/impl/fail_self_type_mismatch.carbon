@@ -50,8 +50,8 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(type, %i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %I.type = facet_value %i32, %i32 [template]
-// CHECK:STDOUT:   %C.5: type = class_type @C, @C(%I.type, %.1) [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %C.5: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -189,15 +189,15 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @F.1(constants.%I.facet) {
+// CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%I.type, constants.%.1) {
+// CHECK:STDOUT: specific @C(constants.%I.type, constants.%I.facet) {
 // CHECK:STDOUT:   %T.loc11_9.2 => constants.%I.type
 // CHECK:STDOUT:   %T.patt.loc11_9.2 => constants.%I.type
-// CHECK:STDOUT:   %X.loc11_19.2 => constants.%.1
-// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%.1
+// CHECK:STDOUT:   %X.loc11_19.2 => constants.%I.facet
+// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%I.facet
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

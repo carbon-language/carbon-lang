@@ -34,7 +34,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %i32: type = int_type signed, %int.32 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %int.1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
@@ -61,7 +61,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int.3.1, %Convert.17 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.5(%int.32) [template]
 // CHECK:STDOUT:   %int.3.2: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %.2: type = array_type %int.3.2, %i32 [template]
+// CHECK:STDOUT:   %.1: type = array_type %int.3.2, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -124,9 +124,9 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %int.convert_checked.loc19_34: init Core.IntLiteral = call %Convert.specific_fn.loc19_34(%.loc19_34.3) [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.4: Core.IntLiteral = value_of_initializer %int.convert_checked.loc19_34 [template = constants.%int.3.2]
 // CHECK:STDOUT:   %.loc19_34.5: Core.IntLiteral = converted %int.sadd, %.loc19_34.4 [template = constants.%int.3.2]
-// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.2]
-// CHECK:STDOUT:   %arr.var: ref %.2 = var arr
-// CHECK:STDOUT:   %arr: ref %.2 = bind_name arr, %arr.var
+// CHECK:STDOUT:   %.loc19_35: type = array_type %.loc19_34.5, %i32 [template = constants.%.1]
+// CHECK:STDOUT:   %arr.var: ref %.1 = var arr
+// CHECK:STDOUT:   %arr: ref %.1 = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -212,8 +212,8 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @F.1(constants.%I.facet) {
+// CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -53,12 +53,12 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %UseSelf.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %UseSelf.facet.1: %UseSelf.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT:   %struct.1: %C = struct_value () [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %.2: %UseSelf.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %UseSelf.facet.2: %UseSelf.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %struct.2: %D = struct_value () [template]
 // CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [template]
@@ -77,14 +77,14 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%ptr.3, %struct_type.x.y.2) [template]
 // CHECK:STDOUT:   %F.type.5: type = fn_type @F.5 [template]
 // CHECK:STDOUT:   %F.5: %F.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %.3: %SelfNested.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %SelfNested.facet.1: %SelfNested.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%F.5) [template]
 // CHECK:STDOUT:   %ptr.4: type = ptr_type %D [template]
 // CHECK:STDOUT:   %struct_type.x.y.3: type = struct_type {.x: %D, .y: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%ptr.4, %struct_type.x.y.3) [template]
 // CHECK:STDOUT:   %F.type.6: type = fn_type @F.6 [template]
 // CHECK:STDOUT:   %F.6: %F.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %.4: %SelfNested.type = facet_value %D, %D [template]
+// CHECK:STDOUT:   %SelfNested.facet.2: %SelfNested.type = facet_value %D, %D [template]
 // CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%F.6) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,13 +336,13 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.1) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.1
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%.2) {
-// CHECK:STDOUT:   %Self => constants.%.2
+// CHECK:STDOUT: specific @F.1(constants.%UseSelf.facet.2) {
+// CHECK:STDOUT:   %Self => constants.%UseSelf.facet.2
 // CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,16 +354,16 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%.3) {
-// CHECK:STDOUT:   %Self => constants.%.3
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.1) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.1
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%C
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.3
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.2
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.4(constants.%.4) {
-// CHECK:STDOUT:   %Self => constants.%.4
+// CHECK:STDOUT: specific @F.4(constants.%SelfNested.facet.2) {
+// CHECK:STDOUT:   %Self => constants.%SelfNested.facet.2
 // CHECK:STDOUT:   %Self.as_type.loc28_16.1 => constants.%D
 // CHECK:STDOUT:   %ptr.loc28_16.1 => constants.%ptr.4
 // CHECK:STDOUT:   %struct_type.x.y.loc28_36.1 => constants.%struct_type.x.y.3

@@ -38,7 +38,7 @@ class A {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
 // CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %.1: %DefaultConstructible.type = facet_value %C, %C [template]
+// CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, %C [template]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Make.2) [template]
 // CHECK:STDOUT:   %struct: %C = struct_value () [template]
 // CHECK:STDOUT: }
@@ -130,8 +130,8 @@ class A {
 // CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make.1(constants.%.1) {
-// CHECK:STDOUT:   %Self => constants.%.1
+// CHECK:STDOUT: specific @Make.1(constants.%DefaultConstructible.facet) {
+// CHECK:STDOUT:   %Self => constants.%DefaultConstructible.facet
 // CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

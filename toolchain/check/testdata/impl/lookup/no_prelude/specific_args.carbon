@@ -189,7 +189,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.9 [template]
-// CHECK:STDOUT:   %.1: %I.type.2 = facet_value %X, %X [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %X, %X [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -300,7 +300,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %elt0 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%InInterfaceArgs, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%InInterfaceArgs, constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_impl_in_interface_args.carbon
 // CHECK:STDOUT:
@@ -481,7 +481,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [template]
 // CHECK:STDOUT:   %elt0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.9 [template]
-// CHECK:STDOUT:   %.1: %I.type.2 = facet_value %C.3, %C.3 [symbolic]
+// CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %C.3, %C.3 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -619,7 +619,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %elt0 => constants.%elt0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%X, constants.%.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%X, constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_impl_in_class_args.carbon
 // CHECK:STDOUT:

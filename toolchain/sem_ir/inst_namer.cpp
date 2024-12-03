@@ -540,6 +540,21 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
+      case CARBON_KIND(FacetValue inst): {
+        if (auto facet_type =
+                sem_ir_.types().TryGetAs<FacetType>(inst.type_id)) {
+          const auto& facet_type_info =
+              sem_ir_.facet_types().Get(facet_type->facet_type_id);
+          if (auto interface = facet_type_info.TryAsSingleInterface()) {
+            const auto& interface_info =
+                sem_ir_.interfaces().Get(interface->interface_id);
+            add_inst_name_id(interface_info.name_id, ".facet");
+            continue;
+          }
+        }
+        add_inst_name("facet_value");
+        continue;
+      }
       case CARBON_KIND(FloatType inst): {
         add_int_or_float_type_name('f', inst.bit_width_id);
         continue;
