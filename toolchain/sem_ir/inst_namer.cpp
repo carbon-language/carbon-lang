@@ -485,9 +485,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function_info = sem_ir_.functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        // FIXME pattern and decl are handled separately. Could lead to skew
-        // in presence of duplicates. pattern_block_id comes from the
-        // definition, decl_block_id comes from the current decl.
         CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
         CollectNamesInBlock(function_scope_id, inst.decl_block_id);
         continue;
