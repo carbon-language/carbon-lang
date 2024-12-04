@@ -17,9 +17,13 @@ namespace Carbon::Internal {
 // Filed as https://github.com/llvm/llvm-project/issues/118697
 // NOLINTNEXTLINE(modernize-use-trailing-return-type)
 CheckCondition(bool condition)
-    __attribute__((diagnose_if(condition, "CHECK condition is always true",
+    __attribute__((diagnose_if(condition,
+                               "CHECK condition is always true; replace with "
+                               "static_assert if this is intended",
                                "error")))
-    __attribute__((diagnose_if(!condition, "CHECK condition is always false",
+    __attribute__((diagnose_if(!condition,
+                               "CHECK condition is always false; replace with "
+                               "CARBON_FATAL if this is intended",
                                "error"))) {
   return condition;
 }
