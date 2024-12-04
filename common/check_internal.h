@@ -14,6 +14,7 @@ namespace Carbon::Internal {
 // to the constant `true` or `false`.
 [[clang::always_inline]] constexpr bool
 // Trailing GNU function attributes are incompatible with trailing return types.
+// Filed as https://github.com/llvm/llvm-project/issues/118697
 // NOLINTNEXTLINE(modernize-use-trailing-return-type)
 CheckCondition(bool condition)
     __attribute__((diagnose_if(condition, "CHECK condition is always true",
