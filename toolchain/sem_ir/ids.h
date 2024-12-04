@@ -113,9 +113,6 @@ constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 struct ConstantId : public IdBase, public Printable<ConstantId> {
   // An ID for an expression that is not constant.
   static const ConstantId NotConstant;
-  // An ID for an expression whose phase cannot be determined because it
-  // contains an error. This is always modeled as a template constant.
-  static const ConstantId Error;
   // An explicitly invalid ID.
   static const ConstantId Invalid;
 
@@ -183,8 +180,6 @@ struct ConstantId : public IdBase, public Printable<ConstantId> {
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
-constexpr ConstantId ConstantId::Error =
-    ConstantId::ForTemplateConstant(InstId::BuiltinErrorInst);
 constexpr ConstantId ConstantId::Invalid = ConstantId(InvalidIndex);
 
 // The ID of a EntityName.
@@ -636,15 +631,6 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   // `InstIdAsType` or `TypeOfInstId` as the diagnostic argument type.
   using DiagnosticType = DiagnosticTypeInfo<std::string>;
 
-  // The builtin TypeType.
-  static const TypeId TypeType;
-
-  // The builtin placeholder type for patterns with deduced types.
-  static const TypeId AutoType;
-
-  // The builtin Error.
-  static const TypeId Error;
-
   // An explicitly invalid ID.
   static const TypeId Invalid;
 
@@ -663,11 +649,6 @@ struct TypeId : public IdBase, public Printable<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr TypeId TypeId::TypeType = TypeId::ForTypeConstant(
-    ConstantId::ForTemplateConstant(InstId::BuiltinTypeType));
-constexpr TypeId TypeId::AutoType = TypeId::ForTypeConstant(
-    ConstantId::ForTemplateConstant(InstId::BuiltinAutoType));
-constexpr TypeId TypeId::Error = TypeId::ForTypeConstant(ConstantId::Error);
 constexpr TypeId TypeId::Invalid = TypeId(InvalidIndex);
 
 // The ID of a type block.

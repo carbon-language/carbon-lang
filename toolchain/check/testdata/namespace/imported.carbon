@@ -123,9 +123,9 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %package_b: ref %empty_tuple.type = bind_name package_b, %package_b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "implicit.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B();
+// CHECK:STDOUT: fn @B() [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

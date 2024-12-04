@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/ids.h"
 
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -127,11 +128,11 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << "type";
-  if (*this == TypeType) {
+  if (*this == TypeType::SingletonTypeId) {
     out << "TypeType";
-  } else if (*this == AutoType) {
+  } else if (*this == AutoType::SingletonTypeId) {
     out << "AutoType";
-  } else if (*this == Error) {
+  } else if (*this == ErrorInst::SingletonTypeId) {
     out << "Error";
   } else {
     out << "(";

@@ -36,10 +36,12 @@ File::File(CheckIRId check_ir_id,
       inst_blocks_(allocator_),
       constants_(this) {
   // `type` and the error type are both complete types.
-  types_.SetValueRepr(TypeId::TypeType,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
-  types_.SetValueRepr(TypeId::Error,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::Error});
+  types_.SetValueRepr(
+      TypeType::SingletonTypeId,
+      {.kind = ValueRepr::Copy, .type_id = TypeType::SingletonTypeId});
+  types_.SetValueRepr(
+      ErrorInst::SingletonTypeId,
+      {.kind = ValueRepr::Copy, .type_id = ErrorInst::SingletonTypeId});
 
   insts_.Reserve(SingletonInstKinds.size());
   for (auto kind : SingletonInstKinds) {

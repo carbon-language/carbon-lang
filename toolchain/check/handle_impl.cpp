@@ -101,7 +101,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
-    self_type_id = SemIR::TypeId::Error;
+    self_type_id = SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -112,7 +112,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // handling of the `Self` expression.
   auto self_inst_id = context.AddInst(
       node_id,
-      SemIR::NameRef{.type_id = SemIR::TypeId::TypeType,
+      SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
                      .value_id = context.types().GetInstId(self_type_id)});
 

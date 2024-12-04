@@ -63,7 +63,7 @@ interface I {}
 // CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I;
+// CHECK:STDOUT: interface @I [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]

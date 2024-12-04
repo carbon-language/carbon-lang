@@ -104,7 +104,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 struct TypeExpr {
   // The converted expression of type `type`, or `InstId::BuiltinErrorInst`.
   SemIR::InstId inst_id;
-  // The corresponding type, or `TypeId::Error`.
+  // The corresponding type, or `ErrorInst::SingletonTypeId`.
   SemIR::TypeId type_id;
 };
 

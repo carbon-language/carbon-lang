@@ -61,7 +61,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A;
+// CHECK:STDOUT: interface @A [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.2 as imports.%import_ref.3;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.2 as imports.%import_ref.3 [from "a.carbon"];
 // CHECK:STDOUT:

@@ -271,7 +271,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
       SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
-      if (base_type_id != SemIR::TypeId::TypeType &&
+      if (base_type_id != SemIR::TypeType::SingletonTypeId &&
           context.IsFacetType(base_type_id)) {
         // Handles `T.F` when `T` is a non-type facet.
 
@@ -467,7 +467,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
       return SemIR::InstId::BuiltinErrorInst;
     }
 
-    if (base_type_id != SemIR::TypeId::Error) {
+    if (base_type_id != SemIR::ErrorInst::SingletonTypeId) {
       CARBON_DIAGNOSTIC(QualifiedExprUnsupported, Error,
                         "type {0} does not support qualified expressions",
                         TypeOfInstId);
@@ -514,7 +514,8 @@ auto PerformCompoundMemberAccess(
 
   // If we didn't perform impl lookup or instance binding, that's an error
   // because the base expression is not used for anything.
-  if (member_id == member_expr_id && member.type_id() != SemIR::TypeId::Error) {
+  if (member_id == member_expr_id &&
+      member.type_id() != SemIR::ErrorInst::SingletonTypeId) {
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",
@@ -555,13 +556,13 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     return diag_non_constant_index();
   }
 
-  SemIR::TypeId element_type_id = SemIR::TypeId::Error;
+  SemIR::TypeId element_type_id = SemIR::ErrorInst::SingletonTypeId;
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
       context, index_node_id, index_inst_id,
       context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
   auto index_const_id = context.constant_values().Get(index_inst_id);
-  if (index_const_id == SemIR::ConstantId::Error) {
+  if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::InstId::BuiltinErrorInst;
   } else if (!index_const_id.is_template()) {
     return diag_non_constant_index();

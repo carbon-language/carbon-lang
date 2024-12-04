@@ -173,7 +173,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %b_ptr: ref %ptr.2 = bind_name b_ptr, %b_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -232,7 +232,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %c_ptr: ref %ptr.2 = bind_name c_ptr, %c_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -294,7 +294,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
@@ -356,7 +356,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
@@ -422,7 +422,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "b.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7
@@ -488,7 +488,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "b.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7
