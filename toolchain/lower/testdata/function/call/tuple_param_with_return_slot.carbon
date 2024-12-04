@@ -19,28 +19,28 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'tuple_param_with_return_slot.carbon'
 // CHECK:STDOUT: source_filename = "tuple_param_with_return_slot.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.2.loc16_20.12 = internal constant { i32, i32 } { i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.2.loc16_20.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
-// CHECK:STDOUT:   %.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc12_17.tuple.elem.load = load i32, ptr %.loc12_17.tuple.elem, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc12_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   %.loc12_22.tuple.elem.load = load i32, ptr %.loc12_22.tuple.elem, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc12_24.2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_12.tuple.elem, ptr %.loc12_24.2.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc12_24.4.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_17.tuple.elem.load, ptr %.loc12_24.4.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc12_24.6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12_22.tuple.elem.load, ptr %.loc12_24.6.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem0.loc12_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !7
+// CHECK:STDOUT:   %tuple.elem0.loc12_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc12_17.tuple.elem.load = load i32, ptr %tuple.elem0.loc12_17.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.loc12_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.loc12_22.tuple.elem.load = load i32, ptr %tuple.elem1.loc12_22.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %tuple.elem0.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem0.loc12_12.tuple.elem, ptr %tuple.elem0.loc12_24.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem1.loc12_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem0.loc12_17.tuple.elem.load, ptr %tuple.elem1.loc12_24.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !10
+// CHECK:STDOUT:   store i32 %tuple.elem1.loc12_22.tuple.elem.load, ptr %tuple.elem2.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_4.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_4.1.temp, { i32 } { i32 1 }, ptr @tuple.2.loc16_20.12), !dbg !13
+// CHECK:STDOUT:   %.loc16_21.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_21.1.temp, { i32 } { i32 1 }, ptr @tuple.2.loc16_20.6), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

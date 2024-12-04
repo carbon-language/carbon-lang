@@ -15,7 +15,7 @@ fn Run2(a: i32, b: i32) {}
 fn Main() {
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-8]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
@@ -23,7 +23,7 @@ fn Main() {
   Run0(1);
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run0(0, 1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-16]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run0() {}
   // CHECK:STDERR: ^~~~~~~~~~~
@@ -32,7 +32,7 @@ fn Main() {
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-24]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
@@ -40,7 +40,7 @@ fn Main() {
   Run1();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   Run1(0, 1);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-32]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run1(a: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ fn Main() {
 
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+7]]:3: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-40]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +57,7 @@ fn Main() {
   Run2();
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE+6]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   Run2(0);
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_param_count.carbon:[[@LINE-48]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn Run2(a: i32, b: i32) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,18 +69,18 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Run0.type: type = fn_type @Run0 [template]
 // CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Run1.type: type = fn_type @Run1 [template]
 // CHECK:STDOUT:   %Run1: %Run1.type = struct_value () [template]
 // CHECK:STDOUT:   %Run2.type: type = fn_type @Run2 [template]
 // CHECK:STDOUT:   %Run2: %Run2.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -105,10 +105,10 @@ fn Main() {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_12.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc12_12.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_12.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_12.3: type = converted %int.make_type_signed, %.loc12_12.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_signed, %.loc12_12.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -118,14 +118,14 @@ fn Main() {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_12.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_12: init type = call constants.%Int(%.loc13_12.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_12.2: type = value_of_initializer %int.make_type_signed.loc13_12 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_12.3: type = converted %int.make_type_signed.loc13_12, %.loc13_12.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_20.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_20: init type = call constants.%Int(%.loc13_20.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_20.2: type = value_of_initializer %int.make_type_signed.loc13_20 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_20.3: type = converted %int.make_type_signed.loc13_20, %.loc13_20.2 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc13_12: init type = call constants.%Int(%int_32.loc13_12) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_signed.loc13_12 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %int.make_type_signed.loc13_12, %.loc13_12.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc13_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc13_20: init type = call constants.%Int(%int_32.loc13_20) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_signed.loc13_20 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_signed.loc13_20, %.loc13_20.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
@@ -152,17 +152,17 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
-// CHECK:STDOUT:   %.loc23: Core.IntLiteral = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [template = constants.%Run0]
-// CHECK:STDOUT:   %.loc31_8: Core.IntLiteral = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc31_11: Core.IntLiteral = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %int_0.loc31: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Run1.ref.loc40: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
 // CHECK:STDOUT:   %Run1.ref.loc48: %Run1.type = name_ref Run1, file.%Run1.decl [template = constants.%Run1]
-// CHECK:STDOUT:   %.loc48_8: Core.IntLiteral = int_value 0 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc48_11: Core.IntLiteral = int_value 1 [template = constants.%.2]
+// CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
 // CHECK:STDOUT:   %Run2.ref.loc64: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %.loc64: Core.IntLiteral = int_value 0 [template = constants.%.3]
+// CHECK:STDOUT:   %int_0.loc64: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

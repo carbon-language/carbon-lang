@@ -30,21 +30,21 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %type = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.1.loc18_16 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @struct.2.loc19_16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc18_16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @D.val.loc19_16 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @struct.1.loc18_16, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_16, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @struct.2.loc19_16, i64 0, i1 false), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc19_16, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !12
 // CHECK:STDOUT:   call void @_CF.Main.46(ptr %c.var), !dbg !13
 // CHECK:STDOUT:   call void @_CF.Main.47(ptr %d.var), !dbg !14
-// CHECK:STDOUT:   %.loc24_5 = load i32, ptr %n.var, align 4, !dbg !15
-// CHECK:STDOUT:   call void @_CF.Main.48(i32 %.loc24_5), !dbg !16
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main.48(i32 %.loc24), !dbg !16
 // CHECK:STDOUT:   call void @_CF.Main.49(%type zeroinitializer), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }

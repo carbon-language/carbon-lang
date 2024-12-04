@@ -545,11 +545,12 @@ static auto GetImportKey(UnitInfo& unit_info, IdentifierId file_package_id,
   return {package_name, library_name};
 }
 
-static constexpr llvm::StringLiteral ExplicitMainName = "Main";
+static constexpr llvm::StringLiteral CppPackageName = "Cpp";
+static constexpr llvm::StringLiteral MainPackageName = "Main";
 
 static auto RenderImportKey(ImportKey import_key) -> std::string {
   if (import_key.first.empty()) {
-    import_key.first = ExplicitMainName;
+    import_key.first = MainPackageName;
   }
   if (import_key.second.empty()) {
     return import_key.first.str();
@@ -573,7 +574,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
 
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_key.first == ExplicitMainName;
+  bool is_explicit_main = import_key.first == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
@@ -688,6 +689,11 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
   } else {
     // The imported api is missing.
     package_imports.has_load_error = true;
+    if (!explicit_import_map && import_key.first == CppPackageName) {
+      // Don't diagnose the implicit import in `impl package Cpp`, because we'll
+      // have diagnosed the use of `Cpp` in the declaration.
+      return;
+    }
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "corresponding API for '{0}' not found", std::string);
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "imported API '{0}' not found",
@@ -714,9 +720,9 @@ static auto BuildApiMapAndDiagnosePackaging(
                                 // Construct a boring key for Main//default.
                                 : ImportKey{"", ""};
 
-    // Diagnose explicit `Main` uses before they become marked as possible
+    // Diagnose restricted package names before they become marked as possible
     // APIs.
-    if (import_key.first == ExplicitMainName) {
+    if (import_key.first == MainPackageName) {
       CARBON_DIAGNOSTIC(ExplicitMainPackage, Error,
                         "`Main//default` must omit `package` declaration");
       CARBON_DIAGNOSTIC(
@@ -725,6 +731,11 @@ static auto BuildApiMapAndDiagnosePackaging(
       unit_info.emitter.Emit(packaging->names.node_id,
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
+      continue;
+    } else if (import_key.first == CppPackageName) {
+      CARBON_DIAGNOSTIC(CppPackageDeclaration, Error,
+                        "`Cpp` cannot be used by a `package` declaration");
+      unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration);
       continue;
     }
 

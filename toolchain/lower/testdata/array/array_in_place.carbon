@@ -22,10 +22,10 @@ fn G() {
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca [2 x { i32, i32, i32 }], align 8, !dbg !7
-// CHECK:STDOUT:   %.loc14_42.2.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.2.array.index), !dbg !9
-// CHECK:STDOUT:   %.loc14_42.5.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.5.array.index), !dbg !10
+// CHECK:STDOUT:   %.loc14_42.1.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.1.array.index), !dbg !9
+// CHECK:STDOUT:   %.loc14_42.3.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %v.var, i32 0, {} zeroinitializer, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_42.3.array.index), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

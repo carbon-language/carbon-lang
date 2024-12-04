@@ -139,8 +139,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def: type = class_type @Def [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -151,18 +151,19 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Def
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef: type = class_type @ForwardWithDef [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -174,10 +175,11 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%ForwardWithDef
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward.carbon
@@ -199,13 +201,15 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def: type = class_type @Def [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct: %Def = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %Def.val: %Def = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -222,14 +226,15 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_15.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc4_15.2: init %Def = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc4_16: init %Def = converted %.loc4_15.1, %.loc4_15.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc4_15.2: init %Def = class_init (), file.%c.var [template = constants.%Def.val]
+// CHECK:STDOUT:   %.loc4_16: init %Def = converted %.loc4_15.1, %.loc4_15.2 [template = constants.%Def.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -237,7 +242,7 @@ private class Redecl {}
 // CHECK:STDOUT: --- fail_local_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -252,7 +257,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -260,7 +265,7 @@ private class Redecl {}
 // CHECK:STDOUT: --- fail_other_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -283,7 +288,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -292,13 +297,15 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef: type = class_type @ForwardWithDef [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct: %ForwardWithDef = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %ForwardWithDef.val: %ForwardWithDef = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, inst+5, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -315,14 +322,15 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_26.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef = class_init (), file.%c.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc4_27: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc4_26.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef = class_init (), file.%c.var [template = constants.%ForwardWithDef.val]
+// CHECK:STDOUT:   %.loc4_27: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [template = constants.%ForwardWithDef.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_27
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -330,7 +338,7 @@ private class Redecl {}
 // CHECK:STDOUT: --- fail_local_forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -345,7 +353,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -353,7 +361,7 @@ private class Redecl {}
 // CHECK:STDOUT: --- fail_other_forward_with_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -376,7 +384,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %.1 = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -385,11 +393,11 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Forward: type = class_type @Forward [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %Forward [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Forward [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = struct_type {} [template]
-// CHECK:STDOUT:   %.3: <witness> = complete_type_witness %.2 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -404,25 +412,26 @@ private class Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %.1 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %.1 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %ptr = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
-// CHECK:STDOUT:     %.loc4: type = ptr_type %Forward [template = constants.%.1]
-// CHECK:STDOUT:     %c.param: %.1 = value_param runtime_param0
-// CHECK:STDOUT:     %c: %.1 = bind_name c, %c.param
+// CHECK:STDOUT:     %ptr: type = ptr_type %Forward [template = constants.%ptr]
+// CHECK:STDOUT:     %c.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %c: %ptr = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Forward {
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.2 [template = constants.%.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Forward
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %.1) {
+// CHECK:STDOUT: fn @F(%c.param_patt: %ptr) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -444,7 +453,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc10: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -480,7 +489,7 @@ private class Redecl {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc9: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -495,8 +504,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Redecl: type = class_type @Redecl [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -508,9 +517,10 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Redecl {
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Redecl
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

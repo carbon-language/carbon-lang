@@ -21,8 +21,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_38.6.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc11_38.12.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.loc11_39, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
@@ -30,11 +30,11 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc14_17.1.temp = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_17.1.temp), !dbg !11
-// CHECK:STDOUT:   %.loc14_19.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_17.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc14_19.2 = load i32, ptr %.loc14_19.1.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc14_19.2, ptr %t.var, align 4, !dbg !12
+// CHECK:STDOUT:   %.loc14_18.1.temp = alloca { i32, i32 }, align 8, !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_18.1.temp), !dbg !11
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_18.1.temp, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc14_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc14_19, ptr %t.var, align 4, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

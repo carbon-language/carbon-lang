@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Postorder processing](#postorder-processing)
 -   [Key IR concepts](#key-ir-concepts)
+    -   [Instruction operands](#instruction-operands)
     -   [Parameters and arguments](#parameters-and-arguments)
 -   [SemIR textual format](#semir-textual-format)
     -   [Raw form](#raw-form)
@@ -74,7 +75,7 @@ interprets to build the `SemIR`.
 
 A `SemIR::Inst` is the basic building block that represents a simple
 instruction, such as an operator or declaring a literal. For each kind of
-instruction, a typedef for that specific kind of instruction is provided in the
+instruction, a struct for that specific kind of instruction is provided in the
 `SemIR` namespace. For example, `SemIR::Assign` represents an assignment
 instruction, and `SemIR::PointerType` represents a pointer type instruction.
 
@@ -83,38 +84,63 @@ instruction, as described in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) (also see
 [adding features for Check](adding_features.md#check)):
 
--   A `Parse::Node parse_node;` member that tracks its location is present on
-    almost all instructions, except instructions like `SemIR::Builtin` that
-    don't have an associated location.
+-   An `InstKind kind;` member if the instruction has a `Kinds` constant making
+    it a shorthand for multiple individual instructions.
 
 -   A `SemIR::TypeId type_id;` member that describes the type of the instruction
     is present on all instructions that produce a value. This includes namespace
     instructions, which are modeled as producing a value of "namespace" type,
     even though they can't be used as a first-class value in Carbon expressions.
 
--   Up to two additional, kind-specific members. For example `SemIR::Assign` has
-    members `InstId lhs_id` and `InstId rhs_id`.
+-   Up to two additional [kind-specific members](#instruction-operands). For
+    example `SemIR::Assign` has members `InstId lhs_id` and `InstId rhs_id`. And
+    `SemIR::ClassElementAccess` has an `ElementIndex` into the fields of the
+    class to define which field it is accessing.
 
 Instructions are stored as type-erased `SemIR::Inst` objects, which store the
 instruction kind and the (up to) four fields described above. This balances the
-size of `SemIR::Inst` against the overhead of indirection.
+size of `SemIR::Inst` against the overhead of indirection. All instructions have
+with them a `LocId` that tracks their source location, and is stored separately
+on the `InstStore` and retrieved by `GetLocId()`.
 
-A `SemIR::InstBlock` can represent a code block. However, it can also be created
-when a series of instructions needs to be closely associated, such as a
-parameter list.
+A `SemIR::InstBlockId`, used to index into `SemIR::InstBlockStore`, can
+represent a code block. However, it can also be created when a series of
+instructions needs to be closely associated, such as a parameter list.
 
-A `SemIR::Builtin` represents a language built-in, such as the unconstrained
-facet type `type`. We will also have built-in functions which would need to form
-the implementation of some library types, such as `i32`. Built-ins are in a
-stable index across `SemIR` instances.
+A number of instruction types in
+[sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) are builtin
+instructions, such as `SemIR::TypeType` which represents the unconstrained facet
+type `type`. Builtins have stable ids in the `SemIR::InstStore` across `SemIR`
+instances.
+
+### Instruction operands
+
+The kind-specific members on a typed instruction struct can be of any type
+listed in the `SemIR::IdKind` enumeration defined in
+[sem_ir/id_kind.h](/toolchain/sem_ir/id_kind.h), typically derived from
+`IdBase`. The most commonly used kinds refer to other instructions:
+
+-   `SemIR::InstId`: Refers to a specific instance of an instruction. For
+    example, this should be used if the operand may have side-effects or a
+    meaningful location.
+-   `SemIR::ConstantId`: An abstract reference to a known constant value. This
+    should be used instead of `InstId` if you care only about the identity of
+    the value and not how it was formed.
+-   `SemIR::TypeId`: An abstract reference to a known constant value of type
+    `type`. This should be used instead of `ConstantId` if you know that the
+    type of the constant value is always `type` (or the value is the "error"
+    constant, whose type is also the "error" constant).
+
+Other ID types are used for more specialized purposes. Refer to the class
+documentation for the ID type for more details.
 
 ### Parameters and arguments
 
-Parameters and arguments will be stored as two `SemIR::InstBlock`s each. The
-first will contain the full IR, while the second will contain references to the
-last instruction for each parameter or argument. The references block will have
-a size equal to the number of parameters or arguments, allowing for quick size
-comparisons and indexed access.
+Parameters and arguments will be stored as two blocks (referred to by
+`SemIR::InstBlockId`) each. The first will contain the full IR, while the second
+will contain references to the last instruction for each parameter or argument.
+The references block will have a size equal to the number of parameters or
+arguments, allowing for quick size comparisons and indexed access.
 
 ## SemIR textual format
 

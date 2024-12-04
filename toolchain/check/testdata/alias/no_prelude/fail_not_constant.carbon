@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %empty_tuple.type [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %empty_tuple.type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,15 +45,15 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_17: init %empty_tuple.type = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc12_17
 // CHECK:STDOUT:   %.loc13_11: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc13_12.1: type = converted %.loc13_11, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc13_12.2: type = ptr_type %empty_tuple.type [template = constants.%.1]
-// CHECK:STDOUT:   %b.var: ref %.1 = var b
-// CHECK:STDOUT:   %b: ref %.1 = bind_name b, %b.var
+// CHECK:STDOUT:   %.loc13_12: type = converted %.loc13_11, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %ptr: type = ptr_type %empty_tuple.type [template = constants.%ptr]
+// CHECK:STDOUT:   %b.var: ref %ptr = var b
+// CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
-// CHECK:STDOUT:   %.loc13_16: %.1 = addr_of %a.ref
-// CHECK:STDOUT:   assign %b.var, %.loc13_16
-// CHECK:STDOUT:   %b.ref: ref %.1 = name_ref b, %b
-// CHECK:STDOUT:   %.loc17_14: %.1 = bind_value %b.ref
+// CHECK:STDOUT:   %addr: %ptr = addr_of %a.ref
+// CHECK:STDOUT:   assign %b.var, %addr
+// CHECK:STDOUT:   %b.ref: ref %ptr = name_ref b, %b
+// CHECK:STDOUT:   %.loc17_14: %ptr = bind_value %b.ref
 // CHECK:STDOUT:   %.loc17_13: ref %empty_tuple.type = deref %.loc17_14
 // CHECK:STDOUT:   %c: <error> = bind_alias c, <error> [template = <error>]
 // CHECK:STDOUT:   return

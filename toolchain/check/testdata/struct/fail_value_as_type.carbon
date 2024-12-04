@@ -19,8 +19,8 @@ var x: {.a = 1};
 // CHECK:STDOUT: --- fail_value_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -37,8 +37,8 @@ var x: {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_14: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_15.1: %.2 = struct_literal (%.loc17_14)
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %.loc17_15.1: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:   %.loc17_15.2: type = converted %.loc17_15.1, <error> [template = <error>]
 // CHECK:STDOUT:   %x.var: ref <error> = var x
 // CHECK:STDOUT:   %x: ref <error> = bind_name x, %x.var

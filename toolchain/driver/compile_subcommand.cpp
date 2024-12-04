@@ -270,7 +270,7 @@ Excludes files with the given prefix from dumps.
       {
           .name = "debug-info",
           .help = R"""(
-Emit DWARF debug information.
+Whether to emit DWARF debug information.
 )""",
       },
       [&](auto& arg_b) {
@@ -363,6 +363,8 @@ class CompilationUnit {
 
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> void {
+    CARBON_CHECK(!tokens_, "Called RunLex twice");
+
     LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
       source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                   input_filename_, *consumer_);
@@ -396,6 +398,7 @@ class CompilationUnit {
   // Parses tokens. Returns true on success.
   auto RunParse() -> void {
     CARBON_CHECK(tokens_, "Must call RunLex first");
+    CARBON_CHECK(!parse_tree_, "Called RunParse twice");
 
     LogCall("Parse::Parse", "parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
@@ -420,6 +423,8 @@ class CompilationUnit {
 
   auto PreCheck() -> Parse::NodeLocConverter& {
     CARBON_CHECK(parse_tree_, "Must call RunParse first");
+    CARBON_CHECK(!node_converter_, "Called PreCheck twice");
+
     get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
       return this->GetParseTreeAndSubtrees();
     };
@@ -433,6 +438,7 @@ class CompilationUnit {
                     llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
       -> Check::Unit {
     CARBON_CHECK(node_converter_, "Must call PreCheck first");
+    CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
 
     sem_ir_.emplace(check_ir_id, parse_tree_->packaging_decl(), value_stores_,
                     input_filename_);
@@ -443,7 +449,7 @@ class CompilationUnit {
     sem_ir_converter_.emplace(node_converters, &*sem_ir_);
     return {.consumer = consumer_,
             .value_stores = &value_stores_,
-            .timings = &timings_,
+            .timings = timings_ ? &*timings_ : nullptr,
             .tokens = &*tokens_,
             .parse_tree = &*parse_tree_,
             .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
@@ -503,6 +509,7 @@ class CompilationUnit {
   // Lower SemIR to LLVM IR.
   auto RunLower() -> void {
     CARBON_CHECK(sem_ir_converter_, "Must call PostCheck first");
+    CARBON_CHECK(!module_, "Called RunLower twice");
 
     LogCall("Lower::LowerToLLVM", "lower", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
@@ -650,7 +657,7 @@ class CompilationUnit {
                llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
       -> void {
     CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
-    Timings::ScopedTiming timing(&timings_, timing_label);
+    Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
     fn();
     CARBON_VLOG("*** {0} done ***\n", logging_label);
   }

@@ -19,7 +19,7 @@ var a: [1; 1];
 // CHECK:STDOUT: --- fail_invalid_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -36,10 +36,10 @@ var a: [1; 1];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_9.1: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_12: Core.IntLiteral = int_value 1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_9.2: type = converted %.loc17_9.1, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc17_13: type = array_type %.loc17_12, <error> [template = <error>]
+// CHECK:STDOUT:   %int_1.loc17_9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc17_12: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %.loc17: type = converted %int_1.loc17_9, <error> [template = <error>]
+// CHECK:STDOUT:   %array_type: type = array_type %int_1.loc17_12, <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }

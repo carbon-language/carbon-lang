@@ -19,7 +19,7 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
   // that's not how we currently model `Core.Int`.
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   var v: Core.Int(N);
-  // CHECK:STDERR:          ^~~~~~~~~
+  // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Core.Int(N);
 }
 
@@ -42,8 +42,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %.2: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%.1) [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%int_0) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -103,9 +103,9 @@ fn CallNegative() {
 // CHECK:STDOUT: fn @CallNegative() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ErrorIfNIsZero.ref: %ErrorIfNIsZero.type = name_ref ErrorIfNIsZero, file.%ErrorIfNIsZero.decl [template = constants.%ErrorIfNIsZero]
-// CHECK:STDOUT:   %.loc16_18: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc16_3: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%.1) [template = constants.%.2]
-// CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %.loc16_3()
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero.ref, @ErrorIfNIsZero(constants.%int_0) [template = constants.%ErrorIfNIsZero.specific_fn]
+// CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %ErrorIfNIsZero.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,9 +114,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%.1) {
-// CHECK:STDOUT:   %N.loc4_19.2 => constants.%.1
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%.1
+// CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
+// CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %iN => <error>

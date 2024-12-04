@@ -7,24 +7,12 @@
 `MODULE.bazel.lock` may change locally when `bazel` is executed. This means one
 of:
 
-1.  `MODULE.bazel` is changing.
+1.  An input is changing, typically `MODULE.bazel` or `.bazelversion`.
     -   Running `bazel mod deps` provides a canonical update to
         `MODULE.bazel.lock`; include the changes.
     -   GitHub test actions may also identify platform-specific lockfile
         updates.
-2.  The `bazel` version doesn't match the version used to generate the
-    `MODULE.bazel.lock`.
-    -   Bazel releases can change the lock file contents.
-    -   We use Bazelisk in order to keep everyone using the same version:
-        https://bazel.build/install/bazelisk
-        -   Developers are encouraged to alias `bazel` to `bazelisk` for
-            ease-of-use; some setups, like Homebrew, will include that with a
-            `bazelisk` install.
-        -   Contribution tools documentation includes `bazelisk` setup:
-            https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md
-    -   Make sure `bazelisk --version` (or `bazel --version`) matches the
-        version in `.bazeliskrc`.
-3.  The host platform hasn't yet been added to the lock file.
+2.  The host platform hasn't yet been added to the lock file.
     -   Platforms tested with GitHub actions are kept up-to-date. Other
         platforms may fall out of sync due to `bazel` or dependency changes,
         and should be updated with a PR the same way a platform is added.

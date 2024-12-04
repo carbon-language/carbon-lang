@@ -162,13 +162,6 @@ class Context {
     return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId {
-    auto const_id = constants().GetOrAdd(inst, is_symbolic);
-    CARBON_VLOG("AddConstant: {0}\n", inst);
-    return const_id;
-  }
-
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   template <typename InstT>
@@ -193,6 +186,11 @@ class Context {
   // as a return slot.
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
+
+  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // The instruction is required to not change its constant value.
+  auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                          SemIR::Inst inst) -> void;
 
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
@@ -406,9 +404,6 @@ class Context {
                                SemIR::SpecificId enclosing_specific_id)
       -> SemIR::TypeId;
 
-  // Returns the type `i32`.
-  auto GetInt32Type() -> SemIR::TypeId;
-
   // Gets the facet type corresponding to a particular interface.
   auto GetInterfaceType(SemIR::InterfaceId interface_id,
                         SemIR::SpecificId specific_id) -> SemIR::TypeId;
@@ -425,9 +420,6 @@ class Context {
   // Returns an unbound element type.
   auto GetUnboundElementType(SemIR::TypeId class_type_id,
                              SemIR::TypeId element_type_id) -> SemIR::TypeId;
-
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
 
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
@@ -490,6 +482,10 @@ class Context {
 
   auto struct_type_fields_stack() -> ArrayStack<SemIR::StructTypeField>& {
     return struct_type_fields_stack_;
+  }
+
+  auto field_decls_stack() -> ArrayStack<SemIR::InstId>& {
+    return field_decls_stack_;
   }
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
@@ -648,9 +644,11 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
-  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
-  // object representations.
+  // The stack of StructTypeFields for in-progress StructTypeLiterals.
   ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
+
+  // The stack of FieldDecls for in-progress Class definitions.
+  ArrayStack<SemIR::InstId> field_decls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

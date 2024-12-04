@@ -16,9 +16,9 @@
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/block_value_store.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -127,6 +127,18 @@ concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 //   data where the instruction's kind is not known.
 class Inst : public Printable<Inst> {
  public:
+  // Makes an instruction for a singleton. This exists to support simple
+  // construction of all singletons by File.
+  static auto MakeSingleton(InstKind kind) -> Inst {
+    CARBON_CHECK(IsSingletonInstKind(kind));
+    // Error uses a self-referential type so that it's not accidentally treated
+    // as a normal type. Every other builtin is a type, including the
+    // self-referential TypeType.
+    auto type_id =
+        kind == InstKind::ErrorInst ? TypeId::Error : TypeId::TypeType;
+    return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
+  }
+
   template <typename TypedInst>
     requires Internal::InstLikeType<TypedInst>
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -208,9 +220,7 @@ class Inst : public Printable<Inst> {
     }
   }
 
-  auto kind() const -> InstKind {
-    return InstKind::Make(static_cast<InstKind::RawEnumType>(kind_));
-  }
+  auto kind() const -> InstKind { return InstKind::FromInt(kind_); }
 
   // Gets the type of the value produced by evaluating this instruction.
   auto type_id() const -> TypeId { return type_id_; }
@@ -267,22 +277,16 @@ class Inst : public Printable<Inst> {
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
   static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-  static constexpr auto ToRaw(BuiltinInstKind kind) -> int32_t {
-    return kind.AsInt();
-  }
 
   // Convert a field from its raw representation.
   template <typename T>
+    requires IdKind::Contains<T>
   static constexpr auto FromRaw(int32_t raw) -> T {
     return T(raw);
   }
   template <>
   constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
     return IntId::MakeRaw(raw);
-  }
-  template <>
-  constexpr auto FromRaw<BuiltinInstKind>(int32_t raw) -> BuiltinInstKind {
-    return BuiltinInstKind::FromInt(raw);
   }
 
   int32_t kind_;

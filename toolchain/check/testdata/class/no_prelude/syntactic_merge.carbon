@@ -183,16 +183,16 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
-// CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
-// CHECK:STDOUT:   %Bar.2: type = class_type @Bar, @Bar(%a) [symbolic]
+// CHECK:STDOUT:   %Bar.generic: %Bar.type = struct_value () [template]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar, @Bar(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -205,7 +205,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc8: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -213,7 +213,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param.loc7: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param.loc7 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc8: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -221,7 +221,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param.loc8: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc8: %C = bind_symbolic_name a, 0, %a.param.loc8 [symbolic = constants.%a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
+// CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type = class_decl @Bar [template = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc11: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc11, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -229,7 +229,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param.loc10: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc10_11.1: %C = bind_symbolic_name a, 0, %a.param.loc10 [symbolic = %a.loc10_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
+// CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type = class_decl @Bar [template = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc11: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc11, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -240,10 +240,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc7_11.1: %C) {
@@ -253,10 +254,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc8: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:     .Self = constants.%Foo
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,10 +269,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc11: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Bar.2
+// CHECK:STDOUT:     .Self = constants.%Bar
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,13 +291,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -303,7 +306,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -311,7 +314,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc6_17.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_17.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -322,10 +325,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc6_17.1: %C) {
@@ -335,10 +339,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:     .Self = constants.%Foo
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -351,15 +356,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -368,7 +373,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -376,7 +381,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc14_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc14_11.1, runtime_param<invalid> [symbolic = %a.patt.loc14_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -387,10 +392,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %C) {
@@ -407,10 +413,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc14: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,13 +435,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -443,7 +450,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -451,7 +458,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param.loc6: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0, %a.param.loc6 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -462,10 +469,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %C) {
@@ -475,10 +483,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc7: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:     .Self = constants.%Foo
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -491,14 +500,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
-// CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
+// CHECK:STDOUT:   %Bar.generic: %Bar.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -511,7 +520,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<invalid> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -519,7 +528,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
+// CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc8_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc8_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc8_11.1, runtime_param<invalid> [symbolic = %a.patt.loc8_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -530,10 +539,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc7_11.1: %C) {
@@ -564,22 +574,23 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT:   %Bar.type: type = generic_class_type @Bar [template]
-// CHECK:STDOUT:   %Bar.1: %Bar.type = struct_value () [template]
-// CHECK:STDOUT:   %Bar.2: type = class_type @Bar, @Bar(%a) [symbolic]
+// CHECK:STDOUT:   %Bar.generic: %Bar.type = struct_value () [template]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar, @Bar(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, inst+4, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -591,7 +602,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc4: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc4, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -599,7 +610,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc4: %C = bind_symbolic_name a, 0, %a.param [symbolic = constants.%a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.1] {
+// CHECK:STDOUT:   %Bar.decl: %Bar.type = class_decl @Bar [template = constants.%Bar.generic] {
 // CHECK:STDOUT:     %a.patt.loc5: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc5, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -611,7 +622,8 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
+// CHECK:STDOUT:   .Self = imports.%import_ref.6
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
@@ -621,10 +633,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:     .Self = constants.%Foo
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -635,10 +648,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Bar.2
+// CHECK:STDOUT:     .Self = constants.%Bar
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -656,17 +670,17 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %b: %C = bind_symbolic_name b, 0 [symbolic]
 // CHECK:STDOUT:   %b.patt: %C = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%b) [symbolic]
+// CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -678,7 +692,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<invalid> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -686,7 +700,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %b.patt.loc15_11.1: %C = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_11.2 (constants.%b.patt)]
 // CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt.loc15_11.1, runtime_param<invalid> [symbolic = %b.patt.loc15_11.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
@@ -697,10 +711,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc7_11.1: %C) {
@@ -717,10 +732,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -738,15 +754,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -758,7 +774,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<invalid> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -766,7 +782,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc15_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc15_11.1, runtime_param<invalid> [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -777,10 +793,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc7_11.1: %C) {
@@ -797,10 +814,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -818,15 +836,15 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.3: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.4: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -838,7 +856,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc7_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc7_11.1, runtime_param<invalid> [symbolic = %a.patt.loc7_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -846,7 +864,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.3] {
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
 // CHECK:STDOUT:     %a.patt.loc15_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc15_11.1, runtime_param<invalid> [symbolic = %a.patt.loc15_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -857,10 +875,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc7_11.1: %C) {
@@ -877,10 +896,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc15: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.4
+// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -898,12 +918,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -912,7 +932,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6_11.1: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
@@ -923,10 +943,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %C) {
@@ -945,18 +966,19 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
-// CHECK:STDOUT:   %Foo.2: type = class_type @Foo, @Foo(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo: type = class_type @Foo, @Foo(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//alias_two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, inst+4, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst+2, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -969,7 +991,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
 // CHECK:STDOUT:     %a.patt.loc6: %C = symbolic_binding_pattern a, 0 [symbolic = constants.%a.patt]
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt.loc6, runtime_param<invalid> [symbolic = constants.%a.patt]
 // CHECK:STDOUT:   } {
@@ -981,7 +1003,8 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Foo(constants.%a: %C) {
@@ -991,10 +1014,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc6: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2
+// CHECK:STDOUT:     .Self = constants.%Foo
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1007,16 +1031,16 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %.3: type = const_type %C [template]
-// CHECK:STDOUT:   %a: %.3 = bind_symbolic_name a, 0 [symbolic]
-// CHECK:STDOUT:   %a.patt: %.3 = symbolic_binding_pattern a, 0 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %const: type = const_type %C [template]
+// CHECK:STDOUT:   %a: %const = bind_symbolic_name a, 0 [symbolic]
+// CHECK:STDOUT:   %a.patt: %const = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type: type = generic_class_type @Foo [template]
-// CHECK:STDOUT:   %Foo.1: %Foo.type = struct_value () [template]
+// CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
-// CHECK:STDOUT:   %.4: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1025,52 +1049,54 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.1] {
-// CHECK:STDOUT:     %a.patt.loc6_11.1: %.3 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %.3 = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl: %Foo.type = class_decl @Foo [template = constants.%Foo.generic] {
+// CHECK:STDOUT:     %a.patt.loc6_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc6_11.1, runtime_param<invalid> [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc6: type = const_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %a.param: %.3 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc6_11.1: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:     %const: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc6_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.4] {
-// CHECK:STDOUT:     %a.patt.loc18_11.1: %.3 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
-// CHECK:STDOUT:     %a.param_patt: %.3 = value_param_pattern %a.patt.loc18_11.1, runtime_param<invalid> [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
+// CHECK:STDOUT:     %a.patt.loc18_11.1: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt: %const = value_param_pattern %a.patt.loc18_11.1, runtime_param<invalid> [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc18_22: type = const_type %C [template = constants.%.3]
-// CHECK:STDOUT:     %.loc18_15: type = const_type %.3 [template = constants.%.3]
-// CHECK:STDOUT:     %a.param: %.3 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %a.loc18_11.1: %.3 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_11.2 (constants.%a)]
+// CHECK:STDOUT:     %const.loc18_22: type = const_type %C [template = constants.%const]
+// CHECK:STDOUT:     %const.loc18_15: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:     %a.param: %const = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %a.loc18_11.1: %const = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc18_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %.3) {
-// CHECK:STDOUT:   %a.loc6_11.2: %.3 = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc6_11.2: %.3 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic class @Foo(%a.loc6_11.1: %const) {
+// CHECK:STDOUT:   %a.loc6_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc6_11.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%a.loc18_11.1: %.3) {
-// CHECK:STDOUT:   %a.loc18_11.2: %.3 = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
-// CHECK:STDOUT:   %a.patt.loc18_11.2: %.3 = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
+// CHECK:STDOUT: generic class @.1(%a.loc18_11.1: %const) {
+// CHECK:STDOUT:   %a.loc18_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
+// CHECK:STDOUT:   %a.patt.loc18_11.2: %const = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_11.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc18_33: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.5
+// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1089,14 +1115,14 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: type = unbound_element_type %Base, %empty_tuple.type [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %Base [template]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [template]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %Base [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.a: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.5: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1105,47 +1131,48 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.5] {
-// CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.2 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16_11: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
+// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc16: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:     %.loc16_26: type = ptr_type %Base [template = constants.%.2]
-// CHECK:STDOUT:     %self.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.2 = bind_name self, %self.param
+// CHECK:STDOUT:     %ptr: type = ptr_type %Base [template = constants.%ptr.1]
+// CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %.1 = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %.2 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %.2 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc7_8: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %.loc7: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:     %.loc7_23: type = ptr_type %Base [template = constants.%.2]
-// CHECK:STDOUT:     %self.param: %.2 = value_param runtime_param0
-// CHECK:STDOUT:     %self: %.2 = bind_name self, %self.param
+// CHECK:STDOUT:     %ptr: type = ptr_type %Base [template = constants.%ptr.1]
+// CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self.param_patt: %.2]();
+// CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.1]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[addr %self.param_patt: %.2]() {
+// CHECK:STDOUT: fn @.1[addr %self.param_patt: %ptr.1]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %.2 = name_ref self, %self
+// CHECK:STDOUT:   %self.ref: %ptr.1 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
-// CHECK:STDOUT:   %a.ref: %.1 = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [template = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc17_10: ref %empty_tuple.type = class_element_access %.loc17_4, element0
 // CHECK:STDOUT:   %.loc17_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = tuple_init () to %.loc17_10 [template = constants.%empty_tuple]

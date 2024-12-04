@@ -102,11 +102,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ClassElementAccess inst) -> void {
   // Find the class that we're performing access into.
   auto class_type_id = context.sem_ir().insts().Get(inst.base_id).type_id();
-  auto class_type =
-      context.sem_ir().types().GetAs<SemIR::ClassType>(class_type_id);
-  const auto& class_info = context.sem_ir().classes().Get(class_type.class_id);
   SemIR::TypeId object_repr_id =
-      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+      context.sem_ir().types().GetObjectRepr(class_type_id);
 
   // Translate the class field access into a struct access on the object
   // representation.

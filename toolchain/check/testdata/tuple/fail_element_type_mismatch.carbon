@@ -19,22 +19,22 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT: --- fail_element_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %.3: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %.4: f64 = float_literal 65.890000000000001 [template]
+// CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, f64) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%.1) [template]
+// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %.28: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %.29: <bound method> = bound_method %.3, %Convert.14 [template]
-// CHECK:STDOUT:   %.30: <specific function> = specific_function %.29, @Convert.2(%.1) [template]
-// CHECK:STDOUT:   %.31: %i32 = int_value 2 [template]
+// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,10 +52,10 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc17_9: init type = call constants.%Int(%.loc17_9) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_14: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:   %int.make_type_signed.loc17_14: init type = call constants.%Int(%.loc17_14) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc17_9: init type = call constants.%Int(%int_32.loc17_9) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc17_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc17_14: init type = call constants.%Int(%int_32.loc17_14) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_17.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc17_9, %int.make_type_signed.loc17_14)
 // CHECK:STDOUT:   %.loc17_17.2: type = value_of_initializer %int.make_type_signed.loc17_9 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17_17.3: type = converted %int.make_type_signed.loc17_9, %.loc17_17.2 [template = constants.%i32]
@@ -68,17 +68,17 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_22: Core.IntLiteral = int_value 2 [template = constants.%.3]
-// CHECK:STDOUT:   %.loc17_25: f64 = float_literal 65.890000000000001 [template = constants.%.4]
-// CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%.loc17_22, %.loc17_25)
-// CHECK:STDOUT:   %.loc17_30.2: %Convert.type.2 = interface_witness_access constants.%.28, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %.loc17_30.3: <bound method> = bound_method %.loc17_22, %.loc17_30.2 [template = constants.%.29]
-// CHECK:STDOUT:   %.loc17_30.4: <specific function> = specific_function %.loc17_30.3, @Convert.2(constants.%.1) [template = constants.%.30]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %.loc17_30.4(%.loc17_22) [template = constants.%.31]
-// CHECK:STDOUT:   %.loc17_30.5: init %i32 = converted %.loc17_22, %int.convert_checked [template = constants.%.31]
-// CHECK:STDOUT:   %.loc17_30.6: ref %i32 = tuple_access file.%x.var, element0
-// CHECK:STDOUT:   %.loc17_30.7: init %i32 = initialize_from %.loc17_30.5 to %.loc17_30.6 [template = constants.%.31]
-// CHECK:STDOUT:   %.loc17_30.8: %i32 = converted %.loc17_25, <error> [template = <error>]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
+// CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template = constants.%float]
+// CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%int_2, %float)
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc17_30.2: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.2]
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access file.%x.var, element0
+// CHECK:STDOUT:   %.loc17_30.3: init %i32 = initialize_from %.loc17_30.2 to %tuple.elem0 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc17_30.4: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -41,6 +41,7 @@ cc_library(
     hdrs = ["command_line.h"],
     deps = [
         ":check",
+        ":error",
         ":ostream",
         "@llvm-project//llvm:Support",
     ],
@@ -52,6 +53,7 @@ cc_test(
     srcs = ["command_line_test.cpp"],
     deps = [
         ":command_line",
+        ":error_test_helpers",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
@@ -122,12 +124,23 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "error_test_helpers",
+    testonly = 1,
+    hdrs = ["error_test_helpers.h"],
+    deps = [
+        ":error",
+        "@googletest//:gtest",
+    ],
+)
+
 cc_test(
     name = "error_test",
     size = "small",
     srcs = ["error_test.cpp"],
     deps = [
         ":error",
+        ":error_test_helpers",
         "//testing/base:gtest_main",
         "//testing/base:test_raw_ostream",
         "@googletest//:gtest",

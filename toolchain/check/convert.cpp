@@ -168,30 +168,31 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
 // another aggregate.
 //
 // For the source: `src_id` is the source aggregate, `src_elem_type` is the
-// element type, `i` is the index, and `SourceAccessInstT` is the kind of
-// instruction used to access the source element.
+// element type, `src_field_index` is the index, and `SourceAccessInstT` is the
+// kind of instruction used to access the source element.
 //
 // For the target: `kind` is the kind of conversion or initialization,
 // `target_elem_type` is the element type. For initialization, `target_id` is
 // the destination, `target_block` is a pending block for target location
 // calculations that will be spliced as the return slot of the initializer if
-// necessary, `i` is the index, and `TargetAccessInstT` is the kind of
-// instruction used to access the destination element.
+// necessary, `target_field_index` is the index, and `TargetAccessInstT` is the
+// kind of instruction used to access the destination element.
 template <typename SourceAccessInstT, typename TargetAccessInstT>
 static auto ConvertAggregateElement(
     Context& context, SemIR::LocId loc_id, SemIR::InstId src_id,
     SemIR::TypeId src_elem_type,
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
-    SemIR::TypeId target_elem_type, PendingBlock* target_block, size_t i) {
+    SemIR::TypeId target_elem_type, PendingBlock* target_block,
+    size_t src_field_index, size_t target_field_index) {
   // Compute the location of the source element. This goes into the current code
   // block, not into the target block.
   // TODO: Ideally we would discard this instruction if it's unused.
-  auto src_elem_id =
-      !src_literal_elems.empty()
-          ? src_literal_elems[i]
-          : MakeElementAccessInst<SourceAccessInstT>(context, loc_id, src_id,
-                                                     src_elem_type, context, i);
+  auto src_elem_id = !src_literal_elems.empty()
+                         ? src_literal_elems[src_field_index]
+                         : MakeElementAccessInst<SourceAccessInstT>(
+                               context, loc_id, src_id, src_elem_type, context,
+                               src_field_index);
 
   // If we're performing a conversion rather than an initialization, we won't
   // have or need a target.
@@ -204,7 +205,8 @@ static auto ConvertAggregateElement(
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
   target.init_block = target_block;
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
-      context, loc_id, target_id, target_elem_type, *target_block, i);
+      context, loc_id, target_id, target_elem_type, *target_block,
+      target_field_index);
   return Convert(context, loc_id, src_elem_id, target);
 }
 
@@ -275,7 +277,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
-            array_type.element_type_id, target_block, i);
+            array_type.element_type_id, target_block, i, i);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
@@ -356,7 +358,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
-            inner_kind, target.init_id, dest_type_id, target.init_block, i);
+            inner_kind, target.init_id, dest_type_id, target.init_block, i, i);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
@@ -394,7 +396,8 @@ static auto ConvertStructToStructOrClass(Context& context,
   auto dest_elem_fields = sem_ir.struct_type_fields().Get(dest_type.fields_id);
   bool dest_has_vptr = !dest_elem_fields.empty() &&
                        dest_elem_fields.front().name_id == SemIR::NameId::Vptr;
-  auto dest_elem_fields_size = dest_elem_fields.size() - dest_has_vptr;
+  int dest_vptr_offset = (dest_has_vptr ? 1 : 0);
+  auto dest_elem_fields_size = dest_elem_fields.size() - dest_vptr_offset;
 
   auto value = sem_ir.insts().Get(value_id);
   auto value_loc_id = sem_ir.insts().GetLocId(value_id);
@@ -496,7 +499,7 @@ static auto ConvertStructToStructOrClass(Context& context,
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_id, literal_elems,
             inner_kind, target.init_id, dest_field.type_id, target.init_block,
-            src_field_index);
+            src_field_index, src_field_index + dest_vptr_offset);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
     }
@@ -604,15 +607,12 @@ static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
       break;
     }
     auto& derived_class = context.classes().Get(derived_class_type->class_id);
-    if (!derived_class.base_id.is_valid()) {
+    auto base_type_id = derived_class.GetBaseType(
+        context.sem_ir(), derived_class_type->specific_id);
+    if (!base_type_id.is_valid()) {
       result = std::nullopt;
       break;
     }
-    auto base_decl =
-        context.insts().GetAs<SemIR::BaseDecl>(derived_class.base_id);
-    auto base_type_id = SemIR::GetTypeInSpecific(
-        context.sem_ir(), derived_class_type->specific_id,
-        base_decl.base_type_id);
     result->push_back({derived_class.base_id, base_type_id});
     derived_id = base_type_id;
   }
@@ -709,12 +709,15 @@ static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // If the type is an adapter, its object representation type is its compatible
   // non-adapter type.
-  if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id)) {
+  while (auto class_type =
+             context.types().TryGetAs<SemIR::ClassType>(type_id)) {
     auto& class_info = context.classes().Get(class_type->class_id);
-    if (class_info.adapt_id.is_valid()) {
-      return class_info.GetObjectRepr(context.sem_ir(),
-                                      class_type->specific_id);
+    auto adapted_type_id =
+        class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
+    if (!adapted_type_id.is_valid()) {
+      break;
     }
+    type_id = adapted_type_id;
   }
 
   // Otherwise, the type itself is a non-adapter type.

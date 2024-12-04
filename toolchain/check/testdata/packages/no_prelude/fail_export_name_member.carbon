@@ -37,10 +37,10 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: type = unbound_element_type %C, %.1 [template]
-// CHECK:STDOUT:   %.3: type = struct_type {.n: %.1} [template]
-// CHECK:STDOUT:   %.4: <witness> = complete_type_witness %.3 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [template]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,26 +51,31 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc5_8: %.2 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc6: <witness> = complete_type_witness %.3 [template = constants.%.4]
+// CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .n = %.loc5_8
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Foo//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Foo//a, inst+10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Foo//a, inst+8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -82,7 +87,8 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
-// CHECK:STDOUT:   .n = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .n = imports.%import_ref.4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

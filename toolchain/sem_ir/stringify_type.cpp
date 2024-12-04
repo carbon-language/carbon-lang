@@ -24,18 +24,16 @@ static auto GetTypePrecedence(InstKind kind) -> int {
   return 0;
 }
 
-auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
-    -> std::string {
-  std::string str;
-  llvm::raw_string_ostream out(str);
-
+namespace {
+class StepStack {
+ public:
+  enum Kind : uint8_t {
+    Inst,
+    FixedString,
+    ArrayBound,
+    Name,
+  };
   struct Step {
-    // The instruction's file.
-    const File& sem_ir;
-    enum Kind : uint8_t {
-      Inst,
-      FixedString,
-    };
     // The kind of step to perform.
     Kind kind;
     union {
@@ -43,74 +41,99 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       InstId inst_id;
       // The fixed string to print, when kind is FixedString.
       const char* fixed_string;
+      // The array bound to print, when kind is ArrayBound.
+      InstId bound_id;
+      // The name to print, when kind is Name.
+      NameId name_id;
     };
-    // The index within the current step. Not used by all kinds of step.
-    int index = 0;
-
-    auto Next() const -> Step {
-      Step next = *this;
-      ++next.index;
-      return next;
-    }
-  };
-  llvm::SmallVector<Step> steps = {Step{
-      .sem_ir = outer_sem_ir, .kind = Step::Inst, .inst_id = outer_inst_id}};
-
-  auto push_string = [&](const char* string) {
-    steps.push_back({.sem_ir = outer_sem_ir,
-                     .kind = Step::FixedString,
-                     .fixed_string = string});
   };
 
-  while (!steps.empty()) {
-    auto step = steps.pop_back_val();
+  explicit StepStack(const SemIR::File* file, InstId outer_inst_id)
+      : sem_ir(file) {
+    steps.push_back({.kind = Inst, .inst_id = outer_inst_id});
+  }
 
-    if (step.kind == Step::FixedString) {
-      out << step.fixed_string;
-      continue;
+  auto PushInstId(InstId inst_id) -> void {
+    steps.push_back({.kind = Inst, .inst_id = inst_id});
+  }
+  auto PushString(const char* string) -> void {
+    steps.push_back({.kind = FixedString, .fixed_string = string});
+  }
+  auto PushArrayBound(InstId bound_id) -> void {
+    steps.push_back({.kind = ArrayBound, .bound_id = bound_id});
+  }
+  auto PushNameId(NameId name_id) -> void {
+    steps.push_back({.kind = Name, .name_id = name_id});
+  }
+  auto PushTypeId(TypeId type_id) -> void {
+    PushInstId(sem_ir->types().GetInstId(type_id));
+  }
+  auto PushSpecificId(const EntityWithParamsBase& entity,
+                      SpecificId specific_id) -> void {
+    if (!entity.param_patterns_id.is_valid()) {
+      return;
     }
-
-    CARBON_CHECK(step.kind == Step::Inst);
-    if (!step.inst_id.is_valid()) {
-      out << "<invalid type>";
-      continue;
+    int num_params = sem_ir->inst_blocks().Get(entity.param_patterns_id).size();
+    if (!num_params) {
+      PushString("()");
+      return;
     }
+    if (!specific_id.is_valid()) {
+      // The name of the generic was used within the generic itself.
+      // TODO: Should we print the names of the generic parameters in this
+      // case?
+      return;
+    }
+    const auto& specific = sem_ir->specifics().Get(specific_id);
+    auto args =
+        sem_ir->inst_blocks().Get(specific.args_id).take_back(num_params);
+    bool last = true;
+    for (auto arg : llvm::reverse(args)) {
+      PushString(last ? ")" : ", ");
+      PushInstId(arg);
+      last = false;
+    }
+    PushString("(");
+  }
 
-    const auto& sem_ir = step.sem_ir;
-    // Helper for instructions with the current sem_ir.
-    auto push_inst_id = [&](InstId inst_id) {
-      steps.push_back(
-          {.sem_ir = sem_ir, .kind = Step::Inst, .inst_id = inst_id});
-    };
+  auto empty() const -> bool { return steps.empty(); }
+  auto Pop() -> Step { return steps.pop_back_val(); }
 
-    auto push_specific_id = [&](const EntityWithParamsBase& entity,
-                                SpecificId specific_id) {
-      if (!entity.param_patterns_id.is_valid()) {
-        return;
-      }
-      int num_params =
-          sem_ir.inst_blocks().Get(entity.param_patterns_id).size();
-      if (!num_params) {
-        out << "()";
-        return;
-      }
-      if (!specific_id.is_valid()) {
-        // The name of the generic was used within the generic itself.
-        // TODO: Should we print the names of the generic parameters in this
-        // case?
-        return;
-      }
-      out << "(";
-      const auto& specific = sem_ir.specifics().Get(specific_id);
-      auto args =
-          sem_ir.inst_blocks().Get(specific.args_id).take_back(num_params);
-      bool last = true;
-      for (auto arg : llvm::reverse(args)) {
-        push_string(last ? ")" : ", ");
-        push_inst_id(arg);
-        last = false;
-      }
-    };
+ private:
+  const SemIR::File* sem_ir;
+  llvm::SmallVector<Step> steps;
+};
+}  // namespace
+
+auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
+    -> std::string {
+  std::string str;
+  llvm::raw_string_ostream out(str);
+
+  // Note: Since this is a stack, work is resolved in the reverse order from the
+  // order pushed.
+  StepStack step_stack(&sem_ir, outer_inst_id);
+
+  while (!step_stack.empty()) {
+    auto step = step_stack.Pop();
+
+    switch (step.kind) {
+      case StepStack::FixedString:
+        out << step.fixed_string;
+        continue;
+      case StepStack::ArrayBound:
+        out << sem_ir.GetArrayBoundValue(step.bound_id);
+        continue;
+      case StepStack::Name:
+        out << sem_ir.names().GetFormatted(step.name_id);
+        continue;
+      case StepStack::Inst:
+        if (!step.inst_id.is_valid()) {
+          out << "<invalid type>";
+          continue;
+        }
+        // Fall through to the rest of the function.
+    }
 
     auto untyped_inst = sem_ir.insts().Get(step.inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
@@ -131,27 +154,19 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ArrayType inst): {
-        if (step.index == 0) {
-          out << "[";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.element_type_id));
-        } else if (step.index == 1) {
-          out << "; " << sem_ir.GetArrayBoundValue(inst.bound_id) << "]";
-        }
+        out << "[";
+        step_stack.PushString("]");
+        step_stack.PushArrayBound(inst.bound_id);
+        step_stack.PushString("; ");
+        step_stack.PushTypeId(inst.element_type_id);
         break;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
-        if (step.index == 0) {
-          out << "<associated ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.entity_type_id));
-        } else if (step.index == 1) {
-          out << " in ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.interface_type_id));
-        } else {
-          out << ">";
-        }
+        out << "<associated ";
+        step_stack.PushString(">");
+        step_stack.PushTypeId(inst.interface_type_id);
+        step_stack.PushString(" in ");
+        step_stack.PushTypeId(inst.entity_type_id);
         break;
       }
       case BindAlias::Kind:
@@ -166,76 +181,96 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case CARBON_KIND(ClassType inst): {
         const auto& class_info = sem_ir.classes().Get(inst.class_id);
         out << sem_ir.names().GetFormatted(class_info.name_id);
-        push_specific_id(class_info, inst.specific_id);
+        step_stack.PushSpecificId(class_info, inst.specific_id);
         break;
       }
       case CARBON_KIND(ConstType inst): {
-        if (step.index == 0) {
-          out << "const ";
+        out << "const ";
 
-          // Add parentheses if required.
-          auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
-          if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
-              GetTypePrecedence(SemIR::ConstType::Kind)) {
-            out << "(";
-            steps.push_back(step.Next());
-          }
-
-          push_inst_id(inner_type_inst_id);
-        } else if (step.index == 1) {
-          out << ")";
+        // Add parentheses if required.
+        auto inner_type_inst_id = sem_ir.types().GetInstId(inst.inner_id);
+        if (GetTypePrecedence(sem_ir.insts().Get(inner_type_inst_id).kind()) <
+            GetTypePrecedence(SemIR::ConstType::Kind)) {
+          out << "(";
+          step_stack.PushString(")");
         }
+
+        step_stack.PushInstId(inner_type_inst_id);
         break;
       }
       case CARBON_KIND(FacetAccessType inst): {
         // Given `T:! I`, print `T as type` as simply `T`.
-        push_inst_id(inst.facet_value_inst_id);
+        step_stack.PushInstId(inst.facet_value_inst_id);
+        break;
+      }
+      case CARBON_KIND(FacetAccessWitness inst): {
+        out << "<witness for ";
+        step_stack.PushString(">");
+        step_stack.PushInstId(inst.facet_value_inst_id);
         break;
       }
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
+        // Output `where` restrictions.
+        bool some_where = false;
+        if (facet_type_info.other_requirements) {
+          step_stack.PushString("...");
+          some_where = true;
+        }
+        for (auto rewrite :
+             llvm::reverse(facet_type_info.rewrite_constraints)) {
+          if (some_where) {
+            step_stack.PushString(" and");
+          }
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.rhs_const_id));
+          step_stack.PushString(" = ");
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.lhs_const_id));
+          step_stack.PushString(" ");
+          some_where = true;
+        }
+        // TODO: Other restrictions from facet_type_info.
+        if (some_where) {
+          step_stack.PushString(" where");
+        }
+
+        // Output interface requirements.
         if (facet_type_info.impls_constraints.empty()) {
-          out << "type";
-        } else {
-          const auto& impls = facet_type_info.impls_constraints[step.index];
+          step_stack.PushString("type");
+          break;
+        }
+        for (auto index : llvm::reverse(
+                 llvm::seq(facet_type_info.impls_constraints.size()))) {
+          const auto& impls = facet_type_info.impls_constraints[index];
           const auto& interface_info =
               sem_ir.interfaces().Get(impls.interface_id);
-          out << sem_ir.names().GetFormatted(interface_info.name_id);
-          push_specific_id(interface_info, impls.specific_id);
-          if (step.index + 1 <
-              static_cast<int>(facet_type_info.impls_constraints.size())) {
-            steps.push_back(step.Next());
-            push_string(" & ");
+          step_stack.PushSpecificId(interface_info, impls.specific_id);
+          step_stack.PushNameId(interface_info.name_id);
+          if (index > 0) {
+            step_stack.PushString(" & ");
           }
-        }
-        // TODO: Also output other restrictions from facet_type_info.
-        if (step.index + 1 >=
-                static_cast<int>(facet_type_info.impls_constraints.size()) &&
-            facet_type_info.requirement_block_id.is_valid()) {
-          out << " where...";
         }
         break;
       }
       case CARBON_KIND(FacetValue inst): {
         // No need to output the witness.
-        push_inst_id(sem_ir.types().GetInstId(inst.type_id));
-        push_string(" as ");
-        push_inst_id(inst.type_inst_id);
+        step_stack.PushTypeId(inst.type_id);
+        step_stack.PushString(" as ");
+        step_stack.PushInstId(inst.type_inst_id);
         break;
       }
       case CARBON_KIND(FloatType inst): {
         // TODO: Is this okay?
-        if (step.index == 1) {
-          out << ")";
-        } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << "f";
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
           out << "Core.Float(";
-          steps.push_back(step.Next());
-          push_inst_id(inst.bit_width_id);
+          step_stack.PushString(")");
+          step_stack.PushInstId(inst.bit_width_id);
         }
         break;
       }
@@ -256,18 +291,81 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
+      case CARBON_KIND(ImportRefUnloaded inst): {
+        if (inst.entity_name_id.is_valid()) {
+          auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
+          out << sem_ir.names().GetFormatted(name_id);
+        } else {
+          out << "<import ref unloaded invalid entity name>";
+        }
+        break;
+      }
       case CARBON_KIND(IntType inst): {
-        if (step.index == 1) {
-          out << ")";
-        } else if (auto width_value =
-                       sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
           out << (inst.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
-          steps.push_back(step.Next());
-          push_inst_id(inst.bit_width_id);
+          step_stack.PushString(")");
+          step_stack.PushInstId(inst.bit_width_id);
         }
+        break;
+      }
+      case CARBON_KIND(InterfaceWitnessAccess inst): {
+        auto witness_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        auto witness =
+            sem_ir.insts().GetAs<FacetAccessWitness>(witness_inst_id);
+        auto witness_type_id =
+            sem_ir.insts().Get(witness.facet_value_inst_id).type_id();
+        auto facet_type = sem_ir.types().GetAs<FacetType>(witness_type_id);
+        step_stack.PushString(")");
+        // TODO: Support != 1 interface better.
+        if (auto impls_constraint = sem_ir.facet_types()
+                                        .Get(facet_type.facet_type_id)
+                                        .TryAsSingleInterface()) {
+          const auto& interface =
+              sem_ir.interfaces().Get(impls_constraint->interface_id);
+          auto entities =
+              sem_ir.inst_blocks().Get(interface.associated_entities_id);
+          size_t index = inst.index.index;
+          CARBON_CHECK(index < entities.size(), "Access out of bounds.");
+          auto entity_inst_id = entities[index];
+          if (auto associated_const =
+                  sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
+                      entity_inst_id)) {
+            step_stack.PushNameId(associated_const->name_id);
+          } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
+                         entity_inst_id)) {
+            const auto& function =
+                sem_ir.functions().Get(function_decl->function_id);
+            step_stack.PushNameId(function.name_id);
+          } else {
+            step_stack.PushInstId(entity_inst_id);
+          }
+          step_stack.PushString(".");
+          step_stack.PushNameId(interface.name_id);
+          step_stack.PushString(".(");
+        } else {
+          step_stack.PushTypeId(witness_type_id);
+          step_stack.PushString(".(TODO: ");
+        }
+
+        bool period_self = false;
+        if (auto sym_name = sem_ir.insts().TryGetAs<BindSymbolicName>(
+                witness.facet_value_inst_id)) {
+          auto name_id =
+              sem_ir.entity_names().Get(sym_name->entity_name_id).name_id;
+          period_self = (name_id == SemIR::NameId::PeriodSelf);
+        }
+        if (!period_self) {
+          step_stack.PushInstId(witness.facet_value_inst_id);
+        }
+        break;
+      }
+      case CARBON_KIND(IntValue inst): {
+        sem_ir.ints().Get(inst.int_id).print(out, /*isSigned=*/true);
         break;
       }
       case CARBON_KIND(NameRef inst): {
@@ -275,12 +373,8 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(PointerType inst): {
-        if (step.index == 0) {
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.pointee_id));
-        } else if (step.index == 1) {
-          out << "*";
-        }
+        step_stack.PushString("*");
+        step_stack.PushTypeId(inst.pointee_id);
         break;
       }
       case CARBON_KIND(StructType inst): {
@@ -289,17 +383,18 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
           out << "{}";
           break;
         }
-
-        if (step.index >= static_cast<int>(fields.size())) {
-          out << "}";
-          break;
+        out << "{";
+        step_stack.PushString("}");
+        for (auto index : llvm::reverse(llvm::seq(fields.size()))) {
+          const auto& field = fields[index];
+          step_stack.PushTypeId(field.type_id);
+          step_stack.PushString(": ");
+          step_stack.PushNameId(field.name_id);
+          step_stack.PushString(".");
+          if (index > 0) {
+            step_stack.PushString(", ");
+          }
         }
-
-        const auto& field = fields[step.index];
-        out << (step.index == 0 ? "{" : ", ") << "."
-            << sem_ir.names().GetFormatted(field.name_id) << ": ";
-        steps.push_back(step.Next());
-        push_inst_id(sem_ir.types().GetInstId(field.type_id));
         break;
       }
       case CARBON_KIND(TupleType inst): {
@@ -307,44 +402,26 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
         if (refs.empty()) {
           out << "()";
           break;
-        } else if (step.index == 0) {
-          out << "(";
-        } else if (step.index < static_cast<int>(refs.size())) {
-          out << ", ";
-        } else {
-          // A tuple of one element has a comma to disambiguate from an
-          // expression.
-          if (step.index == 1) {
-            out << ",";
-          }
-          out << ")";
-          break;
         }
-        steps.push_back(step.Next());
-        push_inst_id(sem_ir.types().GetInstId(refs[step.index]));
+        out << "(";
+        step_stack.PushString(")");
+        // A tuple of one element has a comma to disambiguate from an
+        // expression.
+        if (refs.size() == 1) {
+          step_stack.PushString(",");
+        }
+        for (auto i : llvm::reverse(llvm::seq(refs.size()))) {
+          step_stack.PushTypeId(refs[i]);
+          if (i > 0) {
+            step_stack.PushString(", ");
+          }
+        }
         break;
       }
       case CARBON_KIND(UnboundElementType inst): {
-        if (step.index == 0) {
-          out << "<unbound element of class ";
-          steps.push_back(step.Next());
-          push_inst_id(sem_ir.types().GetInstId(inst.class_type_id));
-        } else {
-          out << ">";
-        }
-        break;
-      }
-      case CARBON_KIND(WhereExpr inst): {
-        if (step.index == 0) {
-          out << "<where restriction on ";
-          steps.push_back(step.Next());
-          TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
-          push_inst_id(sem_ir.types().GetInstId(type_id));
-          // TODO: Also output restrictions from the inst block
-          // inst.requirements_id.
-        } else {
-          out << ">";
-        }
+        out << "<unbound element of class ";
+        step_stack.PushString(">");
+        step_stack.PushTypeId(inst.class_type_id);
         break;
       }
       case AdaptDecl::Kind:
@@ -379,12 +456,9 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ImplDecl::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
-      case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
-      case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
@@ -416,12 +490,13 @@ auto StringifyTypeExpr(const SemIR::File& outer_sem_ir, InstId outer_inst_id)
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
       case VarStorage::Kind:
+      case WhereExpr::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
         auto const_inst_id =
             sem_ir.constant_values().GetConstantInstId(step.inst_id);
         if (const_inst_id.is_valid() && const_inst_id != step.inst_id) {
-          push_inst_id(const_inst_id);
+          step_stack.PushInstId(const_inst_id);
           break;
         }
 

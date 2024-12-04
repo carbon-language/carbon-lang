@@ -115,7 +115,8 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
-  if (types().GetConstantId(inst.type_id()).is_symbolic()) {
+  if (constant_values().DependsOnGenericParameter(
+          types().GetConstantId(inst.type_id()))) {
     dep_kind |= GenericRegionStack::DependencyKind::SymbolicType;
   }
 
@@ -128,7 +129,7 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
     // If the constant value is symbolic, track that we need to substitute into
     // it.
-    if (const_id.is_symbolic()) {
+    if (constant_values().DependsOnGenericParameter(const_id)) {
       dep_kind |= GenericRegionStack::DependencyKind::SymbolicConstant;
     }
   }
@@ -197,6 +198,15 @@ auto Context::ReplaceInstBeforeConstantUse(SemIR::InstId inst_id,
   sem_ir().insts().Set(inst_id, inst);
   CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
   FinishInst(inst_id, inst);
+}
+
+auto Context::ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                                 SemIR::Inst inst) -> void {
+  auto old_const_id = sem_ir().constant_values().Get(inst_id);
+  sem_ir().insts().Set(inst_id, inst);
+  CARBON_VLOG("ReplaceInst: {0} -> {1}\n", inst_id, inst);
+  auto new_const_id = TryEvalInst(*this, inst_id, inst);
+  CARBON_CHECK(old_const_id == new_const_id);
 }
 
 auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
@@ -381,18 +391,19 @@ static auto DiagnoseInvalidQualifiedNameAccess(Context& context, SemIRLoc loc,
   }
 
   // TODO: Support scoped entities other than just classes.
-  auto class_info = context.classes().Get(class_type->class_id);
+  const auto& class_info = context.classes().Get(class_type->class_id);
 
   auto parent_type_id = class_info.self_type_id;
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            class_info.base_id)) {
-      parent_type_id = base_decl->base_type_id;
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       class_info.adapt_id)) {
-      parent_type_id = adapt_decl->adapted_type_id;
+    if (auto base_type_id =
+            class_info.GetBaseType(context.sem_ir(), class_type->specific_id);
+        base_type_id.is_valid()) {
+      parent_type_id = base_type_id;
+    } else if (auto adapted_type_id = class_info.GetAdaptedType(
+                   context.sem_ir(), class_type->specific_id);
+               adapted_type_id.is_valid()) {
+      parent_type_id = adapted_type_id;
     } else {
       CARBON_FATAL("Expected parent for parent access");
     }
@@ -948,7 +959,13 @@ class TypeCompleter {
         if (inst.specific_id.is_valid()) {
           ResolveSpecificDefinition(context_, inst.specific_id);
         }
-        Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        if (auto adapted_type_id =
+                class_info.GetAdaptedType(context_.sem_ir(), inst.specific_id);
+            adapted_type_id.is_valid()) {
+          Push(adapted_type_id);
+        } else {
+          Push(class_info.GetObjectRepr(context_.sem_ir(), inst.specific_id));
+        }
         break;
       }
       case CARBON_KIND(SemIR::ConstType inst): {
@@ -1118,12 +1135,10 @@ class TypeCompleter {
     auto& class_info = context_.classes().Get(inst.class_id);
     // The value representation of an adapter is the value representation of
     // its adapted type.
-    if (class_info.adapt_id.is_valid()) {
-      return GetNestedValueRepr(SemIR::GetTypeInSpecific(
-          context_.sem_ir(), inst.specific_id,
-          context_.insts()
-              .GetAs<SemIR::AdaptDecl>(class_info.adapt_id)
-              .adapted_type_id));
+    if (auto adapted_type_id =
+            class_info.GetAdaptedType(context_.sem_ir(), inst.specific_id);
+        adapted_type_id.is_valid()) {
+      return GetNestedValueRepr(adapted_type_id);
     }
     // Otherwise, the value representation for a class is a pointer to the
     // object representation.
@@ -1267,7 +1282,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
         ResolveSpecificDefinition(*this, interface.specific_id);
       }
     }
-    // TODO: Process other requirements.
+    // TODO: Finish facet type resolution.
   }
 
   return true;
@@ -1290,9 +1305,9 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
 auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
                                      SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  SemIR::FacetTypeId facet_type_id = facet_types().Add(SemIR::FacetTypeInfo{
-      .impls_constraints = {{interface_id, specific_id}},
-      .requirement_block_id = SemIR::InstBlockId::Invalid});
+  SemIR::FacetTypeId facet_type_id = facet_types().Add(
+      SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
+                           .other_requirements = false});
   return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }
 
@@ -1363,17 +1378,6 @@ auto Context::GetGenericInterfaceType(SemIR::InterfaceId interface_id,
       *this, interface_id, enclosing_specific_id);
 }
 
-auto Context::GetInt32Type() -> SemIR::TypeId {
-  auto bit_width_const_id = TryEvalInst(
-      *this, SemIR::InstId::Invalid,
-      SemIR::IntValue{
-          .type_id = GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType),
-          .int_id = ints().Add(32)});
-  return GetCompleteTypeImpl<SemIR::IntType>(
-      *this, SemIR::IntKind::Signed,
-      constant_values().GetInstId(bit_width_const_id));
-}
-
 auto Context::GetInterfaceType(SemIR::InterfaceId interface_id,
                                SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
@@ -1389,13 +1393,6 @@ auto Context::GetUnboundElementType(SemIR::TypeId class_type_id,
     -> SemIR::TypeId {
   return GetTypeImpl<SemIR::UnboundElementType>(*this, class_type_id,
                                                 element_type_id);
-}
-
-auto Context::GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId {
-  if (auto const_type = types().TryGetAs<SemIR::ConstType>(type_id)) {
-    return const_type->inner_id;
-  }
-  return type_id;
 }
 
 auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {

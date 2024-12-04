@@ -81,15 +81,19 @@ static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
 
     // If the `type_id` of `Self` does not match with the one we're currently
     // accessing, try checking if this class is of the parent type of `Self`.
-    if (auto base_decl = context.insts().TryGetAsIfValid<SemIR::BaseDecl>(
-            self_class_info.base_id)) {
-      if (base_decl->base_type_id == class_info.self_type_id) {
+    if (auto base_type_id = self_class_info.GetBaseType(
+            context.sem_ir(), self_class_type->specific_id);
+        base_type_id.is_valid()) {
+      if (context.types().GetConstantId(base_type_id) == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
-    } else if (auto adapt_decl =
-                   context.insts().TryGetAsIfValid<SemIR::AdaptDecl>(
-                       self_class_info.adapt_id)) {
-      if (adapt_decl->adapted_type_id == class_info.self_type_id) {
+      // TODO: Also check whether this base class has a base class of its own.
+    } else if (auto adapt_type_id = self_class_info.GetAdaptedType(
+                   context.sem_ir(), self_class_type->specific_id);
+               adapt_type_id.is_valid()) {
+      if (context.types().GetConstantId(adapt_type_id) == name_scope_const_id) {
+        // TODO: Should we be allowed to access protected fields of a type we
+        // are adapting? The design doesn't allow this.
         return SemIR::AccessKind::Protected;
       }
     }
@@ -124,6 +128,46 @@ static auto ScopeNeedsImplLookup(Context& context,
   return true;
 }
 
+static auto GetInterfaceFromFacetType(Context& context, SemIR::TypeId type_id)
+    -> std::optional<SemIR::FacetTypeInfo::ImplsConstraint> {
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+  return facet_type_info.TryAsSingleInterface();
+}
+
+static auto AccessMemberOfInterfaceWitness(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
+    SemIR::SpecificId interface_specific_id,
+    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id)
+    -> SemIR::InstId {
+  auto member_value_id = context.constant_values().GetConstantInstId(member_id);
+  if (!member_value_id.is_valid()) {
+    if (member_value_id != SemIR::InstId::BuiltinErrorInst) {
+      context.TODO(member_id, "non-constant associated entity");
+    }
+    return SemIR::InstId::BuiltinErrorInst;
+  }
+
+  auto assoc_entity =
+      context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
+  if (!assoc_entity) {
+    context.TODO(member_id, "unexpected value for associated entity");
+    return SemIR::InstId::BuiltinErrorInst;
+  }
+
+  // TODO: This produces the type of the associated entity with no value for
+  // `Self`. The type `Self` might appear in the type of an associated constant,
+  // and if so, we'll need to substitute it here somehow.
+  auto subst_type_id = SemIR::GetTypeInSpecific(
+      context.sem_ir(), interface_specific_id, assoc_type.entity_type_id);
+
+  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
+      loc_id, {.type_id = subst_type_id,
+               .witness_id = witness_id,
+               .index = assoc_entity->index});
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -131,11 +175,8 @@ static auto PerformImplLookup(
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     Context::BuildDiagnosticFn missing_impl_diagnoser = nullptr)
     -> SemIR::InstId {
-  auto facet_type =
-      context.types().GetAs<SemIR::FacetType>(assoc_type.interface_type_id);
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-  auto interface_type = facet_type_info.TryAsSingleInterface();
+  auto interface_type =
+      GetInterfaceFromFacetType(context, assoc_type.interface_type_id);
   if (!interface_type) {
     context.TODO(loc_id,
                  "Lookup of impl witness not yet supported except for a single "
@@ -170,42 +211,20 @@ static auto PerformImplLookup(
     }
     return SemIR::InstId::BuiltinErrorInst;
   }
-
-  auto member_value_id = context.constant_values().GetConstantInstId(member_id);
-  if (!member_value_id.is_valid()) {
-    if (member_value_id != SemIR::InstId::BuiltinErrorInst) {
-      context.TODO(member_id, "non-constant associated entity");
-    }
-    return SemIR::InstId::BuiltinErrorInst;
-  }
-
-  auto assoc_entity =
-      context.insts().TryGetAs<SemIR::AssociatedEntity>(member_value_id);
-  if (!assoc_entity) {
-    context.TODO(member_id, "unexpected value for associated entity");
-    return SemIR::InstId::BuiltinErrorInst;
-  }
-
-  // TODO: This produces the type of the associated entity with no value for
-  // `Self`. The type `Self` might appear in the type of an associated constant,
-  // and if so, we'll need to substitute it here somehow.
-  auto subst_type_id = SemIR::GetTypeInSpecific(
-      context.sem_ir(), interface_type->specific_id, assoc_type.entity_type_id);
-
-  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
-      loc_id, {.type_id = subst_type_id,
-               .witness_id = witness_id,
-               .index = assoc_entity->index});
+  return AccessMemberOfInterfaceWitness(context, loc_id, witness_id,
+                                        interface_type->specific_id, assoc_type,
+                                        member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
 // impl lookup if necessary. If the scope is invalid, assume an error has
 // already been diagnosed, and return BuiltinErrorInst.
 static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
-                                    SemIR::InstId /*base_id*/,
+                                    SemIR::InstId base_id,
                                     SemIR::NameId name_id,
                                     SemIR::ConstantId name_scope_const_id,
-                                    llvm::ArrayRef<LookupScope> lookup_scopes)
+                                    llvm::ArrayRef<LookupScope> lookup_scopes,
+                                    bool lookup_in_type_of_base)
     -> SemIR::InstId {
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
@@ -250,7 +269,64 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   // impl member is not supposed to be treated as ambiguous.
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
-    if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
+    if (lookup_in_type_of_base) {
+      SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
+      if (base_type_id != SemIR::TypeId::TypeType &&
+          context.IsFacetType(base_type_id)) {
+        // Handles `T.F` when `T` is a non-type facet.
+
+        auto assoc_interface =
+            GetInterfaceFromFacetType(context, assoc_type->interface_type_id);
+        // An associated entity should always be associated with a single
+        // interface.
+        CARBON_CHECK(assoc_interface);
+
+        // First look for `*assoc_interface` in the type of the base. If it is
+        // found, get the witness that the interface is implemented from
+        // `base_id`.
+        auto facet_type = context.types().GetAs<SemIR::FacetType>(base_type_id);
+        const auto& facet_type_info =
+            context.facet_types().Get(facet_type.facet_type_id);
+        // Witness that `T` implements the `*assoc_interface`.
+        SemIR::InstId witness_inst_id = SemIR::InstId::Invalid;
+        for (auto base_interface : facet_type_info.impls_constraints) {
+          // Get the witness that `T` implements `base_type_id`.
+          if (base_interface == *assoc_interface) {
+            witness_inst_id = context.GetOrAddInst<SemIR::FacetAccessWitness>(
+                loc_id, {.type_id = context.GetBuiltinType(
+                             SemIR::BuiltinInstKind::WitnessType),
+                         .facet_value_inst_id = base_id});
+            // TODO: Result will eventually be a facet type witness instead of
+            // an interface witness. Will need to use the index
+            // `*assoc_interface` was found in
+            // `facet_type_info.impls_constraints` to get the correct interface
+            // witness out.
+            break;
+          }
+        }
+        // TODO: If that fails, would need to do impl lookup to see if the facet
+        // value implements the interface of `*assoc_type`.
+        if (!witness_inst_id.is_valid()) {
+          context.TODO(member_id,
+                       "associated entity not found in facet type, need to do "
+                       "impl lookup");
+          return SemIR::InstId::BuiltinErrorInst;
+        }
+
+        member_id = AccessMemberOfInterfaceWitness(
+            context, loc_id, witness_inst_id, assoc_interface->specific_id,
+            *assoc_type, member_id);
+      } else {
+        // Handles `x.F` if `x` is of type `class C` that extends an interface
+        // containing `F`.
+        SemIR::ConstantId constant_id =
+            context.types().GetConstantId(base_type_id);
+        member_id = PerformImplLookup(context, loc_id, constant_id, *assoc_type,
+                                      member_id);
+      }
+    } else if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
+      // Handles `T.F` where `T` is a type extending an interface containing
+      // `F`.
       member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
                                     *assoc_type, member_id);
     }
@@ -342,7 +418,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
     if (context.AppendLookupScopesForConstant(loc_id, base_const_id,
                                               &lookup_scopes)) {
       return LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                     base_const_id, lookup_scopes);
+                                     base_const_id, lookup_scopes,
+                                     /*lookup_in_type_of_base=*/false);
     }
   }
 
@@ -401,7 +478,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // Perform lookup into the base type.
   auto member_id = LookupMemberNameInScope(context, loc_id, base_id, name_id,
-                                           base_type_const_id, lookup_scopes);
+                                           base_type_const_id, lookup_scopes,
+                                           /*lookup_in_type_of_base=*/true);
 
   // Perform instance binding if we found an instance member.
   member_id = PerformInstanceBinding(context, loc_id, base_id, member_id);

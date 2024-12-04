@@ -5,6 +5,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -26,16 +27,6 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
       {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType),
        .value = SemIR::BoolValue::True});
   return true;
-}
-
-// Forms an IntValue instruction with type `IntLiteral` for a given literal
-// integer value, which is assumed to be unsigned.
-static auto MakeIntLiteral(Context& context, Parse::NodeId node_id,
-                           IntId int_id) -> SemIR::InstId {
-  return context.AddInst<SemIR::IntValue>(
-      node_id, {.type_id = context.GetBuiltinType(
-                    SemIR::BuiltinInstKind::IntLiteralType),
-                .int_id = int_id});
 }
 
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
@@ -121,10 +112,7 @@ static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
         node_id, IntWidthNotMultipleOf8, int_kind.is_signed(),
         llvm::APSInt(context.ints().Get(size_id), /*isUnsigned=*/true));
   }
-  auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = context.LookupNameInCore(
-      node_id, int_kind == SemIR::IntKind::Signed ? "Int" : "UInt");
-  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
+  auto type_inst_id = MakeIntTypeLiteral(context, node_id, int_kind, size_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }

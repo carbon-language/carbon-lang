@@ -103,6 +103,14 @@ static auto PushOperand(Context& context, Worklist& worklist,
         PushOperand(context, worklist, SemIR::IdKind::For<SemIR::SpecificId>,
                     interface.specific_id.index);
       }
+      for (auto rewrite : facet_type_info.rewrite_constraints) {
+        auto lhs_inst_id =
+            context.constant_values().GetInstId(rewrite.lhs_const_id);
+        auto rhs_inst_id =
+            context.constant_values().GetInstId(rewrite.rhs_const_id);
+        worklist.Push(lhs_inst_id);
+        worklist.Push(rhs_inst_id);
+      }
       // TODO: Process other requirements as well.
       break;
     }
@@ -192,6 +200,13 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       SemIR::FacetTypeInfo new_facet_type_info = old_facet_type_info;
       // Since these were added to a stack, we get them back in reverse order.
       for (auto i : llvm::reverse(
+               llvm::seq(old_facet_type_info.rewrite_constraints.size()))) {
+        auto rhs_id = context.constant_values().Get(worklist.Pop());
+        auto lhs_id = context.constant_values().Get(worklist.Pop());
+        new_facet_type_info.rewrite_constraints[i].rhs_const_id = rhs_id;
+        new_facet_type_info.rewrite_constraints[i].lhs_const_id = lhs_id;
+      }
+      for (auto i : llvm::reverse(
                llvm::seq(old_facet_type_info.impls_constraints.size()))) {
         auto specific_id = PopOperand(
             context, worklist, SemIR::IdKind::For<SemIR::SpecificId>,
@@ -199,6 +214,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         new_facet_type_info.impls_constraints[i].specific_id =
             SemIR::SpecificId(specific_id);
       }
+      new_facet_type_info.Canonicalize();
       return context.facet_types().Add(new_facet_type_info).index;
     }
     default:

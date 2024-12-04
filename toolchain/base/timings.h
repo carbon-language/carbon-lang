@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_TIMINGS_H_
 #define CARBON_TOOLCHAIN_BASE_TIMINGS_H_
 
+#include <chrono>
+
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/yaml.h"
@@ -14,26 +16,26 @@ namespace Carbon {
 // Helps track timings for a compile.
 class Timings {
  public:
-  // Records a timing for a scope, if the timings object is valid.
+  // Records a timing for a scope, if the timings object is present.
   class ScopedTiming {
    public:
-    explicit ScopedTiming(std::optional<Timings>* timings,
-                          llvm::StringRef label)
-        : timings(timings),
-          label(label),
-          start(*timings ? std::chrono::steady_clock::now()
+    // The `timings` may be null, in which case the `ScopedTiming` is a no-op.
+    explicit ScopedTiming(Timings* timings, llvm::StringRef label)
+        : timings_(timings),
+          label_(label),
+          start_(timings ? std::chrono::steady_clock::now()
                          : std::chrono::steady_clock::time_point::min()) {}
 
     ~ScopedTiming() {
-      if (*timings) {
-        (*timings)->Add(label, std::chrono::steady_clock::now() - start);
+      if (timings_) {
+        timings_->Add(label_, std::chrono::steady_clock::now() - start_);
       }
     }
 
    private:
-    std::optional<Timings>* timings;
-    llvm::StringRef label;
-    std::chrono::steady_clock::time_point start;
+    Timings* timings_;
+    llvm::StringRef label_;
+    std::chrono::steady_clock::time_point start_;
   };
 
   // Adds tracking for nanoseconds, paired with the given label.

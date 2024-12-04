@@ -127,13 +127,13 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     'inst+38':         templateConstant(inst+38)
 // CHECK:STDOUT:     'inst+39':         templateConstant(inst+38)
 // CHECK:STDOUT:   symbolic_constants:
-// CHECK:STDOUT:     symbolicConstant0: {inst: inst+2, generic: generic<invalid>, index: genericInst<invalid>}
-// CHECK:STDOUT:     symbolicConstant1: {inst: inst+4, generic: generic<invalid>, index: genericInst<invalid>}
-// CHECK:STDOUT:     symbolicConstant2: {inst: inst+16, generic: generic<invalid>, index: genericInst<invalid>}
-// CHECK:STDOUT:     symbolicConstant3: {inst: inst+2, generic: generic0, index: genericInstInDecl0}
-// CHECK:STDOUT:     symbolicConstant4: {inst: inst+4, generic: generic0, index: genericInstInDecl1}
-// CHECK:STDOUT:     symbolicConstant5: {inst: inst+16, generic: generic0, index: genericInstInDecl2}
-// CHECK:STDOUT:     symbolicConstant6: {inst: inst+30, generic: generic<invalid>, index: genericInst<invalid>}
+// CHECK:STDOUT:     symbolicConstant0: {inst: inst+2, generic: generic<invalid>, index: genericInst<invalid>, .Self: false}
+// CHECK:STDOUT:     symbolicConstant1: {inst: inst+4, generic: generic<invalid>, index: genericInst<invalid>, .Self: false}
+// CHECK:STDOUT:     symbolicConstant2: {inst: inst+16, generic: generic<invalid>, index: genericInst<invalid>, .Self: false}
+// CHECK:STDOUT:     symbolicConstant3: {inst: inst+2, generic: generic0, index: genericInstInDecl0, .Self: false}
+// CHECK:STDOUT:     symbolicConstant4: {inst: inst+4, generic: generic0, index: genericInstInDecl1, .Self: false}
+// CHECK:STDOUT:     symbolicConstant5: {inst: inst+16, generic: generic0, index: genericInstInDecl2, .Self: false}
+// CHECK:STDOUT:     symbolicConstant6: {inst: inst+30, generic: generic<invalid>, index: genericInst<invalid>, .Self: false}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:

@@ -46,11 +46,11 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT: --- fail_impl_as_false.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %.1 [template]
-// CHECK:STDOUT:   %.2: bool = bool_literal false [template]
+// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -67,17 +67,17 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11: type = converted @impl.9.%.loc11_13, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc11: type = converted @impl.9.%false, <error> [template = <error>]
 // CHECK:STDOUT:   impl_decl @impl.9 [template] {} {
-// CHECK:STDOUT:     %.loc11_6.1: Core.IntLiteral = int_value 32 [template = constants.%.1]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%.loc11_6.1) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_6.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_6.3: type = converted %int.make_type_signed, %.loc11_6.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_13: bool = bool_literal false [template = constants.%.2]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_6.2: type = converted %int.make_type_signed, %.loc11_6.1 [template = constants.%i32]
+// CHECK:STDOUT:     %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.9: %.loc11_6.3 as <error> {
+// CHECK:STDOUT: impl @impl.9: %.loc11_6.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -117,10 +117,10 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT: --- fail_impl_as_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,11 +138,11 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc10_6.1: Core.IntLiteral = int_value 64 [template = constants.%.1]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%.loc10_6.1) [template = f64]
-// CHECK:STDOUT:     %.loc10_6.2: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc10_6.3: type = converted %float.make_type, %.loc10_6.2 [template = f64]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
+// CHECK:STDOUT:     %.loc10_6.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc10_6.2: type = converted %float.make_type, %.loc10_6.1 [template = f64]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.loc10_18: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
@@ -150,7 +150,7 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc10_6.3 as %.loc10_18 {
+// CHECK:STDOUT: impl @impl: %.loc10_6.2 as %.loc10_18 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

@@ -25,7 +25,7 @@ fn Run() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -55,9 +55,9 @@ fn Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   %.loc17_7: Core.IntLiteral = int_value 0 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_4.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc17_4.2: ref %empty_tuple.type = temporary %.loc17_4.1, %F.call
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %.loc17_5.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc17_5.2: ref %empty_tuple.type = temporary %.loc17_5.1, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

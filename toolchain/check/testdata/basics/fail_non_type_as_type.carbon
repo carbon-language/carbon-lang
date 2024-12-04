@@ -19,7 +19,7 @@ var x: type = 42;
 // CHECK:STDOUT: --- fail_non_type_as_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 42 [template]
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -42,8 +42,8 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_15: Core.IntLiteral = int_value 42 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc17_17: type = converted %.loc17_15, <error> [template = <error>]
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
+// CHECK:STDOUT:   %.loc17: type = converted %int_42, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -24,8 +24,8 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.a: %Incomplete} [template]
-// CHECK:STDOUT:   %.2: type = ptr_type %Incomplete [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,13 +36,13 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [template = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc19: type = struct_type {.a: %Incomplete} [template = constants.%.1]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Incomplete} [template = constants.%struct_type.a]
 // CHECK:STDOUT:   %s.var: ref <error> = var s
 // CHECK:STDOUT:   %s: ref <error> = bind_name s, %s.var
 // CHECK:STDOUT:   %Incomplete.ref.loc21: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc21: type = ptr_type %Incomplete [template = constants.%.2]
-// CHECK:STDOUT:   %p.var: ref %.2 = var p
-// CHECK:STDOUT:   %p: ref %.2 = bind_name p, %p.var
+// CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template = constants.%ptr]
+// CHECK:STDOUT:   %p.var: ref %ptr = var p
+// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -51,7 +51,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, file.%s
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21: <error> = addr_of %a.ref [template = <error>]
+// CHECK:STDOUT:   %addr: <error> = addr_of %a.ref [template = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

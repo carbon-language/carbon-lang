@@ -41,8 +41,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !11
 // CHECK:STDOUT:   %.loc22_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   store i32 1, ptr %.loc22_4.a, align 4, !dbg !12
-// CHECK:STDOUT:   %.loc23_4.b = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   store ptr %c.var, ptr %.loc23_4.b, align 8, !dbg !13
+// CHECK:STDOUT:   %.loc23.b = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 1, !dbg !13
+// CHECK:STDOUT:   store ptr %c.var, ptr %.loc23.b, align 8, !dbg !13
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !15
 // CHECK:STDOUT: }

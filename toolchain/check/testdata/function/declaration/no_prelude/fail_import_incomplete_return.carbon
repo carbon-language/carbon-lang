@@ -98,8 +98,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
 // CHECK:STDOUT:   %Call: %Call.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -153,10 +153,11 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc37: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnCUnused() -> %C;
@@ -189,6 +190,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnDUnused.type: type = fn_type @ReturnDUnused [template]
 // CHECK:STDOUT:   %ReturnDUnused: %ReturnDUnused.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ReturnDUsed.type: type = fn_type @ReturnDUsed [template]
 // CHECK:STDOUT:   %ReturnDUsed: %ReturnDUsed.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -201,7 +204,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %import_ref.5: %ReturnDUnused.type = import_ref Main//incomplete_return, inst+27, loaded [template = constants.%ReturnDUnused]
 // CHECK:STDOUT:   %import_ref.6: %ReturnDUsed.type = import_ref Main//incomplete_return, inst+35, loaded [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//incomplete_return, inst+38, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//incomplete_return, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//incomplete_return, inst+48, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//incomplete_return, inst+4, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -223,7 +227,8 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.8
+// CHECK:STDOUT:   .Self = imports.%import_ref.9
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {
@@ -233,13 +238,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%import_ref.4 [template = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%import_ref.5 [template = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %.loc32_16.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc32_16.1
-// CHECK:STDOUT:   %.loc32_16.2: ref %D = temporary %.loc32_16.1, %ReturnDUnused.call
+// CHECK:STDOUT:   %.loc32_17.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc32_17.1
+// CHECK:STDOUT:   %.loc32_17.2: ref %D = temporary %.loc32_17.1, %ReturnDUnused.call
 // CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%import_ref.6 [template = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc33_14.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc33_14.1
-// CHECK:STDOUT:   %.loc33_14.2: ref %D = temporary %.loc33_14.1, %ReturnDUsed.call
+// CHECK:STDOUT:   %.loc33_15.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc33_15.1
+// CHECK:STDOUT:   %.loc33_15.2: ref %D = temporary %.loc33_15.1, %ReturnDUsed.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

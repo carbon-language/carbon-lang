@@ -58,7 +58,7 @@ var b: Bool() = false;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: bool = bool_literal false [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,8 +89,8 @@ var b: Bool() = false;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6: bool = bool_literal false [template = constants.%.1]
-// CHECK:STDOUT:   assign file.%b.var, %.loc6
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   assign file.%b.var, %false
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

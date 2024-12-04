@@ -22,10 +22,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4, !dbg !8
 // CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc13_20.1.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc13_20.2 = load i32, ptr %.loc13_20.1.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_20.3.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.2, 0, !dbg !10
-// CHECK:STDOUT:   store { i32 } %.loc13_20.3.tuple.init, ptr %y.var, align 4, !dbg !11
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc13_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.1, 0, !dbg !10
+// CHECK:STDOUT:   store { i32 } %.loc13_20.2.tuple.init, ptr %y.var, align 4, !dbg !11
 // CHECK:STDOUT:   ret i32 0, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
