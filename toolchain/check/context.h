@@ -468,7 +468,7 @@ class Context {
       { Dumper::Dump(tokens, parse_tree, t) };
     }
   LLVM_DUMP_METHOD auto Dump(const T& t) const -> void {
-    Dumper::Dump(tokens(), t);
+    Dumper::Dump(tokens(), parse_tree(), t);
   }
 
   // Get the Lex::TokenKind of a node for diagnostics.
@@ -480,7 +480,7 @@ class Context {
 
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
 
-  auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return get_parse_tree_and_subtrees_();
