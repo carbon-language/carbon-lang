@@ -284,8 +284,7 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
   }
 
   auto inst_id = parent_scope.names[insert.value()].inst_id;
-  auto prev_ir_inst =
-      GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
+  auto prev_ir_inst = GetCanonicalImportIRInst(context, inst_id);
   VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
                                   &import_sem_ir, import_inst_id);
 }
@@ -594,8 +593,7 @@ auto ImportNameFromOtherPackage(
     // When there's a name collision, they need to either be the same canonical
     // instruction, or we'll diagnose.
     if (!canonical_result_inst) {
-      canonical_result_inst =
-          GetCanonicalImportIRInst(context, &context.sem_ir(), result_id);
+      canonical_result_inst = GetCanonicalImportIRInst(context, result_id);
     }
     VerifySameCanonicalImportIRInst(context, result_id, *canonical_result_inst,
                                     import_ir_id, import_ir.sem_ir,

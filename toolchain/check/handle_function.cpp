@@ -131,8 +131,7 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
       break;
     }
     case SemIR::ImportRefLoaded::Kind: {
-      auto import_ir_inst =
-          GetCanonicalImportIRInst(context, &context.sem_ir(), prev_id);
+      auto import_ir_inst = GetCanonicalImportIRInst(context, prev_id);
 
       // Verify the decl so that things like aliases are name conflicts.
       const auto* import_ir =
