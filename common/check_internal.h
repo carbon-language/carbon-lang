@@ -10,6 +10,19 @@
 
 namespace Carbon::Internal {
 
+// Evaluates a condition in a CHECK. This diagnoses if the condition evaluates
+// to the constant `true` or `false`.
+[[clang::always_inline]] constexpr bool
+// Trailing GNU function attributes are incompatible with trailing return types.
+// NOLINTNEXTLINE(modernize-use-trailing-return-type)
+CheckCondition(bool condition)
+    __attribute__((diagnose_if(condition, "CHECK condition is always true",
+                               "error")))
+    __attribute__((diagnose_if(!condition, "CHECK condition is always false",
+                               "error"))) {
+  return condition;
+}
+
 // Implements the check failure message printing.
 //
 // This is out-of-line and will arrange to stop the program, print any debugging
@@ -53,6 +66,13 @@ template <TemplateString Kind, TemplateString File, int Line,
 }
 
 }  // namespace Carbon::Internal
+
+// Evaluates the condition of a CHECK as a boolean value.
+//
+// This performs a contextual conversion to bool, diagnoses if the condition is
+// always true or always false, and returns its value.
+#define CARBON_INTERNAL_CHECK_CONDITION(cond) \
+  (Carbon::Internal::CheckCondition(true && (cond)))
 
 // Implements check messages without any formatted values.
 //
