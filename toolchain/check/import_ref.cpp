@@ -1234,7 +1234,7 @@ static auto AddAssociatedEntities(ImportContext& context,
           context.import_functions().Get(function_decl->function_id);
       import_name_id = function.name_id;
     } else {
-      CARBON_CHECK("Unhandled associated entity type");
+      CARBON_FATAL("Unhandled associated entity type");
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(
