@@ -1221,7 +1221,7 @@ static auto AddAssociatedEntities(ImportContext& context,
   llvm::SmallVector<SemIR::InstId> new_associated_entities;
   new_associated_entities.reserve(associated_entities.size());
   for (auto inst_id : associated_entities) {
-    // Determine the name of the associated entity, by switching on its type.
+    // Determine the name of the associated entity, by switching on its kind.
     SemIR::NameId import_name_id = SemIR::NameId::Invalid;
     if (auto associated_const =
             context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
