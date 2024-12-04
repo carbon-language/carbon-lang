@@ -201,7 +201,7 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Child {
+// CHECK:STDOUT: class @Child [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   .base = imports.%import_ref.12
@@ -209,7 +209,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT: class @Base [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .F = imports.%import_ref.5
@@ -270,5 +270,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
+// CHECK:STDOUT: fn @F[%self.param_patt: %Base]() [from "a.carbon"];
 // CHECK:STDOUT:

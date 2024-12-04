@@ -485,18 +485,18 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -813,13 +813,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

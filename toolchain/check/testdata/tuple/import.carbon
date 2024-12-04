@@ -421,7 +421,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c: ref %C.2 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.7) {
+// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.7) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.7 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.7 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
@@ -434,7 +434,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.2;
+// CHECK:STDOUT: fn @F() -> %C.2 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -552,7 +552,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.1) {
+// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.1) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.1 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.1 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
@@ -565,7 +565,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.2;
+// CHECK:STDOUT: fn @F() -> %C.2 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -672,7 +672,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.2 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.1) {
+// CHECK:STDOUT: generic class @C(constants.%X: %tuple.type.1) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %X: %tuple.type.1 = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %tuple.type.1 = symbolic_binding_pattern X, 0 [symbolic = %X.patt (constants.%X.patt)]
 // CHECK:STDOUT:
@@ -685,7 +685,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.3;
+// CHECK:STDOUT: fn @F() -> %C.3 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

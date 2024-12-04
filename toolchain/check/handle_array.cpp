@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
       context, context.insts().GetLocId(bound_inst_id), bound_inst_id,
       context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
   context.AddInstAndPush<SemIR::ArrayType>(
-      node_id, {.type_id = SemIR::TypeId::TypeType,
+      node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .bound_id = bound_inst_id,
                 .element_type_id = element_type_id});
   return true;

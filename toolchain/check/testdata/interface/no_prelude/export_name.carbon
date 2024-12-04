@@ -79,7 +79,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   %I: type = export I, imports.%import_ref.1 [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT: interface @I [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()
@@ -114,7 +114,7 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT: interface @I [from "export.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()

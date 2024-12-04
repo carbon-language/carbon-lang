@@ -242,13 +242,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT: interface @Empty [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Basic {
+// CHECK:STDOUT: interface @Basic [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .T = imports.%import_ref.7
@@ -256,7 +256,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%import_ref.9, imports.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardDeclared {
+// CHECK:STDOUT: interface @ForwardDeclared [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   .T = imports.%import_ref.12
@@ -279,12 +279,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) {
+// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

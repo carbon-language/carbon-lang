@@ -361,7 +361,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
+// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -380,13 +380,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %CompleteClass.2 {
+// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %CompleteClass.2 [from "foo.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.2 = struct_literal (%int_1)
@@ -521,7 +521,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
+// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -564,13 +564,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %.loc7_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %CompleteClass.2;
+// CHECK:STDOUT: fn @F.2() -> %CompleteClass.2 [from "foo.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseField() -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -687,7 +687,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [template = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) {
+// CHECK:STDOUT: generic class @CompleteClass(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -725,13 +725,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %CompleteClass.3;
+// CHECK:STDOUT: fn @F.2() -> %CompleteClass.3 [from "foo.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -816,7 +816,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Class(constants.%T: type) {
+// CHECK:STDOUT: generic class @Class(constants.%T: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

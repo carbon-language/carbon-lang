@@ -83,7 +83,7 @@ var c: C = {};
 // CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -115,7 +115,7 @@ var c: C = {};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2

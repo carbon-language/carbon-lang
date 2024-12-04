@@ -322,7 +322,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT: class @Derived [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.13
 // CHECK:STDOUT:   .base = imports.%import_ref.14
@@ -330,14 +330,14 @@ fn H() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Param {
+// CHECK:STDOUT: class @Param [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .y = imports.%import_ref.7
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(constants.%T: type) {
+// CHECK:STDOUT: generic class @Base(constants.%T: type) [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -809,7 +809,7 @@ fn H() {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) {
+// CHECK:STDOUT: generic class @C(constants.%T: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -829,7 +829,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @X(constants.%U: type) {
+// CHECK:STDOUT: generic class @X(constants.%U: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
 // CHECK:STDOUT:
@@ -867,7 +867,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(constants.%U: type) {
+// CHECK:STDOUT: generic fn @G(constants.%U: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

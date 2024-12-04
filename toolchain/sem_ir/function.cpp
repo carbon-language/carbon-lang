@@ -36,7 +36,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
   auto val_inst = sem_ir.insts().Get(val_id);
   auto struct_val = val_inst.TryAs<StructValue>();
   if (!struct_val) {
-    result.is_error = val_inst.type_id() == SemIR::TypeId::Error;
+    result.is_error = val_inst.type_id() == SemIR::ErrorInst::SingletonTypeId;
     return result;
   }
   auto fn_type = sem_ir.types().TryGetAs<FunctionType>(struct_val->type_id);

@@ -550,7 +550,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   CARBON_CHECK(dest_class_info.inheritance_kind != SemIR::Class::Abstract);
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
-  if (object_repr_id == SemIR::TypeId::Error) {
+  if (object_repr_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::InstId::BuiltinErrorInst;
   }
   auto dest_struct_type =
@@ -866,7 +866,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  if (target.type_id == SemIR::TypeId::TypeType) {
+  if (target.type_id == SemIR::TypeType::SingletonTypeId) {
     // A tuple of types converts to type `type`.
     // TODO: This should apply even for non-literal tuples.
     if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
@@ -913,7 +913,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
     -> SemIR::InstId {
   auto expr = context.insts().Get(expr_id);
   auto type_id = expr.type_id();
-  if (type_id == SemIR::TypeId::Error) {
+  if (type_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::InstId::BuiltinErrorInst;
   }
 
@@ -943,8 +943,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Start by making sure both sides are valid. If any part is invalid, the
   // result is invalid and we shouldn't error.
-  if (sem_ir.insts().Get(expr_id).type_id() == SemIR::TypeId::Error ||
-      target.type_id == SemIR::TypeId::Error) {
+  if (sem_ir.insts().Get(expr_id).type_id() ==
+          SemIR::ErrorInst::SingletonTypeId ||
+      target.type_id == SemIR::ErrorInst::SingletonTypeId) {
     return SemIR::InstId::BuiltinErrorInst;
   }
 
@@ -1215,10 +1216,11 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
     -> TypeExpr {
-  auto type_inst_id =
-      ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeId::TypeType);
+  auto type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
+                                           SemIR::TypeType::SingletonTypeId);
   if (type_inst_id == SemIR::InstId::BuiltinErrorInst) {
-    return {.inst_id = type_inst_id, .type_id = SemIR::TypeId::Error};
+    return {.inst_id = type_inst_id,
+            .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
@@ -1227,7 +1229,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
                       "cannot evaluate type expression");
     context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
     return {.inst_id = SemIR::InstId::BuiltinErrorInst,
-            .type_id = SemIR::TypeId::Error};
+            .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
 
   return {.inst_id = type_inst_id,

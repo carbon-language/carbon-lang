@@ -381,7 +381,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c: ref %C.2 = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.1) {
+// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.1) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.1 = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.1 = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -394,7 +394,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.2;
+// CHECK:STDOUT: fn @F() -> %C.2 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -502,7 +502,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref <error> = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b) {
+// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -515,7 +515,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.2;
+// CHECK:STDOUT: fn @F() -> %C.2 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -622,7 +622,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.2 = bind_name c_bad, %c_bad.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.1) {
+// CHECK:STDOUT: generic class @C(constants.%S: %struct_type.a.b.1) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.1 = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.1 = symbolic_binding_pattern S, 0 [symbolic = %S.patt (constants.%S.patt)]
 // CHECK:STDOUT:
@@ -635,7 +635,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C.3;
+// CHECK:STDOUT: fn @F() -> %C.3 [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

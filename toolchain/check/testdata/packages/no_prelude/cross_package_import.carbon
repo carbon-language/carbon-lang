@@ -318,7 +318,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_other_ns.carbon
 // CHECK:STDOUT:
@@ -372,9 +372,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F2();
+// CHECK:STDOUT: fn @F2() [from "other_fn2.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
@@ -412,7 +412,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
@@ -466,7 +466,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
@@ -492,7 +492,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

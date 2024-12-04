@@ -248,7 +248,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Def();
+// CHECK:STDOUT: fn @Def() [from "def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -360,7 +360,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardWithDef();
+// CHECK:STDOUT: fn @ForwardWithDef() [from "forward_with_def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -473,7 +473,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Forward() {
+// CHECK:STDOUT: fn @Forward() [from "forward.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -626,7 +626,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %NotEmptyStruct.decl: %NotEmptyStruct.type = fn_decl @NotEmptyStruct [template = constants.%NotEmptyStruct] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @J {
+// CHECK:STDOUT: interface @J [from "state_constraints.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   witness = ()
@@ -655,7 +655,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(constants.%V: %J_where.type) {
+// CHECK:STDOUT: generic fn @Impls(constants.%V: %J_where.type) [from "state_constraints.carbon"] {
 // CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic = %V.patt (constants.%V.patt)]
 // CHECK:STDOUT:

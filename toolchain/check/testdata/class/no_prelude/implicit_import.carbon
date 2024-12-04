@@ -221,7 +221,7 @@ class B {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "redef_after_def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -277,7 +277,7 @@ class B {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
+// CHECK:STDOUT: class @C [from "def_alias.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

@@ -134,8 +134,8 @@ class Inst : public Printable<Inst> {
     // Error uses a self-referential type so that it's not accidentally treated
     // as a normal type. Every other builtin is a type, including the
     // self-referential TypeType.
-    auto type_id =
-        kind == InstKind::ErrorInst ? TypeId::Error : TypeId::TypeType;
+    auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
+                                               : TypeType::SingletonTypeId;
     return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
   }
 

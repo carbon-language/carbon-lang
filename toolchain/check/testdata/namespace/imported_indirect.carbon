@@ -181,7 +181,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D();
+// CHECK:STDOUT: fn @D() [from "d.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

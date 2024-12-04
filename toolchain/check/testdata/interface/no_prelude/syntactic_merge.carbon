@@ -674,7 +674,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -698,7 +698,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Bar(constants.%a: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -722,7 +722,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
@@ -1121,7 +1121,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -1145,7 +1145,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3

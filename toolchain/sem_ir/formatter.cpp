@@ -190,6 +190,9 @@ class FormatterImpl {
     // than at the end.
     FormatPendingConstantValue(AddSpace::After);
 
+    // Put the imported-from library name before the definition of the entity.
+    FormatPendingImportedFrom(AddSpace::After);
+
     out_ << '{';
     indent_ += 2;
     after_open_brace_ = true;
@@ -203,6 +206,11 @@ class FormatterImpl {
     }
     out_ << '}';
     after_open_brace_ = false;
+  }
+
+  auto Semicolon() -> void {
+    FormatPendingImportedFrom(AddSpace::Before);
+    out_ << ';';
   }
 
   // Adds beginning-of-line indentation. If we're at the start of a braced
@@ -255,7 +263,7 @@ class FormatterImpl {
       return;
     }
 
-    FormatEntityStart("class", class_info.generic_id, id);
+    FormatEntityStart("class", class_info, id);
 
     llvm::SaveAndRestore class_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -271,10 +279,10 @@ class FormatterImpl {
       out_ << "\n";
 
       CloseBrace();
-      out_ << '\n';
     } else {
-      out_ << ";\n";
+      Semicolon();
     }
+    out_ << '\n';
 
     FormatEntityEnd(class_info.generic_id);
   }
@@ -286,7 +294,7 @@ class FormatterImpl {
       return;
     }
 
-    FormatEntityStart("interface", interface_info.generic_id, id);
+    FormatEntityStart("interface", interface_info, id);
 
     llvm::SaveAndRestore interface_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -307,10 +315,10 @@ class FormatterImpl {
       out_ << "\n";
 
       CloseBrace();
-      out_ << '\n';
     } else {
-      out_ << ";\n";
+      Semicolon();
     }
+    out_ << '\n';
 
     FormatEntityEnd(interface_info.generic_id);
   }
@@ -322,7 +330,7 @@ class FormatterImpl {
       return;
     }
 
-    FormatEntityStart("impl", impl_info.generic_id, id);
+    FormatEntityStart("impl", impl_info, id);
 
     llvm::SaveAndRestore impl_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -350,10 +358,10 @@ class FormatterImpl {
       out_ << "\n";
 
       CloseBrace();
-      out_ << '\n';
     } else {
-      out_ << ";\n";
+      Semicolon();
     }
+    out_ << '\n';
 
     FormatEntityEnd(impl_info.generic_id);
   }
@@ -383,7 +391,7 @@ class FormatterImpl {
       function_start += "extern ";
     }
     function_start += "fn";
-    FormatEntityStart(function_start, fn.generic_id, id);
+    FormatEntityStart(function_start, fn, id);
 
     llvm::SaveAndRestore function_scope(scope_, inst_namer_->GetScopeFor(id));
 
@@ -421,10 +429,10 @@ class FormatterImpl {
       }
 
       CloseBrace();
-      out_ << '\n';
     } else {
-      out_ << ";\n";
+      Semicolon();
     }
+    out_ << '\n';
 
     FormatEntityEnd(fn.generic_id);
   }
@@ -515,8 +523,22 @@ class FormatterImpl {
 
   // Provides common formatting for entities, paired with FormatEntityEnd.
   template <typename IdT>
-  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
-                         IdT entity_id) -> void {
+  auto FormatEntityStart(llvm::StringRef entity_kind,
+                         const EntityWithParamsBase& entity, IdT entity_id)
+      -> void {
+    // If this entity was imported from a different IR, annotate the name of
+    // that IR in the output before the `{` or `;`.
+    if (entity.first_owning_decl_id.is_valid()) {
+      auto loc_id = sem_ir_.insts().GetLocId(entity.first_owning_decl_id);
+      if (loc_id.is_import_ir_inst_id()) {
+        auto import_ir_id =
+            sem_ir_.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
+        const auto* import_file = sem_ir_.import_irs().Get(import_ir_id).sem_ir;
+        pending_imported_from_ = import_file->filename();
+      }
+    }
+
+    auto generic_id = entity.generic_id;
     if (generic_id.is_valid()) {
       FormatGenericStart(entity_kind, generic_id);
     }
@@ -697,6 +719,25 @@ class FormatterImpl {
     out_ << ImportRefUnloaded::Kind.ir_name();
     FormatInstRHS(inst);
     out_ << "\n";
+  }
+
+  // If there is a pending library name that the current instruction was
+  // imported from, print it now and clear it out.
+  auto FormatPendingImportedFrom(AddSpace space_where) -> void {
+    if (pending_imported_from_.empty()) {
+      return;
+    }
+
+    if (space_where == AddSpace::Before) {
+      out_ << ' ';
+    }
+    out_ << "[from \"";
+    out_.write_escaped(pending_imported_from_);
+    out_ << "\"]";
+    if (space_where == AddSpace::After) {
+      out_ << ' ';
+    }
+    pending_imported_from_ = llvm::StringRef();
   }
 
   // If there is a pending constant value attached to the current instruction,
@@ -1294,6 +1335,11 @@ class FormatterImpl {
   // instruction currently being printed. If true, only the phase of the
   // constant is printed, and the value is omitted.
   bool pending_constant_value_is_self_ = false;
+
+  // The name of the IR file from which the current entity was imported, if it
+  // was imported and no file has been printed yet. This is printed before the
+  // first open brace or the semicolon in the entity declaration.
+  llvm::StringRef pending_imported_from_;
 
   // Indexes of chunks of output that should be included when an instruction is
   // referenced, indexed by the instruction's index. This is resized in advance

@@ -97,7 +97,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::BuiltinErrorInst;
   }
   return context.GetOrAddInst<SemIR::ClassType>(
-      loc_id, {.type_id = SemIR::TypeId::TypeType,
+      loc_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                .class_id = class_id,
                .specific_id = *callee_specific_id});
 }
@@ -202,7 +202,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case SemIR::InitRepr::Incomplete:
       // Don't form an initializing expression with an incomplete type.
       // CheckFunctionReturnType will have diagnosed this for us if needed.
-      return_info.type_id = SemIR::TypeId::Error;
+      return_info.type_id = SemIR::ErrorInst::SingletonTypeId;
       break;
   }
 

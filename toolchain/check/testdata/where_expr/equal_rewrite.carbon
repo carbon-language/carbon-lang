@@ -1119,14 +1119,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %Calls.decl: %Calls.type = fn_decl @Calls [template = constants.%Calls] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @N {
+// CHECK:STDOUT: interface @N [from "equal_constraint.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   .P = imports.%import_ref.6
 // CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A {
+// CHECK:STDOUT: interface @A [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.45
 // CHECK:STDOUT:   .B = imports.%import_ref.46
@@ -1146,14 +1146,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(constants.%T: %N_where.type) {
+// CHECK:STDOUT: generic fn @Equal(constants.%T: %N_where.type) [from "equal_constraint.carbon"] {
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %N_where.type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: %A_where.type.2) {
+// CHECK:STDOUT: generic fn @NestedRewrite(constants.%D: %A_where.type.2) [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic = %D (constants.%D)]
 // CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic = %D.patt (constants.%D.patt)]
 // CHECK:STDOUT:

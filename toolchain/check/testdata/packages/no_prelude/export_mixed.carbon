@@ -201,7 +201,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .x = imports.%import_ref.5
@@ -234,7 +234,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .x = imports.%import_ref.5
@@ -283,7 +283,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -332,7 +332,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export_name.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -381,7 +381,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -460,7 +460,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -522,14 +522,14 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .x = imports.%import_ref.5
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @D {
+// CHECK:STDOUT: class @D [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.7
 // CHECK:STDOUT:   .y = imports.%import_ref.8

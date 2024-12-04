@@ -156,7 +156,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Add {
+// CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Op = imports.%import_ref.3
@@ -197,7 +197,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc7_53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) {
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
