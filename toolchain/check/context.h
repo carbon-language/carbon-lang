@@ -464,11 +464,12 @@ class Context {
   // there, outside of the Check class.
   template <typename T>
     requires requires(const Lex::TokenizedBuffer& tokens,
-                      const Parse::Tree& parse_tree, const T& t) {
-      { Dumper::Dump(tokens, parse_tree, t) };
+                      const Parse::Tree& parse_tree, const SemIR::File& sem_ir,
+                      const T& t) {
+      { Dumper::Dump(tokens, parse_tree, sem_ir, t) };
     }
   LLVM_DUMP_METHOD auto Dump(const T& t) const -> void {
-    Dumper::Dump(tokens(), parse_tree(), t);
+    Dumper::Dump(tokens(), parse_tree(), *sem_ir_, t);
   }
 
   // Get the Lex::TokenKind of a node for diagnostics.

@@ -14,7 +14,8 @@ namespace Carbon::Check {
 class Dumper {
  public:
   static auto Dump(const Lex::TokenizedBuffer& tokens,
-                   const Parse::Tree& parse_tree, SemIR::LocId loc_id) -> void;
+                   const Parse::Tree& parse_tree, const SemIR::File& sem_ir,
+                   SemIR::LocId loc_id) -> void;
 };
 
 }  // namespace Carbon::Check
