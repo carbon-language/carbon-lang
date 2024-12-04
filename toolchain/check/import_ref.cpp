@@ -1239,7 +1239,7 @@ static auto AddAssociatedEntities(ImportContext& context,
       import_name_id =
           context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
-      CARBON_FATAL("Unhandled associated entity type: {0}",
+      CARBON_FATAL("Unhandled associated entity kind: {0}",
                    context.import_insts().Get(inst_id).kind());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
