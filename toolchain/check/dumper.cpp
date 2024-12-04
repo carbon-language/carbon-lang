@@ -4,6 +4,8 @@
 
 #include "toolchain/check/dumper.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 namespace Carbon::Check {
 
 auto Dumper::Dump(const Carbon::Lex::TokenizedBuffer& tokens,
