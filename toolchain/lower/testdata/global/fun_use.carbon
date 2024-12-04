@@ -7,22 +7,21 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/global/fun_use.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/global/fun_use.carbon
-class A {};
+var a: i32;
 
-var a: A;
-
-fn F() {
-  a;
+fn F() -> i32 {
+  return a;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'fun_use.carbon'
 // CHECK:STDOUT: source_filename = "fun_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global {}
+// CHECK:STDOUT: @a = internal global i32
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   %.loc16 = load i32, ptr @a, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc16, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -32,7 +31,8 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "fun_use.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 3, scope: !4)
