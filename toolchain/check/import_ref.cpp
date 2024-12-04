@@ -93,38 +93,47 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
   return inst_id;
 }
 
-auto GetCanonicalImportIRInst(Context& context, const SemIR::File* cursor_ir,
-                              SemIR::InstId cursor_inst_id)
+static auto GetCanonicalImportIRInst(Context& context,
+                                     const SemIR::File* cursor_ir,
+                                     SemIR::InstId cursor_inst_id)
     -> SemIR::ImportIRInst {
   while (true) {
-    auto inst = cursor_ir->insts().Get(cursor_inst_id);
-    CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::ExportDecl bind_export): {
-        cursor_inst_id = bind_export.value_id;
-        continue;
-      }
-      case SemIR::ImportRefLoaded::Kind:
-      case SemIR::ImportRefUnloaded::Kind: {
-        auto import_ref = inst.As<SemIR::AnyImportRef>();
-        auto import_ir_inst =
-            cursor_ir->import_ir_insts().Get(import_ref.import_ir_inst_id);
-        cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
-        cursor_inst_id = import_ir_inst.inst_id;
-        continue;
-      }
-      default: {
-        auto ir_id = SemIR::ImportIRId::Invalid;
-        if (cursor_ir != &context.sem_ir()) {
-          // This uses AddImportIR in case it was indirectly found, which can
-          // happen with two or more steps of exports.
-          ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
-                                        .is_export = false,
-                                        .sem_ir = cursor_ir});
-        }
-        return {.ir_id = ir_id, .inst_id = cursor_inst_id};
-      }
+    // Step through an instruction with an imported location to the imported
+    // instruction.
+    auto loc_id = cursor_ir->insts().GetLocId(cursor_inst_id);
+    if (loc_id.is_import_ir_inst_id()) {
+      auto import_ir_inst =
+          cursor_ir->import_ir_insts().Get(loc_id.import_ir_inst_id());
+      cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+      cursor_inst_id = import_ir_inst.inst_id;
+      continue;
     }
+
+    // Step through export declarations to their exported value.
+    if (auto export_decl =
+            cursor_ir->insts().TryGetAs<SemIR::ExportDecl>(cursor_inst_id)) {
+      cursor_inst_id = export_decl->value_id;
+      continue;
+    }
+
+    // Reached a non-imported entity.
+    break;
   }
+
+  auto ir_id = SemIR::ImportIRId::Invalid;
+  if (cursor_ir != &context.sem_ir()) {
+    // This uses AddImportIR in case it was indirectly found, which can
+    // happen with two or more steps of exports.
+    ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::Invalid,
+                                  .is_export = false,
+                                  .sem_ir = cursor_ir});
+  }
+  return {.ir_id = ir_id, .inst_id = cursor_inst_id};
+}
+
+auto GetCanonicalImportIRInst(Context& context, SemIR::InstId inst_id)
+    -> SemIR::ImportIRInst {
+  return GetCanonicalImportIRInst(context, &context.sem_ir(), inst_id);
 }
 
 auto VerifySameCanonicalImportIRInst(Context& context, SemIR::InstId prev_id,
@@ -1221,7 +1230,7 @@ static auto AddAssociatedEntities(ImportContext& context,
   llvm::SmallVector<SemIR::InstId> new_associated_entities;
   new_associated_entities.reserve(associated_entities.size());
   for (auto inst_id : associated_entities) {
-    // Determine the name of the associated entity, by switching on its type.
+    // Determine the name of the associated entity, by switching on its kind.
     SemIR::NameId import_name_id = SemIR::NameId::Invalid;
     if (auto associated_const =
             context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
@@ -1233,8 +1242,14 @@ static auto AddAssociatedEntities(ImportContext& context,
       auto function =
           context.import_functions().Get(function_decl->function_id);
       import_name_id = function.name_id;
+    } else if (auto import_ref =
+                   context.import_insts().TryGetAs<SemIR::AnyImportRef>(
+                       inst_id)) {
+      import_name_id =
+          context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
-      CARBON_CHECK("Unhandled associated entity type");
+      CARBON_FATAL("Unhandled associated entity kind: {0}",
+                   context.import_insts().Get(inst_id).kind());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(

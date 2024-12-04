@@ -25,10 +25,9 @@ static auto FindAssociatedImportIRs(Context& context,
     if (!decl_id.is_valid()) {
       return;
     }
-    auto loc_id = context.insts().GetLocId(decl_id);
-    if (loc_id.is_import_ir_inst_id()) {
-      result.push_back(
-          context.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id);
+    if (auto ir_id = GetCanonicalImportIRInst(context, decl_id).ir_id;
+        ir_id.is_valid()) {
+      result.push_back(ir_id);
     }
   };
 

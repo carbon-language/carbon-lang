@@ -479,16 +479,25 @@ class CompilationUnit {
     if (vlog_stream_ || print) {
       // Omit entities imported from files that we are not dumping.
       auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
-        auto loc_id = sem_ir_->insts().GetLocId(entity_inst_id);
-        if (!loc_id.is_import_ir_inst_id()) {
-          return true;
+        // TODO: Reuse `GetCanonicalImportIRInst`. Currently it depends on
+        // `Check::Context`, which we don't have access to here.
+        const SemIR::File* file = &*sem_ir_;
+        while (true) {
+          auto loc_id = file->insts().GetLocId(entity_inst_id);
+          if (!loc_id.is_import_ir_inst_id()) {
+            return true;
+          }
+          auto import_ir_inst =
+              file->import_ir_insts().Get(loc_id.import_ir_inst_id());
+          const auto* import_file =
+              file->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+          CARBON_CHECK(import_file);
+          if (!IncludeInDumps(import_file->filename())) {
+            return false;
+          }
+          file = import_file;
+          entity_inst_id = import_ir_inst.inst_id;
         }
-        auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
-        const auto* import_file =
-            sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-        CARBON_CHECK(import_file);
-        return IncludeInDumps(import_file->filename());
       };
 
       SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
