@@ -120,7 +120,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F() [from "basic.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -224,5 +224,5 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F();
+// CHECK:STDOUT: extern fn @F() [from "basic.carbon"];
 // CHECK:STDOUT:

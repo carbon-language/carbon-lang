@@ -224,7 +224,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Def {
+// CHECK:STDOUT: class @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -320,7 +320,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardWithDef {
+// CHECK:STDOUT: class @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2

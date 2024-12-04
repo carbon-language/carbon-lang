@@ -121,7 +121,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %a_val: ref %C = bind_name a_val, %a_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.7
 // CHECK:STDOUT:   .v = imports.%import_ref.8

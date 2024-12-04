@@ -324,7 +324,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Action(constants.%T: type) {
+// CHECK:STDOUT: generic interface @Action(constants.%T: type) [from "action.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -344,25 +344,25 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.13 as imports.%import_ref.14 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.13 as imports.%import_ref.14 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%import_ref.16
 // CHECK:STDOUT:   witness = imports.%import_ref.15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @B [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.7
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.12
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) [from "action.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -380,7 +380,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2();
+// CHECK:STDOUT: fn @Op.2() [from "action.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -484,7 +484,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Action(constants.%T: type) {
+// CHECK:STDOUT: generic interface @Action(constants.%T: type) [from "action.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -504,31 +504,31 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.13 as imports.%import_ref.14 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.13 as imports.%import_ref.14 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%import_ref.16
 // CHECK:STDOUT:   witness = imports.%import_ref.15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @B [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.7
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.12
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.20
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) {
+// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self.1: @Action.%Action.type (%Action.type.2)) [from "action.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -808,7 +808,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Factory(constants.%T: type) {
+// CHECK:STDOUT: generic interface @Factory(constants.%T: type) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -828,25 +828,25 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.11 as imports.%import_ref.12 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.11 as imports.%import_ref.12 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%import_ref.14
 // CHECK:STDOUT:   witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @B [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.10
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) {
+// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
@@ -866,7 +866,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %B;
+// CHECK:STDOUT: fn @Make.2() -> %B [from "factory.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -973,7 +973,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Factory(constants.%T: type) {
+// CHECK:STDOUT: generic interface @Factory(constants.%T: type) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -993,19 +993,19 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.11 as imports.%import_ref.12 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.11 as imports.%import_ref.12 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%import_ref.14
 // CHECK:STDOUT:   witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @B {
+// CHECK:STDOUT: class @B [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @A {
+// CHECK:STDOUT: class @A [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.10
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
@@ -1019,7 +1019,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) {
+// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self.1: @Factory.%Factory.type (%Factory.type.2)) [from "factory.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T);

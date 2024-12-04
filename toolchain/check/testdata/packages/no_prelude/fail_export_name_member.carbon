@@ -85,7 +85,7 @@ export C.n;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .n = imports.%import_ref.4
