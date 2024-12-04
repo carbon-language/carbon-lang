@@ -18,6 +18,18 @@ namespace Carbon {
 template <typename DataType>
 class DataIterator;
 
+// Non-templated portions of `IdBase`.
+struct AnyIdBase {
+  static constexpr int32_t InvalidIndex = -1;
+
+  AnyIdBase() = delete;
+  constexpr explicit AnyIdBase(int index) : index(index) {}
+
+  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
+
+  int32_t index;
+};
+
 // A lightweight handle to an item identified by an opaque ID.
 //
 // This class is intended to be derived from by classes representing a specific
@@ -27,23 +39,34 @@ class DataIterator;
 // Classes derived from IdBase are designed to be passed by value, not
 // reference or pointer. They are also designed to be small and efficient to
 // store in data structures.
-struct IdBase : public Printable<IdBase> {
-  static constexpr int32_t InvalidIndex = -1;
+//
+// This uses CRTP for the `Print` function. Children should have:
+//   static constexpr llvm::StringLiteral Label = "my_label";
+// Children can also define their own `Print` function, removing the dependency
+// on `Label`.
+template <typename IdT>
+struct IdBase : public AnyIdBase, public Printable<IdT> {
+  using AnyIdBase::AnyIdBase;
 
-  IdBase() = delete;
-  constexpr explicit IdBase(int index) : index(index) {}
-
-  auto Print(llvm::raw_ostream& output) const -> void {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << IdT::Label;
     if (is_valid()) {
-      output << index;
+      out << index;
     } else {
-      output << "<invalid>";
+      out << "<invalid>";
     }
   }
 
-  constexpr auto is_valid() const -> bool { return index != InvalidIndex; }
-
-  int32_t index;
+  // Support simple equality comparison for ID types.
+  friend constexpr auto operator==(IdT lhs, IdT rhs) -> bool {
+    return lhs.index == rhs.index;
+  }
+  // Support equality comparison when the RHS is convertible to IdT.
+  template <typename RHSType>
+    requires std::convertible_to<RHSType, IdT>
+  friend auto operator==(IdT lhs, RHSType rhs) -> bool {
+    return lhs.index == IdT(rhs).index;
+  }
 };
 
 // A lightweight handle to an item that behaves like an index.
@@ -51,31 +74,15 @@ struct IdBase : public Printable<IdBase> {
 // Unlike IdBase, classes derived from IndexBase are not completely opaque, and
 // provide at least an ordering between indexes that has meaning to an API
 // user. Additional semantics may be specified by the derived class.
-struct IndexBase : public IdBase {
-  using IdBase::IdBase;
+template <typename IdT>
+struct IndexBase : public IdBase<IdT> {
+  using IdBase<IdT>::IdBase;
+
+  // Support relational comparisons for index types.
+  friend auto operator<=>(IdT lhs, IdT rhs) -> std::strong_ordering {
+    return lhs.index <=> rhs.index;
+  }
 };
-
-// Support equality comparison when one operand is a child of `IdBase`
-// (including `IndexBase`) and the other operand is either the same type or
-// convertible to that type.
-template <typename IndexType>
-  requires std::derived_from<IndexType, IdBase>
-constexpr auto operator==(IndexType lhs, IndexType rhs) -> bool {
-  return lhs.index == rhs.index;
-}
-template <typename IndexType, typename RHSType>
-  requires std::derived_from<IndexType, IdBase> &&
-           std::convertible_to<RHSType, IndexType>
-auto operator==(IndexType lhs, RHSType rhs) -> bool {
-  return lhs.index == IndexType(rhs).index;
-}
-
-// Relational comparisons are only supported for types derived from `IndexBase`.
-template <typename IndexType>
-  requires std::derived_from<IndexType, IndexBase>
-auto operator<=>(IndexType lhs, IndexType rhs) -> std::strong_ordering {
-  return lhs.index <=> rhs.index;
-}
 
 // A random-access iterator for arrays using IndexBase-derived types.
 template <typename IndexT>

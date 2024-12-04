@@ -10,10 +10,12 @@
 namespace Carbon::SemIR {
 
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
-  out << "inst";
   if (!is_valid()) {
     IdBase::Print(out);
-  } else if (is_builtin()) {
+    return;
+  }
+  out << Label;
+  if (is_builtin()) {
     out << builtin_inst_kind();
   } else {
     // Use the `+` as a small reminder that this is a delta, rather than an
@@ -26,34 +28,36 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
     -> void {
   if (!is_valid()) {
     IdBase::Print(out);
-  } else if (is_template()) {
+    return;
+  }
+  if (is_template()) {
     if (disambiguate) {
-      out << "templateConstant(";
+      out << "template_constant(";
     }
     out << template_inst_id();
     if (disambiguate) {
       out << ")";
     }
   } else if (is_symbolic()) {
-    out << "symbolicConstant" << symbolic_index();
+    out << "symbolic_constant" << symbolic_index();
   } else {
+    CARBON_CHECK(!is_constant());
     out << "runtime";
   }
 }
 
 auto RuntimeParamIndex::Print(llvm::raw_ostream& out) const -> void {
-  out << "runtime_param";
   if (*this == Unknown) {
-    out << "<unknown>";
+    out << Label << "<unknown>";
   } else {
     IndexBase::Print(out);
   }
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
-  out << "genericInst";
+  out << "generic_inst";
   if (is_valid()) {
-    out << (region() == Declaration ? "InDecl" : "InDef") << index();
+    out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
     out << "<invalid>";
   }
@@ -90,19 +94,18 @@ auto NameId::ForIdentifier(IdentifierId id) -> NameId {
 }
 
 auto NameId::Print(llvm::raw_ostream& out) const -> void {
-  out << "name";
   if (*this == SelfValue) {
-    out << "SelfValue";
+    out << Label << "SelfValue";
   } else if (*this == SelfType) {
-    out << "SelfType";
+    out << Label << "SelfType";
   } else if (*this == PeriodSelf) {
-    out << "PeriodSelf";
+    out << Label << "PeriodSelf";
   } else if (*this == ReturnSlot) {
-    out << "ReturnSlot";
+    out << Label << "ReturnSlot";
   } else if (*this == PackageNamespace) {
-    out << "PackageNamespace";
+    out << Label << "PackageNamespace";
   } else if (*this == Base) {
-    out << "Base";
+    out << Label << "Base";
   } else {
     CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
     IdBase::Print(out);
@@ -121,13 +124,12 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   } else if (*this == GlobalInit) {
     out << "global_init";
   } else {
-    out << "block";
     IdBase::Print(out);
   }
 }
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
-  out << "type";
+  out << Label;
   if (*this == TypeType::SingletonTypeId) {
     out << "TypeType";
   } else if (*this == AutoType::SingletonTypeId) {
@@ -153,18 +155,17 @@ auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
 }
 
 auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
-  out << "libraryName";
   if (*this == Default) {
-    out << "Default";
+    out << Label << "Default";
   } else if (*this == Error) {
-    out << "<error>";
+    out << Label << "<error>";
   } else {
     IdBase::Print(out);
   }
 }
 
 auto LocId::Print(llvm::raw_ostream& out) const -> void {
-  out << "loc_";
+  out << Label << "_";
   if (is_node_id() || !is_valid()) {
     out << node_id();
   } else {

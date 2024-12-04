@@ -20,7 +20,7 @@ namespace Carbon::Check {
 class IdUnion {
  public:
   // The default constructor forms an invalid ID.
-  explicit constexpr IdUnion() : index(IdBase::InvalidIndex) {}
+  explicit constexpr IdUnion() : index(AnyIdBase::InvalidIndex) {}
 
   template <typename IdT>
     requires SemIR::IdKind::Contains<IdT>
@@ -49,7 +49,7 @@ class IdUnion {
   }
 
  private:
-  decltype(IdBase::index) index;
+  decltype(AnyIdBase::index) index;
 };
 
 // The stack of parse nodes representing the current state of a Check::Context.
@@ -690,8 +690,8 @@ class NodeStack {
       -> void {
     CARBON_CHECK(NodeKindToIdKind(parse_kind) == id_kind,
                  "Unexpected Id::Kind mapping for {0}: expected {1}, found {2}",
-                 parse_kind, static_cast<int>(id_kind),
-                 static_cast<int>(NodeKindToIdKind(parse_kind)));
+                 parse_kind, SemIR::IdKind(id_kind),
+                 SemIR::IdKind(NodeKindToIdKind(parse_kind)));
   }
 
   // Require an entry to have the given Parse::NodeKind.

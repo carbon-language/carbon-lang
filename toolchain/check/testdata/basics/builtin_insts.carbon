@@ -24,7 +24,7 @@
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     type_block0:     {}
+// CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     typeTypeType:    {kind: copy, type: typeTypeType}
 // CHECK:STDOUT:     typeError:       {kind: copy, type: typeError}
@@ -46,25 +46,25 @@
 // CHECK:STDOUT:     instWitnessType: {kind: WitnessType, type: typeTypeType}
 // CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(instNamespaceType)}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     instTypeType:    templateConstant(instTypeType)
-// CHECK:STDOUT:     instAutoType:    templateConstant(instAutoType)
-// CHECK:STDOUT:     instBoolType:    templateConstant(instBoolType)
-// CHECK:STDOUT:     instBoundMethodType: templateConstant(instBoundMethodType)
-// CHECK:STDOUT:     instErrorInst:   templateConstant(instErrorInst)
-// CHECK:STDOUT:     instIntLiteralType: templateConstant(instIntLiteralType)
-// CHECK:STDOUT:     instLegacyFloatType: templateConstant(instLegacyFloatType)
-// CHECK:STDOUT:     instNamespaceType: templateConstant(instNamespaceType)
-// CHECK:STDOUT:     instSpecificFunctionType: templateConstant(instSpecificFunctionType)
-// CHECK:STDOUT:     instStringType:  templateConstant(instStringType)
-// CHECK:STDOUT:     instVtableType:  templateConstant(instVtableType)
-// CHECK:STDOUT:     instWitnessType: templateConstant(instWitnessType)
-// CHECK:STDOUT:     'inst+0':          templateConstant(inst+0)
+// CHECK:STDOUT:     instTypeType:    template_constant(instTypeType)
+// CHECK:STDOUT:     instAutoType:    template_constant(instAutoType)
+// CHECK:STDOUT:     instBoolType:    template_constant(instBoolType)
+// CHECK:STDOUT:     instBoundMethodType: template_constant(instBoundMethodType)
+// CHECK:STDOUT:     instErrorInst:   template_constant(instErrorInst)
+// CHECK:STDOUT:     instIntLiteralType: template_constant(instIntLiteralType)
+// CHECK:STDOUT:     instLegacyFloatType: template_constant(instLegacyFloatType)
+// CHECK:STDOUT:     instNamespaceType: template_constant(instNamespaceType)
+// CHECK:STDOUT:     instSpecificFunctionType: template_constant(instSpecificFunctionType)
+// CHECK:STDOUT:     instStringType:  template_constant(instStringType)
+// CHECK:STDOUT:     instVtableType:  template_constant(instVtableType)
+// CHECK:STDOUT:     instWitnessType: template_constant(instWitnessType)
+// CHECK:STDOUT:     'inst+0':          template_constant(inst+0)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     empty:           {}
 // CHECK:STDOUT:     exports:         {}
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     block4:
+// CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst+0
 // CHECK:STDOUT: ...
