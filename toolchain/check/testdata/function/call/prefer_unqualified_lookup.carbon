@@ -87,7 +87,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     %.loc13_33.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_33.2: type = converted %int.make_type_signed.loc13, %.loc13_33.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc13: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc13
+// CHECK:STDOUT:     %return.loc13: ref %i32 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,7 +137,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:       %.loc9_15.1: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
 // CHECK:STDOUT:       %.loc9_15.2: type = converted %int.make_type_signed.loc9, %.loc9_15.1 [template = constants.%i32]
 // CHECK:STDOUT:       %return.param.loc9: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:       %.loc9_12: ref %i32 = return_slot %return.param.loc9
+// CHECK:STDOUT:       %return.loc9: ref %i32 = return_slot %return.param.loc9
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:

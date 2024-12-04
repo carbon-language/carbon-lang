@@ -212,11 +212,31 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(FacetType inst): {
         const FacetTypeInfo& facet_type_info =
             sem_ir.facet_types().Get(inst.facet_type_id);
-        // TODO: Also output other restrictions from facet_type_info.
-        if (facet_type_info.requirement_block_id.is_valid()) {
-          step_stack.PushString(" where...");
+        // Output `where` restrictions.
+        bool some_where = false;
+        if (facet_type_info.other_requirements) {
+          step_stack.PushString("...");
+          some_where = true;
+        }
+        for (auto rewrite :
+             llvm::reverse(facet_type_info.rewrite_constraints)) {
+          if (some_where) {
+            step_stack.PushString(" and");
+          }
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.rhs_const_id));
+          step_stack.PushString(" = ");
+          step_stack.PushInstId(
+              sem_ir.constant_values().GetInstId(rewrite.lhs_const_id));
+          step_stack.PushString(" ");
+          some_where = true;
+        }
+        // TODO: Other restrictions from facet_type_info.
+        if (some_where) {
+          step_stack.PushString(" where");
         }
 
+        // Output interface requirements.
         if (facet_type_info.impls_constraints.empty()) {
           step_stack.PushString("type");
           break;
@@ -271,6 +291,15 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
+      case CARBON_KIND(ImportRefUnloaded inst): {
+        if (inst.entity_name_id.is_valid()) {
+          auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
+          out << sem_ir.names().GetFormatted(name_id);
+        } else {
+          out << "<import ref unloaded invalid entity name>";
+        }
+        break;
+      }
       case CARBON_KIND(IntType inst): {
         if (auto width_value =
                 sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
@@ -280,6 +309,58 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           out << (inst.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
           step_stack.PushString(")");
           step_stack.PushInstId(inst.bit_width_id);
+        }
+        break;
+      }
+      case CARBON_KIND(InterfaceWitnessAccess inst): {
+        auto witness_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        auto witness =
+            sem_ir.insts().GetAs<FacetAccessWitness>(witness_inst_id);
+        auto witness_type_id =
+            sem_ir.insts().Get(witness.facet_value_inst_id).type_id();
+        auto facet_type = sem_ir.types().GetAs<FacetType>(witness_type_id);
+        step_stack.PushString(")");
+        // TODO: Support != 1 interface better.
+        if (auto impls_constraint = sem_ir.facet_types()
+                                        .Get(facet_type.facet_type_id)
+                                        .TryAsSingleInterface()) {
+          const auto& interface =
+              sem_ir.interfaces().Get(impls_constraint->interface_id);
+          auto entities =
+              sem_ir.inst_blocks().Get(interface.associated_entities_id);
+          size_t index = inst.index.index;
+          CARBON_CHECK(index < entities.size(), "Access out of bounds.");
+          auto entity_inst_id = entities[index];
+          if (auto associated_const =
+                  sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
+                      entity_inst_id)) {
+            step_stack.PushNameId(associated_const->name_id);
+          } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
+                         entity_inst_id)) {
+            const auto& function =
+                sem_ir.functions().Get(function_decl->function_id);
+            step_stack.PushNameId(function.name_id);
+          } else {
+            step_stack.PushInstId(entity_inst_id);
+          }
+          step_stack.PushString(".");
+          step_stack.PushNameId(interface.name_id);
+          step_stack.PushString(".(");
+        } else {
+          step_stack.PushTypeId(witness_type_id);
+          step_stack.PushString(".(TODO: ");
+        }
+
+        bool period_self = false;
+        if (auto sym_name = sem_ir.insts().TryGetAs<BindSymbolicName>(
+                witness.facet_value_inst_id)) {
+          auto name_id =
+              sem_ir.entity_names().Get(sym_name->entity_name_id).name_id;
+          period_self = (name_id == SemIR::NameId::PeriodSelf);
+        }
+        if (!period_self) {
+          step_stack.PushInstId(witness.facet_value_inst_id);
         }
         break;
       }
@@ -343,15 +424,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.class_type_id);
         break;
       }
-      case CARBON_KIND(WhereExpr inst): {
-        out << "<where restriction on ";
-        step_stack.PushString(">");
-        TypeId type_id = sem_ir.insts().Get(inst.period_self_id).type_id();
-        step_stack.PushTypeId(type_id);
-        // TODO: Also output restrictions from the inst block
-        // inst.requirements_id.
-        break;
-      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -384,11 +456,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ImplDecl::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
-      case ImportRefUnloaded::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
@@ -420,6 +490,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
       case VarStorage::Kind:
+      case WhereExpr::Kind:
         // We don't know how to print this instruction, but it might have a
         // constant value that we can print.
         auto const_inst_id =

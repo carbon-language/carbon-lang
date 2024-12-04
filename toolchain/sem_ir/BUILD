@@ -71,6 +71,7 @@ cc_library(
         "builtin_function_kind.cpp",
         "class.cpp",
         "constant.cpp",
+        "facet_type_info.cpp",
         "file.cpp",
         "function.cpp",
         "generic.cpp",

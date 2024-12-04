@@ -190,11 +190,11 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
@@ -236,7 +236,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -286,7 +286,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {
@@ -329,11 +329,11 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT: }
@@ -375,7 +375,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:

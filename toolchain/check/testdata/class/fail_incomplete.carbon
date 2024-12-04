@@ -385,7 +385,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertFromStruct() -> %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc42_43: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc42: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

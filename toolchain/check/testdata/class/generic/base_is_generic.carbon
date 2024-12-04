@@ -274,23 +274,23 @@ fn H() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, inst+9, unloaded
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_base, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, inst+48, loaded [template = constants.%Derived]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+78, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, inst+47, loaded [template = constants.%Derived]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+77, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.16
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_base, inst+46, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_base, inst+45, loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Param.elem = import_ref Main//extend_generic_base, inst+44, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: %Param.elem = import_ref Main//extend_generic_base, inst+43, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, inst+20, loaded [symbolic = @Base.%complete_type (constants.%complete_type.2)]
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+15, unloaded
 // CHECK:STDOUT:   %import_ref.10: @Base.%Base.elem (%Base.elem.1) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.2]
-// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_base, inst+63, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_base, inst+49, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_base, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, inst+52, loaded [template = constants.%Base.2]
+// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_base, inst+62, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_base, inst+48, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_base, inst+60, unloaded
+// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, inst+51, loaded [template = constants.%Base.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

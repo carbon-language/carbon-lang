@@ -188,13 +188,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %C.2) -> %return: %D {
+// CHECK:STDOUT: fn @G(%p.param_patt: %C.2) -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %C.2 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [template = constants.%F.specific_fn.2]
-// CHECK:STDOUT:   %.loc9_15.2: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %F.specific_fn(%p.ref) to %.loc9_15.2
+// CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %D = call %F.specific_fn(%p.ref) to %.loc9
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,24 +352,24 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%p.param_patt: @F.%I.loc7_22.2 (%I.1)) -> %return: %C {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%p.param_patt: @F.%I.loc7_22.2 (%I.1)) -> %return.param_patt: %C {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%I.loc7_22.2 (%I.1) = name_ref p, %p
 // CHECK:STDOUT:     %F.specific_fn.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.1)]
-// CHECK:STDOUT:     %.loc7_25.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init %C = call %F.specific_fn.loc7_39.1(%p.ref) to %.loc7_25.2
+// CHECK:STDOUT:     %.loc7: ref %C = splice_block %return {}
+// CHECK:STDOUT:     %F.call: init %C = call %F.specific_fn.loc7_39.1(%p.ref) to %.loc7
 // CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %I.2) -> %return: %C {
+// CHECK:STDOUT: fn @G(%p.param_patt: %I.2) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %I.2 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn.2]
-// CHECK:STDOUT:   %.loc9_15.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref) to %.loc9_15.2
+// CHECK:STDOUT:   %.loc9: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref) to %.loc9
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -598,7 +598,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2: <specific function> = specific_function constants.%F, @F(%T.loc13_6.2, %U.loc13_16.2) [symbolic = %F.specific_fn.loc13_67.2 (constants.%F.specific_fn.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type, %U.param_patt: type](%p.param_patt: @F.%Inner.loc13_45.2 (%Inner.1)) -> %return: @F.%tuple.type (%tuple.type.2) {
+// CHECK:STDOUT:   fn[%T.param_patt: type, %U.param_patt: type](%p.param_patt: @F.%Inner.loc13_45.2 (%Inner.1)) -> %return.param_patt: @F.%tuple.type (%tuple.type.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%Inner.loc13_45.2 (%Inner.1) = name_ref p, %p
@@ -620,13 +620,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param_patt: %Inner.2) -> %return: %tuple.type.3 {
+// CHECK:STDOUT: fn @G(%p.param_patt: %Inner.2) -> %return.param_patt: %tuple.type.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %Inner.2 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [template = constants.%F.specific_fn.2]
-// CHECK:STDOUT:   %.loc15_28.2: ref %tuple.type.3 = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %tuple.type.3 = call %F.specific_fn(%p.ref) to %.loc15_28.2
+// CHECK:STDOUT:   %.loc15_28: ref %tuple.type.3 = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %tuple.type.3 = call %F.specific_fn(%p.ref) to %.loc15_28
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

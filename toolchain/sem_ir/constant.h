@@ -24,10 +24,13 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   // The index of this symbolic constant within the generic's list of symbolic
   // constants, or invalid if `generic_id` is invalid.
   GenericInstIndex index;
+  // True if this is constant is symbolic just because it uses `.Self`.
+  bool period_self_only;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << "}";
+        << ", index: " << index
+        << ", .Self: " << (period_self_only ? "true" : "false") << "}";
   }
 };
 
@@ -102,6 +105,13 @@ class ConstantValueStore {
     return symbolic_constants_[const_id.symbolic_index()];
   }
 
+  // Returns true for symbolic constants other than those that are only symbolic
+  // because they depend on `.Self`.
+  auto DependsOnGenericParameter(ConstantId const_id) const -> bool {
+    return const_id.is_symbolic() &&
+           !GetSymbolicConstant(const_id).period_self_only;
+  }
+
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
@@ -148,9 +158,10 @@ class ConstantStore {
   // Adds a new constant instruction, or gets the existing constant with this
   // value. Returns the ID of the constant.
   //
-  // This updates `sem_ir.insts()` and `sem_ir.constant_values()` if the
+  // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
-  auto GetOrAdd(Inst inst, bool is_symbolic) -> ConstantId;
+  enum PhaseKind : uint8_t { IsTemplate, IsPeriodSelfSymbolic, IsSymbolic };
+  auto GetOrAdd(Inst inst, PhaseKind phase) -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

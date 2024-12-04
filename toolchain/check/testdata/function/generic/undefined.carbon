@@ -221,7 +221,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %x.param.loc4: @Defined.%T.loc4_12.2 (%T) = value_param runtime_param0
 // CHECK:STDOUT:     %x.loc4: @Defined.%T.loc4_12.2 (%T) = bind_name x, %x.param.loc4
 // CHECK:STDOUT:     %return.param.loc4: ref @Defined.%T.loc4_12.2 (%T) = out_param runtime_param1
-// CHECK:STDOUT:     %.loc4: ref @Defined.%T.loc4_12.2 (%T) = return_slot %return.param.loc4
+// CHECK:STDOUT:     %return.loc4: ref @Defined.%T.loc4_12.2 (%T) = return_slot %return.param.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallDefined.decl: %CallDefined.type = fn_decl @CallDefined [template = constants.%CallDefined] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -249,7 +249,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %x.param.loc10: %T = value_param runtime_param0
 // CHECK:STDOUT:     %x.loc10: %T = bind_name x, %x.param.loc10
 // CHECK:STDOUT:     %return.param.loc10: ref %T = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %T = return_slot %return.param.loc10
+// CHECK:STDOUT:     %return.loc10: ref %T = return_slot %return.param.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

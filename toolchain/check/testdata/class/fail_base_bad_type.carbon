@@ -731,7 +731,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseIncomplete(%p.param_patt: %ptr.1) -> %ptr.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.1 = name_ref p, %p
-// CHECK:STDOUT:   %.loc28_82: %ptr.2 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc28: %ptr.2 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

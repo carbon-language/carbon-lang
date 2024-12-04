@@ -516,7 +516,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %Derived {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc22_26: %struct_type.a = struct_literal (%int_1)
@@ -603,7 +603,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Return(%a.param_patt: %Abstract) -> %return: %Abstract {
+// CHECK:STDOUT: fn @Return(%a.param_patt: %Abstract) -> %return.param_patt: %Abstract {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return

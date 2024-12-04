@@ -24,11 +24,11 @@
 
 namespace Carbon::Check {
 
-// Given an initializing expression, find its return slot. Returns `Invalid` if
-// there is no return slot, because the initialization is not performed in
-// place.
-static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
-                                         SemIR::InstId init_id)
+// Given an initializing expression, find its return slot argument. Returns
+// `Invalid` if there is no return slot, because the initialization is not
+// performed in place.
+static auto FindReturnSlotArgForInitializer(SemIR::File& sem_ir,
+                                            SemIR::InstId init_id)
     -> SemIR::InstId {
   while (true) {
     SemIR::Inst init_untyped = sem_ir.insts().Get(init_id);
@@ -77,15 +77,15 @@ static auto FindReturnSlotForInitializer(SemIR::File& sem_ir,
 static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
                                SemIR::InstId target_id,
                                PendingBlock& target_block) -> void {
-  auto return_slot_id = FindReturnSlotForInitializer(sem_ir, init_id);
-  if (return_slot_id.is_valid()) {
+  auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
+  if (return_slot_arg_id.is_valid()) {
     // Replace the temporary in the return slot with a reference to our target.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_id).kind() ==
+    CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
                      SemIR::TemporaryStorage::Kind,
                  "Return slot for initializer does not contain a temporary; "
                  "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_id));
-    target_block.MergeReplacing(return_slot_id, target_id);
+                 sem_ir.insts().Get(return_slot_arg_id));
+    target_block.MergeReplacing(return_slot_arg_id, target_id);
   }
 }
 
@@ -97,18 +97,18 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
 static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                               bool discarded) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
-  auto return_slot_id = FindReturnSlotForInitializer(sem_ir, init_id);
-  if (return_slot_id.is_valid()) {
+  auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
+  if (return_slot_arg_id.is_valid()) {
     // The return slot should already have a materialized temporary in it.
-    CARBON_CHECK(sem_ir.insts().Get(return_slot_id).kind() ==
+    CARBON_CHECK(sem_ir.insts().Get(return_slot_arg_id).kind() ==
                      SemIR::TemporaryStorage::Kind,
                  "Return slot for initializer does not contain a temporary; "
                  "initialized multiple times? Have {0}",
-                 sem_ir.insts().Get(return_slot_id));
+                 sem_ir.insts().Get(return_slot_arg_id));
     auto init = sem_ir.insts().Get(init_id);
     return context.AddInst<SemIR::Temporary>(sem_ir.insts().GetLocId(init_id),
                                              {.type_id = init.type_id(),
-                                              .storage_id = return_slot_id,
+                                              .storage_id = return_slot_arg_id,
                                               .init_id = init_id});
   }
 
@@ -258,9 +258,9 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 
   // Arrays are always initialized in-place. Allocate a temporary as the
   // destination for the array initialization if we weren't given one.
-  SemIR::InstId return_slot_id = target.init_id;
+  SemIR::InstId return_slot_arg_id = target.init_id;
   if (!target.init_id.is_valid()) {
-    return_slot_id = target_block->AddInst<SemIR::TemporaryStorage>(
+    return_slot_arg_id = target_block->AddInst<SemIR::TemporaryStorage>(
         value_loc_id, {.type_id = target.type_id});
   }
 
@@ -276,7 +276,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::ArrayIndex>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
-            ConversionTarget::FullInitializer, return_slot_id,
+            ConversionTarget::FullInitializer, return_slot_arg_id,
             array_type.element_type_id, target_block, i, i);
     if (init_id == SemIR::InstId::BuiltinErrorInst) {
       return SemIR::InstId::BuiltinErrorInst;
@@ -290,7 +290,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   return context.AddInst<SemIR::ArrayInit>(
       value_loc_id, {.type_id = target.type_id,
                      .inits_id = sem_ir.inst_blocks().Add(inits),
-                     .dest_id = return_slot_id});
+                     .dest_id = return_slot_arg_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only

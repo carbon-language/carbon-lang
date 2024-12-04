@@ -122,7 +122,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.1) -> %return: %Class {
+// CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.1) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %next.ref: %ptr.1 = name_ref next, %next
@@ -136,7 +136,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   return %.loc17_32 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeReorder(%n.param_patt: %i32, %next.param_patt: %ptr.1) -> %return: %Class {
+// CHECK:STDOUT: fn @MakeReorder(%n.param_patt: %i32, %next.param_patt: %ptr.1) -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %next.ref: %ptr.1 = name_ref next, %next
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n

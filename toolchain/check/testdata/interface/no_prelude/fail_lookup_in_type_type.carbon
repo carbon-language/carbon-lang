@@ -49,7 +49,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT: --- fail_lookup_type_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
@@ -58,7 +58,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .U = @__global_init.%U
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self, 0 [symbolic = constants.%.Self]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:   %.loc7: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:     requirement_impls %.Self.ref, type

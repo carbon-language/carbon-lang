@@ -230,10 +230,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(return_type, /*AddressSpace=*/0));
-    return_param_id = sem_ir()
-                          .insts()
-                          .GetAs<SemIR::ReturnSlot>(function.return_slot_id)
-                          .storage_id;
+    return_param_id = function.return_slot_pattern_id;
     param_inst_ids.push_back(return_param_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
@@ -352,11 +349,11 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
   // The subset of call_param_ids that is already in the order that the LLVM
   // calling convention expects.
   llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
-  if (function.return_slot_id.is_valid()) {
+  if (function.return_slot_pattern_id.is_valid()) {
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `function.return_slot_id.is_valid()` queries whether there is a
-    // return slot at the SemIR level.
+    // whereas `function.return_slot_pattern_id.is_valid()` queries whether
+    // there is a return slot at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id)
             .has_return_slot()) {
       lower_param(call_param_ids.back());

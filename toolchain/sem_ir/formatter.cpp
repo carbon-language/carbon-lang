@@ -398,15 +398,15 @@ class FormatterImpl {
     FormatParamList(fn.implicit_param_patterns_id, /*is_implicit=*/true);
     FormatParamList(fn.param_patterns_id, /*is_implicit=*/false);
 
-    if (fn.return_slot_id.is_valid()) {
+    if (fn.return_slot_pattern_id.is_valid()) {
       out_ << " -> ";
       auto return_info = ReturnTypeInfo::ForFunction(sem_ir_, fn);
       if (!fn.body_block_ids.empty() && return_info.is_valid() &&
           return_info.has_return_slot()) {
-        FormatName(fn.return_slot_id);
+        FormatName(fn.return_slot_pattern_id);
         out_ << ": ";
       }
-      FormatType(sem_ir_.insts().Get(fn.return_slot_id).type_id());
+      FormatType(sem_ir_.insts().Get(fn.return_slot_pattern_id).type_id());
     }
 
     if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
@@ -902,9 +902,9 @@ class FormatterImpl {
 
     auto return_info = ReturnTypeInfo::ForType(sem_ir_, inst.type_id);
     bool has_return_slot = return_info.has_return_slot();
-    InstId return_slot_id = InstId::Invalid;
+    InstId return_slot_arg_id = InstId::Invalid;
     if (has_return_slot) {
-      return_slot_id = args.back();
+      return_slot_arg_id = args.back();
       args = args.drop_back();
     }
 
@@ -917,18 +917,18 @@ class FormatterImpl {
     out_ << ')';
 
     if (has_return_slot) {
-      FormatReturnSlot(return_slot_id);
+      FormatReturnSlotArg(return_slot_arg_id);
     }
   }
 
   auto FormatInstRHS(ArrayInit inst) -> void {
     FormatArgs(inst.inits_id);
-    FormatReturnSlot(inst.dest_id);
+    FormatReturnSlotArg(inst.dest_id);
   }
 
   auto FormatInstRHS(InitializeFrom inst) -> void {
     FormatArgs(inst.src_id);
-    FormatReturnSlot(inst.dest_id);
+    FormatReturnSlotArg(inst.dest_id);
   }
 
   auto FormatInstRHS(ValueParam inst) -> void {
@@ -946,7 +946,7 @@ class FormatterImpl {
   auto FormatInstRHS(ReturnExpr ret) -> void {
     FormatArgs(ret.expr_id);
     if (ret.dest_id.is_valid()) {
-      FormatReturnSlot(ret.dest_id);
+      FormatReturnSlotArg(ret.dest_id);
     }
   }
 
@@ -962,12 +962,12 @@ class FormatterImpl {
 
   auto FormatInstRHS(StructInit init) -> void {
     FormatArgs(init.elements_id);
-    FormatReturnSlot(init.dest_id);
+    FormatReturnSlotArg(init.dest_id);
   }
 
   auto FormatInstRHS(TupleInit init) -> void {
     FormatArgs(init.elements_id);
-    FormatReturnSlot(init.dest_id);
+    FormatReturnSlotArg(init.dest_id);
   }
 
   auto FormatInstRHS(FunctionDecl inst) -> void {
@@ -1096,9 +1096,19 @@ class FormatterImpl {
       }
     }
 
-    if (info.requirement_block_id.is_valid()) {
+    if (info.other_requirements || !info.rewrite_constraints.empty()) {
       // TODO: Include specifics.
-      out_ << " where TODO";
+      out_ << " where ";
+      llvm::ListSeparator and_sep(" and ");
+      for (auto rewrite : info.rewrite_constraints) {
+        out_ << and_sep;
+        FormatConstant(rewrite.lhs_const_id);
+        out_ << " = ";
+        FormatConstant(rewrite.rhs_const_id);
+      }
+      if (info.other_requirements) {
+        out_ << and_sep << "TODO";
+      }
     }
     out_ << ">";
   }
@@ -1192,7 +1202,7 @@ class FormatterImpl {
     out_ << ')';
   }
 
-  auto FormatReturnSlot(InstId dest_id) -> void {
+  auto FormatReturnSlotArg(InstId dest_id) -> void {
     out_ << " to ";
     FormatArg(dest_id);
   }

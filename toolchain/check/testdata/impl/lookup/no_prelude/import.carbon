@@ -1163,8 +1163,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %X.1: %T = bind_symbolic_name X, 1 [symbolic]
-// CHECK:STDOUT:   %X.2: @AnyParam.%T (%T) = bind_symbolic_name X, 1 [symbolic]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt.2: %T = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.2: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface.generic) [template]
@@ -1256,10 +1255,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = %interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @AnyParam(constants.%T: type, constants.%X.2: @AnyParam.%T (%T)) [from "has_param.carbon"] {
+// CHECK:STDOUT: generic class @AnyParam(constants.%T: type, constants.%X: %T) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
-// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X.1)]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1313,18 +1312,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %U.patt.loc6_28.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X.1) {
+// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %X => constants.%X.1
-// CHECK:STDOUT:   %X.patt => constants.%X.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X.2) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %X => constants.%X.2
-// CHECK:STDOUT:   %X.patt => constants.%X.2
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.1, constants.%GenericInterface.generic) {
@@ -1351,20 +1343,19 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %X.1: %T = bind_symbolic_name X, 1 [symbolic]
-// CHECK:STDOUT:   %X.2: @AnyParam.%T (%T) = bind_symbolic_name X, 1 [symbolic]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %X.patt.2: %T = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.1: type = generic_interface_type @GenericInterface [template]
 // CHECK:STDOUT:   %GenericInterface.generic: %GenericInterface.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.2: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic]
+// CHECK:STDOUT:   %Self.1: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
-// CHECK:STDOUT:   %Self.2: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.2: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.1, %GenericInterface.generic) [template]
 // CHECK:STDOUT:   %AnyParam.val: %AnyParam.2 = struct_value () [template]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [template]
-// CHECK:STDOUT:   %Self.3: %Y.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Y.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type.1: type = fn_type @K.1 [template]
 // CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %Y.type, %K.type.1 [template]
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, imports.%import_ref.10 [template]
@@ -1392,9 +1383,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %import_ref.7 = import_ref PackageHasParam//default, inst+28, unloaded
 // CHECK:STDOUT:   %import_ref.8: %K.assoc_type = import_ref PackageHasParam//default, inst+34, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %import_ref.9 = import_ref PackageHasParam//default, inst+30, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageGenericInterface//default, inst+46, loaded [template = constants.%AnyParam.2]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageGenericInterface//default, inst+56, loaded [template = constants.%Y.type]
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref PackageGenericInterface//default, inst+65, loaded [template = constants.%interface]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref PackageGenericInterface//default, inst+45, loaded [template = constants.%AnyParam.2]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref PackageGenericInterface//default, inst+55, loaded [template = constants.%Y.type]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref PackageGenericInterface//default, inst+64, loaded [template = constants.%interface]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1414,7 +1405,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.2)]
-// CHECK:STDOUT:   %Self: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %GenericInterface.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -1435,10 +1426,10 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @AnyParam(constants.%T: type, constants.%X.2: @AnyParam.%T (%T)) [from "has_param.carbon"] {
+// CHECK:STDOUT: generic class @AnyParam(constants.%T: type, constants.%X: %T) [from "has_param.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
-// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X.1)]
+// CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1472,7 +1463,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @K.1(constants.%Self.3: %Y.type) [from "has_param.carbon"] {
+// CHECK:STDOUT: generic fn @K.1(constants.%Self.2: %Y.type) [from "has_param.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
@@ -1480,18 +1471,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.2() [from "has_generic_interface.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X.1) {
+// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %X => constants.%X.1
-// CHECK:STDOUT:   %X.patt => constants.%X.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X.2) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %X => constants.%X.2
-// CHECK:STDOUT:   %X.patt => constants.%X.2
+// CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %X.patt => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericInterface(constants.%U) {
@@ -1513,7 +1497,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @K.1(constants.%Self.3) {}
+// CHECK:STDOUT: specific @K.1(constants.%Self.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- has_extra_interfaces.carbon
 // CHECK:STDOUT:

@@ -141,7 +141,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: %A {
+// CHECK:STDOUT: fn @F() -> %return.param_patt: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [template = constants.%A.val]

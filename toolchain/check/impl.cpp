@@ -200,11 +200,14 @@ static auto BuildInterfaceWitness(
         }
         break;
       }
-      case SemIR::AssociatedConstantDecl::Kind:
+      case CARBON_KIND(SemIR::AssociatedConstantDecl associated): {
         // TODO: Check we have a value for this constant in the constraint.
-        context.TODO(impl.definition_id,
-                     "impl of interface with associated constant");
+        context.TODO(
+            impl.definition_id,
+            "impl of interface with associated constant " +
+                context.names().GetFormatted(associated.name_id).str());
         return SemIR::InstId::BuiltinErrorInst;
+      }
       default:
         CARBON_CHECK(decl_id == SemIR::InstId::BuiltinErrorInst,
                      "Unexpected kind of associated entity {0}", decl);

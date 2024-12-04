@@ -614,10 +614,12 @@ class ImportRefResolver : public ImportContext {
 };
 }  // namespace
 
-static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
+static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
+                         SemIR::EntityNameId entity_name_id =
+                             SemIR::EntityNameId::Invalid) -> SemIR::InstId {
   return AddImportRef(context.local_context(),
-                      {.ir_id = context.import_ir_id(), .inst_id = inst_id});
+                      {.ir_id = context.import_ir_id(), .inst_id = inst_id},
+                      entity_name_id);
 }
 
 static auto AddLoadedImportRef(ImportContext& context, SemIR::TypeId type_id,
@@ -1208,6 +1210,7 @@ static auto AddNameScopeImportRefs(ImportContext& context,
 // Given a block ID for a list of associated entities of a witness, returns a
 // version localized to the current IR.
 static auto AddAssociatedEntities(ImportContext& context,
+                                  SemIR::NameScopeId local_name_scope_id,
                                   SemIR::InstBlockId associated_entities_id)
     -> SemIR::InstBlockId {
   if (associated_entities_id == SemIR::InstBlockId::Empty) {
@@ -1218,7 +1221,28 @@ static auto AddAssociatedEntities(ImportContext& context,
   llvm::SmallVector<SemIR::InstId> new_associated_entities;
   new_associated_entities.reserve(associated_entities.size());
   for (auto inst_id : associated_entities) {
-    new_associated_entities.push_back(AddImportRef(context, inst_id));
+    // Determine the name of the associated entity, by switching on its type.
+    SemIR::NameId import_name_id = SemIR::NameId::Invalid;
+    if (auto associated_const =
+            context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
+                inst_id)) {
+      import_name_id = associated_const->name_id;
+    } else if (auto function_decl =
+                   context.import_insts().TryGetAs<SemIR::FunctionDecl>(
+                       inst_id)) {
+      auto function =
+          context.import_functions().Get(function_decl->function_id);
+      import_name_id = function.name_id;
+    } else {
+      CARBON_CHECK("Unhandled associated entity type");
+    }
+    auto name_id = GetLocalNameId(context, import_name_id);
+    auto entity_name_id = context.local_entity_names().Add(
+        {.name_id = name_id,
+         .parent_scope_id = local_name_scope_id,
+         .bind_index = SemIR::CompileTimeBindIndex::Invalid});
+    new_associated_entities.push_back(
+        AddImportRef(context, inst_id, entity_name_id));
   }
   return context.local_inst_blocks().Add(new_associated_entities);
 }
@@ -1644,7 +1668,6 @@ static auto MakeFunctionDecl(ImportContext& context,
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.return_slot_pattern_id = SemIR::InstId::Invalid,
-        .return_slot_id = SemIR::InstId::Invalid,
         .builtin_function_kind = import_function.builtin_function_kind}});
 
   function_decl.type_id = context.local_context().GetFunctionType(
@@ -1692,10 +1715,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   auto return_type_const_id = SemIR::ConstantId::Invalid;
-  if (import_function.return_slot_id.is_valid()) {
+  if (import_function.return_slot_pattern_id.is_valid()) {
     return_type_const_id = GetLocalConstantId(
-        resolver,
-        resolver.import_insts().Get(import_function.return_slot_id).type_id());
+        resolver, resolver.import_insts()
+                      .Get(import_function.return_slot_pattern_id)
+                      .type_id());
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
@@ -1719,18 +1743,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_function.return_slot_pattern_id);
   SetGenericData(resolver, import_function.generic_id, new_function.generic_id,
                  generic_data);
-
-  if (import_function.return_slot_id.is_valid()) {
-    // Recreate the return slot from scratch.
-    // TODO: Once we import function definitions, we'll need to make sure we
-    // use the same return storage variable in the declaration and definition.
-    new_function.return_slot_id =
-        resolver.local_context().AddInstInNoBlock<SemIR::VarStorage>(
-            AddImportIRInst(resolver, import_function.return_slot_id),
-            {.type_id = resolver.local_context().GetTypeIdForTypeConstant(
-                 return_type_const_id),
-             .name_id = SemIR::NameId::ReturnSlot});
-  }
 
   if (import_function.definition_id.is_valid()) {
     new_function.definition_id = new_function.first_owning_decl_id;
@@ -1987,8 +1999,8 @@ static auto AddInterfaceDefinition(ImportContext& context,
   // Push a block so that we can add scoped instructions to it.
   context.local_context().inst_block_stack().Push();
   AddNameScopeImportRefs(context, import_scope, new_scope);
-  new_interface.associated_entities_id =
-      AddAssociatedEntities(context, import_interface.associated_entities_id);
+  new_interface.associated_entities_id = AddAssociatedEntities(
+      context, new_interface.scope_id, import_interface.associated_entities_id);
   new_interface.body_block_id =
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
@@ -2092,6 +2104,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FacetAccessWitness inst)
+    -> ResolveResult {
+  auto facet_value_inst_id =
+      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::FacetAccessWitness>(
+      resolver, {.type_id = resolver.local_context().GetBuiltinType(
+                     SemIR::BuiltinInstKind::WitnessType),
+                 .facet_value_inst_id = facet_value_inst_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeId::TypeType);
 
@@ -2102,6 +2129,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                      .Get(interface.interface_id)
                                      .first_owning_decl_id);
     GetLocalSpecificData(resolver, interface.specific_id);
+  }
+  for (auto rewrite : facet_type_info.rewrite_constraints) {
+    GetLocalConstantId(resolver, rewrite.lhs_const_id);
+    GetLocalConstantId(resolver, rewrite.rhs_const_id);
   }
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2135,11 +2166,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           {generic_interface_type.interface_id, specific_id});
     }
   }
+  llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>
+      rewrite_constraints;
+  for (auto rewrite : facet_type_info.rewrite_constraints) {
+    rewrite_constraints.push_back(
+        {.lhs_const_id = GetLocalConstantId(resolver, rewrite.lhs_const_id),
+         .rhs_const_id = GetLocalConstantId(resolver, rewrite.rhs_const_id)});
+  }
   // TODO: Also process the other requirements.
   SemIR::FacetTypeId facet_type_id =
       resolver.local_facet_types().Add(SemIR::FacetTypeInfo{
           .impls_constraints = impls_constraints,
-          .requirement_block_id = SemIR::InstBlockId::Invalid});
+          .rewrite_constraints = rewrite_constraints,
+          .other_requirements = facet_type_info.other_requirements});
   return ResolveAs<SemIR::FacetType>(
       resolver,
       {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id});
@@ -2174,6 +2213,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = resolver.local_context().GetBuiltinType(
                      SemIR::BuiltinInstKind::WitnessType),
                  .elements_id = elements_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::InterfaceWitnessAccess inst)
+    -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto witness_id = GetLocalConstantInstId(resolver, inst.witness_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::InterfaceWitnessAccess>(
+      resolver,
+      {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
+       .witness_id = witness_id,
+       .index = inst.index});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2404,6 +2459,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FacetAccessType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::FacetAccessWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::FacetType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -2435,6 +2493,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::InterfaceWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::InterfaceWitnessAccess inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::IntValue inst): {

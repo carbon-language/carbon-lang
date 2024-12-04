@@ -145,7 +145,7 @@ fn G() -> C {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %C {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %return

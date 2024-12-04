@@ -115,7 +115,8 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
-  if (types().GetConstantId(inst.type_id()).is_symbolic()) {
+  if (constant_values().DependsOnGenericParameter(
+          types().GetConstantId(inst.type_id()))) {
     dep_kind |= GenericRegionStack::DependencyKind::SymbolicType;
   }
 
@@ -128,7 +129,7 @@ auto Context::FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void {
 
     // If the constant value is symbolic, track that we need to substitute into
     // it.
-    if (const_id.is_symbolic()) {
+    if (constant_values().DependsOnGenericParameter(const_id)) {
       dep_kind |= GenericRegionStack::DependencyKind::SymbolicConstant;
     }
   }
@@ -1281,7 +1282,7 @@ auto Context::TryToDefineType(SemIR::TypeId type_id,
         ResolveSpecificDefinition(*this, interface.specific_id);
       }
     }
-    // TODO: Process other requirements.
+    // TODO: Finish facet type resolution.
   }
 
   return true;
@@ -1304,9 +1305,9 @@ auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
 auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
                                      SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  SemIR::FacetTypeId facet_type_id = facet_types().Add(SemIR::FacetTypeInfo{
-      .impls_constraints = {{interface_id, specific_id}},
-      .requirement_block_id = SemIR::InstBlockId::Invalid});
+  SemIR::FacetTypeId facet_type_id = facet_types().Add(
+      SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
+                           .other_requirements = false});
   return {.type_id = SemIR::TypeId::TypeType, .facet_type_id = facet_type_id};
 }
 

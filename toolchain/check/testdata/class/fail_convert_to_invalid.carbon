@@ -65,7 +65,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %C {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123]
 // CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_123)

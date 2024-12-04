@@ -104,11 +104,11 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_slot_id.is_valid()) {
+  if (!return_slot_pattern_id.is_valid()) {
     return TypeId::Invalid;
   }
   return GetTypeInSpecific(file, specific_id,
-                           file.insts().Get(return_slot_id).type_id());
+                           file.insts().Get(return_slot_pattern_id).type_id());
 }
 
 }  // namespace Carbon::SemIR

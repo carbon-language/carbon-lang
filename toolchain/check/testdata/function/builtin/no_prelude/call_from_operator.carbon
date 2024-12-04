@@ -579,15 +579,13 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %As.type.2: type = facet_type <@As, @As(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.1: @As.%As.type (%As.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.1: %As.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %Self.2: %As.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.1: type = fn_type @Convert.1, @As(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.2 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.1: type = assoc_entity_type %As.type.2, %Convert.type.1 [symbolic]
 // CHECK:STDOUT:   %assoc0.1: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.6 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %As.type.3: type = facet_type <@As, @As(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @As(%i32) [template]
 // CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
@@ -595,17 +593,15 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %assoc0.2: %Convert.assoc_type.2 = assoc_entity element0, imports.%import_ref.6 [template]
 // CHECK:STDOUT:   %assoc0.3: %Convert.assoc_type.1 = assoc_entity element0, imports.%import_ref.7 [symbolic]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
-// CHECK:STDOUT:   %Self.3: %Add.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.2: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.4: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2) = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.3: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
-// CHECK:STDOUT:   %Self.5: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @ImplicitAs(%T) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type.3: type = facet_access_type %Self.5 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.3 [symbolic]
 // CHECK:STDOUT:   %Convert.assoc_type.3: type = assoc_entity_type %ImplicitAs.type.2, %Convert.type.3 [symbolic]
 // CHECK:STDOUT:   %assoc0.4: %Convert.assoc_type.3 = assoc_entity element0, imports.%import_ref.23 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.4: type = facet_access_type %Self.4 [symbolic]
 // CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.2, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.assoc_type.4: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.4 [template]
@@ -624,7 +620,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.6 [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Self.as_type.5: type = facet_access_type %Self.3 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.3: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.1 [template]
 // CHECK:STDOUT:   %assoc0.7: %Op.assoc_type = assoc_entity element0, imports.%import_ref.30 [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
@@ -739,7 +735,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.2)]
-// CHECK:STDOUT:   %Self: %As.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %As.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.1, @As(%T) [symbolic = %Convert.type (constants.%Convert.type.1)]
 // CHECK:STDOUT:   %Convert: @As.%Convert.type (%Convert.type.1) = struct_value () [symbolic = %Convert (constants.%Convert.1)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @As.%As.type (%As.type.2), @As.%Convert.type (%Convert.type.1) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.1)]
@@ -766,7 +762,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.5)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.2, @ImplicitAs(%T) [symbolic = %Convert.type (constants.%Convert.type.3)]
 // CHECK:STDOUT:   %Convert: @ImplicitAs.%Convert.type (%Convert.type.3) = struct_value () [symbolic = %Convert (constants.%Convert.3)]
 // CHECK:STDOUT:   %Convert.assoc_type: type = assoc_entity_type @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2), @ImplicitAs.%Convert.type (%Convert.type.3) [symbolic = %Convert.assoc_type (constants.%Convert.assoc_type.3)]
@@ -802,31 +798,31 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert.1(constants.%T: type, constants.%Self.1: @As.%As.type (%As.type.2)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert.1(constants.%T: type, constants.%Self.1: %As.type.2) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %As.type: type = facet_type <@As, @As(%T)> [symbolic = %As.type (constants.%As.type.2)]
-// CHECK:STDOUT:   %Self: %As.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %As.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.1)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Convert.1.%Self.as_type (%Self.as_type.1)]() -> @Convert.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert.2(constants.%T: type, constants.%Self.4: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2)) [from "core.carbon"] {
+// CHECK:STDOUT: generic fn @Convert.2(constants.%T: type, constants.%Self.3: %ImplicitAs.type.2) [from "core.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.5)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.3)]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type (%Self.as_type.3)]() -> @Convert.2.%T (%T);
+// CHECK:STDOUT:   fn[%self.param_patt: @Convert.2.%Self.as_type (%Self.as_type.2)]() -> @Convert.2.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: Core.IntLiteral]() -> %i32 = "int.convert_checked" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self.3: %Add.type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.5)]
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.2: %Add.type) [from "core.carbon"] {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.5)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type.5)) -> @Op.1.%Self.as_type (%Self.as_type.5);
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.3)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type.3)) -> @Op.1.%Self.as_type (%Self.as_type.3);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self.param_patt: %i32](%other.param_patt: %i32) -> %i32 = "int.sadd" [from "core.carbon"];
@@ -905,7 +901,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %As.type => constants.%As.type.2
 // CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @As(constants.%i32) {
@@ -914,7 +910,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type => constants.%As.type.3
-// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Self => constants.%Self.1
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.2
 // CHECK:STDOUT:   %Convert => constants.%Convert.2
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.2
@@ -932,7 +928,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
-// CHECK:STDOUT:   %Self => constants.%Self.5
+// CHECK:STDOUT:   %Self => constants.%Self.3
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.4
 // CHECK:STDOUT:   %Convert => constants.%Convert.4
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.4
@@ -949,11 +945,11 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert.2(constants.%T, constants.%Self.4) {
+// CHECK:STDOUT: specific @Convert.2(constants.%T, constants.%Self.3) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.4
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.4
+// CHECK:STDOUT:   %Self => constants.%Self.3
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(Core.IntLiteral) {
@@ -962,15 +958,15 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
-// CHECK:STDOUT:   %Self => constants.%Self.5
+// CHECK:STDOUT:   %Self => constants.%Self.3
 // CHECK:STDOUT:   %Convert.type => constants.%Convert.type.5
 // CHECK:STDOUT:   %Convert => constants.%Convert.5
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.5
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%Self.3) {
-// CHECK:STDOUT:   %Self => constants.%Self.3
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.5
+// CHECK:STDOUT: specific @Op.1(constants.%Self.2) {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -63,10 +63,7 @@ class MatchContext {
   // specific.
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
                                             SemIR::SpecificId::Invalid)
-      : next_index_(0),
-        kind_(kind),
-        callee_specific_id_(callee_specific_id),
-        return_slot_id_(SemIR::InstId::Invalid) {}
+      : next_index_(0), kind_(kind), callee_specific_id_(callee_specific_id) {}
 
   // Adds a work item to the stack.
   auto AddWork(WorkItem work_item) -> void { stack_.push_back(work_item); }
@@ -76,8 +73,6 @@ class MatchContext {
   // calling-convention argument. When performing callee pattern matching,
   // returns an inst block with references to all the emitted BindName insts.
   auto DoWork(Context& context) -> SemIR::InstBlockId;
-
-  auto return_slot_id() const -> SemIR::InstId { return return_slot_id_; }
 
  private:
   // Allocates the next unallocated RuntimeParamIndex, starting from 0.
@@ -113,10 +108,6 @@ class MatchContext {
 
   // The SpecificId of the function being called (if any).
   SemIR::SpecificId callee_specific_id_;
-
-  // The return slot inst emitted by `DoWork`, if any.
-  // TODO: Can this be added to the block returned by `DoWork`, instead?
-  SemIR::InstId return_slot_id_;
 };
 
 }  // namespace
@@ -280,10 +271,15 @@ auto MatchContext::EmitPatternMatch(Context& context,
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern return_slot_pattern): {
       CARBON_CHECK(kind_ == MatchKind::Callee);
-      return_slot_id_ = context.AddInst<SemIR::ReturnSlot>(
+      auto return_slot_id = context.AddInst<SemIR::ReturnSlot>(
           pattern.loc_id, {.type_id = return_slot_pattern.type_id,
                            .type_inst_id = return_slot_pattern.type_inst_id,
                            .storage_id = entry.scrutinee_id});
+      bool already_in_lookup =
+          context.scope_stack()
+              .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
+              .is_valid();
+      CARBON_CHECK(!already_in_lookup);
       results_.push_back(entry.scrutinee_id);
       break;
     }
@@ -297,11 +293,10 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
-    -> ParameterBlocks {
+    -> SemIR::InstBlockId {
   if (!return_slot_pattern_id.is_valid() && !param_patterns_id.is_valid() &&
       !implicit_param_patterns_id.is_valid()) {
-    return {.call_params_id = SemIR::InstBlockId::Invalid,
-            .return_slot_id = SemIR::InstId::Invalid};
+    return SemIR::InstBlockId::Invalid;
   }
 
   MatchContext match(MatchKind::Callee);
@@ -329,8 +324,7 @@ auto CalleePatternMatch(Context& context,
     }
   }
 
-  return {.call_params_id = match.DoWork(context),
-          .return_slot_id = match.return_slot_id()};
+  return match.DoWork(context);
 }
 
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,

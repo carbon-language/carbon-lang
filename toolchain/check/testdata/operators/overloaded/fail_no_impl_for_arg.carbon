@@ -204,15 +204,15 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.3[addr %self.param_patt: %ptr.1](%other.param_patt: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test(%a.param_patt: %C, %b.param_patt: %D) -> %return: %C {
+// CHECK:STDOUT: fn @Test(%a.param_patt: %C, %b.param_patt: %D) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc23_21.2: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %.loc34: %C = converted %b.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref, <error>) to %.loc23_21.2
+// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref, <error>) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

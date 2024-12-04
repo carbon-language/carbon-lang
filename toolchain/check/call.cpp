@@ -177,7 +177,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
                             "return type declared here");
-          builder.Note(function.return_slot_id, IncompleteReturnTypeHere);
+          builder.Note(function.return_slot_pattern_id,
+                       IncompleteReturnTypeHere);
         });
     return CheckFunctionReturnType(context, callee_id, function,
                                    *callee_specific_id);

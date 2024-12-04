@@ -48,12 +48,6 @@ InstNamer::InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
         *this, fn_loc, sem_ir.names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.implicit_param_patterns_id);
     CollectNamesInBlock(fn_scope, fn.param_patterns_id);
-    if (fn.return_slot_id.is_valid()) {
-      insts_[fn.return_slot_id.index] = {
-          fn_scope,
-          GetScopeInfo(fn_scope).insts.AllocateName(
-              *this, sem_ir.insts().GetLocId(fn.return_slot_id), "return")};
-    }
     if (!fn.body_block_ids.empty()) {
       AddBlockLabel(fn_scope, fn.body_block_ids.front(), "entry", fn_loc);
     }
@@ -552,16 +546,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(FacetType inst): {
         const auto& facet_type_info =
             sem_ir_.facet_types().Get(inst.facet_type_id);
+        bool has_where = facet_type_info.other_requirements ||
+                         !facet_type_info.rewrite_constraints.empty();
         if (auto interface = facet_type_info.TryAsSingleInterface()) {
           const auto& interface_info =
               sem_ir_.interfaces().Get(interface->interface_id);
-          add_inst_name_id(interface_info.name_id, ".type");
+          add_inst_name_id(interface_info.name_id,
+                           has_where ? "_where.type" : ".type");
         } else if (facet_type_info.impls_constraints.empty()) {
-          if (facet_type_info.requirement_block_id.is_valid()) {
-            add_inst_name("type_where");
-          } else {
-            add_inst_name("type");
-          }
+          add_inst_name(has_where ? "type_where" : "type");
         } else {
           add_inst_name("facet_type");
         }
@@ -718,6 +711,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           add_inst_name("specific_fn");
         }
         continue;
+      }
+      case InstKind::ReturnSlot: {
+        add_inst_name_id(NameId::ReturnSlot);
+        break;
       }
       case CARBON_KIND(SpliceBlock inst): {
         CollectNamesInBlock(scope_id, inst.block_id);

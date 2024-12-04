@@ -71,7 +71,7 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: %C {
+// CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_17.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc19_18.1: %struct_type.v = struct_literal (%.loc19_17.1)

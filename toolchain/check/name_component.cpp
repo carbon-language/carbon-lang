@@ -43,7 +43,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  auto [call_params_id, return_slot_id] =
+  auto call_params_id =
       CalleePatternMatch(context, *implicit_param_patterns_id,
                          *param_patterns_id, return_slot_pattern_id);
 
@@ -59,7 +59,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       .param_patterns_id = *param_patterns_id,
       .call_params_id = call_params_id,
       .return_slot_pattern_id = return_slot_pattern_id,
-      .return_slot_id = return_slot_id,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }

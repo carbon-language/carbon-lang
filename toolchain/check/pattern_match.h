@@ -10,17 +10,6 @@
 
 namespace Carbon::Check {
 
-// The outputs of CalleePatternMatch.
-// TODO: Rename or remove this struct.
-struct ParameterBlocks {
-  // The `Call` parameters of the function.
-  SemIR::InstBlockId call_params_id;
-
-  // The return slot.
-  // TODO: Drop this and just use the last element of above?
-  SemIR::InstId return_slot_id;
-};
-
 // TODO: Find a better place for this overview, once it has stabilized.
 //
 // The signature pattern of a function call is matched partially by the caller
@@ -35,11 +24,13 @@ struct ParameterBlocks {
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
 // matching them against the corresponding `Call` parameters (see
 // entity_with_params_base.h for the definition of that term).
+// Returns the ID of an inst block consisting of references to the `Call`
+// parameters of the function.
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
-    -> ParameterBlocks;
+    -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for matching the given arguments with the given
 // parameter patterns, and returns an inst block of the arguments that should

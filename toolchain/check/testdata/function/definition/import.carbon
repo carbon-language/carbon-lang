@@ -271,9 +271,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+35, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+62, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+73, unloaded
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+34, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+61, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+72, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.6
@@ -365,8 +365,8 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+62, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+73, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+61, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+72, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -397,7 +397,7 @@ fn D() {}
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc23_14: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -447,8 +447,8 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+34, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+61, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

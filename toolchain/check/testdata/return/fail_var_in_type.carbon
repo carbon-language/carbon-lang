@@ -48,7 +48,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x
-// CHECK:STDOUT:     %.loc15_13: type = bind_value %x.ref
+// CHECK:STDOUT:     %.loc15: type = bind_value %x.ref
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
