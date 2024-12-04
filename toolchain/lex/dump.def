@@ -1,0 +1,20 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// This is an X-macro header. It does not use `#include` guards, and instead is
+// designed to be `#include`ed after the x-macro is defined in order for its
+// inclusion to expand to the desired output. Macro definitions are cleaned up
+// at the end of this file.
+//
+// Supported x-macros are:
+// - CARBON_LEX_DUMP_TYPE(Type)
+//   Defines a type that can be dumped from a lexing context.
+
+#if !defined(CARBON_LEX_DUMP_TYPE)
+#error "Must define the x-macro to use this file."
+#endif
+
+CARBON_LEX_DUMP_TYPE(TokenKind)
+
+#undef CARBON_LEX_DUMP_TYPE

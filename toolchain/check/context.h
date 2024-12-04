@@ -11,7 +11,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/dumper.h"
+#include "toolchain/check/dump.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -59,7 +59,10 @@ struct AccessInfo {
 };
 
 // Context and shared functionality for semantics handlers.
-class Context {
+//
+// The Dumper parent class provides a `Dump(x)` method for many types across the
+// toolchain.
+class Context : public DumpMethods<Context> {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
@@ -458,20 +461,6 @@ class Context {
   // Prints the the formatted sem_ir to stderr.
   LLVM_DUMP_METHOD auto DumpFormattedFile() const -> void;
 
-  // Dumps an object to stderr.
-  //
-  // Defers to the Dumper class so that all dump overloads can grouped together
-  // there, outside of the Check class.
-  template <typename T>
-    requires requires(const Lex::TokenizedBuffer& tokens,
-                      const Parse::Tree& parse_tree, const SemIR::File& sem_ir,
-                      const T& t) {
-      { Dumper::Dump(tokens, parse_tree, sem_ir, t) };
-    }
-  LLVM_DUMP_METHOD auto Dump(const T& t) const -> void {
-    Dumper::Dump(tokens(), parse_tree(), *sem_ir_, t);
-  }
-
   // Get the Lex::TokenKind of a node for diagnostics.
   auto token_kind(Parse::NodeId node_id) -> Lex::TokenKind {
     return tokens().GetKind(parse_tree().node_token(node_id));
@@ -488,6 +477,7 @@ class Context {
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 

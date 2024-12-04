@@ -209,8 +209,15 @@ cc_library(
 
 cc_library(
     name = "tokenized_buffer",
-    srcs = ["tokenized_buffer.cpp"],
-    hdrs = ["tokenized_buffer.h"],
+    srcs = [
+        "dump.cpp",
+        "tokenized_buffer.cpp",
+    ],
+    hdrs = [
+        "dump.h",
+        "tokenized_buffer.h",
+    ],
+    textual_hdrs = ["dump.def"],
     deps = [
         ":character_set",
         ":helpers",
