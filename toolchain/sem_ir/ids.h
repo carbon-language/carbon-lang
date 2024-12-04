@@ -440,7 +440,7 @@ constexpr BoolValue BoolValue::True = BoolValue(1);
 // affect its semantics, such as overflow behavior.
 struct IntKind : public IdBase<IntKind> {
   // Not used by `Print`, but for `IdKind`.
-  static constexpr llvm::StringLiteral Label = "int_signed_or_unsigned";
+  static constexpr llvm::StringLiteral Label = "int_kind";
 
   static const IntKind Unsigned;
   static const IntKind Signed;
@@ -459,7 +459,7 @@ constexpr IntKind IntKind::Signed = IntKind(1);
 // A float kind value.
 struct FloatKind : public IdBase<FloatKind> {
   // Not used by `Print`, but for `IdKind`.
-  static constexpr llvm::StringLiteral Label = "float";
+  static constexpr llvm::StringLiteral Label = "float_kind";
 
   using IdBase::IdBase;
 

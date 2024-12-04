@@ -16,7 +16,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   }
   out << Label;
   if (is_builtin()) {
-    out << builtin_inst_kind();
+    out << "(" << builtin_inst_kind() << ")";
   } else {
     // Use the `+` as a small reminder that this is a delta, rather than an
     // absolute index.
@@ -94,29 +94,35 @@ auto NameId::ForIdentifier(IdentifierId id) -> NameId {
 }
 
 auto NameId::Print(llvm::raw_ostream& out) const -> void {
+  if (!is_valid() || index >= 0) {
+    IdBase::Print(out);
+    return;
+  }
+  out << Label << "(";
   if (*this == SelfValue) {
-    out << Label << "SelfValue";
+    out << "SelfValue";
   } else if (*this == SelfType) {
-    out << Label << "SelfType";
+    out << "SelfType";
   } else if (*this == PeriodSelf) {
-    out << Label << "PeriodSelf";
+    out << "PeriodSelf";
   } else if (*this == ReturnSlot) {
-    out << Label << "ReturnSlot";
+    out << "ReturnSlot";
   } else if (*this == PackageNamespace) {
-    out << Label << "PackageNamespace";
+    out << "PackageNamespace";
   } else if (*this == Base) {
-    out << Label << "Base";
+    out << "Base";
   } else {
-    CARBON_CHECK(!is_valid() || index >= 0, "Unknown index {0}", index);
+    CARBON_FATAL("Unknown index {0}", index);
     IdBase::Print(out);
   }
+  out << ")";
 }
 
 auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Unreachable) {
     out << "unreachable";
   } else if (*this == Empty) {
-    out << "empty";
+    out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
   } else if (*this == ImportRefs) {
@@ -129,7 +135,7 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
-  out << Label;
+  out << Label << "(";
   if (*this == TypeType::SingletonTypeId) {
     out << "TypeType";
   } else if (*this == AutoType::SingletonTypeId) {
@@ -137,10 +143,9 @@ auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   } else if (*this == ErrorInst::SingletonTypeId) {
     out << "Error";
   } else {
-    out << "(";
     AsConstantId().Print(out, /*disambiguate=*/false);
-    out << ")";
   }
+  out << ")";
 }
 
 auto LibraryNameId::ForStringLiteralValueId(StringLiteralValueId id)
