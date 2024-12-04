@@ -57,12 +57,7 @@ class FunctionContext {
     if (auto result = file_context_->global_variables().Lookup(inst_id)) {
       return result.value();
     }
-    if (auto bind_name = sem_ir().insts().TryGetAs<SemIR::BindName>(inst_id)) {
-      if (auto result =
-              file_context_->global_variables().Lookup(bind_name->value_id)) {
-        return result.value();
-      }
-    }
+
     return file_context_->GetGlobal(inst_id);
   }
 
