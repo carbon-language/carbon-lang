@@ -1233,8 +1233,14 @@ static auto AddAssociatedEntities(ImportContext& context,
       auto function =
           context.import_functions().Get(function_decl->function_id);
       import_name_id = function.name_id;
+    } else if (auto import_ref =
+                   context.import_insts().TryGetAs<SemIR::AnyImportRef>(
+                       inst_id)) {
+      import_name_id =
+          context.import_entity_names().Get(import_ref->entity_name_id).name_id;
     } else {
-      CARBON_FATAL("Unhandled associated entity type");
+      CARBON_FATAL("Unhandled associated entity type: {0}",
+                   context.import_insts().Get(inst_id).kind().ir_name());
     }
     auto name_id = GetLocalNameId(context, import_name_id);
     auto entity_name_id = context.local_entity_names().Add(
