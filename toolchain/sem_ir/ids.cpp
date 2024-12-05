@@ -15,8 +15,8 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
     return;
   }
   out << Label;
-  if (is_builtin()) {
-    out << "(" << builtin_inst_kind() << ")";
+  if (index < static_cast<int>(SingletonInstKinds.size())) {
+    out << "(" << SingletonInstKinds[index] << ")";
   } else {
     // Use the `+` as a small reminder that this is a delta, rather than an
     // absolute index.

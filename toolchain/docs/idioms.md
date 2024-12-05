@@ -384,12 +384,8 @@ class Foo {
 The parameters of the variable template can be chosen to allow reuse of the same
 variable template for multiple static data members.
 
-Examples:
-
--   `NodeStack::IdKindTable` in
-    [check/node_stack.h](/toolchain/check/node_stack.h)
--   `BuiltinKind::ValidCount` in
-    [sem_ir/builtin_inst_kind.h](/toolchain/sem_ir/builtin_inst_kind.h)
+For example, see `NodeStack::IdKindTable` in
+[check/node_stack.h](/toolchain/check/node_stack.h).
 
 A global constant may use a single definition without a separate declaration:
 

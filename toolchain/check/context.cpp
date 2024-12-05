@@ -25,7 +25,6 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -1353,8 +1352,9 @@ auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id,
                                                   entity_type_id);
 }
 
-auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
-  auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
+auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
+  CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
+  auto type_id = GetTypeIdForTypeInst(singleton_id);
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Failed to complete builtin type");

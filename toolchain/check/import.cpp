@@ -507,7 +507,7 @@ static auto AddNamespaceFromOtherPackage(Context& context,
                                          SemIR::NameId name_id)
     -> SemIR::InstId {
   auto namespace_type_id =
-      context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType);
+      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
   NamespaceResult result = CopySingleNameScopeFromImportIR(
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);

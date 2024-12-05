@@ -7,7 +7,6 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"

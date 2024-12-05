@@ -6,7 +6,6 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/literal.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
 

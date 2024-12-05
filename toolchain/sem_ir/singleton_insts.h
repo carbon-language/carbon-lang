@@ -36,6 +36,12 @@ template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
 inline constexpr auto MakeSingletonInstId() -> InstId;
 
+// Returns true if the InstId corresponds to a singleton inst.
+inline constexpr auto IsSingletonInstId(InstId id) -> bool {
+  return id.index >= 0 &&
+         id.index < static_cast<int32_t>(SingletonInstKinds.size());
+}
+
 // Only implementation details are below.
 
 namespace Internal {

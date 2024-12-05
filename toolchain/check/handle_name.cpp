@@ -222,10 +222,10 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
 
 auto HandleParseNode(Context& context, Parse::PackageExprId node_id) -> bool {
   context.AddInstAndPush<SemIR::NameRef>(
-      node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType),
-       .name_id = SemIR::NameId::PackageNamespace,
-       .value_id = SemIR::Namespace::PackageInstId});
+      node_id, {.type_id = context.GetSingletonType(
+                    SemIR::NamespaceType::SingletonInstId),
+                .name_id = SemIR::NameId::PackageNamespace,
+                .value_id = SemIR::Namespace::PackageInstId});
   return true;
 }
 

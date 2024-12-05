@@ -467,8 +467,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
   return kind;
 }
 
-// Returns whether `function` is a valid declaration of the builtin
-// `builtin_inst_kind`.
+// Returns whether `function` is a valid declaration of `builtin_kind`.
 static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)

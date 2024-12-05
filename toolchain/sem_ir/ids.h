@@ -11,7 +11,6 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::SemIR {
 
@@ -40,25 +39,7 @@ struct InstId : public IdBase<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
-  // Returns the instruction ID for a builtin. This relies on File guarantees
-  // for builtin placement.
-  static constexpr auto ForBuiltin(BuiltinInstKind kind) -> InstId {
-    return InstId(kind.AsInt());
-  }
-
   using IdBase::IdBase;
-
-  // Returns true if the instruction is a builtin. Requires is_valid.
-  auto is_builtin() const -> bool {
-    CARBON_CHECK(is_valid());
-    return index < BuiltinInstKind::ValidCount;
-  }
-
-  // Returns the BuiltinInstKind. Requires is_builtin.
-  auto builtin_inst_kind() const -> BuiltinInstKind {
-    CARBON_CHECK(is_builtin());
-    return BuiltinInstKind::FromInt(index);
-  }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };

@@ -319,7 +319,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
 
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
-      context.GetBuiltinType(SemIR::BuiltinInstKind::NamespaceType);
+      context.GetSingletonType(SemIR::NamespaceType::SingletonInstId);
 
   // Define the package scope, with an instruction for `package` expressions to
   // reference.

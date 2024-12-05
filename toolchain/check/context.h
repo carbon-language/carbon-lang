@@ -383,8 +383,9 @@ class Context {
   auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
                                SemIR::TypeId entity_type_id) -> SemIR::TypeId;
 
-  // Gets a builtin type. The returned type will be complete.
-  auto GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId;
+  // Gets a singleton type. The returned type will be complete. Requires that
+  // `singleton_id` is already validated to be a singleton.
+  auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)

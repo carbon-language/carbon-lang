@@ -46,7 +46,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto alias_type_id = SemIR::TypeId::Invalid;
   auto alias_value_id = SemIR::InstId::Invalid;
-  if (expr_id.is_builtin()) {
+  if (SemIR::IsSingletonInstId(expr_id)) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.
     // TODO: Look into handling `false`, this doesn't do it right now because it

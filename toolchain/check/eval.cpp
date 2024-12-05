@@ -667,7 +667,7 @@ static auto MakeIntTypeResult(Context& context, SemIRLoc loc,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
   auto result = SemIR::IntType{
-      .type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::TypeType),
+      .type_id = context.GetSingletonType(SemIR::TypeType::SingletonInstId),
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc, result)) {

@@ -11,7 +11,6 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 

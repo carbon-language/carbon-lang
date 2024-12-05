@@ -293,8 +293,8 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           // Get the witness that `T` implements `base_type_id`.
           if (base_interface == *assoc_interface) {
             witness_inst_id = context.GetOrAddInst<SemIR::FacetAccessWitness>(
-                loc_id, {.type_id = context.GetBuiltinType(
-                             SemIR::BuiltinInstKind::WitnessType),
+                loc_id, {.type_id = context.GetSingletonType(
+                             SemIR::WitnessType::SingletonInstId),
                          .facet_value_inst_id = base_id});
             // TODO: Result will eventually be a facet type witness instead of
             // an interface witness. Will need to use the index
@@ -375,8 +375,8 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       if (IsInstanceMethod(context.sem_ir(), fn_type.function_id)) {
         return context.GetOrAddInst<SemIR::BoundMethod>(
-            loc_id, {.type_id = context.GetBuiltinType(
-                         SemIR::BuiltinInstKind::BoundMethodType),
+            loc_id, {.type_id = context.GetSingletonType(
+                         SemIR::BoundMethodType::SingletonInstId),
                      .object_id = base_id,
                      .function_id = member_id});
       }
@@ -560,7 +560,7 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
   auto index_node_id = context.insts().GetLocId(index_inst_id);
   index_inst_id = ConvertToValueOfType(
       context, index_node_id, index_inst_id,
-      context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
+      context.GetSingletonType(SemIR::IntLiteralType::SingletonInstId));
   auto index_const_id = context.constant_values().Get(index_inst_id);
   if (index_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;

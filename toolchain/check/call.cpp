@@ -11,7 +11,6 @@
 #include "toolchain/check/function.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -162,8 +161,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     callee_id = context.GetOrAddInst(
         context.insts().GetLocId(callee_id),
         SemIR::SpecificFunction{
-            .type_id = context.GetBuiltinType(
-                SemIR::BuiltinInstKind::SpecificFunctionType),
+            .type_id = context.GetSingletonType(
+                SemIR::SpecificFunctionType::SingletonInstId),
             .callee_id = callee_id,
             .specific_id = *callee_specific_id});
     context.definitions_required().push_back(callee_id);
