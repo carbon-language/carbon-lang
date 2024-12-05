@@ -34,6 +34,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -1076,7 +1077,8 @@ class TypeCompleter {
     bool same_as_object_rep = true;
     for (auto field : fields) {
       auto field_value_rep = GetNestedValueRepr(field.type_id);
-      if (field_value_rep.type_id != field.type_id) {
+      if (!field_value_rep.IsCopyOfObjectRepr(context_.sem_ir(),
+                                              field.type_id)) {
         same_as_object_rep = false;
         field.type_id = field_value_rep.type_id;
       }
@@ -1108,7 +1110,8 @@ class TypeCompleter {
     bool same_as_object_rep = true;
     for (auto element_type_id : elements) {
       auto element_value_rep = GetNestedValueRepr(element_type_id);
-      if (element_value_rep.type_id != element_type_id) {
+      if (!element_value_rep.IsCopyOfObjectRepr(context_.sem_ir(),
+                                                element_type_id)) {
         same_as_object_rep = false;
       }
       value_rep_elements.push_back(element_value_rep.type_id);

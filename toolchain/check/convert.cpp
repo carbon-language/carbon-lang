@@ -678,6 +678,17 @@ static auto IsValidExprCategoryForConversionTarget(
   }
 }
 
+// Determines whether the initialization representation of the type is a copy of
+// the value representation.
+static auto InitReprIsCopyOfValueRepr(const SemIR::File& sem_ir,
+                                      SemIR::TypeId type_id) -> bool {
+  // The initializing representation is a copy of the value representation if
+  // they're both copies of the object representation.
+  return SemIR::InitRepr::ForType(sem_ir, type_id).IsCopyOfObjectRepr() &&
+         SemIR::ValueRepr::ForType(sem_ir, type_id)
+             .IsCopyOfObjectRepr(sem_ir, type_id);
+}
+
 // Determines whether we can pull a value directly out of an initializing
 // expression of type `type_id` to initialize a target of type `type_id` and
 // kind `target_kind`.
@@ -691,17 +702,8 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
     return false;
   }
 
-  if (SemIR::InitRepr::ForType(sem_ir, type_id).kind !=
-      SemIR::InitRepr::ByCopy) {
-    // The initializing expression doesn't contain a copy of a value.
-    return false;
-  }
-
-  // If the value representation is a copy of the object representation, we
-  // already have a value of the right form and can use that value directly.
-  auto value_rep = SemIR::ValueRepr::ForType(sem_ir, type_id);
-  return value_rep.kind == SemIR::ValueRepr::Copy &&
-         value_rep.type_id == type_id;
+  // We can pull a value out of an initializing expression if it holds one.
+  return InitReprIsCopyOfValueRepr(sem_ir, type_id);
 }
 
 // Returns the non-adapter type that is compatible with the specified type.
@@ -917,13 +919,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
     return SemIR::InstId::BuiltinErrorInst;
   }
 
-  // TODO: Directly track on the value representation whether it's a copy of
-  // the object representation.
-  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
-  if (value_rep.kind == SemIR::ValueRepr::Copy &&
-      value_rep.aggregate_kind == SemIR::ValueRepr::NotAggregate &&
-      value_rep.type_id == type_id) {
-    // For by-value scalar types, no explicit action is required. Initializing
+  if (InitReprIsCopyOfValueRepr(context.sem_ir(), type_id)) {
+    // For simple by-value types, no explicit action is required. Initializing
     // from a value expression is treated as copying the value.
     return expr_id;
   }
