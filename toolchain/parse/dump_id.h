@@ -29,7 +29,7 @@ class DumpIdMethods {
 
  public:
   LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
-    static_cast<const Tree&>(*this).tokens_->DumpId(token);
+    static_cast<const Tree&>(*this).tokens().DumpId(token);
   }
   LLVM_DUMP_METHOD auto DumpId(NodeId node_id) const -> void {
     DumpIdOverloads::DumpId(node_id, static_cast<const Tree&>(*this));

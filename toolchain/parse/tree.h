@@ -81,8 +81,6 @@ struct File;
 // The DumpIdMethods parent class provides a `DumpId(x)` method for many types
 // across the toolchain.
 class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
-  friend class DumpIdMethods<Tree>;  // Access to `tokens_`.
-
  public:
   class PostorderIterator;
 
@@ -136,6 +134,8 @@ class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
 
   // Returns the token the given parse tree node models.
   auto node_token(NodeId n) const -> Lex::TokenIndex;
+
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
 
   // Returns whether this node is a valid node of the specified type.
   template <typename T>

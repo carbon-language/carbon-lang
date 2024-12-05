@@ -9,8 +9,19 @@
 
 namespace Carbon::Lex::DumpIdOverloads {
 
-auto DumpId(TokenIndex /*token*/, const TokenizedBuffer& /*buffer*/) -> void {
-  llvm::errs() << "TokenIndex(?)";
+auto DumpId(TokenIndex token, const TokenizedBuffer& buffer) -> void {
+  if (!token.is_valid()) {
+    llvm::errs() << "TokenIndex(invalid)";
+    return;
+  }
+
+  auto kind = buffer.GetKind(token);
+  auto line = buffer.GetLineNumber(token);
+  auto col = buffer.GetColumnNumber(token);
+
+  llvm::errs() << "TokenIndex(kind: ";
+  kind.Print(llvm::errs());
+  llvm::errs() << ", line: " << line << ", col: " << col << ")";
 }
 
 }  // namespace Carbon::Lex::DumpIdOverloads

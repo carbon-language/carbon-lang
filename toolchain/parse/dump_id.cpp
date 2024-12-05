@@ -5,6 +5,7 @@
 #include "toolchain/parse/dump_id.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/lex/dump_id.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse::DumpIdOverloads {
@@ -12,15 +13,17 @@ namespace Carbon::Parse::DumpIdOverloads {
 auto DumpId(NodeId node_id, const Tree& tree) -> void {
   if (!node_id.is_valid()) {
     llvm::errs() << "NodeId(invalid)";
+    return;
   }
 
-  llvm::errs() << "NodeId(";
+  auto kind = tree.node_kind(node_id);
   auto token = tree.node_token(node_id);
-  llvm::errs() << "token = ";
-  tree.DumpId(token);
-  llvm::errs() << ")";
 
-  llvm::errs() << "A node id";
+  llvm::errs() << "NodeId(kind: ";
+  kind.Print(llvm::errs());
+  llvm::errs() << ", token: ";
+  Lex::DumpIdOverloads::DumpId(token, tree.tokens());
+  llvm::errs() << ")";
 }
 
 }  // namespace Carbon::Parse::DumpIdOverloads
