@@ -58,14 +58,8 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
   }
 
   // Support simple equality comparison for ID types.
-  friend constexpr auto operator==(IdT lhs, IdT rhs) -> bool {
-    return lhs.index == rhs.index;
-  }
-  // Support equality comparison when the RHS is convertible to IdT.
-  template <typename RHSType>
-    requires std::convertible_to<RHSType, IdT>
-  friend auto operator==(IdT lhs, RHSType rhs) -> bool {
-    return lhs.index == IdT(rhs).index;
+  constexpr auto operator==(IdBase<IdT> rhs) const -> bool {
+    return index == rhs.index;
   }
 };
 
@@ -79,8 +73,8 @@ struct IndexBase : public IdBase<IdT> {
   using IdBase<IdT>::IdBase;
 
   // Support relational comparisons for index types.
-  friend auto operator<=>(IdT lhs, IdT rhs) -> std::strong_ordering {
-    return lhs.index <=> rhs.index;
+  auto operator<=>(IndexBase<IdT> rhs) const -> std::strong_ordering {
+    return this->index <=> rhs.index;
   }
 };
 
