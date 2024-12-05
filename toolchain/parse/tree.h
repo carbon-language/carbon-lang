@@ -15,7 +15,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/dump.h"
+#include "toolchain/parse/dump_id.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -77,8 +77,11 @@ struct File;
 // The tree is immutable once built, but is designed to support reasonably
 // efficient patterns that build a new tree with a specific transformation
 // applied.
-class Tree : public Printable<Tree>, public DumpMethods<Tree> {
-  friend class DumpMethods<Tree>;
+//
+// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
+// across the toolchain.
+class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
+  friend class DumpIdMethods<Tree>;  // Access to `tokens_`.
 
  public:
   class PostorderIterator;

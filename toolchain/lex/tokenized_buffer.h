@@ -18,7 +18,7 @@
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lex/dump.h"
+#include "toolchain/lex/dump_id.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -82,8 +82,11 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
+//
+// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
+// across the toolchain.
 class TokenizedBuffer : public Printable<TokenizedBuffer>,
-                        public DumpMethods<TokenizedBuffer> {
+                        public DumpIdMethods<TokenizedBuffer> {
  public:
   // The maximum number of tokens that can be stored in the buffer, including
   // the FileStart and FileEnd tokens.

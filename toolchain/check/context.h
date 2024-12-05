@@ -11,7 +11,7 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/dump.h"
+#include "toolchain/check/dump_id.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -60,9 +60,9 @@ struct AccessInfo {
 
 // Context and shared functionality for semantics handlers.
 //
-// The Dumper parent class provides a `Dump(x)` method for many types across the
-// toolchain.
-class Context : public DumpMethods<Context> {
+// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
+// across the toolchain.
+class Context : public DumpIdMethods<Context> {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;

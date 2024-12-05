@@ -113,18 +113,15 @@ cc_library(
 cc_library(
     name = "tree",
     srcs = [
-        "dump.cpp",
+        "dump_id.cpp",
         "extract.cpp",
         "tree.cpp",
         "tree_and_subtrees.cpp",
     ],
     hdrs = [
-        "dump.h",
+        "dump_id.h",
         "tree.h",
         "tree_and_subtrees.h",
-    ],
-    textual_hdrs = [
-        "dump.def",
     ],
     deps = [
         ":node_kind",

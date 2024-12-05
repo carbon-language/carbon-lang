@@ -20,7 +20,7 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
-        "dump.cpp",
+        "dump_id.cpp",
         "eval.cpp",
         "function.cpp",
         "generic.cpp",
@@ -47,7 +47,7 @@ cc_library(
         "decl_name_stack.h",
         "deduce.h",
         "diagnostic_helpers.h",
-        "dump.h",
+        "dump_id.h",
         "eval.h",
         "function.h",
         "generic.h",
@@ -68,9 +68,6 @@ cc_library(
         "pending_block.h",
         "return.h",
         "subst.h",
-    ],
-    textual_hdrs = [
-        "dump.def",
     ],
     deps = [
         ":node_stack",
