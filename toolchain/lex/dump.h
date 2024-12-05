@@ -13,16 +13,10 @@ class TokenizedBuffer;
 
 namespace DumpOverloads {
 
+// Dump implementation methods. Each one takes `T` or `const T&` for the type it
+// will dump along with a `const TokenizedBuffer&`. It should dump to
+// `llvm::errs()`.
 auto Dump(TokenKind token_kind, const TokenizedBuffer& buffer) -> void;
-
-}
-
-namespace Internal {
-
-template <typename T>
-concept HasDumpOverload = requires(const T& t, const TokenizedBuffer& tokens) {
-  { DumpOverloads::Dump(t, tokens) };
-};
 
 }
 
@@ -39,7 +33,7 @@ class DumpMethods {
  public:
 #define CARBON_LEX_DUMP_TYPE(Type)                                      \
   LLVM_DUMP_METHOD auto Dump(const Type& t) -> void {                   \
-    DumpOverloads::Dump(t, static_cast<const TokenizedBuffer&>(*this)); \
+    Lex::DumpOverloads::Dump(t, static_cast<const TokenizedBuffer&>(*this)); \
   }
 #include "toolchain/lex/dump.def"
 };

@@ -35,9 +35,4 @@ auto Dump(SemIR::LocId loc_id, const Context& context) -> void {
   }
 }
 
-auto Dump(Lex::TokenKind /* token_kind */, const Context& /* context */)
-    -> void {
-  llvm::errs() << "overridden! fancy check output!\n";
-}
-
 }  // namespace Carbon::Check::DumpOverloads
