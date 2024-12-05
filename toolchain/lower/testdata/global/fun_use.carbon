@@ -20,8 +20,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16 = load i32, ptr @a, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc16, !dbg !8
+// CHECK:STDOUT:   %.loc13 = load i32, ptr @a, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc13, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -34,5 +34,5 @@ fn F() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 3, scope: !4)
