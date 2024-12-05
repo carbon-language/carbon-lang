@@ -324,7 +324,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
   auto package_scope_id = context.name_scopes().Add(
-      SemIR::InstId::PackageNamespace, SemIR::NameId::PackageNamespace,
+      SemIR::Namespace::PackageInstId, SemIR::NameId::PackageNamespace,
       SemIR::NameScopeId::Invalid);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
@@ -332,7 +332,7 @@ static auto InitPackageScopeAndImports(Context& context, UnitInfo& unit_info,
       Parse::NodeId::Invalid, {.type_id = namespace_type_id,
                                .name_scope_id = SemIR::NameScopeId::Package,
                                .import_id = SemIR::InstId::Invalid});
-  CARBON_CHECK(package_inst_id == SemIR::InstId::PackageNamespace);
+  CARBON_CHECK(package_inst_id == SemIR::Namespace::PackageInstId);
 
   // If there is an implicit `api` import, set it first so that it uses the
   // ImportIRId::ApiForImpl when processed for imports.

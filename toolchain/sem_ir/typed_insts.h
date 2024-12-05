@@ -947,6 +947,9 @@ struct Namespace {
   static constexpr auto Kind =
       InstKind::Namespace.Define<Parse::AnyNamespaceId>(
           {.ir_name = "namespace", .constant_kind = InstConstantKind::Always});
+  // The file's package namespace is a well-known instruction to help `package.`
+  // qualified names. It will always be immediately after singletons.
+  static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
 
   TypeId type_id;
   NameScopeId name_scope_id;

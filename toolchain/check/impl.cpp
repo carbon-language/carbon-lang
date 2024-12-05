@@ -107,7 +107,7 @@ static auto CheckAssociatedFunctionImplementation(
                            interface_function_type.function_id);
     builder.Emit();
 
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Map from the specific for the function type to the specific for the
@@ -129,7 +129,7 @@ static auto CheckAssociatedFunctionImplementation(
           context.functions().Get(interface_function_type.function_id),
           interface_function_specific_id,
           /*check_syntax=*/false)) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   return impl_decl_id;
 }
@@ -150,7 +150,7 @@ static auto BuildInterfaceWitness(
         return context.emitter().Build(
             impl.definition_id, ImplOfUndefinedInterface, interface.name_id);
       })) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
@@ -171,7 +171,7 @@ static auto BuildInterfaceWitness(
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
-          return SemIR::InstId::BuiltinErrorInst;
+          return SemIR::ErrorInst::SingletonInstId;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
@@ -196,7 +196,7 @@ static auto BuildInterfaceWitness(
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 
-          table.push_back(SemIR::InstId::BuiltinErrorInst);
+          table.push_back(SemIR::ErrorInst::SingletonInstId);
         }
         break;
       }
@@ -206,12 +206,12 @@ static auto BuildInterfaceWitness(
             impl.definition_id,
             "impl of interface with associated constant " +
                 context.names().GetFormatted(associated.name_id).str());
-        return SemIR::InstId::BuiltinErrorInst;
+        return SemIR::ErrorInst::SingletonInstId;
       }
       default:
-        CARBON_CHECK(decl_id == SemIR::InstId::BuiltinErrorInst,
+        CARBON_CHECK(decl_id == SemIR::ErrorInst::SingletonInstId,
                      "Unexpected kind of associated entity {0}", decl);
-        table.push_back(SemIR::InstId::BuiltinErrorInst);
+        table.push_back(SemIR::ErrorInst::SingletonInstId);
         break;
     }
   }
@@ -230,13 +230,13 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
 
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
     CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
     context.emitter().Emit(impl.definition_id, ImplAsNonFacetType);
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   const SemIR::FacetTypeInfo& facet_type_info =
       context.facet_types().Get(facet_type->facet_type_id);
@@ -244,7 +244,7 @@ auto BuildImplWitness(Context& context, SemIR::ImplId impl_id)
   auto interface = facet_type_info.TryAsSingleInterface();
   if (!interface) {
     context.TODO(impl.definition_id, "impl as not 1 interface");
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   llvm::SmallVector<SemIR::InstId> used_decl_ids;

@@ -73,14 +73,14 @@ struct NoReturn {
 };
 
 // Constraint that a type is `bool`.
-using Bool = BuiltinType<InstId::BuiltinBoolType>;
+using Bool = BuiltinType<BoolType::SingletonInstId>;
 
 // Constraint that requires the type to be an integer type.
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<InstId::BuiltinIntLiteralType>::Check(sem_ir, state,
-                                                          type_id)) {
+    if (BuiltinType<IntLiteralType::SingletonInstId>::Check(sem_ir, state,
+                                                            type_id)) {
       return true;
     }
     return sem_ir.types().Is<IntType>(type_id);
@@ -91,8 +91,8 @@ struct AnyInt {
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<InstId::BuiltinLegacyFloatType>::Check(sem_ir, state,
-                                                           type_id)) {
+    if (BuiltinType<LegacyFloatType::SingletonInstId>::Check(sem_ir, state,
+                                                             type_id)) {
       return true;
     }
     return sem_ir.types().Is<FloatType>(type_id);
@@ -100,7 +100,7 @@ struct AnyFloat {
 };
 
 // Constraint that requires the type to be the type type.
-using Type = BuiltinType<InstId::BuiltinTypeType>;
+using Type = BuiltinType<TypeType::SingletonInstId>;
 
 }  // namespace
 

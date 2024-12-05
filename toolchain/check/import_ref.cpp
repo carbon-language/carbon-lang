@@ -1139,7 +1139,7 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
       break;
     }
     default: {
-      if (const_inst_id == SemIR::InstId::BuiltinErrorInst) {
+      if (const_inst_id == SemIR::ErrorInst::SingletonInstId) {
         return SemIR::NameScopeId::Invalid;
       }
       break;
@@ -1614,7 +1614,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CompleteTypeWitness inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::InstId::BuiltinWitnessType);
+               SemIR::WitnessType::SingletonInstId);
   auto object_repr_const_id = GetLocalConstantId(resolver, inst.object_repr_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();

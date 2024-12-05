@@ -46,7 +46,7 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   if (!context.constant_values().Get(bound_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 

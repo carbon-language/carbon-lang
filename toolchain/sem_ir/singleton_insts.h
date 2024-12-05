@@ -64,13 +64,6 @@ inline constexpr auto MakeSingletonInstId() -> InstId {
   return InstId(index);
 }
 
-// TODO: This verifies values match while working on removing
-// `CARBON_SEM_IR_BUILTIN_INST_KIND`.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
-  static_assert(InstId::Builtin##Name ==      \
-                MakeSingletonInstId<InstKind::RawEnumType::Name>());
-#include "toolchain/sem_ir/inst_kind.def"
-
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_SINGLETON_INSTS_H_

@@ -42,7 +42,7 @@ auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
     return false;
   }
   auto inst_id = GetInstId(int_type_id);
-  if (inst_id == InstId::BuiltinIntLiteralType) {
+  if (inst_id == IntLiteralType::SingletonInstId) {
     return true;
   }
   auto int_type = file_->insts().TryGetAs<IntType>(inst_id);
@@ -52,7 +52,7 @@ auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
 auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
   auto object_repr_id = GetObjectRepr(int_type_id);
   auto inst_id = GetInstId(object_repr_id);
-  if (inst_id == InstId::BuiltinIntLiteralType) {
+  if (inst_id == IntLiteralType::SingletonInstId) {
     return {.is_signed = true, .bit_width = IntId::Invalid};
   }
   auto int_type = file_->insts().GetAs<IntType>(inst_id);

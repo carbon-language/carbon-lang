@@ -55,7 +55,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
                            llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 
@@ -65,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealExponentTooLargeForI64,
                            llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 
@@ -151,13 +151,13 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinStringType);
+  context.node_stack().Push(node_id, SemIR::StringType::SingletonInstId);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinTypeType);
+  context.node_stack().Push(node_id, SemIR::TypeType::SingletonInstId);
   return true;
 }
 

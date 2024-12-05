@@ -355,7 +355,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   }
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::InstId::BuiltinErrorInst) {
+    if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
       continue;
     }
 

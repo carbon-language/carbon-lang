@@ -249,7 +249,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                ? ArrayInitFromExprArgCountMismatch
                                : ArrayInitFromLiteralArgCountMismatch,
                            array_bound, tuple_elem_types.size());
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   PendingBlock target_block_storage(context);
@@ -278,8 +278,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
             context, value_loc_id, value_id, src_type_id, literal_elems,
             ConversionTarget::FullInitializer, return_slot_arg_id,
             array_type.element_type_id, target_block, i, i);
-    if (init_id == SemIR::InstId::BuiltinErrorInst) {
-      return SemIR::InstId::BuiltinErrorInst;
+    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+      return SemIR::ErrorInst::SingletonInstId;
     }
     inits.push_back(init_id);
   }
@@ -327,7 +327,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
                       IntAsSelect, IntAsSelect);
     context.emitter().Emit(value_loc_id, TupleInitElementCountMismatch,
                            dest_elem_types.size(), src_elem_types.size());
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // If we're forming an initializer, then we want an initializer for each
@@ -359,8 +359,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
             context, value_loc_id, value_id, src_type_id, literal_elems,
             inner_kind, target.init_id, dest_type_id, target.init_block, i, i);
-    if (init_id == SemIR::InstId::BuiltinErrorInst) {
-      return SemIR::InstId::BuiltinErrorInst;
+    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+      return SemIR::ErrorInst::SingletonInstId;
     }
     new_block.Set(i, init_id);
   }
@@ -426,7 +426,7 @@ static auto ConvertStructToStructOrClass(Context& context,
     context.emitter().Emit(value_loc_id, StructInitElementCountMismatch,
                            ToClass, dest_elem_fields_size,
                            src_elem_fields.size());
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Prepare to look up fields in the source by index.
@@ -462,7 +462,7 @@ static auto ConvertStructToStructOrClass(Context& context,
   for (auto [i, dest_field] : llvm::enumerate(dest_elem_fields)) {
     if (dest_field.name_id == SemIR::NameId::Vptr) {
       // TODO: Initialize the vptr to point to a vtable.
-      new_block.Set(i, SemIR::InstId::BuiltinErrorInst);
+      new_block.Set(i, SemIR::ErrorInst::SingletonInstId);
       continue;
     }
 
@@ -488,7 +488,7 @@ static auto ConvertStructToStructOrClass(Context& context,
                                  StructInitMissingFieldInConversion, value_id,
                                  target.type_id, dest_field.name_id);
         }
-        return SemIR::InstId::BuiltinErrorInst;
+        return SemIR::ErrorInst::SingletonInstId;
       }
     }
     auto src_field = src_elem_fields[src_field_index];
@@ -500,8 +500,8 @@ static auto ConvertStructToStructOrClass(Context& context,
             context, value_loc_id, value_id, src_field.type_id, literal_elems,
             inner_kind, target.init_id, dest_field.type_id, target.init_block,
             src_field_index, src_field_index + dest_vptr_offset);
-    if (init_id == SemIR::InstId::BuiltinErrorInst) {
-      return SemIR::InstId::BuiltinErrorInst;
+    if (init_id == SemIR::ErrorInst::SingletonInstId) {
+      return SemIR::ErrorInst::SingletonInstId;
     }
     new_block.Set(i, init_id);
   }
@@ -551,7 +551,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   auto object_repr_id =
       dest_class_info.GetObjectRepr(context.sem_ir(), dest_type.specific_id);
   if (object_repr_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_id);
@@ -914,7 +914,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   auto expr = context.insts().Get(expr_id);
   auto type_id = expr.type_id();
   if (type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // TODO: Directly track on the value representation whether it's a copy of
@@ -933,7 +933,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id)
   CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
                     "cannot copy value of type {0}", TypeOfInstId);
   context.emitter().Emit(expr_id, CopyOfUncopyableType, expr_id);
-  return SemIR::InstId::BuiltinErrorInst;
+  return SemIR::ErrorInst::SingletonInstId;
 }
 
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
@@ -946,7 +946,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (sem_ir.insts().Get(expr_id).type_id() ==
           SemIR::ErrorInst::SingletonTypeId ||
       target.type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   if (SemIR::GetExprCategory(sem_ir, expr_id) == SemIR::ExprCategory::NotExpr) {
@@ -956,7 +956,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     CARBON_DIAGNOSTIC(UseOfNonExprAsValue, Error,
                       "expression cannot be used as a value");
     context.emitter().Emit(expr_id, UseOfNonExprAsValue);
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // We can only perform initialization for complete types.
@@ -989,12 +989,12 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             return context.emitter().Build(loc_id, AbstractTypeInInit,
                                            target.type_id);
           })) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
-  if (expr_id == SemIR::InstId::BuiltinErrorInst) {
+  if (expr_id == SemIR::ErrorInst::SingletonInstId) {
     return expr_id;
   }
 
@@ -1024,7 +1024,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     });
 
     // Pull a value directly out of the initializer if possible and wanted.
-    if (expr_id != SemIR::InstId::BuiltinErrorInst &&
+    if (expr_id != SemIR::ErrorInst::SingletonInstId &&
         CanUseValueOfInitializer(sem_ir, target.type_id, target.kind)) {
       expr_id = context.AddInst<SemIR::ValueOfInitializer>(
           loc_id, {.type_id = target.type_id, .init_id = expr_id});
@@ -1053,7 +1053,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                    sem_ir.insts().Get(expr_id));
 
     case SemIR::ExprCategory::Error:
-      return SemIR::InstId::BuiltinErrorInst;
+      return SemIR::ErrorInst::SingletonInstId;
 
     case SemIR::ExprCategory::Initializing:
       if (target.is_initializer()) {
@@ -1206,7 +1206,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
         .Build(call_loc_id, MissingObjectInMethodCall)
         .Note(callee_decl_id, InCallToFunction)
         .Emit();
-    self_id = SemIR::InstId::BuiltinErrorInst;
+    self_id = SemIR::ErrorInst::SingletonInstId;
   }
 
   return CallerPatternMatch(context, callee_specific_id, self_param_id,
@@ -1218,7 +1218,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
     -> TypeExpr {
   auto type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                            SemIR::TypeType::SingletonTypeId);
-  if (type_inst_id == SemIR::InstId::BuiltinErrorInst) {
+  if (type_inst_id == SemIR::ErrorInst::SingletonInstId) {
     return {.inst_id = type_inst_id,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
@@ -1228,7 +1228,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
     CARBON_DIAGNOSTIC(TypeExprEvaluationFailure, Error,
                       "cannot evaluate type expression");
     context.emitter().Emit(loc_id, TypeExprEvaluationFailure);
-    return {.inst_id = SemIR::InstId::BuiltinErrorInst,
+    return {.inst_id = SemIR::ErrorInst::SingletonInstId,
             .type_id = SemIR::ErrorInst::SingletonTypeId};
   }
 

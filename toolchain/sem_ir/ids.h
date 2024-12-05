@@ -39,13 +39,6 @@ struct InstId : public IdBase, public Printable<InstId> {
   // An explicitly invalid ID.
   static const InstId Invalid;
 
-// Builtin inst IDs.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) static const InstId Builtin##Name;
-#include "toolchain/sem_ir/inst_kind.def"
-
-  // The namespace for a `package` expression.
-  static const InstId PackageNamespace;
-
   // Returns the instruction ID for a builtin. This relies on File guarantees
   // for builtin placement.
   static constexpr auto ForBuiltin(BuiltinInstKind kind) -> InstId {
@@ -71,11 +64,6 @@ struct InstId : public IdBase, public Printable<InstId> {
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
-  constexpr InstId InstId::Builtin##Name =    \
-      InstId::ForBuiltin(BuiltinInstKind::Name);
-#include "toolchain/sem_ir/inst_kind.def"
-
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
 // class.
@@ -94,9 +82,6 @@ class AbsoluteInstId : public InstId {
 
   using InstId::InstId;
 };
-
-// The package namespace will be the instruction after builtins.
-constexpr InstId InstId::PackageNamespace = InstId(BuiltinInstKind::ValidCount);
 
 // The ID of a constant value of an expression. An expression is either:
 //

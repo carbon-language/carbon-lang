@@ -86,7 +86,7 @@ auto Function::GetNameFromPatternId(const File& sem_ir, InstId pattern_id)
     inst = sem_ir.insts().Get(inst_id);
   }
 
-  if (inst_id == SemIR::InstId::BuiltinErrorInst) {
+  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
     return SemIR::NameId::Invalid;
   }
 

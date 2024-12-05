@@ -60,10 +60,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinErrorInst),
+      SemIR::ConstantId::ForTemplateConstant(SemIR::ErrorInst::SingletonInstId),
       SemIR::ErrorInst::SingletonTypeId);
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
+      SemIR::ConstantId::ForTemplateConstant(SemIR::TypeType::SingletonInstId),
       SemIR::TypeType::SingletonTypeId);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
@@ -355,7 +355,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   return {.specific_id = SemIR::SpecificId::Invalid,
-          .inst_id = SemIR::InstId::BuiltinErrorInst};
+          .inst_id = SemIR::ErrorInst::SingletonInstId};
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
@@ -583,7 +583,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
       emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
-              .inst_id = SemIR::InstId::BuiltinErrorInst};
+              .inst_id = SemIR::ErrorInst::SingletonInstId};
     }
 
     result.inst_id = scope_result_id;
@@ -609,7 +609,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     }
 
     return {.specific_id = SemIR::SpecificId::Invalid,
-            .inst_id = SemIR::InstId::BuiltinErrorInst};
+            .inst_id = SemIR::ErrorInst::SingletonInstId};
   }
 
   return result;
@@ -653,7 +653,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
     -> SemIR::InstId {
   auto core_package_id = GetCorePackage(*this, loc, name);
   if (!core_package_id.is_valid()) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
@@ -665,7 +665,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
     emitter_->Emit(loc, CoreNameNotFound, name_id);
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Look through import_refs and aliases.

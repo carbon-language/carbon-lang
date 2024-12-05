@@ -143,7 +143,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     return sem_ir_.insts().Get(inst_id).kind().ir_name().str();
   }
 
-  if (inst_id == InstId::PackageNamespace) {
+  if (inst_id == SemIR::Namespace::PackageInstId) {
     return "package";
   }
 

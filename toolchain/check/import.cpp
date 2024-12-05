@@ -366,8 +366,8 @@ static auto ImportScopeFromApiFile(Context& context,
 auto ImportApiFile(Context& context, SemIR::TypeId namespace_type_id,
                    const SemIR::File& api_sem_ir) -> void {
   context.import_ir_constant_values()[SemIR::ImportIRId::ApiForImpl.index].Set(
-      SemIR::InstId::PackageNamespace,
-      context.constant_values().Get(SemIR::InstId::PackageNamespace));
+      SemIR::Namespace::PackageInstId,
+      context.constant_values().Get(SemIR::Namespace::PackageInstId));
 
   llvm::SmallVector<TodoScope> todo_scopes = {};
   ImportScopeFromApiFile(context, api_sem_ir, SemIR::NameScopeId::Package,
@@ -393,8 +393,8 @@ auto ImportLibrariesFromCurrentPackage(
     auto ir_id = AddImportIR(context, import_ir);
 
     context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::InstId::PackageNamespace,
-        context.constant_values().Get(SemIR::InstId::PackageNamespace));
+        SemIR::Namespace::PackageInstId,
+        context.constant_values().Get(SemIR::Namespace::PackageInstId));
 
     for (const auto import_inst_id :
          import_ir.sem_ir->inst_blocks().Get(SemIR::InstBlockId::Exports)) {
@@ -455,7 +455,7 @@ auto ImportLibrariesFromOtherPackage(Context& context,
     auto ir_id = AddImportIR(context, import_ir);
     scope.import_ir_scopes.push_back({ir_id, SemIR::NameScopeId::Package});
     context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::InstId::PackageNamespace, namespace_const_id);
+        SemIR::Namespace::PackageInstId, namespace_const_id);
   }
   if (has_load_error) {
     scope.has_error = has_load_error;
