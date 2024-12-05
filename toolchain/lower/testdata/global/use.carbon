@@ -4,17 +4,17 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/global/fun_use.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/global/use.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/global/fun_use.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/global/use.carbon
 var a: i32;
 
 fn F() -> i32 {
   return a;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'fun_use.carbon'
-// CHECK:STDOUT: source_filename = "fun_use.carbon"
+// CHECK:STDOUT: ; ModuleID = 'use.carbon'
+// CHECK:STDOUT: source_filename = "use.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @a = internal global i32
 // CHECK:STDOUT:
@@ -30,7 +30,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "fun_use.carbon", directory: "")
+// CHECK:STDOUT: !3 = !DIFile(filename: "use.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
