@@ -25,7 +25,8 @@ struct DeferredDefinition;
 
 // The index of a deferred function definition within the parse tree's deferred
 // definition store.
-struct DeferredDefinitionIndex : public IndexBase {
+struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
+  static constexpr llvm::StringLiteral Label = "deferred_def";
   using ValueType = DeferredDefinition;
 
   static const DeferredDefinitionIndex Invalid;

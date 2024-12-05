@@ -19,7 +19,9 @@ struct InvalidNodeId {};
 // Objects of this type are small and cheap to copy and store. They don't
 // contain any of the information about the node, and serve as a handle that
 // can be used with the underlying tree to query for detailed information.
-struct NodeId : public IdBase {
+struct NodeId : public IdBase<NodeId> {
+  static constexpr llvm::StringLiteral Label = "node";
+
   // An explicitly invalid node ID.
   static constexpr InvalidNodeId Invalid;
 

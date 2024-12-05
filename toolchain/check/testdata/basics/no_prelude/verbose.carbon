@@ -12,11 +12,11 @@
 // NOAUTOUPDATE
 // SET-CHECK-SUBSET
 // CHECK:STDERR: Node Push 0: FunctionIntroducer -> <none>
-// CHECK:STDERR: AddPlaceholderInst: {kind: FunctionDecl, arg0: function<invalid>, arg1: empty}
-// CHECK:STDERR: ReplaceInst: inst+{{[0-9]+}} -> {kind: FunctionDecl, arg0: function{{[0-9]+}}, arg1: empty, type: type(inst+{{[0-9]+}})}
+// CHECK:STDERR: AddPlaceholderInst: {kind: FunctionDecl, arg0: function<invalid>, arg1: inst_block_empty}
+// CHECK:STDERR: ReplaceInst: inst+{{[0-9]+}} -> {kind: FunctionDecl, arg0: function{{[0-9]+}}, arg1: inst_block_empty, type: type(inst+{{[0-9]+}})}
 // CHECK:STDERR: inst_block_stack_ Push 1
 // CHECK:STDERR: AddInst: {kind: Return}
-// CHECK:STDERR: inst_block_stack_ Pop 1: block{{[0-9]+}}
+// CHECK:STDERR: inst_block_stack_ Pop 1: inst_block{{[0-9]+}}
 
 fn Foo() {
   return;

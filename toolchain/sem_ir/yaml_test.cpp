@@ -50,9 +50,10 @@ TEST(SemIRTest, YAML) {
   auto type_block_id = Yaml::Scalar(MatchesRegex(R"(type_block\d+)"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst\+\d+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"(templateConstant\(inst(\w+|\+\d+)\))"));
-  auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\w+)"));
-  auto type_id = Yaml::Scalar(MatchesRegex(R"(type(\w+|\(inst(\w+|\+\d+)\)))"));
+      Yaml::Scalar(MatchesRegex(R"(template_constant\(inst(\w+|\+\d+)\))"));
+  auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\(\w+\))"));
+  auto type_id =
+      Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst\+\d+)\))"));
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
@@ -79,7 +80,7 @@ TEST(SemIRTest, YAML) {
                Contains(Pair(_, Yaml::Mapping(ElementsAre(
                                     Pair("kind", "TupleType"),
                                     Pair("arg0", type_block_id),
-                                    Pair("type", "typeTypeType"))))),
+                                    Pair("type", "type(TypeType)"))))),
                // A 2-arg instruction.
                Contains(Pair(
                    _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
@@ -91,12 +92,12 @@ TEST(SemIRTest, YAML) {
       // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
-               Pair("empty", Yaml::Mapping(IsEmpty())),
+               Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
                Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
                Pair("import_refs", Yaml::Mapping(IsEmpty())),
                Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("block5", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+               Pair("inst_block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
+               Pair("inst_block5", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

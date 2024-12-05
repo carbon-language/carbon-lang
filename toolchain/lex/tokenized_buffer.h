@@ -37,7 +37,8 @@ class TokenizedBuffer;
 // same line or the relative position of different lines within the source.
 //
 // All other APIs to query a `LineIndex` are on the `TokenizedBuffer`.
-struct LineIndex : public IndexBase {
+struct LineIndex : public IndexBase<LineIndex> {
+  static constexpr llvm::StringLiteral Label = "line";
   static const LineIndex Invalid;
   using IndexBase::IndexBase;
 };
@@ -45,7 +46,8 @@ struct LineIndex : public IndexBase {
 constexpr LineIndex LineIndex::Invalid(InvalidIndex);
 
 // Indices for comments within the buffer.
-struct CommentIndex : public IndexBase {
+struct CommentIndex : public IndexBase<CommentIndex> {
+  static constexpr llvm::StringLiteral Label = "comment";
   static const CommentIndex Invalid;
   using IndexBase::IndexBase;
 };
