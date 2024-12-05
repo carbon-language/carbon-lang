@@ -328,21 +328,9 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   return true;
 }
 
-// Processes a function definition after a signature for which we have already
-// built a function ID. This logic is shared between processing regular function
-// definitions and delayed parsing of inline method definitions.
-static auto HandleFunctionDefinitionAfterSignature(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
-    SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
-  auto& function = context.functions().Get(function_id);
-
-  // Create the function scope and the entry block.
-  context.return_scope_stack().push_back({.decl_id = decl_id});
-  context.inst_block_stack().Push();
-  context.scope_stack().Push(decl_id);
-  StartGenericDefinition(context);
-  context.AddCurrentCodeBlockToFunction();
-
+static auto CheckFunctionDefinitionSignature(Context& context,
+                                             SemIR::Function& function)
+    -> void {
   // Check the return type is complete.
   CheckFunctionReturnType(context, function.return_slot_pattern_id, function,
                           SemIR::SpecificId::Invalid);
@@ -370,6 +358,24 @@ static auto HandleFunctionDefinitionAfterSignature(
               param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
         });
   }
+}
+
+// Processes a function definition after a signature for which we have already
+// built a function ID. This logic is shared between processing regular function
+// definitions and delayed parsing of inline method definitions.
+static auto HandleFunctionDefinitionAfterSignature(
+    Context& context, Parse::FunctionDefinitionStartId node_id,
+    SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
+  auto& function = context.functions().Get(function_id);
+
+  // Create the function scope and the entry block.
+  context.return_scope_stack().push_back({.decl_id = decl_id});
+  context.inst_block_stack().Push();
+  context.scope_stack().Push(decl_id);
+  StartGenericDefinition(context);
+  context.AddCurrentCodeBlockToFunction();
+
+  CheckFunctionDefinitionSignature(context, function);
 
   context.node_stack().Push(node_id, function_id);
 }
@@ -509,6 +515,7 @@ auto HandleParseNode(Context& context,
   auto builtin_kind = LookupBuiltinFunctionKind(context, name_id);
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
     auto& function = context.functions().Get(function_id);
+    CheckFunctionDefinitionSignature(context, function);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
       // Build an empty generic definition if this is a generic builtin.
