@@ -66,6 +66,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %int_1.2: %MyInt32 = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %int_2.2: %MyInt32 = int_value 2 [template]
+// CHECK:STDOUT:   %int_3: %MyInt32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -203,13 +204,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %.loc22_72.1: %MyIntLiteral = as_compatible %int_2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc22_72.2: %MyIntLiteral = converted %int_2, %.loc22_72.1 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %int.convert_checked.loc22_87: init %MyInt32 = call %Make.ref.loc22_64(%.loc22_72.2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc22_54.1: ref %MyInt32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_54.2: ref %MyInt32 = temporary %.loc22_54.1, %int.convert_checked.loc22_54
-// CHECK:STDOUT:   %.loc22_54.3: %MyInt32 = bind_value %.loc22_54.2
-// CHECK:STDOUT:   %.loc22_87.1: ref %MyInt32 = temporary_storage
-// CHECK:STDOUT:   %.loc22_87.2: ref %MyInt32 = temporary %.loc22_87.1, %int.convert_checked.loc22_87
-// CHECK:STDOUT:   %.loc22_87.3: %MyInt32 = bind_value %.loc22_87.2
-// CHECK:STDOUT:   %int.sadd: init %MyInt32 = call %MyAdd.ref(%.loc22_54.3, %.loc22_87.3)
+// CHECK:STDOUT:   %.loc22_54.1: %MyInt32 = value_of_initializer %int.convert_checked.loc22_54 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc22_54.2: %MyInt32 = converted %int.convert_checked.loc22_54, %.loc22_54.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc22_87.1: %MyInt32 = value_of_initializer %int.convert_checked.loc22_87 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc22_87.2: %MyInt32 = converted %int.convert_checked.loc22_87, %.loc22_87.1 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %int.sadd: init %MyInt32 = call %MyAdd.ref(%.loc22_54.2, %.loc22_87.2) [template = constants.%int_3]
 // CHECK:STDOUT:   assign file.%v.var, %int.sadd
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
