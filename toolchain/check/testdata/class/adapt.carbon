@@ -39,7 +39,7 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error: name `F` not found [NameNotFound]
+  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+3]]:3: error: member name `F` not found in `AdaptNotExtend` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   a.F();
   // CHECK:STDERR:   ^~~
   a.F();

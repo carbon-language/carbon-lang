@@ -46,7 +46,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: name `v` not found [NameNotFound]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var v2: () = Test.v;
 // CHECK:STDERR:              ^~~~~~
 var v2: () = Test.v;
