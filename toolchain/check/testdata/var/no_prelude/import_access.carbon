@@ -85,7 +85,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Test//def, inst+5, loaded
+// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Test//def, v, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -63,6 +63,11 @@ struct UnitInfo {
         err_tracker(*unit.consumer),
         emitter(*unit.node_converter, err_tracker) {}
 
+  auto parse_tree() -> const Parse::Tree& { return unit->sem_ir->parse_tree(); }
+  auto source() -> const SourceBuffer& {
+    return parse_tree().tokens().source();
+  }
+
   SemIR::CheckIRId check_ir_id;
   Unit* unit;
 
@@ -485,11 +490,10 @@ static auto CheckParseTree(UnitInfo& unit_info, int total_ir_count,
   // We can safely mark this as checked at the start.
   unit_info.is_checked = true;
 
-  SemIR::File& sem_ir = *unit_info.unit->sem_ir;
+  SemIR::File* sem_ir = unit_info.unit->sem_ir;
   Context::DiagnosticEmitter emitter(*unit_info.unit->sem_ir_converter,
                                      unit_info.err_tracker);
-  Context context(*unit_info.unit->tokens, emitter, *unit_info.unit->parse_tree,
-                  unit_info.unit->get_parse_tree_and_subtrees, sem_ir,
+  Context context(&emitter, unit_info.unit->get_parse_tree_and_subtrees, sem_ir,
                   vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
@@ -515,11 +519,11 @@ static auto CheckParseTree(UnitInfo& unit_info, int total_ir_count,
 
   context.VerifyOnFinish();
 
-  sem_ir.set_has_errors(unit_info.err_tracker.seen_error());
+  sem_ir->set_has_errors(unit_info.err_tracker.seen_error());
 
 #ifndef NDEBUG
-  if (auto verify = sem_ir.Verify(); !verify.ok()) {
-    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir,
+  if (auto verify = sem_ir->Verify(); !verify.ok()) {
+    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", *sem_ir,
                  verify.error());
   }
 #endif
@@ -566,7 +570,7 @@ static auto TrackImport(Map<ImportKey, UnitInfo*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitInfo& unit_info, Parse::Tree::PackagingNames import)
     -> void {
-  const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
+  const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
       packaging ? packaging->names.package_id : IdentifierId::Invalid;
@@ -712,7 +716,7 @@ static auto BuildApiMapAndDiagnosePackaging(
     llvm::MutableArrayRef<UnitInfo> unit_infos) -> Map<ImportKey, UnitInfo*> {
   Map<ImportKey, UnitInfo*> api_map;
   for (auto& unit_info : unit_infos) {
-    const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
+    const auto& packaging = unit_info.parse_tree().packaging_decl();
     // An import key formed from the `package` or `library` declaration. Or, for
     // Main//default, a placeholder key.
     auto import_key = packaging ? GetImportKey(unit_info, IdentifierId::Invalid,
@@ -749,7 +753,7 @@ static auto BuildApiMapAndDiagnosePackaging(
       auto insert_result = api_map.Insert(import_key, &unit_info);
       if (!insert_result.is_inserted()) {
         llvm::StringRef prev_filename =
-            insert_result.value()->unit->tokens->source().filename();
+            insert_result.value()->source().filename();
         if (packaging) {
           CARBON_DIAGNOSTIC(DuplicateLibraryApi, Error,
                             "library's API previously provided by `{0}`",
@@ -770,8 +774,9 @@ static auto BuildApiMapAndDiagnosePackaging(
     // Validate file extensions. Note imports rely the packaging declaration,
     // not the extension. If the input is not a regular file, for example
     // because it is stdin, no filename checking is performed.
-    if (unit_info.unit->tokens->source().is_regular_file()) {
-      auto filename = unit_info.unit->tokens->source().filename();
+    const auto& source = unit_info.source();
+    if (source.is_regular_file()) {
+      auto filename = source.filename();
       static constexpr llvm::StringLiteral ApiExt = ".carbon";
       static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
       bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
@@ -814,7 +819,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   llvm::SmallVector<UnitInfo*> ready_to_check;
   ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
-    const auto& packaging = unit_info.unit->parse_tree->packaging_decl();
+    const auto& packaging = unit_info.parse_tree().packaging_decl();
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
@@ -838,7 +843,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                    .library_id = prelude_id});
     }
 
-    for (const auto& import : unit_info.unit->parse_tree->imports()) {
+    for (const auto& import : unit_info.parse_tree().imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import);
     }
 

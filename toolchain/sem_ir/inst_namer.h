@@ -31,8 +31,7 @@ class InstNamer {
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
-  InstNamer(const Lex::TokenizedBuffer& tokenized_buffer,
-            const Parse::Tree& parse_tree, const File& sem_ir);
+  explicit InstNamer(const File* sem_ir);
 
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
@@ -41,13 +40,13 @@ class InstNamer {
     auto index = static_cast<int32_t>(ScopeId::FirstFunction);
 
     if constexpr (!std::same_as<FunctionId, IdT>) {
-      index += sem_ir_.functions().size();
+      index += sem_ir_->functions().size();
       if constexpr (!std::same_as<ClassId, IdT>) {
-        index += sem_ir_.classes().size();
+        index += sem_ir_->classes().size();
         if constexpr (!std::same_as<InterfaceId, IdT>) {
-          index += sem_ir_.interfaces().size();
+          index += sem_ir_->interfaces().size();
           if constexpr (!std::same_as<ImplId, IdT>) {
-            index += sem_ir_.impls().size();
+            index += sem_ir_->impls().size();
             static_assert(std::same_as<NumberOfScopesTag, IdT>,
                           "Unknown ID kind for scope");
           }
@@ -165,9 +164,7 @@ class InstNamer {
 
   auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
 
-  const Lex::TokenizedBuffer& tokenized_buffer_;
-  const Parse::Tree& parse_tree_;
-  const File& sem_ir_;
+  const File* sem_ir_;
 
   // The namespace for entity names. Names within this namespace are prefixed
   // with `@` in formatted SemIR.

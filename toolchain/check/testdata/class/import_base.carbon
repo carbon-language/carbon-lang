@@ -170,23 +170,23 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+46, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, Base, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Child, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.14
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+44, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Base.elem = import_ref Main//a, inst+37, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+42, unloaded
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+47, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+51, unloaded
-// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, inst+48, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %import_ref.7: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, loc9_13, unloaded
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst59 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -299,7 +299,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -348,8 +348,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, inst+1, loaded [template = constants.%F2]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -392,7 +392,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -446,7 +446,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -476,7 +476,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, Other, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
 // CHECK:STDOUT:     import Other//other_fn

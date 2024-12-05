@@ -92,15 +92,15 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %struct_type.b = import_ref Main//a, inst+11, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, Cycle, unloaded
+// CHECK:STDOUT:   %import_ref.2: ref %struct_type.b = import_ref Main//a, a, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+19, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.5: %Cycle.elem = import_ref Main//a, inst+17, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, loc11_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5: %Cycle.elem = import_ref Main//a, loc10_8, loaded [template = %.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

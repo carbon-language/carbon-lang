@@ -72,10 +72,10 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Foo//a, inst+10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Foo//a, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Foo//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Foo//a, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Foo//a, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Foo//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

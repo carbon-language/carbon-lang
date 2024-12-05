@@ -204,10 +204,10 @@ class Derived {
 // CHECK:STDOUT:     .Base = %import_ref.1
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,10 +266,10 @@ class Derived {
 // CHECK:STDOUT:     .Base = %import_ref.1
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -352,8 +352,8 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Main//def_alias, inst+6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, A, unloaded
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

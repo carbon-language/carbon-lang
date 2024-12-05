@@ -67,7 +67,7 @@ impl AC as AI {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %AC.ref.loc17 as %AI.ref.loc17 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst+18.loc17_15
+// CHECK:STDOUT:   witness = <unexpected>.inst30.loc17_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -105,14 +105,14 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//i, inst+3, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//i, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//i, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//i, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref Main//i, inst+7, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//i, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//i, loc4_21, unloaded
+// CHECK:STDOUT:   %import_ref.4: %F.type.2 = import_ref Main//i, F, loaded [template = constants.%F.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -179,13 +179,13 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, inst+5, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//c, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, inst+8, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst+6, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//c, loc6_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//c, inst18 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -236,20 +236,20 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Get.type = import_ref Main//get, inst+16, loaded [template = constants.%Get]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//i, inst+3, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.1: %Get.type = import_ref Main//get, Get, loaded [template = constants.%Get]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//i, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//get, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//get, inst+10, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//i, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//i, inst+12, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//i, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//c, inst+10, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//c, inst+17, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//c, inst+27, loaded [template = constants.%interface]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//get, inst21 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//get, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//i, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//i, loc4_21, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//i, F, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//c, loc7_6, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//c, loc7_11, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//c, loc7_13, loaded [template = constants.%interface]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

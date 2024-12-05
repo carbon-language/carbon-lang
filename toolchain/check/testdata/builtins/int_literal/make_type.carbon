@@ -61,7 +61,7 @@ var i: IntLiteral();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref: %IntLiteral.type = import_ref Main//types, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

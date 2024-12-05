@@ -33,7 +33,7 @@ fn B() {
 // CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst+1}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name0: inst13}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, body: [inst_block4]}
@@ -46,35 +46,35 @@ fn B() {
 // CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
 // CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
 // CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst+2)':    {kind: none, type: type(inst+3)}
-// CHECK:STDOUT:     'type(inst+3)':    {kind: none, type: type(inst+3)}
+// CHECK:STDOUT:     'type(inst14)':    {kind: none, type: type(inst15)}
+// CHECK:STDOUT:     'type(inst15)':    {kind: none, type: type(inst15)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'inst+1':          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst+2)}
-// CHECK:STDOUT:     'inst+2':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
-// CHECK:STDOUT:     'inst+3':          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
-// CHECK:STDOUT:     'inst+4':          {kind: StructValue, arg0: inst_block_empty, type: type(inst+2)}
-// CHECK:STDOUT:     'inst+5':          {kind: Return}
+// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst13:          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst14)}
+// CHECK:STDOUT:     inst14:          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst15:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
+// CHECK:STDOUT:     inst16:          {kind: StructValue, arg0: inst_block_empty, type: type(inst14)}
+// CHECK:STDOUT:     inst17:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst+0':          template_constant(inst+0)
-// CHECK:STDOUT:     'inst+1':          template_constant(inst+4)
-// CHECK:STDOUT:     'inst+2':          template_constant(inst+2)
-// CHECK:STDOUT:     'inst+3':          template_constant(inst+3)
-// CHECK:STDOUT:     'inst+4':          template_constant(inst+4)
+// CHECK:STDOUT:     inst12:          template_constant(inst12)
+// CHECK:STDOUT:     inst13:          template_constant(inst16)
+// CHECK:STDOUT:     inst14:          template_constant(inst14)
+// CHECK:STDOUT:     inst15:          template_constant(inst15)
+// CHECK:STDOUT:     inst16:          template_constant(inst16)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst+1
+// CHECK:STDOUT:       0:               inst13
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
-// CHECK:STDOUT:       0:               inst+5
+// CHECK:STDOUT:       0:               inst17
 // CHECK:STDOUT:     inst_block5:
-// CHECK:STDOUT:       0:               inst+0
-// CHECK:STDOUT:       1:               inst+1
+// CHECK:STDOUT:       0:               inst12
+// CHECK:STDOUT:       1:               inst13
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.carbon
@@ -101,13 +101,13 @@ fn B() {
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     ir0:             {decl_id: inst<invalid>, is_export: false}
-// CHECK:STDOUT:     ir1:             {decl_id: inst+1, is_export: false}
+// CHECK:STDOUT:     ir1:             {decl_id: inst13, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: ir1, inst_id: inst+1}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst+1}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: ir1, inst_id: inst13}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst13}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst+0, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst+2, name0: inst+3}}
-// CHECK:STDOUT:     name_scope1:     {inst: inst+2, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst+8}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst14, name0: inst15}}
+// CHECK:STDOUT:     name_scope1:     {inst: inst14, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst20}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
@@ -122,58 +122,58 @@ fn B() {
 // CHECK:STDOUT:     'type(TypeType)':  {kind: copy, type: type(TypeType)}
 // CHECK:STDOUT:     'type(Error)':     {kind: copy, type: type(Error)}
 // CHECK:STDOUT:     'type(inst(NamespaceType))': {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst+4)':    {kind: none, type: type(inst+5)}
-// CHECK:STDOUT:     'type(inst+5)':    {kind: none, type: type(inst+5)}
-// CHECK:STDOUT:     'type(inst+10)':   {kind: none, type: type(inst+5)}
+// CHECK:STDOUT:     'type(inst16)':    {kind: none, type: type(inst17)}
+// CHECK:STDOUT:     'type(inst17)':    {kind: none, type: type(inst17)}
+// CHECK:STDOUT:     'type(inst22)':    {kind: none, type: type(inst17)}
 // CHECK:STDOUT:   type_blocks:
 // CHECK:STDOUT:     type_block0:     {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst+0':          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'inst+1':          {kind: ImportDecl, arg0: name1}
-// CHECK:STDOUT:     'inst+2':          {kind: Namespace, arg0: name_scope1, arg1: inst+1, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'inst+3':          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst+4)}
-// CHECK:STDOUT:     'inst+4':          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
-// CHECK:STDOUT:     'inst+5':          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
-// CHECK:STDOUT:     'inst+6':          {kind: StructValue, arg0: inst_block_empty, type: type(inst+4)}
-// CHECK:STDOUT:     'inst+7':          {kind: NameRef, arg0: name1, arg1: inst+2, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'inst+8':          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+9':          {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+10':         {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: type(TypeType)}
-// CHECK:STDOUT:     'inst+11':         {kind: StructValue, arg0: inst_block_empty, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+12':         {kind: NameRef, arg0: name1, arg1: inst+8, type: type(inst+10)}
-// CHECK:STDOUT:     'inst+13':         {kind: Call, arg0: inst+12, arg1: inst_block_empty, type: type(inst+5)}
-// CHECK:STDOUT:     'inst+14':         {kind: Return}
+// CHECK:STDOUT:     inst12:          {kind: Namespace, arg0: name_scope0, arg1: inst<invalid>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst13:          {kind: ImportDecl, arg0: name1}
+// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope1, arg1: inst13, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst15:          {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst16)}
+// CHECK:STDOUT:     inst16:          {kind: FunctionType, arg0: function0, arg1: specific<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst17:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
+// CHECK:STDOUT:     inst18:          {kind: StructValue, arg0: inst_block_empty, type: type(inst16)}
+// CHECK:STDOUT:     inst19:          {kind: NameRef, arg0: name1, arg1: inst14, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst20:          {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst22)}
+// CHECK:STDOUT:     inst21:          {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(inst22)}
+// CHECK:STDOUT:     inst22:          {kind: FunctionType, arg0: function1, arg1: specific<invalid>, type: type(TypeType)}
+// CHECK:STDOUT:     inst23:          {kind: StructValue, arg0: inst_block_empty, type: type(inst22)}
+// CHECK:STDOUT:     inst24:          {kind: NameRef, arg0: name1, arg1: inst20, type: type(inst22)}
+// CHECK:STDOUT:     inst25:          {kind: Call, arg0: inst24, arg1: inst_block_empty, type: type(inst17)}
+// CHECK:STDOUT:     inst26:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst+0':          template_constant(inst+0)
-// CHECK:STDOUT:     'inst+2':          template_constant(inst+2)
-// CHECK:STDOUT:     'inst+3':          template_constant(inst+6)
-// CHECK:STDOUT:     'inst+4':          template_constant(inst+4)
-// CHECK:STDOUT:     'inst+5':          template_constant(inst+5)
-// CHECK:STDOUT:     'inst+6':          template_constant(inst+6)
-// CHECK:STDOUT:     'inst+7':          template_constant(inst+2)
-// CHECK:STDOUT:     'inst+8':          template_constant(inst+11)
-// CHECK:STDOUT:     'inst+9':          template_constant(inst+11)
-// CHECK:STDOUT:     'inst+10':         template_constant(inst+10)
-// CHECK:STDOUT:     'inst+11':         template_constant(inst+11)
-// CHECK:STDOUT:     'inst+12':         template_constant(inst+11)
+// CHECK:STDOUT:     inst12:          template_constant(inst12)
+// CHECK:STDOUT:     inst14:          template_constant(inst14)
+// CHECK:STDOUT:     inst15:          template_constant(inst18)
+// CHECK:STDOUT:     inst16:          template_constant(inst16)
+// CHECK:STDOUT:     inst17:          template_constant(inst17)
+// CHECK:STDOUT:     inst18:          template_constant(inst18)
+// CHECK:STDOUT:     inst19:          template_constant(inst14)
+// CHECK:STDOUT:     inst20:          template_constant(inst23)
+// CHECK:STDOUT:     inst21:          template_constant(inst23)
+// CHECK:STDOUT:     inst22:          template_constant(inst22)
+// CHECK:STDOUT:     inst23:          template_constant(inst23)
+// CHECK:STDOUT:     inst24:          template_constant(inst23)
 // CHECK:STDOUT:   symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst+3
+// CHECK:STDOUT:       0:               inst15
 // CHECK:STDOUT:     import_refs:
-// CHECK:STDOUT:       0:               inst+2
-// CHECK:STDOUT:       1:               inst+8
+// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       1:               inst20
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
-// CHECK:STDOUT:       0:               inst+7
-// CHECK:STDOUT:       1:               inst+12
-// CHECK:STDOUT:       2:               inst+13
-// CHECK:STDOUT:       3:               inst+14
+// CHECK:STDOUT:       0:               inst19
+// CHECK:STDOUT:       1:               inst24
+// CHECK:STDOUT:       2:               inst25
+// CHECK:STDOUT:       3:               inst26
 // CHECK:STDOUT:     inst_block5:
-// CHECK:STDOUT:       0:               inst+0
-// CHECK:STDOUT:       1:               inst+1
-// CHECK:STDOUT:       2:               inst+3
+// CHECK:STDOUT:       0:               inst12
+// CHECK:STDOUT:       1:               inst13
+// CHECK:STDOUT:       2:               inst15
 // CHECK:STDOUT: ...
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -191,7 +191,7 @@ fn B() {
 // CHECK:STDOUT:     .A = %import_ref
 // CHECK:STDOUT:     import A//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref A//default, inst+1, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref A//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

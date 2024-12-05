@@ -105,7 +105,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//basic, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//basic, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

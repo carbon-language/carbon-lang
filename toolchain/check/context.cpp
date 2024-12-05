@@ -38,22 +38,19 @@
 
 namespace Carbon::Check {
 
-Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
-                 const Parse::Tree& parse_tree,
+Context::Context(DiagnosticEmitter* emitter,
                  llvm::function_ref<const Parse::TreeAndSubtrees&()>
                      get_parse_tree_and_subtrees,
-                 SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream)
-    : tokens_(&tokens),
-      emitter_(&emitter),
-      parse_tree_(&parse_tree),
+                 SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream)
+    : emitter_(emitter),
       get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees),
-      sem_ir_(&sem_ir),
+      sem_ir_(sem_ir),
       vlog_stream_(vlog_stream),
-      node_stack_(parse_tree, vlog_stream),
-      inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
-      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
-      args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
+      node_stack_(sem_ir->parse_tree(), vlog_stream),
+      inst_block_stack_("inst_block_stack_", *sem_ir, vlog_stream),
+      pattern_block_stack_("pattern_block_stack_", *sem_ir, vlog_stream),
+      param_and_arg_refs_stack_(*sem_ir, vlog_stream, node_stack_),
+      args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       global_init_(this) {
@@ -1415,7 +1412,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 }
 
 auto Context::DumpFormattedFile() const -> void {
-  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+  SemIR::Formatter formatter(sem_ir_);
   formatter.Print(llvm::errs());
 }
 

@@ -138,16 +138,16 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Example//a, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Example//a, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .B1 = %import_ref.3
 // CHECK:STDOUT:     .B2 = %import_ref.4
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Example//a, inst+4, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: %B1.type = import_ref Example//b, inst+4, loaded [template = constants.%B1]
-// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref Example//b, inst+10, loaded [template = constants.%B2]
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Example//a, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: %B1.type = import_ref Example//b, B1, loaded [template = constants.%B1]
+// CHECK:STDOUT:   %import_ref.4: %B2.type = import_ref Example//b, B2, loaded [template = constants.%B2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

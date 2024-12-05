@@ -88,10 +88,10 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Test//def, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Test//def, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Test//def, C, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Test//def, A, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -129,7 +129,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Test//def, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Test//def, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

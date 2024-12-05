@@ -63,8 +63,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+224, loaded [template = constants.%LeftShift.type]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, inst+258, loaded [template = constants.%LeftShiftAssign.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, LeftShift, loaded [template = constants.%LeftShift.type]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/bitwise, LeftShiftAssign, loaded [template = constants.%LeftShiftAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

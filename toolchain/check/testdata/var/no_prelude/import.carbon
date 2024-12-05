@@ -54,7 +54,7 @@ var a: () = a_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Implicit//default, inst+5, loaded
+// CHECK:STDOUT:   %import_ref: ref %empty_tuple.type = import_ref Implicit//default, a_ref, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

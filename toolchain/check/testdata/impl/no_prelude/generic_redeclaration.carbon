@@ -452,7 +452,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7 as %J.ref.loc7 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = <unexpected>.inst+26.loc7_28
+// CHECK:STDOUT:     witness = <unexpected>.inst38.loc7_28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

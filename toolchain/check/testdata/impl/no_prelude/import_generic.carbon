@@ -201,16 +201,16 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, I, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, loc7_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, loc7_32, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc8_33, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, loc8_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -339,16 +339,16 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, I, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, loc7_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, loc7_32, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc8_33, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, loc8_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

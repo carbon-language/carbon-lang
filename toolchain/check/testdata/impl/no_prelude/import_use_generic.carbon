@@ -210,16 +210,16 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//import_generic, inst+7, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//import_generic, inst+17, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, inst+15, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, inst+25, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.1)]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.%interface (constants.%interface.1)]
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//import_generic, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//import_generic, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, loc7_9, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, F, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @impl.%C (constants.%C.1)]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, loc10_32, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @impl.%interface (constants.%interface.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -575,17 +575,17 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//state_constraints, inst+3, loaded [template = constants.%J.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.4: %Impls.type = import_ref Main//state_constraints, inst+57, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, inst+85, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//state_constraints, J, loaded [template = constants.%J.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//state_constraints, I, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//state_constraints, EqualEqual, unloaded
+// CHECK:STDOUT:   %import_ref.4: %Impls.type = import_ref Main//state_constraints, Impls, loaded [template = constants.%Impls]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//state_constraints, And, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//state_constraints, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

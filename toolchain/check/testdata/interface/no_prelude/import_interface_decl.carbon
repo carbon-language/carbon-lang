@@ -48,9 +48,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+6, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, A, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, loc3_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, loc3_12, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

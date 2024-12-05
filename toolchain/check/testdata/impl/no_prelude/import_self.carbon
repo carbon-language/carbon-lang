@@ -116,10 +116,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %Op.assoc_type = import_ref Main//a, inst+34, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+27, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Add, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: %Op.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, Op, loaded [template = constants.%Op.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
