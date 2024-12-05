@@ -10,12 +10,12 @@
 
 // --- fail_derive_from_error.carbon
 
+library "[[@TEST_NAME]]";
+
 class DeriveFromError {
-  // CHECK:STDERR: fail_derive_from_error.carbon:[[@LINE+6]]:16: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR: fail_derive_from_error.carbon:[[@LINE+4]]:16: error: name `error` not found [NameNotFound]
   // CHECK:STDERR:   extend base: error;
   // CHECK:STDERR:                ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_derive_from_non_type.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
   // CHECK:STDERR:
   extend base: error;
 }
@@ -25,15 +25,15 @@ fn AccessMemberWithInvalidBaseError(p: DeriveFromError*) -> i32 { return (*p).n;
 
 // --- fail_derive_from_non_type.carbon
 
+library "[[@TEST_NAME]]";
+
 class DeriveFromNonType {
-  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+9]]:16: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+7]]:16: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   extend base: 32;
   // CHECK:STDERR:                ^~
-  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+6]]:16: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_derive_from_non_type.carbon:[[@LINE+4]]:16: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   extend base: 32;
   // CHECK:STDERR:                ^~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_derive_from_i32.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
   // CHECK:STDERR:
   extend base: 32;
 }
@@ -41,6 +41,8 @@ class DeriveFromNonType {
 fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> i32 { return (*p).n; }
 
 // --- fail_derive_from_i32.carbon
+
+library "[[@TEST_NAME]]";
 
 class DeriveFromi32 {
   // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:16: error: deriving from final type `i32`; base type must be an `abstract` or `base` class [BaseIsFinal]
@@ -52,20 +54,20 @@ class DeriveFromi32 {
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+9]]:53: error: cannot implicitly convert from `DeriveFromi32*` to `i32*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+7]]:53: error: cannot implicitly convert from `DeriveFromi32*` to `i32*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 // CHECK:STDERR:                                                     ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+6]]:53: note: type `DeriveFromi32*` does not implement interface `ImplicitAs(i32*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:53: note: type `DeriveFromi32*` does not implement interface `ImplicitAs(i32*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 // CHECK:STDERR:                                                     ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_tuple.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
 // CHECK:STDERR:
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
 fn AccessMemberWithInvalidBasei32(p: DeriveFromi32*) -> i32 { return (*p).n; }
 
 // --- fail_derive_from_tuple.carbon
+
+library "[[@TEST_NAME]]";
 
 base class Base {}
 
@@ -77,20 +79,20 @@ class DeriveFromTuple {
   extend base: (Base,);
 }
 
-// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+9]]:61: error: cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+7]]:61: error: cannot implicitly convert from `DeriveFromTuple*` to `(Base,)*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:                                                             ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+6]]:61: note: type `DeriveFromTuple*` does not implement interface `ImplicitAs((Base,)*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derive_from_tuple.carbon:[[@LINE+4]]:61: note: type `DeriveFromTuple*` does not implement interface `ImplicitAs((Base,)*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:                                                             ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_struct.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
 // CHECK:STDERR:
 fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 
 fn AccessMemberWithInvalidBaseTuple(p: DeriveFromTuple*) -> i32 { return (*p).n; }
 
 // --- fail_derive_from_struct.carbon
+
+library "[[@TEST_NAME]]";
 
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
@@ -102,14 +104,12 @@ class DeriveFromStruct {
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+9]]:74: error: cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+7]]:74: error: cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+6]]:74: note: type `DeriveFromStruct*` does not implement interface `ImplicitAs({.a: i32, .b: i32}*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:74: note: type `DeriveFromStruct*` does not implement interface `ImplicitAs({.a: i32, .b: i32}*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_incomplete.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
 // CHECK:STDERR:
 fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 
@@ -117,6 +117,8 @@ fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return 
 fn AccessMemberWithInvalidBaseStruct(p: DeriveFromStruct*) -> i32 { return (*p).n; }
 
 // --- fail_derive_from_incomplete.carbon
+
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:1: error: `base` not allowed on `class` forward declaration, only definition [ModifierOnlyAllowedOnDefinition]
 // CHECK:STDERR: base class Incomplete;
@@ -135,20 +137,20 @@ class DeriveFromIncomplete {
   extend base: Incomplete;
 }
 
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+9]]:74: error: cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+7]]:74: error: cannot implicitly convert from `DeriveFromIncomplete*` to `Incomplete*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+6]]:74: note: type `DeriveFromIncomplete*` does not implement interface `ImplicitAs(Incomplete*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derive_from_incomplete.carbon:[[@LINE+4]]:74: note: type `DeriveFromIncomplete*` does not implement interface `ImplicitAs(Incomplete*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_derive_from_final.carbon: error: `Main//default` previously provided by `fail_derive_from_error.carbon` [DuplicateMainApi]
 // CHECK:STDERR:
 fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 
 fn AccessMemberWithInvalidBaseIncomplete(p: DeriveFromIncomplete*) -> i32 { return (*p).n; }
 
 // --- fail_derive_from_final.carbon
+
+library "[[@TEST_NAME]]";
 
 class Final {
   var a: i32;
@@ -390,14 +392,14 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: class @DeriveFromi32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_16.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_16.2: type = converted %int.make_type_signed, %.loc7_16.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_19: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc9_16.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_16.2: type = converted %int.make_type_signed, %.loc9_16.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_19: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromi32
-// CHECK:STDOUT:   .base = %.loc7_19
+// CHECK:STDOUT:   .base = %.loc9_19
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -504,14 +506,14 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromTuple {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc9_22.1: %tuple.type.1 = tuple_literal (%Base.ref)
-// CHECK:STDOUT:   %.loc9_22.2: type = converted %.loc9_22.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc9_23: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc11_22.1: %tuple.type.1 = tuple_literal (%Base.ref)
+// CHECK:STDOUT:   %.loc11_22.2: type = converted %.loc11_22.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc11_23: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromTuple
-// CHECK:STDOUT:   .base = %.loc9_23
+// CHECK:STDOUT:   .base = %.loc11_23
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -609,21 +611,21 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromStruct {
-// CHECK:STDOUT:   %int_32.loc9_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9_21: init type = call constants.%Int(%int_32.loc9_21) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_21.1: type = value_of_initializer %int.make_type_signed.loc9_21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_21.2: type = converted %int.make_type_signed.loc9_21, %.loc9_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc9_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9_30: init type = call constants.%Int(%int_32.loc9_30) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_30.1: type = value_of_initializer %int.make_type_signed.loc9_30 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_30.2: type = converted %int.make_type_signed.loc9_30, %.loc9_30.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc11_21: init type = call constants.%Int(%int_32.loc11_21) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_21.1: type = value_of_initializer %int.make_type_signed.loc11_21 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_21.2: type = converted %int.make_type_signed.loc11_21, %.loc11_21.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc11_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc11_30: init type = call constants.%Int(%int_32.loc11_30) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_30.1: type = value_of_initializer %int.make_type_signed.loc11_30 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_30.2: type = converted %int.make_type_signed.loc11_30, %.loc11_30.1 [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b]
-// CHECK:STDOUT:   %.loc9_34: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc11_34: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromStruct
-// CHECK:STDOUT:   .base = %.loc9_34
+// CHECK:STDOUT:   .base = %.loc11_34
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -718,12 +720,12 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromIncomplete {
 // CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:   %.loc16: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:   %.loc18: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromIncomplete
-// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .base = %.loc18
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -795,9 +797,9 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %ptr.3 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %DeriveFromFinal.ref: type = name_ref DeriveFromFinal, file.%DeriveFromFinal.decl [template = constants.%DeriveFromFinal]
-// CHECK:STDOUT:     %ptr.loc15_44: type = ptr_type %DeriveFromFinal [template = constants.%ptr.2]
+// CHECK:STDOUT:     %ptr.loc17_44: type = ptr_type %DeriveFromFinal [template = constants.%ptr.2]
 // CHECK:STDOUT:     %Final.ref: type = name_ref Final, file.%Final.decl [template = constants.%Final]
-// CHECK:STDOUT:     %ptr.loc15_55: type = ptr_type %Final [template = constants.%ptr.3]
+// CHECK:STDOUT:     %ptr.loc17_55: type = ptr_type %Final [template = constants.%ptr.3]
 // CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.3 = out_param runtime_param1
@@ -813,8 +815,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %ptr: type = ptr_type %DeriveFromFinal [template = constants.%ptr.2]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_72.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc19_72.2: type = converted %int.make_type_signed, %.loc19_72.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_72.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_72.2: type = converted %int.make_type_signed, %.loc21_72.1 [template = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -830,8 +832,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:     %ptr: type = ptr_type %DeriveFromFinal [template = constants.%ptr.2]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_70.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_70.2: type = converted %int.make_type_signed, %.loc23_70.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc25_70.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc25_70.2: type = converted %int.make_type_signed, %.loc25_70.1 [template = constants.%i32]
 // CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
 // CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -842,25 +844,25 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: class @Final {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc3_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc3_10.2: type = converted %int.make_type_signed, %.loc3_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc3_8: %Final.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc5_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc5_10.2: type = converted %int.make_type_signed, %.loc5_10.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc5_8: %Final.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Final
-// CHECK:STDOUT:   .a = %.loc3_8
+// CHECK:STDOUT:   .a = %.loc5_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @DeriveFromFinal {
 // CHECK:STDOUT:   %Final.ref: type = name_ref Final, file.%Final.decl [template = constants.%Final]
-// CHECK:STDOUT:   %.loc11: %DeriveFromFinal.elem = base_decl %Final.ref, element0 [template]
+// CHECK:STDOUT:   %.loc13: %DeriveFromFinal.elem = base_decl %Final.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%DeriveFromFinal
-// CHECK:STDOUT:   .base = %.loc11
+// CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Final.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -868,29 +870,29 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @ConvertToBadBaseFinal(%p.param_patt: %ptr.2) -> %ptr.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc16_11.1: ref %DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %.loc16_11.2: ref %Final = class_element_access %.loc16_11.1, element0
-// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc16_11.2
-// CHECK:STDOUT:   %.loc16_11.3: %ptr.3 = converted %p.ref, %addr
-// CHECK:STDOUT:   return %.loc16_11.3
+// CHECK:STDOUT:   %.loc18_11.1: ref %DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc18_11.2: ref %Final = class_element_access %.loc18_11.1, element0
+// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc18_11.2
+// CHECK:STDOUT:   %.loc18_11.3: %ptr.3 = converted %p.ref, %addr
+// CHECK:STDOUT:   return %.loc18_11.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_WithMember(%p.param_patt: %ptr.2) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc20_11: ref %DeriveFromFinal = deref %p.ref
-// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc3_8 [template = @Final.%.loc3_8]
-// CHECK:STDOUT:   %.loc20_14.1: ref %Final = class_element_access %.loc20_11, element0
-// CHECK:STDOUT:   %.loc20_14.2: ref %Final = converted %.loc20_11, %.loc20_14.1
-// CHECK:STDOUT:   %.loc20_14.3: ref %i32 = class_element_access %.loc20_14.2, element0
-// CHECK:STDOUT:   %.loc20_14.4: %i32 = bind_value %.loc20_14.3
-// CHECK:STDOUT:   return %.loc20_14.4
+// CHECK:STDOUT:   %.loc22_11: ref %DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %a.ref: %Final.elem = name_ref a, @Final.%.loc5_8 [template = @Final.%.loc5_8]
+// CHECK:STDOUT:   %.loc22_14.1: ref %Final = class_element_access %.loc22_11, element0
+// CHECK:STDOUT:   %.loc22_14.2: ref %Final = converted %.loc22_11, %.loc22_14.1
+// CHECK:STDOUT:   %.loc22_14.3: ref %i32 = class_element_access %.loc22_14.2, element0
+// CHECK:STDOUT:   %.loc22_14.4: %i32 = bind_value %.loc22_14.3
+// CHECK:STDOUT:   return %.loc22_14.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_NoMember(%p.param_patt: %ptr.2) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc27: ref %DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc29: ref %DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

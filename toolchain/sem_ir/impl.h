@@ -59,11 +59,10 @@ struct Impl : public EntityWithParamsBase,
 class ImplStore {
  private:
   // An ID of either a single impl or a lookup bucket.
-  class ImplOrLookupBucketId : public IdBase {
-   private:
-    explicit constexpr ImplOrLookupBucketId(int index) : IdBase(index) {}
-
+  class ImplOrLookupBucketId : public IdBase<ImplOrLookupBucketId> {
    public:
+    static constexpr llvm::StringLiteral Label = "impl_or_lookup_bucket";
+
     // An explicitly invalid ID, corresponding to to ImplId::Invalid.
     static const ImplOrLookupBucketId Invalid;
 
@@ -90,6 +89,9 @@ class ImplStore {
       CARBON_CHECK(!is_bucket());
       return ImplId(index);
     }
+
+   private:
+    explicit constexpr ImplOrLookupBucketId(int index) : IdBase(index) {}
   };
 
  public:

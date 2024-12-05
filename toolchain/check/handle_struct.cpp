@@ -139,7 +139,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/false)) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
     auto type_id = context.GetStructType(
         context.struct_type_fields().AddCanonical(fields));
@@ -165,7 +165,7 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
                              /*is_struct_type_literal=*/true)) {
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
     context.AddInstAndPush<SemIR::StructType>(

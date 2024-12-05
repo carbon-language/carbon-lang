@@ -57,7 +57,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 
@@ -67,7 +67,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 
@@ -170,7 +170,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 

@@ -25,7 +25,6 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/generic.h"
@@ -34,6 +33,7 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -60,10 +60,10 @@ Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinErrorInst),
+      SemIR::ConstantId::ForTemplateConstant(SemIR::ErrorInst::SingletonInstId),
       SemIR::ErrorInst::SingletonTypeId);
   type_ids_for_type_constants_.Insert(
-      SemIR::ConstantId::ForTemplateConstant(SemIR::InstId::BuiltinTypeType),
+      SemIR::ConstantId::ForTemplateConstant(SemIR::TypeType::SingletonInstId),
       SemIR::TypeType::SingletonTypeId);
 
   // TODO: Remove this and add a `VerifyOnFinish` once we properly push and pop
@@ -355,7 +355,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   return {.specific_id = SemIR::SpecificId::Invalid,
-          .inst_id = SemIR::InstId::BuiltinErrorInst};
+          .inst_id = SemIR::ErrorInst::SingletonInstId};
 }
 
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
@@ -583,7 +583,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
       emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
-              .inst_id = SemIR::InstId::BuiltinErrorInst};
+              .inst_id = SemIR::ErrorInst::SingletonInstId};
     }
 
     result.inst_id = scope_result_id;
@@ -609,7 +609,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     }
 
     return {.specific_id = SemIR::SpecificId::Invalid,
-            .inst_id = SemIR::InstId::BuiltinErrorInst};
+            .inst_id = SemIR::ErrorInst::SingletonInstId};
   }
 
   return result;
@@ -653,7 +653,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
     -> SemIR::InstId {
   auto core_package_id = GetCorePackage(*this, loc, name);
   if (!core_package_id.is_valid()) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
@@ -665,7 +665,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
         "name `Core.{0}` implicitly referenced here, but not found",
         SemIR::NameId);
     emitter_->Emit(loc, CoreNameNotFound, name_id);
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // Look through import_refs and aliases.
@@ -1076,7 +1076,8 @@ class TypeCompleter {
     bool same_as_object_rep = true;
     for (auto field : fields) {
       auto field_value_rep = GetNestedValueRepr(field.type_id);
-      if (field_value_rep.type_id != field.type_id) {
+      if (!field_value_rep.IsCopyOfObjectRepr(context_.sem_ir(),
+                                              field.type_id)) {
         same_as_object_rep = false;
         field.type_id = field_value_rep.type_id;
       }
@@ -1108,7 +1109,8 @@ class TypeCompleter {
     bool same_as_object_rep = true;
     for (auto element_type_id : elements) {
       auto element_value_rep = GetNestedValueRepr(element_type_id);
-      if (element_value_rep.type_id != element_type_id) {
+      if (!element_value_rep.IsCopyOfObjectRepr(context_.sem_ir(),
+                                                element_type_id)) {
         same_as_object_rep = false;
       }
       value_rep_elements.push_back(element_value_rep.type_id);
@@ -1353,8 +1355,9 @@ auto Context::GetAssociatedEntityType(SemIR::TypeId interface_type_id,
                                                   entity_type_id);
 }
 
-auto Context::GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId {
-  auto type_id = GetTypeIdForTypeInst(SemIR::InstId::ForBuiltin(kind));
+auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
+  CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
+  auto type_id = GetTypeIdForTypeInst(singleton_id);
   // To keep client code simpler, complete builtin types before returning them.
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Failed to complete builtin type");

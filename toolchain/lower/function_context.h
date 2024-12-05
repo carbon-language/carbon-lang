@@ -46,7 +46,7 @@ class FunctionContext {
   // Returns a value for the given instruction.
   auto GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     // All builtins are types, with the same empty lowered value.
-    if (inst_id.is_builtin()) {
+    if (SemIR::IsSingletonInstId(inst_id)) {
       return GetTypeAsValue();
     }
 

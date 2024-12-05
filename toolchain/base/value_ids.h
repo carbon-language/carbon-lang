@@ -43,26 +43,20 @@ class Real : public Printable<Real> {
 
 // Corresponds to a float value represented by an APFloat. This is used for
 // floating-point values in SemIR.
-struct FloatId : public IdBase, public Printable<FloatId> {
+struct FloatId : public IdBase<FloatId> {
+  static constexpr llvm::StringLiteral Label = "float";
   using ValueType = llvm::APFloat;
   static const FloatId Invalid;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "float";
-    IdBase::Print(out);
-  }
 };
 constexpr FloatId FloatId::Invalid(FloatId::InvalidIndex);
 
 // Corresponds to a Real value.
-struct RealId : public IdBase, public Printable<RealId> {
+struct RealId : public IdBase<RealId> {
+  static constexpr llvm::StringLiteral Label = "real";
   using ValueType = Real;
   static const RealId Invalid;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "real";
-    IdBase::Print(out);
-  }
 };
 constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 
@@ -70,27 +64,20 @@ constexpr RealId RealId::Invalid(RealId::InvalidIndex);
 //
 // `NameId` relies on the values of this type other than `Invalid` all being
 // non-negative.
-struct IdentifierId : public IdBase, public Printable<IdentifierId> {
+struct IdentifierId : public IdBase<IdentifierId> {
+  static constexpr llvm::StringLiteral Label = "identifier";
   using ValueType = llvm::StringRef;
   static const IdentifierId Invalid;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "identifier";
-    IdBase::Print(out);
-  }
 };
 constexpr IdentifierId IdentifierId::Invalid(IdentifierId::InvalidIndex);
 
 // Corresponds to StringRefs for string literals.
-struct StringLiteralValueId : public IdBase,
-                              public Printable<StringLiteralValueId> {
+struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
+  static constexpr llvm::StringLiteral Label = "string";
   using ValueType = llvm::StringRef;
   static const StringLiteralValueId Invalid;
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "string";
-    IdBase::Print(out);
-  }
 };
 constexpr StringLiteralValueId StringLiteralValueId::Invalid(
     StringLiteralValueId::InvalidIndex);

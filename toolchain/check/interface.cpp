@@ -18,7 +18,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
     // This should only happen if the interface is erroneously defined more than
     // once.
     // TODO: Find a way to CHECK this.
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // The interface type is the type of `Self`.

@@ -10,44 +10,10 @@
 // This macro should be defined before including this header:
 // - CARBON_SEM_IR_INST_KIND(Name)
 //   Invoked for each kind of semantic instruction.
-//
-// Temporarily, we have CARBON_SEM_IR_BUILTIN_INST_KIND too:
-//
-// - CARBON_SEM_IR_BUILTIN_INST_KIND(Name)
-//   Defines a non-Invalid builtin type. Falls back to CARBON_SEM_IR_INST_KIND
-//   if not defined.
-//
-// TODO: Merge builtin instructions into the standard CARBON_SEM_IR_INST_KIND,
-// tracking the "builtin" annotation separately. This approach is used for
-// legacy compatibility.
-
-// If CARBON_SEM_IR_BUILTIN_INST_KIND is missing, default to
-// CARBON_SEM_IR_INST_KIND. However, if it's provided, make
-// CARBON_SEM_IR_INST_KIND optional. Per the above TODO, this is temporary.
-#ifndef CARBON_SEM_IR_BUILTIN_INST_KIND
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) CARBON_SEM_IR_INST_KIND(Name)
-#else
-#ifndef CARBON_SEM_IR_INST_KIND
-#define CARBON_SEM_IR_INST_KIND(Name)
-#endif
-#endif
 
 #ifndef CARBON_SEM_IR_INST_KIND
 #error "Must define the x-macro to use this file."
 #endif
-
-CARBON_SEM_IR_BUILTIN_INST_KIND(TypeType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(AutoType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(BoolType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(BoundMethodType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(ErrorInst)
-CARBON_SEM_IR_BUILTIN_INST_KIND(IntLiteralType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(LegacyFloatType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(NamespaceType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(SpecificFunctionType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(StringType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(VtableType)
-CARBON_SEM_IR_BUILTIN_INST_KIND(WitnessType)
 
 // For each instruction kind declared here there is a matching definition in
 // `typed_insts.h`.
@@ -62,16 +28,18 @@ CARBON_SEM_IR_INST_KIND(Assign)
 CARBON_SEM_IR_INST_KIND(AssociatedConstantDecl)
 CARBON_SEM_IR_INST_KIND(AssociatedEntity)
 CARBON_SEM_IR_INST_KIND(AssociatedEntityType)
+CARBON_SEM_IR_INST_KIND(AutoType)
 CARBON_SEM_IR_INST_KIND(BaseDecl)
 CARBON_SEM_IR_INST_KIND(BindAlias)
-CARBON_SEM_IR_INST_KIND(ExportDecl)
-CARBON_SEM_IR_INST_KIND(BindingPattern)
 CARBON_SEM_IR_INST_KIND(BindName)
 CARBON_SEM_IR_INST_KIND(BindSymbolicName)
 CARBON_SEM_IR_INST_KIND(BindValue)
+CARBON_SEM_IR_INST_KIND(BindingPattern)
 CARBON_SEM_IR_INST_KIND(BlockArg)
 CARBON_SEM_IR_INST_KIND(BoolLiteral)
+CARBON_SEM_IR_INST_KIND(BoolType)
 CARBON_SEM_IR_INST_KIND(BoundMethod)
+CARBON_SEM_IR_INST_KIND(BoundMethodType)
 CARBON_SEM_IR_INST_KIND(Branch)
 CARBON_SEM_IR_INST_KIND(BranchIf)
 CARBON_SEM_IR_INST_KIND(BranchWithArg)
@@ -84,6 +52,8 @@ CARBON_SEM_IR_INST_KIND(CompleteTypeWitness)
 CARBON_SEM_IR_INST_KIND(ConstType)
 CARBON_SEM_IR_INST_KIND(Converted)
 CARBON_SEM_IR_INST_KIND(Deref)
+CARBON_SEM_IR_INST_KIND(ErrorInst)
+CARBON_SEM_IR_INST_KIND(ExportDecl)
 CARBON_SEM_IR_INST_KIND(FacetAccessType)
 CARBON_SEM_IR_INST_KIND(FacetAccessWitness)
 CARBON_SEM_IR_INST_KIND(FacetType)
@@ -97,43 +67,49 @@ CARBON_SEM_IR_INST_KIND(GenericClassType)
 CARBON_SEM_IR_INST_KIND(GenericInterfaceType)
 CARBON_SEM_IR_INST_KIND(ImplDecl)
 CARBON_SEM_IR_INST_KIND(ImportDecl)
-CARBON_SEM_IR_INST_KIND(ImportRefUnloaded)
 CARBON_SEM_IR_INST_KIND(ImportRefLoaded)
+CARBON_SEM_IR_INST_KIND(ImportRefUnloaded)
 CARBON_SEM_IR_INST_KIND(InitializeFrom)
+CARBON_SEM_IR_INST_KIND(IntLiteralType)
+CARBON_SEM_IR_INST_KIND(IntType)
+CARBON_SEM_IR_INST_KIND(IntValue)
 CARBON_SEM_IR_INST_KIND(InterfaceDecl)
 CARBON_SEM_IR_INST_KIND(InterfaceWitness)
 CARBON_SEM_IR_INST_KIND(InterfaceWitnessAccess)
-CARBON_SEM_IR_INST_KIND(IntValue)
-CARBON_SEM_IR_INST_KIND(IntType)
+CARBON_SEM_IR_INST_KIND(LegacyFloatType)
 CARBON_SEM_IR_INST_KIND(NameRef)
 CARBON_SEM_IR_INST_KIND(Namespace)
+CARBON_SEM_IR_INST_KIND(NamespaceType)
 CARBON_SEM_IR_INST_KIND(OutParam)
 CARBON_SEM_IR_INST_KIND(OutParamPattern)
 CARBON_SEM_IR_INST_KIND(PointerType)
-CARBON_SEM_IR_INST_KIND(RequirementRewrite)
 CARBON_SEM_IR_INST_KIND(RequirementEquivalent)
 CARBON_SEM_IR_INST_KIND(RequirementImpls)
+CARBON_SEM_IR_INST_KIND(RequirementRewrite)
 CARBON_SEM_IR_INST_KIND(Return)
 CARBON_SEM_IR_INST_KIND(ReturnExpr)
 CARBON_SEM_IR_INST_KIND(ReturnSlot)
 CARBON_SEM_IR_INST_KIND(ReturnSlotPattern)
 CARBON_SEM_IR_INST_KIND(SpecificConstant)
 CARBON_SEM_IR_INST_KIND(SpecificFunction)
+CARBON_SEM_IR_INST_KIND(SpecificFunctionType)
 CARBON_SEM_IR_INST_KIND(SpliceBlock)
 CARBON_SEM_IR_INST_KIND(StringLiteral)
+CARBON_SEM_IR_INST_KIND(StringType)
 CARBON_SEM_IR_INST_KIND(StructAccess)
 CARBON_SEM_IR_INST_KIND(StructInit)
 CARBON_SEM_IR_INST_KIND(StructLiteral)
 CARBON_SEM_IR_INST_KIND(StructType)
 CARBON_SEM_IR_INST_KIND(StructValue)
 CARBON_SEM_IR_INST_KIND(SymbolicBindingPattern)
-CARBON_SEM_IR_INST_KIND(TemporaryStorage)
 CARBON_SEM_IR_INST_KIND(Temporary)
+CARBON_SEM_IR_INST_KIND(TemporaryStorage)
 CARBON_SEM_IR_INST_KIND(TupleAccess)
 CARBON_SEM_IR_INST_KIND(TupleInit)
 CARBON_SEM_IR_INST_KIND(TupleLiteral)
 CARBON_SEM_IR_INST_KIND(TupleType)
 CARBON_SEM_IR_INST_KIND(TupleValue)
+CARBON_SEM_IR_INST_KIND(TypeType)
 CARBON_SEM_IR_INST_KIND(UnaryOperatorNot)
 CARBON_SEM_IR_INST_KIND(UnboundElementType)
 CARBON_SEM_IR_INST_KIND(ValueAsRef)
@@ -141,7 +117,9 @@ CARBON_SEM_IR_INST_KIND(ValueOfInitializer)
 CARBON_SEM_IR_INST_KIND(ValueParam)
 CARBON_SEM_IR_INST_KIND(ValueParamPattern)
 CARBON_SEM_IR_INST_KIND(VarStorage)
+CARBON_SEM_IR_INST_KIND(VtableType)
 CARBON_SEM_IR_INST_KIND(WhereExpr)
+CARBON_SEM_IR_INST_KIND(WitnessType)
 
 #undef CARBON_SEM_IR_INST_KIND
 #undef CARBON_SEM_IR_BUILTIN_INST_KIND

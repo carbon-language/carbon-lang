@@ -16,7 +16,7 @@ static auto GetFoundationType(const File& file, SpecificId specific_id,
   if (!inst_id.is_valid()) {
     return TypeId::Invalid;
   }
-  if (inst_id == SemIR::InstId::BuiltinErrorInst) {
+  if (inst_id == SemIR::ErrorInst::SingletonInstId) {
     return ErrorInst::SingletonTypeId;
   }
   return TypeId::ForTypeConstant(GetConstantValueInSpecific(
