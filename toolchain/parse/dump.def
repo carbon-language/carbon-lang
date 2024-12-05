@@ -8,13 +8,13 @@
 // at the end of this file.
 //
 // Supported x-macros are:
-// - CARBON_LEX_DUMP_TYPE(Type)
-//   Defines a type that can be dumped from a lexing context.
+// - CARBON_PARSE_DUMP_TYPE(Type)
+//   Defines a type that can be dumped from a parsing context.
 
-#if !defined(CARBON_LEX_DUMP_TYPE)
+#if !defined(CARBON_PARSE_DUMP_TYPE)
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_LEX_DUMP_TYPE(Lex::TokenKind)
+CARBON_PARSE_DUMP_TYPE(Parse::NodeId)
 
-#undef CARBON_LEX_DUMP_TYPE
+#undef CARBON_PARSE_DUMP_TYPE

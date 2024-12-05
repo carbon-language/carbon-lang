@@ -17,6 +17,15 @@ auto Dump(TokenKind token_kind, const TokenizedBuffer& buffer) -> void;
 
 }
 
+namespace Internal {
+
+template <typename T>
+concept HasDumpOverload = requires(const T& t, const TokenizedBuffer& tokens) {
+  { DumpOverloads::Dump(t, tokens) };
+};
+
+}
+
 // A set of Dump() overloads that dump an object to stderr, useful for calling
 // inside a debugger. These are all exposed as part of the
 // `Lex::TokenizedBuffer` API.
@@ -29,7 +38,7 @@ class DumpMethods {
 
  public:
 #define CARBON_LEX_DUMP_TYPE(Type)                                      \
-  LLVM_DUMP_METHOD auto Dump(Type t) -> void {                          \
+  LLVM_DUMP_METHOD auto Dump(const Type& t) -> void {                   \
     DumpOverloads::Dump(t, static_cast<const TokenizedBuffer&>(*this)); \
   }
 #include "toolchain/lex/dump.def"
