@@ -36,31 +36,37 @@ auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
   return type_id;
 }
 
-auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
-  auto object_repr_id = GetObjectRepr(int_type_id);
+static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
+    -> std::optional<TypeStore::IntTypeInfo> {
+  auto object_repr_id = file.types().GetObjectRepr(type_id);
   if (!object_repr_id.is_valid()) {
-    return false;
+    return std::nullopt;
   }
-  auto inst_id = GetInstId(int_type_id);
+  auto inst_id = file.types().GetInstId(object_repr_id);
   if (inst_id == InstId::BuiltinIntLiteralType) {
-    return true;
+    // `Core.IntLiteral` has an unknown bit-width.
+    return TypeStore::IntTypeInfo{.is_signed = true,
+                                  .bit_width = IntId::Invalid};
   }
-  auto int_type = file_->insts().TryGetAs<IntType>(inst_id);
-  return int_type && int_type->int_kind.is_signed();
+  auto int_type = file.insts().TryGetAs<IntType>(inst_id);
+  if (!int_type) {
+    return std::nullopt;
+  }
+  auto bit_width_inst = file.insts().TryGetAs<IntValue>(int_type->bit_width_id);
+  return TypeStore::IntTypeInfo{
+      .is_signed = int_type->int_kind.is_signed(),
+      .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
+}
+
+auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
+  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  return int_info && int_info->is_signed;
 }
 
 auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
-  auto object_repr_id = GetObjectRepr(int_type_id);
-  auto inst_id = GetInstId(object_repr_id);
-  if (inst_id == InstId::BuiltinIntLiteralType) {
-    return {.is_signed = true, .bit_width = IntId::Invalid};
-  }
-  auto int_type = file_->insts().GetAs<IntType>(inst_id);
-  auto bit_width_inst =
-      file_->insts().TryGetAs<IntValue>(int_type.bit_width_id);
-  return {
-      .is_signed = int_type.int_kind.is_signed(),
-      .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
+  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  CARBON_CHECK(int_info, "Type {0} is not an integer type", int_type_id);
+  return *int_info;
 }
 
 }  // namespace Carbon::SemIR
