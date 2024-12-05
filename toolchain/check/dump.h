@@ -63,21 +63,14 @@ class DumpMethods {
 
  private:
   template <class T>
-    requires(Check::Internal::HasDumpOverload<T>)
   auto Dispatch(const T& t, const Context& context) -> void {
-    Check::DumpOverloads::Dump(t, context);
-  }
-  template <class T>
-    requires(!Check::Internal::HasDumpOverload<T> &&
-             Parse::Internal::HasDumpOverload<T>)
-  auto Dispatch(const T& t, const Context& context) -> void {
-    Lex::DumpOverloads::Dump(t, context.parse_tree());
-  }
-  template <class T>
-    requires(!Check::Internal::HasDumpOverload<T> &&
-             !Parse::Internal::HasDumpOverload<T>)
-  auto Dispatch(const T& t, const Context& context) -> void {
-    Lex::DumpOverloads::Dump(t, context.tokens());
+    if constexpr (Check::Internal::HasDumpOverload<T>) {
+      Check::DumpOverloads::Dump(t, context);
+    } else if constexpr (Parse::Internal::HasDumpOverload<T>) {
+      Parse::DumpOverloads::Dump(t, context.parse_tree());
+    } else {
+      Lex::DumpOverloads::Dump(t, context.tokens());
+    }
   }
 };
 

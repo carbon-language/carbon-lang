@@ -50,14 +50,12 @@ class DumpMethods {
 
  private:
   template <class T>
-    requires(Parse::Internal::HasDumpOverload<T>)
   auto Dispatch(const T& t, const Tree& tree) -> void {
-    Parse::DumpOverloads::Dump(t, tree);
-  }
-  template <class T>
-    requires(!Parse::Internal::HasDumpOverload<T>)
-  auto Dispatch(const T& t, const Tree& tree) -> void {
-    Lex::DumpOverloads::Dump(t, *tree.tokens_);
+    if constexpr (Parse::Internal::HasDumpOverload<T>) {
+      Parse::DumpOverloads::Dump(t, tree);
+    } else {
+      Lex::DumpOverloads::Dump(t, *tree.tokens_);
+    }
   }
 };
 
