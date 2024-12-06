@@ -10,18 +10,6 @@
 
 namespace Carbon::Check {
 
-// The pattern-match counterparts of the patterns passed to CalleePatternMatch.
-struct ParameterBlocks {
-  // The implicit parameter list.
-  SemIR::InstBlockId implicit_params_id;
-
-  // The explicit parameter list.
-  SemIR::InstBlockId params_id;
-
-  // The return slot.
-  SemIR::InstId return_slot_id;
-};
-
 // TODO: Find a better place for this overview, once it has stabilized.
 //
 // The signature pattern of a function call is matched partially by the caller
@@ -29,26 +17,24 @@ struct ParameterBlocks {
 // between the two: pattern insts that are descendants of a `ParamPattern`
 // are matched by the callee, and pattern insts that have a `ParamPattern`
 // as a descendant are matched by the caller.
-//
-// "Calling convention arguments" are the values actually passed from caller to
-// callee at the semantic IR level, and "calling convention parameters" are
-// the corresponding semantic placeholders that they bind to.
 
 // Emits the pattern-match IR for the declaration of a parameterized entity with
 // the given implicit and explicit parameter patterns, and the given return slot
 // pattern (any of which may be invalid if not applicable). This IR performs the
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
-// matching them against the corresponding calling-convention parameters.
+// matching them against the corresponding `Call` parameters (see
+// entity_with_params_base.h for the definition of that term).
+// Returns the ID of an inst block consisting of references to the `Call`
+// parameters of the function.
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_slot_pattern_id)
-    -> ParameterBlocks;
+    -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for matching the given arguments with the given
-// parameter patterns, and returns an inst block with one inst for each
-// calling convention argument. This IR performs the caller side of pattern
-// matching.
+// parameter patterns, and returns an inst block of the arguments that should
+// be passed to the `Call` inst.
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,

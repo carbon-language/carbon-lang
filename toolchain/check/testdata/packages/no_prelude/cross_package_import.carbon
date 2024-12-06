@@ -299,7 +299,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -318,7 +318,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_other_ns.carbon
 // CHECK:STDOUT:
@@ -348,8 +348,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, inst+1, loaded [template = constants.%F2]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -372,9 +372,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F2();
+// CHECK:STDOUT: fn @F2() [from "other_fn2.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
@@ -392,7 +392,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -412,7 +412,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
@@ -446,7 +446,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -466,7 +466,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
@@ -476,7 +476,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, inst+1, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, Other, loaded
 // CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
 // CHECK:STDOUT:     import Other//other_fn
@@ -492,7 +492,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F() [from "other_fn.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

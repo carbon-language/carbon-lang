@@ -10,7 +10,7 @@
 
 fn F(T:! type, U:! type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   let n: U = *p;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let n: U = *p;
@@ -25,7 +25,7 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -52,17 +52,17 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %U.patt.loc11_16.2: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc11_16.2 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %.loc12_11.2 (constants.%.1)]
+// CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc12_11.1: type = ptr_type %T [symbolic = %.loc12_11.2 (constants.%.1)]
-// CHECK:STDOUT:     %p.var: ref @F.%.loc12_11.2 (%.1) = var p
-// CHECK:STDOUT:     %p: ref @F.%.loc12_11.2 (%.1) = bind_name p, %p.var
+// CHECK:STDOUT:     %ptr.loc12_11.1: type = ptr_type %T [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
+// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc12_11.2 (%ptr) = var p
+// CHECK:STDOUT:     %p: ref @F.%ptr.loc12_11.2 (%ptr) = bind_name p, %p.var
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc11_16.1 [symbolic = %U.loc11_16.2 (constants.%U)]
-// CHECK:STDOUT:     %p.ref: ref @F.%.loc12_11.2 (%.1) = name_ref p, %p
-// CHECK:STDOUT:     %.loc16_15: @F.%.loc12_11.2 (%.1) = bind_value %p.ref
+// CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc12_11.2 (%ptr) = name_ref p, %p
+// CHECK:STDOUT:     %.loc16_15: @F.%ptr.loc12_11.2 (%ptr) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc16_14: ref @F.%T.loc11_6.2 (%T) = deref %.loc16_15
 // CHECK:STDOUT:     %.loc16_16: @F.%U.loc11_16.2 (%U) = converted %.loc16_14, <error> [template = <error>]
 // CHECK:STDOUT:     %n: @F.%U.loc11_16.2 (%U) = bind_name n, <error>

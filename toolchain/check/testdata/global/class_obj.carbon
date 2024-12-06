@@ -15,9 +15,9 @@ var a: A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %.2: <witness> = complete_type_witness %.1 [template]
-// CHECK:STDOUT:   %struct: %A = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -41,17 +41,18 @@ var a: A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %.loc10: <witness> = complete_type_witness %.1 [template = constants.%.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_13.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_14: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_13.2: init %A = class_init (), file.%a.var [template = constants.%A.val]
+// CHECK:STDOUT:   %.loc12_14: init %A = converted %.loc12_13.1, %.loc12_13.2 [template = constants.%A.val]
 // CHECK:STDOUT:   assign file.%a.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -14,8 +14,8 @@ var y: {} = x;
 // CHECK:STDOUT: --- empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.1: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct: %.1 = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -23,25 +23,25 @@ var y: {} = x;
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc12_9.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%.1 [template = constants.%.1]
-// CHECK:STDOUT:   %y.var: ref %.1 = var y
-// CHECK:STDOUT:   %y: ref %.1 = bind_name y, %y.var
+// CHECK:STDOUT:   %.loc11_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
+// CHECK:STDOUT:   %.loc12_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %y.var: ref %empty_struct_type = var y
+// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_14.1: %.1 = struct_literal ()
-// CHECK:STDOUT:   %.loc11_14.2: init %.1 = struct_init () to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_15: init %.1 = converted %.loc11_14.1, %.loc11_14.2 [template = constants.%struct]
+// CHECK:STDOUT:   %.loc11_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc11_14.2: init %empty_struct_type = struct_init () to file.%x.var [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_15: init %empty_struct_type = converted %.loc11_14.1, %.loc11_14.2 [template = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_15
-// CHECK:STDOUT:   %x.ref: ref %.1 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc12_13: init %.1 = struct_init () to file.%y.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_14: init %.1 = converted %x.ref, %.loc12_13 [template = constants.%struct]
+// CHECK:STDOUT:   %x.ref: ref %empty_struct_type = name_ref x, file.%x
+// CHECK:STDOUT:   %.loc12_13: init %empty_struct_type = struct_init () to file.%y.var [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_14: init %empty_struct_type = converted %x.ref, %.loc12_13 [template = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

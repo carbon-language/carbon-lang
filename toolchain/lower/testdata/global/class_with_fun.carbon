@@ -19,19 +19,19 @@ var a: A = {};
 // CHECK:STDOUT: source_filename = "class_with_fun.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @a = internal global {}
-// CHECK:STDOUT: @struct.loc13_12 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @struct.loc16_14 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc13_12 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc16_14 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_Cret_a.Main(ptr sret({}) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @struct.loc13_12, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @A.val.loc13_12, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @struct.loc16_14, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @a, ptr align 1 @A.val.loc16_14, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

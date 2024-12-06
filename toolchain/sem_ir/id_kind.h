@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "common/ostream.h"
 #include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -14,10 +15,10 @@ namespace Carbon::SemIR {
 
 // An enum whose values are the specified types.
 template <typename... Types>
-class TypeEnum {
+class TypeEnum : public Printable<TypeEnum<Types...>> {
  public:
-  static constexpr std::size_t NumTypes = sizeof...(Types);
-  static constexpr std::size_t NumValues = NumTypes + 2;
+  static constexpr size_t NumTypes = sizeof...(Types);
+  static constexpr size_t NumValues = NumTypes + 2;
 
   static_assert(NumValues <= 256, "Too many types for raw enum.");
 
@@ -48,7 +49,7 @@ class TypeEnum {
     requires(K != RawEnumType::Invalid)
   using TypeFor = __type_pack_element<static_cast<size_t>(K), Types...>;
 
-  // Workarond for Clang bug https://github.com/llvm/llvm-project/issues/85461
+  // Workaround for Clang bug https://github.com/llvm/llvm-project/issues/85461
   template <RawEnumType Value>
   static constexpr auto FromRaw = TypeEnum(Value);
 
@@ -87,13 +88,27 @@ class TypeEnum {
 
   // Returns a value that can be used as an array index. Returned value will be
   // < NumValues.
-  constexpr auto ToIndex() const -> std::size_t {
-    return static_cast<std::size_t>(value_);
+  constexpr auto ToIndex() const -> size_t {
+    return static_cast<size_t>(value_);
   }
 
   // Returns whether this is a valid value, not `Invalid`.
   constexpr auto is_valid() const -> bool {
     return value_ != RawEnumType::Invalid;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "IdKind(";
+    if (value_ == RawEnumType::None) {
+      out << "None";
+    } else {
+      static constexpr std::array<llvm::StringLiteral, sizeof...(Types)> Names =
+          {
+              Types::Label...,
+          };
+      out << Names[static_cast<int>(value_)];
+    }
+    out << ")";
   }
 
  private:
@@ -115,17 +130,21 @@ class TypeEnum {
 };
 
 // An enum of all the ID types used as instruction operands.
+//
+// As instruction operands, the types listed here can appear as fields of typed
+// instructions (`toolchain/sem_ir/typed_insts.h`) and must implement the
+// `FromRaw` and `ToRaw` protocol in `SemIR::Inst`. In most cases this is done
+// by inheriting from `IdBase` or `IndexBase`.
 using IdKind = TypeEnum<
-    // From sem_ir/builtin_inst_kind.h.
-    BuiltinInstKind,
     // From base/value_store.h.
     IntId, RealId, FloatId, StringLiteralValueId,
-    // From sem_ir/id.h.
-    InstId, AbsoluteInstId, ConstantId, EntityNameId, CompileTimeBindIndex,
-    RuntimeParamIndex, FacetTypeId, FunctionId, ClassId, InterfaceId, ImplId,
-    GenericId, SpecificId, ImportIRId, ImportIRInstId, LocId, BoolValue,
-    IntKind, NameId, NameScopeId, InstBlockId, StructTypeFieldsId, TypeId,
-    TypeBlockId, ElementIndex, LibraryNameId, FloatKind>;
+    // From sem_ir/ids.h.
+    InstId, AbsoluteInstId, AnyRawId, ConstantId, EntityNameId,
+    CompileTimeBindIndex, RuntimeParamIndex, FacetTypeId, FunctionId, ClassId,
+    InterfaceId, ImplId, GenericId, SpecificId, ImportIRId, ImportIRInstId,
+    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId,
+    StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
+    FloatKind>;
 
 }  // namespace Carbon::SemIR
 

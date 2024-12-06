@@ -366,7 +366,7 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-g", "-gsimple-template-names"],
+                        flags = ["-g"],
                     ),
                     flag_group(
                         flags = ["-gsplit-dwarf"],
@@ -404,7 +404,11 @@ def _impl(ctx):
                 actions = codegen_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-glldb", "-gpubnames"],
+                        flags = [
+                            "-glldb",
+                            "-gpubnames",
+                            "-gsimple-template-names",
+                        ],
                     ),
                 ]),
             ),
@@ -424,7 +428,6 @@ def _impl(ctx):
                     ),
                     flag_group(
                         flags = ["-ggnu-pubnames"],
-                        expand_if_available = "per_object_debug_info_file",
                     ),
                 ]),
             ),
@@ -433,7 +436,6 @@ def _impl(ctx):
                 flag_groups = [
                     flag_group(
                         flags = ["-Wl,--gdb-index"],
-                        expand_if_available = "per_object_debug_info_file",
                     ),
                 ],
             ),
@@ -653,10 +655,21 @@ def _impl(ctx):
 
     if clang_version and clang_version <= 16:
         libcpp_debug_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=1"]
-    else:
+        libcpp_release_flags = ["-D_LIBCPP_ENABLE_ASSERTIONS=0"]
+    elif clang_version and clang_version <= 17:
         # Clang 17 deprecates LIBCPP_ENABLE_ASSERTIONS in favor of
-        # HARDENED_MODE.
+        # HARDENED_MODE and DEBUG_MODE.
         libcpp_debug_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
+        libcpp_release_flags = ["-D_LIBCPP_ENABLE_HARDENED_MODE=1"]
+    else:
+        # Clang 18 changes HARDENED_MODE to use 4 values:
+        # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
+        libcpp_debug_flags = [
+            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+        ]
+        libcpp_release_flags = [
+            "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
+        ]
 
     linux_flags_feature = feature(
         name = "linux_flags",
@@ -701,6 +714,13 @@ def _impl(ctx):
                 flag_groups = [flag_group(flags = libcpp_debug_flags)],
                 with_features = [
                     with_feature_set(not_features = ["opt"]),
+                ],
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [flag_group(flags = libcpp_release_flags)],
+                with_features = [
+                    with_feature_set(features = ["opt"]),
                 ],
             ),
             flag_set(

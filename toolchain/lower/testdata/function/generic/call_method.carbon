@@ -23,23 +23,23 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
 // CHECK:STDOUT: source_filename = "call_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.loc18_16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc18_16 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CCallF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @struct.loc18_16, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_16, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc20_14 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.45(ptr %c.var, i32 %.loc20_14), !dbg !12
+// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.46(ptr %c.var, i32 %.loc20_14), !dbg !12
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_CF.C.Main.45(ptr, i32)
+// CHECK:STDOUT: declare i32 @_CF.C.Main.46(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

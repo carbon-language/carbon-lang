@@ -43,7 +43,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  auto [implicit_params_id, params_id, return_slot_id] =
+  auto call_params_id =
       CalleePatternMatch(context, *implicit_param_patterns_id,
                          *param_patterns_id, return_slot_pattern_id);
 
@@ -54,13 +54,11 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id = implicit_params_id,
       .implicit_param_patterns_id = *implicit_param_patterns_id,
       .params_loc_id = params_loc_id,
-      .params_id = params_id,
       .param_patterns_id = *param_patterns_id,
+      .call_params_id = call_params_id,
       .return_slot_pattern_id = return_slot_pattern_id,
-      .return_slot_id = return_slot_id,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
@@ -70,18 +68,17 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
 auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
     -> NameComponent {
   NameComponent name = PopNameComponent(context);
-  if (name.implicit_params_id.is_valid() || name.params_id.is_valid()) {
+  if (name.call_params_id.is_valid()) {
     CARBON_DIAGNOSTIC(UnexpectedDeclNameParams, Error,
                       "`{0}` declaration cannot have parameters",
                       Lex::TokenKind);
     // Point to the lexically first parameter list in the diagnostic.
-    context.emitter().Emit(name.implicit_params_id.is_valid()
+    context.emitter().Emit(name.implicit_param_patterns_id.is_valid()
                                ? name.implicit_params_loc_id
                                : name.params_loc_id,
                            UnexpectedDeclNameParams, introducer);
 
-    name.implicit_params_id = SemIR::InstBlockId::Invalid;
-    name.params_id = SemIR::InstBlockId::Invalid;
+    name.call_params_id = SemIR::InstBlockId::Invalid;
   }
   return name;
 }

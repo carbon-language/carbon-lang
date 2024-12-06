@@ -151,7 +151,7 @@ class DiagnosticEmitter {
     // TODO: Custom formatting can be provided with an format_provider, but that
     // affects all formatv calls. Consider replacing formatv with a custom call
     // that allows diagnostic-specific formatting.
-    template <typename... Args, std::size_t... N>
+    template <typename... Args, size_t... N>
     static auto FormatFn(const DiagnosticMessage& message,
                          std::index_sequence<N...> /*indices*/) -> std::string {
       static_assert(sizeof...(Args) == sizeof...(N), "Invalid template args");

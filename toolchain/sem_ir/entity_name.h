@@ -27,7 +27,9 @@ struct EntityName : public Printable<EntityName> {
   NameId name_id;
   // The parent scope.
   NameScopeId parent_scope_id;
-  // The index for a compile-time binding. Invalid for a runtime binding.
+  // The index for a compile-time binding. Invalid for a runtime binding, or
+  // for a symbolic binding, like `.Self`, that does not correspond to a generic
+  // parameter (and therefore has no index).
   CompileTimeBindIndex bind_index;
 };
 

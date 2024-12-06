@@ -28,19 +28,22 @@ struct NameComponent {
 
   // The implicit parameter list.
   Parse::NodeId implicit_params_loc_id;
-  SemIR::InstBlockId implicit_params_id;
   SemIR::InstBlockId implicit_param_patterns_id;
 
   // The explicit parameter list.
   Parse::NodeId params_loc_id;
-  SemIR::InstBlockId params_id;
   SemIR::InstBlockId param_patterns_id;
 
+  // The `Call` parameters of the entity, if it's a function (see the
+  // corresponding member of SemIR::EntityWithParamsBase).
+  // TODO: This is only used for function declarations. Should it go somewhere
+  // else?
+  SemIR::InstBlockId call_params_id;
+
   // The return slot.
-  // TODO: These are only used for function declarations. Should they go
+  // TODO: This is only used for function declarations. Should it go
   // somewhere else?
   SemIR::InstId return_slot_pattern_id;
-  SemIR::InstId return_slot_id;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;

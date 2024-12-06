@@ -8,9 +8,9 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -97,7 +97,7 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
     CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
                       "type {0} does not support indexing", SemIR::TypeId);
     context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
-    return SemIR::InstId::BuiltinError;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   Operator op{
@@ -134,7 +134,9 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
       auto index_loc_id = context.insts().GetLocId(index_inst_id);
       auto cast_index_id = ConvertToValueOfType(
           context, index_loc_id, index_inst_id,
-          context.GetBuiltinType(SemIR::BuiltinInstKind::IntType));
+          // TODO: Replace this with impl lookup rather than hardcoding `i32`.
+          MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                      context.ints().Add(32)));
       auto array_cat =
           SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
       if (array_cat == SemIR::ExprCategory::Value) {
@@ -161,8 +163,8 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
 
     default: {
-      auto elem_id = SemIR::InstId::BuiltinError;
-      if (operand_type_id != SemIR::TypeId::Error) {
+      auto elem_id = SemIR::ErrorInst::SingletonInstId;
+      if (operand_type_id != SemIR::ErrorInst::SingletonTypeId) {
         elem_id = PerformIndexWith(context, node_id, operand_inst_id,
                                    operand_type_id, index_inst_id);
       }

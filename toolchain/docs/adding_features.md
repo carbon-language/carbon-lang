@@ -280,12 +280,12 @@ If the resulting SemIR needs a new instruction:
 
         -   Set `.is_type = InstIsType::Always` in its `Kind` definition.
         -   When constructing instructions of this kind, pass
-            `SemIR::TypeId::TypeType` in as the value of the `type_id` field, as
-            in:
+            `SemIR::TypeType::SingletonTypeId` in as the value of the `type_id`
+            field, as in:
 
             ```
             SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
-                node_id, {.type_id = SemIR::TypeId::TypeType, ...});
+                node_id, {.type_id = SemIR::TypeType::SingletonTypeId, ...});
             ```
 
     -   Although most instructions have distinct types represented by
@@ -293,14 +293,15 @@ If the resulting SemIR needs a new instruction:
         where types don't need to be distinct per-entity. This is rare, but
         used, for example, when an expression implicitly uses a value as part of
         SemIR evaluation or as part of desugaring. We have builtin types for
-        bound methods, namespaces, witnesses, among others. These are defined in
-        [`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
-        To get a type id for one of these builtin types, use something like
-        `context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType)`, as in:
+        bound methods, namespaces, witnesses, among others. These are
+        constructed as a special-case in
+        [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
+        one of these builtin types, use something like
+        `context.GetSingletonType(SemIR::WitnessType::SingletonInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            context.GetBuiltinType(SemIR::BuiltinInstKind::WitnessType);
+            context.GetSingletonType(SemIR::WitnessType::SingletonInstId);
         SemIR::InstId inst_id = context.AddInst<SemIR::NewInstKindName>(
             node_id, {.type_id = witness_type_id, ...});
         ```
@@ -334,7 +335,7 @@ need custom formatting, then a `FormatInstRHS` overload can be implemented
 instead.
 
 If the resulting SemIR needs a new built-in, add it to
-[`sem_ir/builtin_inst_kind.def`](/toolchain/sem_ir/builtin_inst_kind.def).
+[`File` construction](/toolchain/sem_ir/file.cpp).
 
 ### SemIR typed instruction metadata implementation
 

@@ -17,7 +17,8 @@ namespace Carbon::Check {
 //
 // `ScopeIndex` values are comparable. Lower `ScopeIndex` values correspond to
 // scopes entered earlier in the file.
-struct ScopeIndex : public IndexBase, public Printable<ScopeIndex> {
+struct ScopeIndex : public IndexBase<ScopeIndex> {
+  static constexpr llvm::StringLiteral Label = "scope";
   static const ScopeIndex Package;
 
   using IndexBase::IndexBase;

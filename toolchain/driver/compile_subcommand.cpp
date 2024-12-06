@@ -270,7 +270,7 @@ Excludes files with the given prefix from dumps.
       {
           .name = "debug-info",
           .help = R"""(
-Emit DWARF debug information.
+Whether to emit DWARF debug information.
 )""",
       },
       [&](auto& arg_b) {
@@ -363,6 +363,8 @@ class CompilationUnit {
 
   // Loads source and lexes it. Returns true on success.
   auto RunLex() -> void {
+    CARBON_CHECK(!tokens_, "Called RunLex twice");
+
     LogCall("SourceBuffer::MakeFromFileOrStdin", "source", [&] {
       source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                   input_filename_, *consumer_);
@@ -395,7 +397,8 @@ class CompilationUnit {
 
   // Parses tokens. Returns true on success.
   auto RunParse() -> void {
-    CARBON_CHECK(tokens_);
+    CARBON_CHECK(tokens_, "Must call RunLex first");
+    CARBON_CHECK(!parse_tree_, "Called RunParse twice");
 
     LogCall("Parse::Parse", "parse", [&] {
       parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
@@ -418,33 +421,49 @@ class CompilationUnit {
     }
   }
 
+  auto PreCheck() -> Parse::NodeLocConverter& {
+    CARBON_CHECK(parse_tree_, "Must call RunParse first");
+    CARBON_CHECK(!node_converter_, "Called PreCheck twice");
+
+    get_parse_tree_and_subtrees_ = [this]() -> const Parse::TreeAndSubtrees& {
+      return this->GetParseTreeAndSubtrees();
+    };
+    node_converter_.emplace(&*tokens_, source_->filename(),
+                            *get_parse_tree_and_subtrees_);
+    return *node_converter_;
+  }
+
   // Returns information needed to check this unit.
-  auto GetCheckUnit() -> Check::Unit {
-    CARBON_CHECK(parse_tree_);
-    return {
-        .value_stores = &value_stores_,
-        .timings = &timings_,
-        .tokens = &*tokens_,
-        .parse_tree = &*parse_tree_,
-        .consumer = consumer_,
-        .get_parse_tree_and_subtrees = [&]() -> const Parse::TreeAndSubtrees& {
-          return GetParseTreeAndSubtrees();
-        },
-        .sem_ir = &sem_ir_};
+  auto GetCheckUnit(SemIR::CheckIRId check_ir_id,
+                    llvm::ArrayRef<Parse::NodeLocConverter*> node_converters)
+      -> Check::Unit {
+    CARBON_CHECK(node_converter_, "Must call PreCheck first");
+    CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
+
+    sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
+                    value_stores_, input_filename_);
+    if (mem_usage_) {
+      mem_usage_->Collect("sem_ir_", *sem_ir_);
+    }
+
+    sem_ir_converter_.emplace(node_converters, &*sem_ir_);
+    return {.consumer = consumer_,
+            .value_stores = &value_stores_,
+            .timings = timings_ ? &*timings_ : nullptr,
+            .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
+            .sem_ir = &*sem_ir_,
+            .node_converter = &*node_converter_,
+            .sem_ir_converter = &*sem_ir_converter_};
   }
 
   // Runs post-check logic. Returns true if checking succeeded for the IR.
   auto PostCheck() -> void {
-    CARBON_CHECK(sem_ir_);
+    CARBON_CHECK(sem_ir_converter_, "Must call GetCheckUnit first");
 
     // We've finished all steps that can produce diagnostics. Emit the
     // diagnostics now, so that the developer sees them sooner and doesn't need
     // to wait for code generation.
     consumer_->Flush();
-
-    if (mem_usage_) {
-      mem_usage_->Collect("sem_ir_", *sem_ir_);
-    }
 
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
       CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
@@ -458,20 +477,28 @@ class CompilationUnit {
     if (vlog_stream_ || print) {
       // Omit entities imported from files that we are not dumping.
       auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
-        auto loc_id = sem_ir_->insts().GetLocId(entity_inst_id);
-        if (!loc_id.is_import_ir_inst_id()) {
-          return true;
+        // TODO: Reuse `GetCanonicalImportIRInst`. Currently it depends on
+        // `Check::Context`, which we don't have access to here.
+        const SemIR::File* file = &*sem_ir_;
+        while (true) {
+          auto loc_id = file->insts().GetLocId(entity_inst_id);
+          if (!loc_id.is_import_ir_inst_id()) {
+            return true;
+          }
+          auto import_ir_inst =
+              file->import_ir_insts().Get(loc_id.import_ir_inst_id());
+          const auto* import_file =
+              file->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+          CARBON_CHECK(import_file);
+          if (!IncludeInDumps(import_file->filename())) {
+            return false;
+          }
+          file = import_file;
+          entity_inst_id = import_ir_inst.inst_id;
         }
-        auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
-        const auto* import_file =
-            sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-        CARBON_CHECK(import_file);
-        return IncludeInDumps(import_file->filename());
       };
 
-      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
-                                 should_format_entity);
+      SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
       if (vlog_stream_) {
         CARBON_VLOG("*** SemIR::File ***\n");
         formatter.Print(*vlog_stream_);
@@ -486,17 +513,18 @@ class CompilationUnit {
   }
 
   // Lower SemIR to LLVM IR.
-  auto RunLower(const Check::SemIRDiagnosticConverter& converter) -> void {
-    CARBON_CHECK(sem_ir_);
+  auto RunLower() -> void {
+    CARBON_CHECK(sem_ir_converter_, "Must call PostCheck first");
+    CARBON_CHECK(!module_, "Called RunLower twice");
 
     LogCall("Lower::LowerToLLVM", "lower", [&] {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
-      SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
+      SemIR::InstNamer inst_namer(&*sem_ir_);
       module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
-                                   converter, input_filename_, *sem_ir_,
-                                   &inst_namer, vlog_stream_);
+                                   *sem_ir_converter_, input_filename_,
+                                   *sem_ir_, &inst_namer, vlog_stream_);
     });
     if (vlog_stream_) {
       CARBON_VLOG("*** llvm::Module ***\n");
@@ -511,7 +539,7 @@ class CompilationUnit {
   }
 
   auto RunCodeGen() -> void {
-    CARBON_CHECK(module_);
+    CARBON_CHECK(module_, "Must call RunLower first");
     LogCall("CodeGen", "codegen", [&] { success_ = RunCodeGenHelper(); });
   }
 
@@ -577,8 +605,8 @@ class CompilationUnit {
         if (!source_->is_regular_file()) {
           // Don't invent file names like `-.o` or `/dev/stdin.o`.
           driver_env_->error_stream
-              << "error: output file name must be specified for input '"
-              << input_filename_ << "' that is not a regular file\n";
+              << "error: output file name must be specified for input `"
+              << input_filename_ << "` that is not a regular file\n";
           return false;
         }
         output_filename = input_filename_;
@@ -635,7 +663,7 @@ class CompilationUnit {
                llvm::StringLiteral timing_label, llvm::function_ref<void()> fn)
       -> void {
     CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
-    Timings::ScopedTiming timing(&timings_, timing_label);
+    Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
     fn();
     CARBON_VLOG("*** {0} done ***\n", logging_label);
   }
@@ -654,6 +682,10 @@ class CompilationUnit {
   DriverEnv* driver_env_;
   SharedValueStores value_stores_;
   const CompileOptions& options_;
+  // The input filename from the command line. For most diagnostics, we
+  // typically use `source_->filename()`, which includes a `-` -> `<stdin>`
+  // translation. However, logging and some diagnostics use the command line
+  // argument.
   std::string input_filename_;
 
   // Copied from driver_ for CARBON_VLOG.
@@ -675,6 +707,10 @@ class CompilationUnit {
   std::optional<Lex::TokenizedBuffer> tokens_;
   std::optional<Parse::Tree> parse_tree_;
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
+  std::optional<std::function<const Parse::TreeAndSubtrees&()>>
+      get_parse_tree_and_subtrees_;
+  std::optional<Parse::NodeLocConverter> node_converter_;
+  std::optional<Check::SemIRDiagnosticConverter> sem_ir_converter_;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
@@ -779,22 +815,30 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Check.
-  SharedValueStores builtin_value_stores;
-  llvm::SmallVector<Check::Unit> check_units;
+  // Pre-check assigns IR IDs and constructs node converters.
+  llvm::SmallVector<Parse::NodeLocConverter*> node_converters;
+  // This size may not match due to units that are missing source, but that's an
+  // error case and not worth extra work.
+  node_converters.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
-      check_units.push_back(unit->GetCheckUnit());
+      node_converters.push_back(&unit->PreCheck());
     }
   }
-  llvm::SmallVector<Parse::NodeLocConverter> node_converters;
-  node_converters.reserve(check_units.size());
-  for (auto& unit : check_units) {
-    node_converters.emplace_back(unit.tokens, unit.tokens->source().filename(),
-                                 unit.get_parse_tree_and_subtrees);
+
+  // Gather Check::Units.
+  llvm::SmallVector<Check::Unit> check_units;
+  check_units.reserve(node_converters.size());
+  for (auto& unit : units) {
+    if (unit->has_source()) {
+      SemIR::CheckIRId check_ir_id(check_units.size());
+      check_units.push_back(unit->GetCheckUnit(check_ir_id, node_converters));
+    }
   }
+
+  // Execute the actual checking.
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
-  Check::CheckParseTrees(check_units, node_converters, options_.prelude_import,
+  Check::CheckParseTrees(check_units, options_.prelude_import,
                          driver_env.vlog_stream);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
@@ -816,9 +860,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Lower.
   for (const auto& unit : units) {
-    Check::SemIRDiagnosticConverter converter(node_converters,
-                                              &**unit->GetCheckUnit().sem_ir);
-    unit->RunLower(converter);
+    unit->RunLower();
   }
   if (options_.phase == CompileOptions::Phase::Lower) {
     return make_result();

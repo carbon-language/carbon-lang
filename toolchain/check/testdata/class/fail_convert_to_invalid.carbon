@@ -25,8 +25,8 @@ fn Make() -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: Core.IntLiteral = int_value 123 [template]
-// CHECK:STDOUT:   %.2: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -57,17 +57,18 @@ fn Make() -> C {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %NoSuchType.ref: <error> = name_ref NoSuchType, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15: <error> = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc16: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .a = %.loc15
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %C {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_16: Core.IntLiteral = int_value 123 [template = constants.%.1]
-// CHECK:STDOUT:   %.loc19_19: %.2 = struct_literal (%.loc19_16)
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123]
+// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_123)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

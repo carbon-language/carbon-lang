@@ -94,6 +94,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
     InstConstantKind constant_kind = InstConstantKind::Never;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
+    bool deduce_through = false;
   };
 
   // Provides a definition for this instruction kind. Should only be called
@@ -102,6 +103,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   constexpr auto Define(DefinitionInfo info) const -> Definition<TypedNodeId>;
 
   using EnumBase::AsInt;
+  using EnumBase::FromInt;
   using EnumBase::Make;
 
   // Returns true if the kind matches any of the provided instructions' kinds.
@@ -133,6 +135,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // terminator instruction.
   auto terminator_kind() const -> TerminatorKind {
     return definition_info(*this).terminator_kind;
+  }
+
+  // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
+  // conclude `A` == `B`.
+  auto deduce_through() const -> bool {
+    return definition_info(*this).deduce_through;
   }
 
   // Compute a fingerprint for this instruction kind, allowing its use as part
@@ -186,6 +194,10 @@ class InstKind::Definition : public InstKind {
 
   // Returns true if the instruction is lowered.
   constexpr auto is_lowered() const -> bool { return info_.is_lowered; }
+
+  // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
+  // conclude `A` == `B`.
+  constexpr auto deduce_through() const -> bool { return info_.deduce_through; }
 
  private:
   friend class InstKind;

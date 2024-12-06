@@ -14,7 +14,7 @@ var x: {.v: ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.1: type = struct_type {.v: %empty_tuple.type} [template]
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -23,8 +23,8 @@ var x: {.v: ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc11_15: type = struct_type {.v: %empty_tuple.type} [template = constants.%.1]
-// CHECK:STDOUT:   %x.var: ref %.1 = var x
-// CHECK:STDOUT:   %x: ref %.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
+// CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
+// CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

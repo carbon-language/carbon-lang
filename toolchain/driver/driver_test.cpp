@@ -105,13 +105,13 @@ class DriverTest : public testing::Test {
 
 TEST_F(DriverTest, BadCommandErrors) {
   EXPECT_FALSE(driver_.RunCommand({}).success);
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("error:"));
 
   EXPECT_FALSE(driver_.RunCommand({"foo"}).success);
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("error:"));
 
   EXPECT_FALSE(driver_.RunCommand({"foo --bar --baz"}).success);
-  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("ERROR"));
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("error:"));
 }
 
 TEST_F(DriverTest, CompileCommandErrors) {
@@ -119,8 +119,8 @@ TEST_F(DriverTest, CompileCommandErrors) {
   EXPECT_FALSE(driver_.RunCommand({"compile"}).success);
   EXPECT_THAT(
       test_error_stream_.TakeStr(),
-      StrEq("ERROR: Not all required positional arguments were provided. First "
-            "missing and required positional argument: 'FILE'\n"));
+      StrEq("error: not all required positional arguments were provided; first "
+            "missing and required positional argument: `FILE`\n"));
 
   // Invalid output filename. No reliably error message here.
   // TODO: Likely want a different filename on Windows.

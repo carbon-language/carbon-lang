@@ -122,8 +122,8 @@ and any previously queued merge. Checks run on this commit help to ensure that
 the `trunk` stays "green" in presence of conflicting merges.
 
 After the merge queue checks pass, the `trunk` branch pointer is updated to
-include the now merged changset. The resulting commit title and description will
-match exactly those of the pull request, so it is important to set those
+include the now merged changeset. The resulting commit title and description
+will match exactly those of the pull request, so it is important to set those
 appropriately before merging. Co-authors are preserved by this operation. If a
 failure happens at any point, the merge fails, with both `trunk` and the pull
 request branch kept in their original state.

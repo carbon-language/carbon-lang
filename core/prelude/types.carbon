@@ -12,7 +12,6 @@ export import library "prelude/types/bool";
 // import library "prelude/types/i32";
 
 fn IntLiteral() -> type = "int_literal.make_type";
-fn Int32() -> type = "int.make_type_32";
 fn Int(size: IntLiteral()) -> type = "int.make_type_signed";
 fn UInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
 fn Float(size: IntLiteral()) -> type = "float.make_type";

@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Lower {
 
@@ -38,7 +39,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
-    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
+    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
@@ -55,8 +56,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         names_to_render.push_back(
             {.name_scope_id = interface.scope_id, .prefix = ':'});
 
-        CARBON_KIND_SWITCH(insts().Get(constant_values().GetConstantInstId(
-                               impl.self_id))) {
+        auto self_inst =
+            insts().Get(constant_values().GetConstantInstId(impl.self_id));
+        CARBON_KIND_SWITCH(self_inst) {
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
@@ -64,8 +66,27 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
                 {.name_scope_id = next_name_scope_id, .prefix = '\0'});
             break;
           }
-          case CARBON_KIND(SemIR::BuiltinInst builtin_inst): {
-            os << builtin_inst.builtin_inst_kind.label();
+          case SemIR::AutoType::Kind:
+          case SemIR::BoolType::Kind:
+          case SemIR::BoundMethodType::Kind:
+          case SemIR::IntLiteralType::Kind:
+          case SemIR::LegacyFloatType::Kind:
+          case SemIR::NamespaceType::Kind:
+          case SemIR::SpecificFunctionType::Kind:
+          case SemIR::StringType::Kind:
+          case SemIR::TypeType::Kind:
+          case SemIR::VtableType::Kind:
+          case SemIR::WitnessType::Kind: {
+            os << self_inst.kind().ir_name();
+            break;
+          }
+          case CARBON_KIND(SemIR::IntType int_type): {
+            os << (int_type.int_kind == SemIR::IntKind::Signed ? "i" : "u")
+               << sem_ir().ints().Get(
+                      sem_ir()
+                          .insts()
+                          .GetAs<SemIR::IntValue>(int_type.bit_width_id)
+                          .int_id);
             break;
           }
           default:
@@ -89,7 +110,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
       }
       case SemIR::Namespace::Kind: {
-        os << names().GetAsStringIfIdentifier(name_scope.name_id);
+        os << names().GetAsStringIfIdentifier(name_scope.name_id());
         break;
       }
       default:
@@ -98,7 +119,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     }
     if (!name_scope.is_imported_package()) {
       names_to_render.push_back(
-          {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
+          {.name_scope_id = name_scope.parent_scope_id(), .prefix = '.'});
     }
   }
 }

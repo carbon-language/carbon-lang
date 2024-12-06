@@ -7,14 +7,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "builtin_inst_kind",
-    srcs = ["builtin_inst_kind.cpp"],
-    hdrs = ["builtin_inst_kind.h"],
-    textual_hdrs = ["builtin_inst_kind.def"],
-    deps = ["//common:enum_base"],
-)
-
-cc_library(
     name = "block_value_store",
     hdrs = ["block_value_store.h"],
     deps = [
@@ -27,39 +19,28 @@ cc_library(
 )
 
 cc_library(
-    name = "ids",
+    name = "typed_insts",
+    srcs = [
+        "ids.cpp",
+        "inst_kind.cpp",
+    ],
     hdrs = [
         "id_kind.h",
         "ids.h",
-    ],
-    deps = [
-        "//common:check",
-        "//common:ostream",
-        "//toolchain/base:index_base",
-        "//toolchain/base:int",
-        "//toolchain/base:shared_value_stores",
-        "//toolchain/base:value_ids",
-        "//toolchain/diagnostics:diagnostic_emitter",
-        "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:builtin_inst_kind",
-    ],
-)
-
-cc_library(
-    name = "inst_kind",
-    srcs = ["inst_kind.cpp"],
-    hdrs = [
         "inst_kind.h",
+        "singleton_insts.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],
     deps = [
         "//common:check",
         "//common:enum_base",
+        "//common:ostream",
+        "//toolchain/base:index_base",
         "//toolchain/base:int",
+        "//toolchain/base:value_ids",
+        "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
-        "//toolchain/sem_ir:builtin_inst_kind",
-        "//toolchain/sem_ir:ids",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -70,9 +51,7 @@ cc_library(
     hdrs = ["inst.h"],
     deps = [
         ":block_value_store",
-        ":builtin_inst_kind",
-        ":ids",
-        ":inst_kind",
+        ":typed_insts",
         "//common:check",
         "//common:hashing",
         "//common:ostream",
@@ -90,11 +69,14 @@ cc_library(
         "builtin_function_kind.cpp",
         "class.cpp",
         "constant.cpp",
+        "facet_type_info.cpp",
         "file.cpp",
         "function.cpp",
         "generic.cpp",
         "impl.cpp",
         "name.cpp",
+        "name_scope.cpp",
+        "type.cpp",
         "type_info.cpp",
     ],
     hdrs = [
@@ -122,10 +104,8 @@ cc_library(
     ],
     deps = [
         ":block_value_store",
-        ":builtin_inst_kind",
-        ":ids",
         ":inst",
-        ":inst_kind",
+        ":typed_insts",
         "//common:check",
         "//common:enum_base",
         "//common:error",
@@ -141,6 +121,7 @@ cc_library(
         "//toolchain/base:yaml",
         "//toolchain/lex:token_kind",
         "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -151,8 +132,7 @@ cc_library(
     hdrs = ["stringify_type.h"],
     deps = [
         ":file",
-        ":ids",
-        ":inst_kind",
+        ":typed_insts",
         "//common:check",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
@@ -165,8 +145,7 @@ cc_library(
     hdrs = ["inst_namer.h"],
     deps = [
         ":file",
-        ":ids",
-        ":inst_kind",
+        ":typed_insts",
         "//common:ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
@@ -182,9 +161,8 @@ cc_library(
     hdrs = ["formatter.h"],
     deps = [
         ":file",
-        ":ids",
-        ":inst_kind",
         ":inst_namer",
+        ":typed_insts",
         "//common:ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
@@ -205,12 +183,23 @@ cc_library(
 )
 
 cc_test(
+    name = "name_scope_test",
+    size = "small",
+    srcs = ["name_scope_test.cpp"],
+    deps = [
+        ":file",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
     name = "typed_insts_test",
     size = "small",
     srcs = ["typed_insts_test.cpp"],
     deps = [
         ":inst",
-        ":inst_kind",
+        ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],

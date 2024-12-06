@@ -2326,7 +2326,7 @@ fn PeekAtTopOfStackParameterizedImpl
   ...
 }
 fn PeekAtTopOfStackParameterized[StackType:! type]
-    (s: StackType*, T:! type where StackType is StackParameterized(T)) -> T {
+    (s: StackType*, T:! type where StackType impls StackParameterized(T)) -> T {
   return PeekAtTopOfStackParameterizedImpl(T, StackType, s);
 }
 
@@ -2505,8 +2505,21 @@ binary operator:
 -   _Same-type constraints_: `where`...`==`...
 -   _Implements constraints_: `where`...`impls`...
 
+And there are two positions that `where` can be written:
+
+-   At the end of an `impl as` declaration, before the body of the impl.
+    ```carbon
+    impl Class as Interface where .A = i32 { ... }
+    ```
+-   Inside a type expression.
+    ```carbon
+    fn F[T: Interface where .A impls OtherInterface](t: T) { ... }
+    ```
+
 A rewrite constraint is written `where .A = B`, where `A` is the name of an
-[associated constant](#associated-constants) which is rewritten to `B`.
+[associated constant](#associated-constants) which is rewritten to `B`. Any use
+of `.A` thereafter is the same as using `B`, including direct access to the API
+of `B`.
 
 The "dot followed by the name of a member" construct, like `.A`, is called a
 _designator_. The name of the designator is looked up in the constraint, and
@@ -2518,15 +2531,20 @@ constraint.
 > constraint is satisfied.
 
 A same-type constraint is written `where X == Y`, where `X` and `Y` both name
-facets. The constraint is that `X as type` must be the same as `Y as type`. In
-cases where a constraint may be written in either form, prefer a rewrite
-constraint over a same-type constraint. Note that switching between the two
-forms does not change which types satisfies the constraint, and so is a
-compatible change for callers.
+facets. The constraint is that `X as type` must be the same as `Y as type`. It
+would normally only be used in the type expression position.
+
+A same-type constraint does not rewrite the type on the left-hand side to the
+right-hand side, and they are still treated as distinct types. A value of type
+`X` [would need to be cast](#satisfying-both-facet-types) to `Y` in order to use
+the API of `Y`. So for constraint clauses that name a single facet type on the
+right-hand side, using a rewrite constraint is preferred. Note that switching
+between the two forms does not change which types satisfies the constraint, and
+so is a compatible change for callers.
 
 An implements constraint is written `where T impls C`, where `T` is a facet and
 `C` is a facet type. The constraint is that `T` satisfies the requirements of
-`C`.
+`C`. It would normally only be used in the type expression position.
 
 **References:** The definition of rewrite and same-type constraints were in
 [proposal #2173](https://github.com/carbon-language/carbon-lang/pull/2173).
@@ -2600,7 +2618,7 @@ interface Container {
   let IteratorType:! Iterator where .ElementType = ElementType;
 
   // `.Self` means `SliceType`.
-  let SliceType:! Container where .Self is SliceConstraint(ElementType, .Self);
+  let SliceType:! Container where .Self impls SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
   fn GetSlice[addr self: Self*]
@@ -2989,7 +3007,7 @@ notionally does much the same thing as
 impl A as SameAs(C) { ... }
 ```
 
-where the `impl` makes use of `A is SameAs(B)` and `B is SameAs(C)`.
+where the `impl` makes use of `A impls SameAs(B)` and `B impls SameAs(C)`.
 
 In general, an `observe` declaration lists a sequence of
 [type expressions](terminology.md#type-expression) that are equal by some

@@ -266,7 +266,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT: --- fail_extern_library_collision.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_library, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_library, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -358,7 +358,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "extern_of_import.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_on_definition.carbon
 // CHECK:STDOUT:

@@ -52,19 +52,19 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return: %tuple.type {
+// CHECK:STDOUT: fn @Foo(%n.param_patt: %empty_tuple.type) -> %return.param_patt: %tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   %.loc16_15.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc16_16.1: %tuple.type = tuple_literal (%n.ref, %.loc16_15.1)
-// CHECK:STDOUT:   %.loc16_16.2: ref %empty_tuple.type = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc16_11: init %empty_tuple.type = tuple_init () to %.loc16_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_16.3: init %empty_tuple.type = converted %n.ref, %.loc16_11 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_16.4: ref %empty_tuple.type = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc16_15.2: init %empty_tuple.type = tuple_init () to %.loc16_16.4 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_16.5: init %empty_tuple.type = converted %.loc16_15.1, %.loc16_15.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_16.6: init %tuple.type = tuple_init (%.loc16_16.3, %.loc16_16.5) to %return [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc16_17: init %tuple.type = converted %.loc16_16.1, %.loc16_16.6 [template = constants.%tuple]
+// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc16_11: init %empty_tuple.type = tuple_init () to %tuple.elem0 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.2: init %empty_tuple.type = converted %n.ref, %.loc16_11 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc16_15.2: init %empty_tuple.type = tuple_init () to %tuple.elem1 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.3: init %empty_tuple.type = converted %.loc16_15.1, %.loc16_15.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_16.4: init %tuple.type = tuple_init (%.loc16_16.2, %.loc16_16.3) to %return [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_17: init %tuple.type = converted %.loc16_16.1, %.loc16_16.4 [template = constants.%tuple]
 // CHECK:STDOUT:   return %.loc16_17 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -135,7 +135,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         auto& name_scope =
             context_->name_scopes().Get(name_context.parent_scope_id);
         if (name_context.has_qualifiers) {
-          auto inst = context_->insts().Get(name_scope.inst_id);
+          auto inst = context_->insts().Get(name_scope.inst_id());
           if (!inst.Is<SemIR::Namespace>()) {
             // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
@@ -154,20 +154,9 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
           context_->AddExport(target_id);
         }
 
-        auto add_scope = [&] {
-          int index = name_scope.names.size();
-          name_scope.names.push_back(
-              {.name_id = name_context.unresolved_name_id,
-               .inst_id = target_id,
-               .access_kind = access_kind});
-          return index;
-        };
-        auto result = name_scope.name_map.Insert(
-            name_context.unresolved_name_id, add_scope);
-        CARBON_CHECK(
-            result.is_inserted(),
-            "Duplicate names should have been resolved previously: {0} in {1}",
-            name_context.unresolved_name_id, name_context.parent_scope_id);
+        name_scope.AddRequired({.name_id = name_context.unresolved_name_id,
+                                .inst_id = target_id,
+                                .access_kind = access_kind});
       }
       break;
 
@@ -242,7 +231,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   if (scope_id.is_valid()) {
     PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
                            specific_id,
-                           context_->name_scopes().Get(scope_id).has_error);
+                           context_->name_scopes().Get(scope_id).has_error());
     name_context.parent_scope_id = scope_id;
   } else {
     name_context.state = NameContext::State::Error;
@@ -427,12 +416,12 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                          SemIR::InstBlockId::Invalid))) {
         return InvalidResult;
       }
-      if (scope.is_closed_import) {
+      if (scope.is_closed_import()) {
         DiagnoseQualifiedDeclInImportedPackage(*context_, name_context.loc_id,
-                                               scope.inst_id);
+                                               scope.inst_id());
         // Only error once per package. Recover by allowing this package name to
         // be used as a name qualifier.
-        scope.is_closed_import = false;
+        scope.set_is_closed_import(false);
       }
       return {scope_id, SemIR::SpecificId::Invalid};
     }

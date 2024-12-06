@@ -69,11 +69,10 @@ class Context {
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   // Stores references for work.
-  explicit Context(const Lex::TokenizedBuffer& tokens,
-                   DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
+  explicit Context(DiagnosticEmitter* emitter,
                    llvm::function_ref<const Parse::TreeAndSubtrees&()>
                        get_parse_tree_and_subtrees,
-                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
+                   SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIRLoc loc, std::string label) -> bool;
@@ -162,13 +161,6 @@ class Context {
     return AddPatternInst(SemIR::LocIdAndInst(node_id, inst));
   }
 
-  // Adds an instruction to the constants block, returning the produced ID.
-  auto AddConstant(SemIR::Inst inst, bool is_symbolic) -> SemIR::ConstantId {
-    auto const_id = constants().GetOrAdd(inst, is_symbolic);
-    CARBON_VLOG("AddConstant: {0}\n", inst);
-    return const_id;
-  }
-
   // Pushes a parse tree node onto the stack, storing the SemIR::Inst as the
   // result.
   template <typename InstT>
@@ -193,6 +185,11 @@ class Context {
   // as a return slot.
   auto ReplaceInstBeforeConstantUse(SemIR::InstId inst_id, SemIR::Inst inst)
       -> void;
+
+  // Replaces the instruction `inst_id` with `inst`, not affecting location.
+  // The instruction is required to not change its constant value.
+  auto ReplaceInstPreservingConstantValue(SemIR::InstId inst_id,
+                                          SemIR::Inst inst) -> void;
 
   // Sets only the parse node of an instruction. This is only used when setting
   // the parse node of an imported namespace. Versus
@@ -242,7 +239,7 @@ class Context {
       -> LookupResult;
 
   // Returns the instruction corresponding to a name in the core package, or
-  // BuiltinError if not found.
+  // BuiltinErrorInst if not found.
   auto LookupNameInCore(SemIRLoc loc, llvm::StringRef name) -> SemIR::InstId;
 
   // Prints a diagnostic for a duplicate name.
@@ -364,12 +361,12 @@ class Context {
       -> SemIR::TypeId {
     return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
                ? type_id
-               : SemIR::TypeId::Error;
+               : SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(SemIR::TypeId type_id) -> bool {
-    return type_id == SemIR::TypeId::TypeType ||
+    return type_id == SemIR::TypeType::SingletonTypeId ||
            types().Is<SemIR::FacetType>(type_id);
   }
 
@@ -385,8 +382,9 @@ class Context {
   auto GetAssociatedEntityType(SemIR::TypeId interface_type_id,
                                SemIR::TypeId entity_type_id) -> SemIR::TypeId;
 
-  // Gets a builtin type. The returned type will be complete.
-  auto GetBuiltinType(SemIR::BuiltinInstKind kind) -> SemIR::TypeId;
+  // Gets a singleton type. The returned type will be complete. Requires that
+  // `singleton_id` is already validated to be a singleton.
+  auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
@@ -423,9 +421,6 @@ class Context {
   auto GetUnboundElementType(SemIR::TypeId class_type_id,
                              SemIR::TypeId element_type_id) -> SemIR::TypeId;
 
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(SemIR::TypeId type_id) -> SemIR::TypeId;
-
   // Adds an exported name.
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
@@ -460,17 +455,17 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
-
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
-
-  auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return get_parse_tree_and_subtrees_();
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
+
+  auto parse_tree() -> const Parse::Tree& { return sem_ir_->parse_tree(); }
+
+  auto tokens() -> const Lex::TokenizedBuffer& { return parse_tree().tokens(); }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
@@ -487,6 +482,10 @@ class Context {
 
   auto struct_type_fields_stack() -> ArrayStack<SemIR::StructTypeField>& {
     return struct_type_fields_stack_;
+  }
+
+  auto field_decls_stack() -> ArrayStack<SemIR::InstId>& {
+    return field_decls_stack_;
   }
 
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
@@ -607,14 +606,8 @@ class Context {
   // any applicable instruction lists.
   auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
 
-  // Tokens for getting data on literals.
-  const Lex::TokenizedBuffer* tokens_;
-
   // Handles diagnostics.
   DiagnosticEmitter* emitter_;
-
-  // The file's parse tree.
-  const Parse::Tree* parse_tree_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   llvm::function_ref<const Parse::TreeAndSubtrees&()>
@@ -645,9 +638,11 @@ class Context {
   // arguments.
   InstBlockStack args_type_info_stack_;
 
-  // The stack of StructTypeFields for in-progress StructTypeLiterals and Class
-  // object representations.
+  // The stack of StructTypeFields for in-progress StructTypeLiterals.
   ArrayStack<SemIR::StructTypeField> struct_type_fields_stack_;
+
+  // The stack of FieldDecls for in-progress Class definitions.
+  ArrayStack<SemIR::InstId> field_decls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

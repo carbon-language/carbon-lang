@@ -14,6 +14,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
+#include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/entity_name.h"
@@ -27,6 +28,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -36,16 +38,10 @@ namespace Carbon::SemIR {
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
-  // Used to return information about an integer type in `GetIntTypeInfo`.
-  struct IntTypeInfo {
-    bool is_signed;
-    IntId bit_width;
-  };
-
   // Starts a new file for Check::CheckParseTree.
-  explicit File(CheckIRId check_ir_id, IdentifierId package_id,
-                LibraryNameId library_id, SharedValueStores& value_stores,
-                std::string filename);
+  explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
+                const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
+                SharedValueStores& value_stores, std::string filename);
 
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;
@@ -53,16 +49,13 @@ class File : public Printable<File> {
   // Verifies that invariants of the semantics IR hold.
   auto Verify() const -> ErrorOr<Success>;
 
-  // Prints the full IR. Allow omitting builtins so that unrelated changes are
-  // less likely to alter test golden files.
-  // TODO: In the future, the things to print may change, for example by adding
-  // preludes. We may then want the ability to omit other things similar to
-  // builtins.
-  auto Print(llvm::raw_ostream& out, bool include_builtins = false) const
+  // Prints the full IR. Allow omitting singletons so that changes to the list
+  // of singletons won't churn golden test file content.
+  auto Print(llvm::raw_ostream& out, bool include_singletons = false) const
       -> void {
-    Yaml::Print(out, OutputYaml(include_builtins));
+    Yaml::Print(out, OutputYaml(include_singletons));
   }
-  auto OutputYaml(bool include_builtins) const -> Yaml::OutputMapping;
+  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
@@ -76,29 +69,6 @@ class File : public Printable<File> {
   // Gets the pointee type of the given type, which must be a pointer type.
   auto GetPointeeType(TypeId pointer_id) const -> TypeId {
     return types().GetAs<PointerType>(pointer_id).pointee_id;
-  }
-
-  // Returns integer type information from a type ID. Abstracts away the
-  // difference between an `IntType` instruction defined type and a builtin
-  // instruction defined type. Uses IntId::Invalid for types that have an
-  // invalid width.
-  //
-  // TODO: When we don't have a builtin int type mixed with actual `IntType`
-  // instructions, clients should directly query the `IntType` instruction to
-  // compute this information.
-  auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
-    auto inst_id = types().GetInstId(int_type_id);
-    if (inst_id == InstId::BuiltinIntType) {
-      return {.is_signed = true, .bit_width = ints().Lookup(32)};
-    }
-    if (inst_id == InstId::BuiltinIntLiteralType) {
-      return {.is_signed = true, .bit_width = IntId::Invalid};
-    }
-    auto int_type = insts().GetAs<IntType>(inst_id);
-    auto bit_width_inst = insts().TryGetAs<IntValue>(int_type.bit_width_id);
-    return {
-        .is_signed = int_type.int_kind.is_signed(),
-        .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::Invalid};
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
@@ -211,7 +181,11 @@ class File : public Printable<File> {
 
   auto filename() const -> llvm::StringRef { return filename_; }
 
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
+
  private:
+  const Parse::Tree* parse_tree_;
+
   // True if parts of the IR may be invalid.
   bool has_errors_ = false;
 
@@ -269,8 +243,8 @@ class File : public Printable<File> {
   // the data is provided by allocator_.
   BlockValueStore<TypeBlockId> type_blocks_;
 
-  // All instructions. The first entries will always be BuiltinInsts, at
-  // indices matching BuiltinInstKind ordering.
+  // All instructions. The first entries will always be the singleton
+  // instructions.
   InstStore insts_;
 
   // Storage for name scopes.
@@ -297,7 +271,7 @@ class File : public Printable<File> {
   StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
 
   // Descriptions of types used in this file.
-  TypeStore types_ = TypeStore(&insts_, &constant_values_);
+  TypeStore types_ = TypeStore(this);
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md

@@ -53,6 +53,7 @@ struct IntStoreTestPeer;
 // invalid integer.
 class IntId : public Printable<IntId> {
  public:
+  static constexpr llvm::StringLiteral Label = "int";
   using ValueType = llvm::APInt;
 
   // The encoding of integer IDs ensures that valid IDs associated with tokens
@@ -122,15 +123,16 @@ class IntId : public Printable<IntId> {
   constexpr auto AsRaw() const -> int32_t { return id_; }
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "int [";
+    out << Label << "(";
     if (is_value()) {
-      out << "value: " << AsValue() << "]";
+      out << "value: " << AsValue();
     } else if (is_index()) {
-      out << "index: " << AsIndex() << "]";
+      out << "index: " << AsIndex();
     } else {
       CARBON_CHECK(!is_valid());
-      out << "invalid]";
+      out << "<invalid>";
     }
+    out << ")";
   }
 
   friend constexpr auto operator==(IntId lhs, IntId rhs) -> bool {
@@ -349,14 +351,11 @@ class IntStore {
   friend struct Testing::IntStoreTestPeer;
 
   // Used for `values_`; tracked using `IntId`'s index range.
-  struct APIntId : IdBase, Printable<APIntId> {
+  struct APIntId : IdBase<APIntId> {
+    static constexpr llvm::StringLiteral Label = "ap_int";
     using ValueType = llvm::APInt;
     static const APIntId Invalid;
     using IdBase::IdBase;
-    auto Print(llvm::raw_ostream& out) const -> void {
-      out << "ap_int";
-      IdBase::Print(out);
-    }
   };
 
   static constexpr int MinAPWidth = 64;

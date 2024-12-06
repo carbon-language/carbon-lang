@@ -11,7 +11,6 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -19,12 +18,16 @@
 
 namespace Carbon::SemIR {
 
-File::File(CheckIRId check_ir_id, IdentifierId package_id,
-           LibraryNameId library_id, SharedValueStores& value_stores,
-           std::string filename)
-    : check_ir_id_(check_ir_id),
-      package_id_(package_id),
-      library_id_(library_id),
+File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
+           const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
+           SharedValueStores& value_stores, std::string filename)
+    : parse_tree_(parse_tree),
+      check_ir_id_(check_ir_id),
+      package_id_(packaging_decl ? packaging_decl->names.package_id
+                                 : IdentifierId::Invalid),
+      library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
+                                       packaging_decl->names.library_id)
+                                 : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       impls_(*this),
@@ -34,29 +37,19 @@ File::File(CheckIRId check_ir_id, IdentifierId package_id,
       inst_blocks_(allocator_),
       constants_(this) {
   // `type` and the error type are both complete types.
-  types_.SetValueRepr(TypeId::TypeType,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::TypeType});
-  types_.SetValueRepr(TypeId::Error,
-                      {.kind = ValueRepr::Copy, .type_id = TypeId::Error});
+  types_.SetValueRepr(
+      TypeType::SingletonTypeId,
+      {.kind = ValueRepr::Copy, .type_id = TypeType::SingletonTypeId});
+  types_.SetValueRepr(
+      ErrorInst::SingletonTypeId,
+      {.kind = ValueRepr::Copy, .type_id = ErrorInst::SingletonTypeId});
 
-  insts_.Reserve(BuiltinInstKind::ValidCount);
-// Error uses a self-referential type so that it's not accidentally treated as
-// a normal type. Every other builtin is a type, including the
-// self-referential TypeType.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name, ...)                \
-  insts_.AddInNoBlock(LocIdAndInst::NoLoc<BuiltinInst>(           \
-      {.type_id = BuiltinInstKind::Name == BuiltinInstKind::Error \
-                      ? TypeId::Error                             \
-                      : TypeId::TypeType,                         \
-       .builtin_inst_kind = BuiltinInstKind::Name}));
-#include "toolchain/sem_ir/builtin_inst_kind.def"
-  CARBON_CHECK(insts_.size() == BuiltinInstKind::ValidCount,
-               "Builtins should produce {0} insts, actual: {1}",
-               BuiltinInstKind::ValidCount, insts_.size());
-  for (auto i : llvm::seq(BuiltinInstKind::ValidCount)) {
-    auto builtin_id = SemIR::InstId(i);
-    constant_values_.Set(builtin_id,
-                         SemIR::ConstantId::ForTemplateConstant(builtin_id));
+  insts_.Reserve(SingletonInstKinds.size());
+  for (auto kind : SingletonInstKinds) {
+    auto inst_id =
+        insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
+    constant_values_.Set(inst_id,
+                         SemIR::ConstantId::ForTemplateConstant(inst_id));
   }
 }
 
@@ -97,9 +90,9 @@ auto File::Verify() const -> ErrorOr<Success> {
   return Success();
 }
 
-auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
-  return Yaml::OutputMapping([this,
-                              include_builtins](Yaml::OutputMapping::Map map) {
+auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([this, include_singletons](
+                                 Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
     map.Add(
         "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
@@ -116,7 +109,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("type_blocks", type_blocks_.OutputYaml());
           map.Add(
               "insts", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                int start = include_builtins ? 0 : BuiltinInstKind::ValidCount;
+                int start = include_singletons ? 0 : SingletonInstKinds.size();
                 for (int i : llvm::seq(start, insts_.size())) {
                   auto id = InstId(i);
                   map.Add(PrintToString(id),
@@ -126,7 +119,7 @@ auto File::OutputYaml(bool include_builtins) const -> Yaml::OutputMapping {
           map.Add("constant_values",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                     int start =
-                        include_builtins ? 0 : BuiltinInstKind::ValidCount;
+                        include_singletons ? 0 : SingletonInstKinds.size();
                     for (int i : llvm::seq(start, insts_.size())) {
                       auto id = InstId(i);
                       auto value = constant_values_.Get(id);
@@ -249,50 +242,59 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AssociatedConstantDecl::Kind:
       case AssociatedEntity::Kind:
       case AssociatedEntityType::Kind:
+      case AutoType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
+      case BoolType::Kind:
       case BoundMethod::Kind:
+      case BoundMethodType::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
+      case FacetAccessType::Kind:
+      case FacetAccessWitness::Kind:
       case FacetType::Kind:
-      case FacetTypeAccess::Kind:
+      case FacetValue::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:
       case FunctionType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
       case ImportDecl::Kind:
+      case IntLiteralType::Kind:
+      case IntType::Kind:
+      case IntValue::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
       case InterfaceWitnessAccess::Kind:
-      case IntValue::Kind:
-      case IntType::Kind:
+      case LegacyFloatType::Kind:
+      case NamespaceType::Kind:
       case PointerType::Kind:
       case SpecificFunction::Kind:
+      case SpecificFunctionType::Kind:
       case StringLiteral::Kind:
-      case StructValue::Kind:
+      case StringType::Kind:
       case StructType::Kind:
+      case StructValue::Kind:
       case SymbolicBindingPattern::Kind:
-      case TupleValue::Kind:
       case TupleType::Kind:
+      case TupleValue::Kind:
+      case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case ValueParamPattern::Kind:
+      case VtableType::Kind:
       case WhereExpr::Kind:
+      case WitnessType::Kind:
         return value_category;
 
-      case CARBON_KIND(BuiltinInst inst): {
-        if (inst.builtin_inst_kind == BuiltinInstKind::Error) {
-          return ExprCategory::Error;
-        }
-        return value_category;
-      }
+      case ErrorInst::Kind:
+        return ExprCategory::Error;
 
       case CARBON_KIND(BindName inst): {
         // TODO: Don't rely on value_id for expression category, since it may
@@ -309,6 +311,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = inst.array_id;
         continue;
       }
+
+      case VtablePtr::Kind:
+        return ExprCategory::EphemeralRef;
 
       case CARBON_KIND(ClassElementAccess inst): {
         inst_id = inst.base_id;

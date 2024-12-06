@@ -19,20 +19,12 @@ interface ImplicitAs(Dest:! type) {
 
 // TODO: These impls should live with Core.Int, but currently that's a builtin
 // not a class type, so there is no other library these can go in.
-impl IntLiteral() as ImplicitAs(i32) {
-  fn Convert[self: Self]() -> i32 = "int.convert_checked";
-}
-
 impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(Int(N)) {
   fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
 }
 
 impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(N)) {
   fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
-}
-
-impl i32 as ImplicitAs(IntLiteral()) {
-  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 impl forall [N:! IntLiteral()] Int(N) as ImplicitAs(IntLiteral()) {
@@ -44,20 +36,12 @@ impl forall [N:! IntLiteral()] UInt(N) as ImplicitAs(IntLiteral()) {
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl IntLiteral() as As(i32) {
-  fn Convert[self: Self]() -> i32 = "int.convert_checked";
-}
-
 impl forall [N:! IntLiteral()] IntLiteral() as As(Int(N)) {
   fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
 }
 
 impl forall [N:! IntLiteral()] IntLiteral() as As(UInt(N)) {
   fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
-}
-
-impl i32 as As(IntLiteral()) {
-  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 impl forall [N:! IntLiteral()] Int(N) as As(IntLiteral()) {

@@ -16,33 +16,30 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_id = ExprAsType(context, self_node, self_id).type_id;
   // Only facet types may have `where` restrictions.
-  if (self_type_id != SemIR::TypeId::Error &&
+  if (self_type_id != SemIR::ErrorInst::SingletonTypeId &&
       !context.IsFacetType(self_type_id)) {
     CARBON_DIAGNOSTIC(WhereOnNonFacetType, Error,
                       "left argument of `where` operator must be a facet type");
     context.emitter().Emit(self_node, WhereOnNonFacetType);
-    self_type_id = SemIR::TypeId::Error;
+    self_type_id = SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
   context.scope_stack().Push();
-  // Create a generic region containing `.Self` and the constraints.
-  StartGenericDecl(context);
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
-  // Because there is no equivalent non-symbolic value, we use `Invalid` as
-  // the `value_id` on the `BindSymbolicName`.
   auto entity_name_id = context.entity_names().Add(
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .bind_index = context.scope_stack().AddCompileTimeBinding()});
+       // Invalid because this is not the parameter of a generic.
+       .bind_index = SemIR::CompileTimeBindIndex::Invalid});
   auto inst_id =
       context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
           {.type_id = self_type_id,
            .entity_name_id = entity_name_id,
+           // Invalid because there is no equivalent non-symbolic value.
            .value_id = SemIR::InstId::Invalid}));
-  context.scope_stack().PushCompileTimeBinding(inst_id);
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
@@ -97,13 +94,13 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
-  if (rhs_as_type.type_id != SemIR::TypeId::Error &&
+  if (rhs_as_type.type_id != SemIR::ErrorInst::SingletonTypeId &&
       !context.IsFacetType(rhs_as_type.type_id)) {
     CARBON_DIAGNOSTIC(
         ImplsOnNonFacetType, Error,
         "right argument of `impls` requirement must be a facet type");
     context.emitter().Emit(rhs_node, ImplsOnNonFacetType);
-    rhs_as_type.inst_id = SemIR::InstId::BuiltinError;
+    rhs_as_type.inst_id = SemIR::ErrorInst::SingletonInstId;
   }
   // TODO: Require that at least one side uses a designator.
 
@@ -122,9 +119,6 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  // Discard the generic region containing `.Self` and the constraints.
-  // TODO: Decide if we want to build a `Generic` object for this.
-  DiscardGenericDecl(context);
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();
@@ -132,7 +126,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
       context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
   context.AddInstAndPush<SemIR::WhereExpr>(
-      node_id, {.type_id = SemIR::TypeId::TypeType,
+      node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .period_self_id = period_self_id,
                 .requirements_id = requirements_id});
   return true;

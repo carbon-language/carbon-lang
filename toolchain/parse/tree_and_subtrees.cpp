@@ -139,7 +139,7 @@ auto TreeAndSubtrees::PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
   // If children are being added, include node_index in order to disambiguate
   // nodes.
   if (preorder) {
-    output << "node_index: " << n << ", ";
+    output << "node_index: " << n.index << ", ";
   }
   output << "kind: '" << tree_->node_kind(n) << "', text: '"
          << tokens_->GetTokenText(tree_->node_token(n)) << "'";

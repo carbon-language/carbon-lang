@@ -29,7 +29,7 @@ fn G(x: ());
 fn G() {}
 
 fn H(x: ());
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: package `Core` implicitly referenced here, but not found [CoreNotFound]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+4]]:9: error: `Core.Bool` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn H(x: bool) {}
 // CHECK:STDERR:         ^~~~
 // CHECK:STDERR:
@@ -91,10 +91,10 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %.5: %.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %K.type: type = fn_type @K [template]
 // CHECK:STDOUT:   %K: %K.type = struct_value () [template]
-// CHECK:STDOUT:   %.6: type = struct_type {} [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %.type.6: type = fn_type @.6 [template]
-// CHECK:STDOUT:   %.7: %.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %struct: %.6 = struct_value () [template]
+// CHECK:STDOUT:   %.6: %.type.6 = struct_value () [template]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -171,14 +171,14 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc65: %.type.6 = fn_decl @.6 [template = constants.%.7] {
-// CHECK:STDOUT:     %return.patt: %.6 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %.6 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   %.decl.loc65: %.type.6 = fn_decl @.6 [template = constants.%.6] {
+// CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc65_12.1: %.6 = struct_literal ()
-// CHECK:STDOUT:     %.loc65_12.2: type = converted %.loc65_12.1, constants.%.6 [template = constants.%.6]
-// CHECK:STDOUT:     %return.param: ref %.6 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %.6 = return_slot %return.param
+// CHECK:STDOUT:     %.loc65_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc65_12.2: type = converted %.loc65_12.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -222,11 +222,11 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K() -> %empty_tuple.type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.6() -> %.6 {
+// CHECK:STDOUT: fn @.6() -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc65_24: %.6 = struct_literal ()
-// CHECK:STDOUT:   %struct: %.6 = struct_value () [template = constants.%struct]
-// CHECK:STDOUT:   %.loc65_25: %.6 = converted %.loc65_24, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc65_24: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc65_25: %empty_struct_type = converted %.loc65_24, %empty_struct [template = constants.%empty_struct]
 // CHECK:STDOUT:   return %.loc65_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

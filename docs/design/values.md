@@ -674,8 +674,8 @@ alternatives considered section of [P2006]:
 ### Pointer syntax
 
 The type of a pointer to a type `T` is written with a postfix `*` as in `T*`.
-Dereferencing a pointer is a [_reference expression_] and is written with a
-prefix `*` as in `*p`:
+Dereferencing a pointer is a [_reference expression_] and is written with a prefix
+`*` as in `*p`:
 
 ```carbon
 var i: i32 = 42;

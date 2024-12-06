@@ -76,10 +76,10 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id.is_valid()) {
+  if (!scope.inst_id().is_valid()) {
     return std::nullopt;
   }
-  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id);
+  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
@@ -101,7 +101,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
-    self_type_id = SemIR::TypeId::Error;
+    self_type_id = SemIR::ErrorInst::SingletonTypeId;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -112,7 +112,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
   // handling of the `Self` expression.
   auto self_inst_id = context.AddInst(
       node_id,
-      SemIR::NameRef{.type_id = SemIR::TypeId::TypeType,
+      SemIR::NameRef{.type_id = SemIR::TypeType::SingletonTypeId,
                      .name_id = SemIR::NameId::SelfType,
                      .value_id = context.types().GetInstId(self_type_id)});
 
@@ -145,7 +145,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
-    parent_scope.has_error = true;
+    parent_scope.set_has_error();
     return;
   }
 
@@ -158,7 +158,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // If the explicit self type is not the default, just bail out.
     if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
-      parent_scope.has_error = true;
+      parent_scope.set_has_error();
       return;
     }
 
@@ -176,18 +176,21 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
   if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.has_error = true;
+    parent_scope.set_has_error();
     return;
   }
-  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
-    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                   constraint_inst_id);
-  });
+  if (!context.TryToDefineType(constraint_id, [&] {
+        CARBON_DIAGNOSTIC(
+            ExtendUndefinedInterface, Error,
+            "`extend impl` requires a definition for facet type {0}",
+            InstIdAsType);
+        return context.emitter().Build(node_id, ExtendUndefinedInterface,
+                                       constraint_inst_id);
+      })) {
+    parent_scope.set_has_error();
+  };
 
-  parent_scope.extended_scopes.push_back(constraint_inst_id);
+  parent_scope.AddExtendedScope(constraint_inst_id);
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
@@ -198,14 +201,13 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
 
-  ParameterBlocks parameter_blocks{
-      .implicit_params_id = SemIR::InstBlockId::Invalid,
-      .params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_id = SemIR::InstId::Invalid};
   if (implicit_param_patterns_id) {
-    parameter_blocks =
+    // Emit the `forall` match. This shouldn't produce any `Call` params,
+    // because `impl`s are never actually called at runtime.
+    auto call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
+    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
   }
 
   Parse::NodeId first_param_node_id =
@@ -218,14 +220,12 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       .first_param_node_id = first_param_node_id,
       .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
-      .implicit_params_id = parameter_blocks.implicit_params_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
       .params_loc_id = Parse::NodeId::Invalid,
-      .params_id = SemIR::InstBlockId::Invalid,
       .param_patterns_id = SemIR::InstBlockId::Invalid,
+      .call_params_id = SemIR::InstBlockId::Invalid,
       .return_slot_pattern_id = SemIR::InstId::Invalid,
-      .return_slot_id = SemIR::InstId::Invalid,
       .pattern_block_id = context.pattern_block_stack().Pop(),
   };
 }
