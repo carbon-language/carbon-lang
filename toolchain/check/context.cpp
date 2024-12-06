@@ -226,7 +226,7 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
 }
 
 // Given an instruction associated with a scope and a `SpecificId` for that
-// scope, forms an instruction that describes the specific scope.
+// scope, returns an instruction that describes the specific scope.
 static auto GetInstForSpecificScope(Context& context, SemIR::InstId inst_id,
                                     SemIR::SpecificId specific_id)
     -> SemIR::InstId {
