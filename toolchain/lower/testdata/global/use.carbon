@@ -7,7 +7,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/global/use.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/global/use.carbon
-var a: i32;
+var a: i32 = 5;
 
 var b: i32 = a;
 
@@ -30,9 +30,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12 = load i32, ptr @a, align 4, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc12, ptr @b, align 4, !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   store i32 5, ptr @a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc12 = load i32, ptr @a, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc12, ptr @b, align 4, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -48,6 +49,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: !7 = !DILocation(line: 15, column: 10, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 14, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 1, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT: !10 = !DILocation(line: 10, column: 1, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 14, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 12, column: 1, scope: !9)
+// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
