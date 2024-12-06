@@ -1036,8 +1036,8 @@ class FormatterImpl {
       if (!loc_id.is_valid()) {
         out_ << import_ir_inst.inst_id << " [no loc]";
       } else if (loc_id.is_import_ir_inst_id()) {
-        // TODO: Probably don't want to format each indirection, but maybe the
-        // canonical location?
+        // TODO: Probably don't want to format each indirection, but maybe reuse
+        // GetCanonicalImportIRInst?
         out_ << import_ir_inst.inst_id << " [indirect]";
       } else if (loc_id.is_node_id()) {
         // Formats a NodeId from the provided file.
