@@ -79,9 +79,10 @@ class C {
 package FailModifiers;
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
   // CHECK:STDERR:   impl fn F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   impl fn F();
 }
 
@@ -116,6 +117,25 @@ base class Base {
 class Derived {
   extend base: Base;
   impl fn F();
+}
+
+// --- fail_impl_before_base.carbon
+
+package ImplBeforeBase;
+
+base class Base {
+}
+
+class Derived {
+  // CHECK:STDERR: fail_impl_before_base.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR:   impl fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl fn F();
+  // CHECK:STDERR: fail_impl_before_base.carbon:[[@LINE+3]]:3: error: `base` declaration must appear before impl function declarations [BaseDeclAfterImplDecl]
+  // CHECK:STDERR:   extend base: Base;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  extend base: Base;
 }
 
 // CHECK:STDOUT: --- modifiers.carbon
@@ -690,6 +710,59 @@ class Derived {
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_impl_before_base.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.2]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

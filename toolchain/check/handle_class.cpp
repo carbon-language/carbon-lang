@@ -526,6 +526,21 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
     return true;
   }
 
+  // TODO: base must appear before virtual functions too
+  for (auto inst_id : context.inst_block_stack().PeekCurrentBlockContents()) {
+    if (auto function_decl =
+            context.insts().TryGetAs<SemIR::FunctionDecl>(inst_id)) {
+      auto& function = context.functions().Get(function_decl->function_id);
+      if (function.virtual_modifier == SemIR::Function::VirtualModifier::Impl) {
+        CARBON_DIAGNOSTIC(
+            BaseDeclAfterImplDecl, Error,
+            "`base` declaration must appear before impl function declarations");
+        context.emitter().Emit(node_id, BaseDeclAfterImplDecl);
+        return true;
+      }
+    }
+  }
+
   auto base_info = CheckBaseType(context, base_type_node_id, base_type_expr_id);
 
   // TODO: Should we diagnose if there are already any fields?
