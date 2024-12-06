@@ -41,7 +41,8 @@ namespace Carbon::Check {
 Context::Context(DiagnosticEmitter* emitter,
                  llvm::function_ref<const Parse::TreeAndSubtrees&()>
                      get_parse_tree_and_subtrees,
-                 SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream)
+                 SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
+                 llvm::raw_ostream* vlog_stream)
     : emitter_(emitter),
       get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees),
       sem_ir_(sem_ir),
@@ -54,6 +55,11 @@ Context::Context(DiagnosticEmitter* emitter,
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       global_init_(this) {
+  // Prepare fields which relate to the number of IRs available for import.
+  import_irs().Reserve(imported_ir_count);
+  import_ir_constant_values_.reserve(imported_ir_count);
+  check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::Invalid);
+
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(

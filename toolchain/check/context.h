@@ -72,7 +72,8 @@ class Context {
   explicit Context(DiagnosticEmitter* emitter,
                    llvm::function_ref<const Parse::TreeAndSubtrees&()>
                        get_parse_tree_and_subtrees,
-                   SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream);
+                   SemIR::File* sem_ir, int imported_ir_count,
+                   int total_ir_count, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIRLoc loc, std::string label) -> bool;
@@ -446,13 +447,6 @@ class Context {
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
   auto Finalize() -> void;
-
-  // Sets the total number of IRs which exist. This is used to prepare a map
-  // from IR to imported IR.
-  auto SetTotalIRCount(int num_irs) -> void {
-    CARBON_CHECK(check_ir_map_.empty(), "SetTotalIRCount is only called once");
-    check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
-  }
 
   // Returns the imported IR ID for an IR, or invalid if not imported.
   auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {

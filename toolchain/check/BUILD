@@ -96,6 +96,8 @@ cc_library(
     name = "check",
     srcs = [
         "check.cpp",
+        "check_unit.cpp",
+        "check_unit.h",
         "deferred_definition_worklist.cpp",
         "deferred_definition_worklist.h",
         "handle.h",
