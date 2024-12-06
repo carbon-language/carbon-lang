@@ -21,6 +21,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %.1: <witness> = require_complete_type %ptr [symbolic]
+// CHECK:STDOUT:   %.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -42,6 +44,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
+// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %.2 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:

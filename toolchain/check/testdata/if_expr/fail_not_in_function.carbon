@@ -78,8 +78,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected>.inst+357.loc37_8
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst+359.loc38_1
+// CHECK:STDOUT:   .n = <unexpected>.inst+366.loc37_8
+// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst+368.loc38_1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

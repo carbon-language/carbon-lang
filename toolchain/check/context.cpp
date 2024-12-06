@@ -1240,6 +1240,14 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
     return false;
   }
 
+  if (diagnoser && type_id.AsConstantId().is_symbolic()) {
+    // TODO: Pass in a location.
+    // TODO: Deduplicate these.
+    AddInstInNoBlock(SemIR::LocIdAndInst::NoLoc(SemIR::RequireCompleteType{
+        .type_id = GetSingletonType(SemIR::WitnessType::SingletonInstId),
+        .complete_type_id = type_id}));
+  }
+
   if (!abstract_diagnoser) {
     return true;
   }

@@ -97,7 +97,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %ptr = import_ref Implicit//default, inst+317, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %ptr = import_ref Implicit//default, inst+326, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.37
 // CHECK:STDOUT:     import Core//prelude

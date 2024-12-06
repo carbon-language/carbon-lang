@@ -246,7 +246,6 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       // TODO: Eventually, completeness requirements should be modeled as
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
-      // TODO: We'll also need to do this when evaluating the eval block.
       if (context.types().IsComplete(inst.type_id())) {
         context.TryToCompleteType(type_id);
       }

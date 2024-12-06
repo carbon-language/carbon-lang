@@ -340,6 +340,13 @@ class Context {
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
+  //
+  // If `diagnoser` is provided, it is assumed to be an error for the type to be
+  // incomplete, and `diagnoser` should build an error diagnostic. If `type_id`
+  // is dependent, the completeness of the type will be enforced during
+  // monomorphization.
+  //
+  // Returns `true` if the type is symbolic.
   auto TryToCompleteType(SemIR::TypeId type_id,
                          BuildDiagnosticFn diagnoser = nullptr,
                          BuildDiagnosticFn abstract_diagnoser = nullptr)
