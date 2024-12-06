@@ -774,9 +774,8 @@ static auto BuildApiMapAndDiagnosePackaging(
     // Validate file extensions. Note imports rely the packaging declaration,
     // not the extension. If the input is not a regular file, for example
     // because it is stdin, no filename checking is performed.
-    const auto& source = unit_info.source();
-    if (source.is_regular_file()) {
-      auto filename = source.filename();
+    if (unit_info.source().is_regular_file()) {
+      auto filename = unit_info.source().filename();
       static constexpr llvm::StringLiteral ApiExt = ".carbon";
       static constexpr llvm::StringLiteral ImplExt = ".impl.carbon";
       bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);

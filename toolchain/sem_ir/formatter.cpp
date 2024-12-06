@@ -1040,7 +1040,11 @@ class FormatterImpl {
         // canonical location?
         out_ << import_ir_inst.inst_id << " [indirect]";
       } else if (loc_id.is_node_id()) {
-        FormatNodeId(import_ir.sem_ir, loc_id.node_id());
+        // Formats a NodeId from the provided file.
+        const auto& tree = import_ir.sem_ir->parse_tree();
+        auto token = tree.node_token(loc_id.node_id());
+        out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
+             << tree.tokens().GetColumnNumber(token);
       } else {
         CARBON_FATAL("Unexpected LocId: {0}", loc_id);
       }
@@ -1157,22 +1161,6 @@ class FormatterImpl {
   auto FormatArg(IntId id) -> void {
     // We don't know the signedness to use here. Default to unsigned.
     sem_ir_->ints().Get(id).print(out_, /*isSigned=*/false);
-  }
-
-  auto FormatArg(LocId id) -> void {
-    if (!id.is_valid()) {
-      out_ << id;
-    } else if (id.is_import_ir_inst_id()) {
-      auto import_ir_inst =
-          sem_ir_->import_ir_insts().Get(id.import_ir_inst_id());
-      out_ << "{";
-      FormatArg(import_ir_inst.ir_id);
-      out_ << ", " << import_ir_inst.inst_id << "}";
-    } else if (id.is_node_id()) {
-      FormatNodeId(sem_ir_, id.node_id());
-    } else {
-      CARBON_FATAL("Unexpected LocId: {0}", id);
-    }
   }
 
   auto FormatArg(ElementIndex index) -> void { out_ << index; }
@@ -1319,14 +1307,6 @@ class FormatterImpl {
                   import_ir.library_id().AsStringLiteralValueId())
             : "default";
     return llvm::formatv("{0}//{1}", package_name, library_name);
-  }
-
-  // Formats a NodeId from the provided file.
-  auto FormatNodeId(const SemIR::File* sem_ir, Parse::NodeId node_id) -> void {
-    const auto& tree = sem_ir->parse_tree();
-    auto token = tree.node_token(node_id);
-    out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
-         << tree.tokens().GetColumnNumber(token);
   }
 
   const File* sem_ir_;
