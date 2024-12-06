@@ -1464,9 +1464,9 @@ struct VtableType {
 };
 
 // Initializer for virtual function table pointers in object initialization.
-struct VptrInit {
+struct VtablePtr {
   static constexpr auto Kind =
-      InstKind::VptrInit.Define<Parse::NodeId>({.ir_name = "vptr_init"});
+      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
   TypeId type_id;
 };
 

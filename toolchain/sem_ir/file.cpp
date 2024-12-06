@@ -311,7 +311,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case VptrInit::Kind:
+      case VtablePtr::Kind:
         return ExprCategory::EphemeralRef;
 
       case CARBON_KIND(ClassElementAccess inst): {

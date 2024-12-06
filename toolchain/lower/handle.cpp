@@ -254,7 +254,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::VptrInit /*inst*/) -> void {
+                SemIR::VtablePtr /*inst*/) -> void {
   // TODO: Initialize the virtual pointer to actually point to a virtual
   // function table.
   context.SetLocal(inst_id,

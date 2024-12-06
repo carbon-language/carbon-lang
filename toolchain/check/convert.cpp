@@ -466,11 +466,11 @@ static auto ConvertStructToStructOrClass(Context& context,
           value_loc_id, {.type_id = dest_field.type_id,
                          .base_id = target.init_id,
                          .index = SemIR::ElementIndex(i)});
-      auto vptr_init_id = context.AddInst<SemIR::VptrInit>(
+      auto vtable_ptr_id = context.AddInst<SemIR::VtablePtr>(
           value_loc_id, {.type_id = dest_field.type_id});
       auto init_id = context.AddInst<SemIR::InitializeFrom>(
           value_loc_id, {.type_id = dest_field.type_id,
-                         .src_id = vptr_init_id,
+                         .src_id = vtable_ptr_id,
                          .dest_id = dest_id});
       new_block.Set(i, init_id);
       continue;
