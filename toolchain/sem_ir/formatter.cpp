@@ -1040,7 +1040,7 @@ class FormatterImpl {
         // GetCanonicalImportIRInst?
         out_ << import_ir_inst.inst_id << " [indirect]";
       } else if (loc_id.is_node_id()) {
-        // Formats a NodeId from the provided file.
+        // Formats a NodeId from the import.
         const auto& tree = import_ir.sem_ir->parse_tree();
         auto token = tree.node_token(loc_id.node_id());
         out_ << "loc" << tree.tokens().GetLineNumber(token) << "_"
