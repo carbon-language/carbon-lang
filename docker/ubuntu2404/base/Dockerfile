@@ -43,3 +43,7 @@ ENV PATH="/usr/lib/llvm-18/bin:${PATH}"
 
 # Update pip and install black and pre-commit.
 RUN pip3 install black pre-commit --break-system-packages
+
+# Create .cache directory with proper ownership. We will mount a named volume
+# at this location to allow caching of bazel build files.
+RUN mkdir /home/ubuntu/.cache && chown -R ubuntu:ubuntu /home/ubuntu/.cache

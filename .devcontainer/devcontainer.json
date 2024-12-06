@@ -16,9 +16,11 @@
   ],
   "containerUser": "ubuntu",
   "remoteUser": "ubuntu",
-  "runArgs": [
-    "--userns=keep-id"
-  ],
+  // When using devcontainer with podman, you may see /workspace being owned
+  // by root. To work around this, uncomment the following lines
+  // "runArgs": [
+  //   "--userns=keep-id"
+  // ],
   "customizations": {
     "vscode": {
       "extensions": [
