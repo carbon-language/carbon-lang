@@ -220,9 +220,6 @@ class Tree : public Printable<Tree> {
     NodeKind kind_;
     static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
-    // We have 3 bytes of padding here that we can pack flags or other compact
-    // data into.
-
     // Whether this node is or contains a parse error.
     //
     // When this is true, this node and its children may not have the expected
