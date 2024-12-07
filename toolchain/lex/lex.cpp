@@ -1396,13 +1396,12 @@ auto Lexer::Finalize() -> void {
   // many identifiers to fit an `IdentifierId` into a `token_payload_`, and
   // likewise for `IntId` and so on. If we start adding any of those IDs prior
   // to lexing, we may need to also limit the number of those IDs here.
-  if (buffer_.token_infos_.size() > TokenizedBuffer::MaxTokens) {
+  if (buffer_.token_infos_.size() > TokenIndex::Max) {
     CARBON_DIAGNOSTIC(TooManyTokens, Error,
                       "too many tokens in source file; try splitting into "
                       "multiple source files");
     // Subtract one to leave room for the `FileEnd` token.
-    token_emitter_.Emit(TokenIndex(TokenizedBuffer::MaxTokens - 1),
-                        TooManyTokens);
+    token_emitter_.Emit(TokenIndex(TokenIndex::Max - 1), TooManyTokens);
     // TODO: Convert tokens after the token limit to error tokens to avoid
     // misinterpretation by consumers of the tokenized buffer.
   }

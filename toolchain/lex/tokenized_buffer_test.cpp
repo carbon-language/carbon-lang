@@ -1160,9 +1160,9 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
     input += "{}\n";
   }
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
-                  DiagnosticKind::TooManyTokens, DiagnosticLevel::Error,
-                  TokenizedBuffer::MaxTokens / 2, 1, _)));
+              HandleDiagnostic(IsSingleDiagnostic(DiagnosticKind::TooManyTokens,
+                                                  DiagnosticLevel::Error,
+                                                  TokenIndex::Max / 2, 1, _)));
   compile_helper_.GetTokenizedBuffer(input, &consumer);
 }
 

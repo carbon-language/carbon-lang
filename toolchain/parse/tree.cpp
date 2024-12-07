@@ -23,7 +23,7 @@ auto Tree::postorder() const -> llvm::iterator_range<PostorderIterator> {
 
 auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
   CARBON_CHECK(n.is_valid());
-  return node_impls_[n.index].token;
+  return node_impls_[n.index].token();
 }
 
 auto Tree::Print(llvm::raw_ostream& output) const -> void {
