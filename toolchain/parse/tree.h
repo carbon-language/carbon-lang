@@ -218,7 +218,7 @@ class Tree : public Printable<Tree> {
    private:
     // The kind of this node. Note that this is only a single byte.
     NodeKind kind_;
-    static_assert(sizeof(kind_) == 1, "NodeKind must pack to one byte");
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
     // We have 3 bytes of padding here that we can pack flags or other compact
     // data into.

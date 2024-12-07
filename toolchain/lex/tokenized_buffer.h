@@ -280,7 +280,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   class TokenInfo {
    public:
     // The kind for this token.
-    auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
+    auto kind() const -> TokenKind { return kind_; }
 
     // Whether this token is preceded by whitespace. We only store the preceding
     // state, and look at the next token to check for trailing whitespace.
@@ -399,7 +399,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // token index. Stores to this field may overflow, but we produce an error
     // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
     // so this value never overflows if lexing succeeds.
-    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
+    TokenKind kind_;
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
     bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
 
