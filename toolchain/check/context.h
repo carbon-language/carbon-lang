@@ -226,14 +226,14 @@ class Context {
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
   // still updates `*scopes` and returns `true`.
-  auto AppendLookupScopesForConstant(SemIRLoc loc,
+  auto AppendLookupScopesForConstant(SemIR::LocId loc,
                                      SemIR::ConstantId base_const_id,
                                      llvm::SmallVector<LookupScope>* scopes)
       -> bool;
 
   // Performs a qualified name lookup in a specified scopes and in scopes that
   // they extend, returning the referenced instruction.
-  auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupQualifiedName(SemIR::LocId loc, SemIR::NameId name_id,
                            llvm::ArrayRef<LookupScope> lookup_scopes,
                            bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
@@ -344,13 +344,17 @@ class Context {
   // If `diagnoser` is provided, it is assumed to be an error for the type to be
   // incomplete, and `diagnoser` should build an error diagnostic. If `type_id`
   // is dependent, the completeness of the type will be enforced during
-  // monomorphization.
+  // monomorphization, and `loc_id` is used as the location for a diagnostic
+  // produced at that time.
   //
   // Returns `true` if the type is symbolic.
-  auto TryToCompleteType(SemIR::TypeId type_id,
-                         BuildDiagnosticFn diagnoser = nullptr,
+  auto TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                         BuildDiagnosticFn diagnoser,
                          BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> bool;
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool {
+    return TryToCompleteType(type_id, SemIR::LocId::Invalid, nullptr);
+  }
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -358,16 +362,17 @@ class Context {
   //
   // This is the same as `TryToCompleteType` except for interfaces, which are
   // complete before they are fully defined.
-  auto TryToDefineType(SemIR::TypeId type_id,
+  auto TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                        BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType. `diagnoser` must not be null.
-  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser,
+  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                      BuildDiagnosticFn diagnoser,
                       BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> SemIR::TypeId {
-    return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
+    return TryToCompleteType(type_id, loc_id, diagnoser, abstract_diagnoser)
                ? type_id
                : SemIR::ErrorInst::SingletonTypeId;
   }

@@ -65,7 +65,7 @@ auto CheckFunctionTypeMatches(Context& context,
   return true;
 }
 
-auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
+auto CheckFunctionReturnType(Context& context, SemIR::LocId loc,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo {
@@ -90,7 +90,7 @@ auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    if (context.TryToCompleteType(return_info.type_id,
+    if (context.TryToCompleteType(return_info.type_id, loc,
                                   diagnose_incomplete_return_type,
                                   diagnose_abstract_return_type)) {
       return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),

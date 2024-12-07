@@ -453,7 +453,7 @@ struct ProhibitedAccessInfo {
 };
 
 auto Context::AppendLookupScopesForConstant(
-    SemIRLoc loc, SemIR::ConstantId base_const_id,
+    SemIR::LocId loc, SemIR::ConstantId base_const_id,
     llvm::SmallVector<LookupScope>* scopes) -> bool {
   auto base_id = constant_values().GetInstId(base_const_id);
   auto base = insts().Get(base_id);
@@ -464,7 +464,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
@@ -476,7 +476,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                         "member access into undefined interface {0}",
                         InstIdAsType);
@@ -505,7 +505,7 @@ auto Context::AppendLookupScopesForConstant(
   return false;
 }
 
-auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+auto Context::LookupQualifiedName(SemIR::LocId loc, SemIR::NameId name_id,
                                   llvm::ArrayRef<LookupScope> lookup_scopes,
                                   bool required,
                                   std::optional<AccessInfo> access_info)
@@ -1233,7 +1233,7 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id,
+auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                                 BuildDiagnosticFn diagnoser,
                                 BuildDiagnosticFn abstract_diagnoser) -> bool {
   if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
@@ -1241,11 +1241,12 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
   }
 
   if (diagnoser && type_id.AsConstantId().is_symbolic()) {
-    // TODO: Pass in a location.
     // TODO: Deduplicate these.
-    AddInstInNoBlock(SemIR::LocIdAndInst::NoLoc(SemIR::RequireCompleteType{
-        .type_id = GetSingletonType(SemIR::WitnessType::SingletonInstId),
-        .complete_type_id = type_id}));
+    AddInstInNoBlock(SemIR::LocIdAndInst(
+        loc_id,
+        SemIR::RequireCompleteType{
+            .type_id = GetSingletonType(SemIR::WitnessType::SingletonInstId),
+            .complete_type_id = type_id}));
   }
 
   if (!abstract_diagnoser) {
@@ -1271,9 +1272,9 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
   return true;
 }
 
-auto Context::TryToDefineType(SemIR::TypeId type_id,
+auto Context::TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                               BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, diagnoser)) {
+  if (!TryToCompleteType(type_id, loc_id, diagnoser)) {
     return false;
   }
 

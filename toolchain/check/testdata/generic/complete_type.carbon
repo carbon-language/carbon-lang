@@ -7,13 +7,15 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/generic/complete_type.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/generic/complete_type.carbon
-// CHECK:STDERR: fail_incomplete_in_class.carbon: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
 
 // --- fail_incomplete_in_class.carbon
 
 library "[[@TEST_NAME]]";
 
 class A(T:! type) {
+  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+3]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:   var v: T;
+  // CHECK:STDERR:          ^
   var v: T;
 }
 
@@ -112,7 +114,7 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @A.%T.loc4_9.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc5_10: <witness> = require_complete_type @A.%T.loc4_9.2 (%T) [symbolic = %.loc5_10 (constants.%.1)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc4_9.2) [symbolic = %A (constants.%A.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.1), @A.%T.loc4_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc4_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.1)]
@@ -120,12 +122,12 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc5: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
+// CHECK:STDOUT:     %.loc5_8: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
-// CHECK:STDOUT:     .v = %.loc5
+// CHECK:STDOUT:     .v = %.loc5_8
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -158,7 +160,7 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => <error>
+// CHECK:STDOUT:   %.loc5_10 => <error>
 // CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.2
@@ -222,7 +224,7 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%T.loc4_6.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc5: <witness> = require_complete_type @F.%T.loc4_6.2 (%T) [symbolic = %.loc5 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -252,6 +254,6 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type
+// CHECK:STDOUT:   %.loc5 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

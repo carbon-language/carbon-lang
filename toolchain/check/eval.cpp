@@ -1776,8 +1776,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
       // If the type is a template constant, require it to be complete now.
       if (phase == Phase::Template) {
-        complete_type_id =
-            eval_context.context().AsCompleteType(complete_type_id, [&] {
+        // No location is needed here because we know the type is not a symbolic
+        // constant.
+        complete_type_id = eval_context.context().AsCompleteType(
+            complete_type_id, SemIR::LocId::Invalid, [&] {
               CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
                                 "{0} evaluates to incomplete type {1}",
                                 SemIR::TypeId, SemIR::TypeId);

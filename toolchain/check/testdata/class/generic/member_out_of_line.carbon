@@ -167,8 +167,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc14: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:     %.loc14: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]
-// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, %.loc14 [symbolic = constants.%Class]
+// CHECK:STDOUT:     %.loc14_28: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, %.loc14_28 [symbolic = constants.%Class]
 // CHECK:STDOUT:     %T.ref.loc14: type = name_ref T, %T.loc14 [symbolic = constants.%T]
 // CHECK:STDOUT:     %self.param.loc14: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %self.param.loc14
@@ -186,7 +186,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.loc4_13.2) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc7_10: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %.loc7_10 (constants.%.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc4_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
@@ -221,14 +221,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %return.loc6: ref @G.%T.loc6 (%T) = return_slot %return.param.loc6
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc7: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc7_8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc8_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .n = %.loc7
+// CHECK:STDOUT:     .n = %.loc7_8
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -237,7 +237,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc5: type = bind_symbolic_name T, 0 [symbolic = %T.loc5 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%T.loc5 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc10: <witness> = require_complete_type @F.%T.loc5 (%T) [symbolic = %.loc10 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
@@ -251,14 +251,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc6) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.loc14_26: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %.loc14_26 (constants.%.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @G.%Class (%Class), @G.%T.loc6 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @G.%T.loc6 (%T) [symbolic = %.2 (constants.%.1)]
+// CHECK:STDOUT:   %.loc15_14.3: <witness> = require_complete_type @G.%T.loc6 (%T) [symbolic = %.loc15_14.3 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class]() -> %T {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self.loc14
-// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7 [template = @Class.%.loc7]
+// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc7_8 [template = @Class.%.loc7_8]
 // CHECK:STDOUT:     %.loc15_14.1: ref @G.%T.loc6 (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc15_14.2: @G.%T.loc6 (%T) = bind_value %.loc15_14.1
 // CHECK:STDOUT:     return %.loc15_14.2
@@ -274,7 +274,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
-// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.loc7_10 => constants.%.1
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
@@ -352,8 +352,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.ref.loc10_22: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %N.param: %T = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %N.loc10: %T = bind_symbolic_name N, 1, %N.param [symbolic = constants.%N]
-// CHECK:STDOUT:     %.loc10: type = specific_constant constants.%B, @B(constants.%T, constants.%N) [symbolic = constants.%B]
-// CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10 [symbolic = constants.%B]
+// CHECK:STDOUT:     %.loc10_33: type = specific_constant constants.%B, @B(constants.%T, constants.%N) [symbolic = constants.%B]
+// CHECK:STDOUT:     %Self.ref.loc10: type = name_ref Self, %.loc10_33 [symbolic = constants.%B]
 // CHECK:STDOUT:     %T.ref.loc10_42: type = name_ref T, %T.loc10 [symbolic = constants.%T]
 // CHECK:STDOUT:     %self.param.loc10: %B = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc10: %B = bind_name self, %self.param.loc10
@@ -427,8 +427,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T.loc6, %N.loc6) [symbolic = %B (constants.%B)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%B (%B) [symbolic = %.1 (constants.%.1)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%T.loc6 (%T) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc10_31: <witness> = require_complete_type @F.%B (%B) [symbolic = %.loc10_31 (constants.%.1)]
+// CHECK:STDOUT:   %.loc10_40: <witness> = require_complete_type @F.%T.loc6 (%T) [symbolic = %.loc10_40 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %B](%a.param_patt: %T) {
 // CHECK:STDOUT:   !entry:

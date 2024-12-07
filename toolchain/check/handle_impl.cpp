@@ -179,13 +179,15 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     parent_scope.has_error = true;
     return;
   }
-  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
-    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                   constraint_inst_id);
-  });
+  parent_scope.has_error |=
+      !context.TryToDefineType(constraint_id, node_id, [&] {
+        CARBON_DIAGNOSTIC(
+            ExtendUndefinedInterface, Error,
+            "`extend impl` requires a definition for facet type {0}",
+            InstIdAsType);
+        return context.emitter().Build(node_id, ExtendUndefinedInterface,
+                                       constraint_inst_id);
+      });
 
   parent_scope.extended_scopes.push_back(constraint_inst_id);
 }

@@ -55,7 +55,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc13_17.2: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @G.%array_type.loc13_17.2 (%array_type) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc13_17: <witness> = require_complete_type @G.%array_type.loc13_17.2 (%array_type) [symbolic = %.loc13_17 (constants.%.1)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc13_17.2 (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {

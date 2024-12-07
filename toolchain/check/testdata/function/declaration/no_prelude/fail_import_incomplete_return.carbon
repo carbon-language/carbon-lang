@@ -23,7 +23,7 @@ fn ReturnDUsed() -> D;
 fn Call() {
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnCUsed();
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-12]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
   // CHECK:STDERR: ^~~~~~~~
@@ -34,7 +34,7 @@ fn Call() {
   ReturnCUsed();
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+10]]:3: error: function returns incomplete type `D` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnDUsed();
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-22]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class D;
   // CHECK:STDERR: ^~~~~~~~
@@ -56,7 +56,7 @@ import library "incomplete_return";
 fn CallFAndGIncomplete() {
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+12]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnCUnused();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;
@@ -69,7 +69,7 @@ fn CallFAndGIncomplete() {
   ReturnCUnused();
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+11]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnCUsed();
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-19]]:1: in import [InImport]
   // CHECK:STDERR: fail_incomplete_return.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class C;

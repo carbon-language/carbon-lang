@@ -57,13 +57,13 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc14_10.2: type = facet_access_type %T.loc13_6.2 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%T.as_type.loc14_10.2 (%T.as_type) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc14_10.2: <witness> = require_complete_type @F.%T.as_type.loc14_10.2 (%T.as_type) [symbolic = %.loc14_10.2 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Empty.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc14_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc14: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc14_10.1: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = var x
 // CHECK:STDOUT:     %x: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = bind_name x, %x.var
 // CHECK:STDOUT:     return

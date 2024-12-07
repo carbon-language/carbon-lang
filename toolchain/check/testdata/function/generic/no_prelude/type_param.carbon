@@ -44,8 +44,8 @@ fn F(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %.1 (constants.%.1)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc12: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %.loc12 (constants.%.1)]
+// CHECK:STDOUT:   %.loc13_10: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %.loc13_10 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:

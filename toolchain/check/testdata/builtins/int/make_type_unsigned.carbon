@@ -259,7 +259,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %uN: type = int_type unsigned, %N.loc14_13.2 [symbolic = %uN (constants.%uN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Symbolic.%uN (%uN) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc14_43: <witness> = require_complete_type @Symbolic.%uN (%uN) [symbolic = %.loc14_43 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral, %x.param_patt: @Symbolic.%uN (%uN)) -> @Symbolic.%uN (%uN) {
 // CHECK:STDOUT:   !entry:

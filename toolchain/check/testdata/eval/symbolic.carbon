@@ -64,11 +64,11 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %ptr.loc13_12.2: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %ptr.loc13_12.2 (constants.%ptr.1)]
 // CHECK:STDOUT:   %const.loc13_15.2: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %const.loc13_15.2 (constants.%const)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr.loc13_12.2 (%ptr.1), @F.%const.loc13_15.2 (%const)) [symbolic = %tuple.type (constants.%tuple.type.2)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc13_22.3: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %.loc13_22.3 (constants.%.1)]
 // CHECK:STDOUT:   %struct_type.a.loc14_16.2: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a.loc14_16.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%struct_type.a.loc14_16.2 (%struct_type.a) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc14: <witness> = require_complete_type @F.%struct_type.a.loc14_16.2 (%struct_type.a) [symbolic = %.loc14 (constants.%.2)]
 // CHECK:STDOUT:   %array_type.loc15_15.2: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type.loc15_15.2 (constants.%array_type)]
-// CHECK:STDOUT:   %.3: <witness> = require_complete_type @F.%array_type.loc15_15.2 (%array_type) [symbolic = %.3 (constants.%.3)]
+// CHECK:STDOUT:   %.loc15: <witness> = require_complete_type @F.%array_type.loc15_15.2 (%array_type) [symbolic = %.loc15 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:

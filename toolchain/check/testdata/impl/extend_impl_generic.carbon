@@ -409,7 +409,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%U) [symbolic = %F.type (constants.%F.type.3)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.3) = struct_value () [symbolic = %F (constants.%F.3)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @impl.%I.type.loc9_21.2 (%I.type.3) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc9: <witness> = require_complete_type @impl.%I.type.loc9_21.2 (%I.type.3) [symbolic = %.loc9 (constants.%.1)]
 // CHECK:STDOUT:   %interface.loc9_23.2: <witness> = interface_witness (%F) [symbolic = %interface.loc9_23.2 (constants.%interface)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.type.loc9_21.1 {
@@ -419,8 +419,8 @@ class X(U:! type) {
 // CHECK:STDOUT:       %t.patt: @F.2.%U (%U) = binding_pattern t
 // CHECK:STDOUT:       %t.param_patt: @F.2.%U (%U) = value_param_pattern %t.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc10: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc10 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:       %.loc10_16: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc10_16 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %self.param: @F.2.%X (%X) = value_param runtime_param0
 // CHECK:STDOUT:       %self: @F.2.%X (%X) = bind_name self, %self.param
@@ -441,7 +441,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U.loc8_9.2)> [symbolic = %I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @X.%I.type (%I.type.3) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc9_23: <witness> = require_complete_type @X.%I.type (%I.type.3) [symbolic = %.loc9_23 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     impl_decl @impl [template] {} {
@@ -450,12 +450,12 @@ class X(U:! type) {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %I.type.loc9_21.1: type = facet_type <@I, @I(constants.%U)> [symbolic = %I.type.loc9_21.2 (constants.%I.type.3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc9: type = specific_constant @impl.%I.type.loc9_21.1, @impl(constants.%U) [symbolic = %I.type (constants.%I.type.3)]
+// CHECK:STDOUT:     %.loc9_21: type = specific_constant @impl.%I.type.loc9_21.1, @impl(constants.%U) [symbolic = %I.type (constants.%I.type.3)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%X
-// CHECK:STDOUT:     extend %.loc9
+// CHECK:STDOUT:     extend %.loc9_21
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -473,11 +473,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U)> [symbolic = %I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.2.%I.type (%I.type.3) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc10_25: <witness> = require_complete_type @F.2.%I.type (%I.type.3) [symbolic = %.loc10_25 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.2.%X (%X) [symbolic = %.2 (constants.%.2)]
-// CHECK:STDOUT:   %.3: <witness> = require_complete_type @F.2.%U (%U) [symbolic = %.3 (constants.%.3)]
+// CHECK:STDOUT:   %.loc10_14: <witness> = require_complete_type @F.2.%X (%X) [symbolic = %.loc10_14 (constants.%.2)]
+// CHECK:STDOUT:   %.loc10_23: <witness> = require_complete_type @F.2.%U (%U) [symbolic = %.loc10_23 (constants.%.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%X (%X)](%t.param_patt: @F.2.%U (%U)) {
 // CHECK:STDOUT:   !entry:
@@ -513,7 +513,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.loc9_23 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%U) {
@@ -547,7 +547,7 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.loc9 => constants.%.1
 // CHECK:STDOUT:   %interface.loc9_23.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -565,7 +565,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
-// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.loc10_25 => constants.%.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%U, constants.%I.facet) {

@@ -161,8 +161,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%T.loc7_6.2 (%T), @F.%U.loc7_16.2 (%U)) [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%U.loc7_16.2 (%U) [symbolic = %.1 (constants.%.1)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc7_40: <witness> = require_complete_type @F.%U.loc7_16.2 (%U) [symbolic = %.loc7_40 (constants.%.1)]
+// CHECK:STDOUT:   %.loc7_30: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %.loc7_30 (constants.%.2)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2, %U.loc7_16.2) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type, %U.param_patt: type](%pair.param_patt: @F.%tuple.type (%tuple.type.2)) -> @F.%U.loc7_16.2 (%U) {
@@ -195,8 +195,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.1
-// CHECK:STDOUT:   %.2 => constants.%.2
+// CHECK:STDOUT:   %.loc7_40 => constants.%.1
+// CHECK:STDOUT:   %.loc7_30 => constants.%.2
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,8 +216,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.1
-// CHECK:STDOUT:   %.2 => constants.%complete_type.2
+// CHECK:STDOUT:   %.loc7_40 => constants.%complete_type.1
+// CHECK:STDOUT:   %.loc7_30 => constants.%complete_type.2
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -398,7 +398,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(%tuple.loc6_40.2) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%HasPair.loc6_41.2 (%HasPair.2) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc6_25: <witness> = require_complete_type @F.%HasPair.loc6_41.2 (%HasPair.2) [symbolic = %.loc6_25 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%A.param_patt: %i32, %B.param_patt: %i32](%h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.2)) -> %i32 {
 // CHECK:STDOUT:   !entry:
@@ -460,7 +460,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2 => constants.%HasPair.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.1
+// CHECK:STDOUT:   %.loc6_25 => constants.%complete_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inconsistent.carbon

@@ -127,7 +127,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc4: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %.loc4 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -167,7 +167,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_12.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.2
+// CHECK:STDOUT:   %.loc4 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_defined_late.carbon
@@ -264,7 +264,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %.1 (constants.%.5)]
+// CHECK:STDOUT:   %.loc10: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %.loc10 (constants.%.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
@@ -304,7 +304,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.2
+// CHECK:STDOUT:   %.loc10 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_undefined.carbon

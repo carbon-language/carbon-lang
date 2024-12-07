@@ -134,7 +134,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc4_6.2 [symbolic = %iN (constants.%iN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%iN (%iN) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc4_30: <witness> = require_complete_type @F.%iN (%iN) [symbolic = %.loc4_30 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: @F.%iN (%iN)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
@@ -166,7 +166,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %iN => constants.%i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type
+// CHECK:STDOUT:   %.loc4_30 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_float.carbon

@@ -51,7 +51,7 @@ fn F(T:! type, n: T) -> T {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc11: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %.loc11 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %n.param_patt: @F.%T.loc11_6.2 (%T)) -> @F.%T.loc11_6.2 (%T) {
 // CHECK:STDOUT:   !entry:

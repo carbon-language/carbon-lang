@@ -86,7 +86,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc4_19.2 [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @ErrorIfNIsZero.%iN (%iN) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc12_20.3: <witness> = require_complete_type @ErrorIfNIsZero.%iN (%iN) [symbolic = %.loc12_20.3 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral) {
 // CHECK:STDOUT:   !entry:
@@ -122,6 +122,6 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %iN => <error>
-// CHECK:STDOUT:   %.1 => <error>
+// CHECK:STDOUT:   %.loc12_20.3 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

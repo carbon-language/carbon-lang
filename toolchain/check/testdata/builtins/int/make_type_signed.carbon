@@ -278,7 +278,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc14_13.2 [symbolic = %iN (constants.%iN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Symbolic.%iN (%iN) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc14_42: <witness> = require_complete_type @Symbolic.%iN (%iN) [symbolic = %.loc14_42 (constants.%.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral, %x.param_patt: @Symbolic.%iN (%iN)) -> @Symbolic.%iN (%iN) {
 // CHECK:STDOUT:   !entry:

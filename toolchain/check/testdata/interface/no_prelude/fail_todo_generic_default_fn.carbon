@@ -133,7 +133,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.as_type.loc22_24.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc22_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @.1.%Self.as_type.loc22_24.2 (%Self.as_type) [symbolic = %.1 (constants.%.2)]
+// CHECK:STDOUT:   %.loc22_32: <witness> = require_complete_type @.1.%Self.as_type.loc22_24.2 (%Self.as_type) [symbolic = %.loc22_32 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @.1.%Self.as_type.loc22_24.2 (%Self.as_type)]() -> @.1.%Self.as_type.loc22_24.2 (%Self.as_type) {
 // CHECK:STDOUT:   !entry:

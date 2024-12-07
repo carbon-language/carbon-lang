@@ -104,7 +104,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // A `var` declaration at class scope introduces a field.
       auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
       cast_type_id = context.AsCompleteType(
-          cast_type_id,
+          cast_type_id, type_node,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,
                               "{0:field|variable} has incomplete type {1}",
@@ -245,7 +245,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     }
 
     case Parse::NodeKind::LetIntroducer: {
-      cast_type_id = context.AsCompleteType(cast_type_id, [&] {
+      cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInLetDecl, Error,
                           "`let` binding has incomplete type {0}",
                           InstIdAsType);

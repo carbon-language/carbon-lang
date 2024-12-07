@@ -102,7 +102,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %T.patt.loc11_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc12_10: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %.loc12_10 (constants.%.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc11_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Class(%T.loc11_13.2) [symbolic = %F.type (constants.%F.type)]
@@ -112,7 +112,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [template]
+// CHECK:STDOUT:     %.loc12_8: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [template]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Class (%Class) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.%Class (%Class) = value_param_pattern %self.patt, runtime_param0
@@ -131,7 +131,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
-// CHECK:STDOUT:     .a = %.loc12
+// CHECK:STDOUT:     .a = %.loc12_8
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }

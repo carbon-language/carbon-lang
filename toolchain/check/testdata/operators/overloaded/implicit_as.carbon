@@ -238,7 +238,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %.1 (constants.%.1)]
+// CHECK:STDOUT:   %.loc27_21: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %.loc27_21 (constants.%.1)]
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
@@ -295,7 +295,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%.1
+// CHECK:STDOUT:   %.loc27_21 => constants.%.1
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,7 +309,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.1
+// CHECK:STDOUT:   %.loc27_21 => constants.%complete_type.1
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,7 +318,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1 => constants.%complete_type.2
+// CHECK:STDOUT:   %.loc27_21 => constants.%complete_type.2
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

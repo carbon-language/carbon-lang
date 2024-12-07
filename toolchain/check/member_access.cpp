@@ -425,13 +425,15 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!context.TryToCompleteType(base_type_id, [&] {
-        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
-                          "member access into object of incomplete type {0}",
-                          TypeOfInstId);
-        return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
-                                       base_id);
-      })) {
+  if (!context.TryToCompleteType(
+          base_type_id, context.insts().GetLocId(base_id), [&] {
+            CARBON_DIAGNOSTIC(
+                IncompleteTypeInMemberAccess, Error,
+                "member access into object of incomplete type {0}",
+                TypeOfInstId);
+            return context.emitter().Build(
+                base_id, IncompleteTypeInMemberAccess, base_id);
+          })) {
     return SemIR::ErrorInst::SingletonInstId;
   }
 

@@ -58,8 +58,8 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.loc11_21.2: type = ptr_type @F.%ptr.loc11_20.2 (%ptr.1) [symbolic = %ptr.loc11_21.2 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type @F.%ptr.loc11_20.2 (%ptr.1) [symbolic = %.1 (constants.%.1)]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type @F.%ptr.loc11_21.2 (%ptr.2) [symbolic = %.2 (constants.%.2)]
+// CHECK:STDOUT:   %.loc11_24: <witness> = require_complete_type @F.%ptr.loc11_20.2 (%ptr.1) [symbolic = %.loc11_24 (constants.%.1)]
+// CHECK:STDOUT:   %.loc11_17: <witness> = require_complete_type @F.%ptr.loc11_21.2 (%ptr.2) [symbolic = %.loc11_17 (constants.%.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %p.param_patt: @F.%ptr.loc11_21.2 (%ptr.2)) -> @F.%ptr.loc11_20.2 (%ptr.1) {
 // CHECK:STDOUT:   !entry:
