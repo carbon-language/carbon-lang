@@ -374,7 +374,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(Namespace inst): {
         out << sem_ir.names().GetFormatted(
-            sem_ir.name_scopes().Get(inst.name_scope_id).name_id);
+            sem_ir.name_scopes().Get(inst.name_scope_id).name_id());
         break;
       }
       case CARBON_KIND(PointerType inst): {

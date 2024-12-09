@@ -255,7 +255,7 @@ auto Context::DiagnoseMemberNameNotFound(
       lookup_scopes.front().name_scope_id.is_valid()) {
     const auto& scope = name_scopes().Get(lookup_scopes.front().name_scope_id);
     if (auto specific_inst_id = GetInstForSpecificScope(
-            *this, scope.inst_id, lookup_scopes.front().specific_id);
+            *this, scope.inst_id(), lookup_scopes.front().specific_id);
         specific_inst_id.is_valid()) {
       CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
