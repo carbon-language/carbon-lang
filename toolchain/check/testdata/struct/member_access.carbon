@@ -18,6 +18,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: f64, .b: %i32} [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: f64, .b: Core.IntLiteral} [template]
@@ -76,11 +77,15 @@ var z: i32 = y;
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_47
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.1 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc12_15.1: ref %i32 = struct_access %x.ref, element1
+// CHECK:STDOUT:   %.loc12_17.1: ref %i32.builtin = as_compatible %.loc12_15.1
+// CHECK:STDOUT:   %.loc12_17.2: ref %i32 = as_compatible %.loc12_17.1
 // CHECK:STDOUT:   %.loc12_15.2: %i32 = bind_value %.loc12_15.1
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_15.2
 // CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, file.%y
-// CHECK:STDOUT:   %.loc13: %i32 = bind_value %y.ref
-// CHECK:STDOUT:   assign file.%z.var, %.loc13
+// CHECK:STDOUT:   %.loc13_15.1: ref %i32.builtin = as_compatible %y.ref
+// CHECK:STDOUT:   %.loc13_15.2: ref %i32 = as_compatible %.loc13_15.1
+// CHECK:STDOUT:   %.loc13_14: %i32 = bind_value %y.ref
+// CHECK:STDOUT:   assign file.%z.var, %.loc13_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

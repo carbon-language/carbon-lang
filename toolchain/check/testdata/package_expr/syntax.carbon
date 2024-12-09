@@ -46,6 +46,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
@@ -89,8 +90,10 @@ fn Main() {
 // CHECK:STDOUT:   assign file.%x.var, %.loc4
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc5: %i32 = bind_value %x.ref
-// CHECK:STDOUT:   assign file.%y.var, %.loc5
+// CHECK:STDOUT:   %.loc5_23.1: ref %i32.builtin = as_compatible %x.ref
+// CHECK:STDOUT:   %.loc5_23.2: ref %i32 = as_compatible %.loc5_23.1
+// CHECK:STDOUT:   %.loc5_21: %i32 = bind_value %x.ref
+// CHECK:STDOUT:   assign file.%y.var, %.loc5_21
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,6 +102,7 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
@@ -151,8 +155,10 @@ fn Main() {
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %x.ref: ref %i32 = name_ref x, file.%x
-// CHECK:STDOUT:   %.loc9: %i32 = bind_value %x.ref
-// CHECK:STDOUT:   assign %y.var, %.loc9
+// CHECK:STDOUT:   %.loc9_25.1: ref %i32.builtin = as_compatible %x.ref
+// CHECK:STDOUT:   %.loc9_25.2: ref %i32 = as_compatible %.loc9_25.1
+// CHECK:STDOUT:   %.loc9_23: %i32 = bind_value %x.ref
+// CHECK:STDOUT:   assign %y.var, %.loc9_23
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

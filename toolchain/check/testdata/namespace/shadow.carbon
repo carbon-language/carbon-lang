@@ -39,6 +39,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -108,8 +109,10 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   %.loc22: init %i32 = converted %int_0.loc22, %int.convert_checked.loc22 [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign %A.var, %.loc22
 // CHECK:STDOUT:   %A.ref.loc25: ref %i32 = name_ref A, %A
-// CHECK:STDOUT:   %.loc25: %i32 = bind_value %A.ref.loc25
-// CHECK:STDOUT:   return %.loc25
+// CHECK:STDOUT:   %.loc25_13.1: ref %i32.builtin = as_compatible %A.ref.loc25
+// CHECK:STDOUT:   %.loc25_13.2: ref %i32 = as_compatible %.loc25_13.1
+// CHECK:STDOUT:   %.loc25_12: %i32 = bind_value %A.ref.loc25
+// CHECK:STDOUT:   return %.loc25_12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %int_0.loc27: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]

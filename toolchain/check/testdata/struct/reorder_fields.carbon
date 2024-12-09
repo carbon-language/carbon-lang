@@ -32,6 +32,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: f64} [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: f64, .a: %i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,13 +115,15 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %y: %struct_type.b.a = bind_name y, %.loc16_32
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc17_10.1: %i32 = struct_access %y.ref, element1
-// CHECK:STDOUT:   %.loc17_10.2: ref %i32 = struct_access %return, element1
-// CHECK:STDOUT:   %.loc17_10.3: init %i32 = initialize_from %.loc17_10.1 to %.loc17_10.2
-// CHECK:STDOUT:   %.loc17_10.4: f64 = struct_access %y.ref, element0
-// CHECK:STDOUT:   %.loc17_10.5: ref f64 = struct_access %return, element0
-// CHECK:STDOUT:   %.loc17_10.6: init f64 = initialize_from %.loc17_10.4 to %.loc17_10.5
-// CHECK:STDOUT:   %.loc17_10.7: init %struct_type.a.b = struct_init (%.loc17_10.3, %.loc17_10.6) to %return
-// CHECK:STDOUT:   %.loc17_11: init %struct_type.a.b = converted %y.ref, %.loc17_10.7
+// CHECK:STDOUT:   %.loc17_10.2: %i32.builtin = as_compatible %.loc17_10.1
+// CHECK:STDOUT:   %.loc17_10.3: %i32 = as_compatible %.loc17_10.2
+// CHECK:STDOUT:   %.loc17_10.4: ref %i32 = struct_access %return, element1
+// CHECK:STDOUT:   %.loc17_10.5: init %i32 = initialize_from %.loc17_10.1 to %.loc17_10.4
+// CHECK:STDOUT:   %.loc17_10.6: f64 = struct_access %y.ref, element0
+// CHECK:STDOUT:   %.loc17_10.7: ref f64 = struct_access %return, element0
+// CHECK:STDOUT:   %.loc17_10.8: init f64 = initialize_from %.loc17_10.6 to %.loc17_10.7
+// CHECK:STDOUT:   %.loc17_10.9: init %struct_type.a.b = struct_init (%.loc17_10.5, %.loc17_10.8) to %return
+// CHECK:STDOUT:   %.loc17_11: init %struct_type.a.b = converted %y.ref, %.loc17_10.9
 // CHECK:STDOUT:   return %.loc17_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

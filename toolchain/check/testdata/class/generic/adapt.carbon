@@ -231,8 +231,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %.loc13_13.2: %C.2 = converted %a.ref, %.loc13_13.1
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, @C.%.loc5 [template = @C.%.loc5]
 // CHECK:STDOUT:   %.loc13_23.1: ref %i32 = class_element_access %.loc13_13.2, element0
-// CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
-// CHECK:STDOUT:   return %.loc13_23.2
+// CHECK:STDOUT:   %.loc13_23.2: ref %i32.builtin = as_compatible %.loc13_23.1
+// CHECK:STDOUT:   %.loc13_23.3: ref %i32 = as_compatible %.loc13_23.2
+// CHECK:STDOUT:   %.loc13_23.4: %i32 = bind_value %.loc13_23.1
+// CHECK:STDOUT:   return %.loc13_23.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -357,8 +359,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %.loc7_13.2: %C.2 = converted %a.ref, %.loc7_13.1
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, imports.%import_ref.9 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_23.1: ref %i32 = class_element_access %.loc7_13.2, element0
-// CHECK:STDOUT:   %.loc7_23.2: %i32 = bind_value %.loc7_23.1
-// CHECK:STDOUT:   return %.loc7_23.2
+// CHECK:STDOUT:   %.loc7_23.2: ref %i32.builtin = as_compatible %.loc7_23.1
+// CHECK:STDOUT:   %.loc7_23.3: ref %i32 = as_compatible %.loc7_23.2
+// CHECK:STDOUT:   %.loc7_23.4: %i32 = bind_value %.loc7_23.1
+// CHECK:STDOUT:   return %.loc7_23.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -488,6 +492,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, @C.%.loc5 [template = @C.%.loc5]
 // CHECK:STDOUT:   %.loc21_11.1: %C.2 = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc21_13.1: %i32.builtin = as_compatible %.loc21_11.2 [template = <error>]
+// CHECK:STDOUT:   %.loc21_13.2: %i32 = as_compatible %.loc21_13.1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -710,6 +716,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, imports.%import_ref.8 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc14_11.1: %C.2 = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc14_13.1: %i32.builtin = as_compatible %.loc14_11.2 [template = <error>]
+// CHECK:STDOUT:   %.loc14_13.2: %i32 = as_compatible %.loc14_13.1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -971,8 +979,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %.loc15_13.2: %C = converted %a.ref, %.loc15_13.1
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc11 [template = @C.%.loc11]
 // CHECK:STDOUT:   %.loc15_18.1: ref %i32 = class_element_access %.loc15_13.2, element0
-// CHECK:STDOUT:   %.loc15_18.2: %i32 = bind_value %.loc15_18.1
-// CHECK:STDOUT:   return %.loc15_18.2
+// CHECK:STDOUT:   %.loc15_18.2: ref %i32.builtin = as_compatible %.loc15_18.1
+// CHECK:STDOUT:   %.loc15_18.3: ref %i32 = as_compatible %.loc15_18.2
+// CHECK:STDOUT:   %.loc15_18.4: %i32 = bind_value %.loc15_18.1
+// CHECK:STDOUT:   return %.loc15_18.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Adapter(constants.%T) {

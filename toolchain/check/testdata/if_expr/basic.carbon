@@ -22,6 +22,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
@@ -114,8 +115,10 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int_32.loc13_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13_23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_23.1: ref %i32 = array_index %x.ref.loc13_20, %m.ref
-// CHECK:STDOUT:   %.loc13_23.2: %i32 = bind_value %.loc13_23.1
-// CHECK:STDOUT:   br !if.expr.result(%.loc13_23.2)
+// CHECK:STDOUT:   %.loc13_23.2: ref %i32.builtin = as_compatible %.loc13_23.1
+// CHECK:STDOUT:   %.loc13_23.3: ref %i32 = as_compatible %.loc13_23.2
+// CHECK:STDOUT:   %.loc13_23.4: %i32 = bind_value %.loc13_23.1
+// CHECK:STDOUT:   br !if.expr.result(%.loc13_23.4)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %x.ref.loc13_30: ref %array_type = name_ref x, %x
@@ -123,6 +126,8 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int_32.loc13_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13_33.1: ref %i32 = array_index %x.ref.loc13_30, %n.ref
+// CHECK:STDOUT:   %.loc13_25.1: ref %i32.builtin = as_compatible %.loc13_33.1
+// CHECK:STDOUT:   %.loc13_25.2: ref %i32 = as_compatible %.loc13_25.1
 // CHECK:STDOUT:   %.loc13_33.2: %i32 = bind_value %.loc13_33.1
 // CHECK:STDOUT:   br !if.expr.result(%.loc13_33.2)
 // CHECK:STDOUT:

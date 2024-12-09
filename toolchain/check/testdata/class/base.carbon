@@ -50,6 +50,7 @@ class Derived {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.b.1 [template]
@@ -187,21 +188,29 @@ class Derived {
 // CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %d.ref.loc18_12: %Derived.elem.2 = name_ref d, @Derived.%.loc10 [template = @Derived.%.loc10]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %d.ref.loc18_11, element1
-// CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
+// CHECK:STDOUT:   %.loc18_12.2: ref %i32.builtin = as_compatible %.loc18_12.1
+// CHECK:STDOUT:   %.loc18_12.3: ref %i32 = as_compatible %.loc18_12.2
+// CHECK:STDOUT:   %.loc18_12.4: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   %d.ref.loc18_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.1 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
 // CHECK:STDOUT:   %.loc18_17.1: ref %Base = class_element_access %d.ref.loc18_16, element0
 // CHECK:STDOUT:   %.loc18_17.2: %Base = bind_value %.loc18_17.1
 // CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc4 [template = @Base.%.loc4]
 // CHECK:STDOUT:   %.loc18_22.1: ref %i32 = class_element_access %.loc18_17.2, element0
-// CHECK:STDOUT:   %.loc18_22.2: %i32 = bind_value %.loc18_22.1
-// CHECK:STDOUT:   %.loc18_24.1: %tuple.type.2 = tuple_literal (%.loc18_12.2, %.loc18_22.2)
+// CHECK:STDOUT:   %.loc18_22.2: ref %i32.builtin = as_compatible %.loc18_22.1
+// CHECK:STDOUT:   %.loc18_22.3: ref %i32 = as_compatible %.loc18_22.2
+// CHECK:STDOUT:   %.loc18_22.4: %i32 = bind_value %.loc18_22.1
+// CHECK:STDOUT:   %.loc18_24.1: %tuple.type.2 = tuple_literal (%.loc18_12.4, %.loc18_22.4)
+// CHECK:STDOUT:   %.loc18_24.2: %i32.builtin = as_compatible %.loc18_12.4
+// CHECK:STDOUT:   %.loc18_24.3: %i32 = as_compatible %.loc18_24.2
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc18_24.2: init %i32 = initialize_from %.loc18_12.2 to %tuple.elem0
+// CHECK:STDOUT:   %.loc18_24.4: init %i32 = initialize_from %.loc18_12.4 to %tuple.elem0
+// CHECK:STDOUT:   %.loc18_24.5: %i32.builtin = as_compatible %.loc18_22.4
+// CHECK:STDOUT:   %.loc18_24.6: %i32 = as_compatible %.loc18_24.5
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %.loc18_22.2 to %tuple.elem1
-// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.2 = tuple_init (%.loc18_24.2, %.loc18_24.3) to %return
-// CHECK:STDOUT:   %.loc18_25: init %tuple.type.2 = converted %.loc18_24.1, %.loc18_24.4
+// CHECK:STDOUT:   %.loc18_24.7: init %i32 = initialize_from %.loc18_22.4 to %tuple.elem1
+// CHECK:STDOUT:   %.loc18_24.8: init %tuple.type.2 = tuple_init (%.loc18_24.4, %.loc18_24.7) to %return
+// CHECK:STDOUT:   %.loc18_25: init %tuple.type.2 = converted %.loc18_24.1, %.loc18_24.8
 // CHECK:STDOUT:   return %.loc18_25 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

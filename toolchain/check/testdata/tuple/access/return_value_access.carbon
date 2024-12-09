@@ -23,6 +23,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -100,6 +101,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc14_12.1: ref %tuple.type.2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_12.2: ref %tuple.type.2 = temporary %.loc14_12.1, %F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc14_12.2, element0
+// CHECK:STDOUT:   %.loc14_15.1: ref %i32.builtin = as_compatible %tuple.elem0
+// CHECK:STDOUT:   %.loc14_15.2: ref %i32 = as_compatible %.loc14_15.1
 // CHECK:STDOUT:   %.loc14_13: %i32 = bind_value %tuple.elem0
 // CHECK:STDOUT:   return %.loc14_13
 // CHECK:STDOUT: }

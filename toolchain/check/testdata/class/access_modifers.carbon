@@ -341,6 +341,7 @@ class A {
 // CHECK:STDOUT:   %Circle: type = class_type @Circle [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [template]
 // CHECK:STDOUT:   %GetRadius.type: type = fn_type @GetRadius [template]
 // CHECK:STDOUT:   %GetRadius: %GetRadius.type = struct_value () [template]
@@ -433,8 +434,10 @@ class A {
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%.loc5 [template = @Circle.%.loc5]
 // CHECK:STDOUT:   %.loc8_16.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc8_16.2: %i32 = bind_value %.loc8_16.1
-// CHECK:STDOUT:   return %.loc8_16.2
+// CHECK:STDOUT:   %.loc8_16.2: ref %i32.builtin = as_compatible %.loc8_16.1
+// CHECK:STDOUT:   %.loc8_16.3: ref %i32 = as_compatible %.loc8_16.2
+// CHECK:STDOUT:   %.loc8_16.4: %i32 = bind_value %.loc8_16.1
+// CHECK:STDOUT:   return %.loc8_16.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SomeInternalFunction() -> %i32 {

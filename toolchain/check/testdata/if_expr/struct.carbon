@@ -28,6 +28,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
@@ -122,20 +123,28 @@ fn F(cond: bool) {
 // CHECK:STDOUT: !if.expr.then:
 // CHECK:STDOUT:   %a.ref.loc15_18: ref %struct_type.a.b.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc15_18.1: ref %i32 = struct_access %a.ref.loc15_18, element0
-// CHECK:STDOUT:   %.loc15_18.2: %i32 = bind_value %.loc15_18.1
-// CHECK:STDOUT:   %.loc15_18.3: ref %i32 = struct_access %a.ref.loc15_18, element1
-// CHECK:STDOUT:   %.loc15_18.4: %i32 = bind_value %.loc15_18.3
-// CHECK:STDOUT:   %struct.loc15_18: %struct_type.a.b.1 = struct_value (%.loc15_18.2, %.loc15_18.4)
-// CHECK:STDOUT:   %.loc15_18.5: %struct_type.a.b.1 = converted %a.ref.loc15_18, %struct.loc15_18
-// CHECK:STDOUT:   br !if.expr.result(%.loc15_18.5)
+// CHECK:STDOUT:   %.loc15_18.2: ref %i32.builtin = as_compatible %.loc15_18.1
+// CHECK:STDOUT:   %.loc15_18.3: ref %i32 = as_compatible %.loc15_18.2
+// CHECK:STDOUT:   %.loc15_18.4: %i32 = bind_value %.loc15_18.1
+// CHECK:STDOUT:   %.loc15_18.5: ref %i32 = struct_access %a.ref.loc15_18, element1
+// CHECK:STDOUT:   %.loc15_18.6: ref %i32.builtin = as_compatible %.loc15_18.5
+// CHECK:STDOUT:   %.loc15_18.7: ref %i32 = as_compatible %.loc15_18.6
+// CHECK:STDOUT:   %.loc15_18.8: %i32 = bind_value %.loc15_18.5
+// CHECK:STDOUT:   %struct.loc15_18: %struct_type.a.b.1 = struct_value (%.loc15_18.4, %.loc15_18.8)
+// CHECK:STDOUT:   %.loc15_18.9: %struct_type.a.b.1 = converted %a.ref.loc15_18, %struct.loc15_18
+// CHECK:STDOUT:   br !if.expr.result(%.loc15_18.9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %a.ref.loc15_25: ref %struct_type.a.b.1 = name_ref a, %a
 // CHECK:STDOUT:   %.loc15_25.1: ref %i32 = struct_access %a.ref.loc15_25, element0
-// CHECK:STDOUT:   %.loc15_25.2: %i32 = bind_value %.loc15_25.1
-// CHECK:STDOUT:   %.loc15_25.3: ref %i32 = struct_access %a.ref.loc15_25, element1
-// CHECK:STDOUT:   %.loc15_25.4: %i32 = bind_value %.loc15_25.3
-// CHECK:STDOUT:   %struct.loc15_25: %struct_type.a.b.1 = struct_value (%.loc15_25.2, %.loc15_25.4)
+// CHECK:STDOUT:   %.loc15_25.2: ref %i32.builtin = as_compatible %.loc15_25.1
+// CHECK:STDOUT:   %.loc15_25.3: ref %i32 = as_compatible %.loc15_25.2
+// CHECK:STDOUT:   %.loc15_25.4: %i32 = bind_value %.loc15_25.1
+// CHECK:STDOUT:   %.loc15_25.5: ref %i32 = struct_access %a.ref.loc15_25, element1
+// CHECK:STDOUT:   %.loc15_25.6: ref %i32.builtin = as_compatible %.loc15_25.5
+// CHECK:STDOUT:   %.loc15_25.7: ref %i32 = as_compatible %.loc15_25.6
+// CHECK:STDOUT:   %.loc15_25.8: %i32 = bind_value %.loc15_25.5
+// CHECK:STDOUT:   %struct.loc15_25: %struct_type.a.b.1 = struct_value (%.loc15_25.4, %.loc15_25.8)
 // CHECK:STDOUT:   %.loc15_20: %struct_type.a.b.1 = converted %a.ref.loc15_25, %struct.loc15_25
 // CHECK:STDOUT:   br !if.expr.result(%.loc15_20)
 // CHECK:STDOUT:

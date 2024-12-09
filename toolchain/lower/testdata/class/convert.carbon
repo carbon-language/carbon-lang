@@ -31,8 +31,8 @@ fn DoIt() {
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc16_48.2 = load i32, ptr %.loc16_48.1.n, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc16_48.2, !dbg !8
+// CHECK:STDOUT:   %.loc16_48.4 = load i32, ptr %.loc16_48.1.n, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc16_48.4, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CConsume.Main(i32 %n) !dbg !9 {

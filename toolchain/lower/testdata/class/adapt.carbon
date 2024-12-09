@@ -73,8 +73,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: define i32 @_CGetB.PairAdapter.Main(ptr %self) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !13
-// CHECK:STDOUT:   ret i32 %.loc22_14.2, !dbg !14
+// CHECK:STDOUT:   %.loc22_14.4 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc22_14.4, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUse.Main() !dbg !15 {

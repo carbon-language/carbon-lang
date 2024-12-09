@@ -46,8 +46,8 @@ fn G() {
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_CF.Main.118(ptr %c.var), !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main.119(ptr %d.var), !dbg !12
-// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.120(i32 %.loc24), !dbg !14
+// CHECK:STDOUT:   %.loc24_5.3 = load i32, ptr %n.var, align 4, !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main.120(i32 %.loc24_5.3), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main.121(%type zeroinitializer), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }

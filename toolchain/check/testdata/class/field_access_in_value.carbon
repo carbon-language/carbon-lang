@@ -28,6 +28,7 @@ fn Test() {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.j.k [template]
@@ -111,15 +112,23 @@ fn Test() {
 // CHECK:STDOUT:   %c.ref.loc21: %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc21: %Class.elem = name_ref j, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc21_18.1: ref %i32 = class_element_access %c.ref.loc21, element0
-// CHECK:STDOUT:   %.loc21_18.2: %i32 = bind_value %.loc21_18.1
-// CHECK:STDOUT:   assign %cj.var, %.loc21_18.2
+// CHECK:STDOUT:   %.loc21_18.2: ref %i32.builtin = as_compatible %.loc21_18.1
+// CHECK:STDOUT:   %.loc21_18.3: ref %i32 = as_compatible %.loc21_18.2
+// CHECK:STDOUT:   %.loc21_18.4: %i32 = bind_value %.loc21_18.1
+// CHECK:STDOUT:   %.loc21_20.1: %i32.builtin = as_compatible %.loc21_18.4
+// CHECK:STDOUT:   %.loc21_20.2: %i32 = as_compatible %.loc21_20.1
+// CHECK:STDOUT:   assign %cj.var, %.loc21_18.4
 // CHECK:STDOUT:   %ck.var: ref %i32 = var ck
 // CHECK:STDOUT:   %ck: ref %i32 = bind_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc22: %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc22: %Class.elem = name_ref k, @Class.%.loc13 [template = @Class.%.loc13]
 // CHECK:STDOUT:   %.loc22_18.1: ref %i32 = class_element_access %c.ref.loc22, element1
-// CHECK:STDOUT:   %.loc22_18.2: %i32 = bind_value %.loc22_18.1
-// CHECK:STDOUT:   assign %ck.var, %.loc22_18.2
+// CHECK:STDOUT:   %.loc22_18.2: ref %i32.builtin = as_compatible %.loc22_18.1
+// CHECK:STDOUT:   %.loc22_18.3: ref %i32 = as_compatible %.loc22_18.2
+// CHECK:STDOUT:   %.loc22_18.4: %i32 = bind_value %.loc22_18.1
+// CHECK:STDOUT:   %.loc22_20.1: %i32.builtin = as_compatible %.loc22_18.4
+// CHECK:STDOUT:   %.loc22_20.2: %i32 = as_compatible %.loc22_20.1
+// CHECK:STDOUT:   assign %ck.var, %.loc22_18.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

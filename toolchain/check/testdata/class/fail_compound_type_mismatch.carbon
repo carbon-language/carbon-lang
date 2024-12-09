@@ -32,6 +32,7 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a [template]
@@ -105,6 +106,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16 [template = @B.%.loc16]
 // CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc26_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc26_17.1: %i32.builtin = as_compatible %.loc26_11.2 [template = <error>]
+// CHECK:STDOUT:   %.loc26_17.2: %i32 = as_compatible %.loc26_17.1 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

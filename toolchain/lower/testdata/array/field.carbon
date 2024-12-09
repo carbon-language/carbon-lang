@@ -43,8 +43,8 @@ class A {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc19_16.1.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc19_20.2.array.index = getelementptr inbounds [2 x i32], ptr %.loc19_16.1.v, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc19_20.3 = load i32, ptr %.loc19_20.2.array.index, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 %.loc19_20.3, !dbg !12
+// CHECK:STDOUT:   %.loc19_20.5 = load i32, ptr %.loc19_20.2.array.index, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc19_20.5, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUse.A.Main(ptr %self) !dbg !13 {

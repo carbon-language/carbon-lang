@@ -29,8 +29,8 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc19_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc19_14.2 = load i32, ptr %.loc19_14.1.a, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc19_14.2, !dbg !8
+// CHECK:STDOUT:   %.loc19_14.4 = load i32, ptr %.loc19_14.1.a, align 4, !dbg !7
+// CHECK:STDOUT:   ret i32 %.loc19_14.4, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) !dbg !9 {

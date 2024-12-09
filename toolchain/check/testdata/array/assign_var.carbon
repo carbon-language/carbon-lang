@@ -17,6 +17,7 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32, %i32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
@@ -93,22 +94,28 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_35
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %tuple.elem0.loc12: ref %i32 = tuple_access %a.ref, element0
-// CHECK:STDOUT:   %.loc12_19.1: %i32 = bind_value %tuple.elem0.loc12
+// CHECK:STDOUT:   %.loc12_19.1: ref %i32.builtin = as_compatible %tuple.elem0.loc12
+// CHECK:STDOUT:   %.loc12_19.2: ref %i32 = as_compatible %.loc12_19.1
+// CHECK:STDOUT:   %.loc12_19.3: %i32 = bind_value %tuple.elem0.loc12
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %.loc12_19.2: ref %i32 = array_index file.%b.var, %int_0
-// CHECK:STDOUT:   %.loc12_19.3: init %i32 = initialize_from %.loc12_19.1 to %.loc12_19.2
+// CHECK:STDOUT:   %.loc12_19.4: ref %i32 = array_index file.%b.var, %int_0
+// CHECK:STDOUT:   %.loc12_19.5: init %i32 = initialize_from %.loc12_19.3 to %.loc12_19.4
 // CHECK:STDOUT:   %tuple.elem1.loc12: ref %i32 = tuple_access %a.ref, element1
-// CHECK:STDOUT:   %.loc12_19.4: %i32 = bind_value %tuple.elem1.loc12
+// CHECK:STDOUT:   %.loc12_19.6: ref %i32.builtin = as_compatible %tuple.elem1.loc12
+// CHECK:STDOUT:   %.loc12_19.7: ref %i32 = as_compatible %.loc12_19.6
+// CHECK:STDOUT:   %.loc12_19.8: %i32 = bind_value %tuple.elem1.loc12
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc12_19.5: ref %i32 = array_index file.%b.var, %int_1.loc12
-// CHECK:STDOUT:   %.loc12_19.6: init %i32 = initialize_from %.loc12_19.4 to %.loc12_19.5
+// CHECK:STDOUT:   %.loc12_19.9: ref %i32 = array_index file.%b.var, %int_1.loc12
+// CHECK:STDOUT:   %.loc12_19.10: init %i32 = initialize_from %.loc12_19.8 to %.loc12_19.9
 // CHECK:STDOUT:   %tuple.elem2.loc12: ref %i32 = tuple_access %a.ref, element2
-// CHECK:STDOUT:   %.loc12_19.7: %i32 = bind_value %tuple.elem2.loc12
+// CHECK:STDOUT:   %.loc12_19.11: ref %i32.builtin = as_compatible %tuple.elem2.loc12
+// CHECK:STDOUT:   %.loc12_19.12: ref %i32 = as_compatible %.loc12_19.11
+// CHECK:STDOUT:   %.loc12_19.13: %i32 = bind_value %tuple.elem2.loc12
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %.loc12_19.8: ref %i32 = array_index file.%b.var, %int_2.loc12
-// CHECK:STDOUT:   %.loc12_19.9: init %i32 = initialize_from %.loc12_19.7 to %.loc12_19.8
-// CHECK:STDOUT:   %.loc12_19.10: init %array_type = array_init (%.loc12_19.3, %.loc12_19.6, %.loc12_19.9) to file.%b.var
-// CHECK:STDOUT:   %.loc12_20: init %array_type = converted %a.ref, %.loc12_19.10
+// CHECK:STDOUT:   %.loc12_19.14: ref %i32 = array_index file.%b.var, %int_2.loc12
+// CHECK:STDOUT:   %.loc12_19.15: init %i32 = initialize_from %.loc12_19.13 to %.loc12_19.14
+// CHECK:STDOUT:   %.loc12_19.16: init %array_type = array_init (%.loc12_19.5, %.loc12_19.10, %.loc12_19.15) to file.%b.var
+// CHECK:STDOUT:   %.loc12_20: init %array_type = converted %a.ref, %.loc12_19.16
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_20
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

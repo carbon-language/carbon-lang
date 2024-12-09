@@ -18,6 +18,7 @@ var c: i32 = b.0;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_12.1: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -70,15 +71,19 @@ var c: i32 = b.0;
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_22
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %tuple.elem0.loc12: ref %i32 = tuple_access %a.ref, element0
-// CHECK:STDOUT:   %.loc12_17.1: %i32 = bind_value %tuple.elem0.loc12
-// CHECK:STDOUT:   %.loc12_17.2: init %tuple.type.2 = tuple_init (%.loc12_17.1) to file.%b.var
-// CHECK:STDOUT:   %.loc12_18: init %tuple.type.2 = converted %a.ref, %.loc12_17.2
+// CHECK:STDOUT:   %.loc12_17.1: ref %i32.builtin = as_compatible %tuple.elem0.loc12
+// CHECK:STDOUT:   %.loc12_17.2: ref %i32 = as_compatible %.loc12_17.1
+// CHECK:STDOUT:   %.loc12_17.3: %i32 = bind_value %tuple.elem0.loc12
+// CHECK:STDOUT:   %.loc12_17.4: init %tuple.type.2 = tuple_init (%.loc12_17.3) to file.%b.var
+// CHECK:STDOUT:   %.loc12_18: init %tuple.type.2 = converted %a.ref, %.loc12_17.4
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_18
 // CHECK:STDOUT:   %b.ref: ref %tuple.type.2 = name_ref b, file.%b
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0.loc13: ref %i32 = tuple_access %b.ref, element0
-// CHECK:STDOUT:   %.loc13: %i32 = bind_value %tuple.elem0.loc13
-// CHECK:STDOUT:   assign file.%c.var, %.loc13
+// CHECK:STDOUT:   %.loc13_17.1: ref %i32.builtin = as_compatible %tuple.elem0.loc13
+// CHECK:STDOUT:   %.loc13_17.2: ref %i32 = as_compatible %.loc13_17.1
+// CHECK:STDOUT:   %.loc13_15: %i32 = bind_value %tuple.elem0.loc13
+// CHECK:STDOUT:   assign file.%c.var, %.loc13_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

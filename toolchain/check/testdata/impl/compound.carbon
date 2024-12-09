@@ -59,6 +59,7 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %impl_witness.1 [template]
 // CHECK:STDOUT:   %NonInstanceCall.type: type = fn_type @NonInstanceCall [template]
 // CHECK:STDOUT:   %NonInstanceCall: %NonInstanceCall.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template]
@@ -242,8 +243,10 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:   %.loc34_4.1: ref %i32 = deref %p.ref
 // CHECK:STDOUT:   %impl.elem1: %G.type.1 = impl_witness_access constants.%impl_witness.1, element1 [template = constants.%G.2]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc34_4.1, %impl.elem1
-// CHECK:STDOUT:   %.loc34_4.2: %i32 = bind_value %.loc34_4.1
-// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(%.loc34_4.2)
+// CHECK:STDOUT:   %.loc34_4.2: ref %i32.builtin = as_compatible %.loc34_4.1
+// CHECK:STDOUT:   %.loc34_4.3: ref %i32 = as_compatible %.loc34_4.2
+// CHECK:STDOUT:   %.loc34_4.4: %i32 = bind_value %.loc34_4.1
+// CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(%.loc34_4.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

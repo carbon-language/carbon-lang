@@ -245,6 +245,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %struct_type.b.c: type = struct_type {.b: %i32, .c: %tuple.type.2} [template]
@@ -320,32 +321,40 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_ref.ref: ref %struct_type.a = name_ref a_ref, imports.%import_ref.1
 // CHECK:STDOUT:   %.loc4_20.1: ref %i32 = struct_access %a_ref.ref, element0
-// CHECK:STDOUT:   %.loc4_20.2: %i32 = bind_value %.loc4_20.1
-// CHECK:STDOUT:   %.loc4_20.3: init %struct_type.a = struct_init (%.loc4_20.2) to file.%a.var
-// CHECK:STDOUT:   %.loc4_25: init %struct_type.a = converted %a_ref.ref, %.loc4_20.3
+// CHECK:STDOUT:   %.loc4_20.2: ref %i32.builtin = as_compatible %.loc4_20.1
+// CHECK:STDOUT:   %.loc4_20.3: ref %i32 = as_compatible %.loc4_20.2
+// CHECK:STDOUT:   %.loc4_20.4: %i32 = bind_value %.loc4_20.1
+// CHECK:STDOUT:   %.loc4_20.5: init %struct_type.a = struct_init (%.loc4_20.4) to file.%a.var
+// CHECK:STDOUT:   %.loc4_25: init %struct_type.a = converted %a_ref.ref, %.loc4_20.5
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_25
 // CHECK:STDOUT:   %b_ref.ref: ref %struct_type.a.d.1 = name_ref b_ref, imports.%import_ref.2
 // CHECK:STDOUT:   %.loc5_47.1: ref %struct_type.b.c = struct_access %b_ref.ref, element0
 // CHECK:STDOUT:   %.loc5_47.2: ref %i32 = struct_access %.loc5_47.1, element0
-// CHECK:STDOUT:   %.loc5_47.3: %i32 = bind_value %.loc5_47.2
-// CHECK:STDOUT:   %.loc5_47.4: ref %struct_type.b.c = struct_access file.%b.var, element0
-// CHECK:STDOUT:   %.loc5_47.5: ref %i32 = struct_access %.loc5_47.4, element0
-// CHECK:STDOUT:   %.loc5_47.6: init %i32 = initialize_from %.loc5_47.3 to %.loc5_47.5
-// CHECK:STDOUT:   %.loc5_47.7: ref %tuple.type.2 = struct_access %.loc5_47.1, element1
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc5_47.7, element0
-// CHECK:STDOUT:   %.loc5_47.8: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %.loc5_47.9: ref %tuple.type.2 = struct_access %.loc5_47.4, element1
-// CHECK:STDOUT:   %.loc5_47.10: init %tuple.type.2 = tuple_init (%.loc5_47.8) to %.loc5_47.9
-// CHECK:STDOUT:   %.loc5_47.11: init %tuple.type.2 = converted %.loc5_47.7, %.loc5_47.10
-// CHECK:STDOUT:   %.loc5_47.12: init %tuple.type.2 = initialize_from %.loc5_47.11 to %.loc5_47.9
-// CHECK:STDOUT:   %.loc5_47.13: init %struct_type.b.c = struct_init (%.loc5_47.6, %.loc5_47.12) to %.loc5_47.4
-// CHECK:STDOUT:   %.loc5_47.14: init %struct_type.b.c = converted %.loc5_47.1, %.loc5_47.13
-// CHECK:STDOUT:   %.loc5_47.15: ref %i32 = struct_access %b_ref.ref, element1
-// CHECK:STDOUT:   %.loc5_47.16: %i32 = bind_value %.loc5_47.15
-// CHECK:STDOUT:   %.loc5_47.17: ref %i32 = struct_access file.%b.var, element1
-// CHECK:STDOUT:   %.loc5_47.18: init %i32 = initialize_from %.loc5_47.16 to %.loc5_47.17
-// CHECK:STDOUT:   %.loc5_47.19: init %struct_type.a.d.1 = struct_init (%.loc5_47.14, %.loc5_47.18) to file.%b.var
-// CHECK:STDOUT:   %.loc5_52: init %struct_type.a.d.1 = converted %b_ref.ref, %.loc5_47.19
+// CHECK:STDOUT:   %.loc5_47.3: ref %i32.builtin = as_compatible %.loc5_47.2
+// CHECK:STDOUT:   %.loc5_47.4: ref %i32 = as_compatible %.loc5_47.3
+// CHECK:STDOUT:   %.loc5_47.5: %i32 = bind_value %.loc5_47.2
+// CHECK:STDOUT:   %.loc5_47.6: ref %struct_type.b.c = struct_access file.%b.var, element0
+// CHECK:STDOUT:   %.loc5_47.7: ref %i32 = struct_access %.loc5_47.6, element0
+// CHECK:STDOUT:   %.loc5_47.8: init %i32 = initialize_from %.loc5_47.5 to %.loc5_47.7
+// CHECK:STDOUT:   %.loc5_47.9: ref %tuple.type.2 = struct_access %.loc5_47.1, element1
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc5_47.9, element0
+// CHECK:STDOUT:   %.loc5_47.10: ref %i32.builtin = as_compatible %tuple.elem0
+// CHECK:STDOUT:   %.loc5_47.11: ref %i32 = as_compatible %.loc5_47.10
+// CHECK:STDOUT:   %.loc5_47.12: %i32 = bind_value %tuple.elem0
+// CHECK:STDOUT:   %.loc5_47.13: ref %tuple.type.2 = struct_access %.loc5_47.6, element1
+// CHECK:STDOUT:   %.loc5_47.14: init %tuple.type.2 = tuple_init (%.loc5_47.12) to %.loc5_47.13
+// CHECK:STDOUT:   %.loc5_47.15: init %tuple.type.2 = converted %.loc5_47.9, %.loc5_47.14
+// CHECK:STDOUT:   %.loc5_47.16: init %tuple.type.2 = initialize_from %.loc5_47.15 to %.loc5_47.13
+// CHECK:STDOUT:   %.loc5_47.17: init %struct_type.b.c = struct_init (%.loc5_47.8, %.loc5_47.16) to %.loc5_47.6
+// CHECK:STDOUT:   %.loc5_47.18: init %struct_type.b.c = converted %.loc5_47.1, %.loc5_47.17
+// CHECK:STDOUT:   %.loc5_47.19: ref %i32 = struct_access %b_ref.ref, element1
+// CHECK:STDOUT:   %.loc5_47.20: ref %i32.builtin = as_compatible %.loc5_47.19
+// CHECK:STDOUT:   %.loc5_47.21: ref %i32 = as_compatible %.loc5_47.20
+// CHECK:STDOUT:   %.loc5_47.22: %i32 = bind_value %.loc5_47.19
+// CHECK:STDOUT:   %.loc5_47.23: ref %i32 = struct_access file.%b.var, element1
+// CHECK:STDOUT:   %.loc5_47.24: init %i32 = initialize_from %.loc5_47.22 to %.loc5_47.23
+// CHECK:STDOUT:   %.loc5_47.25: init %struct_type.a.d.1 = struct_init (%.loc5_47.18, %.loc5_47.24) to file.%b.var
+// CHECK:STDOUT:   %.loc5_52: init %struct_type.a.d.1 = converted %b_ref.ref, %.loc5_47.25
 // CHECK:STDOUT:   assign file.%b.var, %.loc5_52
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
 // CHECK:STDOUT:   %.loc6: ref %C.2 = splice_block file.%c.var {}

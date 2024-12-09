@@ -29,6 +29,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.1 [template]
@@ -142,7 +143,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc22_31: init %i32 = converted %int_0, %int.convert_checked [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign %result.var, %.loc22_31
-// CHECK:STDOUT:   %.loc22_16: %i32 = bind_value %result
-// CHECK:STDOUT:   return %.loc22_16
+// CHECK:STDOUT:   %.loc22_16.1: ref %i32.builtin = as_compatible %result
+// CHECK:STDOUT:   %.loc22_16.2: ref %i32 = as_compatible %.loc22_16.1
+// CHECK:STDOUT:   %.loc22_16.3: %i32 = bind_value %result
+// CHECK:STDOUT:   return %.loc22_16.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

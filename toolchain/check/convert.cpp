@@ -722,7 +722,7 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
 }
 
 // Returns the non-adapter type that is compatible with the specified type.
-static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
+static auto GetCompatibleFoundationType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // If the type is an adapter, its object representation type is its compatible
   // non-adapter type.
@@ -797,9 +797,11 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   // T explicitly converts to U if T is compatible with U.
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
-    auto target_base_id = GetCompatibleBaseType(context, target.type_id);
-    auto value_base_id = GetCompatibleBaseType(context, value_type_id);
-    if (target_base_id == value_base_id) {
+    auto target_foundation_id =
+        GetCompatibleFoundationType(context, target.type_id);
+    auto value_foundation_id =
+        GetCompatibleFoundationType(context, value_type_id);
+    if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.
       if (SemIR::GetExprCategory(context.sem_ir(), value_id) ==
@@ -917,6 +919,43 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
       return context.AddInst<SemIR::FacetAccessType>(
           loc_id, {.type_id = target.type_id, .facet_value_inst_id = value_id});
+    }
+  }
+
+  // When converting between adaptor classes of the same type (we don't
+  // implicitly convert between different adaptors even if they adapt the same
+  // foundation type), and when no other conversion was available on the adaptor
+  // class itself, we do the builtin conversion step on their foundation type.
+  // To do so, we have to insert a conversion up to the foundation and back
+  // down.
+  if (value_type_id == target.type_id) {
+    auto foundation_value_type_id =
+        GetCompatibleFoundationType(context, value_type_id);
+    if (foundation_value_type_id != value_type_id) {
+      auto foundation_target_type_id =
+          GetCompatibleFoundationType(context, target.type_id);
+      CARBON_CHECK(foundation_value_type_id == foundation_target_type_id,
+                   "Same type ids have different foundation type ids");
+
+      auto foundation_value_id = context.AddInst<SemIR::AsCompatible>(
+          loc_id, {.type_id = foundation_value_type_id, .source_id = value_id});
+      // We recurse here, but at most one time, since we have walked the full
+      // adapt chain to the root foundation type before recursing.
+      auto converted_value_id =
+          PerformBuiltinConversion(context, loc_id, foundation_value_id,
+                                   {
+                                       .kind = target.kind,
+                                       .type_id = foundation_target_type_id,
+                                       .init_id = target.init_id,
+                                       .init_block = target.init_block,
+                                   });
+      auto target_value_id = context.AddInst<SemIR::AsCompatible>(
+          loc_id, {.type_id = target.type_id, .source_id = converted_value_id});
+      // If no builtin conversion actually happened, we orphan the two
+      // AsCompatible instructions and don't refer to them. If a conversion did
+      // happen, then we return the result of the second AsCompatible.
+      return converted_value_id == foundation_value_id ? value_id
+                                                       : target_value_id;
     }
   }
 

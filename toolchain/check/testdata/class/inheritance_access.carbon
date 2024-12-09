@@ -232,6 +232,7 @@ class B {
 // CHECK:STDOUT:   %Shape: type = class_type @Shape [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Shape.elem: type = unbound_element_type %Shape, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.y: type = struct_type {.x: %i32, .y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.y [template]
@@ -320,14 +321,18 @@ class B {
 // CHECK:STDOUT:   %.loc13_25.2: ref %Shape = converted %self.ref.loc13_21, %.loc13_25.1
 // CHECK:STDOUT:   %.loc13_25.3: ref %i32 = class_element_access %.loc13_25.2, element1
 // CHECK:STDOUT:   %.loc13_27.1: %tuple.type.2 = tuple_literal (%.loc13_17.3, %.loc13_25.3)
+// CHECK:STDOUT:   %.loc13_27.2: ref %i32.builtin = as_compatible %.loc13_17.3
+// CHECK:STDOUT:   %.loc13_27.3: ref %i32 = as_compatible %.loc13_27.2
 // CHECK:STDOUT:   %.loc13_17.4: %i32 = bind_value %.loc13_17.3
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc13_27.2: init %i32 = initialize_from %.loc13_17.4 to %tuple.elem0
+// CHECK:STDOUT:   %.loc13_27.4: init %i32 = initialize_from %.loc13_17.4 to %tuple.elem0
+// CHECK:STDOUT:   %.loc13_27.5: ref %i32.builtin = as_compatible %.loc13_25.3
+// CHECK:STDOUT:   %.loc13_27.6: ref %i32 = as_compatible %.loc13_27.5
 // CHECK:STDOUT:   %.loc13_25.4: %i32 = bind_value %.loc13_25.3
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %.loc13_25.4 to %tuple.elem1
-// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.2 = tuple_init (%.loc13_27.2, %.loc13_27.3) to %return
-// CHECK:STDOUT:   %.loc13_28: init %tuple.type.2 = converted %.loc13_27.1, %.loc13_27.4
+// CHECK:STDOUT:   %.loc13_27.7: init %i32 = initialize_from %.loc13_25.4 to %tuple.elem1
+// CHECK:STDOUT:   %.loc13_27.8: init %tuple.type.2 = tuple_init (%.loc13_27.4, %.loc13_27.7) to %return
+// CHECK:STDOUT:   %.loc13_28: init %tuple.type.2 = converted %.loc13_27.1, %.loc13_27.8
 // CHECK:STDOUT:   return %.loc13_28 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

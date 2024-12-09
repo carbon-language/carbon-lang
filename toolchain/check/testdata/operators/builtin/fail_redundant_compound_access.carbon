@@ -30,6 +30,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
@@ -100,8 +101,10 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref.loc19_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_10: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19: %i32 = bind_value %a.ref.loc19_10
-// CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
+// CHECK:STDOUT:   %.loc19_5.1: ref %i32.builtin = as_compatible %a.ref.loc19_10
+// CHECK:STDOUT:   %.loc19_5.2: ref %i32 = as_compatible %.loc19_5.1
+// CHECK:STDOUT:   %.loc19_10: %i32 = bind_value %a.ref.loc19_10
+// CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19_10
 // CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]

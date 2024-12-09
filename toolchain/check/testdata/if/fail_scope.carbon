@@ -28,6 +28,7 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %VarScope.type: type = fn_type @VarScope [template]
 // CHECK:STDOUT:   %VarScope: %VarScope.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.15), @impl.1(%int_32) [template]
@@ -90,8 +91,10 @@ fn VarScope(b: bool) -> i32 {
 // CHECK:STDOUT:   %.loc13: init %i32 = converted %int_2, %int.convert_checked [template = constants.%int_2.2]
 // CHECK:STDOUT:   assign %n.var, %.loc13
 // CHECK:STDOUT:   %n.ref.loc14: ref %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc14: %i32 = bind_value %n.ref.loc14
-// CHECK:STDOUT:   return %.loc14
+// CHECK:STDOUT:   %.loc14_13.1: ref %i32.builtin = as_compatible %n.ref.loc14
+// CHECK:STDOUT:   %.loc14_13.2: ref %i32 = as_compatible %.loc14_13.1
+// CHECK:STDOUT:   %.loc14_12: %i32 = bind_value %n.ref.loc14
+// CHECK:STDOUT:   return %.loc14_12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %n.ref.loc19: <error> = name_ref n, <error> [template = <error>]

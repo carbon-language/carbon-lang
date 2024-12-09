@@ -186,14 +186,18 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %v: ref %Class.2 = bind_name v, %v.var
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc14_30.1: %struct_type.k.2 = struct_literal (%x.ref)
-// CHECK:STDOUT:   %.loc14_30.2: ref %i32 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc14_30.3: init %i32 = initialize_from %x.ref to %.loc14_30.2
-// CHECK:STDOUT:   %.loc14_30.4: init %Class.2 = class_init (%.loc14_30.3), %v.var
-// CHECK:STDOUT:   %.loc14_31: init %Class.2 = converted %.loc14_30.1, %.loc14_30.4
+// CHECK:STDOUT:   %.loc14_30.2: %i32.builtin = as_compatible %x.ref
+// CHECK:STDOUT:   %.loc14_30.3: %i32 = as_compatible %.loc14_30.2
+// CHECK:STDOUT:   %.loc14_30.4: ref %i32 = class_element_access %v.var, element0
+// CHECK:STDOUT:   %.loc14_30.5: init %i32 = initialize_from %x.ref to %.loc14_30.4
+// CHECK:STDOUT:   %.loc14_30.6: init %Class.2 = class_init (%.loc14_30.5), %v.var
+// CHECK:STDOUT:   %.loc14_31: init %Class.2 = converted %.loc14_30.1, %.loc14_30.6
 // CHECK:STDOUT:   assign %v.var, %.loc14_31
 // CHECK:STDOUT:   %v.ref: ref %Class.2 = name_ref v, %v
 // CHECK:STDOUT:   %k.ref: %Class.elem.2 = name_ref k, @Class.%.loc5 [template = @Class.%.loc5]
 // CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %v.ref, element0
+// CHECK:STDOUT:   %.loc15_13.1: ref %i32.builtin = as_compatible %.loc15_11.1
+// CHECK:STDOUT:   %.loc15_13.2: ref %i32 = as_compatible %.loc15_13.1
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
 // CHECK:STDOUT:   return %.loc15_11.2
 // CHECK:STDOUT: }

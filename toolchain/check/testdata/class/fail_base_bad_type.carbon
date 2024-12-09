@@ -737,6 +737,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %Final: type = class_type @Final [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Final.elem: type = unbound_element_type %Final, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a [template]
@@ -867,6 +868,8 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT:   %.loc22_14.1: ref %Final = class_element_access %.loc22_11, element0
 // CHECK:STDOUT:   %.loc22_14.2: ref %Final = converted %.loc22_11, %.loc22_14.1
 // CHECK:STDOUT:   %.loc22_14.3: ref %i32 = class_element_access %.loc22_14.2, element0
+// CHECK:STDOUT:   %.loc22_16.1: ref %i32.builtin = as_compatible %.loc22_14.3
+// CHECK:STDOUT:   %.loc22_16.2: ref %i32 = as_compatible %.loc22_16.1
 // CHECK:STDOUT:   %.loc22_14.4: %i32 = bind_value %.loc22_14.3
 // CHECK:STDOUT:   return %.loc22_14.4
 // CHECK:STDOUT: }

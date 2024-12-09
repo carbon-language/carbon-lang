@@ -17,6 +17,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %struct_type.a.2: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -65,9 +66,11 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_28
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.1 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc12_20.1: ref %i32 = struct_access %x.ref, element0
-// CHECK:STDOUT:   %.loc12_20.2: %i32 = bind_value %.loc12_20.1
-// CHECK:STDOUT:   %.loc12_20.3: init %struct_type.a.1 = struct_init (%.loc12_20.2) to file.%y.var
-// CHECK:STDOUT:   %.loc12_21: init %struct_type.a.1 = converted %x.ref, %.loc12_20.3
+// CHECK:STDOUT:   %.loc12_20.2: ref %i32.builtin = as_compatible %.loc12_20.1
+// CHECK:STDOUT:   %.loc12_20.3: ref %i32 = as_compatible %.loc12_20.2
+// CHECK:STDOUT:   %.loc12_20.4: %i32 = bind_value %.loc12_20.1
+// CHECK:STDOUT:   %.loc12_20.5: init %struct_type.a.1 = struct_init (%.loc12_20.4) to file.%y.var
+// CHECK:STDOUT:   %.loc12_21: init %struct_type.a.1 = converted %x.ref, %.loc12_20.5
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_21
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

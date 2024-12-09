@@ -25,9 +25,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   %.loc13_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc13_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.1, 0, !dbg !9
-// CHECK:STDOUT:   store { i32 } %.loc13_20.2.tuple.init, ptr %y.var, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_20.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc13_20.4.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.3, 0, !dbg !9
+// CHECK:STDOUT:   store { i32 } %.loc13_20.4.tuple.init, ptr %y.var, align 4, !dbg !10
 // CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

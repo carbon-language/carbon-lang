@@ -23,6 +23,7 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -93,12 +94,14 @@ fn Run() {
 // CHECK:STDOUT:   %.loc14_23.1: ref %tuple.type.2 = temporary_storage
 // CHECK:STDOUT:   %.loc14_23.2: ref %tuple.type.2 = temporary %.loc14_23.1, %F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc14_23.2, element0
-// CHECK:STDOUT:   %.loc14_23.3: %i32 = bind_value %tuple.elem0
+// CHECK:STDOUT:   %.loc14_23.3: ref %i32.builtin = as_compatible %tuple.elem0
+// CHECK:STDOUT:   %.loc14_23.4: ref %i32 = as_compatible %.loc14_23.3
+// CHECK:STDOUT:   %.loc14_23.5: %i32 = bind_value %tuple.elem0
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc14_23.4: ref %i32 = array_index %t.var, %int_0
-// CHECK:STDOUT:   %.loc14_23.5: init %i32 = initialize_from %.loc14_23.3 to %.loc14_23.4
-// CHECK:STDOUT:   %.loc14_23.6: init %array_type = array_init (%.loc14_23.5) to %t.var
-// CHECK:STDOUT:   %.loc14_24: init %array_type = converted %F.call, %.loc14_23.6
+// CHECK:STDOUT:   %.loc14_23.6: ref %i32 = array_index %t.var, %int_0
+// CHECK:STDOUT:   %.loc14_23.7: init %i32 = initialize_from %.loc14_23.5 to %.loc14_23.6
+// CHECK:STDOUT:   %.loc14_23.8: init %array_type = array_init (%.loc14_23.7) to %t.var
+// CHECK:STDOUT:   %.loc14_24: init %array_type = converted %F.call, %.loc14_23.8
 // CHECK:STDOUT:   assign %t.var, %.loc14_24
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
