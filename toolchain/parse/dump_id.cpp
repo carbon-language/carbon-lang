@@ -27,7 +27,7 @@ auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void {
 }
 
 template <>
-auto DumpIdMethods<Tree>::Newline() const -> void {
+auto DumpIdMethods<Tree>::WriteNewline() const -> void {
   llvm::errs() << "\n";
 }
 

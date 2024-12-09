@@ -43,7 +43,7 @@ auto DumpIdImpl(SemIR::LocId loc_id, const Context& context) -> void {
 }
 
 template <>
-auto DumpIdMethods<Context>::Newline() const -> void {
+auto DumpIdMethods<Context>::WriteNewline() const -> void {
   llvm::errs() << "\n";
 }
 

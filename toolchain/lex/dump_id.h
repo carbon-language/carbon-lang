@@ -28,11 +28,12 @@ class DumpIdMethods {
  public:
   LLVM_DUMP_METHOD auto DumpId(TokenIndex token) const -> void {
     DumpIdImpl(token, static_cast<const TokenizedBuffer&>(*this));
-    Newline();
+    WriteNewline();
   }
 
  private:
-  auto Newline() const -> void;
+  // Helper to keep stream includes out of the header file.
+  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Lex

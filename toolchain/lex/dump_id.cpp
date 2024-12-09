@@ -27,7 +27,7 @@ auto DumpIdImpl(TokenIndex token, const TokenizedBuffer& buffer) -> void {
 }
 
 template <>
-auto DumpIdMethods<TokenizedBuffer>::Newline() const -> void {
+auto DumpIdMethods<TokenizedBuffer>::WriteNewline() const -> void {
   llvm::errs() << "\n";
 }
 

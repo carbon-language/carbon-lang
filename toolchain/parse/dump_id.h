@@ -31,11 +31,12 @@ class DumpIdMethods {
   }
   LLVM_DUMP_METHOD auto DumpId(NodeId node_id) const -> void {
     DumpIdImpl(node_id, static_cast<const Tree&>(*this));
-    Newline();
+    WriteNewline();
   }
 
  private:
-  auto Newline() const -> void;
+  // Helper to keep stream includes out of the header file.
+  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Parse

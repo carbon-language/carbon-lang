@@ -36,11 +36,12 @@ class DumpIdMethods {
   }
   LLVM_DUMP_METHOD auto DumpId(SemIR::LocId loc_id) const -> void {
     DumpIdImpl(loc_id, static_cast<const Context&>(*this));
-    Newline();
+    WriteNewline();
   }
 
  private:
-  auto Newline() const -> void;
+  // Helper to keep stream includes out of the header file.
+  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Check
