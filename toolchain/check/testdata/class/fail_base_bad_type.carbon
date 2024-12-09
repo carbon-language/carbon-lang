@@ -174,7 +174,7 @@ fn AccessMemberWithInvalidBaseFinal_WithMember(p: DeriveFromFinal*) -> i32 {
 }
 
 fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:10: error: name `b` not found [NameNotFound]
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:10: error: member name `b` not found in `DeriveFromFinal` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return (*p).b;
   // CHECK:STDERR:          ^~~~~~
   return (*p).b;

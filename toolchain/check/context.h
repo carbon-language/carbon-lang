@@ -251,6 +251,11 @@ class Context {
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
 
+  // Prints a diagnostic for a missing qualified name.
+  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
+                                  llvm::ArrayRef<LookupScope> lookup_scopes)
+      -> void;
+
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
@@ -388,6 +393,10 @@ class Context {
   // Gets a singleton type. The returned type will be complete. Requires that
   // `singleton_id` is already validated to be a singleton.
   auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
+
+  // Gets a class type.
+  auto GetClassType(SemIR::ClassId class_id, SemIR::SpecificId specific_id)
+      -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
