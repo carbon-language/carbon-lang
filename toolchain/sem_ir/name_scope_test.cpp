@@ -14,6 +14,7 @@ using ::testing::ElementsAre;
 using ::testing::Field;
 using ::testing::Pair;
 
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
 MATCHER_P(NameScopeEntryEquals, entry, "") {
   return ExplainMatchResult(
       AllOf(Field("name_id", &NameScope::Entry::name_id, entry.name_id),
