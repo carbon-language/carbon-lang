@@ -40,7 +40,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%T) [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %A.elem.1: type = unbound_element_type %A.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n.1: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n.1 [symbolic]
@@ -61,30 +61,30 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%V)> [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%V) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %I.type.3 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %I.type.3 [symbolic]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @I(%V) [symbolic]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [symbolic]
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %A.2, %A.2 [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
-// CHECK:STDOUT:   %.3: <witness> = require_complete_type %V [symbolic]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %V [symbolic]
 // CHECK:STDOUT:   %A.elem.2: type = unbound_element_type %A.2, %V [symbolic]
 // CHECK:STDOUT:   %struct_type.n.2: type = struct_type {.n: %V} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.n.2 [symbolic]
-// CHECK:STDOUT:   %.4: <witness> = require_complete_type %A.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.4: <witness> = require_complete_type %A.2 [symbolic]
 // CHECK:STDOUT:   %W: type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: type = symbolic_binding_pattern W, 0 [symbolic]
 // CHECK:STDOUT:   %A.3: type = class_type @A, @A(%W) [symbolic]
 // CHECK:STDOUT:   %TestGeneric.type: type = fn_type @TestGeneric [template]
 // CHECK:STDOUT:   %TestGeneric: %TestGeneric.type = struct_value () [template]
-// CHECK:STDOUT:   %.5: <witness> = require_complete_type %W [symbolic]
+// CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %W [symbolic]
 // CHECK:STDOUT:   %A.elem.3: type = unbound_element_type %A.3, %W [symbolic]
 // CHECK:STDOUT:   %struct_type.n.3: type = struct_type {.n: %W} [symbolic]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n.3 [symbolic]
-// CHECK:STDOUT:   %.6: <witness> = require_complete_type %A.3 [symbolic]
+// CHECK:STDOUT:   %require_complete.6: <witness> = require_complete_type %A.3 [symbolic]
 // CHECK:STDOUT:   %I.type.4: type = facet_type <@I, @I(%W)> [symbolic]
-// CHECK:STDOUT:   %.7: <witness> = require_complete_type %I.type.4 [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %I.type.4 [symbolic]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.1, @I(%W) [symbolic]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.assoc_type.3: type = assoc_entity_type %I.type.4, %F.type.4 [symbolic]
@@ -232,7 +232,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%V.loc10_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %.loc10: <witness> = require_complete_type @impl.%I.type.loc10_35.2 (%I.type.3) [symbolic = %.loc10 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%I.type.loc10_35.2 (%I.type.3) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:   %interface.loc10_37.2: <witness> = interface_witness (%F) [symbolic = %interface.loc10_37.2 (constants.%interface.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %A.loc10_27.1 as %I.type.loc10_35.1 {
@@ -262,7 +262,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc2_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc3_10: <witness> = require_complete_type @A.%T.loc2_9.2 (%T) [symbolic = %.loc3_10 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc2_9.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc2_9.2) [symbolic = %A (constants.%A.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.1), @A.%T.loc2_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @A.%T.loc2_9.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n.1)]
@@ -270,12 +270,12 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc2_9.1 [symbolic = %T.loc2_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc3_8: @A.%A.elem (%A.elem.1) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc3: @A.%A.elem (%A.elem.1) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc4_1.1: <witness> = complete_type_witness %struct_type.n.1 [symbolic = %complete_type.loc4_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
-// CHECK:STDOUT:     .n = %.loc3_8
+// CHECK:STDOUT:     .n = %.loc3
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc4_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -294,14 +294,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_22: <witness> = require_complete_type @F.2.%V (%V) [symbolic = %.loc11_22 (constants.%.3)]
-// CHECK:STDOUT:   %.loc11_12: <witness> = require_complete_type @F.2.%A (%A.2) [symbolic = %.loc11_12 (constants.%.4)]
+// CHECK:STDOUT:   %require_complete.loc11_22: <witness> = require_complete_type @F.2.%V (%V) [symbolic = %require_complete.loc11_22 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete.loc11_12: <witness> = require_complete_type @F.2.%A (%A.2) [symbolic = %require_complete.loc11_12 (constants.%require_complete.4)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @F.2.%A (%A.2), @F.2.%V (%V) [symbolic = %A.elem (constants.%A.elem.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%A (%A.2)]() -> @F.2.%V (%V) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @F.2.%A (%A.2) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.2) = name_ref n, @A.%.loc3_8 [template = @A.%.loc3_8]
+// CHECK:STDOUT:     %n.ref: @F.2.%A.elem (%A.elem.2) = name_ref n, @A.%.loc3 [template = @A.%.loc3]
 // CHECK:STDOUT:     %.loc12_16.1: ref @F.2.%V (%V) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc12_16.2: @F.2.%V (%V) = bind_value %.loc12_16.1
 // CHECK:STDOUT:     return %.loc12_16.2
@@ -314,10 +314,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.loc16_32.2: type = class_type @A, @A(%W.loc16_16.2) [symbolic = %A.loc16_32.2 (constants.%A.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc16_35: <witness> = require_complete_type @TestGeneric.%W.loc16_16.2 (%W) [symbolic = %.loc16_35 (constants.%.5)]
-// CHECK:STDOUT:   %.loc16_27: <witness> = require_complete_type @TestGeneric.%A.loc16_32.2 (%A.3) [symbolic = %.loc16_27 (constants.%.6)]
+// CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type @TestGeneric.%W.loc16_16.2 (%W) [symbolic = %require_complete.loc16_35 (constants.%require_complete.5)]
+// CHECK:STDOUT:   %require_complete.loc16_27: <witness> = require_complete_type @TestGeneric.%A.loc16_32.2 (%A.3) [symbolic = %require_complete.loc16_27 (constants.%require_complete.6)]
 // CHECK:STDOUT:   %I.type.loc17_16.2: type = facet_type <@I, @I(%W.loc16_16.2)> [symbolic = %I.type.loc17_16.2 (constants.%I.type.4)]
-// CHECK:STDOUT:   %.loc17_17.2: <witness> = require_complete_type @TestGeneric.%I.type.loc17_16.2 (%I.type.4) [symbolic = %.loc17_17.2 (constants.%.7)]
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @TestGeneric.%I.type.loc17_16.2 (%I.type.4) [symbolic = %require_complete.loc17 (constants.%require_complete.7)]
 // CHECK:STDOUT:   %F.type.loc17_17: type = fn_type @F.1, @I(%W.loc16_16.2) [symbolic = %F.type.loc17_17 (constants.%F.type.4)]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @TestGeneric.%I.type.loc17_16.2 (%I.type.4), @TestGeneric.%F.type.loc17_17 (%F.type.4) [symbolic = %F.assoc_type (constants.%F.assoc_type.3)]
 // CHECK:STDOUT:   %assoc0: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = assoc_entity element0, @I.%F.decl [symbolic = %assoc0 (constants.%assoc0.3)]
@@ -330,8 +330,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %I.ref: %I.type.1 = name_ref I, file.%I.decl [template = constants.%I.generic]
 // CHECK:STDOUT:     %W.ref.loc17: type = name_ref W, %W.loc16_16.1 [symbolic = %W.loc16_16.2 (constants.%W)]
 // CHECK:STDOUT:     %I.type.loc17_16.1: type = facet_type <@I, @I(constants.%W)> [symbolic = %I.type.loc17_16.2 (constants.%I.type.4)]
-// CHECK:STDOUT:     %.loc17_17.1: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%W) [symbolic = %assoc0 (constants.%assoc0.3)]
-// CHECK:STDOUT:     %F.ref: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = name_ref F, %.loc17_17.1 [symbolic = %assoc0 (constants.%assoc0.3)]
+// CHECK:STDOUT:     %.loc17_17: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = specific_constant @I.%assoc0.loc7_26.1, @I(constants.%W) [symbolic = %assoc0 (constants.%assoc0.3)]
+// CHECK:STDOUT:     %F.ref: @TestGeneric.%F.assoc_type (%F.assoc_type.3) = name_ref F, %.loc17_17 [symbolic = %assoc0 (constants.%assoc0.3)]
 // CHECK:STDOUT:     %impl.elem0: @TestGeneric.%F.type.loc17_17 (%F.type.4) = interface_witness_access constants.%interface.2, element0 [symbolic = %F (constants.%F.5)]
 // CHECK:STDOUT:     %F.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %F.bound, @F.2(constants.%W)
@@ -399,7 +399,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%V
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc3_10 => constants.%.3
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.3
 // CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.2
@@ -438,7 +438,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %.loc10 => constants.%.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.2
 // CHECK:STDOUT:   %interface.loc10_37.2 => constants.%interface.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -471,7 +471,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%W
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc3_10 => constants.%.5
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.5
 // CHECK:STDOUT:   %A => constants.%A.3
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.3
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.3
@@ -511,7 +511,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.5
 // CHECK:STDOUT:   %F => constants.%F.5
-// CHECK:STDOUT:   %.loc10 => constants.%.7
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.7
 // CHECK:STDOUT:   %interface.loc10_37.2 => constants.%interface.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -520,8 +520,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A => constants.%A.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_22 => constants.%.5
-// CHECK:STDOUT:   %.loc11_12 => constants.%.6
+// CHECK:STDOUT:   %require_complete.loc11_22 => constants.%require_complete.5
+// CHECK:STDOUT:   %require_complete.loc11_12 => constants.%require_complete.6
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -542,7 +542,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T.patt.loc2_9.2 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc3_10 => constants.%complete_type.4
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.4
 // CHECK:STDOUT:   %A => constants.%A.4
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.4
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.4
@@ -571,7 +571,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.7
 // CHECK:STDOUT:   %F => constants.%F.7
-// CHECK:STDOUT:   %.loc10 => constants.%complete_type.6
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.6
 // CHECK:STDOUT:   %interface.loc10_37.2 => constants.%interface.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -580,8 +580,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A => constants.%A.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_22 => constants.%complete_type.4
-// CHECK:STDOUT:   %.loc11_12 => constants.%complete_type.5
+// CHECK:STDOUT:   %require_complete.loc11_22 => constants.%complete_type.4
+// CHECK:STDOUT:   %require_complete.loc11_12 => constants.%complete_type.5
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

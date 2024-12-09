@@ -198,7 +198,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.type: type = fn_type @ExplicitGenericParam [template]
 // CHECK:STDOUT:   %ExplicitGenericParam: %ExplicitGenericParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %ptr.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %ptr.1 [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.1: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -212,7 +212,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.3: type = ptr_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %CallExplicitGenericParamWithGenericArg.type: type = fn_type @CallExplicitGenericParamWithGenericArg [template]
 // CHECK:STDOUT:   %CallExplicitGenericParamWithGenericArg: %CallExplicitGenericParamWithGenericArg.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %ptr.3 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %ptr.3 [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.3: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%struct_type.a) [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %ptr.2 [template]
 // CHECK:STDOUT: }
@@ -280,7 +280,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2: type = ptr_type @ExplicitGenericParam.%T.loc4_25.2 (%T) [symbolic = %ptr.loc4_39.2 (constants.%ptr.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35: <witness> = require_complete_type @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr.1) [symbolic = %.loc4_35 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr.1) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2: <specific function> = specific_function constants.%ExplicitGenericParam, @ExplicitGenericParam(%T.loc4_25.2) [symbolic = %ExplicitGenericParam.specific_fn.loc4_50.2 (constants.%ExplicitGenericParam.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr.1) {
@@ -316,7 +316,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc10_63.2: type = ptr_type @CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2 (%struct_type.a) [symbolic = %ptr.loc10_63.2 (constants.%ptr.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc10: <witness> = require_complete_type @CallExplicitGenericParamWithGenericArg.%ptr.loc10_63.2 (%ptr.3) [symbolic = %.loc10 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallExplicitGenericParamWithGenericArg.%ptr.loc10_63.2 (%ptr.3) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc11_10.2: <specific function> = specific_function constants.%ExplicitGenericParam, @ExplicitGenericParam(%struct_type.a.loc10_62.2) [symbolic = %ExplicitGenericParam.specific_fn.loc11_10.2 (constants.%ExplicitGenericParam.specific_fn.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @CallExplicitGenericParamWithGenericArg.%ptr.loc10_63.2 (%ptr.3) {
@@ -338,7 +338,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35 => constants.%.1
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,7 +354,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -371,7 +371,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35 => constants.%.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.2
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -389,7 +389,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.type: type = fn_type @ExplicitGenericParam [template]
 // CHECK:STDOUT:   %ExplicitGenericParam: %ExplicitGenericParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %ptr [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn: <specific function> = specific_function %ExplicitGenericParam, @ExplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %CallExplicitGenericParamConst.type: type = fn_type @CallExplicitGenericParamConst [template]
 // CHECK:STDOUT:   %CallExplicitGenericParamConst: %CallExplicitGenericParamConst.type = struct_value () [template]
@@ -447,7 +447,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2: type = ptr_type @ExplicitGenericParam.%T.loc4_25.2 (%T) [symbolic = %ptr.loc4_39.2 (constants.%ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35: <witness> = require_complete_type @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr) [symbolic = %.loc4_35 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2: <specific function> = specific_function constants.%ExplicitGenericParam, @ExplicitGenericParam(%T.loc4_25.2) [symbolic = %ExplicitGenericParam.specific_fn.loc4_50.2 (constants.%ExplicitGenericParam.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @ExplicitGenericParam.%ptr.loc4_39.2 (%ptr) {
@@ -469,7 +469,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc7_3.2: <specific function> = specific_function constants.%ExplicitGenericParam, @ExplicitGenericParam(%T.loc6_34.2) [symbolic = %ExplicitGenericParam.specific_fn.loc7_3.2 (constants.%ExplicitGenericParam.specific_fn)]
 // CHECK:STDOUT:   %ptr: type = ptr_type @CallExplicitGenericParamConst.%T.loc6_34.2 (%T) [symbolic = %ptr (constants.%ptr)]
-// CHECK:STDOUT:   %.loc7: <witness> = require_complete_type @CallExplicitGenericParamConst.%ptr (%ptr) [symbolic = %.loc7 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallExplicitGenericParamConst.%ptr (%ptr) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -494,7 +494,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_35 => constants.%.1
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -526,8 +526,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.type: type = fn_type @ExplicitAndAlsoDeduced [template]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced: %ExplicitAndAlsoDeduced.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %ptr.1 [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %ptr.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.1: <specific function> = specific_function %ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T) [symbolic]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %A [template]
 // CHECK:STDOUT:   %CallExplicitAndAlsoDeduced.type: type = fn_type @CallExplicitAndAlsoDeduced [template]
@@ -596,8 +596,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc6_47.2: type = ptr_type @ExplicitAndAlsoDeduced.%T.loc6_27.2 (%T) [symbolic = %ptr.loc6_47.2 (constants.%ptr.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_43: <witness> = require_complete_type @ExplicitAndAlsoDeduced.%ptr.loc6_47.2 (%ptr.1) [symbolic = %.loc6_43 (constants.%.1)]
-// CHECK:STDOUT:   %.loc6_38: <witness> = require_complete_type @ExplicitAndAlsoDeduced.%T.loc6_27.2 (%T) [symbolic = %.loc6_38 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete.loc6_43: <witness> = require_complete_type @ExplicitAndAlsoDeduced.%ptr.loc6_47.2 (%ptr.1) [symbolic = %require_complete.loc6_43 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc6_38: <witness> = require_complete_type @ExplicitAndAlsoDeduced.%T.loc6_27.2 (%T) [symbolic = %require_complete.loc6_38 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2: <specific function> = specific_function constants.%ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T.loc6_27.2) [symbolic = %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 (constants.%ExplicitAndAlsoDeduced.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %x.param_patt: @ExplicitAndAlsoDeduced.%T.loc6_27.2 (%T)) -> @ExplicitAndAlsoDeduced.%ptr.loc6_47.2 (%ptr.1) {
@@ -636,8 +636,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_43 => constants.%.1
-// CHECK:STDOUT:   %.loc6_38 => constants.%.2
+// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%require_complete.1
+// CHECK:STDOUT:   %require_complete.loc6_38 => constants.%require_complete.2
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -653,8 +653,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_43 => constants.%complete_type.2
-// CHECK:STDOUT:   %.loc6_38 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete.loc6_38 => constants.%complete_type.1
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,8 +666,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.type: type = fn_type @ImplicitGenericParam [template]
 // CHECK:STDOUT:   %ImplicitGenericParam: %ImplicitGenericParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %ptr.1 [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %ptr.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.1: <specific function> = specific_function %ImplicitGenericParam, @ImplicitGenericParam(%T) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -742,8 +742,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_45.2: type = ptr_type @ImplicitGenericParam.%T.loc4_25.2 (%T) [symbolic = %ptr.loc4_45.2 (constants.%ptr.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_41: <witness> = require_complete_type @ImplicitGenericParam.%ptr.loc4_45.2 (%ptr.1) [symbolic = %.loc4_41 (constants.%.1)]
-// CHECK:STDOUT:   %.loc4_36: <witness> = require_complete_type @ImplicitGenericParam.%T.loc4_25.2 (%T) [symbolic = %.loc4_36 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete.loc4_41: <witness> = require_complete_type @ImplicitGenericParam.%ptr.loc4_45.2 (%ptr.1) [symbolic = %require_complete.loc4_41 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc4_36: <witness> = require_complete_type @ImplicitGenericParam.%T.loc4_25.2 (%T) [symbolic = %require_complete.loc4_36 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2: <specific function> = specific_function constants.%ImplicitGenericParam, @ImplicitGenericParam(%T.loc4_25.2) [symbolic = %ImplicitGenericParam.specific_fn.loc4_56.2 (constants.%ImplicitGenericParam.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @ImplicitGenericParam.%T.loc4_25.2 (%T)) -> @ImplicitGenericParam.%ptr.loc4_45.2 (%ptr.1) {
@@ -775,8 +775,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_41 => constants.%.1
-// CHECK:STDOUT:   %.loc4_36 => constants.%.2
+// CHECK:STDOUT:   %require_complete.loc4_41 => constants.%require_complete.1
+// CHECK:STDOUT:   %require_complete.loc4_36 => constants.%require_complete.2
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -792,8 +792,8 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_41 => constants.%complete_type.1
-// CHECK:STDOUT:   %.loc4_36 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete.loc4_41 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc4_36 => constants.%complete_type.2
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -811,7 +811,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%T, %i32) [symbolic]
 // CHECK:STDOUT:   %TupleParam.type: type = fn_type @TupleParam [template]
 // CHECK:STDOUT:   %TupleParam: %TupleParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %tuple.type.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %tuple.type.2 [symbolic]
 // CHECK:STDOUT:   %CallTupleParam.type: type = fn_type @CallTupleParam [template]
 // CHECK:STDOUT:   %CallTupleParam: %CallTupleParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
@@ -873,7 +873,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@TupleParam.%T.loc4_15.2 (%T), %i32) [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_26: <witness> = require_complete_type @TupleParam.%tuple.type (%tuple.type.2) [symbolic = %.loc4_26 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @TupleParam.%tuple.type (%tuple.type.2) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @TupleParam.%tuple.type (%tuple.type.2)) {
 // CHECK:STDOUT:   !entry:
@@ -912,7 +912,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_26 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduce_nested_struct.carbon
@@ -928,7 +928,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %T, .b: %i32} [symbolic]
 // CHECK:STDOUT:   %StructParam.type: type = fn_type @StructParam [template]
 // CHECK:STDOUT:   %StructParam: %StructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %struct_type.a.b.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %struct_type.a.b.1 [symbolic]
 // CHECK:STDOUT:   %CallStructParam.type: type = fn_type @CallStructParam [template]
 // CHECK:STDOUT:   %CallStructParam: %CallStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
@@ -989,7 +989,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2: type = struct_type {.a: @StructParam.%T.loc4_16.2 (%T), .b: %i32} [symbolic = %struct_type.a.b.loc4_44.2 (constants.%struct_type.a.b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_27: <witness> = require_complete_type @StructParam.%struct_type.a.b.loc4_44.2 (%struct_type.a.b.1) [symbolic = %.loc4_27 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @StructParam.%struct_type.a.b.loc4_44.2 (%struct_type.a.b.1) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @StructParam.%struct_type.a.b.loc4_44.2 (%struct_type.a.b.1)) {
 // CHECK:STDOUT:   !entry:
@@ -1028,7 +1028,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2 => constants.%struct_type.a.b.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_27 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon
@@ -1043,7 +1043,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.c.d.e: type = struct_type {.c: %T, .d: %i32, .e: %i32} [symbolic]
 // CHECK:STDOUT:   %BigStructParam.type: type = fn_type @BigStructParam [template]
 // CHECK:STDOUT:   %BigStructParam: %BigStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %struct_type.c.d.e [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.c.d.e [symbolic]
 // CHECK:STDOUT:   %CallBigStructParam.type: type = fn_type @CallBigStructParam [template]
 // CHECK:STDOUT:   %CallBigStructParam: %CallBigStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
@@ -1096,7 +1096,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.c.d.e.loc4_56.2: type = struct_type {.c: @BigStructParam.%T.loc4_19.2 (%T), .d: %i32, .e: %i32} [symbolic = %struct_type.c.d.e.loc4_56.2 (constants.%struct_type.c.d.e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_30: <witness> = require_complete_type @BigStructParam.%struct_type.c.d.e.loc4_56.2 (%struct_type.c.d.e) [symbolic = %.loc4_30 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @BigStructParam.%struct_type.c.d.e.loc4_56.2 (%struct_type.c.d.e) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @BigStructParam.%struct_type.c.d.e.loc4_56.2 (%struct_type.c.d.e)) {
 // CHECK:STDOUT:   !entry:
@@ -1131,7 +1131,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.f.g: type = struct_type {.f: %T, .g: %i32} [symbolic]
 // CHECK:STDOUT:   %SmallStructParam.type: type = fn_type @SmallStructParam [template]
 // CHECK:STDOUT:   %SmallStructParam: %SmallStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %struct_type.f.g [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.f.g [symbolic]
 // CHECK:STDOUT:   %CallSmallStructParam.type: type = fn_type @CallSmallStructParam [template]
 // CHECK:STDOUT:   %CallSmallStructParam: %CallSmallStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template]
@@ -1181,7 +1181,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.f.g.loc4_49.2: type = struct_type {.f: @SmallStructParam.%T.loc4_21.2 (%T), .g: %i32} [symbolic = %struct_type.f.g.loc4_49.2 (constants.%struct_type.f.g)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_32: <witness> = require_complete_type @SmallStructParam.%struct_type.f.g.loc4_49.2 (%struct_type.f.g) [symbolic = %.loc4_32 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @SmallStructParam.%struct_type.f.g.loc4_49.2 (%struct_type.f.g) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @SmallStructParam.%struct_type.f.g.loc4_49.2 (%struct_type.f.g)) {
 // CHECK:STDOUT:   !entry:
@@ -1217,7 +1217,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.i.different: type = struct_type {.i: %T, .different: %i32} [symbolic]
 // CHECK:STDOUT:   %WrongNameStructParam.type: type = fn_type @WrongNameStructParam [template]
 // CHECK:STDOUT:   %WrongNameStructParam: %WrongNameStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %struct_type.i.different [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.i.different [symbolic]
 // CHECK:STDOUT:   %CallWrongNameStructParam.type: type = fn_type @CallWrongNameStructParam [template]
 // CHECK:STDOUT:   %CallWrongNameStructParam: %CallWrongNameStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
@@ -1266,7 +1266,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.i.different.loc4_61.2: type = struct_type {.i: @WrongNameStructParam.%T.loc4_25.2 (%T), .different: %i32} [symbolic = %struct_type.i.different.loc4_61.2 (constants.%struct_type.i.different)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_36: <witness> = require_complete_type @WrongNameStructParam.%struct_type.i.different.loc4_61.2 (%struct_type.i.different) [symbolic = %.loc4_36 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WrongNameStructParam.%struct_type.i.different.loc4_61.2 (%struct_type.i.different) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @WrongNameStructParam.%struct_type.i.different.loc4_61.2 (%struct_type.i.different)) {
 // CHECK:STDOUT:   !entry:
@@ -1301,7 +1301,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.first.second: type = struct_type {.first: %T, .second: %i32} [symbolic]
 // CHECK:STDOUT:   %WrongOrderStructParam.type: type = fn_type @WrongOrderStructParam [template]
 // CHECK:STDOUT:   %WrongOrderStructParam: %WrongOrderStructParam.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %struct_type.first.second [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.first.second [symbolic]
 // CHECK:STDOUT:   %CallWrongOrderStructParam.type: type = fn_type @CallWrongOrderStructParam [template]
 // CHECK:STDOUT:   %CallWrongOrderStructParam: %CallWrongOrderStructParam.type = struct_value () [template]
 // CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [template]
@@ -1350,7 +1350,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.first.second.loc4_63.2: type = struct_type {.first: @WrongOrderStructParam.%T.loc4_26.2 (%T), .second: %i32} [symbolic = %struct_type.first.second.loc4_63.2 (constants.%struct_type.first.second)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc4_37: <witness> = require_complete_type @WrongOrderStructParam.%struct_type.first.second.loc4_63.2 (%struct_type.first.second) [symbolic = %.loc4_37 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @WrongOrderStructParam.%struct_type.first.second.loc4_63.2 (%struct_type.first.second) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @WrongOrderStructParam.%struct_type.first.second.loc4_63.2 (%struct_type.first.second)) {
 // CHECK:STDOUT:   !entry:

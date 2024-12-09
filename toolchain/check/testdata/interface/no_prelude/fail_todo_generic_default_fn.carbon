@@ -37,7 +37,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1, @I(%T) [symbolic]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -133,7 +133,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %Self.as_type.loc22_24.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc22_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc22_32: <witness> = require_complete_type @.1.%Self.as_type.loc22_24.2 (%Self.as_type) [symbolic = %.loc22_32 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @.1.%Self.as_type.loc22_24.2 (%Self.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @.1.%Self.as_type.loc22_24.2 (%Self.as_type)]() -> @.1.%Self.as_type.loc22_24.2 (%Self.as_type) {
 // CHECK:STDOUT:   !entry:

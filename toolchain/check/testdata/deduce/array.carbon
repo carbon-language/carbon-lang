@@ -109,8 +109,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.1: type = array_type %int_3, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %array_type.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -196,8 +196,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_3, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %.loc6_27 (constants.%.1)]
-// CHECK:STDOUT:   %.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %.loc6_17 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %require_complete.loc6_17 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -267,8 +267,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_27 => constants.%complete_type.1
-// CHECK:STDOUT:   %.loc6_17 => constants.%complete_type.3
+// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_bound_only.carbon
@@ -596,8 +596,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.1: type = array_type %int_2, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %array_type.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
@@ -684,8 +684,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_2, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %.loc6_27 (constants.%.1)]
-// CHECK:STDOUT:   %.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %.loc6_17 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %require_complete.loc6_17 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -755,8 +755,8 @@ fn G() -> C {
 // CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc6_27 => constants.%complete_type.1
-// CHECK:STDOUT:   %.loc6_17 => constants.%complete_type.3
+// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_type_mismatch.carbon

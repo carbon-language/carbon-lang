@@ -58,7 +58,7 @@ class B {}
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %A.1: type = class_type @A, @A(%T) [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %A.elem.1: type = unbound_element_type %A.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.v.1: type = struct_type {.v: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic]
@@ -84,7 +84,7 @@ class B {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = %B.decl.loc12
+// CHECK:STDOUT:     .B = %B.decl.loc15
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -95,18 +95,18 @@ class B {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc12: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc15: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %A.2 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %A.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl.loc12 [template = constants.%B]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl.loc15 [template = constants.%B]
 // CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%B) [template = constants.%A.2]
 // CHECK:STDOUT:     %x.param: %A.2 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %A.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc22: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc25: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @A(%T.loc4_9.1: type) {
@@ -114,21 +114,21 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc5_10: <witness> = require_complete_type @A.%T.loc4_9.2 (%T) [symbolic = %.loc5_10 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc4_9.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc4_9.2) [symbolic = %A (constants.%A.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.1), @A.%T.loc4_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc4_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.1)]
-// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.1) [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc5_8: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
-// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:     %.loc8: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
+// CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
-// CHECK:STDOUT:     .v = %.loc5_8
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
+// CHECK:STDOUT:     .v = %.loc8
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,11 +160,11 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc5_10 => <error>
+// CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.2
-// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.2
+// CHECK:STDOUT:   %complete_type.loc9_1.2 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_in_function.carbon
@@ -175,7 +175,7 @@ class B {}
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -224,7 +224,7 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc5: <witness> = require_complete_type @F.%T.loc4_6.2 (%T) [symbolic = %.loc5 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc4_6.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -254,6 +254,6 @@ class B {}
 // CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc5 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

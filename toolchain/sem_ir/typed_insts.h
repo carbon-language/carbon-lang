@@ -1059,8 +1059,8 @@ struct PointerType {
   TypeId pointee_id;
 };
 
-// An instruction that indicates a type is required to be complete. This is only
-// created for generic types and produces a witness that the type is complete.
+// Requires a type to be complete. This is only created for generic types and
+// produces a witness that the type is complete.
 //
 // TODO: Eventually this should be replaced by a witness for an interface that
 // models type completeness, and should track other information such as the

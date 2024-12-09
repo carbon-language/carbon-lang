@@ -141,7 +141,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %uN: type = int_type unsigned, %N [symbolic]
 // CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
 // CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %uN [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %uN [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -259,7 +259,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %uN: type = int_type unsigned, %N.loc14_13.2 [symbolic = %uN (constants.%uN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc14_43: <witness> = require_complete_type @Symbolic.%uN (%uN) [symbolic = %.loc14_43 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Symbolic.%uN (%uN) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral, %x.param_patt: @Symbolic.%uN (%uN)) -> @Symbolic.%uN (%uN) {
 // CHECK:STDOUT:   !entry:

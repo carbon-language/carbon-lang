@@ -43,7 +43,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %CallFacet.type: type = fn_type @CallFacet [template]
 // CHECK:STDOUT:   %CallFacet: %CallFacet.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,7 +70,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc21_32: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc21: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %T.param: %Interface.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = value_param runtime_param0
@@ -118,7 +118,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.as_type.loc21_32.2: type = facet_access_type %T.loc21_14.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc21_30: <witness> = require_complete_type @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) [symbolic = %.loc21_30 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type, %x.param_patt: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:

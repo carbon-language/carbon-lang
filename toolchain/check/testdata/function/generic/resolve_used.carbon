@@ -40,7 +40,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %iN [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
@@ -86,7 +86,7 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc4_19.2 [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:   %.loc12_20.3: <witness> = require_complete_type @ErrorIfNIsZero.%iN (%iN) [symbolic = %.loc12_20.3 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ErrorIfNIsZero.%iN (%iN) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral) {
 // CHECK:STDOUT:   !entry:
@@ -122,6 +122,6 @@ fn CallNegative() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %iN => <error>
-// CHECK:STDOUT:   %.loc12_20.3 => <error>
+// CHECK:STDOUT:   %require_complete => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -37,7 +37,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Empty.type.3: type = facet_type <@Empty, @Empty(%T)> [symbolic]
 // CHECK:STDOUT:   %.Self.1: %Empty.type.3 = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.1: <witness> = require_complete_type %Empty.type.3 [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Empty.type.3 [symbolic]
 // CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %Empty.type.3, type [symbolic]
 // CHECK:STDOUT:   %assoc0.2: %assoc_type.2 = assoc_entity element0, @Empty.%A [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.1: <witness> = facet_access_witness %.Self.1 [symbolic]
@@ -48,7 +48,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %V.patt: type = symbolic_binding_pattern V, 1 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: <witness> = require_complete_type %Empty_where.type.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Empty_where.type.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -107,8 +107,8 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %Empty.type.loc18_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3)]
 // CHECK:STDOUT:     %.Self.1: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
 // CHECK:STDOUT:     %.Self.ref: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.loc18_34.1: @H.%assoc_type (%assoc_type.2) = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.2)]
-// CHECK:STDOUT:     %A.ref: @H.%assoc_type (%assoc_type.2) = name_ref A, %.loc18_34.1 [symbolic = %assoc0 (constants.%assoc0.2)]
+// CHECK:STDOUT:     %.loc18_34: @H.%assoc_type (%assoc_type.2) = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.2)]
+// CHECK:STDOUT:     %A.ref: @H.%assoc_type (%assoc_type.2) = name_ref A, %.loc18_34 [symbolic = %assoc0 (constants.%assoc0.2)]
 // CHECK:STDOUT:     %.Self.as_wit.loc18_34.1: <witness> = facet_access_witness %.Self.ref [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.1)]
 // CHECK:STDOUT:     %impl.elem0.loc18_34.1: type = interface_witness_access %.Self.as_wit.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.1)]
 // CHECK:STDOUT:     %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
@@ -179,7 +179,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt.loc18_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %Empty.type.loc18_26.2: type = facet_type <@Empty, @Empty(%T.loc18_6.2)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3)]
 // CHECK:STDOUT:   %.Self.2: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:   %.loc18_34.2: <witness> = require_complete_type @H.%Empty.type.loc18_26.2 (%Empty.type.3) [symbolic = %.loc18_34.2 (constants.%.1)]
+// CHECK:STDOUT:   %require_complete.loc18_34: <witness> = require_complete_type @H.%Empty.type.loc18_26.2 (%Empty.type.3) [symbolic = %require_complete.loc18_34 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type @H.%Empty.type.loc18_26.2 (%Empty.type.3), type [symbolic = %assoc_type (constants.%assoc_type.2)]
 // CHECK:STDOUT:   %assoc0: @H.%assoc_type (%assoc_type.2) = assoc_entity element0, @Empty.%A [symbolic = %assoc0 (constants.%assoc0.2)]
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2: <witness> = facet_access_witness %.Self.2 [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.1)]
@@ -190,7 +190,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %V.patt.loc18_43.2: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc18_17: <witness> = require_complete_type @H.%Empty_where.type (%Empty_where.type.1) [symbolic = %.loc18_17 (constants.%.2)]
+// CHECK:STDOUT:   %require_complete.loc18_17: <witness> = require_complete_type @H.%Empty_where.type (%Empty_where.type.1) [symbolic = %require_complete.loc18_17 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: @H.%Empty_where.type (%Empty_where.type.1), %V.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -245,7 +245,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%T
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.3
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.1
-// CHECK:STDOUT:   %.loc18_34.2 => constants.%.1
+// CHECK:STDOUT:   %require_complete.loc18_34 => constants.%require_complete.1
 // CHECK:STDOUT:   %assoc_type => constants.%assoc_type.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2 => constants.%.Self.as_wit.1
@@ -272,7 +272,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%i32
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.4
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.2
-// CHECK:STDOUT:   %.loc18_34.2 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.1
 // CHECK:STDOUT:   %assoc_type => constants.%assoc_type.3
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.3
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2 => constants.%.Self.as_wit.2
@@ -283,6 +283,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %V.patt.loc18_43.2 => bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc18_17 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete.loc18_17 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
