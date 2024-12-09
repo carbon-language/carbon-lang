@@ -12,17 +12,15 @@ namespace Carbon::Parse {
 
 class Tree;
 
-namespace DumpIdOverloads {
-
-auto DumpId(NodeId node_id, const Tree& tree) -> void;
-
-}  // namespace DumpIdOverloads
+auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void;
 
 // A set of DumpId() overloads that dump an object to stderr, useful for calling
 // inside a debugger. These are all exposed as part of the `Parse::Tree` API.
 //
 // This class is inherited by `Parse::Tree`, which provides itself as the
-// template parameter.
+// template parameter. The methods are provided here instead of on `Tree`
+// directly to avoid cluttering the `Tree` class with overloads for every
+// dumpable id type.
 template <class Tree>
 class DumpIdMethods {
   static_assert(std::same_as<Tree, ::Carbon::Parse::Tree>);
@@ -32,7 +30,7 @@ class DumpIdMethods {
     static_cast<const Tree&>(*this).tokens().DumpId(token);
   }
   LLVM_DUMP_METHOD auto DumpId(NodeId node_id) const -> void {
-    DumpIdOverloads::DumpId(node_id, static_cast<const Tree&>(*this));
+    DumpIdImpl(node_id, static_cast<const Tree&>(*this));
     Newline();
   }
 

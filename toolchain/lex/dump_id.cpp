@@ -7,9 +7,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
-namespace Carbon::Lex::DumpIdOverloads {
+namespace Carbon::Lex {
 
-auto DumpId(TokenIndex token, const TokenizedBuffer& buffer) -> void {
+auto DumpIdImpl(TokenIndex token, const TokenizedBuffer& buffer) -> void {
   if (!token.is_valid()) {
     llvm::errs() << "TokenIndex(invalid)";
     return;
@@ -21,14 +21,14 @@ auto DumpId(TokenIndex token, const TokenizedBuffer& buffer) -> void {
 
   llvm::errs() << "TokenIndex(kind: ";
   kind.Print(llvm::errs());
-  llvm::errs() << ", line: " << line << ", col: " << col << ")";
+  llvm::errs() << ", loc: ";
+  llvm::errs().write_escaped(buffer.source().filename());
+  llvm::errs() << ":" << line << ":" << col << ")";
 }
 
-}  // namespace Carbon::Lex::DumpIdOverloads
-
-namespace Carbon::Lex {
 template <>
 auto DumpIdMethods<TokenizedBuffer>::Newline() const -> void {
   llvm::errs() << "\n";
 }
+
 }  // namespace Carbon::Lex

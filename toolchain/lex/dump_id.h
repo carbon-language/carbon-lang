@@ -11,25 +11,23 @@ namespace Carbon::Lex {
 
 class TokenizedBuffer;
 
-namespace DumpIdOverloads {
-
-auto DumpId(TokenIndex token, const TokenizedBuffer& buffer) -> void;
-
-}  // namespace DumpIdOverloads
+auto DumpIdImpl(TokenIndex token, const TokenizedBuffer& buffer) -> void;
 
 // A set of DumpId() overloads that dump an object to stderr, useful for calling
 // inside a debugger. These are all exposed as part of the
 // `Lex::TokenizedBuffer` API.
 //
 // This class is inherited by `Lex::TokenizedBuffer`, which provides itself as
-// the template parameter.
+// the template parameter. The methods are provided here instead of on
+// `TokenizedBuffer` directly to avoid cluttering the `TokenizedBuffer` class
+// with overloads for every dumpable id type.
 template <class TokenizedBuffer>
 class DumpIdMethods {
   static_assert(std::same_as<TokenizedBuffer, ::Carbon::Lex::TokenizedBuffer>);
 
  public:
   LLVM_DUMP_METHOD auto DumpId(TokenIndex token) const -> void {
-    DumpIdOverloads::DumpId(token, static_cast<const TokenizedBuffer&>(*this));
+    DumpIdImpl(token, static_cast<const TokenizedBuffer&>(*this));
     Newline();
   }
 

@@ -14,18 +14,15 @@ namespace Carbon::Check {
 
 class Context;
 
-namespace DumpIdOverloads {
-
-auto DumpId(SemIR::LocId loc_id, const Context& context) -> void;
-
-}  // namespace DumpIdOverloads
+auto DumpIdImpl(SemIR::LocId loc_id, const Context& context) -> void;
 
 // A set of DumpId() overloads that dump an object to stderr, useful for calling
-// inside a debugger. These are all exposed as part of the `Check::Context`
-// API.
+// inside a debugger. These are all exposed as part of the `Check::Context` API.
 //
 // This class is inherited by `Check::Context`, which provides itself as the
-// template parameter.
+// template parameter. The methods are provided here instead of on `Context`
+// directly to avoid cluttering the `Context` class with overloads for every
+// dumpable id type.
 template <class Context>
 class DumpIdMethods {
   static_assert(std::same_as<Context, ::Carbon::Check::Context>);
@@ -38,7 +35,7 @@ class DumpIdMethods {
     static_cast<const Context&>(*this).parse_tree().DumpId(node_id);
   }
   LLVM_DUMP_METHOD auto DumpId(SemIR::LocId loc_id) const -> void {
-    DumpIdOverloads::DumpId(loc_id, static_cast<const Context&>(*this));
+    DumpIdImpl(loc_id, static_cast<const Context&>(*this));
     Newline();
   }
 

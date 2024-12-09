@@ -11,9 +11,9 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 
-namespace Carbon::Check::DumpIdOverloads {
+namespace Carbon::Check {
 
-auto DumpId(SemIR::LocId loc_id, const Context& context) -> void {
+auto DumpIdImpl(SemIR::LocId loc_id, const Context& context) -> void {
   if (!loc_id.is_valid()) {
     llvm::errs() << "LocId(invalid)";
     return;
@@ -24,8 +24,9 @@ auto DumpId(SemIR::LocId loc_id, const Context& context) -> void {
     auto line = context.tokens().GetLineNumber(token);
     auto col = context.tokens().GetColumnNumber(token);
     const char* implicit = loc_id.is_implicit() ? " implicit" : "";
-    llvm::errs() << "LocId(line: " << line << ", col: " << col << implicit
-                 << ")";
+    llvm::errs() << "LocId(";
+    llvm::errs().write_escaped(context.sem_ir().filename());
+    llvm::errs() << ":" << line << ":" << col << implicit << ")";
   } else {
     CARBON_CHECK(loc_id.is_import_ir_inst_id());
 
@@ -41,11 +42,9 @@ auto DumpId(SemIR::LocId loc_id, const Context& context) -> void {
   }
 }
 
-}  // namespace Carbon::Check::DumpIdOverloads
-
-namespace Carbon::Check {
 template <>
 auto DumpIdMethods<Context>::Newline() const -> void {
   llvm::errs() << "\n";
 }
+
 }  // namespace Carbon::Check

@@ -8,9 +8,9 @@
 #include "toolchain/lex/dump_id.h"
 #include "toolchain/parse/tree.h"
 
-namespace Carbon::Parse::DumpIdOverloads {
+namespace Carbon::Parse {
 
-auto DumpId(NodeId node_id, const Tree& tree) -> void {
+auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void {
   if (!node_id.is_valid()) {
     llvm::errs() << "NodeId(invalid)";
     return;
@@ -22,15 +22,13 @@ auto DumpId(NodeId node_id, const Tree& tree) -> void {
   llvm::errs() << "NodeId(kind: ";
   kind.Print(llvm::errs());
   llvm::errs() << ", token: ";
-  Lex::DumpIdOverloads::DumpId(token, tree.tokens());
+  Lex::DumpIdImpl(token, tree.tokens());
   llvm::errs() << ")";
 }
 
-}  // namespace Carbon::Parse::DumpIdOverloads
-
-namespace Carbon::Parse {
 template <>
 auto DumpIdMethods<Tree>::Newline() const -> void {
   llvm::errs() << "\n";
 }
+
 }  // namespace Carbon::Parse
