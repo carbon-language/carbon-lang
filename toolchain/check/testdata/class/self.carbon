@@ -88,7 +88,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc11: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc11: %Class = bind_name self, %self.param.loc11
 // CHECK:STDOUT:     %return.param.loc11: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc11
+// CHECK:STDOUT:     %return.loc11: ref %i32 = return_slot %return.param.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
@@ -106,7 +106,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc15: %ptr.1 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc15: %ptr.1 = bind_name self, %self.param.loc15
 // CHECK:STDOUT:     %return.param.loc15: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc15
+// CHECK:STDOUT:     %return.loc15: ref %i32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,7 +125,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc5: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc5: %Class = bind_name self, %self.param.loc5
 // CHECK:STDOUT:     %return.param.loc5: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc5_22: ref %i32 = return_slot %return.param.loc5
+// CHECK:STDOUT:     %return.loc5: ref %i32 = return_slot %return.param.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
@@ -143,7 +143,7 @@ class Class {
 // CHECK:STDOUT:     %self.param.loc6: %ptr.1 = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc6: %ptr.1 = bind_name self, %self.param.loc6
 // CHECK:STDOUT:     %return.param.loc6: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc6_28: ref %i32 = return_slot %return.param.loc6
+// CHECK:STDOUT:     %return.loc6: ref %i32 = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]

@@ -135,8 +135,8 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Main//library, inst+7, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %G.type = import_ref Main//library, inst+18, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -172,7 +172,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(constants.%T: type) {
+// CHECK:STDOUT: generic fn @F(constants.%T: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -181,7 +181,7 @@ fn H() {
 // CHECK:STDOUT:   fn(%T.param_patt: type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(constants.%T: type) {
+// CHECK:STDOUT: generic fn @G(constants.%T: type) [from "library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

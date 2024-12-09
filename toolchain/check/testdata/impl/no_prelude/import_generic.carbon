@@ -190,27 +190,27 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, I, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, loc7_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, loc7_32, loaded [symbolic = @impl.1.%I.type.1 (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc8_33, loaded [symbolic = @impl.2.%I.type (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, loc8_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -230,13 +230,13 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(constants.%T: type) {
+// CHECK:STDOUT: generic interface @I(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -245,7 +245,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) {
+// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(%T.1)> [symbolic = %I.type.1 (constants.%I.type.2)]
@@ -260,7 +260,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) {
+// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr: type = ptr_type @impl.2.%T (%T) [symbolic = %ptr (constants.%ptr)]
@@ -274,7 +274,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "import_generic.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
@@ -286,7 +286,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(%T) {
@@ -329,26 +329,26 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.1: type = generic_interface_type @I [template]
 // CHECK:STDOUT:   %I.generic: %I.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %I.type.2: type = facet_type <@I, @I(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, inst+12, loaded [template = constants.%I.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, inst+26, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, inst+29, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, inst+38, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//import_generic, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %I.type.1 = import_ref Main//import_generic, I, loaded [template = constants.%I.generic]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//import_generic, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//import_generic, loc7_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//import_generic, loc7_32, loaded [symbolic = @impl.1.%I.type (constants.%I.type.2)]
+// CHECK:STDOUT:   %import_ref.8: type = import_ref Main//import_generic, loc8_24, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc8_33, loaded [symbolic = @impl.2.%I.type.1 (constants.%I.type.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//import_generic, loc8_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -369,13 +369,13 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @I(constants.%T: type) {
+// CHECK:STDOUT: generic interface @I(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
-// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -384,7 +384,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) {
+// CHECK:STDOUT: generic impl @impl.1(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.2)]
@@ -392,7 +392,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   impl: imports.%import_ref.6 as imports.%import_ref.7;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) {
+// CHECK:STDOUT: generic impl @impl.2(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T.1: type = bind_symbolic_name T, 0 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type @impl.2.%T.1 (%T) [symbolic = %ptr.1 (constants.%ptr)]
@@ -406,7 +406,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "import_generic.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4

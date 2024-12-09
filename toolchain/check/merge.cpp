@@ -169,8 +169,9 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
   auto& scope = context.name_scopes().Get(scope_id);
-  if (auto lookup = scope.name_map.Lookup(name_id)) {
-    scope.names[lookup.value()].inst_id = new_inst_id;
+  auto entry_id = scope.Lookup(name_id);
+  if (entry_id) {
+    scope.GetEntry(*entry_id).inst_id = new_inst_id;
   }
 }
 
@@ -183,7 +184,8 @@ static auto EntityHasParamError(Context& context, const DeclParams& info)
     if (param_patterns_id.is_valid() &&
         param_patterns_id != SemIR::InstBlockId::Empty) {
       for (auto param_id : context.inst_blocks().Get(param_patterns_id)) {
-        if (context.insts().Get(param_id).type_id() == SemIR::TypeId::Error) {
+        if (context.insts().Get(param_id).type_id() ==
+            SemIR::ErrorInst::SingletonTypeId) {
           return true;
         }
       }

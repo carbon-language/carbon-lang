@@ -286,19 +286,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//adapt_specific_type, inst+9, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//adapt_specific_type, inst+26, loaded [template = constants.%Adapter]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//adapt_specific_type, inst+65, unloaded
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//adapt_specific_type, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//adapt_specific_type, Adapter, loaded [template = constants.%Adapter]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//adapt_specific_type, Access, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.10
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//adapt_specific_type, inst+20, loaded [symbolic = @C.%complete_type (constants.%complete_type.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//adapt_specific_type, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.6: @C.%C.elem (%C.elem.1) = import_ref Main//adapt_specific_type, inst+18, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//adapt_specific_type, inst+51, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//adapt_specific_type, inst+27, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: @C.%C.elem (%C.elem.1) = import_ref Main//adapt_specific_type, loc5_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//adapt_specific_type, inst39 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -329,13 +329,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Adapter {
+// CHECK:STDOUT: class @Adapter [from "adapt_specific_type.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.9
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) {
+// CHECK:STDOUT: generic class @C(constants.%T: type) [from "adapt_specific_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -655,20 +655,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_adapt_specific_type_library, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_adapt_specific_type_library, inst+26, loaded [template = constants.%Adapter]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_adapt_specific_type_library, C, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_adapt_specific_type_library, Adapter, loaded [template = constants.%Adapter]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.10
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.11
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//extend_adapt_specific_type_library, inst+20, loaded [symbolic = @C.%complete_type (constants.%complete_type.1)]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_adapt_specific_type_library, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.5: @C.%C.elem (%C.elem.1) = import_ref Main//extend_adapt_specific_type_library, inst+18, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//extend_adapt_specific_type_library, inst+51, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extend_adapt_specific_type_library, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//extend_adapt_specific_type_library, inst+44, loaded [template = constants.%C.2]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.1)]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5: @C.%C.elem (%C.elem.1) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extend_adapt_specific_type_library, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [template = constants.%C.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -698,14 +698,14 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Adapter {
+// CHECK:STDOUT: class @Adapter [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   extend imports.%import_ref.9
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) {
+// CHECK:STDOUT: generic class @C(constants.%T: type) [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -887,15 +887,15 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Adapter.type = import_ref Main//adapt_generic_type, inst+9, loaded [template = constants.%Adapter.generic]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//adapt_generic_type, inst+51, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Adapter.type = import_ref Main//adapt_generic_type, Adapter, loaded [template = constants.%Adapter.generic]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//adapt_generic_type, Convert, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//adapt_generic_type, inst+18, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.1)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//adapt_generic_type, inst+15, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.1)]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//adapt_generic_type, inst27 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -951,7 +951,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Adapter(constants.%T: type) {
+// CHECK:STDOUT: generic class @Adapter(constants.%T: type) [from "adapt_generic_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

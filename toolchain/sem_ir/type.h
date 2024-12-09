@@ -108,7 +108,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 
   // Returns integer type information from a type ID that is known to represent
   // an integer type. Abstracts away the difference between an `IntType`
-  // instruction defined type, a builtin instruction defined type, and a class
+  // instruction defined type, a singleton instruction defined type, and a class
   // adapting such a type. Uses IntId::Invalid for types that have a
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;

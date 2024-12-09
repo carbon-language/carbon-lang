@@ -639,12 +639,12 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, inst+15, loaded [template = constants.%Foo.generic]
-// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, inst+26, loaded [template = constants.%Bar.generic]
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: %Foo.type = import_ref Main//two_file, Foo, loaded [template = constants.%Foo.generic]
+// CHECK:STDOUT:   %import_ref.4: %Bar.type = import_ref Main//two_file, Bar, loaded [template = constants.%Bar.generic]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -674,7 +674,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -698,7 +698,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Bar(constants.%a: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -722,7 +722,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
@@ -1095,10 +1095,10 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, inst+13, loaded [template = constants.%Foo.generic]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: %Foo.type = import_ref Main//alias_two_file, Foo, loaded [template = constants.%Foo.generic]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1121,7 +1121,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) {
+// CHECK:STDOUT: generic interface @Foo(constants.%a: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:   %a.patt: %C = symbolic_binding_pattern a, 0 [symbolic = %a.patt (constants.%a.patt)]
 // CHECK:STDOUT:
@@ -1145,7 +1145,7 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3

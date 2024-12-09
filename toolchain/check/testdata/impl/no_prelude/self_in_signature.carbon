@@ -301,7 +301,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1)](%x.param_patt: @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1)) -> @F.1.%Self.as_type.loc12_14.1 (%Self.as_type.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2[%self.param_patt: %C](%x.param_patt: %C) -> %return: %C {
+// CHECK:STDOUT: fn @F.2[%self.param_patt: %C](%x.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc20_38.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc20_38.2: init %C = class_init (), %return [template = constants.%C.val]
@@ -309,7 +309,7 @@ impl D as SelfNested {
 // CHECK:STDOUT:   return %.loc20_39 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.param_patt: %D](%x.param_patt: %D) -> %return: %D {
+// CHECK:STDOUT: fn @F.3[%self.param_patt: %D](%x.param_patt: %D) -> %return.param_patt: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_47.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc24_47.2: init %D = class_init (), %return [template = constants.%D.val]

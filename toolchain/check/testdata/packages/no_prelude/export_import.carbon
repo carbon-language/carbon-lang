@@ -198,7 +198,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: --- export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -211,7 +211,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: --- export_copy.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,7 +224,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: --- non_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -237,7 +237,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: --- export_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -250,7 +250,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: --- import_then_export.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//base, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//base, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -278,10 +278,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -295,7 +295,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -327,10 +327,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -345,7 +345,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -377,10 +377,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, inst+2, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_export, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -395,7 +395,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -427,10 +427,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -444,7 +444,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -476,10 +476,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -493,7 +493,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -525,10 +525,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -542,7 +542,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -574,10 +574,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -591,7 +591,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -623,10 +623,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -640,7 +640,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -672,10 +672,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -689,7 +689,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -732,10 +732,10 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -749,7 +749,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   .x = imports.%import_ref.4
@@ -781,11 +781,11 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//use_non_export_then_base, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//base, inst+9, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst+2, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst+7, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//use_non_export_then_base, c, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -800,7 +800,7 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   %indirect_c: ref %C = bind_name indirect_c, %indirect_c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .x = imports.%import_ref.5

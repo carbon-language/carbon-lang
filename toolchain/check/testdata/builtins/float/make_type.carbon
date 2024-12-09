@@ -111,7 +111,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, inst+27, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     .Int = %import_ref.38
@@ -159,7 +159,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetFloat(%dyn_size.param_patt: %i32) -> type {
 // CHECK:STDOUT: !entry:
@@ -201,7 +201,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, inst+27, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.2
 // CHECK:STDOUT:     .Int = %import_ref.38
@@ -249,7 +249,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %dyn: ref <error> = bind_name dyn, %dyn.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type";
+// CHECK:STDOUT: fn @Float(%size.param_patt: %i32) -> type = "float.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

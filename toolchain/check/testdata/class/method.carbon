@@ -143,7 +143,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %self.param.loc20: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc20: %Class = bind_name self, %self.param.loc20
 // CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc20
+// CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [template = constants.%Call] {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
@@ -280,7 +280,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:     %self.param.loc12: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %self.param.loc12
 // CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc12_22: ref %i32 = return_slot %return.param.loc12
+// CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self

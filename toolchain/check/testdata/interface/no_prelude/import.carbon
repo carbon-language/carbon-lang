@@ -167,21 +167,21 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%Empty.type]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+5, loaded [template = constants.%Basic.type]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+20, loaded [template = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:   %import_ref.4: ref %struct_type.f.1 = import_ref Main//a, inst+39, loaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.7: %assoc_type.1 = import_ref Main//a, inst+11, loaded [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %import_ref.8: %F.assoc_type.1 = import_ref Main//a, inst+18, loaded [template = constants.%assoc1.1]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+22, unloaded
-// CHECK:STDOUT:   %import_ref.12: %assoc_type.2 = import_ref Main//a, inst+26, loaded [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %import_ref.13: %F.assoc_type.2 = import_ref Main//a, inst+32, loaded [template = constants.%assoc1.2]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst+24, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, inst+28, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Empty, loaded [template = constants.%Empty.type]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Basic, loaded [template = constants.%Basic.type]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, ForwardDeclared, loaded [template = constants.%ForwardDeclared.type]
+// CHECK:STDOUT:   %import_ref.4: ref %struct_type.f.1 = import_ref Main//a, f_ref, loaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: %assoc_type.1 = import_ref Main//a, loc8_15, loaded [template = constants.%assoc0.1]
+// CHECK:STDOUT:   %import_ref.8: %F.assoc_type.1 = import_ref Main//a, loc9_9, loaded [template = constants.%assoc1.1]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, T, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//a, F, unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst34 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.12: %assoc_type.2 = import_ref Main//a, loc16_15, loaded [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %import_ref.13: %F.assoc_type.2 = import_ref Main//a, loc17_9, loaded [template = constants.%assoc1.2]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, T, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -242,13 +242,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Empty {
+// CHECK:STDOUT: interface @Empty [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Basic {
+// CHECK:STDOUT: interface @Basic [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .T = imports.%import_ref.7
@@ -256,7 +256,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   witness = (imports.%import_ref.9, imports.%import_ref.10)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardDeclared {
+// CHECK:STDOUT: interface @ForwardDeclared [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   .T = imports.%import_ref.12
@@ -279,12 +279,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) {
+// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

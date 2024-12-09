@@ -452,10 +452,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, inst+7, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//two_file, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -485,18 +485,18 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Bar(%a.param_patt: %C) [from "two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -713,7 +713,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param.loc7: ref %C = out_param runtime_param0
-// CHECK:STDOUT:     %.loc7: ref %C = return_slot %return.param.loc7
+// CHECK:STDOUT:     %return.loc7: ref %C = return_slot %return.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type = fn_decl @Foo [template = constants.%Foo] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
@@ -721,7 +721,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [template = constants.%C]
 // CHECK:STDOUT:     %return.param.loc8: ref %C = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C = return_slot %return.param.loc8
+// CHECK:STDOUT:     %return.loc8: ref %C = return_slot %return.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -733,12 +733,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo() -> %return: %C {
+// CHECK:STDOUT: fn @Foo() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.loc8 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [template = constants.%C.val]
-// CHECK:STDOUT:   return %.loc8_26 to %return
+// CHECK:STDOUT:   return %.loc8_26 to %return.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
@@ -788,9 +788,9 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//alias_two_file, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//alias_two_file, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -813,13 +813,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) {
+// CHECK:STDOUT: fn @Foo(%a.param_patt: %C) [from "alias_two_file.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

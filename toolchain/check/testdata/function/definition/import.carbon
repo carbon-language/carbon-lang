@@ -270,10 +270,10 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, inst+35, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, inst+62, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+73, unloaded
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.6
@@ -314,11 +314,11 @@ fn D() {}
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c [from "fns.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -365,8 +365,8 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+62, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, inst+73, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, C, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
@@ -397,16 +397,16 @@ fn D() {}
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc23_14: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: fn @A() [from "fns.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "fns.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redecl_then_def.carbon
 // CHECK:STDOUT:
@@ -433,7 +433,7 @@ fn D() {}
 // CHECK:STDOUT:   %A.decl.loc24: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A() {
+// CHECK:STDOUT: extern fn @A() [from "extern.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -446,9 +446,9 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, inst+62, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, A, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, B, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, C, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -469,7 +469,7 @@ fn D() {}
 // CHECK:STDOUT:   %D.decl.loc15: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D() {
+// CHECK:STDOUT: fn @D() [from "fns.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

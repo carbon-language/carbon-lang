@@ -99,7 +99,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param.loc22: %Base = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc22: %Base = bind_name self, %self.param.loc22
 // CHECK:STDOUT:     %return.param.loc22: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc22
+// CHECK:STDOUT:     %return.loc22: ref %i32 = return_slot %return.param.loc22
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %ptr.2 = binding_pattern self
@@ -161,7 +161,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.param.loc18: %Base = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc18: %Base = bind_name self, %self.param.loc18
 // CHECK:STDOUT:     %return.param.loc18: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc18_29: ref %i32 = return_slot %return.param.loc18
+// CHECK:STDOUT:     %return.loc18: ref %i32 = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddrSelfBase.decl: %AddrSelfBase.type = fn_decl @AddrSelfBase [template = constants.%AddrSelfBase] {
 // CHECK:STDOUT:     %self.patt: %ptr.2 = binding_pattern self

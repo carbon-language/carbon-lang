@@ -194,28 +194,28 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+3, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+8, loaded [template = constants.%Field]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, inst+31, loaded [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, inst+54, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Empty, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Field, loaded [template = constants.%Field]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, ForwardDeclared, loaded [template = constants.%ForwardDeclared.1]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, Incomplete, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.10
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//a, inst+6, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//a, inst+29, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.9: %Field.elem = import_ref Main//a, inst+27, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.46: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst+32, unloaded
-// CHECK:STDOUT:   %import_ref.48: %F.type = import_ref Main//a, inst+39, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.49: %G.type = import_ref Main//a, inst+50, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.50: <witness> = import_ref Main//a, inst+53, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.51 = import_ref Main//a, inst+32, unloaded
-// CHECK:STDOUT:   %import_ref.52 = import_ref Main//a, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.53 = import_ref Main//a, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//a, loc5_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//a, loc9_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst21 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9: %Field.elem = import_ref Main//a, loc8_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.46: <witness> = import_ref Main//a, loc16_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.47 = import_ref Main//a, inst43 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.48: %F.type = import_ref Main//a, loc14_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.49: %G.type = import_ref Main//a, loc15_27, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.50: <witness> = import_ref Main//a, loc16_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.51 = import_ref Main//a, inst43 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.52 = import_ref Main//a, loc14_21, unloaded
+// CHECK:STDOUT:   %import_ref.53 = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -232,20 +232,20 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Empty {
+// CHECK:STDOUT: class @Empty [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Field {
+// CHECK:STDOUT: class @Field [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.8
 // CHECK:STDOUT:   .x = imports.%import_ref.9
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardDeclared.1 {
+// CHECK:STDOUT: class @ForwardDeclared.1 [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.47
 // CHECK:STDOUT:   .F = imports.%import_ref.48
@@ -253,7 +253,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardDeclared.2 {
+// CHECK:STDOUT: class @ForwardDeclared.2 [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.51
 // CHECK:STDOUT:   .F = imports.%import_ref.52
@@ -261,7 +261,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Incomplete;
+// CHECK:STDOUT: class @Incomplete [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
@@ -328,7 +328,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.1]();
+// CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.1]() [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst+403: %ptr.3]();
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst401: %ptr.3]() [from "a.carbon"];
 // CHECK:STDOUT:

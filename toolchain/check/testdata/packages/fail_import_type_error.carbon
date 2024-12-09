@@ -88,10 +88,10 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref Implicit//default, inst+5, loaded
-// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, inst+9, loaded
-// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, inst+13, loaded
-// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, inst+17, loaded
+// CHECK:STDOUT:   %import_ref.1: ref <error> = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %import_ref.2: ref <error> = import_ref Implicit//default, b_ref, loaded
+// CHECK:STDOUT:   %import_ref.3: ref <error> = import_ref Implicit//default, c_ref, loaded
+// CHECK:STDOUT:   %import_ref.4: ref <error> = import_ref Implicit//default, d_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude

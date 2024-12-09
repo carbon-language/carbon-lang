@@ -7,7 +7,6 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -19,6 +18,7 @@
 // - Either a `Kind` constant, or a `Kinds` constant and an `InstKind kind;`
 //   member. These are described below.
 // - Optionally, a `SingletonInstId` if it is a singleton instruction.
+//   Similarly, there may be `SingletonConstantId` and `SingletonTypeId`.
 // - Optionally, a `TypeId type_id;` member, for instructions that produce a
 //   value. This includes instructions that produce an abstract value, such as a
 //   `Namespace`, for which a placeholder type should be used.
@@ -55,6 +55,8 @@ struct AutoType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
 
   TypeId type_id;
 };
@@ -587,6 +589,10 @@ struct ErrorInst {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonConstantId =
+      ConstantId::ForTemplateConstant(SingletonInstId);
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(SingletonConstantId);
 
   TypeId type_id;
 };
@@ -940,6 +946,9 @@ struct Namespace {
   static constexpr auto Kind =
       InstKind::Namespace.Define<Parse::AnyNamespaceId>(
           {.ir_name = "namespace", .constant_kind = InstConstantKind::Always});
+  // The file's package namespace is a well-known instruction to help `package.`
+  // qualified names. It will always be immediately after singletons.
+  static constexpr InstId PackageInstId = InstId(SingletonInstKinds.size());
 
   TypeId type_id;
   NameScopeId name_scope_id;
@@ -1372,6 +1381,8 @@ struct TypeType {
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Always});
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
+  static constexpr auto SingletonTypeId =
+      TypeId::ForTypeConstant(ConstantId::ForTemplateConstant(SingletonInstId));
 
   TypeId type_id;
 };
@@ -1449,6 +1460,13 @@ struct VtableType {
   // standard type and be removed.
   static constexpr auto SingletonInstId = MakeSingletonInstId<Kind>();
 
+  TypeId type_id;
+};
+
+// Initializer for virtual function table pointers in object initialization.
+struct VtablePtr {
+  static constexpr auto Kind =
+      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
   TypeId type_id;
 };
 

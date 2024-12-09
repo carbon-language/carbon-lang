@@ -214,14 +214,14 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return: %C {
+// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%Function.specific_fn.3]
-// CHECK:STDOUT:   %.loc18_23.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18_23.2
+// CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -426,13 +426,13 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return: %C {
+// CHECK:STDOUT: fn @CallSpecific(%x.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Function.ref: %Function.type = name_ref Function, file.%Function.decl [template = constants.%Function]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%C) [template = constants.%Function.specific_fn.3]
-// CHECK:STDOUT:   %.loc18_23.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18_23.2
+// CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -81,7 +81,7 @@ class RebuildGenericConstantInEvalBlockCallbacks final
           context_.insts().Get(inst_id));
       return true;
     }
-    if (!const_id.is_symbolic()) {
+    if (!context_.constant_values().DependsOnGenericParameter(const_id)) {
       // This instruction doesn't have a symbolic constant value, so can't
       // contain any bindings that need to be substituted.
       return true;
@@ -104,8 +104,12 @@ class RebuildGenericConstantInEvalBlockCallbacks final
     // block.
     if (auto binding =
             context_.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
-      inst_id = Rebuild(inst_id, *binding);
-      return true;
+      if (context_.entity_names()
+              .Get(binding->entity_name_id)
+              .bind_index.is_valid()) {
+        inst_id = Rebuild(inst_id, *binding);
+        return true;
+      }
     }
 
     if (auto pattern =

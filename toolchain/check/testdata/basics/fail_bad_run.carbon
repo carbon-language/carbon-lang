@@ -55,7 +55,7 @@ fn Run() -> String {}
 // CHECK:STDOUT:   %.loc18_20.2: type = converted %int.make_type_signed, %.loc18_20.1 [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %return: String {
+// CHECK:STDOUT: fn @Run() -> %return.param_patt: String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

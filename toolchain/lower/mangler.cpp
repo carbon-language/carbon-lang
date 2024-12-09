@@ -39,7 +39,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       continue;
     }
     const auto& name_scope = sem_ir().name_scopes().Get(name_scope_id);
-    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id)) {
+    CARBON_KIND_SWITCH(sem_ir().insts().Get(name_scope.inst_id())) {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         const auto& impl = sem_ir().impls().Get(impl_decl.impl_id);
 
@@ -110,7 +110,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
       }
       case SemIR::Namespace::Kind: {
-        os << names().GetAsStringIfIdentifier(name_scope.name_id);
+        os << names().GetAsStringIfIdentifier(name_scope.name_id());
         break;
       }
       default:
@@ -119,7 +119,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     }
     if (!name_scope.is_imported_package()) {
       names_to_render.push_back(
-          {.name_scope_id = name_scope.parent_scope_id, .prefix = '.'});
+          {.name_scope_id = name_scope.parent_scope_id(), .prefix = '.'});
     }
   }
 }

@@ -134,8 +134,8 @@ class Inst : public Printable<Inst> {
     // Error uses a self-referential type so that it's not accidentally treated
     // as a normal type. Every other builtin is a type, including the
     // self-referential TypeType.
-    auto type_id =
-        kind == InstKind::ErrorInst ? TypeId::Error : TypeId::TypeType;
+    auto type_id = kind == InstKind::ErrorInst ? ErrorInst::SingletonTypeId
+                                               : TypeType::SingletonTypeId;
     return Inst(kind, type_id, InstId::InvalidIndex, InstId::InvalidIndex);
   }
 
@@ -275,7 +275,7 @@ class Inst : public Printable<Inst> {
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
 
   // Convert a field from its raw representation.

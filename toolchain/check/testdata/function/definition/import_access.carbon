@@ -226,7 +226,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, inst+3, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, Def, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -248,7 +248,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Def();
+// CHECK:STDOUT: fn @Def() [from "def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -338,7 +338,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, inst+3, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -360,7 +360,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardWithDef();
+// CHECK:STDOUT: fn @ForwardWithDef() [from "forward_with_def.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -450,7 +450,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, inst+3, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -473,7 +473,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Forward() {
+// CHECK:STDOUT: fn @Forward() [from "forward.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -646,7 +646,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Outer.val: @A.%Outer.loc4_22.1 (%Outer.1) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @A.%Outer.loc4_22.1 (%Outer.1) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @A.%Outer.loc4_22.1 (%Outer.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_15.2: init @A.%Outer.loc4_22.1 (%Outer.1) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.1)]
@@ -662,7 +662,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Outer.val: @B.%Outer.loc7_22.1 (%Outer.2) = struct_value () [symbolic = %Outer.val (constants.%Outer.val.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @B.%Outer.loc7_22.1 (%Outer.2) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @B.%Outer.loc7_22.1 (%Outer.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_15.2: init @B.%Outer.loc7_22.1 (%Outer.2) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.2)]
@@ -680,7 +680,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.val: @C.%Inner.loc10_22.1 (%Inner.2) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @C.%Inner.loc10_22.1 (%Inner.2) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @C.%Inner.loc10_22.1 (%Inner.2) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_15.2: init @C.%Inner.loc10_22.1 (%Inner.2) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.1)]
@@ -699,7 +699,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Inner.val: @D.%Inner.loc13_22.1 (%Inner.1) = struct_value () [symbolic = %Inner.val (constants.%Inner.val.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return: @D.%Inner.loc13_22.1 (%Inner.1) {
+// CHECK:STDOUT:   fn() -> %return.param_patt: @D.%Inner.loc13_22.1 (%Inner.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_15.2: init @D.%Inner.loc13_22.1 (%Inner.1) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.2)]

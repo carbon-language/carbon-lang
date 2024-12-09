@@ -117,7 +117,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return: %C {
+// CHECK:STDOUT: fn @F() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %result: ref %C = bind_name result, %return

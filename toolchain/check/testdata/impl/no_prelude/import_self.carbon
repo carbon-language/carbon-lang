@@ -116,10 +116,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, inst+1, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: %Op.assoc_type = import_ref Main//a, inst+34, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, inst+27, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Add, loaded [template = constants.%Add.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: %Op.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, Op, loaded [template = constants.%Op.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -156,7 +156,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Add {
+// CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   .Op = imports.%import_ref.3
@@ -197,7 +197,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc7_53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) {
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:

@@ -278,7 +278,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   fn() -> %X;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return: %X {
+// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [template = constants.%X.val]

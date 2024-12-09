@@ -20,6 +20,18 @@ static auto GetCurrentFunction(Context& context) -> SemIR::Function& {
   return context.functions().Get(function_id);
 }
 
+// Gets the return slot of the function that lexically encloses the current
+// location.
+static auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
+  // TODO: this does some unnecessary work to compute non-lexical scopes,
+  // so a separate API on ScopeStack could be more efficient.
+  auto return_slot_id = context.scope_stack()
+                            .LookupInLexicalScopes(SemIR::NameId::ReturnSlot)
+                            .first;
+  CARBON_CHECK(return_slot_id.is_valid());
+  return return_slot_id;
+}
+
 // Gets the currently in scope `returned var`, if any, that would be returned
 // by a `return var;`.
 static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
@@ -40,13 +52,16 @@ static auto NoteNoReturnTypeProvided(Context::DiagnosticBuilder& diag,
 // must be a function whose definition is currently being checked.
 static auto NoteReturnType(Context& context, Context::DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
+  auto out_param_pattern = context.insts().GetAs<SemIR::OutParamPattern>(
+      function.return_slot_pattern_id);
   auto return_type_inst_id =
       context.insts()
-          .GetAs<SemIR::ReturnSlot>(function.return_slot_id)
+          .GetAs<SemIR::ReturnSlotPattern>(out_param_pattern.subpattern_id)
           .type_inst_id;
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
                     InstIdAsType);
-  diag.Note(function.return_slot_id, ReturnTypeHereNote, return_type_inst_id);
+  diag.Note(function.return_slot_pattern_id, ReturnTypeHereNote,
+            return_type_inst_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -78,7 +93,7 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
         context.emitter().Build(returned_node, ReturnedVarWithNoReturnType);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // The declared type of the var must match the return type of the function.
@@ -91,13 +106,13 @@ auto CheckReturnedVar(Context& context, Parse::NodeId returned_node,
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
     NoteReturnType(context, diag, function);
     diag.Emit();
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
 
   // The variable aliases the return slot if there is one. If not, it has its
   // own storage.
   if (return_info.has_return_slot()) {
-    return function.return_slot_id;
+    return GetCurrentReturnSlot(context);
   }
   return context.AddInst<SemIR::VarStorage>(
       name_node, {.type_id = type_id, .name_id = name_id});
@@ -146,7 +161,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     auto diag = context.emitter().Build(node_id, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
-    expr_id = SemIR::InstId::BuiltinErrorInst;
+    expr_id = SemIR::ErrorInst::SingletonInstId;
   } else if (returned_var_id.is_valid()) {
     CARBON_DIAGNOSTIC(
         ReturnExprWithReturnedVar, Error,
@@ -154,13 +169,13 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     auto diag = context.emitter().Build(node_id, ReturnExprWithReturnedVar);
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
-    expr_id = SemIR::InstId::BuiltinErrorInst;
+    expr_id = SemIR::ErrorInst::SingletonInstId;
   } else if (!return_info.is_valid()) {
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
-    expr_id = SemIR::InstId::BuiltinErrorInst;
+    expr_id = SemIR::ErrorInst::SingletonInstId;
   } else if (return_info.has_return_slot()) {
-    return_slot_id = function.return_slot_id;
+    return_slot_id = GetCurrentReturnSlot(context);
     // Note that this can import a function and invalidate `function`.
     expr_id = Initialize(context, node_id, return_slot_id, expr_id);
   } else {
@@ -181,10 +196,10 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
                       "`return var;` with no `returned var` in scope");
     context.emitter().Emit(node_id, ReturnVarWithNoReturnedVar);
-    returned_var_id = SemIR::InstId::BuiltinErrorInst;
+    returned_var_id = SemIR::ErrorInst::SingletonInstId;
   }
 
-  auto return_slot_id = function.return_slot_id;
+  auto return_slot_id = GetCurrentReturnSlot(context);
   if (!SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function)
            .has_return_slot()) {
     // If we don't have a return slot, we're returning by value. Convert to a

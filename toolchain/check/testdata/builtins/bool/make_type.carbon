@@ -62,7 +62,7 @@ var b: Bool() = false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, inst+7, loaded [template = constants.%Bool]
+// CHECK:STDOUT:   %import_ref: %Bool.type = import_ref Main//types, Bool, loaded [template = constants.%Bool]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -85,7 +85,7 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

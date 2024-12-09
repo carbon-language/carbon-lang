@@ -272,25 +272,25 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_base, inst+26, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, inst+48, loaded [template = constants.%Derived]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, inst+78, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, Base, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_base, Param, unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, Derived, loaded [template = constants.%Derived]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, DoubleFieldAccess, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.16
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_base, inst+46, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst+27, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Param.elem = import_ref Main//extend_generic_base, inst+44, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, inst+20, loaded [symbolic = @Base.%complete_type (constants.%complete_type.2)]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.10: @Base.%Base.elem (%Base.elem.1) = import_ref Main//extend_generic_base, inst+18, loaded [template = %.2]
-// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_base, inst+63, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_base, inst+49, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_base, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, inst+52, loaded [template = constants.%Base.2]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_base, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.2)]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.10: @Base.%Base.elem (%Base.elem.1) = import_ref Main//extend_generic_base, loc5_8, loaded [template = %.2]
+// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_base, inst60 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_base, loc13_27, unloaded
+// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_base, loc13_26, loaded [template = constants.%Base.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -322,7 +322,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT: class @Derived [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.13
 // CHECK:STDOUT:   .base = imports.%import_ref.14
@@ -330,14 +330,14 @@ fn H() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Param {
+// CHECK:STDOUT: class @Param [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6
 // CHECK:STDOUT:   .y = imports.%import_ref.7
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Base(constants.%T: type) {
+// CHECK:STDOUT: generic class @Base(constants.%T: type) [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -779,21 +779,21 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_symbolic_base, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//extend_generic_symbolic_base, inst+47, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_generic_symbolic_base, inst+70, unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_symbolic_base, X, unloaded
+// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//extend_generic_symbolic_base, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_generic_symbolic_base, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_symbolic_base, inst+26, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_symbolic_base, inst+15, unloaded
-// CHECK:STDOUT:   %import_ref.7: @X.%G.type (%G.type.1) = import_ref Main//extend_generic_symbolic_base, inst+21, loaded [symbolic = @X.%G (constants.%G.1)]
-// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//extend_generic_symbolic_base, inst+63, loaded [symbolic = @C.%complete_type (constants.%complete_type.2)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_symbolic_base, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extend_generic_symbolic_base, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//extend_generic_symbolic_base, inst+55, loaded [symbolic = @C.%X (constants.%X.2)]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//extend_generic_symbolic_base, loc6_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_generic_symbolic_base, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: @X.%G.type (%G.type.1) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%G (constants.%G.1)]
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.2)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//extend_generic_symbolic_base, inst64 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extend_generic_symbolic_base, loc9_20, unloaded
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//extend_generic_symbolic_base, loc9_19, loaded [symbolic = @C.%X (constants.%X.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -809,7 +809,7 @@ fn H() {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) {
+// CHECK:STDOUT: generic class @C(constants.%T: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -829,7 +829,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @X(constants.%U: type) {
+// CHECK:STDOUT: generic class @X(constants.%U: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
 // CHECK:STDOUT:
@@ -867,7 +867,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(constants.%U: type) {
+// CHECK:STDOUT: generic fn @G(constants.%U: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

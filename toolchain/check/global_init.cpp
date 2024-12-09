@@ -49,7 +49,6 @@ auto GlobalInit::Finalize() -> void {
         .non_owning_decl_id = SemIR::InstId::Invalid,
         .first_owning_decl_id = SemIR::InstId::Invalid},
        {.return_slot_pattern_id = SemIR::InstId::Invalid,
-        .return_slot_id = SemIR::InstId::Invalid,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }
 

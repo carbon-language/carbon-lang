@@ -57,7 +57,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 
@@ -67,7 +67,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 
@@ -170,11 +170,18 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
   auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::InstId::BuiltinNamespaceType) {
+  if (type_inst_id == SemIR::NamespaceType::SingletonInstId) {
     return;
   }
 
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+  auto inner_inst_id = inst.value_id;
+
+  if (auto bind_name =
+          context.sem_ir().insts().TryGetAs<SemIR::BindName>(inner_inst_id)) {
+    inner_inst_id = bind_name->value_id;
+  }
+
+  context.SetLocal(inst_id, context.GetValue(inner_inst_id));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -244,6 +251,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id,
                    context.builder().CreateAlloca(context.GetType(inst.type_id),
                                                   /*ArraySize=*/nullptr));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::VtablePtr /*inst*/) -> void {
+  // TODO: Initialize the virtual pointer to actually point to a virtual
+  // function table.
+  context.SetLocal(inst_id,
+                   llvm::ConstantPointerNull::get(
+                       llvm::PointerType::get(context.llvm_context(), 0)));
 }
 
 }  // namespace Carbon::Lower

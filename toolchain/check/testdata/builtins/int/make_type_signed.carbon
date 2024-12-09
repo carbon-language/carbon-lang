@@ -163,8 +163,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -255,7 +255,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.param_patt: %i64) -> %i64 {
 // CHECK:STDOUT: !entry:
@@ -269,7 +269,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Symbolic(%N.loc14_13.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc14_13.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc14_13.2 (constants.%N)]
@@ -321,11 +321,11 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, inst+35, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, inst+60, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, inst+100, loaded [template = constants.%Symbolic]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, G, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, Symbolic, loaded [template = constants.%Symbolic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -411,7 +411,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseF(%n.param_patt: %i64) -> %i64 {
 // CHECK:STDOUT: !entry:
@@ -423,7 +423,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   return %.loc8_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt: %i64) -> %i64;
+// CHECK:STDOUT: fn @F(%n.param_patt: %i64) -> %i64 [from "use_types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseG(%n.param_patt: %i13) -> %i13 {
 // CHECK:STDOUT: !entry:
@@ -435,7 +435,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   return %.loc12_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param_patt: %i13) -> %i13;
+// CHECK:STDOUT: fn @G(%n.param_patt: %i13) -> %i13 [from "use_types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseSymbolic(%n.param_patt: %i24) -> %i24 {
 // CHECK:STDOUT: !entry:
@@ -449,7 +449,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   return %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Symbolic(constants.%N: Core.IntLiteral) {
+// CHECK:STDOUT: generic fn @Symbolic(constants.%N: Core.IntLiteral) [from "use_types.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic = %iN (constants.%iN)]
@@ -482,8 +482,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -508,7 +508,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_negative_size.carbon
 // CHECK:STDOUT:
@@ -540,8 +540,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type.2 = import_ref Main//types, inst+23, loaded [template = constants.%Int.2]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type.2 = import_ref Main//types, Int, loaded [template = constants.%Int.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.4
@@ -606,7 +606,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%n.param_patt: %i32) -> %i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int.2(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int.2(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_oversized.carbon
 // CHECK:STDOUT:
@@ -617,8 +617,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -643,5 +643,5 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
 // CHECK:STDOUT:

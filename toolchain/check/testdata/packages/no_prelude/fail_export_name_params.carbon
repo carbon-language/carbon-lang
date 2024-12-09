@@ -96,8 +96,8 @@ export C2(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, inst+7, loaded [template = constants.%C1.generic]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, inst+18, loaded [template = constants.%C2.generic]
+// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, C1, loaded [template = constants.%C1.generic]
+// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, C2, loaded [template = constants.%C2.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,14 +112,14 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C1(constants.%T: type) {
+// CHECK:STDOUT: generic class @C1(constants.%T: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C2(constants.%T: type) {
+// CHECK:STDOUT: generic class @C2(constants.%T: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:

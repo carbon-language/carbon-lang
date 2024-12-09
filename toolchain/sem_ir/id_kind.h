@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "common/ostream.h"
 #include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -14,7 +15,7 @@ namespace Carbon::SemIR {
 
 // An enum whose values are the specified types.
 template <typename... Types>
-class TypeEnum {
+class TypeEnum : public Printable<TypeEnum<Types...>> {
  public:
   static constexpr size_t NumTypes = sizeof...(Types);
   static constexpr size_t NumValues = NumTypes + 2;
@@ -94,6 +95,20 @@ class TypeEnum {
   // Returns whether this is a valid value, not `Invalid`.
   constexpr auto is_valid() const -> bool {
     return value_ != RawEnumType::Invalid;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "IdKind(";
+    if (value_ == RawEnumType::None) {
+      out << "None";
+    } else {
+      static constexpr std::array<llvm::StringLiteral, sizeof...(Types)> Names =
+          {
+              Types::Label...,
+          };
+      out << Names[static_cast<int>(value_)];
+    }
+    out << ")";
   }
 
  private:

@@ -70,7 +70,7 @@ var b: T = *a;
 // CHECK:STDOUT: --- fail_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: type = import_ref Implicit//default, T, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

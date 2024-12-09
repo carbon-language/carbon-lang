@@ -366,9 +366,14 @@ class MetadataGroup : public Printable<MetadataGroup> {
   auto Store(uint8_t* metadata, ssize_t index) const -> void;
 
   // Clear a byte of this group's metadata at the provided `byte_index` to the
-  // empty value. Note that this must only be called when `FastByteClear` is
-  // true -- in all other cases users of this class should arrange to clear
-  // individual bytes in the underlying array rather than using the group API.
+  // empty value.
+  //
+  // Note that this must only be called when `FastByteClear` is true -- in all
+  // other cases users of this class should arrange to clear individual bytes in
+  // the underlying array rather than using the group API. This is checked by a
+  // static_assert, and the function is templated so that it is not instantiated
+  // in the cases where it would not be valid.
+  template <bool IsCalled = true>
   auto ClearByte(ssize_t byte_index) -> void;
 
   // Clear all of this group's metadata bytes that indicate a deleted slot to
@@ -533,9 +538,12 @@ inline auto MetadataGroup::Store(uint8_t* metadata, ssize_t index) const
   CARBON_DCHECK(0 == std::memcmp(metadata + index, &metadata_bytes, Size));
 }
 
+template <bool IsCalled>
 inline auto MetadataGroup::ClearByte(ssize_t byte_index) -> void {
-  CARBON_DCHECK(FastByteClear, "Only use byte clearing when fast!");
-  CARBON_DCHECK(Size == 8, "The clear implementation assumes an 8-byte group.");
+  static_assert(!IsCalled || FastByteClear,
+                "Only use byte clearing when fast!");
+  static_assert(!IsCalled || Size == 8,
+                "The clear implementation assumes an 8-byte group.");
 
   metadata_ints[0] &= ~(static_cast<uint64_t>(0xff) << (byte_index * 8));
 }

@@ -118,10 +118,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%A.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, inst+8, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, loc6_12, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -142,13 +142,13 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A {
+// CHECK:STDOUT: interface @A [from "decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 {
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 [from "decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -164,7 +164,7 @@ impl () as D;
 // CHECK:STDOUT: --- use_decl_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, A, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -213,10 +213,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_only_in_api, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_only_in_api, inst+8, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, B, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_only_in_api, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_only_in_api, loc6_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -227,13 +227,13 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @B {
+// CHECK:STDOUT: interface @B [from "decl_only_in_api.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 [from "decl_only_in_api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -273,10 +273,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%C.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_decl_in_impl, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_decl_in_impl, inst+8, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_decl_in_impl, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_decl_in_impl, loc6_12, loaded [template = constants.%C.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -292,13 +292,13 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C {
+// CHECK:STDOUT: interface @C [from "decl_in_api_decl_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4;
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 [from "decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:

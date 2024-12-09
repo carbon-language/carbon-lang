@@ -15,7 +15,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralFalseId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType),
+      {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::False});
   return true;
 }
@@ -24,7 +24,7 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
     -> bool {
   context.AddInstAndPush<SemIR::BoolLiteral>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::BoolType),
+      {.type_id = context.GetSingletonType(SemIR::BoolType::SingletonInstId),
        .value = SemIR::BoolValue::True});
   return true;
 }
@@ -55,7 +55,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
                            llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 
@@ -65,7 +65,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                       llvm::APSInt);
     context.emitter().Emit(node_id, RealExponentTooLargeForI64,
                            llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 
@@ -75,8 +75,8 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
   context.AddInstAndPush<SemIR::FloatLiteral>(
-      node_id, {.type_id = context.GetBuiltinType(
-                    SemIR::BuiltinInstKind::LegacyFloatType),
+      node_id, {.type_id = context.GetSingletonType(
+                    SemIR::LegacyFloatType::SingletonInstId),
                 .float_id = float_id});
   return true;
 }
@@ -84,7 +84,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
   context.AddInstAndPush<SemIR::StringLiteral>(
       node_id,
-      {.type_id = context.GetBuiltinType(SemIR::BuiltinInstKind::StringType),
+      {.type_id = context.GetSingletonType(SemIR::StringType::SingletonInstId),
        .string_literal_id = context.tokens().GetStringLiteralValue(
            context.parse_tree().node_token(node_id))});
   return true;
@@ -151,13 +151,13 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinStringType);
+  context.node_stack().Push(node_id, SemIR::StringType::SingletonInstId);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::InstId::BuiltinTypeType);
+  context.node_stack().Push(node_id, SemIR::TypeType::SingletonInstId);
   return true;
 }
 

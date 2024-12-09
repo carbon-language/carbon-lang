@@ -70,9 +70,9 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//base, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -83,7 +83,7 @@ var c: C = {};
 // CHECK:STDOUT:   %C: type = export C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -99,9 +99,9 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, inst+9, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//export, inst+7, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst+8, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//export, inst19 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//export, inst20 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -115,7 +115,7 @@ var c: C = {};
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "export.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2

@@ -72,7 +72,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Implicit//default, inst+3, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -99,7 +99,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %package_a: ref %empty_tuple.type = bind_name package_a, %package_a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "implicit.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -147,7 +147,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %B.type = import_ref SamePackage//default, inst+3, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref: %B.type = import_ref SamePackage//default, B, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -173,7 +173,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   %package_b: ref %empty_tuple.type = bind_name package_b, %package_b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B();
+// CHECK:STDOUT: fn @B() [from "same_package.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

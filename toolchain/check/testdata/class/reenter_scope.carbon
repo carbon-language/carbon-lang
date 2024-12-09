@@ -58,7 +58,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %.loc16_17.1: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_17.2: type = converted %int.make_type_signed.loc16, %.loc16_17.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc16
+// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,7 +72,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:     %.loc12_13.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_13.2: type = converted %int.make_type_signed.loc12, %.loc12_13.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param runtime_param0
-// CHECK:STDOUT:     %.loc12_10: ref %i32 = return_slot %return.param.loc12
+// CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern

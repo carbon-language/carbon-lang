@@ -155,8 +155,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redecl_after_def, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redecl_after_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redecl_after_def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redecl_after_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -207,9 +207,9 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redef_after_def, inst+1, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redef_after_def, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redef_after_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redef_after_def, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redef_after_def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redef_after_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,7 +221,7 @@ class B {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "redef_after_def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -263,8 +263,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//def_alias, inst+4, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, C, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//def_alias, B, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -277,7 +277,7 @@ class B {}
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
+// CHECK:STDOUT: class @C [from "def_alias.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

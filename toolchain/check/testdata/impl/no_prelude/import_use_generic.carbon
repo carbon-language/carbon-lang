@@ -210,16 +210,16 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//import_generic, inst+7, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//import_generic, inst+17, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, inst+15, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, inst+25, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, inst+32, loaded [symbolic = @impl.%C (constants.%C.1)]
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, inst+33, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//import_generic, inst+43, loaded [symbolic = @impl.%interface (constants.%interface.1)]
+// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//import_generic, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//import_generic, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//import_generic, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//import_generic, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//import_generic, inst31 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6: %F.assoc_type = import_ref Main//import_generic, loc7_9, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//import_generic, F, unloaded
+// CHECK:STDOUT:   %import_ref.9: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @impl.%C (constants.%C.1)]
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//import_generic, loc10_32, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @impl.%interface (constants.%interface.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -254,14 +254,14 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT: interface @I [from "import_generic.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.5
 // CHECK:STDOUT:   .F = imports.%import_ref.6
 // CHECK:STDOUT:   witness = (imports.%import_ref.7)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(constants.%T: type) {
+// CHECK:STDOUT: generic impl @impl(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.1)]
@@ -277,7 +277,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(constants.%T: type) {
+// CHECK:STDOUT: generic class @C(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -290,12 +290,12 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%T: type) {
+// CHECK:STDOUT: generic fn @F.2(constants.%T: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();

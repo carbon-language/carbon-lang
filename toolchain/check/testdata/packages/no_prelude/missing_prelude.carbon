@@ -198,9 +198,8 @@ var n: {} = i32;
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %N.1: @Int.%T (%T) = bind_symbolic_name N, 1 [symbolic]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %N.2: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
 // CHECK:STDOUT: }
@@ -224,10 +223,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(constants.%T: type, constants.%N.1: @Int.%T (%T)) {
+// CHECK:STDOUT: generic fn @Int(constants.%T: type, constants.%N: %T) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
-// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N.2)]
+// CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -244,11 +243,11 @@ var n: {} = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Int(constants.%T, constants.%N.1) {
+// CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %N => constants.%N.1
-// CHECK:STDOUT:   %N.patt => constants.%N.1
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {

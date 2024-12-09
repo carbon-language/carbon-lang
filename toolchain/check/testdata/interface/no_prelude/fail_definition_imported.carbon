@@ -52,7 +52,7 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, inst+1, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,7 +63,7 @@ interface I {}
 // CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I;
+// CHECK:STDOUT: interface @I [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.1 {
 // CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]

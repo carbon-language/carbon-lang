@@ -46,7 +46,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, inst+91, loaded [template = constants.%Negate.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [template = constants.%Negate.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,7 +106,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%self.param_patt: %C]() -> %return: %C {
+// CHECK:STDOUT: fn @Op.1[%self.param_patt: %C]() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%C.val]
@@ -114,13 +114,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   return %.loc19_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc23_17.2: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23_17.2
+// CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -104,7 +104,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc28: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.param.loc28: ref %Class = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %Class = return_slot %return.param.loc28
+// CHECK:STDOUT:     %return.loc28: ref %Class = return_slot %return.param.loc28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WrongSelf.decl: type = class_decl @WrongSelf [template = constants.%WrongSelf] {} {}
 // CHECK:STDOUT:   %CallWrongSelf.decl: %CallWrongSelf.type = fn_decl @CallWrongSelf [template = constants.%CallWrongSelf] {
@@ -132,7 +132,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.param.loc18: ref %Class = out_param runtime_param0
-// CHECK:STDOUT:     %.loc18: ref %Class = return_slot %return.param.loc18
+// CHECK:STDOUT:     %return.loc18: ref %Class = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
@@ -165,14 +165,14 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %Class {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref.loc33: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %self.var: ref %Class = var self
 // CHECK:STDOUT:   %self: ref %Class = bind_name self, %self.var
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self
 // CHECK:STDOUT:   %.loc38: %Class = bind_value %self.ref
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2[%self.param_patt: %Class]();

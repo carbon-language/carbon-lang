@@ -170,23 +170,23 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, inst+47, loaded [template = constants.%Child]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, Base, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Child, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.14
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, inst+45, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, inst+10, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, inst+19, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Base.elem = import_ref Main//a, inst+38, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, inst+43, unloaded
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, inst+54, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst+48, unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, inst+52, unloaded
-// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, inst+49, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %import_ref.7: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, loc9_13, unloaded
+// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst59 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -201,7 +201,7 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Child {
+// CHECK:STDOUT: class @Child [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.11
 // CHECK:STDOUT:   .base = imports.%import_ref.12
@@ -209,7 +209,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT: class @Base [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.4
 // CHECK:STDOUT:   .F = imports.%import_ref.5
@@ -270,5 +270,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
+// CHECK:STDOUT: fn @F[%self.param_patt: %Base]() [from "a.carbon"];
 // CHECK:STDOUT:

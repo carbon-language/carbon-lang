@@ -103,7 +103,7 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %tuple.type.2;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return: %tuple.type.2 {
+// CHECK:STDOUT: fn @G() -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32.loc14_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc14_11: init type = call constants.%Int(%int_32.loc14_11) [template = constants.%i32]
@@ -127,8 +127,8 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %F.call.loc15: init %tuple.type.2 = call %F.ref.loc15() to %.loc15
 // CHECK:STDOUT:   assign %v.ref, %F.call.loc15
 // CHECK:STDOUT:   %F.ref.loc16: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc13_8.2: ref %tuple.type.2 = splice_block %return {}
-// CHECK:STDOUT:   %F.call.loc16: init %tuple.type.2 = call %F.ref.loc16() to %.loc13_8.2
+// CHECK:STDOUT:   %.loc13_8: ref %tuple.type.2 = splice_block %return {}
+// CHECK:STDOUT:   %F.call.loc16: init %tuple.type.2 = call %F.ref.loc16() to %.loc13_8
 // CHECK:STDOUT:   return %F.call.loc16 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

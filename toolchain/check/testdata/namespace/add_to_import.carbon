@@ -60,7 +60,7 @@ var a: i32 = NS.A();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Implicit//default, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Implicit//default, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = file.%A.decl
 // CHECK:STDOUT:   }

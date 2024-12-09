@@ -168,7 +168,7 @@ class Derived {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %Derived {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
 // CHECK:STDOUT:   %.loc14_26.1: %struct_type.b.2 = struct_literal (%int_4)
@@ -196,7 +196,7 @@ class Derived {
 // CHECK:STDOUT:   return %.loc14_36 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return: %tuple.type.2 {
+// CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %d.ref.loc18_12: %Derived.elem.2 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]

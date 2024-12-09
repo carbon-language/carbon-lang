@@ -39,7 +39,7 @@ namespace Carbon::SemIR {
 class File : public Printable<File> {
  public:
   // Starts a new file for Check::CheckParseTree.
-  explicit File(CheckIRId check_ir_id,
+  explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
                 SharedValueStores& value_stores, std::string filename);
 
@@ -181,7 +181,11 @@ class File : public Printable<File> {
 
   auto filename() const -> llvm::StringRef { return filename_; }
 
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
+
  private:
+  const Parse::Tree* parse_tree_;
+
   // True if parts of the IR may be invalid.
   bool has_errors_ = false;
 

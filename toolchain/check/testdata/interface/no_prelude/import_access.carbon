@@ -200,8 +200,8 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -221,7 +221,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Def {
+// CHECK:STDOUT: interface @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()
@@ -303,8 +303,8 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -324,7 +324,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @ForwardWithDef {
+// CHECK:STDOUT: interface @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   witness = ()

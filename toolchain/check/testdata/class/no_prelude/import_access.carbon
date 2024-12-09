@@ -207,9 +207,9 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,7 +224,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @Def {
+// CHECK:STDOUT: class @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -303,9 +303,9 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, inst+5, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -320,7 +320,7 @@ private class Redecl {}
 // CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @ForwardWithDef {
+// CHECK:STDOUT: class @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
@@ -401,7 +401,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, inst+1, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

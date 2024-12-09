@@ -23,8 +23,6 @@ struct Unit {
   SharedValueStores* value_stores;
   // The `timings` may be null if nothing is to be recorded.
   Timings* timings;
-  const Lex::TokenizedBuffer* tokens;
-  const Parse::Tree* parse_tree;
 
   // Returns a lazily constructed TreeAndSubtrees.
   llvm::function_ref<const Parse::TreeAndSubtrees&()>

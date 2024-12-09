@@ -440,8 +440,8 @@ class CompilationUnit {
     CARBON_CHECK(node_converter_, "Must call PreCheck first");
     CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
 
-    sem_ir_.emplace(check_ir_id, parse_tree_->packaging_decl(), value_stores_,
-                    input_filename_);
+    sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
+                    value_stores_, input_filename_);
     if (mem_usage_) {
       mem_usage_->Collect("sem_ir_", *sem_ir_);
     }
@@ -450,8 +450,6 @@ class CompilationUnit {
     return {.consumer = consumer_,
             .value_stores = &value_stores_,
             .timings = timings_ ? &*timings_ : nullptr,
-            .tokens = &*tokens_,
-            .parse_tree = &*parse_tree_,
             .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
             .sem_ir = &*sem_ir_,
             .node_converter = &*node_converter_,
@@ -479,20 +477,28 @@ class CompilationUnit {
     if (vlog_stream_ || print) {
       // Omit entities imported from files that we are not dumping.
       auto should_format_entity = [&](SemIR::InstId entity_inst_id) -> bool {
-        auto loc_id = sem_ir_->insts().GetLocId(entity_inst_id);
-        if (!loc_id.is_import_ir_inst_id()) {
-          return true;
+        // TODO: Reuse `GetCanonicalImportIRInst`. Currently it depends on
+        // `Check::Context`, which we don't have access to here.
+        const SemIR::File* file = &*sem_ir_;
+        while (true) {
+          auto loc_id = file->insts().GetLocId(entity_inst_id);
+          if (!loc_id.is_import_ir_inst_id()) {
+            return true;
+          }
+          auto import_ir_inst =
+              file->import_ir_insts().Get(loc_id.import_ir_inst_id());
+          const auto* import_file =
+              file->import_irs().Get(import_ir_inst.ir_id).sem_ir;
+          CARBON_CHECK(import_file);
+          if (!IncludeInDumps(import_file->filename())) {
+            return false;
+          }
+          file = import_file;
+          entity_inst_id = import_ir_inst.inst_id;
         }
-        auto import_ir_id =
-            sem_ir_->import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id;
-        const auto* import_file =
-            sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-        CARBON_CHECK(import_file);
-        return IncludeInDumps(import_file->filename());
       };
 
-      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
-                                 should_format_entity);
+      SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
       if (vlog_stream_) {
         CARBON_VLOG("*** SemIR::File ***\n");
         formatter.Print(*vlog_stream_);
@@ -515,7 +521,7 @@ class CompilationUnit {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
-      SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
+      SemIR::InstNamer inst_namer(&*sem_ir_);
       module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
                                    *sem_ir_converter_, input_filename_,
                                    *sem_ir_, &inst_namer, vlog_stream_);

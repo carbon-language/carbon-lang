@@ -365,8 +365,8 @@ Carbon focused talks from the community:
 ### 2024
 
 -   Generic implementation strategies in Carbon and Clang, LLVM Developers'
-    Meeting
-    ([slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
+    Meeting ([video](https://youtu.be/j0BL52NdjAU),
+    [slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
 -   The Carbon Language: Road to 0.1, NDC {TechTown}
     ([slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
 -   How designing Carbon with C++ interop taught me about C++ variadics and

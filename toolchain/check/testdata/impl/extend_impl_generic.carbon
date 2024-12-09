@@ -213,7 +213,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   fn() -> @F.1.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() -> %return: %Param {
+// CHECK:STDOUT: fn @F.2() -> %return.param_patt: %Param {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.2 = struct_literal (%int_2)

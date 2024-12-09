@@ -74,7 +74,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Main() -> %return: %tuple.type.2 {
+// CHECK:STDOUT: fn @Main() -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_15: Core.IntLiteral = int_value 15 [template = constants.%int_15.1]
 // CHECK:STDOUT:   %int_35: Core.IntLiteral = int_value 35 [template = constants.%int_35.1]

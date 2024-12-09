@@ -87,7 +87,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %n.param.loc21: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n.loc21: %i32 = bind_name n, %n.param.loc21
 // CHECK:STDOUT:     %return.param.loc21: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param.loc21
+// CHECK:STDOUT:     %return.loc21: ref %i32 = return_slot %return.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -143,7 +143,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     %n.param.loc16: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %n.loc16: %i32 = bind_name n, %n.param.loc16
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc16_16: ref %i32 = return_slot %return.param.loc16
+// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]

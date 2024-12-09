@@ -58,6 +58,11 @@ struct ValueRepr : public Printable<ValueRepr> {
            aggregate_kind == ValueAndObjectAggregate;
   }
 
+  // Returns whether this value representation is a copy of the object
+  // representation of the type. `orig_type_id` must be the type for which this
+  // is the value representation.
+  auto IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const -> bool;
+
   // The kind of value representation used by this type.
   Kind kind = Unknown;
   // The kind of aggregate representation used by this type.
@@ -104,6 +109,10 @@ struct InitRepr {
   // Returns whether the initializing representation information could be fully
   // computed.
   auto is_valid() const -> bool { return kind != Incomplete; }
+
+  // Returns whether the initializing representation is a copy of the object
+  // representation of the type. Provided for symmetry with `ValueRepr`.
+  auto IsCopyOfObjectRepr() const -> bool { return kind == ByCopy; }
 };
 
 // Information about a function's return type.

@@ -258,7 +258,7 @@ class A {
 // CHECK:STDOUT:   return %.loc9_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return: %Circle {
+// CHECK:STDOUT: fn @Make() -> %return.param_patt: %Circle {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %.loc13_24.1: %struct_type.radius.2 = struct_literal (%int_5)

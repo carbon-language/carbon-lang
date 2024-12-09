@@ -71,7 +71,7 @@ static auto HandleModifier(Context& context, Parse::NodeId node_id,
     for (auto later_order = static_cast<int8_t>(order) + 1;
          later_order <= static_cast<int8_t>(ModifierOrder::Last);
          ++later_order) {
-      if (s.ordered_modifier_node_ids[later_order] != Parse::NodeId::Invalid) {
+      if (s.ordered_modifier_node_ids[later_order].is_valid()) {
         closest_later_modifier = s.ordered_modifier_node_ids[later_order];
         break;
       }

@@ -41,10 +41,9 @@ struct NameComponent {
   SemIR::InstBlockId call_params_id;
 
   // The return slot.
-  // TODO: These are only used for function declarations. Should they go
+  // TODO: This is only used for function declarations. Should it go
   // somewhere else?
   SemIR::InstId return_slot_pattern_id;
-  SemIR::InstId return_slot_id;
 
   // The pattern block.
   SemIR::InstBlockId pattern_block_id;

@@ -486,15 +486,15 @@ import library "extern_api";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+34, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+59, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+62, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+66, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.7
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.8
@@ -546,15 +546,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D();
+// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E();
+// CHECK:STDOUT: fn @E() [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -628,7 +628,7 @@ import library "extern_api";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
@@ -669,7 +669,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc23_21: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int_32.loc32_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -686,7 +686,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
-// CHECK:STDOUT:     %.loc32_24: ref %struct_type.c = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
@@ -717,15 +717,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.2) -> %struct_type.c [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D();
+// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E();
+// CHECK:STDOUT: fn @E() [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -799,7 +799,7 @@ import library "extern_api";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = file.%E.decl
 // CHECK:STDOUT:   }
@@ -840,7 +840,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
-// CHECK:STDOUT:     %.loc7_21: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int_32.loc8_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -857,7 +857,7 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
-// CHECK:STDOUT:     %.loc8_24: ref %struct_type.c = return_slot %return.param
+// CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
@@ -969,15 +969,15 @@ import library "extern_api";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, inst+34, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, inst+59, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, inst+62, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//api, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//api, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//api, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//api, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, inst+66, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.12
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.13
@@ -1029,15 +1029,15 @@ import library "extern_api";
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.1) -> %struct_type.c [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @D();
+// CHECK:STDOUT: extern fn @D() [from "api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E();
+// CHECK:STDOUT: fn @E() [from "api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -1110,15 +1110,15 @@ import library "extern_api";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, inst+3, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, inst+34, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, inst+59, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, inst+62, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//extern_api, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//extern_api, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//extern_api, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Main//extern_api, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, inst+66, loaded [template = constants.%E]
+// CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.12
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.13
@@ -1221,11 +1221,11 @@ import library "extern_api";
 // CHECK:STDOUT: --- unloaded.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, inst+59, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, inst+62, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//api, A, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//api, B, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//api, C, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//api, D, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }
@@ -1251,11 +1251,11 @@ import library "extern_api";
 // CHECK:STDOUT: --- unloaded_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, inst+59, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, inst+62, unloaded
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, inst+65, loaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extern_api, A, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extern_api, B, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extern_api, C, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extern_api, D, unloaded
+// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Main//extern_api, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.5, [template] {
 // CHECK:STDOUT:     .E = %import_ref.6
 // CHECK:STDOUT:   }

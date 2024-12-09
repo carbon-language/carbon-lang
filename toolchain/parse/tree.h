@@ -26,7 +26,8 @@ struct DeferredDefinition;
 
 // The index of a deferred function definition within the parse tree's deferred
 // definition store.
-struct DeferredDefinitionIndex : public IndexBase {
+struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
+  static constexpr llvm::StringLiteral Label = "deferred_def";
   using ValueType = DeferredDefinition;
 
   static const DeferredDefinitionIndex Invalid;
@@ -194,6 +195,8 @@ class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
   // build a TreeAndSubtrees and run further verification. This doesn't directly
   // CHECK so that it can be used within a debugger.
   auto Verify() const -> ErrorOr<Success>;
+
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
 
  private:
   friend class Context;

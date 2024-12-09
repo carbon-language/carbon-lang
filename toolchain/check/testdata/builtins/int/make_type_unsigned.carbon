@@ -144,8 +144,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -236,7 +236,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%n.param_patt: %u64) -> %u64 {
 // CHECK:STDOUT: !entry:
@@ -250,7 +250,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Symbolic(%N.loc14_13.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc14_13.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc14_13.2 (constants.%N)]
@@ -281,8 +281,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -307,7 +307,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_negative_size.carbon
 // CHECK:STDOUT:
@@ -339,8 +339,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.4
@@ -405,7 +405,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%n.param_patt: %i32) -> %i32 = "int.snegate";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned" [from "types.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_oversized.carbon
 // CHECK:STDOUT:
@@ -416,8 +416,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -442,5 +442,5 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned";
+// CHECK:STDOUT: fn @UInt(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_unsigned" [from "types.carbon"];
 // CHECK:STDOUT:
