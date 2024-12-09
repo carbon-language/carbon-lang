@@ -135,7 +135,7 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         auto& name_scope =
             context_->name_scopes().Get(name_context.parent_scope_id);
         if (name_context.has_qualifiers) {
-          auto inst = context_->insts().Get(name_scope.inst_id);
+          auto inst = context_->insts().Get(name_scope.inst_id());
           if (!inst.Is<SemIR::Namespace>()) {
             // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
@@ -231,7 +231,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   if (scope_id.is_valid()) {
     PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
                            specific_id,
-                           context_->name_scopes().Get(scope_id).has_error);
+                           context_->name_scopes().Get(scope_id).has_error());
     name_context.parent_scope_id = scope_id;
   } else {
     name_context.state = NameContext::State::Error;
@@ -416,12 +416,12 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
                          SemIR::InstBlockId::Invalid))) {
         return InvalidResult;
       }
-      if (scope.is_closed_import) {
+      if (scope.is_closed_import()) {
         DiagnoseQualifiedDeclInImportedPackage(*context_, name_context.loc_id,
-                                               scope.inst_id);
+                                               scope.inst_id());
         // Only error once per package. Recover by allowing this package name to
         // be used as a name qualifier.
-        scope.is_closed_import = false;
+        scope.set_is_closed_import(false);
       }
       return {scope_id, SemIR::SpecificId::Invalid};
     }

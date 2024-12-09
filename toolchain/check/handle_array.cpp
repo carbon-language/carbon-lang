@@ -6,7 +6,6 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 
 namespace Carbon::Check {
 
@@ -46,13 +45,13 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   if (!context.constant_values().Get(bound_inst_id).is_constant()) {
     CARBON_DIAGNOSTIC(InvalidArrayExpr, Error, "array bound is not a constant");
     context.emitter().Emit(bound_inst_id, InvalidArrayExpr);
-    context.node_stack().Push(node_id, SemIR::InstId::BuiltinErrorInst);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::SingletonInstId);
     return true;
   }
 
   bound_inst_id = ConvertToValueOfType(
       context, context.insts().GetLocId(bound_inst_id), bound_inst_id,
-      context.GetBuiltinType(SemIR::BuiltinInstKind::IntLiteralType));
+      context.GetSingletonType(SemIR::IntLiteralType::SingletonInstId));
   context.AddInstAndPush<SemIR::ArrayType>(
       node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .bound_id = bound_inst_id,

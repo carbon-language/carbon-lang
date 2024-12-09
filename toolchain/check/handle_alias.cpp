@@ -46,7 +46,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
 
   auto alias_type_id = SemIR::TypeId::Invalid;
   auto alias_value_id = SemIR::InstId::Invalid;
-  if (expr_id.is_builtin()) {
+  if (SemIR::IsSingletonInstId(expr_id)) {
     // Type (`bool`) and value (`false`) literals provided by the builtin
     // structure should be turned into name references.
     // TODO: Look into handling `false`, this doesn't do it right now because it
@@ -62,7 +62,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
                       "alias initializer must be a name reference");
     context.emitter().Emit(expr_node, AliasRequiresNameRef);
     alias_type_id = SemIR::ErrorInst::SingletonTypeId;
-    alias_value_id = SemIR::InstId::BuiltinErrorInst;
+    alias_value_id = SemIR::ErrorInst::SingletonInstId;
   }
   auto alias_id = context.AddInst<SemIR::BindAlias>(
       name_context.loc_id, {.type_id = alias_type_id,

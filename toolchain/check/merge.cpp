@@ -169,8 +169,9 @@ auto ReplacePrevInstForMerge(Context& context, SemIR::NameScopeId scope_id,
                              SemIR::NameId name_id, SemIR::InstId new_inst_id)
     -> void {
   auto& scope = context.name_scopes().Get(scope_id);
-  if (auto lookup = scope.name_map.Lookup(name_id)) {
-    scope.names[lookup.value()].inst_id = new_inst_id;
+  auto entry_id = scope.Lookup(name_id);
+  if (entry_id) {
+    scope.GetEntry(*entry_id).inst_id = new_inst_id;
   }
 }
 

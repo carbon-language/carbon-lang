@@ -328,6 +328,38 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
   return true;
 }
 
+static auto CheckFunctionDefinitionSignature(Context& context,
+                                             SemIR::Function& function)
+    -> void {
+  // Check the return type is complete.
+  CheckFunctionReturnType(context, function.return_slot_pattern_id, function,
+                          SemIR::SpecificId::Invalid);
+
+  auto params_to_complete =
+      context.inst_blocks().GetOrEmpty(function.call_params_id);
+  if (function.return_slot_pattern_id.is_valid()) {
+    // Exclude the return slot because it's diagnosed above.
+    params_to_complete = params_to_complete.drop_back();
+  }
+  // Check the parameter types are complete.
+  for (auto param_ref_id : params_to_complete) {
+    if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
+      continue;
+    }
+
+    // The parameter types need to be complete.
+    context.TryToCompleteType(
+        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id, [&] {
+          CARBON_DIAGNOSTIC(
+              IncompleteTypeInFunctionParam, Error,
+              "parameter has incomplete type {0} in function definition",
+              TypeOfInstId);
+          return context.emitter().Build(
+              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
+        });
+  }
+}
+
 // Processes a function definition after a signature for which we have already
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
@@ -343,33 +375,7 @@ static auto HandleFunctionDefinitionAfterSignature(
   StartGenericDefinition(context);
   context.AddCurrentCodeBlockToFunction();
 
-  // Check the return type is complete.
-  CheckFunctionReturnType(context, function.return_slot_pattern_id, function,
-                          SemIR::SpecificId::Invalid);
-
-  auto params_to_complete =
-      context.inst_blocks().GetOrEmpty(function.call_params_id);
-  if (function.return_slot_pattern_id.is_valid()) {
-    // Exclude the return slot because it's diagnosed above.
-    params_to_complete = params_to_complete.drop_back();
-  }
-  // Check the parameter types are complete.
-  for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::InstId::BuiltinErrorInst) {
-      continue;
-    }
-
-    // The parameter types need to be complete.
-    context.TryToCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id, [&] {
-          CARBON_DIAGNOSTIC(
-              IncompleteTypeInFunctionParam, Error,
-              "parameter has incomplete type {0} in function definition",
-              TypeOfInstId);
-          return context.emitter().Build(
-              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
-        });
-  }
+  CheckFunctionDefinitionSignature(context, function);
 
   context.node_stack().Push(node_id, function_id);
 }
@@ -467,8 +473,7 @@ static auto LookupBuiltinFunctionKind(Context& context,
   return kind;
 }
 
-// Returns whether `function` is a valid declaration of the builtin
-// `builtin_inst_kind`.
+// Returns whether `function` is a valid declaration of `builtin_kind`.
 static auto IsValidBuiltinDeclaration(Context& context,
                                       const SemIR::Function& function,
                                       SemIR::BuiltinFunctionKind builtin_kind)
@@ -509,6 +514,7 @@ auto HandleParseNode(Context& context,
   auto builtin_kind = LookupBuiltinFunctionKind(context, name_id);
   if (builtin_kind != SemIR::BuiltinFunctionKind::None) {
     auto& function = context.functions().Get(function_id);
+    CheckFunctionDefinitionSignature(context, function);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
       function.builtin_function_kind = builtin_kind;
       // Build an empty generic definition if this is a generic builtin.

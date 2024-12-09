@@ -275,7 +275,7 @@ class Inst : public Printable<Inst> {
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
 
   // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(IdBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
   static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
 
   // Convert a field from its raw representation.

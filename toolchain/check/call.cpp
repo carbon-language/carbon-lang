@@ -11,7 +11,6 @@
 #include "toolchain/check/function.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/builtin_inst_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -94,7 +93,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                           EntityKind::GenericClass, enclosing_specific_id,
                           /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   return context.GetOrAddInst<SemIR::ClassType>(
       loc_id, {.type_id = SemIR::TypeType::SingletonTypeId,
@@ -114,7 +113,7 @@ static auto PerformCallToGenericInterface(
                           EntityKind::GenericInterface, enclosing_specific_id,
                           /*self_id=*/SemIR::InstId::Invalid, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   return context.GetOrAddInst(loc_id, context.FacetTypeFromInterface(
                                           interface_id, *callee_specific_id));
@@ -144,7 +143,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                             "value of type {0} is not callable", TypeOfInstId);
           context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
         }
-        return SemIR::InstId::BuiltinErrorInst;
+        return SemIR::ErrorInst::SingletonInstId;
       }
     }
   }
@@ -156,14 +155,14 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       EntityKind::Function, callee_function.enclosing_specific_id,
       callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::InstId::BuiltinErrorInst;
+    return SemIR::ErrorInst::SingletonInstId;
   }
   if (callee_specific_id->is_valid()) {
     callee_id = context.GetOrAddInst(
         context.insts().GetLocId(callee_id),
         SemIR::SpecificFunction{
-            .type_id = context.GetBuiltinType(
-                SemIR::BuiltinInstKind::SpecificFunctionType),
+            .type_id = context.GetSingletonType(
+                SemIR::SpecificFunctionType::SingletonInstId),
             .callee_id = callee_id,
             .specific_id = *callee_specific_id});
     context.definitions_required().push_back(callee_id);

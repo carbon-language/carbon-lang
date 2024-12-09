@@ -76,10 +76,10 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     return std::nullopt;
   }
   auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id.is_valid()) {
+  if (!scope.inst_id().is_valid()) {
     return std::nullopt;
   }
-  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id);
+  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
 }
 
 static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
@@ -145,7 +145,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
                       "cannot `extend` a parameterized `impl`");
     context.emitter().Emit(extend_node, ExtendImplForall);
-    parent_scope.has_error = true;
+    parent_scope.set_has_error();
     return;
   }
 
@@ -158,7 +158,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // If the explicit self type is not the default, just bail out.
     if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
-      parent_scope.has_error = true;
+      parent_scope.set_has_error();
       return;
     }
 
@@ -176,18 +176,21 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 
   if (!context.types().Is<SemIR::FacetType>(constraint_id)) {
     context.TODO(node_id, "extending non-facet-type constraint");
-    parent_scope.has_error = true;
+    parent_scope.set_has_error();
     return;
   }
-  parent_scope.has_error |= !context.TryToDefineType(constraint_id, [&] {
-    CARBON_DIAGNOSTIC(ExtendUndefinedInterface, Error,
-                      "`extend impl` requires a definition for facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                   constraint_inst_id);
-  });
+  if (!context.TryToDefineType(constraint_id, [&] {
+        CARBON_DIAGNOSTIC(
+            ExtendUndefinedInterface, Error,
+            "`extend impl` requires a definition for facet type {0}",
+            InstIdAsType);
+        return context.emitter().Build(node_id, ExtendUndefinedInterface,
+                                       constraint_inst_id);
+      })) {
+    parent_scope.set_has_error();
+  };
 
-  parent_scope.extended_scopes.push_back(constraint_inst_id);
+  parent_scope.AddExtendedScope(constraint_inst_id);
 }
 
 // Pops the parameters of an `impl`, forming a `NameComponent` with no

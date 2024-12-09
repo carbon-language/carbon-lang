@@ -149,7 +149,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case SemIR::TypeType::Kind:
       case SemIR::VtableType::Kind:
       case SemIR::WitnessType::Kind: {
-        // Builtin instructions use their IR name as a label.
+        // Singleton instructions use their IR name as a label.
         out << untyped_inst.kind().ir_name();
         break;
       }
@@ -427,6 +427,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << "<unbound element of class ";
         step_stack.PushString(">");
         step_stack.PushTypeId(inst.class_type_id);
+        break;
+      }
+      case VtablePtr::Kind: {
+        out << "<vtable ptr>";
         break;
       }
       case AdaptDecl::Kind:

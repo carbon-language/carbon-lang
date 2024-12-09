@@ -144,8 +144,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -281,8 +281,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -339,8 +339,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.4
@@ -416,8 +416,8 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, inst+23, loaded [template = constants.%UInt]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %UInt.type = import_ref Main//types, UInt, loaded [template = constants.%UInt]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

@@ -62,7 +62,7 @@ var f: () = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//base, inst+1, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//base, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -84,7 +84,7 @@ var f: () = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//export, inst+7, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Main//export, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

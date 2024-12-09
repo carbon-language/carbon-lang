@@ -52,7 +52,7 @@ interface I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, inst+1, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref: type = import_ref Main//a, I, loaded [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

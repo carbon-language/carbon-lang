@@ -22,8 +22,7 @@ class Formatter {
       llvm::function_ref<auto(InstId decl_inst_id)->bool>;
 
   explicit Formatter(
-      const Lex::TokenizedBuffer& tokenized_buffer,
-      const Parse::Tree& parse_tree, const File& sem_ir,
+      const File* sem_ir,
       ShouldFormatEntityFn should_format_entity = [](InstId) { return true; });
   ~Formatter();
 
@@ -31,7 +30,7 @@ class Formatter {
   auto Print(llvm::raw_ostream& out) -> void;
 
  private:
-  const File& sem_ir_;
+  const File* sem_ir_;
   ShouldFormatEntityFn should_format_entity_;
   // Caches naming between Print calls.
   InstNamer inst_namer_;

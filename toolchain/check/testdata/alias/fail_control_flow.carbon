@@ -31,7 +31,7 @@ alias a = true or false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc22: bool = block_arg <unexpected instblockref block5> [template = constants.%true]
+// CHECK:STDOUT:   %.loc22: bool = block_arg <unexpected instblockref inst_block5> [template = constants.%true]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

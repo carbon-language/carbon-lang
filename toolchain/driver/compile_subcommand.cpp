@@ -440,8 +440,8 @@ class CompilationUnit {
     CARBON_CHECK(node_converter_, "Must call PreCheck first");
     CARBON_CHECK(!sem_ir_converter_, "Called GetCheckUnit twice");
 
-    sem_ir_.emplace(check_ir_id, parse_tree_->packaging_decl(), value_stores_,
-                    input_filename_);
+    sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
+                    value_stores_, input_filename_);
     if (mem_usage_) {
       mem_usage_->Collect("sem_ir_", *sem_ir_);
     }
@@ -450,8 +450,6 @@ class CompilationUnit {
     return {.consumer = consumer_,
             .value_stores = &value_stores_,
             .timings = timings_ ? &*timings_ : nullptr,
-            .tokens = &*tokens_,
-            .parse_tree = &*parse_tree_,
             .get_parse_tree_and_subtrees = *get_parse_tree_and_subtrees_,
             .sem_ir = &*sem_ir_,
             .node_converter = &*node_converter_,
@@ -500,8 +498,7 @@ class CompilationUnit {
         }
       };
 
-      SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_,
-                                 should_format_entity);
+      SemIR::Formatter formatter(&*sem_ir_, should_format_entity);
       if (vlog_stream_) {
         CARBON_VLOG("*** SemIR::File ***\n");
         formatter.Print(*vlog_stream_);
@@ -524,7 +521,7 @@ class CompilationUnit {
       llvm_context_ = std::make_unique<llvm::LLVMContext>();
       // TODO: Consider disabling instruction naming by default if we're not
       // producing textual LLVM IR.
-      SemIR::InstNamer inst_namer(*tokens_, *parse_tree_, *sem_ir_);
+      SemIR::InstNamer inst_namer(&*sem_ir_);
       module_ = Lower::LowerToLLVM(*llvm_context_, options_.include_debug_info,
                                    *sem_ir_converter_, input_filename_,
                                    *sem_ir_, &inst_namer, vlog_stream_);

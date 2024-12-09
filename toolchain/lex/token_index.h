@@ -23,7 +23,8 @@ namespace Carbon::Lex {
 // meaningfully compared.
 //
 // All other APIs to query a `TokenIndex` are on the `TokenizedBuffer`.
-struct TokenIndex : public IndexBase {
+struct TokenIndex : public IndexBase<TokenIndex> {
+  static constexpr llvm::StringLiteral Label = "token";
   static const TokenIndex Invalid;
   // Comments aren't tokenized, so this is the first token after FileStart.
   static const TokenIndex FirstNonCommentToken;

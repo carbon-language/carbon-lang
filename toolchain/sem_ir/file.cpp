@@ -18,10 +18,11 @@
 
 namespace Carbon::SemIR {
 
-File::File(CheckIRId check_ir_id,
+File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
            const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
            SharedValueStores& value_stores, std::string filename)
-    : check_ir_id_(check_ir_id),
+    : parse_tree_(parse_tree),
+      check_ir_id_(check_ir_id),
       package_id_(packaging_decl ? packaging_decl->names.package_id
                                  : IdentifierId::Invalid),
       library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(
@@ -310,6 +311,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         inst_id = inst.array_id;
         continue;
       }
+
+      case VtablePtr::Kind:
+        return ExprCategory::EphemeralRef;
 
       case CARBON_KIND(ClassElementAccess inst): {
         inst_id = inst.base_id;

@@ -81,8 +81,8 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
   // diagnostic and so that cross-package imports can find it easily.
   auto entity_name = context.entity_names().Get(import_ref->entity_name_id);
   auto& parent_scope = context.name_scopes().Get(entity_name.parent_scope_id);
-  auto lookup = parent_scope.name_map.Lookup(entity_name.name_id);
-  auto& scope_inst_id = parent_scope.names[lookup.value()].inst_id;
+  auto& scope_inst_id =
+      parent_scope.GetEntry(*parent_scope.Lookup(entity_name.name_id)).inst_id;
   CARBON_CHECK(scope_inst_id == inst_id);
   scope_inst_id = export_id;
 

@@ -496,10 +496,9 @@ class ImportRefResolver : public ImportContext {
 
     if (auto import_type_inst_id =
             import_ir().constant_values().GetInstId(import_type_const_id);
-        import_type_inst_id.is_builtin()) {
+        SemIR::IsSingletonInstId(import_type_inst_id)) {
       // Builtins don't require constant resolution; we can use them directly.
-      return local_context().GetBuiltinType(
-          import_type_inst_id.builtin_inst_kind());
+      return local_context().GetSingletonType(import_type_inst_id);
     } else {
       return local_context().GetTypeIdForTypeConstant(
           ResolveConstant(import_type_id.AsConstantId()));
@@ -1139,7 +1138,7 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
       break;
     }
     default: {
-      if (const_inst_id == SemIR::InstId::BuiltinErrorInst) {
+      if (const_inst_id == SemIR::ErrorInst::SingletonInstId) {
         return SemIR::NameScopeId::Invalid;
       }
       break;
@@ -1205,14 +1204,14 @@ static auto GetIncompleteLocalEntityBase(
 static auto AddNameScopeImportRefs(ImportContext& context,
                                    const SemIR::NameScope& import_scope,
                                    SemIR::NameScope& new_scope) -> void {
-  for (auto entry : import_scope.names) {
+  for (auto entry : import_scope.entries()) {
     auto ref_id = AddImportRef(context, entry.inst_id);
     new_scope.AddRequired({.name_id = GetLocalNameId(context, entry.name_id),
                            .inst_id = ref_id,
                            .access_kind = entry.access_kind});
   }
-  for (auto scope_inst_id : import_scope.extended_scopes) {
-    new_scope.extended_scopes.push_back(AddImportRef(context, scope_inst_id));
+  for (auto scope_inst_id : import_scope.extended_scopes()) {
+    new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));
   }
 }
 
@@ -1569,8 +1568,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_class.is_defined()) {
     auto complete_type_witness_id = AddLoadedImportRef(
         resolver,
-        resolver.local_context().GetBuiltinType(
-            SemIR::BuiltinInstKind::WitnessType),
+        resolver.local_context().GetSingletonType(
+            SemIR::WitnessType::SingletonInstId),
         import_class.complete_type_witness_id, complete_type_witness_const_id);
     AddClassDefinition(resolver, import_class, new_class,
                        complete_type_witness_id, base_id, adapt_id);
@@ -1614,7 +1613,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CompleteTypeWitness inst)
     -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
-               SemIR::InstId::BuiltinWitnessType);
+               SemIR::WitnessType::SingletonInstId);
   auto object_repr_const_id = GetLocalConstantId(resolver, inst.object_repr_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -1622,8 +1621,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto object_repr_id =
       resolver.local_context().GetTypeIdForTypeConstant(object_repr_const_id);
   return ResolveAs<SemIR::CompleteTypeWitness>(
-      resolver, {.type_id = resolver.local_context().GetBuiltinType(
-                     SemIR::BuiltinInstKind::WitnessType),
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
                  .object_repr_id = object_repr_id});
 }
 
@@ -2021,7 +2020,7 @@ static auto AddInterfaceDefinition(ImportContext& context,
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
 
-  CARBON_CHECK(import_scope.extended_scopes.empty(),
+  CARBON_CHECK(import_scope.extended_scopes().empty(),
                "Interfaces don't currently have extended scopes to support.");
 }
 
@@ -2129,8 +2128,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveAs<SemIR::FacetAccessWitness>(
-      resolver, {.type_id = resolver.local_context().GetBuiltinType(
-                     SemIR::BuiltinInstKind::WitnessType),
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
                  .facet_value_inst_id = facet_value_inst_id});
 }
 
@@ -2226,8 +2225,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto elements_id =
       GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
   return ResolveAs<SemIR::InterfaceWitness>(
-      resolver, {.type_id = resolver.local_context().GetBuiltinType(
-                     SemIR::BuiltinInstKind::WitnessType),
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
                  .elements_id = elements_id});
 }
 
@@ -2427,7 +2426,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
                                     SemIR::InstId inst_id,
                                     SemIR::ConstantId const_id)
     -> ResolveResult {
-  if (inst_id.is_builtin()) {
+  if (SemIR::IsSingletonInstId(inst_id)) {
     CARBON_CHECK(!const_id.is_valid());
     // Constants for builtins can be directly copied.
     return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));

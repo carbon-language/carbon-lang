@@ -135,8 +135,8 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Main//library, inst+7, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %G.type = import_ref Main//library, inst+18, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.2: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

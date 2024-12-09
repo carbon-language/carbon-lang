@@ -75,7 +75,7 @@ static auto BuildAssociatedConstantDecl(Context& context,
                       "single `:!` binding");
     context.emitter().Emit(pattern.loc_id,
                            ExpectedSymbolicBindingInAssociatedConstant);
-    context.name_scopes().Get(interface_info.scope_id).has_error = true;
+    context.name_scopes().Get(interface_info.scope_id).set_has_error();
     return;
   }
 
@@ -246,7 +246,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   CARBON_CHECK(!bind_name.value_id.is_valid(),
                "Binding should not already have a value!");
   bind_name.value_id = decl_info->init_id ? *decl_info->init_id
-                                          : SemIR::InstId::BuiltinErrorInst;
+                                          : SemIR::ErrorInst::SingletonInstId;
   context.ReplaceInstBeforeConstantUse(decl_info->pattern_id, bind_name);
   context.inst_block_stack().AddInstId(decl_info->pattern_id);
 

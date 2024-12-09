@@ -21,12 +21,10 @@ cc_library(
 cc_library(
     name = "typed_insts",
     srcs = [
-        "builtin_inst_kind.cpp",
         "ids.cpp",
         "inst_kind.cpp",
     ],
     hdrs = [
-        "builtin_inst_kind.h",
         "id_kind.h",
         "ids.h",
         "inst_kind.h",
@@ -77,6 +75,7 @@ cc_library(
         "generic.cpp",
         "impl.cpp",
         "name.cpp",
+        "name_scope.cpp",
         "type.cpp",
         "type_info.cpp",
     ],
@@ -180,6 +179,17 @@ cc_library(
     deps = [
         ":file",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "name_scope_test",
+    size = "small",
+    srcs = ["name_scope_test.cpp"],
+    deps = [
+        ":file",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 

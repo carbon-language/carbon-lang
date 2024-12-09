@@ -72,7 +72,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %A.type = import_ref Implicit//default, inst+3, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -147,7 +147,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %B.type = import_ref SamePackage//default, inst+3, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref: %B.type = import_ref SamePackage//default, B, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

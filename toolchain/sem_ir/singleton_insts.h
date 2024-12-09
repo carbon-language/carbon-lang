@@ -36,6 +36,12 @@ template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
 inline constexpr auto MakeSingletonInstId() -> InstId;
 
+// Returns true if the InstId corresponds to a singleton inst.
+inline constexpr auto IsSingletonInstId(InstId id) -> bool {
+  return id.index >= 0 &&
+         id.index < static_cast<int32_t>(SingletonInstKinds.size());
+}
+
 // Only implementation details are below.
 
 namespace Internal {
@@ -63,13 +69,6 @@ inline constexpr auto MakeSingletonInstId() -> InstId {
   auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
   return InstId(index);
 }
-
-// TODO: This verifies values match while working on removing
-// `CARBON_SEM_IR_BUILTIN_INST_KIND`.
-#define CARBON_SEM_IR_BUILTIN_INST_KIND(Name) \
-  static_assert(InstId::Builtin##Name ==      \
-                MakeSingletonInstId<InstKind::RawEnumType::Name>());
-#include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::SemIR
 
