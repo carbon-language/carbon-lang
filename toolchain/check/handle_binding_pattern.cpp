@@ -103,7 +103,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
       // A `var` declaration at class scope introduces a field.
       auto parent_class_decl = context.GetCurrentScopeAs<SemIR::ClassDecl>();
-      cast_type_id = context.AsCompleteType(
+      cast_type_id = context.AsConcreteType(
           cast_type_id, type_node,
           [&] {
             CARBON_DIAGNOSTIC(IncompleteTypeInVarDecl, Error,

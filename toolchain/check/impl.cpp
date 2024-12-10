@@ -143,7 +143,7 @@ static auto BuildInterfaceWitness(
   // TODO: This is going to try and define all the interfaces for this facet
   // type, and so once we support impl of a facet type with more than one
   // interface, it might give the wrong name in the diagnostic.
-  if (!context.TryToDefineType(
+  if (!context.RequireDefinedType(
           facet_type_id, context.insts().GetLocId(impl.definition_id), [&] {
             CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
                               "implementation of undefined interface {0}",
