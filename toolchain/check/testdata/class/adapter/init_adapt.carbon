@@ -101,7 +101,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a.b.1 [template]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -186,7 +186,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_signed.loc6, %.loc6_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_8: %C.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -198,7 +198,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: class @AdaptC {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   adapt_decl %C.ref [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptC
@@ -271,7 +271,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a.b.1 [template]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -356,7 +356,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc6_10.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_10.2: type = converted %int.make_type_signed.loc6, %.loc6_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_8: %C.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -368,7 +368,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: class @AdaptC {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   adapt_decl %C.ref [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptC

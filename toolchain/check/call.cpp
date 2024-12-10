@@ -179,7 +179,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
           builder.Note(function.return_slot_pattern_id,
                        IncompleteReturnTypeHere);
         });
-    return CheckFunctionReturnType(context, callee_id, function,
+    return CheckFunctionReturnType(context, loc_id, function,
                                    *callee_specific_id);
   }();
   switch (return_info.init_repr.kind) {

@@ -1768,6 +1768,47 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return MakeConstantResult(eval_context.context(), typed_inst, phase);
     }
 
+    case CARBON_KIND(SemIR::RequireCompleteType require_complete): {
+      auto phase = Phase::Template;
+      auto witness_type_id = eval_context.context().GetSingletonType(
+          SemIR::WitnessType::SingletonInstId);
+      auto complete_type_id = GetConstantValue(
+          eval_context, require_complete.complete_type_id, &phase);
+
+      // If the type is a template constant, require it to be complete now.
+      if (phase == Phase::Template) {
+        // No location is needed here because we know the type is not a symbolic
+        // constant.
+        complete_type_id = eval_context.context().AsCompleteType(
+            complete_type_id, SemIR::LocId::Invalid, [&] {
+              CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
+                                "{0} evaluates to incomplete type {1}",
+                                SemIR::TypeId, SemIR::TypeId);
+              return eval_context.emitter().Build(
+                  inst_id, IncompleteTypeInMonomorphization,
+                  require_complete.complete_type_id, complete_type_id);
+            });
+        if (complete_type_id == SemIR::ErrorInst::SingletonTypeId) {
+          return SemIR::ErrorInst::SingletonConstantId;
+        }
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::CompleteTypeWitness{
+                .type_id = witness_type_id,
+                .object_repr_id =
+                    eval_context.types().GetObjectRepr(complete_type_id)},
+            phase);
+      }
+
+      // If it's not a template constant, require it to be complete once it
+      // becomes one.
+      return MakeConstantResult(
+          eval_context.context(),
+          SemIR::RequireCompleteType{.type_id = witness_type_id,
+                                     .complete_type_id = complete_type_id},
+          phase);
+    }
+
     // These cases are either not expressions or not constant.
     case SemIR::AddrPattern::Kind:
     case SemIR::Assign::Kind:

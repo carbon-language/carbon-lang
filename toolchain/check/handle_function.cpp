@@ -331,16 +331,17 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 static auto CheckFunctionDefinitionSignature(Context& context,
                                              SemIR::Function& function)
     -> void {
-  // Check the return type is complete.
-  CheckFunctionReturnType(context, function.return_slot_pattern_id, function,
-                          SemIR::SpecificId::Invalid);
-
   auto params_to_complete =
       context.inst_blocks().GetOrEmpty(function.call_params_id);
+
+  // Check the return type is complete.
   if (function.return_slot_pattern_id.is_valid()) {
-    // Exclude the return slot because it's diagnosed above.
+    CheckFunctionReturnType(
+        context, context.insts().GetLocId(function.return_slot_pattern_id),
+        function, SemIR::SpecificId::Invalid);
     params_to_complete = params_to_complete.drop_back();
   }
+
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
     if (param_ref_id == SemIR::ErrorInst::SingletonInstId) {
@@ -349,7 +350,8 @@ static auto CheckFunctionDefinitionSignature(Context& context,
 
     // The parameter types need to be complete.
     context.TryToCompleteType(
-        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id, [&] {
+        context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type {0} in function definition",

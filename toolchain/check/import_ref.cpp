@@ -2296,6 +2296,26 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::RequireCompleteType inst)
+    -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::WitnessType::SingletonInstId);
+
+  auto complete_type_const_id =
+      GetLocalConstantId(resolver, inst.complete_type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto complete_type_id =
+      resolver.local_context().GetTypeIdForTypeConstant(complete_type_const_id);
+  return ResolveAs<SemIR::RequireCompleteType>(
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
+                 .complete_type_id = complete_type_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::SpecificFunction inst) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto callee_id = GetLocalConstantInstId(resolver, inst.callee_id);
@@ -2520,6 +2540,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::SpecificFunction inst): {

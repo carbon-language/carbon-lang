@@ -56,6 +56,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.1: type = class_type @Class, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem.1: type = unbound_element_type %Class.1, %T [symbolic]
 // CHECK:STDOUT:   %Get.type.1: type = fn_type @Get, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Get.1: %Get.type.1 = struct_value () [symbolic]
@@ -65,6 +66,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %GetAddr.1: %GetAddr.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Class.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %ptr.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.4: <witness> = require_complete_type %ptr.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -72,19 +76,22 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%i32) [template]
 // CHECK:STDOUT:   %DirectFieldAccess.type: type = fn_type @DirectFieldAccess [template]
 // CHECK:STDOUT:   %DirectFieldAccess: %DirectFieldAccess.type = struct_value () [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %i32 [template]
 // CHECK:STDOUT:   %Get.type.2: type = fn_type @Get, @Class(%i32) [template]
 // CHECK:STDOUT:   %Get.2: %Get.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %GetAddr.type.2: type = fn_type @GetAddr, @Class(%i32) [template]
 // CHECK:STDOUT:   %GetAddr.2: %GetAddr.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %i32} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x.2 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %MethodCall.type: type = fn_type @MethodCall [template]
 // CHECK:STDOUT:   %MethodCall: %MethodCall.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.5: type = ptr_type %Class.2 [template]
 // CHECK:STDOUT:   %AddrMethodCall.type: type = fn_type @AddrMethodCall [template]
 // CHECK:STDOUT:   %AddrMethodCall: %AddrMethodCall.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.6: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %ptr.6 [template]
+// CHECK:STDOUT:   %complete_type.5: <witness> = complete_type_witness %ptr.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -182,6 +189,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc2_13.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc2_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc2_13.2) [symbolic = %Class (constants.%Class.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class.1), @Class.%T.loc2_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
 // CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T.loc2_13.2) [symbolic = %Get.type (constants.%Get.type.1)]
@@ -241,7 +249,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc5_14: <witness> = require_complete_type @Get.%Class (%Class.1) [symbolic = %require_complete.loc5_14 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Get.%Class (%Class.1), @Get.%T (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
+// CHECK:STDOUT:   %require_complete.loc5_42: <witness> = require_complete_type @Get.%T (%T) [symbolic = %require_complete.loc5_42 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Get.%Class (%Class.1)]() -> @Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
@@ -260,6 +270,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1: type = ptr_type @GetAddr.%T (%T) [symbolic = %ptr.loc7_38.1 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc7_34: <witness> = require_complete_type @GetAddr.%ptr.loc7_38.1 (%ptr.2) [symbolic = %require_complete.loc7_34 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete.loc7_23: <witness> = require_complete_type @GetAddr.%ptr.loc7_29.1 (%ptr.1) [symbolic = %require_complete.loc7_23 (constants.%require_complete.4)]
+// CHECK:STDOUT:   %require_complete.loc7_54: <witness> = require_complete_type @GetAddr.%Class (%Class.1) [symbolic = %require_complete.loc7_54 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetAddr.%Class (%Class.1), @GetAddr.%T (%T) [symbolic = %Class.elem (constants.%Class.elem.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc7_29.1 (%ptr.1)]() -> @GetAddr.%ptr.loc7_38.1 (%ptr.2) {
@@ -317,6 +330,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Class => constants.%Class.1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.1
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.1
@@ -359,6 +373,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
 // CHECK:STDOUT:   %Get.type => constants.%Get.type.2
@@ -366,7 +381,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.2
 // CHECK:STDOUT:   %GetAddr => constants.%GetAddr.2
 // CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2
-// CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.2
+// CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%i32) {
@@ -374,7 +389,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc5_14 => constants.%complete_type.3
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
+// CHECK:STDOUT:   %require_complete.loc5_42 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%i32) {
@@ -384,6 +401,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc7_34 => constants.%complete_type.4
+// CHECK:STDOUT:   %require_complete.loc7_23 => constants.%complete_type.5
+// CHECK:STDOUT:   %require_complete.loc7_54 => constants.%complete_type.3
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -399,10 +419,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value () [symbolic]
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [template]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%T) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%Class)> [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %ImplicitAs.type.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -476,6 +499,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.loc5_23.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc5_23.1 (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Make.%Class.loc5_23.1 (%Class) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Class.val: @Make.%Class.loc5_23.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param_patt: @Make.%Class.loc5_23.1 (%Class) {
@@ -493,9 +517,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.loc8_49.2: type = class_type @Class, @Class(%T.loc8_29.2) [symbolic = %Class.loc8_49.2 (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc15_18: <witness> = require_complete_type @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) [symbolic = %require_complete.loc15_18 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
 // CHECK:STDOUT:   %Make.specific_fn.loc15_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %Make.specific_fn.loc15_18.2 (constants.%Make.specific_fn)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Class.loc8_49.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3)]
+// CHECK:STDOUT:   %require_complete.loc15_25: <witness> = require_complete_type @StaticMemberFunctionCall.%ImplicitAs.type (%ImplicitAs.type.3) [symbolic = %require_complete.loc15_25 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %return.param_patt: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) {
 // CHECK:STDOUT:   !entry:
@@ -531,6 +558,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.loc5_23.1 => constants.%Class
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

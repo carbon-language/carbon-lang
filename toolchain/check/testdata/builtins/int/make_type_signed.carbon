@@ -160,6 +160,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Symbolic.type: type = fn_type @Symbolic [template]
 // CHECK:STDOUT:   %Symbolic: %Symbolic.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -277,6 +278,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc14_13.2 [symbolic = %iN (constants.%iN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Symbolic.%iN (%iN) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral, %x.param_patt: @Symbolic.%iN (%iN)) -> @Symbolic.%iN (%iN) {
 // CHECK:STDOUT:   !entry:
@@ -317,7 +319,9 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN [symbolic]
 // CHECK:STDOUT:   %Symbolic.specific_fn: <specific function> = specific_function %Symbolic, @Symbolic(%int_24) [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i24 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -455,6 +459,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic = %iN (constants.%iN)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Symbolic.%iN (%iN) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral, %x.param_patt: @Symbolic.%iN (%iN)) -> @Symbolic.%iN (%iN);
 // CHECK:STDOUT: }
@@ -471,6 +476,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %iN => constants.%i24
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_zero_size.carbon

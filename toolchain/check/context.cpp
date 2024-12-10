@@ -222,6 +222,54 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
+// Given an instruction associated with a scope and a `SpecificId` for that
+// scope, returns an instruction that describes the specific scope.
+static auto GetInstForSpecificScope(Context& context, SemIR::InstId inst_id,
+                                    SemIR::SpecificId specific_id)
+    -> SemIR::InstId {
+  if (!specific_id.is_valid()) {
+    return inst_id;
+  }
+  auto inst = context.insts().Get(inst_id);
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.types().GetInstId(
+          context.GetClassType(class_decl.class_id, specific_id));
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.types().GetInstId(
+          context.GetInterfaceType(interface_decl.interface_id, specific_id));
+    }
+    default: {
+      // Don't know how to form a specific for this generic scope.
+      // TODO: Handle more cases.
+      return SemIR::InstId::Invalid;
+    }
+  }
+}
+
+auto Context::DiagnoseMemberNameNotFound(
+    SemIRLoc loc, SemIR::NameId name_id,
+    llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
+  if (lookup_scopes.size() == 1 &&
+      lookup_scopes.front().name_scope_id.is_valid()) {
+    const auto& scope = name_scopes().Get(lookup_scopes.front().name_scope_id);
+    if (auto specific_inst_id = GetInstForSpecificScope(
+            *this, scope.inst_id(), lookup_scopes.front().specific_id);
+        specific_inst_id.is_valid()) {
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        InstIdAsType);
+      emitter_->Emit(loc, MemberNameNotFoundInScope, name_id, specific_inst_id);
+      return;
+    }
+  }
+
+  CARBON_DIAGNOSTIC(MemberNameNotFound, Error, "member name `{0}` not found",
+                    SemIR::NameId);
+  emitter_->Emit(loc, MemberNameNotFound, name_id);
+}
+
 auto Context::NoteAbstractClass(SemIR::ClassId class_id,
                                 DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
@@ -450,7 +498,7 @@ struct ProhibitedAccessInfo {
 };
 
 auto Context::AppendLookupScopesForConstant(
-    SemIRLoc loc, SemIR::ConstantId base_const_id,
+    SemIR::LocId loc_id, SemIR::ConstantId base_const_id,
     llvm::SmallVector<LookupScope>* scopes) -> bool {
   auto base_id = constant_values().GetInstId(base_const_id);
   auto base = insts().Get(base_id);
@@ -461,11 +509,12 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
-      return emitter().Build(loc, QualifiedExprInIncompleteClassScope, base_id);
+      return emitter().Build(loc_id, QualifiedExprInIncompleteClassScope,
+                             base_id);
     });
     auto& class_info = classes().Get(base_as_class->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
@@ -473,11 +522,11 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), [&] {
+    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                         "member access into undefined interface {0}",
                         InstIdAsType);
-      return emitter().Build(loc, QualifiedExprInUndefinedInterfaceScope,
+      return emitter().Build(loc_id, QualifiedExprInUndefinedInterfaceScope,
                              base_id);
     });
     const auto& facet_type_info =
@@ -502,7 +551,7 @@ auto Context::AppendLookupScopesForConstant(
   return false;
 }
 
-auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
                                   llvm::ArrayRef<LookupScope> lookup_scopes,
                                   bool required,
                                   std::optional<AccessInfo> access_info)
@@ -528,7 +577,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
     has_error |= name_scope.has_error();
 
     auto [scope_result_id, access_kind] =
-        LookupNameInExactScope(loc, name_id, scope_id, name_scope);
+        LookupNameInExactScope(loc_id, name_id, scope_id, name_scope);
 
     auto is_access_prohibited =
         IsAccessProhibited(access_info, access_kind, is_parent_access);
@@ -562,7 +611,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
                                 "declared as an extended scope here");
               builder.Note(extended_id, FromExtendHere);
             });
-        if (!AppendLookupScopesForConstant(loc, const_id, &scopes)) {
+        if (!AppendLookupScopesForConstant(loc_id, const_id, &scopes)) {
           // TODO: Handle case where we have a symbolic type and instead should
           // look in its type.
         }
@@ -577,7 +626,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
           NameAmbiguousDueToExtend, Error,
           "ambiguous use of name `{0}` found in multiple extended scopes",
           SemIR::NameId);
-      emitter_->Emit(loc, NameAmbiguousDueToExtend, name_id);
+      emitter_->Emit(loc_id, NameAmbiguousDueToExtend, name_id);
       // TODO: Add notes pointing to the scopes.
       return {.specific_id = SemIR::SpecificId::Invalid,
               .inst_id = SemIR::ErrorInst::SingletonInstId};
@@ -590,7 +639,7 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
-        DiagnoseNameNotFound(loc, name_id);
+        DiagnoseMemberNameNotFound(loc_id, name_id, lookup_scopes);
       } else {
         //  TODO: We should report multiple prohibited accesses in case we don't
         //  find a valid lookup. Reporting the last one should suffice for now.
@@ -599,9 +648,9 @@ auto Context::LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
 
         // Note, `access_info` is guaranteed to have a value here, since
         // `prohibited_accesses` is non-empty.
-        DiagnoseInvalidQualifiedNameAccess(*this, loc, scope_result_id, name_id,
-                                           access_kind, is_parent_access,
-                                           *access_info);
+        DiagnoseInvalidQualifiedNameAccess(*this, loc_id, scope_result_id,
+                                           name_id, access_kind,
+                                           is_parent_access, *access_info);
       }
     }
 
@@ -1230,11 +1279,22 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id,
+auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                                 BuildDiagnosticFn diagnoser,
                                 BuildDiagnosticFn abstract_diagnoser) -> bool {
   if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
     return false;
+  }
+
+  // For a symbolic type, create an instruction to require the corresponding
+  // specific type to be complete.
+  if (diagnoser && type_id.AsConstantId().is_symbolic()) {
+    // TODO: Deduplicate these.
+    AddInstInNoBlock(SemIR::LocIdAndInst(
+        loc_id,
+        SemIR::RequireCompleteType{
+            .type_id = GetSingletonType(SemIR::WitnessType::SingletonInstId),
+            .complete_type_id = type_id}));
   }
 
   if (!abstract_diagnoser) {
@@ -1260,9 +1320,9 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id,
   return true;
 }
 
-auto Context::TryToDefineType(SemIR::TypeId type_id,
+auto Context::TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                               BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, diagnoser)) {
+  if (!TryToCompleteType(type_id, loc_id, diagnoser)) {
     return false;
   }
 
@@ -1359,6 +1419,11 @@ auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
   bool complete = TryToCompleteType(type_id);
   CARBON_CHECK(complete, "Failed to complete builtin type");
   return type_id;
+}
+
+auto Context::GetClassType(SemIR::ClassId class_id,
+                           SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::ClassType>(*this, class_id, specific_id);
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,

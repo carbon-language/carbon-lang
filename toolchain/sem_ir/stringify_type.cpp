@@ -372,6 +372,11 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << sem_ir.names().GetFormatted(inst.name_id);
         break;
       }
+      case CARBON_KIND(Namespace inst): {
+        out << sem_ir.names().GetFormatted(
+            sem_ir.name_scopes().Get(inst.name_scope_id).name_id());
+        break;
+      }
       case CARBON_KIND(PointerType inst): {
         step_stack.PushString("*");
         step_stack.PushTypeId(inst.pointee_id);
@@ -463,9 +468,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
-      case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
+      case RequireCompleteType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:

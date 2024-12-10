@@ -42,7 +42,7 @@ fn Test() {
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [template]
@@ -63,11 +63,13 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [template]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Source.specific_fn.1: <specific function> = specific_function %Source, @Source(%T) [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %Source.specific_fn.2: <specific function> = specific_function %Source, @Source(%X) [template]
 // CHECK:STDOUT:   %Source.specific_fn.3: <specific function> = specific_function %Source, @Source(%i32) [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -199,7 +201,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -236,6 +238,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
@@ -292,6 +295,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,6 +309,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.1
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -313,6 +318,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

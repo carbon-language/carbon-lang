@@ -51,6 +51,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.3 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,6 +125,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.loc8_33.2: type = facet_type <@I, @I(%ptr.loc8_32.2)> [symbolic = %I.type.loc8_33.2 (constants.%I.type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.2.%I.type.loc8_33.2 (%I.type.3) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %I.type.loc8_33.1 {
 // CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
@@ -197,6 +199,8 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%ptr)> [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %I.type.3 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %I.type.2 [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,6 +255,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type.1: type = facet_type <@I, @I(%T.1)> [symbolic = %I.type.1 (constants.%I.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.1.%I.type.1 (%I.type.2) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.6 as imports.%import_ref.7 {
 // CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
@@ -267,6 +272,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%ptr)> [symbolic = %I.type (constants.%I.type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.2.%I.type (%I.type.3) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.8 as imports.%import_ref.9 {
 // CHECK:STDOUT:   !members:

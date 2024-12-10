@@ -508,7 +508,7 @@ class Derived {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type <vtable> [template]
 // CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.1, .m1: %i32, .m2: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
@@ -563,7 +563,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc6_11.2: type = converted %int.make_type_signed.loc6, %.loc6_11.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6_9: %Base.elem = field_decl m2, element2 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base

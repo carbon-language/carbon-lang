@@ -227,14 +227,14 @@ class Context {
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
   // still updates `*scopes` and returns `true`.
-  auto AppendLookupScopesForConstant(SemIRLoc loc,
+  auto AppendLookupScopesForConstant(SemIR::LocId loc_id,
                                      SemIR::ConstantId base_const_id,
                                      llvm::SmallVector<LookupScope>* scopes)
       -> bool;
 
   // Performs a qualified name lookup in a specified scopes and in scopes that
   // they extend, returning the referenced instruction.
-  auto LookupQualifiedName(SemIRLoc loc, SemIR::NameId name_id,
+  auto LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
                            llvm::ArrayRef<LookupScope> lookup_scopes,
                            bool required = true,
                            std::optional<AccessInfo> access_info = std::nullopt)
@@ -249,6 +249,11 @@ class Context {
 
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
+
+  // Prints a diagnostic for a missing qualified name.
+  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
+                                  llvm::ArrayRef<LookupScope> lookup_scopes)
+      -> void;
 
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
@@ -341,10 +346,21 @@ class Context {
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
-  auto TryToCompleteType(SemIR::TypeId type_id,
-                         BuildDiagnosticFn diagnoser = nullptr,
+  //
+  // If `diagnoser` is provided, it is assumed to be an error for the type to be
+  // incomplete, and `diagnoser` should build an error diagnostic. If `type_id`
+  // is dependent, the completeness of the type will be enforced during
+  // monomorphization, and `loc_id` is used as the location for a diagnostic
+  // produced at that time.
+  //
+  // Returns `true` if the type is symbolic.
+  auto TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                         BuildDiagnosticFn diagnoser,
                          BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> bool;
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool {
+    return TryToCompleteType(type_id, SemIR::LocId::Invalid, nullptr);
+  }
 
   // Attempts to complete and define the type `type_id`. Returns `true` if the
   // type is defined, or `false` if no definition is available. A defined type
@@ -352,16 +368,17 @@ class Context {
   //
   // This is the same as `TryToCompleteType` except for interfaces, which are
   // complete before they are fully defined.
-  auto TryToDefineType(SemIR::TypeId type_id,
+  auto TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                        BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Returns the type `type_id` as a complete type, or produces an incomplete
   // type error and returns an error type. This is a convenience wrapper around
   // TryToCompleteType. `diagnoser` must not be null.
-  auto AsCompleteType(SemIR::TypeId type_id, BuildDiagnosticFn diagnoser,
+  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                      BuildDiagnosticFn diagnoser,
                       BuildDiagnosticFn abstract_diagnoser = nullptr)
       -> SemIR::TypeId {
-    return TryToCompleteType(type_id, diagnoser, abstract_diagnoser)
+    return TryToCompleteType(type_id, loc_id, diagnoser, abstract_diagnoser)
                ? type_id
                : SemIR::ErrorInst::SingletonTypeId;
   }
@@ -387,6 +404,10 @@ class Context {
   // Gets a singleton type. The returned type will be complete. Requires that
   // `singleton_id` is already validated to be a singleton.
   auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
+
+  // Gets a class type.
+  auto GetClassType(SemIR::ClassId class_id, SemIR::SpecificId specific_id)
+      -> SemIR::TypeId;
 
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)

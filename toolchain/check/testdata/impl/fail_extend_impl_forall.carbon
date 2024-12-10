@@ -37,10 +37,12 @@ class C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %GenericInterface.type.2 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.facet: %GenericInterface.type.2 = facet_value %C, %C [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -106,6 +108,7 @@ class C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc19_23.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%GenericInterface.type.loc19_54.2 (%GenericInterface.type.2) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %interface.loc19_56.2: <witness> = interface_witness (%F) [symbolic = %interface.loc19_56.2 (constants.%interface)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %GenericInterface.type.loc19_54.1 {
@@ -156,6 +159,7 @@ class C {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%T (%T) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: @F.2.%T (%T)) {
 // CHECK:STDOUT:   !entry:
@@ -198,6 +202,7 @@ class C {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %interface.loc19_56.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

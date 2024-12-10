@@ -902,6 +902,10 @@ class FormatterImpl {
     llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
     auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
+    if (!return_info.is_valid()) {
+      out_ << "(<invalid return info>)";
+      return;
+    }
     bool has_return_slot = return_info.has_return_slot();
     InstId return_slot_arg_id = InstId::Invalid;
     if (has_return_slot) {

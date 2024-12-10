@@ -57,7 +57,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -67,11 +67,14 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%T, %U) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %U [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %tuple.type.2 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.1: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%C, %D) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %F.specific_fn.2: <specific function> = specific_function %F, @F(%C, %D) [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %tuple.type.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -135,7 +138,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -143,7 +146,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -158,6 +161,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%T.loc7_6.2 (%T), @F.%U.loc7_16.2 (%U)) [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc7_40: <witness> = require_complete_type @F.%U.loc7_16.2 (%U) [symbolic = %require_complete.loc7_40 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %require_complete.loc7_30 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.2, %U.loc7_16.2) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type, %U.param_patt: type](%pair.param_patt: @F.%tuple.type (%tuple.type.2)) -> @F.%U.loc7_16.2 (%U) {
@@ -190,6 +195,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc7_40 => constants.%require_complete.1
+// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%require_complete.2
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -209,6 +216,8 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc7_40 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc7_30 => constants.%complete_type.2
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -227,7 +236,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.generic: %HasPair.type = struct_value () [template]
 // CHECK:STDOUT:   %HasPair.1: type = class_type @HasPair, @HasPair(%Pair) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A: %i32 = bind_symbolic_name A, 0 [symbolic]
 // CHECK:STDOUT:   %A.patt: %i32 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %B: %i32 = bind_symbolic_name B, 1 [symbolic]
@@ -236,6 +245,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.2: type = class_type @HasPair, @HasPair(%tuple.1) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %HasPair.2 [symbolic]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
@@ -371,7 +381,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%HasPair.1
@@ -388,6 +398,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(%tuple.loc6_40.2) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HasPair.loc6_41.2 (%HasPair.2) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%A.param_patt: %i32, %B.param_patt: %i32](%h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.2)) -> %i32 {
 // CHECK:STDOUT:   !entry:
@@ -449,6 +460,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2 => constants.%HasPair.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inconsistent.carbon
