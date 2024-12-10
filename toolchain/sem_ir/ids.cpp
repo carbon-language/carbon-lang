@@ -10,17 +10,10 @@
 namespace Carbon::SemIR {
 
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
-  if (!is_valid()) {
-    IdBase::Print(out);
-    return;
-  }
-  out << Label;
-  if (index < static_cast<int>(SingletonInstKinds.size())) {
-    out << "(" << SingletonInstKinds[index] << ")";
+  if (IsSingletonInstId(*this)) {
+    out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    // Use the `+` as a small reminder that this is a delta, rather than an
-    // absolute index.
-    out << "+" << index - SingletonInstKinds.size();
+    IdBase::Print(out);
   }
 }
 

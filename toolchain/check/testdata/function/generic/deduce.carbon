@@ -827,7 +827,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.4 = tuple_value (%int_1, %int_2.2) [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %tuple.type.4 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %tuple.type.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -912,7 +912,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduce_nested_struct.carbon
@@ -944,7 +944,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.3 = struct_value (%int_1, %int_2.2) [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.a.b.3 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1028,7 +1028,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2 => constants.%struct_type.a.b.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon

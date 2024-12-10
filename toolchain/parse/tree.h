@@ -190,6 +190,8 @@ class Tree : public Printable<Tree> {
   // CHECK so that it can be used within a debugger.
   auto Verify() const -> ErrorOr<Success>;
 
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+
  private:
   friend class Context;
   friend class TypedNodesTestPeer;

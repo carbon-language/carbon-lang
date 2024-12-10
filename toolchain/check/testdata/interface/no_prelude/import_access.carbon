@@ -61,7 +61,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn F(i: Test.Def) {}
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR:
@@ -91,7 +91,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn F(i: Test.ForwardWithDef) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -200,8 +200,8 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst+3, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -303,8 +303,8 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst+4, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

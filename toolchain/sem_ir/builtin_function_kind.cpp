@@ -45,8 +45,11 @@ struct TypeParam {
     if (state.type_params[I].is_valid() && type_id != state.type_params[I]) {
       return false;
     }
+    if (!TypeConstraint::Check(sem_ir, state, type_id)) {
+      return false;
+    }
     state.type_params[I] = type_id;
-    return TypeConstraint::Check(sem_ir, state, type_id);
+    return true;
   }
 };
 
@@ -99,6 +102,27 @@ struct AnyFloat {
   }
 };
 
+// Checks that the specified type matches the given type constraint.
+template <typename TypeConstraint>
+auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
+  while (type_id.is_valid()) {
+    // Allow a type that satisfies the constraint.
+    if (TypeConstraint::Check(sem_ir, state, type_id)) {
+      return true;
+    }
+
+    // Also allow a class type that adapts a matching type.
+    auto class_type = sem_ir.types().TryGetAs<ClassType>(type_id);
+    if (!class_type) {
+      break;
+    }
+    type_id = sem_ir.classes()
+                  .Get(class_type->class_id)
+                  .GetAdaptedType(sem_ir, class_type->specific_id);
+  }
+  return false;
+}
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::SingletonInstId>;
 
@@ -136,7 +160,7 @@ static auto ValidateSignature(const File& sem_ir,
 
   // Argument types must match.
   if (![&]<size_t... Indexes>(std::index_sequence<Indexes...>) {
-        return ((SignatureTraits::template arg_t<Indexes>::Check(
+        return ((Check<typename SignatureTraits::template arg_t<Indexes>>(
                     sem_ir, state, arg_types[Indexes])) &&
                 ...);
       }(std::make_index_sequence<SignatureTraits::num_args>())) {
@@ -144,7 +168,7 @@ static auto ValidateSignature(const File& sem_ir,
   }
 
   // Result type must match.
-  if (!SignatureTraits::result_t::Check(sem_ir, state, return_type)) {
+  if (!Check<typename SignatureTraits::result_t>(sem_ir, state, return_type)) {
     return false;
   }
 

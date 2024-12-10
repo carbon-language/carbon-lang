@@ -38,22 +38,19 @@
 
 namespace Carbon::Check {
 
-Context::Context(const Lex::TokenizedBuffer& tokens, DiagnosticEmitter& emitter,
-                 const Parse::Tree& parse_tree,
+Context::Context(DiagnosticEmitter* emitter,
                  llvm::function_ref<const Parse::TreeAndSubtrees&()>
                      get_parse_tree_and_subtrees,
-                 SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream)
-    : tokens_(&tokens),
-      emitter_(&emitter),
-      parse_tree_(&parse_tree),
+                 SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream)
+    : emitter_(emitter),
       get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees),
-      sem_ir_(&sem_ir),
+      sem_ir_(sem_ir),
       vlog_stream_(vlog_stream),
-      node_stack_(parse_tree, vlog_stream),
-      inst_block_stack_("inst_block_stack_", sem_ir, vlog_stream),
-      pattern_block_stack_("pattern_block_stack_", sem_ir, vlog_stream),
-      param_and_arg_refs_stack_(sem_ir, vlog_stream, node_stack_),
-      args_type_info_stack_("args_type_info_stack_", sem_ir, vlog_stream),
+      node_stack_(sem_ir->parse_tree(), vlog_stream),
+      inst_block_stack_("inst_block_stack_", *sem_ir, vlog_stream),
+      pattern_block_stack_("pattern_block_stack_", *sem_ir, vlog_stream),
+      param_and_arg_refs_stack_(*sem_ir, vlog_stream, node_stack_),
+      args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       global_init_(this) {
@@ -225,6 +222,54 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
+// Given an instruction associated with a scope and a `SpecificId` for that
+// scope, returns an instruction that describes the specific scope.
+static auto GetInstForSpecificScope(Context& context, SemIR::InstId inst_id,
+                                    SemIR::SpecificId specific_id)
+    -> SemIR::InstId {
+  if (!specific_id.is_valid()) {
+    return inst_id;
+  }
+  auto inst = context.insts().Get(inst_id);
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.types().GetInstId(
+          context.GetClassType(class_decl.class_id, specific_id));
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.types().GetInstId(
+          context.GetInterfaceType(interface_decl.interface_id, specific_id));
+    }
+    default: {
+      // Don't know how to form a specific for this generic scope.
+      // TODO: Handle more cases.
+      return SemIR::InstId::Invalid;
+    }
+  }
+}
+
+auto Context::DiagnoseMemberNameNotFound(
+    SemIRLoc loc, SemIR::NameId name_id,
+    llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
+  if (lookup_scopes.size() == 1 &&
+      lookup_scopes.front().name_scope_id.is_valid()) {
+    const auto& scope = name_scopes().Get(lookup_scopes.front().name_scope_id);
+    if (auto specific_inst_id = GetInstForSpecificScope(
+            *this, scope.inst_id(), lookup_scopes.front().specific_id);
+        specific_inst_id.is_valid()) {
+      CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
+                        "member name `{0}` not found in {1}", SemIR::NameId,
+                        InstIdAsType);
+      emitter_->Emit(loc, MemberNameNotFoundInScope, name_id, specific_inst_id);
+      return;
+    }
+  }
+
+  CARBON_DIAGNOSTIC(MemberNameNotFound, Error, "member name `{0}` not found",
+                    SemIR::NameId);
+  emitter_->Emit(loc, MemberNameNotFound, name_id);
+}
+
 auto Context::NoteAbstractClass(SemIR::ClassId class_id,
                                 DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
@@ -362,16 +407,16 @@ auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
     -> std::pair<SemIR::InstId, SemIR::AccessKind> {
-  if (auto lookup = scope.name_map.Lookup(name_id)) {
-    auto entry = scope.names[lookup.value()];
+  if (auto entry_id = scope.Lookup(name_id)) {
+    auto entry = scope.GetEntry(*entry_id);
     LoadImportRef(*this, entry.inst_id);
     return {entry.inst_id, entry.access_kind};
   }
 
-  if (!scope.import_ir_scopes.empty()) {
+  if (!scope.import_ir_scopes().empty()) {
     // TODO: Enforce other access modifiers for imports.
     return {ImportNameFromOtherPackage(*this, loc, scope_id,
-                                       scope.import_ir_scopes, name_id),
+                                       scope.import_ir_scopes(), name_id),
             SemIR::AccessKind::Public};
   }
   return {SemIR::InstId::Invalid, SemIR::AccessKind::Public};
@@ -529,7 +574,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
       continue;
     }
     const auto& name_scope = name_scopes().Get(scope_id);
-    has_error |= name_scope.has_error;
+    has_error |= name_scope.has_error();
 
     auto [scope_result_id, access_kind] =
         LookupNameInExactScope(loc_id, name_id, scope_id, name_scope);
@@ -550,7 +595,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     if (!scope_result_id.is_valid() || is_access_prohibited) {
       // If nothing is found in this scope or if we encountered an invalid
       // access, look in its extended scopes.
-      const auto& extended = name_scope.extended_scopes;
+      const auto& extended = name_scope.extended_scopes();
       scopes.reserve(scopes.size() + extended.size());
       for (auto extended_id : llvm::reverse(extended)) {
         // Substitute into the constant describing the extended scope to
@@ -594,7 +639,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
   if (required && !result.inst_id.is_valid()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
-        DiagnoseNameNotFound(loc_id, name_id);
+        DiagnoseMemberNameNotFound(loc_id, name_id, lookup_scopes);
       } else {
         //  TODO: We should report multiple prohibited accesses in case we don't
         //  find a valid lookup. Reporting the last one should suffice for now.
@@ -1376,6 +1421,11 @@ auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
   return type_id;
 }
 
+auto Context::GetClassType(SemIR::ClassId class_id,
+                           SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::ClassType>(*this, class_id, specific_id);
+}
+
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,
                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionType>(*this, fn_id, specific_id);
@@ -1427,7 +1477,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
 }
 
 auto Context::DumpFormattedFile() const -> void {
-  SemIR::Formatter formatter(*tokens_, *parse_tree_, *sem_ir_);
+  SemIR::Formatter formatter(sem_ir_);
   formatter.Print(llvm::errs());
 }
 

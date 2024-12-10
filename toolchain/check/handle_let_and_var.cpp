@@ -75,7 +75,7 @@ static auto BuildAssociatedConstantDecl(Context& context,
                       "single `:!` binding");
     context.emitter().Emit(pattern.loc_id,
                            ExpectedSymbolicBindingInAssociatedConstant);
-    context.name_scopes().Get(interface_info.scope_id).has_error = true;
+    context.name_scopes().Get(interface_info.scope_id).set_has_error();
     return;
   }
 

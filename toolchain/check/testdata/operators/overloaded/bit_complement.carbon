@@ -46,7 +46,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, inst+1, loaded [template = constants.%BitComplement.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/bitwise, BitComplement, loaded [template = constants.%BitComplement.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

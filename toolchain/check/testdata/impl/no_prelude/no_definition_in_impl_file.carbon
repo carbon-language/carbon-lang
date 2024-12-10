@@ -118,10 +118,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, inst+1, loaded [template = constants.%A.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, inst+8, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_definition_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_definition_in_impl, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_definition_in_impl, loc6_12, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,7 +164,7 @@ impl () as D;
 // CHECK:STDOUT: --- use_decl_in_api.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//decl_in_api_definition_in_impl, A, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -213,10 +213,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_only_in_api, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_only_in_api, inst+8, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//decl_only_in_api, B, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_only_in_api, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_only_in_api, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_only_in_api, loc6_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -273,10 +273,10 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, inst+1, loaded [template = constants.%C.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_decl_in_impl, inst+7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_decl_in_impl, inst+8, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//decl_in_api_decl_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//decl_in_api_decl_in_impl, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//decl_in_api_decl_in_impl, loc6_12, loaded [template = constants.%C.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

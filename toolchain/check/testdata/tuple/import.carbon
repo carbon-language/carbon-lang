@@ -45,10 +45,10 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C(<cannot stringify inst+354 kind TupleValue>)` to `C(<cannot stringify inst+342 kind TupleValue>)` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C(<cannot stringify inst375 kind TupleValue>)` to `C(<cannot stringify inst363 kind TupleValue>)` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C(<cannot stringify inst+354 kind TupleValue>)` does not implement interface `ImplicitAs(C(<cannot stringify inst+342 kind TupleValue>))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C(<cannot stringify inst375 kind TupleValue>)` does not implement interface `ImplicitAs(C(<cannot stringify inst363 kind TupleValue>))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var c_bad: C((3, 4)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C((3, 4)) = F();
@@ -102,7 +102,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %tuple.5: %tuple.type.8 = tuple_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%tuple.5) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
@@ -213,7 +213,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.2]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.1
@@ -336,18 +336,18 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref %tuple.type.2 = import_ref Implicit//default, inst+23, loaded
-// CHECK:STDOUT:   %import_ref.2: ref %tuple.type.8 = import_ref Implicit//default, inst+364, loaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+447, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+481, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1: ref %tuple.type.2 = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %import_ref.2: ref %tuple.type.8 = import_ref Implicit//default, b_ref, loaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.39
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.42
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref Implicit//default, inst+454, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.41 = import_ref Implicit//default, inst+452, unloaded
+// CHECK:STDOUT:   %import_ref.40: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.41 = import_ref Implicit//default, inst473 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -519,16 +519,16 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+364, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+447, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+481, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, a_ref, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, b_ref, unloaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.39: <witness> = import_ref Implicit//default, inst+454, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.40 = import_ref Implicit//default, inst+452, unloaded
+// CHECK:STDOUT:   %import_ref.39: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.40 = import_ref Implicit//default, inst473 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -624,17 +624,17 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, inst+23, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, inst+364, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, inst+447, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, inst+481, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, a_ref, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, b_ref, unloaded
+// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.41
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.39: <witness> = import_ref Implicit//default, inst+454, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.40 = import_ref Implicit//default, inst+452, unloaded
+// CHECK:STDOUT:   %import_ref.39: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.40 = import_ref Implicit//default, inst473 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

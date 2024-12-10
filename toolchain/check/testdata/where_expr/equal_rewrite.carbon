@@ -1084,10 +1084,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//equal_constraint, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Equal.type = import_ref Main//equal_constraint, inst+33, loaded [template = constants.%Equal]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//nested_rewrites, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.4: %NestedRewrite.type = import_ref Main//nested_rewrites, inst+55, loaded [template = constants.%NestedRewrite]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//equal_constraint, N, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Equal.type = import_ref Main//equal_constraint, Equal, loaded [template = constants.%Equal]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//nested_rewrites, A, unloaded
+// CHECK:STDOUT:   %import_ref.4: %NestedRewrite.type = import_ref Main//nested_rewrites, NestedRewrite, loaded [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Bool = %import_ref.8
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.9
@@ -1095,14 +1095,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//equal_constraint, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//equal_constraint, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//equal_constraint, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.45 = import_ref Main//nested_rewrites, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.46 = import_ref Main//nested_rewrites, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.47 = import_ref Main//nested_rewrites, inst+12, unloaded
-// CHECK:STDOUT:   %import_ref.48 = import_ref Main//nested_rewrites, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.49 = import_ref Main//nested_rewrites, inst+11, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//equal_constraint, loc5_15, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//equal_constraint, P, unloaded
+// CHECK:STDOUT:   %import_ref.45 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.46 = import_ref Main//nested_rewrites, loc5_15, unloaded
+// CHECK:STDOUT:   %import_ref.47 = import_ref Main//nested_rewrites, loc6_15, unloaded
+// CHECK:STDOUT:   %import_ref.48 = import_ref Main//nested_rewrites, B, unloaded
+// CHECK:STDOUT:   %import_ref.49 = import_ref Main//nested_rewrites, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

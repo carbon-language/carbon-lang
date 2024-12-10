@@ -63,7 +63,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Same//a, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Same//a, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .B = file.%B
 // CHECK:STDOUT:   }
@@ -86,7 +86,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
@@ -114,7 +114,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//c, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//c, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
@@ -148,19 +148,19 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//d, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//d, A, loaded
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//d, inst+6, loaded
+// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//d, B, loaded
 // CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//d, inst+8, loaded
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//d, C, loaded
 // CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .D = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Same//d, inst+10, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Same//d, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

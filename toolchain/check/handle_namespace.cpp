@@ -50,14 +50,17 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
       // Point at the other namespace.
       namespace_inst.name_scope_id = existing->name_scope_id;
 
-      if (context.name_scopes().Get(existing->name_scope_id).is_closed_import) {
+      if (context.name_scopes()
+              .Get(existing->name_scope_id)
+              .is_closed_import()) {
         // The existing name is a package name, so this is a name conflict.
         context.DiagnoseDuplicateName(namespace_id, existing_inst_id);
 
         // Treat this as a local namespace name from now on to avoid further
         // diagnostics.
-        context.name_scopes().Get(existing->name_scope_id).is_closed_import =
-            false;
+        context.name_scopes()
+            .Get(existing->name_scope_id)
+            .set_is_closed_import(false);
       } else if (existing->import_id.is_valid() &&
                  !context.insts().GetLocId(existing_inst_id).is_valid()) {
         // When the name conflict is an imported namespace, fill the location ID

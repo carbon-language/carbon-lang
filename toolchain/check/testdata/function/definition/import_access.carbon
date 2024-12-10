@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:13: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var f: () = Test.Def();
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:13: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var f: () = Test.ForwardWithDef();
 // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:13: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var f: () = Test.Forward();
 // CHECK:STDERR:             ^~~~~~~~~~~~
 var f: () = Test.Forward();
@@ -226,7 +226,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, inst+3, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref: %Def.type = import_ref Test//def, Def, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -338,7 +338,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, inst+3, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref: %ForwardWithDef.type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -450,7 +450,7 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, inst+3, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %import_ref: %Forward.type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

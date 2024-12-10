@@ -372,6 +372,11 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         out << sem_ir.names().GetFormatted(inst.name_id);
         break;
       }
+      case CARBON_KIND(Namespace inst): {
+        out << sem_ir.names().GetFormatted(
+            sem_ir.name_scopes().Get(inst.name_scope_id).name_id());
+        break;
+      }
       case CARBON_KIND(PointerType inst): {
         step_stack.PushString("*");
         step_stack.PushTypeId(inst.pointee_id);
@@ -424,6 +429,10 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.class_type_id);
         break;
       }
+      case VtablePtr::Kind: {
+        out << "<vtable ptr>";
+        break;
+      }
       case AdaptDecl::Kind:
       case AddrOf::Kind:
       case AddrPattern::Kind:
@@ -459,7 +468,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
       case InterfaceWitness::Kind:
-      case Namespace::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
       case RequireCompleteType::Kind:

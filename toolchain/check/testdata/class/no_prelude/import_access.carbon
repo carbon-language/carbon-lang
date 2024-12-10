@@ -60,7 +60,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: member name `Def` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var c: Test.Def = {};
 // CHECK:STDERR:        ^~~~~~~~
 // CHECK:STDERR:
@@ -90,7 +90,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: var c: Test.ForwardWithDef = {};
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -122,7 +122,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn F(c: Test.Forward*) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~
 fn F(c: Test.Forward*) {}
@@ -207,9 +207,9 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, inst+1, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, inst+4, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -303,9 +303,9 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, inst+1, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, inst+5, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst+2, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -401,7 +401,7 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, inst+1, loaded [template = constants.%Forward]
+// CHECK:STDOUT:   %import_ref: type = import_ref Test//forward, Forward, loaded [template = constants.%Forward]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -192,7 +192,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.7(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Defined.specific_fn: <specific function> = specific_function %Defined, @Defined(%i32) [template]
-// CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:

@@ -95,7 +95,7 @@ class StructAdapter {
 
 fn F(a: StructAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+4]]:10: error: name `b` not found [NameNotFound]
+  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+4]]:10: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return a.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
@@ -131,7 +131,7 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10: error: name `foo` not found [NameNotFound]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return a.foo;
   // CHECK:STDERR:          ^~~~~
   return a.foo;
@@ -611,7 +611,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types, inst+7, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

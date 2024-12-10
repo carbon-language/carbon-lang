@@ -283,23 +283,23 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, inst+7, loaded [template = constants.%Action.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, inst+33, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, inst+36, unloaded
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//action, inst+35, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.9: @Action.%Op.assoc_type (%Op.assoc_type.1) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.3)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//action, inst+31, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.14: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
-// CHECK:STDOUT:   %import_ref.15: <witness> = import_ref Main//action, inst+53, loaded [template = constants.%interface]
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//action, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//action, inst+16, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, Action, loaded [template = constants.%Action.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//action, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//action, C, unloaded
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, F, unloaded
+// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//action, loc9_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst46 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9: @Action.%Op.assoc_type (%Op.assoc_type.1) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.3)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, Op, unloaded
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//action, loc8_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//action, loc12_6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.14: type = import_ref Main//action, loc12_19, loaded [template = constants.%Action.type.3]
+// CHECK:STDOUT:   %import_ref.15: <witness> = import_ref Main//action, loc12_21, loaded [template = constants.%interface]
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//action, loc13_11, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//action, loc5_10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -440,25 +440,25 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, inst+7, loaded [template = constants.%Action.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, inst+28, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, inst+33, unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, inst+36, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//action, inst+35, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst+34, unloaded
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.9: @Action.%Op.assoc_type (%Op.assoc_type.1) = import_ref Main//action, inst+20, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.4)]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//action, inst+31, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst+29, unloaded
-// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//action, inst+39, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.14: type = import_ref Main//action, inst+42, loaded [template = constants.%Action.type.3]
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//action, inst+45, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//action, inst+16, unloaded
-// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref Main//action, inst+38, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.20 = import_ref Main//action, inst+37, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Action.type.1 = import_ref Main//action, Action, loaded [template = constants.%Action.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//action, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//action, B, unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//action, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//action, F, unloaded
+// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//action, loc9_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//action, inst46 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//action, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9: @Action.%Op.assoc_type (%Op.assoc_type.1) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.4)]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//action, Op, unloaded
+// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//action, loc8_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.12 = import_ref Main//action, inst41 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//action, loc12_6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.14: type = import_ref Main//action, loc12_19, loaded [template = constants.%Action.type.3]
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//action, loc12_21, unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//action, loc13_11, unloaded
+// CHECK:STDOUT:   %import_ref.17 = import_ref Main//action, loc5_10, unloaded
+// CHECK:STDOUT:   %import_ref.19: <witness> = import_ref Main//action, loc10_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.20 = import_ref Main//action, inst49 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -764,21 +764,21 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, inst+7, loaded [template = constants.%Factory.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, inst+34, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//factory, inst+39, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//factory, inst+41, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst+40, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//factory, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.7: @Factory.%Make.assoc_type (%Make.assoc_type.1) = import_ref Main//factory, inst+26, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.3)]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//factory, inst+37, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//factory, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//factory, inst+42, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//factory, inst+45, loaded [template = constants.%Factory.type.3]
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//factory, inst+61, loaded [template = constants.%interface]
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//factory, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//factory, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, Factory, loaded [template = constants.%Factory.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//factory, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//factory, loc9_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst52 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//factory, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: @Factory.%Make.assoc_type (%Make.assoc_type.1) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.3)]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, Make, unloaded
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//factory, loc8_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//factory, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//factory, loc11_6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//factory, loc11_20, loaded [template = constants.%Factory.type.3]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//factory, loc11_22, loaded [template = constants.%interface]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//factory, loc12_17, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//factory, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -926,21 +926,21 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, inst+7, loaded [template = constants.%Factory.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, inst+34, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//factory, inst+39, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//factory, inst+41, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst+40, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//factory, inst+14, unloaded
-// CHECK:STDOUT:   %import_ref.7: @Factory.%Make.assoc_type (%Make.assoc_type.1) = import_ref Main//factory, inst+26, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.4)]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, inst+21, unloaded
-// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//factory, inst+37, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//factory, inst+35, unloaded
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//factory, inst+42, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//factory, inst+45, loaded [template = constants.%Factory.type.3]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, inst+61, unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//factory, inst+53, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//factory, inst+21, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Factory.type.1 = import_ref Main//factory, Factory, loaded [template = constants.%Factory.generic]
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//factory, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//factory, B, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//factory, loc9_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//factory, inst52 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//factory, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: @Factory.%Make.assoc_type (%Make.assoc_type.1) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.4)]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//factory, Make, unloaded
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//factory, loc8_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//factory, inst47 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//factory, loc11_6, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//factory, loc11_20, loaded [template = constants.%Factory.type.3]
+// CHECK:STDOUT:   %import_ref.13 = import_ref Main//factory, loc11_22, unloaded
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//factory, loc12_17, unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//factory, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

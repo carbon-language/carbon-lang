@@ -260,7 +260,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [symbolic]
@@ -295,17 +295,17 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.42
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.43
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.38: <witness> = import_ref Main//foo, inst+54, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.39 = import_ref Main//foo, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.40 = import_ref Main//foo, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.41 = import_ref Main//foo, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.38: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.39 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.40 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.41 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -345,7 +345,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete (constants.%require_complete.5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete (constants.%require_complete.7)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.1 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x)]
@@ -474,18 +474,18 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.generic]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+371, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, Class, unloaded
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, F, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//foo, inst+54, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.1) = import_ref Main//foo, inst+41, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, inst+50, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.1) = import_ref Main//foo, loc7_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.8: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -661,19 +661,19 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, inst+9, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, inst+20, loaded [template = constants.%CompleteClass.generic]
-// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, inst+371, loaded [template = constants.%F.3]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, Class, unloaded
+// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, F, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.8
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.9
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//foo, inst+54, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst+25, unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst+41, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//foo, inst+50, unloaded
+// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -790,9 +790,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, inst+9, loaded [template = constants.%Class.generic]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, inst+20, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, inst+371, unloaded
+// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, Class, loaded [template = constants.%Class.generic]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, CompleteClass, unloaded
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

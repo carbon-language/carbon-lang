@@ -204,10 +204,10 @@ class Derived {
 // CHECK:STDOUT:     .Base = %import_ref.1
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,10 +266,10 @@ class Derived {
 // CHECK:STDOUT:     .Base = %import_ref.1
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, inst+3, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, inst+11, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst+4, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, inst+5, unloaded
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -297,8 +297,11 @@ class Derived {
 // CHECK:STDOUT:   %v.var: ref %Base = var v
 // CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc7_28.2: init %Base = class_init (<error>), %v.var [template = <error>]
-// CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.2 [template = <error>]
+// CHECK:STDOUT:   %.loc7_28.2: ref %ptr.1 = class_element_access %v.var, element0
+// CHECK:STDOUT:   %.loc7_28.3: ref %ptr.1 = vtable_ptr
+// CHECK:STDOUT:   %.loc7_28.4: init %ptr.1 = initialize_from %.loc7_28.3 to %.loc7_28.2
+// CHECK:STDOUT:   %.loc7_28.5: init %Base = class_init (%.loc7_28.4), %v.var
+// CHECK:STDOUT:   %.loc7_29: init %Base = converted %.loc7_28.1, %.loc7_28.5
 // CHECK:STDOUT:   assign %v.var, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -593,14 +596,17 @@ class Derived {
 // CHECK:STDOUT:   %i.ref.loc14_25: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %i.ref.loc14_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.1 = struct_literal (%i.ref.loc14_25, %i.ref.loc14_34)
+// CHECK:STDOUT:   %.loc14_35.2: ref %ptr.1 = class_element_access %b1.var, element0
+// CHECK:STDOUT:   %.loc14_35.3: ref %ptr.1 = vtable_ptr
+// CHECK:STDOUT:   %.loc14_35.4: init %ptr.1 = initialize_from %.loc14_35.3 to %.loc14_35.2
 // CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
-// CHECK:STDOUT:   %.loc14_35.2: ref %i32 = class_element_access %b1.var, element2
-// CHECK:STDOUT:   %.loc14_35.3: init %i32 = initialize_from %.loc14_34 to %.loc14_35.2
+// CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b1.var, element2
+// CHECK:STDOUT:   %.loc14_35.6: init %i32 = initialize_from %.loc14_34 to %.loc14_35.5
 // CHECK:STDOUT:   %.loc14_25: %i32 = bind_value %i.ref.loc14_25
-// CHECK:STDOUT:   %.loc14_35.4: ref %i32 = class_element_access %b1.var, element1
-// CHECK:STDOUT:   %.loc14_35.5: init %i32 = initialize_from %.loc14_25 to %.loc14_35.4
-// CHECK:STDOUT:   %.loc14_35.6: init %Base = class_init (<error>, %.loc14_35.3, %.loc14_35.5), %b1.var
-// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.6
+// CHECK:STDOUT:   %.loc14_35.7: ref %i32 = class_element_access %b1.var, element1
+// CHECK:STDOUT:   %.loc14_35.8: init %i32 = initialize_from %.loc14_25 to %.loc14_35.7
+// CHECK:STDOUT:   %.loc14_35.9: init %Base = class_init (%.loc14_35.4, %.loc14_35.6, %.loc14_35.8), %b1.var
+// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.9
 // CHECK:STDOUT:   assign %b1.var, %.loc14_36
 // CHECK:STDOUT:   %Base.ref.loc15: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %b2.var: ref %Base = var b2
@@ -608,22 +614,25 @@ class Derived {
 // CHECK:STDOUT:   %int_3.loc15: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %.loc15_35.1: %struct_type.m2.m1.2 = struct_literal (%int_3.loc15, %int_5)
+// CHECK:STDOUT:   %.loc15_35.2: ref %ptr.1 = class_element_access %b2.var, element0
+// CHECK:STDOUT:   %.loc15_35.3: ref %ptr.1 = vtable_ptr
+// CHECK:STDOUT:   %.loc15_35.4: init %ptr.1 = initialize_from %.loc15_35.3 to %.loc15_35.2
 // CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_35.1: <specific function> = specific_function %Convert.bound.loc15_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %Convert.specific_fn.loc15_35.1(%int_5) [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc15_35.2: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [template = constants.%int_5.2]
-// CHECK:STDOUT:   %.loc15_35.3: ref %i32 = class_element_access %b2.var, element2
-// CHECK:STDOUT:   %.loc15_35.4: init %i32 = initialize_from %.loc15_35.2 to %.loc15_35.3 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [template = constants.%int_5.2]
+// CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
+// CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %impl.elem0.loc15_35.2: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc15_35.2: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_35.2: <specific function> = specific_function %Convert.bound.loc15_35.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.2: init %i32 = call %Convert.specific_fn.loc15_35.2(%int_3.loc15) [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_3.loc15, %int.convert_checked.loc15_35.2 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element1
-// CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc15_35.8: init %Base = class_init (<error>, %.loc15_35.4, %.loc15_35.7), %b2.var [template = <error>]
-// CHECK:STDOUT:   %.loc15_36: init %Base = converted %.loc15_35.1, %.loc15_35.8 [template = <error>]
+// CHECK:STDOUT:   %.loc15_35.8: init %i32 = converted %int_3.loc15, %int.convert_checked.loc15_35.2 [template = constants.%int_3.2]
+// CHECK:STDOUT:   %.loc15_35.9: ref %i32 = class_element_access %b2.var, element1
+// CHECK:STDOUT:   %.loc15_35.10: init %i32 = initialize_from %.loc15_35.8 to %.loc15_35.9 [template = constants.%int_3.2]
+// CHECK:STDOUT:   %.loc15_35.11: init %Base = class_init (%.loc15_35.4, %.loc15_35.7, %.loc15_35.10), %b2.var
+// CHECK:STDOUT:   %.loc15_36: init %Base = converted %.loc15_35.1, %.loc15_35.11
 // CHECK:STDOUT:   assign %b2.var, %.loc15_36
 // CHECK:STDOUT:   %b1.ref: ref %Base = name_ref b1, %b1
 // CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6_9 [template = @Base.%.loc6_9]

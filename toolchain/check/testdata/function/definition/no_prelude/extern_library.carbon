@@ -273,7 +273,7 @@ extern fn F() {}
 // CHECK:STDOUT: --- indirect_two_file.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref = import_ref Main//indirect_two_file_extern, inst+1, unloaded
+// CHECK:STDOUT:   %import_ref = import_ref Main//indirect_two_file_extern, F, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

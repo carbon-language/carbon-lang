@@ -38,7 +38,7 @@ interface BeingDefined {
   // CHECK:STDERR: interface BeingDefined {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: name `T` not found [NameNotFound]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: member name `T` not found in `BeingDefined` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR:

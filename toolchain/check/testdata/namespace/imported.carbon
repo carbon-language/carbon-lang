@@ -76,17 +76,17 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Implicit//default, inst+3, loaded
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Implicit//default, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .A = %import_ref.2
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Implicit//default, inst+5, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Implicit//default, inst+4, loaded
+// CHECK:STDOUT:   %import_ref.2: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Implicit//default, ChildNS, loaded
 // CHECK:STDOUT:   %ChildNS: <namespace> = namespace %import_ref.3, [template] {
 // CHECK:STDOUT:     .B = %import_ref.4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %B.type = import_ref Implicit//default, inst+9, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.4: %B.type = import_ref Implicit//default, B, loaded [template = constants.%B]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

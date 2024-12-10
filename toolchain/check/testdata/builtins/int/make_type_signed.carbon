@@ -164,8 +164,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, inst+7, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Main//types, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -325,11 +325,11 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, inst+34, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, inst+59, loaded [template = constants.%G]
-// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, inst+98, loaded [template = constants.%Symbolic]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Main//use_types, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.4: %G.type = import_ref Main//use_types, G, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.5: %Symbolic.type = import_ref Main//use_types, Symbolic, loaded [template = constants.%Symbolic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -488,8 +488,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -546,8 +546,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type.2 = import_ref Main//types, inst+23, loaded [template = constants.%Int.2]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type.2 = import_ref Main//types, Int, loaded [template = constants.%Int.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.4
@@ -623,8 +623,8 @@ var m: Int(1000000000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, inst+7, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, inst+23, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//types, IntLiteral, unloaded
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Main//types, Int, loaded [template = constants.%Int]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...

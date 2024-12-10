@@ -127,17 +127,17 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_impl_library, inst+1, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_impl_library, inst+12, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//extend_impl_library, inst+24, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_impl_library, inst+13, unloaded
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//extend_impl_library, inst+15, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_impl_library, inst+3, unloaded
-// CHECK:STDOUT:   %import_ref.7: %F.assoc_type = import_ref Main//extend_impl_library, inst+10, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extend_impl_library, inst+5, unloaded
-// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//extend_impl_library, inst+14, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//extend_impl_library, inst+15, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_impl_library, inst+21, loaded [template = constants.%interface]
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_impl_library, I, unloaded
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_impl_library, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//extend_impl_library, loc12_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_impl_library, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//extend_impl_library, loc9_18, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//extend_impl_library, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: %F.assoc_type = import_ref Main//extend_impl_library, loc5_9, loaded [template = constants.%assoc0]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//extend_impl_library, F, unloaded
+// CHECK:STDOUT:   %import_ref.10: type = import_ref Main//extend_impl_library, loc9_15, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.11: type = import_ref Main//extend_impl_library, loc9_18, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_impl_library, loc9_20, loaded [template = constants.%interface]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

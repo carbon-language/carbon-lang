@@ -26,6 +26,11 @@ static auto GetImportNameForEntity(const T& entity)
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   return {entity.name_id, entity.parent_scope_id};
 }
+template <>
+auto GetImportNameForEntity(const SemIR::NameScope& entity)
+    -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
+  return {entity.name_id(), entity.parent_scope_id()};
+}
 
 // Returns name information for the entity, corresponding to IDs in the import
 // IR rather than the current IR.
@@ -99,10 +104,12 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
                          llvm::function_ref<SemIR::InstId()> make_import_id)
     -> NamespaceResult {
   auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
-  auto insert_result =
-      parent_scope->name_map.Insert(name_id, parent_scope->names.size());
-  if (!insert_result.is_inserted()) {
-    auto prev_inst_id = parent_scope->names[insert_result.value()].inst_id;
+  auto [inserted, entry_id] = parent_scope->LookupOrAdd(
+      name_id,
+      // This InstId is temporary and would be overridden if used.
+      SemIR::InstId::Invalid, SemIR::AccessKind::Public);
+  if (!inserted) {
+    auto prev_inst_id = parent_scope->GetEntry(entry_id).inst_id;
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(prev_inst_id)) {
       if (diagnose_duplicate_namespace) {
@@ -140,17 +147,12 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
 
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics.
-  if (!insert_result.is_inserted()) {
-    auto& entry = parent_scope->names[insert_result.value()];
+  auto& entry = parent_scope->GetEntry(entry_id);
+  if (!inserted) {
     context.DiagnoseDuplicateName(namespace_id, entry.inst_id);
-    entry.inst_id = namespace_id;
     entry.access_kind = SemIR::AccessKind::Public;
-  } else {
-    parent_scope->names.push_back({.name_id = name_id,
-                                   .inst_id = namespace_id,
-                                   .access_kind = SemIR::AccessKind::Public});
   }
-
+  entry.inst_id = namespace_id;
   return {namespace_inst.name_scope_id, namespace_id, false};
 }
 
@@ -237,20 +239,20 @@ static auto CopyAncestorNameScopesFromImportIR(
     // The namespace hasn't been copied yet, so add it to our list.
     const auto& scope = import_sem_ir.name_scopes().Get(import_parent_scope_id);
     auto scope_inst =
-        import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id);
+        import_sem_ir.insts().GetAs<SemIR::Namespace>(scope.inst_id());
     new_namespaces.push_back(scope_inst.name_scope_id);
-    import_parent_scope_id = scope.parent_scope_id;
+    import_parent_scope_id = scope.parent_scope_id();
   }
 
   // Add ancestor namespace names, starting with the outermost.
   for (auto import_scope_id : llvm::reverse(new_namespaces)) {
     auto import_scope = import_sem_ir.name_scopes().Get(import_scope_id);
     auto name_id =
-        CopyNameFromImportIR(context, import_sem_ir, import_scope.name_id);
+        CopyNameFromImportIR(context, import_sem_ir, import_scope.name_id());
     scope_cursor =
         CopySingleNameScopeFromImportIR(
             context, namespace_type_id, &copied_namespaces, ir_id,
-            import_scope.inst_id, import_scope_id, scope_cursor, name_id)
+            import_scope.inst_id(), import_scope_id, scope_cursor, name_id)
             .name_scope_id;
   }
 
@@ -265,25 +267,22 @@ static auto AddImportRefOrMerge(Context& context, SemIR::ImportIRId ir_id,
                                 SemIR::NameId name_id) -> void {
   // Leave a placeholder that the inst comes from the other IR.
   auto& parent_scope = context.name_scopes().Get(parent_scope_id);
-  auto insert = parent_scope.name_map.Insert(name_id, [&] {
+  auto [inserted, entry_id] = parent_scope.LookupOrAdd(
+      name_id,
+      // This InstId is temporary and would be overridden if used.
+      SemIR::InstId::Invalid, SemIR::AccessKind::Public);
+  auto& entry = parent_scope.GetEntry(entry_id);
+  if (inserted) {
     auto entity_name_id = context.entity_names().Add(
         {.name_id = name_id,
          .parent_scope_id = parent_scope_id,
          .bind_index = SemIR::CompileTimeBindIndex::Invalid});
-    int index = parent_scope.names.size();
-    parent_scope.names.push_back(
-        {.name_id = name_id,
-         .inst_id =
-             AddImportRef(context, {.ir_id = ir_id, .inst_id = import_inst_id},
-                          entity_name_id),
-         .access_kind = SemIR::AccessKind::Public});
-    return index;
-  });
-  if (insert.is_inserted()) {
+    entry.inst_id = AddImportRef(
+        context, {.ir_id = ir_id, .inst_id = import_inst_id}, entity_name_id);
     return;
   }
 
-  auto inst_id = parent_scope.names[insert.value()].inst_id;
+  auto inst_id = entry.inst_id;
   auto prev_ir_inst = GetCanonicalImportIRInst(context, inst_id);
   VerifySameCanonicalImportIRInst(context, inst_id, prev_ir_inst, ir_id,
                                   &import_sem_ir, import_inst_id);
@@ -333,7 +332,7 @@ static auto ImportScopeFromApiFile(Context& context,
   const auto& api_scope = api_sem_ir.name_scopes().Get(api_scope_id);
   auto& impl_scope = context.name_scopes().Get(impl_scope_id);
 
-  for (const auto& api_entry : api_scope.names) {
+  for (const auto& api_entry : api_scope.entries()) {
     auto impl_name_id =
         CopyNameFromImportIR(context, api_sem_ir, api_entry.name_id);
     if (auto ns =
@@ -342,7 +341,7 @@ static auto ImportScopeFromApiFile(Context& context,
       // ImportLibrariesFromOtherPackage.
       if (api_scope_id == SemIR::NameScopeId::Package) {
         const auto& ns_scope = api_sem_ir.name_scopes().Get(ns->name_scope_id);
-        if (!ns_scope.import_ir_scopes.empty()) {
+        if (!ns_scope.import_ir_scopes().empty()) {
           continue;
         }
       }
@@ -427,8 +426,8 @@ auto ImportLibrariesFromCurrentPackage(
     // file, it transitively affects the current file too.
     if (import_ir.sem_ir->name_scopes()
             .Get(SemIR::NameScopeId::Package)
-            .has_error) {
-      context.name_scopes().Get(SemIR::NameScopeId::Package).has_error = true;
+            .has_error()) {
+      context.name_scopes().Get(SemIR::NameScopeId::Package).set_has_error();
     }
   }
 }
@@ -450,15 +449,16 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   auto namespace_const_id = context.constant_values().Get(result.inst_id);
 
   auto& scope = context.name_scopes().Get(result.name_scope_id);
-  scope.is_closed_import = !result.is_duplicate_of_namespace_in_current_package;
+  scope.set_is_closed_import(
+      !result.is_duplicate_of_namespace_in_current_package);
   for (auto import_ir : import_irs) {
     auto ir_id = AddImportIR(context, import_ir);
-    scope.import_ir_scopes.push_back({ir_id, SemIR::NameScopeId::Package});
+    scope.AddImportIRScope({ir_id, SemIR::NameScopeId::Package});
     context.import_ir_constant_values()[ir_id.index].Set(
         SemIR::Namespace::PackageInstId, namespace_const_id);
   }
   if (has_load_error) {
-    scope.has_error = has_load_error;
+    scope.set_has_error();
   }
 }
 
@@ -483,13 +483,15 @@ static auto LookupNameInImport(const SemIR::File& import_ir,
 
   // Look up the name in the import scope.
   const auto& import_scope = import_ir.name_scopes().Get(import_scope_id);
-  auto lookup = import_scope.name_map.Lookup(import_name_id);
-  if (!lookup) {
+  auto import_scope_entry_id = import_scope.Lookup(import_name_id);
+  if (!import_scope_entry_id) {
     // Name doesn't exist in the import scope.
     return nullptr;
   }
 
-  const auto& import_scope_entry = import_scope.names[lookup.value()];
+  const auto& import_scope_entry =
+      import_scope.GetEntry(*import_scope_entry_id);
+
   if (import_scope_entry.access_kind != SemIR::AccessKind::Public) {
     // Ignore cross-package non-public names.
     return nullptr;
@@ -512,8 +514,9 @@ static auto AddNamespaceFromOtherPackage(Context& context,
       context, namespace_type_id, /*copied_namespaces=*/nullptr, import_ir_id,
       import_inst_id, import_ns.name_scope_id, parent_scope_id, name_id);
   auto& scope = context.name_scopes().Get(result.name_scope_id);
-  scope.is_closed_import = !result.is_duplicate_of_namespace_in_current_package;
-  scope.import_ir_scopes.push_back({import_ir_id, import_ns.name_scope_id});
+  scope.set_is_closed_import(
+      !result.is_duplicate_of_namespace_in_current_package);
+  scope.AddImportIRScope({import_ir_id, import_ns.name_scope_id});
   return result.inst_id;
 }
 
@@ -584,8 +587,7 @@ auto ImportNameFromOtherPackage(
     if (auto import_ns = import_inst.TryAs<SemIR::Namespace>()) {
       if (auto ns = context.insts().TryGetAs<SemIR::Namespace>(result_id)) {
         auto& name_scope = context.name_scopes().Get(ns->name_scope_id);
-        name_scope.import_ir_scopes.push_back(
-            {import_ir_id, import_ns->name_scope_id});
+        name_scope.AddImportIRScope({import_ir_id, import_ns->name_scope_id});
         continue;
       }
     }

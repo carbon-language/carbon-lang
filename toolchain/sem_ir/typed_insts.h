@@ -1482,6 +1482,13 @@ struct VtableType {
   TypeId type_id;
 };
 
+// Initializer for virtual function table pointers in object initialization.
+struct VtablePtr {
+  static constexpr auto Kind =
+      InstKind::VtablePtr.Define<Parse::NodeId>({.ir_name = "vtable_ptr"});
+  TypeId type_id;
+};
+
 // An `expr where requirements` expression.
 struct WhereExpr {
   static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(

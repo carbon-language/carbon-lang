@@ -63,7 +63,7 @@ let b: () = Other.a;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Implicit//default, inst+4, loaded
+// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Implicit//default, a, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -119,7 +119,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:     .a = %import_ref
 // CHECK:STDOUT:     import Other//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Other//default, inst+4, loaded
+// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Other//default, a, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

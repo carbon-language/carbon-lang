@@ -59,7 +59,7 @@ fn NS.Foo();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Example//namespace, inst+3, loaded
+// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Example//namespace, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref, [template] {
 // CHECK:STDOUT:     .Foo = file.%Foo.decl
 // CHECK:STDOUT:   }

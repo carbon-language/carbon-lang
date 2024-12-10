@@ -1204,14 +1204,14 @@ static auto GetIncompleteLocalEntityBase(
 static auto AddNameScopeImportRefs(ImportContext& context,
                                    const SemIR::NameScope& import_scope,
                                    SemIR::NameScope& new_scope) -> void {
-  for (auto entry : import_scope.names) {
+  for (auto entry : import_scope.entries()) {
     auto ref_id = AddImportRef(context, entry.inst_id);
     new_scope.AddRequired({.name_id = GetLocalNameId(context, entry.name_id),
                            .inst_id = ref_id,
                            .access_kind = entry.access_kind});
   }
-  for (auto scope_inst_id : import_scope.extended_scopes) {
-    new_scope.extended_scopes.push_back(AddImportRef(context, scope_inst_id));
+  for (auto scope_inst_id : import_scope.extended_scopes()) {
+    new_scope.AddExtendedScope(AddImportRef(context, scope_inst_id));
   }
 }
 
@@ -2020,7 +2020,7 @@ static auto AddInterfaceDefinition(ImportContext& context,
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
 
-  CARBON_CHECK(import_scope.extended_scopes.empty(),
+  CARBON_CHECK(import_scope.extended_scopes().empty(),
                "Interfaces don't currently have extended scopes to support.");
 }
 

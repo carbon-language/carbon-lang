@@ -1579,6 +1579,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::Temporary::Kind:
     case SemIR::TemporaryStorage::Kind:
     case SemIR::ValueAsRef::Kind:
+    case SemIR::VtablePtr::Kind:
       break;
 
     case CARBON_KIND(SemIR::SymbolicBindingPattern bind): {

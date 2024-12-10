@@ -69,11 +69,10 @@ class Context {
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
   // Stores references for work.
-  explicit Context(const Lex::TokenizedBuffer& tokens,
-                   DiagnosticEmitter& emitter, const Parse::Tree& parse_tree,
+  explicit Context(DiagnosticEmitter* emitter,
                    llvm::function_ref<const Parse::TreeAndSubtrees&()>
                        get_parse_tree_and_subtrees,
-                   SemIR::File& sem_ir, llvm::raw_ostream* vlog_stream);
+                   SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIRLoc loc, std::string label) -> bool;
@@ -249,6 +248,11 @@ class Context {
   // Prints a diagnostic for a missing name.
   auto DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id) -> void;
 
+  // Prints a diagnostic for a missing qualified name.
+  auto DiagnoseMemberNameNotFound(SemIRLoc loc, SemIR::NameId name_id,
+                                  llvm::ArrayRef<LookupScope> lookup_scopes)
+      -> void;
+
   // Adds a note to a diagnostic explaining that a class is incomplete.
   auto NoteIncompleteClass(SemIR::ClassId class_id, DiagnosticBuilder& builder)
       -> void;
@@ -399,6 +403,10 @@ class Context {
   // `singleton_id` is already validated to be a singleton.
   auto GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId;
 
+  // Gets a class type.
+  auto GetClassType(SemIR::ClassId class_id, SemIR::SpecificId specific_id)
+      -> SemIR::TypeId;
+
   // Gets a function type. The returned type will be complete.
   auto GetFunctionType(SemIR::FunctionId fn_id, SemIR::SpecificId specific_id)
       -> SemIR::TypeId;
@@ -468,17 +476,17 @@ class Context {
     return tokens().GetKind(parse_tree().node_token(node_id));
   }
 
-  auto tokens() -> const Lex::TokenizedBuffer& { return *tokens_; }
-
   auto emitter() -> DiagnosticEmitter& { return *emitter_; }
-
-  auto parse_tree() -> const Parse::Tree& { return *parse_tree_; }
 
   auto parse_tree_and_subtrees() -> const Parse::TreeAndSubtrees& {
     return get_parse_tree_and_subtrees_();
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
+
+  auto parse_tree() -> const Parse::Tree& { return sem_ir_->parse_tree(); }
+
+  auto tokens() -> const Lex::TokenizedBuffer& { return parse_tree().tokens(); }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 
@@ -619,14 +627,8 @@ class Context {
   // any applicable instruction lists.
   auto FinishInst(SemIR::InstId inst_id, SemIR::Inst inst) -> void;
 
-  // Tokens for getting data on literals.
-  const Lex::TokenizedBuffer* tokens_;
-
   // Handles diagnostics.
   DiagnosticEmitter* emitter_;
-
-  // The file's parse tree.
-  const Parse::Tree* parse_tree_;
 
   // Returns a lazily constructed TreeAndSubtrees.
   llvm::function_ref<const Parse::TreeAndSubtrees&()>

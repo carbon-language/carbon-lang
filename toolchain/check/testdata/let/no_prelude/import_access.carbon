@@ -46,7 +46,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: name `v` not found [NameNotFound]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14: error: member name `v` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: let v2: () = Test.v;
 // CHECK:STDERR:              ^~~~~~
 let v2: () = Test.v;
@@ -82,7 +82,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Test//def, inst+4, loaded
+// CHECK:STDOUT:   %import_ref: %empty_tuple.type = import_ref Test//def, v, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
