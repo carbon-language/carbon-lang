@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
 
@@ -68,11 +69,14 @@ class StepStack {
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
     PushNameId(name_id);
     while (name_scope_id.is_valid() && name_scope_id != NameScopeId::Package) {
-      PushString(".");
       const auto& name_scope = sem_ir->name_scopes().Get(name_scope_id);
-      // TODO: For a generic scope, pass a SpecificId to this function and
-      // include the relevant arguments.
-      PushNameId(name_scope.name_id());
+      // TODO: Decide how to print unnamed scopes.
+      if (name_scope.name_id().is_valid()) {
+        PushString(".");
+        // TODO: For a generic scope, pass a SpecificId to this function and
+        // include the relevant arguments.
+        PushNameId(name_scope.name_id());
+      }
       name_scope_id = name_scope.parent_scope_id();
     }
   }
@@ -80,6 +84,10 @@ class StepStack {
                       SpecificId specific_id) -> void {
     PushSpecificId(entity, specific_id);
     PushQualifiedName(entity.parent_scope_id, entity.name_id);
+  }
+  auto PushEntityName(EntityNameId entity_name_id) -> void {
+    const auto& entity_name = sem_ir->entity_names().Get(entity_name_id);
+    PushQualifiedName(entity_name.parent_scope_id, entity_name.name_id);
   }
   auto PushTypeId(TypeId type_id) -> void {
     PushInstId(sem_ir->types().GetInstId(type_id));
@@ -190,8 +198,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ExportDecl::Kind: {
         auto name_id =
             untyped_inst.As<AnyBindNameOrExportDecl>().entity_name_id;
-        out << sem_ir.names().GetFormatted(
-            sem_ir.entity_names().Get(name_id).name_id);
+        step_stack.PushEntityName(name_id);
         break;
       }
       case CARBON_KIND(ClassType inst): {
@@ -307,8 +314,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(ImportRefUnloaded inst): {
         if (inst.entity_name_id.is_valid()) {
-          auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
-          out << sem_ir.names().GetFormatted(name_id);
+          step_stack.PushEntityName(inst.entity_name_id);
         } else {
           out << "<import ref unloaded invalid entity name>";
         }
@@ -387,8 +393,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(Namespace inst): {
-        out << sem_ir.names().GetFormatted(
-            sem_ir.name_scopes().Get(inst.name_scope_id).name_id());
+        const auto& name_scope = sem_ir.name_scopes().Get(inst.name_scope_id);
+        step_stack.PushQualifiedName(name_scope.parent_scope_id(),
+                                     name_scope.name_id());
         break;
       }
       case CARBON_KIND(PointerType inst): {
