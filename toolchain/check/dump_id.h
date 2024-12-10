@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_DUMP_ID_H_
 #define CARBON_TOOLCHAIN_CHECK_DUMP_ID_H_
 
+#include "common/ostream.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
@@ -36,12 +37,8 @@ class DumpIdMethods {
   }
   LLVM_DUMP_METHOD auto DumpId(SemIR::LocId loc_id) const -> void {
     DumpIdImpl(loc_id, static_cast<const Context&>(*this));
-    WriteNewline();
+    llvm::errs() << "\n";
   }
-
- private:
-  // Helper to keep stream includes out of the header file.
-  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Check

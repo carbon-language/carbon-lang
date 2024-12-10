@@ -136,8 +136,6 @@ class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
   // Returns the token the given parse tree node models.
   auto node_token(NodeId n) const -> Lex::TokenIndex;
 
-  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
-
   // Returns whether this node is a valid node of the specified type.
   template <typename T>
   auto IsValid(NodeId node_id) const -> bool {

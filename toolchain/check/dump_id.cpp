@@ -5,7 +5,6 @@
 #include "toolchain/check/dump_id.h"
 
 #include "common/check.h"
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/check/context.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
@@ -40,11 +39,6 @@ auto DumpIdImpl(SemIR::LocId loc_id, const Context& context) -> void {
     llvm::errs().write_escaped(import_file->filename());
     llvm::errs() << "\")";
   }
-}
-
-template <>
-auto DumpIdMethods<Context>::WriteNewline() const -> void {
-  llvm::errs() << "\n";
 }
 
 }  // namespace Carbon::Check

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LEX_DUMP_ID_H_
 #define CARBON_TOOLCHAIN_LEX_DUMP_ID_H_
 
+#include "common/ostream.h"
 #include "toolchain/lex/token_index.h"
 
 namespace Carbon::Lex {
@@ -28,12 +29,8 @@ class DumpIdMethods {
  public:
   LLVM_DUMP_METHOD auto DumpId(TokenIndex token) const -> void {
     DumpIdImpl(token, static_cast<const TokenizedBuffer&>(*this));
-    WriteNewline();
+    llvm::errs() << "\n";
   }
-
- private:
-  // Helper to keep stream includes out of the header file.
-  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Lex

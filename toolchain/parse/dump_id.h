@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_DUMP_ID_H_
 #define CARBON_TOOLCHAIN_PARSE_DUMP_ID_H_
 
+#include "common/ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 
@@ -31,12 +32,8 @@ class DumpIdMethods {
   }
   LLVM_DUMP_METHOD auto DumpId(NodeId node_id) const -> void {
     DumpIdImpl(node_id, static_cast<const Tree&>(*this));
-    WriteNewline();
+    llvm::errs() << "\n";
   }
-
- private:
-  // Helper to keep stream includes out of the header file.
-  auto WriteNewline() const -> void;
 };
 
 }  // namespace Carbon::Parse

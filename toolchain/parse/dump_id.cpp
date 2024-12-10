@@ -4,7 +4,6 @@
 
 #include "toolchain/parse/dump_id.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/dump_id.h"
 #include "toolchain/parse/tree.h"
 
@@ -24,11 +23,6 @@ auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void {
   llvm::errs() << ", token: ";
   Lex::DumpIdImpl(token, tree.tokens());
   llvm::errs() << ")";
-}
-
-template <>
-auto DumpIdMethods<Tree>::WriteNewline() const -> void {
-  llvm::errs() << "\n";
 }
 
 }  // namespace Carbon::Parse

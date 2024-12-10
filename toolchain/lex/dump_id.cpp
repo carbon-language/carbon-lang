@@ -4,7 +4,6 @@
 
 #include "toolchain/lex/dump_id.h"
 
-#include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Lex {
@@ -24,11 +23,6 @@ auto DumpIdImpl(TokenIndex token, const TokenizedBuffer& buffer) -> void {
   llvm::errs() << ", loc: ";
   llvm::errs().write_escaped(buffer.source().filename());
   llvm::errs() << ":" << line << ":" << col << ")";
-}
-
-template <>
-auto DumpIdMethods<TokenizedBuffer>::WriteNewline() const -> void {
-  llvm::errs() << "\n";
 }
 
 }  // namespace Carbon::Lex
