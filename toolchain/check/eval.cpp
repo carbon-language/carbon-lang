@@ -1871,14 +1871,18 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
                                .values = result,
                            });
 
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        // TODO: Include a name for the specific.
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note,
+                          "in specific used here");
+        builder.Note(loc, ResolvingSpecificHere);
+      });
+
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-
-    // TODO: If this becomes possible through monomorphization failure, produce
-    // a diagnostic and put `SemIR::ErrorInst::SingletonInstId` in the table
-    // entry.
     CARBON_CHECK(result[i].is_valid());
   }
 
