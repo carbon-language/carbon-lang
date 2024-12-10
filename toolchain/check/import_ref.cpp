@@ -1082,18 +1082,7 @@ static auto GetLocalNameScopeId(ImportRefResolver& resolver,
   }
 
   // Get the constant value for the scope.
-  auto const_id = SemIR::ConstantId::Invalid;
-  CARBON_KIND_SWITCH(*inst) {
-    case SemIR::Namespace::Kind:
-      // If the namespace has already been imported, we can use its constant.
-      // However, if it hasn't, we use Invalid instead of adding it to the
-      // work stack. That's expected to be okay when resolving references.
-      const_id = resolver.local_constant_values_for_import_insts().Get(inst_id);
-      break;
-
-    default:
-      const_id = GetLocalConstantId(resolver, inst_id);
-  }
+  auto const_id = GetLocalConstantId(resolver, inst_id);
   if (!const_id.is_valid()) {
     return SemIR::NameScopeId::Invalid;
   }
@@ -2281,6 +2270,36 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::Namespace inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  const auto& name_scope =
+      resolver.import_name_scopes().Get(inst.name_scope_id);
+  auto parent_scope_id =
+      GetLocalNameScopeId(resolver, name_scope.parent_scope_id());
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto namespace_type_id = resolver.local_context().GetSingletonType(
+      SemIR::NamespaceType::SingletonInstId);
+  auto namespace_decl =
+      SemIR::Namespace{.type_id = namespace_type_id,
+                       .name_scope_id = SemIR::NameScopeId::Invalid,
+                       .import_id = SemIR::AbsoluteInstId::Invalid};
+  auto inst_id = resolver.local_context().AddPlaceholderInstInNoBlock(
+      resolver.local_context().MakeImportedLocAndInst(
+          AddImportIRInst(resolver, import_inst_id), namespace_decl));
+
+  auto name_id = GetLocalNameId(resolver, name_scope.name_id());
+  namespace_decl.name_scope_id =
+      resolver.local_name_scopes().Add(inst_id, name_id, parent_scope_id);
+  resolver.local_context().ReplaceInstBeforeConstantUse(inst_id,
+                                                        namespace_decl);
+  return {.const_id = resolver.local_constant_values().Get(inst_id)};
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::PointerType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
   auto pointee_const_id = GetLocalConstantId(resolver, inst.pointee_id);
@@ -2538,6 +2557,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::IntType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::Namespace inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
