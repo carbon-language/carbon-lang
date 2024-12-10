@@ -5,14 +5,17 @@
 #include "toolchain/check/dump_id.h"
 
 #include "common/check.h"
+#include "common/ostream.h"
 #include "toolchain/check/context.h"
+#include "toolchain/lex/dump_id.h"
 #include "toolchain/lex/tokenized_buffer.h"
+#include "toolchain/parse/dump_id.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
 
-auto DumpIdImpl(SemIR::LocId loc_id, const Context& context) -> void {
+auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
   if (!loc_id.is_valid()) {
     llvm::errs() << "LocId(invalid)";
     return;

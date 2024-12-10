@@ -4,12 +4,13 @@
 
 #include "toolchain/parse/dump_id.h"
 
+#include "common/ostream.h"
 #include "toolchain/lex/dump_id.h"
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
 
-auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void {
+auto DumpIdImpl(const Tree& tree, NodeId node_id) -> void {
   if (!node_id.is_valid()) {
     llvm::errs() << "NodeId(invalid)";
     return;
@@ -21,7 +22,7 @@ auto DumpIdImpl(NodeId node_id, const Tree& tree) -> void {
   llvm::errs() << "NodeId(kind: ";
   kind.Print(llvm::errs());
   llvm::errs() << ", token: ";
-  Lex::DumpIdImpl(token, tree.tokens());
+  Lex::DumpIdImpl(tree.tokens(), token);
   llvm::errs() << ")";
 }
 

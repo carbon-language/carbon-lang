@@ -4,11 +4,12 @@
 
 #include "toolchain/lex/dump_id.h"
 
+#include "common/ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Lex {
 
-auto DumpIdImpl(TokenIndex token, const TokenizedBuffer& buffer) -> void {
+auto DumpIdImpl(const TokenizedBuffer& buffer, TokenIndex token) -> void {
   if (!token.is_valid()) {
     llvm::errs() << "TokenIndex(invalid)";
     return;

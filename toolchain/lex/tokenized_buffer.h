@@ -84,11 +84,7 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-//
-// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
-// across the toolchain.
-class TokenizedBuffer : public Printable<TokenizedBuffer>,
-                        public DumpIdMethods<TokenizedBuffer> {
+class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
   // The maximum number of tokens that can be stored in the buffer, including
   // the FileStart and FileEnd tokens.
@@ -220,6 +216,13 @@ class TokenizedBuffer : public Printable<TokenizedBuffer>,
   }
 
   auto source() const -> const SourceBuffer& { return *source_; }
+
+  // A set of DumpId() overloads that dump an object to stderr, useful for
+  // calling inside a debugger.
+  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
+    DumpIdImpl(*this, token);
+    llvm::errs() << '\n';
+  }
 
  private:
   friend class Lexer;

@@ -78,10 +78,7 @@ struct File;
 // The tree is immutable once built, but is designed to support reasonably
 // efficient patterns that build a new tree with a specific transformation
 // applied.
-//
-// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
-// across the toolchain.
-class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
+class Tree : public Printable<Tree> {
  public:
   class PostorderIterator;
 
@@ -195,6 +192,16 @@ class Tree : public Printable<Tree>, public DumpIdMethods<Tree> {
   auto Verify() const -> ErrorOr<Success>;
 
   auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+
+  // A set of DumpId() overloads that dump an object to stderr, useful for
+  // calling inside a debugger.
+  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
+    tokens().DumpId(token);
+  }
+  LLVM_DUMP_METHOD auto DumpId(Parse::NodeId node_id) const -> void {
+    DumpIdImpl(*this, node_id);
+    llvm::errs() << '\n';
+  }
 
  private:
   friend class Context;

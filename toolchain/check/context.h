@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
 #include "common/map.h"
+#include "common/ostream.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
@@ -59,10 +60,7 @@ struct AccessInfo {
 };
 
 // Context and shared functionality for semantics handlers.
-//
-// The DumpIdMethods parent class provides a `DumpId(x)` method for many types
-// across the toolchain.
-class Context : public DumpIdMethods<Context> {
+class Context {
  public:
   using DiagnosticEmitter = Carbon::DiagnosticEmitter<SemIRLoc>;
   using DiagnosticBuilder = DiagnosticEmitter::DiagnosticBuilder;
@@ -590,6 +588,19 @@ class Context : public DumpIdMethods<Context> {
 
   auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
     return bind_name_cache_;
+  }
+
+  // A set of DumpId() overloads that dump an object to stderr, useful for
+  // calling inside a debugger.
+  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
+    tokens().DumpId(token);
+  }
+  LLVM_DUMP_METHOD auto DumpId(Parse::NodeId node_id) const -> void {
+    parse_tree().DumpId(node_id);
+  }
+  LLVM_DUMP_METHOD auto DumpId(SemIR::LocId loc_id) const -> void {
+    DumpIdImpl(*this, loc_id);
+    llvm::errs() << '\n';
   }
 
  private:
