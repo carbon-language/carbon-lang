@@ -33,6 +33,7 @@ fn G() {
 // CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Make.specific_fn.1: <specific function> = specific_function %Make.1, @Make(%T) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
@@ -58,6 +59,8 @@ fn G() {
 // CHECK:STDOUT:   %Make.type.4: type = fn_type @Make, @Wrap(%C) [template]
 // CHECK:STDOUT:   %Make.4: %Make.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn.4: <specific function> = specific_function %Make.4, @Make(%C) [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %empty_tuple.type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,6 +136,7 @@ fn G() {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Make.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Wrap(%T) [symbolic = %Make.type (constants.%Make.type.1)]
 // CHECK:STDOUT:   %Make: @Make.%Make.type (%Make.type.1) = struct_value () [symbolic = %Make (constants.%Make.1)]
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2: <specific function> = specific_function %Make, @Make(%T) [symbolic = %Make.specific_fn.loc12_27.2 (constants.%Make.specific_fn.1)]
@@ -209,6 +213,7 @@ fn G() {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.1
 // CHECK:STDOUT:   %Make => constants.%Make.1
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.1
@@ -241,6 +246,7 @@ fn G() {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.2
 // CHECK:STDOUT:   %Make => constants.%Make.2
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.2
@@ -259,6 +265,7 @@ fn G() {
 // CHECK:STDOUT:   %T => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.4
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.3
 // CHECK:STDOUT:   %Make => constants.%Make.3
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.3
@@ -277,6 +284,7 @@ fn G() {
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT:   %Make.type => constants.%Make.type.4
 // CHECK:STDOUT:   %Make => constants.%Make.4
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.4

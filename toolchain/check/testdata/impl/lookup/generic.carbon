@@ -287,6 +287,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -294,6 +295,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -406,6 +408,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.2.%T (%T) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @F.2.%T (%T)]() -> @F.2.%T (%T) {
 // CHECK:STDOUT:   !entry:
@@ -473,6 +476,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduced_type_argument.carbon
@@ -695,6 +699,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HasF.type.2 [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %empty_struct_type, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -706,6 +711,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.2, @impl(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %HasF.type.3 [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.4) [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.4, @F.2(%empty_struct_type) [template]
 // CHECK:STDOUT: }
@@ -786,6 +792,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%HasF.type.loc8_36.2 (%HasF.type.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %interface.loc8_38.2: <witness> = interface_witness (%F) [symbolic = %interface.loc8_38.2 (constants.%interface.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc8_25.2 as %HasF.type.loc8_36.1 {
@@ -860,6 +867,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %interface.loc8_38.2 => constants.%interface.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -894,6 +902,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.4
 // CHECK:STDOUT:   %F => constants.%F.4
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %interface.loc8_38.2 => constants.%interface.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1056,6 +1065,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @HasF.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HasF.type.2 [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
@@ -1149,6 +1159,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%HasF.type.loc8_35.2 (%HasF.type.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %interface.loc8_37.2: <witness> = interface_witness (%F) [symbolic = %interface.loc8_37.2 (constants.%interface)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref.loc8_24 as %HasF.type.loc8_35.1 {
@@ -1235,6 +1246,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %interface.loc8_37.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

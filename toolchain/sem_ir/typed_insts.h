@@ -1059,6 +1059,25 @@ struct PointerType {
   TypeId pointee_id;
 };
 
+// Requires a type to be complete. This is only created for generic types and
+// produces a witness that the type is complete.
+//
+// TODO: Eventually this should be replaced by a witness for an interface that
+// models type completeness, and should track other information such as the
+// value representation.
+struct RequireCompleteType {
+  static constexpr auto Kind =
+      InstKind::RequireCompleteType.Define<Parse::NodeId>(
+          {.ir_name = "require_complete_type",
+           .is_type = InstIsType::Never,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+  // Always the builtin witness type.
+  TypeId type_id;
+  // The type that is required to be complete.
+  TypeId complete_type_id;
+};
+
 struct Return {
   static constexpr auto Kind =
       InstKind::Return.Define<Parse::NodeIdOneOf<Parse::FunctionDefinitionId,

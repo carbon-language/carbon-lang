@@ -129,7 +129,7 @@ fn CallTakeIncomplete(p: Class*) {
 fn CallReturnIncomplete() {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:3: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnIncomplete();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-118]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~

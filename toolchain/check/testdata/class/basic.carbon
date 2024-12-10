@@ -40,7 +40,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.k [template]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
@@ -150,7 +150,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc18_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_10.2: type = converted %int.make_type_signed, %.loc18_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc18_8: %Class.elem = field_decl k, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

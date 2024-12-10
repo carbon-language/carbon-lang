@@ -56,7 +56,7 @@ class Class {
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.j.k: type = struct_type {.j: %i32, .k: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.j.k [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -112,7 +112,7 @@ class Class {
 // CHECK:STDOUT:   %.loc34_23.1: %i32 = value_of_initializer %int.convert_checked.loc34 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc34_23.2: %i32 = converted %int_1, %.loc34_23.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc34_23.2
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

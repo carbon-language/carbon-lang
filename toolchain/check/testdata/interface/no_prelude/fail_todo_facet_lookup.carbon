@@ -43,6 +43,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %CallFacet.type: type = fn_type @CallFacet [template]
 // CHECK:STDOUT:   %CallFacet: %CallFacet.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -117,6 +118,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %T.as_type.loc21_32.2: type = facet_access_type %T.loc21_14.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type, %x.param_patt: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:

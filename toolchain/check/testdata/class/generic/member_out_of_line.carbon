@@ -117,9 +117,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -184,6 +186,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F: @Class.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Class(%T.loc4_13.2) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Class.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc4_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc4_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.2 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
@@ -234,6 +237,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc5: type = bind_symbolic_name T, 0 [symbolic = %T.loc5 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%T.loc5 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
@@ -247,7 +251,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc6) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc14 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @G.%Class (%Class), @G.%T.loc6 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @G.%T.loc6 (%T) [symbolic = %require_complete.loc15 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class]() -> %T {
 // CHECK:STDOUT:   !entry:
@@ -268,6 +274,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
@@ -310,6 +317,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %B [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -418,6 +427,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T.loc6, %N.loc6) [symbolic = %B (constants.%B)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc10_31: <witness> = require_complete_type @F.%B (%B) [symbolic = %require_complete.loc10_31 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc10_40: <witness> = require_complete_type @F.%T.loc6 (%T) [symbolic = %require_complete.loc10_40 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %B](%a.param_patt: %T) {
 // CHECK:STDOUT:   !entry:

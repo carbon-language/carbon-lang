@@ -217,6 +217,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %U [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %C.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -314,6 +316,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %U.patt.loc14: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.2) [symbolic = %require_complete.loc20_22 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %C.2](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:

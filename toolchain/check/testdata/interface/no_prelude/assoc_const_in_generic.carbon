@@ -41,14 +41,18 @@ fn H() {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %I.type.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %F.assoc_type.1 [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [template]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%empty_struct_type)> [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %I.type.3 [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F, @I(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %F.assoc_type.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -122,9 +126,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_6.2: type = facet_type <@I, @I(%T.loc15_6.2)> [symbolic = %I.type.loc19_6.2 (constants.%I.type.2)]
+// CHECK:STDOUT:   %require_complete.loc19_7.1: <witness> = require_complete_type @G.%I.type.loc19_6.2 (%I.type.2) [symbolic = %require_complete.loc19_7.1 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @I(%T.loc15_6.2) [symbolic = %F.type (constants.%F.type.1)]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @G.%I.type.loc19_6.2 (%I.type.2), @G.%F.type (%F.type.1) [symbolic = %F.assoc_type (constants.%F.assoc_type.1)]
 // CHECK:STDOUT:   %assoc0: @G.%F.assoc_type (%F.assoc_type.1) = assoc_entity element0, @I.%F.decl [symbolic = %assoc0 (constants.%assoc0.1)]
+// CHECK:STDOUT:   %require_complete.loc19_7.2: <witness> = require_complete_type @G.%F.assoc_type (%F.assoc_type.1) [symbolic = %require_complete.loc19_7.2 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
@@ -186,9 +192,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type.loc19_6.2 => constants.%I.type.3
+// CHECK:STDOUT:   %require_complete.loc19_7.1 => constants.%complete_type.1
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
+// CHECK:STDOUT:   %require_complete.loc19_7.2 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {

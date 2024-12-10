@@ -694,7 +694,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name("ptr");
         continue;
       }
-      case InstKind::ReturnSlotPattern: {
+      case RequireCompleteType::Kind: {
+        add_inst_name("require_complete");
+        continue;
+      }
+      case ReturnSlotPattern::Kind: {
         add_inst_name_id(NameId::ReturnSlot, ".patt");
         continue;
       }
@@ -712,7 +716,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         }
         continue;
       }
-      case InstKind::ReturnSlot: {
+      case ReturnSlot::Kind: {
         add_inst_name_id(NameId::ReturnSlot);
         break;
       }

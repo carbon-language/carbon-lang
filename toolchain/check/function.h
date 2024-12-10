@@ -39,7 +39,7 @@ auto CheckFunctionTypeMatches(
 // error if not. This computes the return slot usage for the function if
 // necessary, and returns information about how the function returns its return
 // value.
-auto CheckFunctionReturnType(Context& context, SemIRLoc loc,
+auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              SemIR::Function& function,
                              SemIR::SpecificId specific_id)
     -> SemIR::ReturnTypeInfo;

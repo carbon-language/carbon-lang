@@ -77,18 +77,21 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
 // CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [template]
 // CHECK:STDOUT:   %Base.1: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Base.elem.1: type = unbound_element_type %Base.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.b.1 [symbolic]
 // CHECK:STDOUT:   %Derived.type: type = generic_class_type @Derived [template]
 // CHECK:STDOUT:   %Derived.generic: %Derived.type = struct_value () [template]
 // CHECK:STDOUT:   %Derived.1: type = class_type @Derived, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Base.1 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.1: type = unbound_element_type %Derived.1, %Base.1 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.2: type = unbound_element_type %Derived.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Base.1, .d: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.d.1 [symbolic]
 // CHECK:STDOUT:   %AccessDerived.type: type = fn_type @AccessDerived [template]
 // CHECK:STDOUT:   %AccessDerived: %AccessDerived.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %Derived.1 [symbolic]
 // CHECK:STDOUT:   %AccessBase.type: type = fn_type @AccessBase [template]
 // CHECK:STDOUT:   %AccessBase: %AccessBase.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
@@ -99,13 +102,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessConcrete.type: type = fn_type @AccessConcrete [template]
 // CHECK:STDOUT:   %AccessConcrete: %AccessConcrete.type = struct_value () [template]
 // CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%i32) [template]
-// CHECK:STDOUT:   %Derived.elem.3: type = unbound_element_type %Derived.2, %Base.2 [template]
-// CHECK:STDOUT:   %Derived.elem.4: type = unbound_element_type %Derived.2, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %Base.2, .d: %i32} [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.d.3 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT:   %Base.elem.2: type = unbound_element_type %Base.2, %i32 [template]
 // CHECK:STDOUT:   %struct_type.b.2: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.b.2 [template]
+// CHECK:STDOUT:   %Derived.elem.3: type = unbound_element_type %Derived.2, %Base.2 [template]
+// CHECK:STDOUT:   %Derived.elem.4: type = unbound_element_type %Derived.2, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %Base.2, .d: %i32} [template]
+// CHECK:STDOUT:   %complete_type.5: <witness> = complete_type_witness %struct_type.base.d.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -206,6 +210,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Base.%T.loc4_17.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_17.2) [symbolic = %Base (constants.%Base.1)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type @Base.%Base (%Base.1), @Base.%T.loc4_17.2 (%T) [symbolic = %Base.elem (constants.%Base.elem.1)]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: @Base.%T.loc4_17.2 (%T)} [symbolic = %struct_type.b (constants.%struct_type.b.1)]
@@ -229,8 +234,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2: type = class_type @Base, @Base(%T.loc8_15.2) [symbolic = %Base.loc9_22.2 (constants.%Base.1)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @Derived.%Base.loc9_22.2 (%Base.1) [symbolic = %require_complete.loc9 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc8_15.2) [symbolic = %Derived (constants.%Derived.1)]
 // CHECK:STDOUT:   %Derived.elem.loc9: type = unbound_element_type @Derived.%Derived (%Derived.1), @Derived.%Base.loc9_22.2 (%Base.1) [symbolic = %Derived.elem.loc9 (constants.%Derived.elem.1)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type @Derived.%T.loc8_15.2 (%T) [symbolic = %require_complete.loc10 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Derived.elem.loc10: type = unbound_element_type @Derived.%Derived (%Derived.1), @Derived.%T.loc8_15.2 (%T) [symbolic = %Derived.elem.loc10 (constants.%Derived.elem.2)]
 // CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: @Derived.%Base.loc9_22.2 (%Base.1), .d: @Derived.%T.loc8_15.2 (%T)} [symbolic = %struct_type.base.d (constants.%struct_type.base.d.1)]
 // CHECK:STDOUT:   %complete_type.loc11_1.2: <witness> = complete_type_witness @Derived.%struct_type.base.d (%struct_type.base.d.1) [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.2)]
@@ -259,7 +266,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc13_40.2: type = class_type @Derived, @Derived(%T.loc13_18.2) [symbolic = %Derived.loc13_40.2 (constants.%Derived.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @AccessDerived.%Derived.loc13_40.2 (%Derived.1) [symbolic = %require_complete.loc13 (constants.%require_complete.3)]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type @AccessDerived.%Derived.loc13_40.2 (%Derived.1), @AccessDerived.%T.loc13_18.2 (%T) [symbolic = %Derived.elem (constants.%Derived.elem.2)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @AccessDerived.%T.loc13_18.2 (%T) [symbolic = %require_complete.loc14 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessDerived.%Derived.loc13_40.2 (%Derived.1)) -> @AccessDerived.%T.loc13_18.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -277,8 +286,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc17_37.2: type = class_type @Derived, @Derived(%T.loc17_15.2) [symbolic = %Derived.loc17_37.2 (constants.%Derived.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @AccessBase.%Derived.loc17_37.2 (%Derived.1) [symbolic = %require_complete.loc17 (constants.%require_complete.3)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc17_15.2) [symbolic = %Base (constants.%Base.1)]
+// CHECK:STDOUT:   %require_complete.loc18_11: <witness> = require_complete_type @AccessBase.%Base (%Base.1) [symbolic = %require_complete.loc18_11 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type @AccessBase.%Base (%Base.1), @AccessBase.%T.loc17_15.2 (%T) [symbolic = %Base.elem (constants.%Base.elem.1)]
+// CHECK:STDOUT:   %require_complete.loc18_13: <witness> = require_complete_type @AccessBase.%T.loc17_15.2 (%T) [symbolic = %require_complete.loc18_13 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessBase.%Derived.loc17_37.2 (%Derived.1)) -> @AccessBase.%T.loc17_15.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -308,6 +320,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Base => constants.%Base.1
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.1
 // CHECK:STDOUT:   %struct_type.b => constants.%struct_type.b.1
@@ -325,8 +338,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2 => constants.%Base.1
+// CHECK:STDOUT:   %require_complete.loc9 => constants.%require_complete.2
 // CHECK:STDOUT:   %Derived => constants.%Derived.1
 // CHECK:STDOUT:   %Derived.elem.loc9 => constants.%Derived.elem.1
+// CHECK:STDOUT:   %require_complete.loc10 => constants.%require_complete.1
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.2
 // CHECK:STDOUT:   %struct_type.base.d => constants.%struct_type.base.d.1
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.2
@@ -375,11 +390,13 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2 => constants.%Base.2
+// CHECK:STDOUT:   %require_complete.loc9 => constants.%complete_type.4
 // CHECK:STDOUT:   %Derived => constants.%Derived.2
 // CHECK:STDOUT:   %Derived.elem.loc9 => constants.%Derived.elem.3
+// CHECK:STDOUT:   %require_complete.loc10 => constants.%complete_type.3
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.4
 // CHECK:STDOUT:   %struct_type.base.d => constants.%struct_type.base.d.3
-// CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.3
+// CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%i32) {
@@ -387,6 +404,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT:   %Base => constants.%Base.2
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.2
 // CHECK:STDOUT:   %struct_type.b => constants.%struct_type.b.2
@@ -401,12 +419,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [template]
 // CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [template]
 // CHECK:STDOUT:   %Base.1: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Base.elem.1: type = unbound_element_type %Base.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.b.1: type = struct_type {.b: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.b.1 [symbolic]
 // CHECK:STDOUT:   %Derived.type: type = generic_class_type @Derived [template]
 // CHECK:STDOUT:   %Derived.generic: %Derived.type = struct_value () [template]
 // CHECK:STDOUT:   %Derived.1: type = class_type @Derived, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Base.1 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.1: type = unbound_element_type %Derived.1, %Base.1 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.2: type = unbound_element_type %Derived.1, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.base.d.1: type = struct_type {.base: %Base.1, .d: %T} [symbolic]
@@ -415,6 +435,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessMissingBase: %AccessMissingBase.type = struct_value () [template]
 // CHECK:STDOUT:   %AccessMissingDerived.type: type = fn_type @AccessMissingDerived [template]
 // CHECK:STDOUT:   %AccessMissingDerived: %AccessMissingDerived.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %Derived.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
@@ -423,13 +444,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessMissingConcrete.type: type = fn_type @AccessMissingConcrete [template]
 // CHECK:STDOUT:   %AccessMissingConcrete: %AccessMissingConcrete.type = struct_value () [template]
 // CHECK:STDOUT:   %Base.2: type = class_type @Base, @Base(%i32) [template]
-// CHECK:STDOUT:   %Derived.elem.3: type = unbound_element_type %Derived.2, %Base.2 [template]
-// CHECK:STDOUT:   %Derived.elem.4: type = unbound_element_type %Derived.2, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %Base.2, .d: %i32} [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.d.3 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT:   %Base.elem.2: type = unbound_element_type %Base.2, %i32 [template]
 // CHECK:STDOUT:   %struct_type.b.2: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.b.2 [template]
+// CHECK:STDOUT:   %Derived.elem.3: type = unbound_element_type %Derived.2, %Base.2 [template]
+// CHECK:STDOUT:   %Derived.elem.4: type = unbound_element_type %Derived.2, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.3: type = struct_type {.base: %Base.2, .d: %i32} [template]
+// CHECK:STDOUT:   %complete_type.5: <witness> = complete_type_witness %struct_type.base.d.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -530,6 +552,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_17.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Base.%T.loc4_17.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc4_17.2) [symbolic = %Base (constants.%Base.1)]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type @Base.%Base (%Base.1), @Base.%T.loc4_17.2 (%T) [symbolic = %Base.elem (constants.%Base.elem.1)]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: @Base.%T.loc4_17.2 (%T)} [symbolic = %struct_type.b (constants.%struct_type.b.1)]
@@ -553,8 +576,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2: type = class_type @Base, @Base(%T.loc8_15.2) [symbolic = %Base.loc9_22.2 (constants.%Base.1)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @Derived.%Base.loc9_22.2 (%Base.1) [symbolic = %require_complete.loc9 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T.loc8_15.2) [symbolic = %Derived (constants.%Derived.1)]
 // CHECK:STDOUT:   %Derived.elem.loc9: type = unbound_element_type @Derived.%Derived (%Derived.1), @Derived.%Base.loc9_22.2 (%Base.1) [symbolic = %Derived.elem.loc9 (constants.%Derived.elem.1)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type @Derived.%T.loc8_15.2 (%T) [symbolic = %require_complete.loc10 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Derived.elem.loc10: type = unbound_element_type @Derived.%Derived (%Derived.1), @Derived.%T.loc8_15.2 (%T) [symbolic = %Derived.elem.loc10 (constants.%Derived.elem.2)]
 // CHECK:STDOUT:   %struct_type.base.d: type = struct_type {.base: @Derived.%Base.loc9_22.2 (%Base.1), .d: @Derived.%T.loc8_15.2 (%T)} [symbolic = %struct_type.base.d (constants.%struct_type.base.d.1)]
 // CHECK:STDOUT:   %complete_type.loc11_1.2: <witness> = complete_type_witness @Derived.%struct_type.base.d (%struct_type.base.d.1) [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.2)]
@@ -583,6 +608,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.loc13_41.2: type = class_type @Base, @Base(%T.loc13_22.2) [symbolic = %Base.loc13_41.2 (constants.%Base.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @AccessMissingBase.%Base.loc13_41.2 (%Base.1) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessMissingBase.%Base.loc13_41.2 (%Base.1)) -> @AccessMissingBase.%T.loc13_22.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -598,6 +624,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc21_47.2: type = class_type @Derived, @Derived(%T.loc21_25.2) [symbolic = %Derived.loc21_47.2 (constants.%Derived.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc21: <witness> = require_complete_type @AccessMissingDerived.%Derived.loc21_47.2 (%Derived.1) [symbolic = %require_complete.loc21 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.loc21_25.2) [symbolic = %Base (constants.%Base.1)]
+// CHECK:STDOUT:   %require_complete.loc26: <witness> = require_complete_type @AccessMissingDerived.%Base (%Base.1) [symbolic = %require_complete.loc26 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @AccessMissingDerived.%Derived.loc21_47.2 (%Derived.1)) -> @AccessMissingDerived.%T.loc21_25.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -619,6 +648,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Base => constants.%Base.1
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.1
 // CHECK:STDOUT:   %struct_type.b => constants.%struct_type.b.1
@@ -636,8 +666,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2 => constants.%Base.1
+// CHECK:STDOUT:   %require_complete.loc9 => constants.%require_complete.2
 // CHECK:STDOUT:   %Derived => constants.%Derived.1
 // CHECK:STDOUT:   %Derived.elem.loc9 => constants.%Derived.elem.1
+// CHECK:STDOUT:   %require_complete.loc10 => constants.%require_complete.1
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.2
 // CHECK:STDOUT:   %struct_type.base.d => constants.%struct_type.base.d.1
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.2
@@ -675,17 +707,24 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.loc21_47.2 => constants.%Derived.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(@AccessMissingDerived.%T.loc21_25.2) {
+// CHECK:STDOUT:   %T.loc4_17.2 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%i32) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%i32
 // CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.loc9_22.2 => constants.%Base.2
+// CHECK:STDOUT:   %require_complete.loc9 => constants.%complete_type.4
 // CHECK:STDOUT:   %Derived => constants.%Derived.2
 // CHECK:STDOUT:   %Derived.elem.loc9 => constants.%Derived.elem.3
+// CHECK:STDOUT:   %require_complete.loc10 => constants.%complete_type.3
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.4
 // CHECK:STDOUT:   %struct_type.base.d => constants.%struct_type.base.d.3
-// CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.3
+// CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%i32) {
@@ -693,6 +732,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_17.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT:   %Base => constants.%Base.2
 // CHECK:STDOUT:   %Base.elem => constants.%Base.elem.2
 // CHECK:STDOUT:   %struct_type.b => constants.%struct_type.b.2

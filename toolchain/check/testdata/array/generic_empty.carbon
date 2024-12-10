@@ -23,6 +23,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_0, %T [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type [symbolic]
 // CHECK:STDOUT:   %array: %array_type = tuple_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,6 +55,7 @@ fn G(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc13_17.2: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc13_17.2 (%array_type) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc13_17.2 (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {

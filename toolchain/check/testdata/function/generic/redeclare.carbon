@@ -97,6 +97,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -147,6 +148,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc4_20.2: type = ptr_type @F.%T.loc4_6.2 (%T) [symbolic = %ptr.loc4_20.2 (constants.%ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%ptr.loc4_20.2 (%ptr) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.2) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %ptr {
@@ -167,6 +169,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc4_20.2 => constants.%ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,6 +192,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %U [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -258,6 +262,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @.1.%U.loc13_16.2 (%U) [symbolic = %ptr.loc13_30.2 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @.1.%ptr.loc13_30.2 (%ptr.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.2) {
 // CHECK:STDOUT:   !entry:
@@ -300,6 +305,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %T.2 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -369,6 +375,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @.1.%T.loc13_16.2 (%T.2) [symbolic = %ptr.loc13_30.2 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @.1.%ptr.loc13_30.2 (%ptr.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: type, %T.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.2) {
 // CHECK:STDOUT:   !entry:
@@ -411,6 +418,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %U.2 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -480,6 +488,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc13_30.2: type = ptr_type @.1.%U.loc13_6.2 (%U.2) [symbolic = %ptr.loc13_30.2 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @.1.%ptr.loc13_30.2 (%ptr.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%U.param_patt: type, %T.param_patt: type) -> @.1.%ptr.loc13_30.2 (%ptr.2) {
 // CHECK:STDOUT:   !entry:

@@ -37,9 +37,13 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr: %GetAddr.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %GetValue: %GetValue.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %ptr.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %ptr.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.4: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [template]
 // CHECK:STDOUT:   %Declaration.generic: %Declaration.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -83,6 +87,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr: @Class.%GetAddr.type (%GetAddr.type) = struct_value () [symbolic = %GetAddr (constants.%GetAddr)]
 // CHECK:STDOUT:   %GetValue.type: type = fn_type @GetValue, @Class(%T.loc11_13.2) [symbolic = %GetValue.type (constants.%GetValue.type)]
 // CHECK:STDOUT:   %GetValue: @Class.%GetValue.type (%GetValue.type) = struct_value () [symbolic = %GetValue (constants.%GetValue)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.loc11_13.2 (%T) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc11_13.2) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.loc11_13.2 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc11_13.2 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
@@ -147,6 +152,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %ptr.loc12_38.1: type = ptr_type @GetAddr.%T (%T) [symbolic = %ptr.loc12_38.1 (constants.%ptr.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc12_34: <witness> = require_complete_type @GetAddr.%ptr.loc12_38.1 (%ptr.2) [symbolic = %require_complete.loc12_34 (constants.%require_complete.2)]
+// CHECK:STDOUT:   %require_complete.loc12_23: <witness> = require_complete_type @GetAddr.%ptr.loc12_29.1 (%ptr.1) [symbolic = %require_complete.loc12_23 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @GetAddr.%Class (%Class) [symbolic = %require_complete.loc13 (constants.%require_complete.4)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetAddr.%Class (%Class), @GetAddr.%T (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[addr %self.param_patt: @GetAddr.%ptr.loc12_29.1 (%ptr.1)]() -> @GetAddr.%ptr.loc12_38.1 (%ptr.2) {
@@ -165,7 +173,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @GetValue.%Class (%Class) [symbolic = %require_complete.loc17 (constants.%require_complete.4)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @GetValue.%Class (%Class), @GetValue.%T (%T) [symbolic = %Class.elem (constants.%Class.elem)]
+// CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type @GetValue.%T (%T) [symbolic = %require_complete.loc18 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @GetValue.%Class (%Class)]() -> @GetValue.%T (%T) {
 // CHECK:STDOUT:   !entry:
@@ -186,6 +196,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %GetAddr => constants.%GetAddr
 // CHECK:STDOUT:   %GetValue.type => constants.%GetValue.type
 // CHECK:STDOUT:   %GetValue => constants.%GetValue
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k

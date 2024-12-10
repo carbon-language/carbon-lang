@@ -53,7 +53,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.1 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -117,7 +117,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc23_30.1: type = value_of_initializer %int.make_type_signed.loc23_30 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_30.2: type = converted %int.make_type_signed.loc23_30, %.loc23_30.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_28: %C.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C

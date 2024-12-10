@@ -330,5 +330,5 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %ForwardDeclared.1]() [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr <unexpected>.inst401: %ptr.3]() [from "a.carbon"];
+// CHECK:STDOUT: fn @G[addr <unexpected>.inst419: %ptr.3]() [from "a.carbon"];
 // CHECK:STDOUT:

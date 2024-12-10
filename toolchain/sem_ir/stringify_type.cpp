@@ -470,6 +470,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case InterfaceWitness::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
+      case RequireCompleteType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:

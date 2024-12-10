@@ -968,7 +968,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // We can only perform initialization for complete types.
   if (!context.TryToCompleteType(
-          target.type_id,
+          target.type_id, loc_id,
           [&] {
             CARBON_CHECK(!target.is_initializer(),
                          "Initialization of incomplete types is expected to be "
