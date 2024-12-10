@@ -58,7 +58,7 @@ class CopyOnWriteBlock {
     if (id_ == source_id_) {
       id_ = (file_.*ValueStore)().Add((file_.*ValueStore)().Get(source_id_));
     }
-    (file_.*ValueStore)().Get(id_)[i] = value;
+    (file_.*ValueStore)().GetMutable(id_)[i] = value;
   }
 
  private:

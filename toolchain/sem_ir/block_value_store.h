@@ -51,7 +51,7 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   }
 
   // Returns the requested block.
-  auto Get(IdT id) -> llvm::MutableArrayRef<ElementType> {
+  auto GetMutable(IdT id) -> llvm::MutableArrayRef<ElementType> {
     return values_.Get(id);
   }
 
