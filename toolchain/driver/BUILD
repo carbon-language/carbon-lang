@@ -74,6 +74,7 @@ cc_binary(
 
 sh_test(
     name = "compile_benchmark_test",
+    size = "small",
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_min_time=1x",
