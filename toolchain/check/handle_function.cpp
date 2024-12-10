@@ -349,7 +349,7 @@ static auto CheckFunctionDefinitionSignature(Context& context,
     }
 
     // The parameter types need to be complete.
-    context.TryToCompleteType(
+    context.RequireCompleteType(
         context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
         context.insts().GetLocId(param_ref_id), [&] {
           CARBON_DIAGNOSTIC(

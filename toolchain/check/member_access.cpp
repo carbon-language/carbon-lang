@@ -425,7 +425,7 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
   // If the base isn't a scope, it must have a complete type.
   auto base_type_id = context.insts().Get(base_id).type_id();
-  if (!context.TryToCompleteType(
+  if (!context.RequireCompleteType(
           base_type_id, context.insts().GetLocId(base_id), [&] {
             CARBON_DIAGNOSTIC(
                 IncompleteTypeInMemberAccess, Error,

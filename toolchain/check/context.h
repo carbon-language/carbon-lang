@@ -339,44 +339,58 @@ class Context {
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
-  // known object and value representations.
+  // known object and value representations. Returns `true` if the type is
+  // symbolic.
+  //
+  // Avoid calling this where possible, as it can lead to coherence issues.
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
+
+  // Like `TryToCompleteType`, but for cases where it is an error for the type
+  // to be incomplete.
   //
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
   //
-  // If `diagnoser` is provided, it is assumed to be an error for the type to be
-  // incomplete, and `diagnoser` should build an error diagnostic. If `type_id`
-  // is dependent, the completeness of the type will be enforced during
-  // monomorphization, and `loc_id` is used as the location for a diagnostic
-  // produced at that time.
+  // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
+  // the completeness of the type will be enforced during monomorphization, and
+  // `loc_id` is used as the location for a diagnostic produced at that time.
+  auto RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                           BuildDiagnosticFn diagnoser) -> bool;
+
+  // Like `RequireCompleteType`, but also require the type to not be an abstract
+  // class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
+  // and this function returns false.
+  auto RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                           BuildDiagnosticFn diagnoser,
+                           BuildDiagnosticFn abstract_diagnoser) -> bool;
+
+  // Like `RequireCompleteType`, but also require the type to be defined. A
+  // defined type has known members. If the type is not defined, `diagnoser` is
+  // used to diagnose the problem, and this function returns false.
   //
-  // Returns `true` if the type is symbolic.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                         BuildDiagnosticFn diagnoser,
-                         BuildDiagnosticFn abstract_diagnoser = nullptr)
-      -> bool;
-  auto TryToCompleteType(SemIR::TypeId type_id) -> bool {
-    return TryToCompleteType(type_id, SemIR::LocId::Invalid, nullptr);
+  // This is the same as `RequireCompleteType` except for facet types, which are
+  // complete before they are fully defined.
+  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                          BuildDiagnosticFn diagnoser) -> bool;
+
+  // Returns the type `type_id` if it is a complete type, or produces an
+  // incomplete type error and returns an error type. This is a convenience
+  // wrapper around `RequireCompleteType`.
+  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                      BuildDiagnosticFn diagnoser) -> SemIR::TypeId {
+    return RequireCompleteType(type_id, loc_id, diagnoser)
+               ? type_id
+               : SemIR::ErrorInst::SingletonTypeId;
   }
 
-  // Attempts to complete and define the type `type_id`. Returns `true` if the
-  // type is defined, or `false` if no definition is available. A defined type
-  // has known members.
-  //
-  // This is the same as `TryToCompleteType` except for interfaces, which are
-  // complete before they are fully defined.
-  auto TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                       BuildDiagnosticFn diagnoser = nullptr) -> bool;
-
-  // Returns the type `type_id` as a complete type, or produces an incomplete
-  // type error and returns an error type. This is a convenience wrapper around
-  // TryToCompleteType. `diagnoser` must not be null.
-  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+  // Returns the type `type_id` if it is a concrete type, or produces an
+  // incomplete or abstract type error and returns an error type. This is a
+  // convenience wrapper around `RequireConcreteType`.
+  auto AsConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                       BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser = nullptr)
-      -> SemIR::TypeId {
-    return TryToCompleteType(type_id, loc_id, diagnoser, abstract_diagnoser)
+                      BuildDiagnosticFn abstract_diagnoser) -> SemIR::TypeId {
+    return RequireConcreteType(type_id, loc_id, diagnoser, abstract_diagnoser)
                ? type_id
                : SemIR::ErrorInst::SingletonTypeId;
   }

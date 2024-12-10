@@ -509,7 +509,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
@@ -522,7 +522,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                         "member access into undefined interface {0}",
                         InstIdAsType);
@@ -1279,16 +1279,21 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                                BuildDiagnosticFn diagnoser,
-                                BuildDiagnosticFn abstract_diagnoser) -> bool {
+auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
+  return TypeCompleter(*this, nullptr).Complete(type_id);
+}
+
+auto Context::RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                  BuildDiagnosticFn diagnoser) -> bool {
+  CARBON_CHECK(diagnoser);
+
   if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
     return false;
   }
 
   // For a symbolic type, create an instruction to require the corresponding
   // specific type to be complete.
-  if (diagnoser && type_id.AsConstantId().is_symbolic()) {
+  if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
     AddInstInNoBlock(SemIR::LocIdAndInst(
         loc_id,
@@ -1297,8 +1302,17 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
             .complete_type_id = type_id}));
   }
 
-  if (!abstract_diagnoser) {
-    return true;
+  return true;
+}
+
+auto Context::RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                  BuildDiagnosticFn diagnoser,
+                                  BuildDiagnosticFn abstract_diagnoser)
+    -> bool {
+  CARBON_CHECK(abstract_diagnoser);
+
+  if (!RequireCompleteType(type_id, loc_id, diagnoser)) {
+    return false;
   }
 
   if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
@@ -1320,9 +1334,9 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
   return true;
 }
 
-auto Context::TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                              BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, loc_id, diagnoser)) {
+auto Context::RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                 BuildDiagnosticFn diagnoser) -> bool {
+  if (!RequireCompleteType(type_id, loc_id, diagnoser)) {
     return false;
   }
 
