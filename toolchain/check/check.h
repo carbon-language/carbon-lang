@@ -10,8 +10,6 @@
 #include "toolchain/base/timings.h"
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 
