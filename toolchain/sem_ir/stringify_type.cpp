@@ -65,6 +65,22 @@ class StepStack {
   auto PushNameId(NameId name_id) -> void {
     steps.push_back({.kind = Name, .name_id = name_id});
   }
+  auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
+    PushNameId(name_id);
+    while (name_scope_id.is_valid() && name_scope_id != NameScopeId::Package) {
+      PushString(".");
+      const auto& name_scope = sem_ir->name_scopes().Get(name_scope_id);
+      // TODO: For a generic scope, pass a SpecificId to this function and
+      // include the relevant arguments.
+      PushNameId(name_scope.name_id());
+      name_scope_id = name_scope.parent_scope_id();
+    }
+  }
+  auto PushEntityName(const EntityWithParamsBase& entity,
+                      SpecificId specific_id) -> void {
+    PushSpecificId(entity, specific_id);
+    PushQualifiedName(entity.parent_scope_id, entity.name_id);
+  }
   auto PushTypeId(TypeId type_id) -> void {
     PushInstId(sem_ir->types().GetInstId(type_id));
   }
@@ -180,8 +196,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(ClassType inst): {
         const auto& class_info = sem_ir.classes().Get(inst.class_id);
-        out << sem_ir.names().GetFormatted(class_info.name_id);
-        step_stack.PushSpecificId(class_info, inst.specific_id);
+        step_stack.PushEntityName(class_info, inst.specific_id);
         break;
       }
       case CARBON_KIND(ConstType inst): {
@@ -246,8 +261,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           const auto& impls = facet_type_info.impls_constraints[index];
           const auto& interface_info =
               sem_ir.interfaces().Get(impls.interface_id);
-          step_stack.PushSpecificId(interface_info, impls.specific_id);
-          step_stack.PushNameId(interface_info.name_id);
+          step_stack.PushEntityName(interface_info, impls.specific_id);
           if (index > 0) {
             step_stack.PushString(" & ");
           }
@@ -345,7 +359,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             step_stack.PushInstId(entity_inst_id);
           }
           step_stack.PushString(".");
-          step_stack.PushNameId(interface.name_id);
+          step_stack.PushEntityName(interface, impls_constraint->specific_id);
           step_stack.PushString(".(");
         } else {
           step_stack.PushTypeId(witness_type_id);

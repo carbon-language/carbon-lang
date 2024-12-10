@@ -14,7 +14,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `T` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let x: T = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -22,7 +22,7 @@ fn F(a: i32) -> i32 {
   // CHECK:STDERR: fail_generic.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `T` to `i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:   ^~~~~~~~~
   return x;

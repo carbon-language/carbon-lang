@@ -57,7 +57,7 @@ let c: C = {};
 // CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert from `Core.IntLiteral` to `SubscriptType` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let x: ElementType = c[0];
 // CHECK:STDERR:                      ^~~~
-// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:22: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(SubscriptType)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:22: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(SubscriptType)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let x: ElementType = c[0];
 // CHECK:STDERR:                      ^~~~
 // CHECK:STDERR:
