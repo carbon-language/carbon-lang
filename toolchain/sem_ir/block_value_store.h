@@ -50,7 +50,9 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
     return values_.Get(id);
   }
 
-  // Returns the requested block.
+  // Returns a mutable view of the requested block. This operation should be
+  // avoided where possible; we generally want blocks to be immutable once
+  // created.
   auto GetMutable(IdT id) -> llvm::MutableArrayRef<ElementType> {
     return values_.Get(id);
   }
