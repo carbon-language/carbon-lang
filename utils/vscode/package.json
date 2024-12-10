@@ -1,8 +1,9 @@
 {
-  "name": "carbon-lang",
-  "displayName": "carbon-lang",
-  "description": "Carbon Language support",
+  "name": "carbon-vscode",
+  "displayName": "Carbon Language",
   "version": "0.0.2",
+  "publisher": "carbon-lang",
+  "description": "Carbon language support for Visual Studio Code.",
   "repository": {
     "url": "https://github.com/carbon-language/carbon-lang"
   },
@@ -12,6 +13,7 @@
   "categories": [
     "Programming Languages"
   ],
+  "icon": "images/icon.png",
   "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
