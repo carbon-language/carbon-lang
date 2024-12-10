@@ -31,12 +31,17 @@ struct SpecificEvalInfo {
 class EvalContext {
  public:
   explicit EvalContext(
-      Context& context,
+      Context& context, SemIRLoc fallback_loc,
       SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
-      : context_(context),
+      : context_(context), fallback_loc_(fallback_loc),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
+
+  // Gets the location to use for diagnostics if a better location is
+  // unavailable.
+  // TODO: This is also sometimes unavailable.
+  auto fallback_loc() const -> SemIRLoc { return fallback_loc_; }
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `Invalid` if the value is not fixed in this context.
@@ -161,6 +166,8 @@ class EvalContext {
  private:
   // The type-checking context in which we're performing evaluation.
   Context& context_;
+  // The location to use for diagnostics when a better location isn't available.
+  SemIRLoc fallback_loc_;
   // The specific that we are evaluating within.
   SemIR::SpecificId specific_id_;
   // If we are currently evaluating an eval block for `specific_id_`,
@@ -419,7 +426,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return MakeSpecific(eval_context.context(), specific.generic_id, args_id);
+  return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
+                      specific.generic_id, args_id);
 }
 
 // Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
@@ -1842,11 +1850,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  EvalContext eval_context(context);
+  EvalContext eval_context(context, inst_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
-auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
+auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
+                             SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
@@ -1856,7 +1865,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::Invalid);
 
-  EvalContext eval_context(context, specific_id,
+  EvalContext eval_context(context, loc, specific_id,
                            SpecificEvalInfo{
                                .region = region,
                                .values = result,
