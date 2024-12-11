@@ -189,6 +189,11 @@ repos:
           - '// '
           - ''
           - --custom_format
+          - '\.(js|ts|mjs)$'
+          - '/**'
+          - ' * '
+          - ' */'
+          - --custom_format
           - '\.(l|lpp|y)$'
           - '/*'
           - ''
@@ -224,6 +229,7 @@ repos:
               website/.ruby-version|
               website/Gemfile.lock|
               .*\.def|
+              .*\.png|
               .*\.svg|
               .*/fuzzer_corpus/.*|
               .*/testdata/.*\.golden

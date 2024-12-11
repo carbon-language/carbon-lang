@@ -1,7 +1,3 @@
-// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-// Exceptions. See /LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
 {
   "version": "0.2.0",
   "configurations": [
@@ -9,7 +5,9 @@
       "name": "Run Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"]
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "${defaultBuildTask}"
     }
   ]
 }
