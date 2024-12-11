@@ -228,47 +228,21 @@ auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
   emitter_->Emit(loc, NameNotFound, name_id);
 }
 
-// Given an instruction associated with a scope and a `SpecificId` for that
-// scope, returns an instruction that describes the specific scope.
-static auto GetInstForSpecificScope(Context& context, SemIR::InstId inst_id,
-                                    SemIR::SpecificId specific_id)
-    -> SemIR::InstId {
-  if (!specific_id.is_valid()) {
-    return inst_id;
-  }
-  auto inst = context.insts().Get(inst_id);
-  CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND(SemIR::ClassDecl class_decl): {
-      return context.types().GetInstId(
-          context.GetClassType(class_decl.class_id, specific_id));
-    }
-    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
-      return context.types().GetInstId(
-          context.GetInterfaceType(interface_decl.interface_id, specific_id));
-    }
-    default: {
-      // Don't know how to form a specific for this generic scope.
-      // TODO: Handle more cases.
-      return SemIR::InstId::Invalid;
-    }
-  }
-}
-
 auto Context::DiagnoseMemberNameNotFound(
     SemIRLoc loc, SemIR::NameId name_id,
     llvm::ArrayRef<LookupScope> lookup_scopes) -> void {
   if (lookup_scopes.size() == 1 &&
       lookup_scopes.front().name_scope_id.is_valid()) {
-    const auto& scope = name_scopes().Get(lookup_scopes.front().name_scope_id);
-    if (auto specific_inst_id = GetInstForSpecificScope(
-            *this, scope.inst_id(), lookup_scopes.front().specific_id);
-        specific_inst_id.is_valid()) {
-      CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
-                        "member name `{0}` not found in {1}", SemIR::NameId,
-                        InstIdAsType);
-      emitter_->Emit(loc, MemberNameNotFoundInScope, name_id, specific_inst_id);
-      return;
-    }
+    auto specific_id = lookup_scopes.front().specific_id;
+    auto scope_inst_id =
+        specific_id.is_valid()
+            ? GetInstForSpecific(*this, specific_id)
+            : name_scopes().Get(lookup_scopes.front().name_scope_id).inst_id();
+    CARBON_DIAGNOSTIC(MemberNameNotFoundInScope, Error,
+                      "member name `{0}` not found in {1}", SemIR::NameId,
+                      InstIdAsType);
+    emitter_->Emit(loc, MemberNameNotFoundInScope, name_id, scope_inst_id);
+    return;
   }
 
   CARBON_DIAGNOSTIC(MemberNameNotFound, Error, "member name `{0}` not found",
@@ -1446,7 +1420,7 @@ auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
 
 auto Context::GetClassType(SemIR::ClassId class_id,
                            SemIR::SpecificId specific_id) -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::ClassType>(*this, class_id, specific_id);
+  return GetTypeImpl<SemIR::ClassType>(*this, class_id, specific_id);
 }
 
 auto Context::GetFunctionType(SemIR::FunctionId fn_id,

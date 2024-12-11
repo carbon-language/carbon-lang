@@ -5,11 +5,13 @@
 #include "toolchain/check/generic.h"
 
 #include "common/map.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -434,6 +436,36 @@ auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
         definition_block_id;
   }
   return true;
+}
+
+auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::InstId {
+  CARBON_CHECK(specific_id.is_valid());
+  const auto& specific = context.specifics().Get(specific_id);
+  const auto& generic = context.generics().Get(specific.generic_id);
+  auto decl = context.insts().Get(generic.decl_id);
+  CARBON_KIND_SWITCH(decl) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.types().GetInstId(
+          context.GetClassType(class_decl.class_id, specific_id));
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.types().GetInstId(
+          context.GetInterfaceType(interface_decl.interface_id, specific_id));
+    }
+    case SemIR::FunctionDecl::Kind: {
+      return context.constant_values().GetInstId(
+          TryEvalInst(context, SemIR::InstId::Invalid,
+                      SemIR::SpecificFunction{
+                          .type_id = context.GetSingletonType(
+                              SemIR::SpecificFunctionType::SingletonInstId),
+                          .callee_id = generic.decl_id,
+                          .specific_id = specific_id}));
+    }
+    default: {
+      CARBON_FATAL("Unknown kind for generic declaration {0}", decl);
+    }
+  }
 }
 
 }  // namespace Carbon::Check

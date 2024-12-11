@@ -24,7 +24,7 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
 }
 
 fn CallNegative() {
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:3: note: in specific used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:3: note: in `ErrorIfNIsZero(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   ErrorIfNIsZero(0);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   ErrorIfNIsZero(0);

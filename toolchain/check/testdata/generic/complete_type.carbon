@@ -24,7 +24,7 @@ class A(T:! type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:6: note: in specific used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:6: note: in `A(B)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: fn F(x: A(B)) {}
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -70,7 +70,7 @@ fn F(T:! type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+3]]:10: note: in specific used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+3]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: fn G() { F(B); }
 // CHECK:STDERR:          ^
 fn G() { F(B); }

@@ -74,6 +74,10 @@ auto MakeSelfSpecific(Context& context, SemIRLoc loc,
 auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool;
 
+// Returns an instruction describing the entity named by the given specific.
+auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_GENERIC_H_

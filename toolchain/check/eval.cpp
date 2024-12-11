@@ -1873,10 +1873,13 @@ auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
 
   DiagnosticAnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        // TODO: Include a name for the specific.
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note,
-                          "in specific used here");
-        builder.Note(loc, ResolvingSpecificHere);
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
+                          InstIdAsType);
+        if (loc.is_inst_id && !loc.inst_id.is_valid()) {
+          return;
+        }
+        builder.Note(loc, ResolvingSpecificHere,
+                     GetInstForSpecific(context, specific_id));
       });
 
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
