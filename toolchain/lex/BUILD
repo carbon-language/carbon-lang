@@ -184,6 +184,7 @@ cc_library(
     hdrs = ["lex.h"],
     deps = [
         ":character_set",
+        ":dump_id",
         ":helpers",
         ":numeric_literal",
         ":string_literal",
@@ -199,6 +200,17 @@ cc_library(
 )
 
 cc_library(
+    name = "dump_id",
+    srcs = ["dump_id.cpp"],
+    hdrs = ["dump_id.h"],
+    deps = [
+        ":tokenized_buffer",
+        "//common:ostream",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "token_index",
     hdrs = ["token_index.h"],
     deps = [
@@ -209,14 +221,8 @@ cc_library(
 
 cc_library(
     name = "tokenized_buffer",
-    srcs = [
-        "dump_id.cpp",
-        "tokenized_buffer.cpp",
-    ],
-    hdrs = [
-        "dump_id.h",
-        "tokenized_buffer.h",
-    ],
+    srcs = ["tokenized_buffer.cpp"],
+    hdrs = ["tokenized_buffer.h"],
     deps = [
         ":character_set",
         ":helpers",

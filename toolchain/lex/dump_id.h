@@ -5,14 +5,22 @@
 #ifndef CARBON_TOOLCHAIN_LEX_DUMP_ID_H_
 #define CARBON_TOOLCHAIN_LEX_DUMP_ID_H_
 
-#include "toolchain/lex/token_index.h"
+#ifndef NDEBUG
+
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Lex {
 
 class TokenizedBuffer;
 
-auto DumpIdImpl(const TokenizedBuffer& buffer, TokenIndex token) -> void;
+auto DumpIdImpl(const TokenizedBuffer& tokens, TokenIndex token) -> void;
+
+// A set of DumpId() overloads that dump an object to stderr, useful for
+// calling inside a debugger.
+auto DumpId(const Lex::TokenizedBuffer& tokens, Lex::TokenIndex token) -> void;
 
 }  // namespace Carbon::Lex
+
+#endif  // NDEBUG
 
 #endif  // CARBON_TOOLCHAIN_LEX_DUMP_ID_H_

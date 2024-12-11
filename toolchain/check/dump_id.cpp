@@ -2,12 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/dump_id.h"
+#ifndef NDEBUG
+
+#include "toolchain/lex/dump_id.h"
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/check/context.h"
-#include "toolchain/lex/dump_id.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/dump_id.h"
 #include "toolchain/parse/tree.h"
@@ -15,7 +16,7 @@
 
 namespace Carbon::Check {
 
-auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
+static auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
   if (!loc_id.is_valid()) {
     llvm::errs() << "LocId(invalid)";
     return;
@@ -44,4 +45,22 @@ auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
   }
 }
 
+// A set of DumpId() overloads that dump an object to stderr, useful for
+// calling inside a debugger.
+LLVM_DUMP_METHOD auto DumpId(const Context& context, Lex::TokenIndex token)
+    -> void {
+  Lex::DumpId(context.tokens(), token);
+}
+LLVM_DUMP_METHOD auto DumpId(const Context& context, Parse::NodeId node_id)
+    -> void {
+  Parse::DumpId(context.parse_tree(), node_id);
+}
+LLVM_DUMP_METHOD auto DumpId(const Context& context, SemIR::LocId loc_id)
+    -> void {
+  DumpIdImpl(context, loc_id);
+  llvm::errs() << '\n';
+}
+
 }  // namespace Carbon::Check
+
+#endif  // NDEBUG

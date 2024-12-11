@@ -88,6 +88,7 @@ cc_library(
     ],
     deps = [
         ":context",
+        ":dump_id",
         ":node_kind",
         ":state",
         ":tree",
@@ -103,6 +104,18 @@ cc_library(
 )
 
 cc_library(
+    name = "dump_id",
+    srcs = ["dump_id.cpp"],
+    hdrs = ["dump_id.h"],
+    deps = [
+        ":tree",
+        "//common:ostream",
+        "//toolchain/lex:dump_id",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "state",
     srcs = ["state.cpp"],
     hdrs = ["state.h"],
@@ -113,13 +126,11 @@ cc_library(
 cc_library(
     name = "tree",
     srcs = [
-        "dump_id.cpp",
         "extract.cpp",
         "tree.cpp",
         "tree_and_subtrees.cpp",
     ],
     hdrs = [
-        "dump_id.h",
         "tree.h",
         "tree_and_subtrees.h",
     ],

@@ -18,7 +18,6 @@
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
-#include "toolchain/lex/dump_id.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/source/source_buffer.h"
@@ -216,13 +215,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   }
 
   auto source() const -> const SourceBuffer& { return *source_; }
-
-  // A set of DumpId() overloads that dump an object to stderr, useful for
-  // calling inside a debugger.
-  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
-    DumpIdImpl(*this, token);
-    llvm::errs() << '\n';
-  }
 
  private:
   friend class Lexer;

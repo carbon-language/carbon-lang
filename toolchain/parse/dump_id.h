@@ -5,14 +5,20 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_DUMP_ID_H_
 #define CARBON_TOOLCHAIN_PARSE_DUMP_ID_H_
 
-#include "toolchain/parse/node_ids.h"
+#ifndef NDEBUG
+
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
 
-class Tree;
-
 auto DumpIdImpl(const Tree& tree, NodeId node_id) -> void;
 
+auto DumpId(const Tree& tree, Lex::TokenIndex token) -> void;
+
+auto DumpId(const Tree& tree, NodeId node_id) -> void;
+
 }  // namespace Carbon::Parse
+
+#endif  // NDEBUG
 
 #endif  // CARBON_TOOLCHAIN_PARSE_DUMP_ID_H_

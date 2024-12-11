@@ -12,7 +12,6 @@
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/dump_id.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
 #include "toolchain/check/inst_block_stack.h"
@@ -609,19 +608,6 @@ class Context {
 
   auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
     return bind_name_cache_;
-  }
-
-  // A set of DumpId() overloads that dump an object to stderr, useful for
-  // calling inside a debugger.
-  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
-    tokens().DumpId(token);
-  }
-  LLVM_DUMP_METHOD auto DumpId(Parse::NodeId node_id) const -> void {
-    parse_tree().DumpId(node_id);
-  }
-  LLVM_DUMP_METHOD auto DumpId(SemIR::LocId loc_id) const -> void {
-    DumpIdImpl(*this, loc_id);
-    llvm::errs() << '\n';
   }
 
  private:

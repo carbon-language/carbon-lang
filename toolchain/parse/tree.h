@@ -15,7 +15,6 @@
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/dump_id.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -192,16 +191,6 @@ class Tree : public Printable<Tree> {
   auto Verify() const -> ErrorOr<Success>;
 
   auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
-
-  // A set of DumpId() overloads that dump an object to stderr, useful for
-  // calling inside a debugger.
-  LLVM_DUMP_METHOD auto DumpId(Lex::TokenIndex token) const -> void {
-    tokens().DumpId(token);
-  }
-  LLVM_DUMP_METHOD auto DumpId(Parse::NodeId node_id) const -> void {
-    DumpIdImpl(*this, node_id);
-    llvm::errs() << '\n';
-  }
 
  private:
   friend class Context;

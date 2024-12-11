@@ -20,7 +20,6 @@ cc_library(
         "convert.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
-        "dump_id.cpp",
         "eval.cpp",
         "function.cpp",
         "generic.cpp",
@@ -47,7 +46,6 @@ cc_library(
         "decl_name_stack.h",
         "deduce.h",
         "diagnostic_helpers.h",
-        "dump_id.h",
         "eval.h",
         "function.h",
         "generic.h",
@@ -93,6 +91,24 @@ cc_library(
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "dump_id",
+    srcs = ["dump_id.cpp"],
+    copts = ["-Wno-missing-prototypes"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//common:ostream",
+        "//toolchain/lex:dump_id",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:dump_id",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+    ],
+    alwayslink = 1,
 )
 
 cc_library(
@@ -112,6 +128,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":dump_id",
         ":impl",
         ":interface",
         ":pointer_dereference",

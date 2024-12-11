@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#ifndef NDEBUG
+
 #include "toolchain/parse/dump_id.h"
 
 #include "common/ostream.h"
 #include "toolchain/lex/dump_id.h"
-#include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
 
@@ -26,4 +27,19 @@ auto DumpIdImpl(const Tree& tree, NodeId node_id) -> void {
   llvm::errs() << ")";
 }
 
+// A set of DumpId() overloads that dump an object to stderr, useful for
+// calling inside a debugger.
+LLVM_DUMP_METHOD auto DumpId(const Parse::Tree& tree, Lex::TokenIndex token)
+    -> void {
+  Lex::DumpId(tree.tokens(), token);
+}
+
+LLVM_DUMP_METHOD auto DumpId(const Parse::Tree& tree, Parse::NodeId node_id)
+    -> void {
+  DumpIdImpl(tree, node_id);
+  llvm::errs() << '\n';
+}
+
 }  // namespace Carbon::Parse
+
+#endif  // NDEBUG
