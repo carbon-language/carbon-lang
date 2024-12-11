@@ -208,12 +208,11 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::Invalid, SemIR::InstId::Invalid);
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
-                 context.inst_blocks()
-                     .Get(call_params_id)
-                     .drop_while([](SemIR::InstId inst_id) {
-                       return inst_id == SemIR::ErrorInst::SingletonInstId;
-                     })
-                     .empty());
+                 llvm::all_of(context.inst_blocks().Get(call_params_id),
+                              [](SemIR::InstId inst_id) {
+                                return inst_id ==
+                                       SemIR::ErrorInst::SingletonInstId;
+                              }));
   }
 
   Parse::NodeId first_param_node_id =
