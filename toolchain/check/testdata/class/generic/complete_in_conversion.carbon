@@ -15,14 +15,16 @@ base class B {}
 class A(N:! i32) {
   extend base: B;
 
-  // CHECK:STDERR: derived_to_base.carbon:[[@LINE+4]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR: derived_to_base.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   var n: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR: derived_to_base.carbon: note: in `A(0)` used here [ResolvingSpecificHere]
   var n: Core.Int(N);
 }
 
 fn F(a: A(0)*) {
+  // CHECK:STDERR: derived_to_base.carbon:[[@LINE+3]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR:   let b: B* = a;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let b: B* = a;
 }
 
@@ -112,10 +114,10 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc14_12.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc14_12.2: %i32 = converted %int_0, %.loc14_12.1 [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc13_12.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
+// CHECK:STDOUT:     %.loc13_12.2: %i32 = converted %int_0, %.loc13_12.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%int_0.2) [template = constants.%A.2]
-// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %A.2 [template = constants.%ptr.2]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %A.2 [template = constants.%ptr.2]
 // CHECK:STDOUT:     %a.param: %ptr.2 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %ptr.2 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -136,14 +138,14 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%N.loc4_9.2) [symbolic = %A (constants.%A.1)]
 // CHECK:STDOUT:   %A.elem.loc5: type = unbound_element_type @A.%A (%A.1), %B [symbolic = %A.elem.loc5 (constants.%A.elem.1)]
-// CHECK:STDOUT:   %Convert.bound.loc11_19.2: <bound method> = bound_method %N.loc4_9.2, constants.%Convert.13 [symbolic = %Convert.bound.loc11_19.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_19.2: <specific function> = specific_function %Convert.bound.loc11_19.2, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc11_19.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:   %int.convert_checked.loc11_19.2: init Core.IntLiteral = call %Convert.specific_fn.loc11_19.2(%N.loc4_9.2) [symbolic = %int.convert_checked.loc11_19.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:   %iN: type = int_type signed, %int.convert_checked.loc11_19.2 [symbolic = %iN (constants.%iN.2)]
+// CHECK:STDOUT:   %Convert.bound.loc10_19.2: <bound method> = bound_method %N.loc4_9.2, constants.%Convert.13 [symbolic = %Convert.bound.loc10_19.2 (constants.%Convert.bound.1)]
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_19.2: <specific function> = specific_function %Convert.bound.loc10_19.2, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc10_19.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:   %int.convert_checked.loc10_19.2: init Core.IntLiteral = call %Convert.specific_fn.loc10_19.2(%N.loc4_9.2) [symbolic = %int.convert_checked.loc10_19.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:   %iN: type = int_type signed, %int.convert_checked.loc10_19.2 [symbolic = %iN (constants.%iN.2)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN (%iN.2) [symbolic = %require_complete (constants.%require_complete.7)]
-// CHECK:STDOUT:   %A.elem.loc11: type = unbound_element_type @A.%A (%A.1), @A.%iN (%iN.2) [symbolic = %A.elem.loc11 (constants.%A.elem.2)]
+// CHECK:STDOUT:   %A.elem.loc10: type = unbound_element_type @A.%A (%A.1), @A.%iN (%iN.2) [symbolic = %A.elem.loc10 (constants.%A.elem.2)]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN (%iN.2)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
-// CHECK:STDOUT:   %complete_type.loc12_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc12_1.2 (constants.%complete_type.3)]
+// CHECK:STDOUT:   %complete_type.loc11_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
@@ -152,36 +154,36 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.1 [template = constants.%Int]
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc4_9.1 [symbolic = %N.loc4_9.2 (constants.%N.1)]
 // CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.13]
-// CHECK:STDOUT:     %Convert.bound.loc11_19.1: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Convert.bound.loc11_19.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc11_19.1: <specific function> = specific_function %Convert.bound.loc11_19.1, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc11_19.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:     %int.convert_checked.loc11_19.1: init Core.IntLiteral = call %Convert.specific_fn.loc11_19.1(%N.ref) [symbolic = %int.convert_checked.loc11_19.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc11_19.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc11_19.1 [symbolic = %int.convert_checked.loc11_19.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %.loc11_19.2: Core.IntLiteral = converted %N.ref, %.loc11_19.1 [symbolic = %int.convert_checked.loc11_19.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:     %int.make_type_signed.loc11: init type = call %Int.ref(%.loc11_19.2) [symbolic = %iN (constants.%iN.2)]
-// CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %int.make_type_signed.loc11 [symbolic = %iN (constants.%iN.2)]
-// CHECK:STDOUT:     %.loc11_20.2: type = converted %int.make_type_signed.loc11, %.loc11_20.1 [symbolic = %iN (constants.%iN.2)]
-// CHECK:STDOUT:     %.loc11_8: @A.%A.elem.loc11 (%A.elem.2) = field_decl n, element1 [template]
-// CHECK:STDOUT:     %complete_type.loc12_1.1: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc12_1.2 (constants.%complete_type.3)]
+// CHECK:STDOUT:     %Convert.bound.loc10_19.1: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Convert.bound.loc10_19.2 (constants.%Convert.bound.1)]
+// CHECK:STDOUT:     %Convert.specific_fn.loc10_19.1: <specific function> = specific_function %Convert.bound.loc10_19.1, @Convert.4(constants.%int_32) [symbolic = %Convert.specific_fn.loc10_19.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:     %int.convert_checked.loc10_19.1: init Core.IntLiteral = call %Convert.specific_fn.loc10_19.1(%N.ref) [symbolic = %int.convert_checked.loc10_19.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc10_19.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc10_19.1 [symbolic = %int.convert_checked.loc10_19.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %.loc10_19.2: Core.IntLiteral = converted %N.ref, %.loc10_19.1 [symbolic = %int.convert_checked.loc10_19.2 (constants.%int.convert_checked)]
+// CHECK:STDOUT:     %int.make_type_signed.loc10: init type = call %Int.ref(%.loc10_19.2) [symbolic = %iN (constants.%iN.2)]
+// CHECK:STDOUT:     %.loc10_20.1: type = value_of_initializer %int.make_type_signed.loc10 [symbolic = %iN (constants.%iN.2)]
+// CHECK:STDOUT:     %.loc10_20.2: type = converted %int.make_type_signed.loc10, %.loc10_20.1 [symbolic = %iN (constants.%iN.2)]
+// CHECK:STDOUT:     %.loc10_8: @A.%A.elem.loc10 (%A.elem.2) = field_decl n, element1 [template]
+// CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
 // CHECK:STDOUT:     .base = %.loc5
-// CHECK:STDOUT:     .n = %.loc11_8
+// CHECK:STDOUT:     .n = %.loc10_8
 // CHECK:STDOUT:     extend %B.ref
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc12_1.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %ptr.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %ptr.loc15: type = ptr_type %B [template = constants.%ptr.3]
+// CHECK:STDOUT:   %ptr.loc17: type = ptr_type %B [template = constants.%ptr.3]
 // CHECK:STDOUT:   %a.ref: %ptr.2 = name_ref a, %a
-// CHECK:STDOUT:   %.loc15_16.1: ref %A.2 = deref %a.ref
-// CHECK:STDOUT:   %.loc15_16.2: ref %B = class_element_access %.loc15_16.1, element0
-// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc15_16.2
-// CHECK:STDOUT:   %.loc15_16.3: %ptr.3 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.3 = bind_name b, %.loc15_16.3
+// CHECK:STDOUT:   %.loc17_16.1: ref %A.2 = deref %a.ref
+// CHECK:STDOUT:   %.loc17_16.2: ref %B = class_element_access %.loc17_16.1, element0
+// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc17_16.2
+// CHECK:STDOUT:   %.loc17_16.3: %ptr.3 = converted %a.ref, %addr
+// CHECK:STDOUT:   %b: %ptr.3 = bind_name b, %.loc17_16.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -202,13 +204,13 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %A.elem.loc5 => constants.%A.elem.3
-// CHECK:STDOUT:   %Convert.bound.loc11_19.2 => constants.%Convert.bound.3
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_19.2 => constants.%Convert.specific_fn.3
-// CHECK:STDOUT:   %int.convert_checked.loc11_19.2 => constants.%int_0.1
+// CHECK:STDOUT:   %Convert.bound.loc10_19.2 => constants.%Convert.bound.3
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_19.2 => constants.%Convert.specific_fn.3
+// CHECK:STDOUT:   %int.convert_checked.loc10_19.2 => constants.%int_0.1
 // CHECK:STDOUT:   %iN => <error>
 // CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %A.elem.loc11 => <error>
+// CHECK:STDOUT:   %A.elem.loc10 => <error>
 // CHECK:STDOUT:   %struct_type.base.n => <error>
-// CHECK:STDOUT:   %complete_type.loc12_1.2 => <error>
+// CHECK:STDOUT:   %complete_type.loc11_1.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

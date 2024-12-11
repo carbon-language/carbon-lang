@@ -344,7 +344,11 @@ class Context {
   // symbolic.
   //
   // Avoid calling this where possible, as it can lead to coherence issues.
-  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
+  // TODO: Remove the remaining call to this and delete this function.
+  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc) -> bool;
+
+  // Completes the type `type_id`. CHECK-fails if it can't be completed.
+  auto CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void;
 
   // Like `TryToCompleteType`, but for cases where it is an error for the type
   // to be incomplete.
