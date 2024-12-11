@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
 
 fn Deref(n: i32) {
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `Core.Int(32)` [DerefOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `i32` [DerefOfNonPointer]
   // CHECK:STDERR:   *n;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *n;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: error: cannot apply `->` operator to non-pointer type `Core.Int(32)` [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: error: cannot apply `->` operator to non-pointer type `i32` [ArrowOperatorOfNonPointer]
   // CHECK:STDERR:   n->foo;
   // CHECK:STDERR:    ^~
   // CHECK:STDERR:

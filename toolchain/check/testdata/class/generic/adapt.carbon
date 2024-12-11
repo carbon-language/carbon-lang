@@ -48,10 +48,10 @@ class Adapter {
 
 fn Access(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `Adapter` to `C(Core.Int(32))` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `Adapter` to `C(i32)` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(Core.Int(32)))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:

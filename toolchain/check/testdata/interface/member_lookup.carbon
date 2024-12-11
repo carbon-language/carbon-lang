@@ -41,7 +41,7 @@ fn AccessMissingGeneric[T:! type](I:! Interface(T)) -> T {
 }
 
 fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10: error: member name `nonesuch` not found in `Interface(Core.Int(32))` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return I.nonesuch;
   // CHECK:STDERR:          ^~~~~~~~~~
   return I.nonesuch;

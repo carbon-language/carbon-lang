@@ -45,7 +45,7 @@ fn AccessMemberWithInvalidBasNonType(p: DeriveFromNonType*) -> i32 { return (*p)
 library "[[@TEST_NAME]]";
 
 class DeriveFromi32 {
-  // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:16: error: deriving from final type `Core.Int(32)`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:16: error: deriving from final type `i32`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:   extend base: i32;
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR:
@@ -94,17 +94,17 @@ library "[[@TEST_NAME]]";
 // TODO: Should we allow this?
 // We do allow `{.base = {.a: i32, .b: i32}}`.
 class DeriveFromStruct {
-  // CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:16: error: deriving from final type `{.a: Core.Int(32), .b: Core.Int(32)}`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:16: error: deriving from final type `{.a: i32, .b: i32}`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:   extend base: {.a: i32, .b: i32};
   // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+7]]:74: error: cannot implicitly convert from `DeriveFromStruct*` to `{.a: Core.Int(32), .b: Core.Int(32)}*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+7]]:74: error: cannot implicitly convert from `DeriveFromStruct*` to `{.a: i32, .b: i32}*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
-// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:74: note: type `DeriveFromStruct*` does not implement interface `Core.ImplicitAs({.a: Core.Int(32), .b: Core.Int(32)}*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derive_from_struct.carbon:[[@LINE+4]]:74: note: type `DeriveFromStruct*` does not implement interface `Core.ImplicitAs({.a: i32, .b: i32}*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:                                                                          ^~~~~~~~~
 // CHECK:STDERR:

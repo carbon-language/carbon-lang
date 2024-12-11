@@ -22,7 +22,7 @@ library "[[@TEST_NAME]]";
 var test_i0: i0;
 var test_i1: i1;
 var test_i15: i15;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+16]]:23: note: in `Core.Int(1000000000)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+16]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 var test_u0: u0;
 var test_u1: u1;
 var test_u15: u15;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+16]]:23: note: in `Core.UInt(1000000000)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+16]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:

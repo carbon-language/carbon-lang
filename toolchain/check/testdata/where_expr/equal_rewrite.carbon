@@ -73,10 +73,10 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `O where .(O.P) = bool` to `O where .(O.P) = Core.Int(32)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+10]]:3: error: cannot implicitly convert from `O where .(O.P) = bool` to `O where .(O.P) = i32` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = Core.Int(32))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: note: type `O where .(O.P) = bool` does not implement interface `Core.ImplicitAs(O where .(O.P) = i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   WithInteger(R);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
@@ -201,10 +201,10 @@ interface E {
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `type` to `E where .(E.G) = Core.Int(32) and .(E.F) = {}` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `type` to `E where .(E.G) = i32 and .(E.F) = {}` [ImplicitAsConversionFailure]
 // CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:1: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = Core.Int(32) and .(E.F) = {})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:1: note: type `type` does not implement interface `Core.ImplicitAs(E where .(E.G) = i32 and .(E.F) = {})` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

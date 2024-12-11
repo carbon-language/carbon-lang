@@ -8,19 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/fail_numeric_literal_overflow.carbon
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 39999999999999999993 too large for type `Core.Int(32)` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let a: i32 = 39999999999999999993;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let a: i32 = 39999999999999999993;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `Core.Int(32)` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let b: i32 = 2_147_483_648;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = 2_147_483_648;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `Core.Int(32)` [IntTooLargeForType]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:1: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
 // CHECK:STDERR: let c: i32 = 0x8000_0000;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

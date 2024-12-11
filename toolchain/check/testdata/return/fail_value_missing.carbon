@@ -12,7 +12,7 @@ fn Main() -> i32 {
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+6]]:3: error: missing return value [ReturnStatementMissingExpr]
   // CHECK:STDERR:   return;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note: return type of function is `Core.Int(32)` [ReturnTypeHereNote]
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Main() -> i32 {
   // CHECK:STDERR:           ^~~~~~
   return;

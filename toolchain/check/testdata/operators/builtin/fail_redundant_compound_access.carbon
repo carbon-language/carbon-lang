@@ -12,7 +12,7 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `Core.Int(32)` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `i32` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   a = a.(a);
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:

@@ -14,7 +14,7 @@
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: Core.Int(32)}` to `{.b: Core.Int(32)}`: missing field `b` in source type [StructInitMissingFieldInConversion]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
 // CHECK:STDERR: var y: {.b: i32} = x;
 // CHECK:STDERR:                    ^
 var y: {.b: i32} = x;

@@ -25,7 +25,7 @@ fn CallNegative() {
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+4]]:3: note: in `ErrorIfNIsZero(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   ErrorIfNIsZero(0);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon: note: in `Core.Int(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon: note: in `i0` used here [ResolvingSpecificHere]
   ErrorIfNIsZero(0);
 }
 

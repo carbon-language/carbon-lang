@@ -116,7 +116,7 @@ library "[[@TEST_NAME]]";
 import library "int_ops";
 
 let max_plus_one: i32 =
-  // CHECK:STDERR: fail_too_large_u32_for_i32.carbon:[[@LINE+4]]:3: error: integer value 2147483648 too large for type `Core.Int(32)` [IntTooLargeForType]
+  // CHECK:STDERR: fail_too_large_u32_for_i32.carbon:[[@LINE+4]]:3: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
   // CHECK:STDERR:   Uint32ToInt32(
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -129,7 +129,7 @@ let max_plus_one: i32 =
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_i32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `Core.Int(16)` [IntTooLargeForType]
+// CHECK:STDERR: fail_too_large_i32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR: let max_plus_one: i16 = Int32ToInt16(0x8000);
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -140,7 +140,7 @@ let max_plus_one: i16 = Int32ToInt16(0x8000);
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_i32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `Core.UInt(16)` [IntTooLargeForType]
+// CHECK:STDERR: fail_too_large_i32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
 // CHECK:STDERR: let max_plus_one: u16 = Int32ToUint16(0x1_0000);
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -151,7 +151,7 @@ let max_plus_one: u16 = Int32ToUint16(0x1_0000);
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_u32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `Core.Int(16)` [IntTooLargeForType]
+// CHECK:STDERR: fail_too_large_u32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR: let max_plus_one: i16 = Uint32ToInt16(Int32ToUint32(0x8000));
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -162,7 +162,7 @@ let max_plus_one: i16 = Uint32ToInt16(Int32ToUint32(0x8000));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_u32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `Core.UInt(16)` [IntTooLargeForType]
+// CHECK:STDERR: fail_too_large_u32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
 // CHECK:STDERR: let max_plus_one: u16 = Uint32ToUint16(Int32ToUint32(0x1_0000));
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -173,7 +173,7 @@ let max_plus_one: u16 = Uint32ToUint16(Int32ToUint32(0x1_0000));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u16.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `Core.UInt(16)` [NegativeIntInUnsignedType]
+// CHECK:STDERR: fail_negative_i32_to_u16.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u16` [NegativeIntInUnsignedType]
 // CHECK:STDERR: let minus_one_to_u16: u16 = Int32ToUint16(SubI32(0, 1));
 // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -184,7 +184,7 @@ let minus_one_to_u16: u16 = Int32ToUint16(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u32.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `Core.UInt(32)` [NegativeIntInUnsignedType]
+// CHECK:STDERR: fail_negative_i32_to_u32.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
 // CHECK:STDERR: let minus_one_to_u32: u32 = Int32ToUint32(SubI32(0, 1));
 // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -195,7 +195,7 @@ let minus_one_to_u32: u32 = Int32ToUint32(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u64.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `Core.UInt(64)` [NegativeIntInUnsignedType]
+// CHECK:STDERR: fail_negative_i32_to_u64.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u64` [NegativeIntInUnsignedType]
 // CHECK:STDERR: let minus_one_to_u64: u64 = Int32ToUint64(SubI32(0, 1));
 // CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -206,7 +206,7 @@ let minus_one_to_u64: u64 = Int32ToUint64(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_small_i32_for_i16.carbon:[[@LINE+4]]:26: error: integer value -32769 too large for type `Core.Int(16)` [IntTooLargeForType]
+// CHECK:STDERR: fail_too_small_i32_for_i16.carbon:[[@LINE+4]]:26: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR: let min_minus_one: i16 = Int32ToInt16(NegateI32(0x8001));
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
