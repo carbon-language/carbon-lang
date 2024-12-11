@@ -7,7 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/type_literals.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/type_literals.carbon
-// CHECK:STDERR: fail_iN_bad_width.carbon: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 
 // --- iN.carbon
 library "[[@TEST_NAME]]";
@@ -19,36 +18,38 @@ var test_i64: i64;
 // --- fail_iN_bad_width.carbon
 library "[[@TEST_NAME]]";
 
-var test_i0: i0;
-var test_i1: i1;
-var test_i15: i15;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+16]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var test_i1000000000: i1000000000;
-// CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE-7]]:14: error: name `i0` not found [NameNotFound]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: name `i0` not found [NameNotFound]
 // CHECK:STDERR: var test_i0: i0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE-10]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(1)` instead [IntWidthNotMultipleOf8]
+var test_i0: i0;
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(1)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_i1: i1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE-13]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead [IntWidthNotMultipleOf8]
+var test_i1: i1;
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_i15: i15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_i15: i15;
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: var test_i1000000000: i1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: var test_i1000000000: i1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR:
 var test_i1000000000: i1000000000;
 // TODO: This diagnostic is not very good.
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+9]]:33: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+8]]:33: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
 // CHECK:STDERR: var test_i10000000000000000000: i10000000000000000000;
 // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+5]]:34: error: found a type literal with a bit width using 20 digits, which is greater than the limit of 18 [TooManyTypeBitWidthDigits]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:34: error: found a type literal with a bit width using 20 digits, which is greater than the limit of 18 [TooManyTypeBitWidthDigits]
 // CHECK:STDERR: var test_i10000000000000000000: i10000000000000000000;
 // CHECK:STDERR:                                  ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_uN_bad_width.carbon: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 var test_i10000000000000000000: i10000000000000000000;
 
 // --- uN.carbon
@@ -61,24 +62,27 @@ var test_u64: u64;
 // --- fail_uN_bad_width.carbon
 library "[[@TEST_NAME]]";
 
-var test_u0: u0;
-var test_u1: u1;
-var test_u15: u15;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+16]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var test_u1000000000: u1000000000;
-// CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE-7]]:14: error: name `u0` not found [NameNotFound]
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: name `u0` not found [NameNotFound]
 // CHECK:STDERR: var test_u0: u0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE-10]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(1)` instead [IntWidthNotMultipleOf8]
+var test_u0: u0;
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:14: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(1)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_u1: u1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE-13]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead [IntWidthNotMultipleOf8]
+var test_u1: u1;
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_u15: u15;
 // CHECK:STDERR:               ^~~
+// CHECK:STDERR:
+var test_u15: u15;
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: var test_u1000000000: u1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: var test_u1000000000: u1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
 var test_u1000000000: u1000000000;
 // TODO: This diagnostic is not very good.
