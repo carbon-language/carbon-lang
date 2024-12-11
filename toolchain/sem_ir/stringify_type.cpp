@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
 
@@ -23,70 +24,6 @@ static auto GetTypePrecedence(InstKind kind) -> int {
     return -2;
   }
   return 0;
-}
-
-// Returns whether a scope is the `Core` package scope.
-static auto IsCorePackage(const File& sem_ir, NameScopeId scope_id) -> bool {
-  if (!scope_id.is_valid()) {
-    return false;
-  }
-  auto scope_inst_id = sem_ir.name_scopes().Get(scope_id).inst_id();
-  auto scope_inst = sem_ir.insts().TryGetAs<Namespace>(scope_inst_id);
-  if (!scope_inst) {
-    return false;
-  }
-
-  const auto& name_scope = sem_ir.name_scopes().Get(scope_inst->name_scope_id);
-  bool is_package = scope_inst->name_scope_id == SemIR::NameScopeId::Package ||
-                    name_scope.is_imported_package();
-  return is_package &&
-         sem_ir.names().GetAsStringIfIdentifier(name_scope.name_id()) == "Core";
-}
-
-// Given a class type, determines whether it corresponds to a type literal, and
-// produces the corresponding type literal prefix such as `i` or `f` and the bit
-// width. For a non-type-literal, returns an invalid width.
-static auto DecomposeAsTypeLiteral(const File& sem_ir, ClassType class_type)
-    -> std::pair<llvm::StringLiteral, IntId> {
-  constexpr std::pair<llvm::StringLiteral, IntId> NotTypeLiteral = {
-      "", IntId::Invalid};
-  if (!class_type.specific_id.is_valid()) {
-    return NotTypeLiteral;
-  }
-
-  const auto& class_info = sem_ir.classes().Get(class_type.class_id);
-  auto name_ident = sem_ir.names().GetAsStringIfIdentifier(class_info.name_id);
-  if (!name_ident) {
-    return NotTypeLiteral;
-  }
-
-  llvm::StringLiteral prefix =
-      llvm::StringSwitch<llvm::StringLiteral>(*name_ident)
-          .Case("Int", "i")
-          .Case("UInt", "u")
-          .Case("Float", "f")
-          .Default("");
-  if (prefix.empty()) {
-    return NotTypeLiteral;
-  }
-
-  if (!IsCorePackage(
-          sem_ir,
-          sem_ir.name_scopes().Get(class_info.scope_id).parent_scope_id())) {
-    return NotTypeLiteral;
-  }
-
-  const auto& specific = sem_ir.specifics().Get(class_type.specific_id);
-  auto args = sem_ir.inst_blocks().Get(specific.args_id);
-  if (args.size() != 1) {
-    return NotTypeLiteral;
-  }
-
-  auto width_arg = sem_ir.insts().TryGetAs<IntValue>(args[0]);
-  if (!width_arg) {
-    return NotTypeLiteral;
-  }
-  return {prefix, width_arg->int_id};
 }
 
 namespace {
@@ -267,11 +204,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(ClassType inst): {
         const auto& class_info = sem_ir.classes().Get(inst.class_id);
-        if (auto [type_literal_prefix, width_id] =
-                DecomposeAsTypeLiteral(sem_ir, inst);
-            width_id.is_valid()) {
-          out << type_literal_prefix;
-          sem_ir.ints().Get(width_id).print(out, /*isSigned=*/false);
+        if (auto literal_info = TypeLiteralInfo::ForType(sem_ir, inst);
+            literal_info.is_valid()) {
+          literal_info.PrintLiteral(sem_ir, out);
           break;
         }
         step_stack.PushEntityName(class_info, inst.specific_id);

@@ -22,7 +22,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [template]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template]
@@ -66,8 +66,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: fn @ReturnType() -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   return %Int
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   return %i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {

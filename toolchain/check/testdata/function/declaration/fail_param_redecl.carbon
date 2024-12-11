@@ -20,7 +20,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -40,21 +40,21 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %n.patt.loc17_6: %Int.2 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc17_7: %Int.2 = value_param_pattern %n.patt.loc17_6, runtime_param0
-// CHECK:STDOUT:     %n.patt.loc17_14: %Int.2 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt.loc17_15: %Int.2 = value_param_pattern %n.patt.loc17_14, runtime_param1
+// CHECK:STDOUT:     %n.patt.loc17_6: %i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc17_7: %i32 = value_param_pattern %n.patt.loc17_6, runtime_param0
+// CHECK:STDOUT:     %n.patt.loc17_14: %i32 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt.loc17_15: %i32 = value_param_pattern %n.patt.loc17_14, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc17_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc17_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc17_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc17_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %n.param.loc17_7: %Int.2 = value_param runtime_param0
-// CHECK:STDOUT:     %n.loc17_6: %Int.2 = bind_name n, %n.param.loc17_7
-// CHECK:STDOUT:     %n.param.loc17_15: %Int.2 = value_param runtime_param1
-// CHECK:STDOUT:     %n.loc17_14: %Int.2 = bind_name n, %n.param.loc17_15
+// CHECK:STDOUT:     %i32.loc17_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %n.param.loc17_7: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %n.loc17_6: %i32 = bind_name n, %n.param.loc17_7
+// CHECK:STDOUT:     %n.param.loc17_15: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %n.loc17_14: %i32 = bind_name n, %n.param.loc17_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param_patt.loc17_7: %Int.2, %n.param_patt.loc17_15: %Int.2);
+// CHECK:STDOUT: fn @F(%n.param_patt.loc17_7: %i32, %n.param_patt.loc17_15: %i32);
 // CHECK:STDOUT:

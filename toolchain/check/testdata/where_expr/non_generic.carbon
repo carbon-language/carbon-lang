@@ -24,7 +24,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %NotGenericF.type: type = fn_type @NotGenericF [template]
 // CHECK:STDOUT:   %NotGenericF: %NotGenericF.type = struct_value () [template]
@@ -57,9 +57,9 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %Int
+// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param0
 // CHECK:STDOUT:     %U: %I_where.type = bind_name U, %U.param

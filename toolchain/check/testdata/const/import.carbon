@@ -30,8 +30,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %const: type = const_type %Int.2 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %const: type = const_type %i32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [template]
@@ -58,19 +58,19 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     %return.param_patt: %const = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %const: type = const_type %Int.2 [template = constants.%const]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %const: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:     %return.param: ref %const = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %const.loc6: type = const_type %Int.2 [template = constants.%const]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %const.loc6: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %a_ref.var: ref %const = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %const.loc7: type = const_type %Int.2 [template = constants.%const]
+// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %const.loc7: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var a_ptr_ref
 // CHECK:STDOUT:   %a_ptr_ref: ref %ptr = bind_name a_ptr_ref, %a_ptr_ref.var
@@ -93,8 +93,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %const: type = const_type %Int.2 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %const: type = const_type %i32 [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,14 +122,14 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %const.loc6: type = const_type %Int.2 [template = constants.%const]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %const.loc6: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %ptr.loc6: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %const.loc7: type = const_type %Int.2 [template = constants.%const]
+// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %const.loc7: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %ptr.loc7: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a_ptr.var: ref %ptr = var a_ptr
 // CHECK:STDOUT:   %a_ptr: ref %ptr = bind_name a_ptr, %a_ptr.var

@@ -45,9 +45,9 @@ fn Run() {
 // CHECK:STDOUT:   %Unused.type: type = fn_type @Unused [template]
 // CHECK:STDOUT:   %Unused: %Unused.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %Int.2 [template]
-// CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %Int.2, .unused: %Int.2} [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
+// CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %i32, .unused: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.unused [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
 // CHECK:STDOUT:   %Child.elem: type = unbound_element_type %Child, %Base [template]
@@ -92,10 +92,10 @@ fn Run() {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.3]
 // CHECK:STDOUT:

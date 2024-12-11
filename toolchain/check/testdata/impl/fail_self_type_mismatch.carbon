@@ -44,11 +44,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %Int.2) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %Int.2, %Int.2 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,7 +82,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -107,15 +107,15 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %Int as %I.ref {
+// CHECK:STDOUT: impl @impl: %i32 as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %c.patt: %C.3 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(type, constants.%Int.2) [template = constants.%C.3]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(type, constants.%i32) [template = constants.%C.3]
 // CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -178,11 +178,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(type, constants.%Int.2) {
+// CHECK:STDOUT: specific @C(type, constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_9.2 => type
 // CHECK:STDOUT:   %T.patt.loc11_9.2 => type
-// CHECK:STDOUT:   %X.loc11_19.2 => constants.%Int.2
-// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%Int.2
+// CHECK:STDOUT:   %X.loc11_19.2 => constants.%i32
+// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {

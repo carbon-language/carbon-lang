@@ -37,14 +37,14 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%Int.2) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
-// CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %Int.2 [template]
-// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Int.2} [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32.builtin [template]
+// CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %i32 [template]
+// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
@@ -88,19 +88,19 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %c.patt: %Class.2 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %Class.2 = value_param_pattern %c.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
 // CHECK:STDOUT:     %int_32.loc15_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc15_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%Int.2) [template = constants.%Class.2]
+// CHECK:STDOUT:     %i32.loc15_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.2]
 // CHECK:STDOUT:     %int_32.loc15_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc15_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc15_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %c.param: %Class.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %Class.2 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %T.patt.loc19_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_6.2 (constants.%T.patt)]
@@ -165,12 +165,12 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param_patt: %Class.2) -> %Int.2 {
+// CHECK:STDOUT: fn @F(%c.param_patt: %Class.2) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class.2 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %Class.elem.2 = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
-// CHECK:STDOUT:   %.loc16_11.1: ref %Int.2 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc16_11.2: %Int.2 = bind_value %.loc16_11.1
+// CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc16_11.2: %i32 = bind_value %.loc16_11.1
 // CHECK:STDOUT:   return %.loc16_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,9 +231,9 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%Int.2) {
-// CHECK:STDOUT:   %T.loc11_13.2 => constants.%Int.2
-// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%Int.2
+// CHECK:STDOUT: specific @Class(constants.%i32) {
+// CHECK:STDOUT:   %T.loc11_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc11_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.3

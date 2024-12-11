@@ -46,9 +46,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %N.2: %Int.2 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.2: %Int.2 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %N.2: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.1: %.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -81,9 +81,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %N.param: %Int.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc32_10.1: %Int.2 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N.2)]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc32_10.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N.2)]
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
@@ -140,9 +140,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class)](%n.param_patt: @F.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: %Int.2) {
-// CHECK:STDOUT:   %N.loc32_10.2: %Int.2 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N.2)]
-// CHECK:STDOUT:   %N.patt: %Int.2 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt.2)]
+// CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: %i32) {
+// CHECK:STDOUT:   %N.loc32_10.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N.2)]
+// CHECK:STDOUT:   %N.patt: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

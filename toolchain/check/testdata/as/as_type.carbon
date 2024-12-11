@@ -14,9 +14,9 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%Int.2, %Int.2) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -38,10 +38,10 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32.loc11_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc11_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:   %i32.loc11_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc11_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %.loc11_24: %tuple.type.1 = tuple_literal (%Int.loc11_16, %Int.loc11_21)
+// CHECK:STDOUT:   %i32.loc11_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc11_24: %tuple.type.1 = tuple_literal (%i32.loc11_16, %i32.loc11_21)
 // CHECK:STDOUT:   %.loc11_26: type = converted %.loc11_24, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %t: type = bind_name t, %.loc11_26
 // CHECK:STDOUT:   return

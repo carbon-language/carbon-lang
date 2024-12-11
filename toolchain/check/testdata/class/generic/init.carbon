@@ -58,14 +58,14 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromStructGeneric: %InitFromStructGeneric.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Class.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %InitFromStructSpecific.type: type = fn_type @InitFromStructSpecific [template]
 // CHECK:STDOUT:   %InitFromStructSpecific: %InitFromStructSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
-// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%Int.2) [template]
-// CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %Int.2 [template]
-// CHECK:STDOUT:   %struct_type.k.2: type = struct_type {.k: %Int.2} [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32.builtin [template]
+// CHECK:STDOUT:   %Class.2: type = class_type @Class, @Class(%i32) [template]
+// CHECK:STDOUT:   %Class.elem.2: type = unbound_element_type %Class.2, %i32 [template]
+// CHECK:STDOUT:   %struct_type.k.2: type = struct_type {.k: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.k.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,19 +110,19 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %return: ref @InitFromStructGeneric.%T.loc8_26.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [template = constants.%InitFromStructSpecific] {
-// CHECK:STDOUT:     %x.patt: %Int.2 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %Int.2 = value_param_pattern %x.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %i32 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc13_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc13_30: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc13_30: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc13_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc13_38: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %x.param: %Int.2 = value_param runtime_param0
-// CHECK:STDOUT:     %x: %Int.2 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %i32.loc13_38: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %x.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %i32 = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,25 +182,25 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: %Int.2) -> %Int.2 {
+// CHECK:STDOUT: fn @InitFromStructSpecific(%x.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
 // CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(constants.%Int.2) [template = constants.%Class.2]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(constants.%i32) [template = constants.%Class.2]
 // CHECK:STDOUT:   %v.var: ref %Class.2 = var v
 // CHECK:STDOUT:   %v: ref %Class.2 = bind_name v, %v.var
-// CHECK:STDOUT:   %x.ref: %Int.2 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc14_30.1: %struct_type.k.2 = struct_literal (%x.ref)
-// CHECK:STDOUT:   %.loc14_30.2: ref %Int.2 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc14_30.3: init %Int.2 = initialize_from %x.ref to %.loc14_30.2
+// CHECK:STDOUT:   %.loc14_30.2: ref %i32 = class_element_access %v.var, element0
+// CHECK:STDOUT:   %.loc14_30.3: init %i32 = initialize_from %x.ref to %.loc14_30.2
 // CHECK:STDOUT:   %.loc14_30.4: init %Class.2 = class_init (%.loc14_30.3), %v.var
 // CHECK:STDOUT:   %.loc14_31: init %Class.2 = converted %.loc14_30.1, %.loc14_30.4
 // CHECK:STDOUT:   assign %v.var, %.loc14_31
 // CHECK:STDOUT:   %v.ref: ref %Class.2 = name_ref v, %v
 // CHECK:STDOUT:   %k.ref: %Class.elem.2 = name_ref k, @Class.%.loc5 [template = @Class.%.loc5]
-// CHECK:STDOUT:   %.loc15_11.1: ref %Int.2 = class_element_access %v.ref, element0
-// CHECK:STDOUT:   %.loc15_11.2: %Int.2 = bind_value %.loc15_11.1
+// CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %v.ref, element0
+// CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
 // CHECK:STDOUT:   return %.loc15_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,9 +231,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(constants.%Int.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%Int.2
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%Int.2
+// CHECK:STDOUT: specific @Class(constants.%i32) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.3
@@ -257,13 +257,13 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %InitFromAdaptedGeneric: %InitFromAdaptedGeneric.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Adapt.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.type: type = fn_type @InitFromAdaptedSpecific [template]
 // CHECK:STDOUT:   %InitFromAdaptedSpecific: %InitFromAdaptedSpecific.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32 [template]
-// CHECK:STDOUT:   %Adapt.2: type = class_type @Adapt, @Adapt(%Int.2) [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %Int.2 [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %i32.builtin [template]
+// CHECK:STDOUT:   %Adapt.2: type = class_type @Adapt, @Adapt(%i32) [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -307,19 +307,19 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %return: ref @InitFromAdaptedGeneric.%T.loc8_27.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [template = constants.%InitFromAdaptedSpecific] {
-// CHECK:STDOUT:     %x.patt: %Int.2 = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %Int.2 = value_param_pattern %x.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %x.patt: %i32 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %i32 = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc12_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc12_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc12_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc12_39: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc12_39: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %x.param: %Int.2 = value_param runtime_param0
-// CHECK:STDOUT:     %x: %Int.2 = bind_name x, %x.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %i32.loc12_39: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %x.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %x: %i32 = bind_name x, %x.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,19 +366,19 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InitFromAdaptedSpecific(%x.param_patt: %Int.2) -> %Int.2 {
+// CHECK:STDOUT: fn @InitFromAdaptedSpecific(%x.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref: %Int.2 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %Adapt.ref: %Adapt.type = name_ref Adapt, file.%Adapt.decl [template = constants.%Adapt.generic]
 // CHECK:STDOUT:   %int_32.loc13_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc13_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %Adapt: type = class_type @Adapt, @Adapt(constants.%Int.2) [template = constants.%Adapt.2]
+// CHECK:STDOUT:   %i32.loc13_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Adapt: type = class_type @Adapt, @Adapt(constants.%i32) [template = constants.%Adapt.2]
 // CHECK:STDOUT:   %.loc13_13.1: %Adapt.2 = as_compatible %x.ref
 // CHECK:STDOUT:   %.loc13_13.2: %Adapt.2 = converted %x.ref, %.loc13_13.1
 // CHECK:STDOUT:   %int_32.loc13_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc13_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %.loc13_28.1: %Int.2 = as_compatible %.loc13_13.2
-// CHECK:STDOUT:   %.loc13_28.2: %Int.2 = converted %.loc13_13.2, %.loc13_28.1
+// CHECK:STDOUT:   %i32.loc13_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_28.1: %i32 = as_compatible %.loc13_13.2
+// CHECK:STDOUT:   %.loc13_28.2: %i32 = converted %.loc13_13.2, %.loc13_28.1
 // CHECK:STDOUT:   return %.loc13_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -401,9 +401,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Adapt(constants.%Int.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%Int.2
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%Int.2
+// CHECK:STDOUT: specific @Adapt(constants.%i32) {
+// CHECK:STDOUT:   %T.loc4_13.2 => constants.%i32
+// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.3

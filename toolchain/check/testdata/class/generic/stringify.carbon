@@ -143,8 +143,8 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %Inner.type.2: type = generic_class_type @Inner, @Outer(%ptr.1) [template]
 // CHECK:STDOUT:   %Inner.generic.2: %Inner.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Int.2} [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %struct_type.a [template]
 // CHECK:STDOUT:   %Inner.2: type = class_type @Inner, @Inner(%ptr.1, %ptr.2) [template]
 // CHECK:STDOUT: }
@@ -188,8 +188,8 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %.loc19_18: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%ptr.1) [template = constants.%Inner.generic.2]
 // CHECK:STDOUT:   %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc19_18 [template = constants.%Inner.generic.2]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %Int.2} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
 // CHECK:STDOUT:   %ptr.loc19_34: type = ptr_type %struct_type.a [template = constants.%ptr.2]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%ptr.1, constants.%ptr.2) [template = constants.%Inner.2]
 // CHECK:STDOUT:   %w.var: ref %Inner.2 = var w
@@ -280,22 +280,22 @@ var v: C(123) = ();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %N.2: %Int.2 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.2: %Int.2 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %N.2: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%N.2) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_123.1: Core.IntLiteral = int_value 123 [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%Int.2) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
 // CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_123.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_123.2: %Int.2 = int_value 123 [template]
+// CHECK:STDOUT:   %int_123.2: %i32 = int_value 123 [template]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%int_123.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,30 +316,30 @@ var v: C(123) = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [template = constants.%C.generic] {
-// CHECK:STDOUT:     %N.patt.loc4_9.1: %Int.2 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
-// CHECK:STDOUT:     %N.param_patt: %Int.2 = value_param_pattern %N.patt.loc4_9.1, runtime_param<invalid> [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
+// CHECK:STDOUT:     %N.patt.loc4_9.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
+// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_9.1, runtime_param<invalid> [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:     %N.param: %Int.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %N.loc4_9.1: %Int.2 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_9.2 (constants.%N.2)]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_9.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_123, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %Int.2 = call %Convert.specific_fn(%int_123) [template = constants.%int_123.2]
-// CHECK:STDOUT:   %.loc12_13.1: %Int.2 = value_of_initializer %int.convert_checked [template = constants.%int_123.2]
-// CHECK:STDOUT:   %.loc12_13.2: %Int.2 = converted %int_123, %.loc12_13.1 [template = constants.%int_123.2]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_123) [template = constants.%int_123.2]
+// CHECK:STDOUT:   %.loc12_13.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_123.2]
+// CHECK:STDOUT:   %.loc12_13.2: %i32 = converted %int_123, %.loc12_13.1 [template = constants.%int_123.2]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%int_123.2) [template = constants.%C.2]
 // CHECK:STDOUT:   %v.var: ref %C.2 = var v
 // CHECK:STDOUT:   %v: ref %C.2 = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%N.loc4_9.1: %Int.2) {
-// CHECK:STDOUT:   %N.loc4_9.2: %Int.2 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.2)]
-// CHECK:STDOUT:   %N.patt.loc4_9.2: %Int.2 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
+// CHECK:STDOUT: generic class @C(%N.loc4_9.1: %i32) {
+// CHECK:STDOUT:   %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.2)]
+// CHECK:STDOUT:   %N.patt.loc4_9.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

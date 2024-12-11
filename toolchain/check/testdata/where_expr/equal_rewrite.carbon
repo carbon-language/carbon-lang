@@ -404,8 +404,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0 = %Int.2> [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0 = %i32> [template]
 // CHECK:STDOUT:   %G: %E_where.type = bind_symbolic_name G, 0 [symbolic]
 // CHECK:STDOUT:   %G.patt: %E_where.type = symbolic_binding_pattern G, 0 [symbolic]
 // CHECK:STDOUT:   %OneRewrite.type: type = fn_type @OneRewrite [template]
@@ -452,9 +452,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = constants.%E_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %Int
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %G.param: %E_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %G.loc8_15.1: %E_where.type = bind_symbolic_name G, 0, %G.param [symbolic = %G.loc8_15.2 (constants.%G)]
@@ -470,16 +470,16 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %.Self.as_wit.loc10_32: <witness> = facet_access_witness %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_32: type = interface_witness_access %.Self.as_wit.loc10_32, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32.loc10_37: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc10_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc10_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.Self.ref.loc10_45: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %F.ref.loc10_45: %assoc_type = name_ref F, @E.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc10_45: <witness> = facet_access_witness %.Self.ref.loc10_45 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc10_45: type = interface_witness_access %.Self.as_wit.loc10_45, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32.loc10_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc10_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc10_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc10: type = where_expr %.Self [template = constants.%E_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_32, %Int.loc10_37
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_45, %Int.loc10_50
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_32, %i32.loc10_37
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_45, %i32.loc10_50
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %H.param: %E_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %H.loc10_20.1: %E_where.type = bind_symbolic_name H, 0, %H.param [symbolic = %H.loc10_20.2 (constants.%H)]
@@ -495,9 +495,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%E_where.type] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %Int
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.param: %E_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %I.loc14_20.1: %E_where.type = bind_symbolic_name I, 0, %I.param [symbolic = %I.loc14_20.2 (constants.%I)]
@@ -780,8 +780,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %O_where.type.1: type = facet_type <@O where %impl.elem0 = %Int.2> [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %O_where.type.1: type = facet_type <@O where %impl.elem0 = %i32> [template]
 // CHECK:STDOUT:   %Q: %O_where.type.1 = bind_symbolic_name Q, 0 [symbolic]
 // CHECK:STDOUT:   %Q.patt: %O_where.type.1 = symbolic_binding_pattern Q, 0 [symbolic]
 // CHECK:STDOUT:   %WithInteger.type: type = fn_type @WithInteger [template]
@@ -825,9 +825,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = constants.%O_where.type.1] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %Int
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Q.param: %O_where.type.1 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %Q.loc8_16.1: %O_where.type.1 = bind_symbolic_name Q, 0, %Q.param [symbolic = %Q.loc8_16.2 (constants.%Q)]
@@ -1064,7 +1064,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1125,8 +1125,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.loc19: %N_where.type = converted %bool.make_type, <error> [template = <error>]
 // CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %.loc32: %A_where.type.2 = converted %Int, <error> [template = <error>]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc32: %A_where.type.2 = converted %i32, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1326,8 +1326,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit.2: <witness> = facet_access_witness %.Self.2 [symbolic]
 // CHECK:STDOUT:   %impl.elem1.2: type = interface_witness_access %.Self.as_wit.2, element1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %E_where.type.3: type = facet_type <@E where %impl.elem1.2 = %Int.2 and %impl.elem0 = %empty_struct_type> [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %E_where.type.3: type = facet_type <@E where %impl.elem1.2 = %i32 and %impl.elem0 = %empty_struct_type> [template]
 // CHECK:STDOUT:   %E_where.type.4: type = facet_type <@E where %impl.elem0 = %impl.elem1.1> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1388,9 +1388,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.as_wit.loc27_33: <witness> = facet_access_witness %.Self.ref.loc27_33 [symbolic = constants.%.Self.as_wit.2]
 // CHECK:STDOUT:   %impl.elem1.loc27: type = interface_witness_access %.Self.as_wit.loc27_33, element1 [symbolic = constants.%impl.elem1.2]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc27_27: type = where_expr %.Self.3 [template = constants.%E_where.type.3] {
-// CHECK:STDOUT:     requirement_rewrite %impl.elem1.loc27, %Int
+// CHECK:STDOUT:     requirement_rewrite %impl.elem1.loc27, %i32
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.ref.loc35: type = name_ref E, %E.decl [template = constants.%E.type]
 // CHECK:STDOUT:   %.Self.4: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
