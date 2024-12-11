@@ -341,7 +341,7 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
-  auto self_specific_id = MakeSelfSpecific(context, generic_id);
+  auto self_specific_id = MakeSelfSpecific(context, decl_id, generic_id);
   context.generics().Get(generic_id).self_specific_id = self_specific_id;
   return generic_id;
 }

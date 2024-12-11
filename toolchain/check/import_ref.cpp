@@ -2714,8 +2714,9 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
                             SemIR::GenericInstIndex::Region::Declaration);
   resolver.local_generics().Get(pending.local_id).decl_block_id = decl_block_id;
 
-  auto self_specific_id =
-      MakeSelfSpecific(resolver.local_context(), pending.local_id);
+  auto local_decl_id = resolver.local_generics().Get(pending.local_id).decl_id;
+  auto self_specific_id = MakeSelfSpecific(resolver.local_context(),
+                                           local_decl_id, pending.local_id);
   resolver.local_generics().Get(pending.local_id).self_specific_id =
       self_specific_id;
   resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,
