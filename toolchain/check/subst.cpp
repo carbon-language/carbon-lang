@@ -190,7 +190,9 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       auto args_id =
           PopOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
                      specific.args_id.index);
-      return MakeSpecific(context, specific.generic_id,
+      // TODO: Provide a location here.
+      SemIRLoc loc = SemIR::InstId::Invalid;
+      return MakeSpecific(context, loc, specific.generic_id,
                           SemIR::InstBlockId(args_id))
           .index;
     }

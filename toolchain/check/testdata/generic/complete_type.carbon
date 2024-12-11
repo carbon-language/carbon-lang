@@ -15,20 +15,23 @@ library "[[@TEST_NAME]]";
 class B;
 
 class A(T:! type) {
-  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+6]]:10: error: `T` evaluates to incomplete type `B` [IncompleteTypeInMonomorphization]
   // CHECK:STDERR:   var v: T;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-6]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class B;
   // CHECK:STDERR: ^~~~~~~~
-  // CHECK:STDERR:
   var v: T;
 }
 
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:6: note: in `A(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fn F(x: A(B)) {}
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:6: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
 // CHECK:STDERR: fn F(x: A(B)) {}
 // CHECK:STDERR:      ^~~~~~~
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-16]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-19]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -67,6 +70,9 @@ fn F(T:! type) {
   var v: T;
 }
 
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+3]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fn G() { F(B); }
+// CHECK:STDERR:          ^
 fn G() { F(B); }
 
 // CHECK:STDOUT: --- fail_incomplete_in_class.carbon
@@ -125,7 +131,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:     %x.param: %A.2 = value_param runtime_param0
 // CHECK:STDOUT:     %x: %A.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc26: type = class_decl @B [template = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -145,17 +151,17 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.1), @A.%T.loc6_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.1)]
-// CHECK:STDOUT:   %complete_type.loc15_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.1) [symbolic = %complete_type.loc15_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_9.1 [symbolic = %T.loc6_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc14: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
-// CHECK:STDOUT:     %complete_type.loc15_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc15_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
-// CHECK:STDOUT:     .v = %.loc14
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc15_1.1
+// CHECK:STDOUT:     .v = %.loc13
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,7 +189,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %A => constants.%A.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.2
-// CHECK:STDOUT:   %complete_type.loc15_1.2 => constants.%complete_type.2
+// CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_in_function.carbon

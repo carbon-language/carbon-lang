@@ -403,6 +403,16 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         step_stack.PushTypeId(inst.pointee_id);
         break;
       }
+      case CARBON_KIND(SpecificFunction inst): {
+        auto callee = SemIR::GetCalleeFunction(sem_ir, inst.callee_id);
+        if (callee.function_id.is_valid()) {
+          step_stack.PushEntityName(sem_ir.functions().Get(callee.function_id),
+                                    inst.specific_id);
+        } else {
+          step_stack.PushString("<invalid specific function>");
+        }
+        break;
+      }
       case CARBON_KIND(StructType inst): {
         auto fields = sem_ir.struct_type_fields().Get(inst.fields_id);
         if (fields.empty()) {
@@ -500,7 +510,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case ReturnSlot::Kind:
       case ReturnSlotPattern::Kind:
       case SpecificConstant::Kind:
-      case SpecificFunction::Kind:
       case SpliceBlock::Kind:
       case StringLiteral::Kind:
       case StructAccess::Kind:

@@ -5,11 +5,13 @@
 #include "toolchain/check/generic.h"
 
 #include "common/map.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -341,7 +343,7 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
-  auto self_specific_id = MakeSelfSpecific(context, generic_id);
+  auto self_specific_id = MakeSelfSpecific(context, decl_id, generic_id);
   context.generics().Get(generic_id).self_specific_id = self_specific_id;
   return generic_id;
 }
@@ -371,15 +373,16 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
   context.generic_region_stack().Pop();
 }
 
-auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId {
   auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
 
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.is_valid()) {
-    auto decl_block_id = TryEvalBlockForSpecific(
-        context, specific_id, SemIR::GenericInstIndex::Region::Declaration);
+    auto decl_block_id =
+        TryEvalBlockForSpecific(context, loc, specific_id,
+                                SemIR::GenericInstIndex::Region::Declaration);
     // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
     // so re-lookup the specific here.
     context.specifics().Get(specific_id).decl_block_id = decl_block_id;
@@ -388,8 +391,8 @@ auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
   return specific_id;
 }
 
-auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
-    -> SemIR::SpecificId {
+auto MakeSelfSpecific(Context& context, SemIRLoc loc,
+                      SemIR::GenericId generic_id) -> SemIR::SpecificId {
   if (!generic_id.is_valid()) {
     return SemIR::SpecificId::Invalid;
   }
@@ -409,11 +412,11 @@ auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
   // TODO: This could be made more efficient. We don't need to perform
   // substitution here; we know we want identity mappings for all constants and
   // types. We could also consider not storing the mapping at all in this case.
-  return MakeSpecific(context, generic_id, args_id);
+  return MakeSpecific(context, loc, generic_id, args_id);
 }
 
-auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
-    -> bool {
+auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
+                               SemIR::SpecificId specific_id) -> bool {
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.is_valid(), "Specific with no generic ID");
@@ -426,13 +429,43 @@ auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
       return false;
     }
     auto definition_block_id = TryEvalBlockForSpecific(
-        context, specific_id, SemIR::GenericInstIndex::Region::Definition);
+        context, loc, specific_id, SemIR::GenericInstIndex::Region::Definition);
     // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
     // so re-lookup the specific here.
     context.specifics().Get(specific_id).definition_block_id =
         definition_block_id;
   }
   return true;
+}
+
+auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::InstId {
+  CARBON_CHECK(specific_id.is_valid());
+  const auto& specific = context.specifics().Get(specific_id);
+  const auto& generic = context.generics().Get(specific.generic_id);
+  auto decl = context.insts().Get(generic.decl_id);
+  CARBON_KIND_SWITCH(decl) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.types().GetInstId(
+          context.GetClassType(class_decl.class_id, specific_id));
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.types().GetInstId(
+          context.GetInterfaceType(interface_decl.interface_id, specific_id));
+    }
+    case SemIR::FunctionDecl::Kind: {
+      return context.constant_values().GetInstId(
+          TryEvalInst(context, SemIR::InstId::Invalid,
+                      SemIR::SpecificFunction{
+                          .type_id = context.GetSingletonType(
+                              SemIR::SpecificFunctionType::SingletonInstId),
+                          .callee_id = generic.decl_id,
+                          .specific_id = specific_id}));
+    }
+    default: {
+      CARBON_FATAL("Unknown kind for generic declaration {0}", decl);
+    }
+  }
 }
 
 }  // namespace Carbon::Check

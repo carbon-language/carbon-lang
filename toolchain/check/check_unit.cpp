@@ -402,7 +402,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
       }
       case CARBON_KIND(SemIR::SpecificFunction specific_function): {
-        if (!ResolveSpecificDefinition(context_,
+        // TODO: Track a location for the use. In general we may want to track a
+        // list of enclosing locations if this was used from a generic.
+        SemIRLoc use_loc = decl_inst_id;
+        if (!ResolveSpecificDefinition(context_, use_loc,
                                        specific_function.specific_id)) {
           CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                             "use of undefined generic function");

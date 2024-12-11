@@ -160,7 +160,7 @@ auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
     if (specific_id.is_valid()) {
       // We need a definition of the specific `impl` so we can access its
       // witness.
-      ResolveSpecificDefinition(context, specific_id);
+      ResolveSpecificDefinition(context, loc_id, specific_id);
     }
     return context.constant_values().GetInstId(
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,

@@ -31,12 +31,31 @@ struct SpecificEvalInfo {
 class EvalContext {
  public:
   explicit EvalContext(
-      Context& context,
+      Context& context, SemIRLoc fallback_loc,
       SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
       : context_(context),
+        fallback_loc_(fallback_loc),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
+
+  // Gets the location to use for diagnostics if a better location is
+  // unavailable.
+  // TODO: This is also sometimes unavailable.
+  auto fallback_loc() const -> SemIRLoc { return fallback_loc_; }
+
+  // Returns a location to use to point at an instruction in a diagnostic, given
+  // a list of instructions that might have an attached location. This is the
+  // location of the first instruction in the list that has a location if there
+  // is one, and otherwise the fallback location.
+  auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIRLoc {
+    for (auto inst_id : inst_ids) {
+      if (inst_id.is_valid() && context_.insts().GetLocId(inst_id).is_valid()) {
+        return inst_id;
+      }
+    }
+    return fallback_loc_;
+  }
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `Invalid` if the value is not fixed in this context.
@@ -161,6 +180,8 @@ class EvalContext {
  private:
   // The type-checking context in which we're performing evaluation.
   Context& context_;
+  // The location to use for diagnostics when a better location isn't available.
+  SemIRLoc fallback_loc_;
   // The specific that we are evaluating within.
   SemIR::SpecificId specific_id_;
   // If we are currently evaluating an eval block for `specific_id_`,
@@ -419,7 +440,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return MakeSpecific(eval_context.context(), specific.generic_id, args_id);
+  return MakeSpecific(eval_context.context(), eval_context.fallback_loc(),
+                      specific.generic_id, args_id);
 }
 
 // Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
@@ -602,7 +624,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
                           "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
-            inst.index_id, ArrayIndexOutOfBounds,
+            eval_context.GetDiagnosticLoc(inst.index_id), ArrayIndexOutOfBounds,
             {.type = index->type_id, .value = index_val}, aggregate_type_id);
         return SemIR::ErrorInst::SingletonConstantId;
       }
@@ -1336,7 +1358,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                                 "array bound of {0} is negative", TypedInt);
               eval_context.emitter().Emit(
-                  bound_id, ArrayBoundNegative,
+                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundNegative,
                   {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
@@ -1344,7 +1366,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                                 "array bound of {0} is too large", TypedInt);
               eval_context.emitter().Emit(
-                  bound_id, ArrayBoundTooLarge,
+                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundTooLarge,
                   {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
@@ -1393,7 +1415,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           [&](SemIR::IntType result) {
             return ValidateIntType(
                 eval_context.context(),
-                inst_id.is_valid() ? inst_id : int_type.bit_width_id, result);
+                eval_context.GetDiagnosticLoc({inst_id, int_type.bit_width_id}),
+                result);
           },
           &SemIR::IntType::bit_width_id);
     }
@@ -1405,7 +1428,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           [&](SemIR::FloatType result) {
             return ValidateFloatType(eval_context.context(),
-                                     float_type.bit_width_id, result);
+                                     eval_context.GetDiagnosticLoc(
+                                         {inst_id, float_type.bit_width_id}),
+                                     result);
           },
           &SemIR::FloatType::bit_width_id);
     }
@@ -1568,7 +1593,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     case CARBON_KIND(SemIR::Call call): {
-      return MakeConstantForCall(eval_context, inst_id, call);
+      return MakeConstantForCall(eval_context,
+                                 eval_context.GetDiagnosticLoc(inst_id), call);
     }
 
     // TODO: These need special handling.
@@ -1785,7 +1811,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                 "{0} evaluates to incomplete type {1}",
                                 SemIR::TypeId, SemIR::TypeId);
               return eval_context.emitter().Build(
-                  inst_id, IncompleteTypeInMonomorphization,
+                  eval_context.GetDiagnosticLoc(inst_id),
+                  IncompleteTypeInMonomorphization,
                   require_complete.complete_type_id, complete_type_id);
             });
         if (complete_type_id == SemIR::ErrorInst::SingletonTypeId) {
@@ -1842,11 +1869,12 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
 auto TryEvalInst(Context& context, SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
-  EvalContext eval_context(context);
+  EvalContext eval_context(context, inst_id);
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
-auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
+auto TryEvalBlockForSpecific(Context& context, SemIRLoc loc,
+                             SemIR::SpecificId specific_id,
                              SemIR::GenericInstIndex::Region region)
     -> SemIR::InstBlockId {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
@@ -1856,20 +1884,27 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::SpecificId specific_id,
   llvm::SmallVector<SemIR::InstId> result;
   result.resize(eval_block.size(), SemIR::InstId::Invalid);
 
-  EvalContext eval_context(context, specific_id,
+  EvalContext eval_context(context, loc, specific_id,
                            SpecificEvalInfo{
                                .region = region,
                                .values = result,
                            });
 
+  DiagnosticAnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Note, "in {0} used here",
+                          InstIdAsType);
+        if (loc.is_inst_id && !loc.inst_id.is_valid()) {
+          return;
+        }
+        builder.Note(loc, ResolvingSpecificHere,
+                     GetInstForSpecific(context, specific_id));
+      });
+
   for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
-
-    // TODO: If this becomes possible through monomorphization failure, produce
-    // a diagnostic and put `SemIR::ErrorInst::SingletonInstId` in the table
-    // entry.
     CARBON_CHECK(result[i].is_valid());
   }
 
