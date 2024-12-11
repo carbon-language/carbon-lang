@@ -9,12 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_not_pointer.carbon
 
 fn Deref(n: i32) {
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `i32` [DerefOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:3: error: cannot dereference operand of non-pointer type `Core.Int(32)` [DerefOfNonPointer]
   // CHECK:STDERR:   *n;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *n;
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: error: cannot apply `->` operator to non-pointer type `i32` [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:4: error: cannot apply `->` operator to non-pointer type `Core.Int(32)` [ArrowOperatorOfNonPointer]
   // CHECK:STDERR:   n->foo;
   // CHECK:STDERR:    ^~
   // CHECK:STDERR:
@@ -44,10 +44,8 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Deref.type: type = fn_type @Deref [template]
 // CHECK:STDOUT:   %Deref: %Deref.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
@@ -57,7 +55,7 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -70,23 +68,21 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Deref.decl: %Deref.type = fn_decl @Deref [template = constants.%Deref] {
-// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
-// CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:     %n.patt: %Int.2 = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: %Int.2 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_13.2: type = converted %int.make_type_signed, %.loc11_13.1 [template = constants.%i32]
-// CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %n.param: %Int.2 = value_param runtime_param0
+// CHECK:STDOUT:     %n: %Int.2 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Deref(%n.param_patt: %i32) {
+// CHECK:STDOUT: fn @Deref(%n.param_patt: %Int.2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.ref.loc16: %i32 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref.loc16: %Int.2 = name_ref n, %n
 // CHECK:STDOUT:   %.loc16: ref <error> = deref %n.ref.loc16
-// CHECK:STDOUT:   %n.ref.loc21: %i32 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref.loc21: %Int.2 = name_ref n, %n
 // CHECK:STDOUT:   %.loc21: ref <error> = deref %n.ref.loc21
 // CHECK:STDOUT:   %foo.ref.loc21: <error> = name_ref foo, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc26_5.1: %empty_tuple.type = tuple_literal ()

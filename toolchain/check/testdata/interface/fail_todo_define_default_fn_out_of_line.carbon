@@ -73,9 +73,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Interface.type, %G.type [template]
@@ -88,7 +86,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -103,31 +101,25 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
 // CHECK:STDOUT:   %.decl.loc23: %.type.1 = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.2] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %a.patt: %Int.2 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %Int.2 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %Int.2 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %Int.2 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc31_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc31_19: init type = call constants.%Int(%int_32.loc31_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_19.1: type = value_of_initializer %int.make_type_signed.loc31_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_19.2: type = converted %int.make_type_signed.loc31_19, %.loc31_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int.loc31_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %int_32.loc31_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc31_27: init type = call constants.%Int(%int_32.loc31_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_27.1: type = value_of_initializer %int.make_type_signed.loc31_27 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_27.2: type = converted %int.make_type_signed.loc31_27, %.loc31_27.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int.loc31_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %int_32.loc31_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc31_35: init type = call constants.%Int(%int_32.loc31_35) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_35.1: type = value_of_initializer %int.make_type_signed.loc31_35 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc31_35.2: type = converted %int.make_type_signed.loc31_35, %.loc31_35.1 [template = constants.%i32]
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %Int.loc31_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %a.param: %Int.2 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Int.2 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %Int.2 = value_param runtime_param1
+// CHECK:STDOUT:     %b: %Int.2 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,31 +128,25 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
-// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %a.patt: %Int.2 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %Int.2 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %Int.2 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %Int.2 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc13_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_19: init type = call constants.%Int(%int_32.loc13_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_19.1: type = value_of_initializer %int.make_type_signed.loc13_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_19.2: type = converted %int.make_type_signed.loc13_19, %.loc13_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int.loc13_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %int_32.loc13_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_27: init type = call constants.%Int(%int_32.loc13_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_27.1: type = value_of_initializer %int.make_type_signed.loc13_27 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_27.2: type = converted %int.make_type_signed.loc13_27, %.loc13_27.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int.loc13_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %int_32.loc13_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_35: init type = call constants.%Int(%int_32.loc13_35) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_35.1: type = value_of_initializer %int.make_type_signed.loc13_35 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_35.2: type = converted %int.make_type_signed.loc13_35, %.loc13_35.1 [template = constants.%i32]
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:     %Int.loc13_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %a.param: %Int.2 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Int.2 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %Int.2 = value_param runtime_param1
+// CHECK:STDOUT:     %b: %Int.2 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, %G.decl [template = constants.%assoc1]
 // CHECK:STDOUT:
@@ -178,7 +164,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT:   fn(%a.param_patt: %Int.2, %b.param_patt: %Int.2) -> %Int.2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @.1(@Interface.%Self: %Interface.type) {
@@ -193,7 +179,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: generic fn @.2(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param_patt: %Int.2, %b.param_patt: %Int.2) -> %Int.2 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {}

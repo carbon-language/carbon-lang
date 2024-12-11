@@ -70,9 +70,7 @@ fn Main() {
 // CHECK:STDOUT:   %Run0.type: type = fn_type @Run0 [template]
 // CHECK:STDOUT:   %Run0: %Run0.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Run1.type: type = fn_type @Run1 [template]
 // CHECK:STDOUT:   %Run1: %Run1.type = struct_value () [template]
 // CHECK:STDOUT:   %Run2.type: type = fn_type @Run2 [template]
@@ -85,7 +83,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -102,34 +100,28 @@ fn Main() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Run0.decl: %Run0.type = fn_decl @Run0 [template = constants.%Run0] {} {}
 // CHECK:STDOUT:   %Run1.decl: %Run1.type = fn_decl @Run1 [template = constants.%Run1] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: %Int.2 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %Int.2 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_12.2: type = converted %int.make_type_signed, %.loc12_12.1 [template = constants.%i32]
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %a.param: %Int.2 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Int.2 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run2.decl: %Run2.type = fn_decl @Run2 [template = constants.%Run2] {
-// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %a.patt: %Int.2 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %Int.2 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %Int.2 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %Int.2 = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc13_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_12: init type = call constants.%Int(%int_32.loc13_12) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %int.make_type_signed.loc13_12 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_12.2: type = converted %int.make_type_signed.loc13_12, %.loc13_12.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int.loc13_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %int_32.loc13_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc13_20: init type = call constants.%Int(%int_32.loc13_20) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_20.1: type = value_of_initializer %int.make_type_signed.loc13_20 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_20.2: type = converted %int.make_type_signed.loc13_20, %.loc13_20.1 [template = constants.%i32]
-// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %Int.loc13_20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %a.param: %Int.2 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %Int.2 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %Int.2 = value_param runtime_param1
+// CHECK:STDOUT:     %b: %Int.2 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
@@ -139,12 +131,12 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run1(%a.param_patt: %i32) {
+// CHECK:STDOUT: fn @Run1(%a.param_patt: %Int.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run2(%a.param_patt: %i32, %b.param_patt: %i32) {
+// CHECK:STDOUT: fn @Run2(%a.param_patt: %Int.2, %b.param_patt: %Int.2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

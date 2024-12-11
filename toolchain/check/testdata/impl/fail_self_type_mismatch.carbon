@@ -15,7 +15,7 @@ interface I {
 }
 
 impl i32 as I {
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+6]]:8: error: type `C(i32)` of parameter 1 in redeclaration differs from previous parameter type `C(i32 as I)` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+6]]:8: error: type `C(Core.Int(32))` of parameter 1 in redeclaration differs from previous parameter type `C(Core.Int(32) as I)` [RedeclParamDiffersType]
   // CHECK:STDERR:   fn F(c: C(i32));
   // CHECK:STDERR:        ^~~~~~~~~
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-7]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
@@ -35,7 +35,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T, %X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C.2: type = class_type @C, @C(%I.type, %Self) [symbolic]
@@ -44,19 +44,17 @@ impl i32 as I {
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %i32) [template]
+// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %Int.2) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %Int.2, %Int.2 [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -84,9 +82,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc17_6.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc17_6.2: type = converted %int.make_type_signed, %.loc17_6.1 [template = constants.%i32]
+// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -111,15 +107,15 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc17_6.2 as %I.ref {
+// CHECK:STDOUT: impl @impl: %Int as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
 // CHECK:STDOUT:     %c.patt: %C.3 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(type, constants.%i32) [template = constants.%C.3]
+// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(type, constants.%Int.2) [template = constants.%C.3]
 // CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
 // CHECK:STDOUT:   }
@@ -139,7 +135,7 @@ impl i32 as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.1
@@ -182,11 +178,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(type, constants.%i32) {
+// CHECK:STDOUT: specific @C(type, constants.%Int.2) {
 // CHECK:STDOUT:   %T.loc11_9.2 => type
 // CHECK:STDOUT:   %T.patt.loc11_9.2 => type
-// CHECK:STDOUT:   %X.loc11_19.2 => constants.%i32
-// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%i32
+// CHECK:STDOUT:   %X.loc11_19.2 => constants.%Int.2
+// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%Int.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {

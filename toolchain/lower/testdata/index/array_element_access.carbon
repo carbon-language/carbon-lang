@@ -57,15 +57,15 @@ fn Run() {
 // CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !16
 // CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   %.loc17_18 = load i32, ptr %b.var, align 4, !dbg !18
-// CHECK:STDOUT:   %.loc17_19.3.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc17_18, !dbg !19
-// CHECK:STDOUT:   %.loc17_19.4 = load i32, ptr %.loc17_19.3.array.index, align 4, !dbg !19
-// CHECK:STDOUT:   store i32 %.loc17_19.4, ptr %c.var, align 4, !dbg !20
+// CHECK:STDOUT:   %.loc17_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc17_18, !dbg !19
+// CHECK:STDOUT:   %.loc17_19.2 = load i32, ptr %.loc17_19.1.array.index, align 4, !dbg !19
+// CHECK:STDOUT:   store i32 %.loc17_19.2, ptr %c.var, align 4, !dbg !20
 // CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !21
 // CHECK:STDOUT:   %.loc18_18.1.temp = alloca [2 x i32], align 4, !dbg !22
 // CHECK:STDOUT:   call void @_CB.Main(ptr %.loc18_18.1.temp), !dbg !22
-// CHECK:STDOUT:   %.loc18_21.3.array.index = getelementptr inbounds [2 x i32], ptr %.loc18_18.1.temp, i32 0, i32 1, !dbg !22
-// CHECK:STDOUT:   %.loc18_21.4 = load i32, ptr %.loc18_21.3.array.index, align 4, !dbg !22
-// CHECK:STDOUT:   store i32 %.loc18_21.4, ptr %d.var, align 4, !dbg !23
+// CHECK:STDOUT:   %.loc18_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc18_18.1.temp, i32 0, i32 1, !dbg !22
+// CHECK:STDOUT:   %.loc18_21.2 = load i32, ptr %.loc18_21.1.array.index, align 4, !dbg !22
+// CHECK:STDOUT:   store i32 %.loc18_21.2, ptr %d.var, align 4, !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
