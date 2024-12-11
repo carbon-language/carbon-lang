@@ -82,6 +82,7 @@ cc_library(
 
 cc_test(
     name = "busybox_info_test",
+    size = "small",
     srcs = ["busybox_info_test.cpp"],
     deps = [
         ":busybox_info",

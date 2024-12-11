@@ -41,7 +41,8 @@ namespace Carbon::Check {
 Context::Context(DiagnosticEmitter* emitter,
                  llvm::function_ref<const Parse::TreeAndSubtrees&()>
                      get_parse_tree_and_subtrees,
-                 SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream)
+                 SemIR::File* sem_ir, int imported_ir_count, int total_ir_count,
+                 llvm::raw_ostream* vlog_stream)
     : emitter_(emitter),
       get_parse_tree_and_subtrees_(get_parse_tree_and_subtrees),
       sem_ir_(sem_ir),
@@ -54,6 +55,11 @@ Context::Context(DiagnosticEmitter* emitter,
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
       global_init_(this) {
+  // Prepare fields which relate to the number of IRs available for import.
+  import_irs().Reserve(imported_ir_count);
+  import_ir_constant_values_.reserve(imported_ir_count);
+  check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::Invalid);
+
   // Map the builtin `<error>` and `type` type constants to their corresponding
   // special `TypeId` values.
   type_ids_for_type_constants_.Insert(
@@ -509,7 +515,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
@@ -522,7 +528,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    TryToDefineType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
                         "member access into undefined interface {0}",
                         InstIdAsType);
@@ -1280,16 +1286,21 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                                BuildDiagnosticFn diagnoser,
-                                BuildDiagnosticFn abstract_diagnoser) -> bool {
+auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
+  return TypeCompleter(*this, nullptr).Complete(type_id);
+}
+
+auto Context::RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                  BuildDiagnosticFn diagnoser) -> bool {
+  CARBON_CHECK(diagnoser);
+
   if (!TypeCompleter(*this, diagnoser).Complete(type_id)) {
     return false;
   }
 
   // For a symbolic type, create an instruction to require the corresponding
   // specific type to be complete.
-  if (diagnoser && type_id.AsConstantId().is_symbolic()) {
+  if (type_id.AsConstantId().is_symbolic()) {
     // TODO: Deduplicate these.
     AddInstInNoBlock(SemIR::LocIdAndInst(
         loc_id,
@@ -1298,8 +1309,17 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
             .complete_type_id = type_id}));
   }
 
-  if (!abstract_diagnoser) {
-    return true;
+  return true;
+}
+
+auto Context::RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                  BuildDiagnosticFn diagnoser,
+                                  BuildDiagnosticFn abstract_diagnoser)
+    -> bool {
+  CARBON_CHECK(abstract_diagnoser);
+
+  if (!RequireCompleteType(type_id, loc_id, diagnoser)) {
+    return false;
   }
 
   if (auto class_type = types().TryGetAs<SemIR::ClassType>(type_id)) {
@@ -1321,9 +1341,9 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
   return true;
 }
 
-auto Context::TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                              BuildDiagnosticFn diagnoser) -> bool {
-  if (!TryToCompleteType(type_id, loc_id, diagnoser)) {
+auto Context::RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                                 BuildDiagnosticFn diagnoser) -> bool {
+  if (!RequireCompleteType(type_id, loc_id, diagnoser)) {
     return false;
   }
 

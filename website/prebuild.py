@@ -148,6 +148,9 @@ def main() -> None:
 
     # bazel-execroot interferes with jekyll because it's a broken symlink.
     Path("bazel-execroot").unlink()
+    # This is a symlink to website/favicon.png, which is moved below.
+    # TODO: Consider moving the icon to a location which won't break.
+    Path("utils/vscode/images/icon.png").unlink()
 
     # The external symlink is created by scripts/create_compdb.py, and can
     # interfere with local execution.

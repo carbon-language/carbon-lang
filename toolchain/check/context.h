@@ -72,7 +72,8 @@ class Context {
   explicit Context(DiagnosticEmitter* emitter,
                    llvm::function_ref<const Parse::TreeAndSubtrees&()>
                        get_parse_tree_and_subtrees,
-                   SemIR::File* sem_ir, llvm::raw_ostream* vlog_stream);
+                   SemIR::File* sem_ir, int imported_ir_count,
+                   int total_ir_count, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIRLoc loc, std::string label) -> bool;
@@ -339,44 +340,58 @@ class Context {
 
   // Attempts to complete the type `type_id`. Returns `true` if the type is
   // complete, or `false` if it could not be completed. A complete type has
-  // known object and value representations.
+  // known object and value representations. Returns `true` if the type is
+  // symbolic.
+  //
+  // Avoid calling this where possible, as it can lead to coherence issues.
+  auto TryToCompleteType(SemIR::TypeId type_id) -> bool;
+
+  // Like `TryToCompleteType`, but for cases where it is an error for the type
+  // to be incomplete.
   //
   // If the type is not complete, `diagnoser` is invoked to diagnose the issue,
   // if a `diagnoser` is provided. The builder it returns will be annotated to
   // describe the reason why the type is not complete.
   //
-  // If `diagnoser` is provided, it is assumed to be an error for the type to be
-  // incomplete, and `diagnoser` should build an error diagnostic. If `type_id`
-  // is dependent, the completeness of the type will be enforced during
-  // monomorphization, and `loc_id` is used as the location for a diagnostic
-  // produced at that time.
+  // `diagnoser` should build an error diagnostic. If `type_id` is dependent,
+  // the completeness of the type will be enforced during monomorphization, and
+  // `loc_id` is used as the location for a diagnostic produced at that time.
+  auto RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                           BuildDiagnosticFn diagnoser) -> bool;
+
+  // Like `RequireCompleteType`, but also require the type to not be an abstract
+  // class type. If it is, `abstract_diagnoser` is used to diagnose the problem,
+  // and this function returns false.
+  auto RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                           BuildDiagnosticFn diagnoser,
+                           BuildDiagnosticFn abstract_diagnoser) -> bool;
+
+  // Like `RequireCompleteType`, but also require the type to be defined. A
+  // defined type has known members. If the type is not defined, `diagnoser` is
+  // used to diagnose the problem, and this function returns false.
   //
-  // Returns `true` if the type is symbolic.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                         BuildDiagnosticFn diagnoser,
-                         BuildDiagnosticFn abstract_diagnoser = nullptr)
-      -> bool;
-  auto TryToCompleteType(SemIR::TypeId type_id) -> bool {
-    return TryToCompleteType(type_id, SemIR::LocId::Invalid, nullptr);
+  // This is the same as `RequireCompleteType` except for facet types, which are
+  // complete before they are fully defined.
+  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                          BuildDiagnosticFn diagnoser) -> bool;
+
+  // Returns the type `type_id` if it is a complete type, or produces an
+  // incomplete type error and returns an error type. This is a convenience
+  // wrapper around `RequireCompleteType`.
+  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                      BuildDiagnosticFn diagnoser) -> SemIR::TypeId {
+    return RequireCompleteType(type_id, loc_id, diagnoser)
+               ? type_id
+               : SemIR::ErrorInst::SingletonTypeId;
   }
 
-  // Attempts to complete and define the type `type_id`. Returns `true` if the
-  // type is defined, or `false` if no definition is available. A defined type
-  // has known members.
-  //
-  // This is the same as `TryToCompleteType` except for interfaces, which are
-  // complete before they are fully defined.
-  auto TryToDefineType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                       BuildDiagnosticFn diagnoser = nullptr) -> bool;
-
-  // Returns the type `type_id` as a complete type, or produces an incomplete
-  // type error and returns an error type. This is a convenience wrapper around
-  // TryToCompleteType. `diagnoser` must not be null.
-  auto AsCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+  // Returns the type `type_id` if it is a concrete type, or produces an
+  // incomplete or abstract type error and returns an error type. This is a
+  // convenience wrapper around `RequireConcreteType`.
+  auto AsConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                       BuildDiagnosticFn diagnoser,
-                      BuildDiagnosticFn abstract_diagnoser = nullptr)
-      -> SemIR::TypeId {
-    return TryToCompleteType(type_id, loc_id, diagnoser, abstract_diagnoser)
+                      BuildDiagnosticFn abstract_diagnoser) -> SemIR::TypeId {
+    return RequireConcreteType(type_id, loc_id, diagnoser, abstract_diagnoser)
                ? type_id
                : SemIR::ErrorInst::SingletonTypeId;
   }
@@ -446,13 +461,6 @@ class Context {
   auto AddExport(SemIR::InstId inst_id) -> void { exports_.push_back(inst_id); }
 
   auto Finalize() -> void;
-
-  // Sets the total number of IRs which exist. This is used to prepare a map
-  // from IR to imported IR.
-  auto SetTotalIRCount(int num_irs) -> void {
-    CARBON_CHECK(check_ir_map_.empty(), "SetTotalIRCount is only called once");
-    check_ir_map_.resize(num_irs, SemIR::ImportIRId::Invalid);
-  }
 
   // Returns the imported IR ID for an IR, or invalid if not imported.
   auto GetImportIRId(const SemIR::File& sem_ir) -> SemIR::ImportIRId& {

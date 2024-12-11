@@ -384,7 +384,7 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
 
   auto [adapted_inst_id, adapted_type_id] =
       ExprAsType(context, node_id, adapted_type_expr_id);
-  adapted_type_id = context.AsCompleteType(
+  adapted_type_id = context.AsConcreteType(
       adapted_type_id, node_id,
       [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,

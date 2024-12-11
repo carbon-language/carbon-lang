@@ -966,8 +966,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  // We can only perform initialization for complete types.
-  if (!context.TryToCompleteType(
+  // We can only perform initialization for complete, non-abstract types.
+  if (!context.RequireConcreteType(
           target.type_id, loc_id,
           [&] {
             CARBON_CHECK(!target.is_initializer(),

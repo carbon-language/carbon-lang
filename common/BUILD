@@ -181,6 +181,7 @@ cc_library(
 
 cc_test(
     name = "hashing_test",
+    size = "small",
     srcs = ["hashing_test.cpp"],
     deps = [
         ":hashing",
@@ -217,6 +218,7 @@ cc_library(
 
 cc_test(
     name = "hashtable_key_context_test",
+    size = "small",
     srcs = ["hashtable_key_context_test.cpp"],
     deps = [
         ":hashtable_key_context",
@@ -281,6 +283,7 @@ cc_library(
 
 cc_test(
     name = "map_test",
+    size = "small",
     srcs = ["map_test.cpp"],
     deps = [
         ":map",
@@ -368,6 +371,7 @@ cc_binary(
 
 sh_test(
     name = "raw_hashtable_metadata_group_benchmark_test",
+    size = "small",
     srcs = ["raw_hashtable_metadata_group_benchmark"],
     args = [
         "--benchmark_min_time=1x",
@@ -420,6 +424,7 @@ cc_library(
 
 cc_test(
     name = "set_test",
+    size = "small",
     srcs = ["set_test.cpp"],
     deps = [
         ":raw_hashtable_test_helpers",
