@@ -34,7 +34,8 @@ class EvalContext {
       Context& context, SemIRLoc fallback_loc,
       SemIR::SpecificId specific_id = SemIR::SpecificId::Invalid,
       std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
-      : context_(context), fallback_loc_(fallback_loc),
+      : context_(context),
+        fallback_loc_(fallback_loc),
         specific_id_(specific_id),
         specific_eval_info_(specific_eval_info) {}
 
