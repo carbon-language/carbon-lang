@@ -149,8 +149,8 @@ struct ReturnTypeInfo {
 
 // Information about the type literal that corresponds to a type.
 struct TypeLiteralInfo {
-  // The kind of a type literal, as determined by the letter that prefixes the bit
-  // width.
+  // The kind of a type literal, as determined by the letter that prefixes the
+  // bit width.
   enum Kind : char {
     None = 0,
     Int = 'i',

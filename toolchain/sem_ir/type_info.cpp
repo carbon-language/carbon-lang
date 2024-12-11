@@ -118,7 +118,8 @@ auto TypeLiteralInfo::PrintLiteral(const File& file,
   file.ints().Get(bit_width_id).print(out, /*isSigned=*/false);
 }
 
-auto TypeLiteralInfo::GetLiteralAsString(const File& file) const -> std::string {
+auto TypeLiteralInfo::GetLiteralAsString(const File& file) const
+    -> std::string {
   std::string result;
   llvm::raw_string_ostream out(result);
   PrintLiteral(file, out);
