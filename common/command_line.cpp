@@ -1070,10 +1070,9 @@ auto Parser::FinalizeParsedOptions() -> ErrorOr<Success> {
   // Sort the missing arguments by name to provide a stable and deterministic
   // error message. We know there can't be duplicate names because these came
   // from a may keyed on the name, so this provides a total ordering.
-  std::sort(missing_options.begin(), missing_options.end(),
-            [](const Arg* lhs, const Arg* rhs) {
-              return lhs->info.name < rhs->info.name;
-            });
+  llvm::sort(missing_options, [](const Arg* lhs, const Arg* rhs) {
+    return lhs->info.name < rhs->info.name;
+  });
 
   std::string error_str = "required options not provided: ";
   llvm::raw_string_ostream error(error_str);

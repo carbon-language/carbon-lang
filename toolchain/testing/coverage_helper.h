@@ -64,14 +64,14 @@ auto TestKindCoverage(const std::string& manifest_path,
 
   constexpr llvm::StringLiteral Bullet = "\n  - ";
 
-  std::sort(missing_kinds.begin(), missing_kinds.end());
+  llvm::sort(missing_kinds);
   EXPECT_TRUE(missing_kinds.empty()) << "Some kinds have no tests:" << Bullet
                                      << llvm::join(missing_kinds, Bullet);
 
   llvm::SmallVector<std::string> unexpected_matches;
   covered_kinds.ForEach(
       [&](const std::string& match) { unexpected_matches.push_back(match); });
-  std::sort(unexpected_matches.begin(), unexpected_matches.end());
+  llvm::sort(unexpected_matches);
   EXPECT_TRUE(unexpected_matches.empty())
       << "Matched things that aren't in the kind list:" << Bullet
       << llvm::join(unexpected_matches, Bullet);

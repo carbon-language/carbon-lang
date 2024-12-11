@@ -272,7 +272,7 @@ DeductionContext::DeductionContext(Context& context, SemIR::LocId loc_id,
     // to substitute them into the function declaration.
     auto args = context.inst_blocks().Get(
         context.specifics().Get(enclosing_specific_id).args_id);
-    std::copy(args.begin(), args.end(), result_arg_ids_.begin());
+    llvm::copy(args, result_arg_ids_.begin());
 
     // TODO: Subst is linear in the length of the substitutions list. Change
     // it so we can pass in an array mapping indexes to substitutions instead.

@@ -349,10 +349,10 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
     grouped_key_indices[hash_index].push_back(i);
   }
   ssize_t max_group_index =
-      std::max_element(grouped_key_indices.begin(), grouped_key_indices.end(),
-                       [](const auto& lhs, const auto& rhs) {
-                         return lhs.size() < rhs.size();
-                       }) -
+      llvm::max_element(grouped_key_indices,
+                        [](const auto& lhs, const auto& rhs) {
+                          return lhs.size() < rhs.size();
+                        }) -
       grouped_key_indices.begin();
 
   // If the max number of collisions on the index is less than or equal to the

@@ -129,9 +129,8 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
 
   // Find the first non-lexical scope that is within the scope of the lexical
   // lookup result.
-  auto* first_non_lexical_scope = std::lower_bound(
-      non_lexical_scope_stack_.begin(), non_lexical_scope_stack_.end(),
-      lexical_results.back().scope_index,
+  auto* first_non_lexical_scope = llvm::lower_bound(
+      non_lexical_scope_stack_, lexical_results.back().scope_index,
       [](const NonLexicalScope& scope, ScopeIndex index) {
         return scope.scope_index < index;
       });
