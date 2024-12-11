@@ -404,6 +404,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
   auto& impl_info = context.impls().Get(impl_id);
   if (!impl_info.is_defined()) {
     impl_info.witness_id = BuildImplWitness(context, impl_id);
+    impl_info.defined = true;
   }
 
   FinishGenericDefinition(context, impl_info.generic_id);

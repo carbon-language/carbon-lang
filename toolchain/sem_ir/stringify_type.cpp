@@ -291,6 +291,70 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
+      case ImplWitnessAccess::Kind: {
+        // FIXME : case CARBON_KIND(ImplWitnessAccess inst): {
+        out << ".(FIXME.FIXME)";
+        /* FIXME
+        auto witness_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        auto witness =
+            sem_ir.insts().GetAs<ImplWitness>(witness_inst_id);
+        auto impl = sem_ir.impls().Get(impl_id);
+        auto constraint_inst_id =
+            sem_ir.constant_values().GetConstantInstId(impl.constraint_id);
+
+        auto witness_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
+        auto witness =
+            sem_ir.insts().GetAs<FacetAccessWitness>(witness_inst_id);
+        auto witness_type_id =
+            sem_ir.insts().Get(witness.facet_value_inst_id).type_id();
+        auto facet_type = sem_ir.types().GetAs<FacetType>(witness_type_id);
+        step_stack.PushString(")");
+        // TODO: Support != 1 interface better.
+        if (auto impls_constraint = sem_ir.facet_types()
+                                        .Get(facet_type.facet_type_id)
+                                        .TryAsSingleInterface()) {
+          const auto& interface =
+              sem_ir.interfaces().Get(impls_constraint->interface_id);
+          auto entities =
+              sem_ir.inst_blocks().Get(interface.associated_entities_id);
+          size_t index = inst.index.index;
+          CARBON_CHECK(index < entities.size(), "Access out of bounds.");
+          auto entity_inst_id = entities[index];
+          if (auto associated_const =
+                  sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
+                      entity_inst_id)) {
+            step_stack.PushNameId(associated_const->name_id);
+          } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
+                         entity_inst_id)) {
+            const auto& function =
+                sem_ir.functions().Get(function_decl->function_id);
+            step_stack.PushNameId(function.name_id);
+          } else {
+            step_stack.PushInstId(entity_inst_id);
+          }
+          step_stack.PushString(".");
+          step_stack.PushNameId(interface.name_id);
+          step_stack.PushString(".(");
+        } else {
+          step_stack.PushTypeId(witness_type_id);
+          step_stack.PushString(".(TODO: ");
+        }
+
+        bool period_self = false;
+        if (auto sym_name = sem_ir.insts().TryGetAs<BindSymbolicName>(
+                witness.facet_value_inst_id)) {
+          auto name_id =
+              sem_ir.entity_names().Get(sym_name->entity_name_id).name_id;
+          period_self = (name_id == SemIR::NameId::PeriodSelf);
+        }
+        if (!period_self) {
+          step_stack.PushInstId(witness.facet_value_inst_id);
+        }
+        */
+        break;
+      }
       case CARBON_KIND(ImportRefUnloaded inst): {
         if (inst.entity_name_id.is_valid()) {
           auto name_id = sem_ir.entity_names().Get(inst.entity_name_id).name_id;
@@ -463,6 +527,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImplWitness::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:

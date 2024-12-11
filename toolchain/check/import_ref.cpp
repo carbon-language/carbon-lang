@@ -1832,6 +1832,8 @@ static auto MakeImplDeclaration(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
        {.self_id = SemIR::InstId::Invalid,
         .constraint_id = SemIR::InstId::Invalid,
+        // FIXME: create a block with non-function associated constant values
+        .witness_block_id = SemIR::InstBlockId::Invalid,
         .witness_id = SemIR::InstId::Invalid}});
 
   // Write the impl ID into the ImplDecl.
@@ -1846,7 +1848,9 @@ static auto AddImplDefinition(ImportContext& context,
     -> void {
   new_impl.definition_id = new_impl.first_owning_decl_id;
 
+  // FIXME: new_impl.witness_block_id
   new_impl.witness_id = witness_id;
+  new_impl.defined = true;
 
   if (import_impl.scope_id.is_valid()) {
     new_impl.scope_id = context.local_name_scopes().Add(
@@ -2216,6 +2220,45 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplWitness inst) -> ResolveResult {
+  auto import_impl_decl_inst_id =
+      // FIXME: latest_decl_id or first_decl_id?
+      resolver.import_impls().Get(inst.impl_id).latest_decl_id();
+  auto impl_const_id = GetLocalConstantId(resolver, import_impl_decl_inst_id);
+  auto impl_inst_id = resolver.local_constant_values().GetInstId(impl_const_id);
+  auto impl_id =
+      resolver.local_insts().GetAs<SemIR::ImplDecl>(impl_inst_id).impl_id;
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto specific_id =
+      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
+  return ResolveAs<SemIR::ImplWitness>(
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::WitnessType::SingletonInstId),
+                 .impl_id = impl_id,
+                 .specific_id = specific_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ImplWitnessAccess inst)
+    -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto witness_id = GetLocalConstantInstId(resolver, inst.witness_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::ImplWitnessAccess>(
+      resolver,
+      {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
+       .witness_id = witness_id,
+       .index = inst.index});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InterfaceWitness inst) -> ResolveResult {
   auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
   if (resolver.HasNewWork()) {
@@ -2520,6 +2563,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::ImplDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::ImplWitness inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ImplWitnessAccess inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);

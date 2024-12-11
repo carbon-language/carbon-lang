@@ -134,7 +134,8 @@ struct ArrayIndex {
 struct AnyAggregateAccess {
   static constexpr InstKind Kinds[] = {
       InstKind::StructAccess, InstKind::TupleAccess,
-      InstKind::ClassElementAccess, InstKind::InterfaceWitnessAccess};
+      InstKind::ClassElementAccess, InstKind::ImplWitnessAccess,
+      InstKind::InterfaceWitnessAccess};
 
   InstKind kind;
   TypeId type_id;
@@ -661,7 +662,7 @@ struct FacetValue {
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
-  // An `InterfaceWitness` instruction (TODO: `FacetTypeWitness`).
+  // An `ImplWitness` instruction (TODO: `FacetTypeWitness`).
   InstId witness_inst_id;
 };
 
@@ -786,6 +787,36 @@ struct ImplDecl {
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
   InstBlockId decl_block_id;
+};
+
+// A witness that a type implements an interface.
+struct ImplWitness {
+  static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
+      {.ir_name = "impl_witness",
+       .constant_kind = InstConstantKind::Conditional,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // Always the builtin witness type.
+  TypeId type_id;
+  ImplId impl_id;
+  SpecificId specific_id;
+};
+
+// Accesses an element of an impl witness by index.
+struct ImplWitnessAccess {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_access",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId witness_id;
+  // An index into associated constants, in the order defined by the interface.
+  ElementIndex index;
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1

@@ -28,8 +28,14 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
+  // The witness block for the impl. It has one entry for every associated
+  // constant of the interface. The entries are updated at the end of the impl
+  // definition.
+  // FIXME: should this just be a vector of `InstId`s?
+  InstBlockId witness_block_id = InstBlockId::Invalid;
 
   // The following members are set at the `}` of the impl definition.
+  bool defined = false;
 
   // The witness for the impl. This can be `BuiltinErrorInst`.
   InstId witness_id = InstId::Invalid;

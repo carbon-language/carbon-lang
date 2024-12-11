@@ -1217,6 +1217,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
+                                          SemIR::ImplWitnessAccess,
                                           SemIR::InterfaceWitnessAccess>())
   auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
