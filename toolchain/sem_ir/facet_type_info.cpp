@@ -7,14 +7,14 @@
 namespace Carbon::SemIR {
 
 template <typename VecT>
-static auto SortAndDeduplicate(VecT* vec) -> void {
-  llvm::sort(*vec);
-  vec->erase(llvm::unique(*vec), vec->end());
+static auto SortAndDeduplicate(VecT& vec) -> void {
+  llvm::sort(vec);
+  vec.erase(llvm::unique(vec), vec.end());
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
-  SortAndDeduplicate(&impls_constraints);
-  SortAndDeduplicate(&rewrite_constraints);
+  SortAndDeduplicate(impls_constraints);
+  SortAndDeduplicate(rewrite_constraints);
 }
 
 auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
