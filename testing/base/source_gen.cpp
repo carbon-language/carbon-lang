@@ -206,7 +206,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   int num_declared_types =
       num_types * type_use_params.declared_types_weight / type_weight_sum;
   for ([[maybe_unused]] auto _ : llvm::seq(num_declared_types / num_classes)) {
-    type_names_.append(class_names_.begin(), class_names_.end());
+    llvm::append_range(type_names_, class_names_);
   }
   // Now append the remainder number of class names. This is where the class
   // names being un-shuffled is essential. We're going to have one extra
@@ -389,8 +389,8 @@ auto SourceGen::GetIdentifiers(int number, int min_length, int max_length,
       number, min_length, max_length, uniform,
       [this](int length, int length_count,
              llvm::SmallVectorImpl<llvm::StringRef>& dest) {
-        auto length_idents = GetSingleLengthIdentifiers(length, length_count);
-        dest.append(length_idents.begin(), length_idents.end());
+        llvm::append_range(dest,
+                           GetSingleLengthIdentifiers(length, length_count));
       });
 
   return idents;

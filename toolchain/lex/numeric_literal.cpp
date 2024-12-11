@@ -185,9 +185,8 @@ static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
-    std::remove_copy_if(digits.begin(), digits.end(),
-                        std::back_inserter(cleaned),
-                        [](char c) { return c == '_' || c == '.'; });
+    llvm::copy_if(digits, std::back_inserter(cleaned),
+                  [](char c) { return c != '_' && c != '.'; });
     digits = cleaned;
   }
 

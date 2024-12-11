@@ -317,10 +317,9 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
 auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
-      std::partition_point(line_infos_.begin(), line_infos_.end(),
-                           [byte_offset](LineInfo line_info) {
-                             return line_info.start <= byte_offset;
-                           });
+      llvm::partition_point(line_infos_, [byte_offset](LineInfo line_info) {
+        return line_info.start <= byte_offset;
+      });
   --line_it;
 
   // If this isn't the first line but it starts past the end of the source, then
@@ -386,8 +385,8 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   int32_t offset = loc - buffer_->source_->text().begin();
 
   // Find the first line starting after the given location.
-  const auto* next_line_it = std::partition_point(
-      buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
+  const auto* next_line_it = llvm::partition_point(
+      buffer_->line_infos_,
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.

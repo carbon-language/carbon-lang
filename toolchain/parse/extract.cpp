@@ -201,7 +201,7 @@ auto NodeExtractor::MatchesNodeIdOneOf(
       *trace_ << "\n";
     }
     return false;
-  } else if (std::find(kinds.begin(), kinds.end(), node_kind) == kinds.end()) {
+  } else if (llvm::find(kinds, node_kind) == kinds.end()) {
     if (trace_) {
       *trace_ << "NodeIdOneOf error: wrong kind " << node_kind << ", expected ";
       trace_kinds();

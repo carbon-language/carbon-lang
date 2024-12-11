@@ -8,8 +8,8 @@ namespace Carbon::SemIR {
 
 template <typename VecT>
 static auto SortAndDeduplicate(VecT* vec) -> void {
-  std::sort(vec->begin(), vec->end());
-  vec->erase(std::unique(vec->begin(), vec->end()), vec->end());
+  llvm::sort(*vec);
+  vec->erase(llvm::unique(*vec), vec->end());
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
