@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_type_assign.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `type` to `{.a: i32}` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `ImplicitAs({.a: i32})` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+3]]:1: note: type `type` does not implement interface `Core.ImplicitAs({.a: i32})` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: {.a: i32} = {.a: i32};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var x: {.a: i32} = {.a: i32};

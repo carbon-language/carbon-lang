@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_negative_indexing.carbon
 
 var c: [i32; 2] = (42, 42);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: error: cannot access member of interface `Negate` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:16: error: cannot access member of interface `Core.Negate` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: var d: i32 = c[-10];
 // CHECK:STDERR:                ^~~
 var d: i32 = c[-10];

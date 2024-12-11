@@ -44,7 +44,7 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a < b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -52,7 +52,7 @@ fn TestLess(a: D, b: D) -> bool {
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a <= b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -60,7 +60,7 @@ fn TestLessEqual(a: D, b: D) -> bool {
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a > b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -68,7 +68,7 @@ fn TestGreater(a: D, b: D) -> bool {
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a >= b;
   // CHECK:STDERR:          ^~~~~~
   return a >= b;

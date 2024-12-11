@@ -14,12 +14,16 @@ package Same library "[[@TEST_NAME]]";
 
 namespace A;
 
+class A.C;
+
 // --- b.carbon
 
 package Same library "[[@TEST_NAME]]";
 import library "a";
 
 namespace A.B;
+
+fn F() -> A.C;
 
 // --- c.carbon
 
@@ -42,7 +46,52 @@ import library "d";
 
 var e: () = A.B.C.D();
 
+// --- fail_named_indirectly_same_package.carbon
+
+package Same library "[[@TEST_NAME]]";
+
+import library "b";
+
+// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE+13]]:10: error: function returns incomplete type `A.C` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fn G() { F(); }
+// CHECK:STDERR:          ^~~
+// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: b.carbon:3:1: in import [InImport]
+// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class A.C;
+// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
+// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: fn F() -> A.C;
+// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:
+fn G() { F(); }
+
+// --- fail_named_indirectly_different_package.carbon
+
+package Other library "[[@TEST_NAME]]";
+
+import Same library "b";
+
+// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+12]]:10: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fn G() { Same.F(); }
+// CHECK:STDERR:          ^~~~~~~~
+// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: b.carbon:3:1: in import [InImport]
+// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class A.C;
+// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
+// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: fn F() -> A.C;
+// CHECK:STDERR:        ^~~~~~
+fn G() { Same.F(); }
+
 // CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -57,16 +106,29 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:     .A = %A
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %A: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref: <namespace> = import_ref Same//a, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref, [template] {
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//a, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:     .B = file.%B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: type = import_ref Same//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -77,11 +139,25 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = imports.%A
 // CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %B: <namespace> = namespace [template] {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [template = imports.%A]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C [from "a.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> %C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
@@ -90,6 +166,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.3 = import_ref Same//b, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -99,6 +176,7 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = imports.%A
+// CHECK:STDOUT:     .F = imports.%import_ref.3
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -193,4 +271,94 @@ var e: () = A.B.C.D();
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:     .B = %B
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Same//b, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .A = imports.%A
+// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C [from "b.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %G.type: type = fn_type @G [template]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Same: <namespace> = namespace file.%Same.import, [template] {
+// CHECK:STDOUT:     .F = %import_ref
+// CHECK:STDOUT:     import Same//b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %F.type = import_ref Same//b, F, loaded [template = constants.%F]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Same = imports.%Same
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Same.import = import Same
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C [from "b.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Same.ref: <namespace> = name_ref Same, imports.%Same [template = imports.%Same]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref [template = constants.%F]
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
 // CHECK:STDOUT:

@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+6]]:21: error: cannot convert from `Core.IntLiteral` to `(i32, i32)` with `as` [ExplicitAsConversionFailure]
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: note: type `Core.IntLiteral` does not implement interface `As((i32, i32))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:21: note: type `Core.IntLiteral` does not implement interface `Core.As((i32, i32))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
 let n: (i32, i32) = 1 as (i32, i32);
