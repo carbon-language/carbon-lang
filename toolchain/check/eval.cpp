@@ -44,6 +44,19 @@ class EvalContext {
   // TODO: This is also sometimes unavailable.
   auto fallback_loc() const -> SemIRLoc { return fallback_loc_; }
 
+  // Returns a location to use to point at an instruction in a diagnostic, given
+  // a list of instructions that might have an attached location. This is the
+  // location of the first instruction in the list that has a location if there
+  // is one, and otherwise the fallback location.
+  auto GetDiagnosticLoc(llvm::ArrayRef<SemIR::InstId> inst_ids) -> SemIRLoc {
+    for (auto inst_id : inst_ids) {
+      if (inst_id.is_valid() && context_.insts().GetLocId(inst_id).is_valid()) {
+        return inst_id;
+      }
+    }
+    return fallback_loc_;
+  }
+
   // Gets the value of the specified compile-time binding in this context.
   // Returns `Invalid` if the value is not fixed in this context.
   auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
@@ -611,7 +624,7 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
                           "array index `{0}` is past the end of type {1}",
                           TypedInt, SemIR::TypeId);
         eval_context.emitter().Emit(
-            inst.index_id, ArrayIndexOutOfBounds,
+            eval_context.GetDiagnosticLoc(inst.index_id), ArrayIndexOutOfBounds,
             {.type = index->type_id, .value = index_val}, aggregate_type_id);
         return SemIR::ErrorInst::SingletonConstantId;
       }
@@ -1345,7 +1358,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
               CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
                                 "array bound of {0} is negative", TypedInt);
               eval_context.emitter().Emit(
-                  bound_id, ArrayBoundNegative,
+                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundNegative,
                   {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
@@ -1353,7 +1366,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
               CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
                                 "array bound of {0} is too large", TypedInt);
               eval_context.emitter().Emit(
-                  bound_id, ArrayBoundTooLarge,
+                  eval_context.GetDiagnosticLoc(bound_id), ArrayBoundTooLarge,
                   {.type = int_bound->type_id, .value = bound_val});
               return false;
             }
@@ -1402,7 +1415,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           [&](SemIR::IntType result) {
             return ValidateIntType(
                 eval_context.context(),
-                inst_id.is_valid() ? inst_id : int_type.bit_width_id, result);
+                eval_context.GetDiagnosticLoc({inst_id, int_type.bit_width_id}),
+                result);
           },
           &SemIR::IntType::bit_width_id);
     }
@@ -1414,7 +1428,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           [&](SemIR::FloatType result) {
             return ValidateFloatType(eval_context.context(),
-                                     float_type.bit_width_id, result);
+                                     eval_context.GetDiagnosticLoc(
+                                         {inst_id, float_type.bit_width_id}),
+                                     result);
           },
           &SemIR::FloatType::bit_width_id);
     }
@@ -1577,7 +1593,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     }
 
     case CARBON_KIND(SemIR::Call call): {
-      return MakeConstantForCall(eval_context, inst_id, call);
+      return MakeConstantForCall(eval_context,
+                                 eval_context.GetDiagnosticLoc(inst_id), call);
     }
 
     // TODO: These need special handling.
@@ -1794,7 +1811,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                 "{0} evaluates to incomplete type {1}",
                                 SemIR::TypeId, SemIR::TypeId);
               return eval_context.emitter().Build(
-                  inst_id, IncompleteTypeInMonomorphization,
+                  eval_context.GetDiagnosticLoc(inst_id),
+                  IncompleteTypeInMonomorphization,
                   require_complete.complete_type_id, complete_type_id);
             });
         if (complete_type_id == SemIR::ErrorInst::SingletonTypeId) {
