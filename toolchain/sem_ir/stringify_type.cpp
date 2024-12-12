@@ -291,18 +291,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
-      case ImplWitnessAccess::Kind: {
-        // FIXME : case CARBON_KIND(ImplWitnessAccess inst): {
-        out << ".(FIXME.FIXME)";
-        /* FIXME
-        auto witness_inst_id =
-            sem_ir.constant_values().GetConstantInstId(inst.witness_id);
-        auto witness =
-            sem_ir.insts().GetAs<ImplWitness>(witness_inst_id);
-        auto impl = sem_ir.impls().Get(impl_id);
-        auto constraint_inst_id =
-            sem_ir.constant_values().GetConstantInstId(impl.constraint_id);
-
+      case CARBON_KIND(ImplWitnessAccess inst): {
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
         auto witness =
@@ -352,7 +341,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         if (!period_self) {
           step_stack.PushInstId(witness.facet_value_inst_id);
         }
-        */
         break;
       }
       case CARBON_KIND(ImportRefUnloaded inst): {

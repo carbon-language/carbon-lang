@@ -311,6 +311,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_info.witness_id = BuildImplWitness(context, impl_info);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -403,7 +404,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
 
   auto& impl_info = context.impls().Get(impl_id);
   if (!impl_info.is_defined()) {
-    impl_info.witness_id = BuildImplWitness(context, impl_id);
+    FinishImplWitness(context, impl_info);
     impl_info.defined = true;
   }
 

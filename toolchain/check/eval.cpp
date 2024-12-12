@@ -1386,7 +1386,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::ImplWitness::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::ImplWitness::specific_id);
+                                        &SemIR::ImplWitness::elements_id);
     case SemIR::InterfaceWitness::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::InterfaceWitness::elements_id);
@@ -1561,14 +1561,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
+    case SemIR::ImplWitnessAccess::Kind:
     case SemIR::InterfaceWitnessAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
-
-    case SemIR::ImplWitnessAccess::Kind: {
-      CARBON_FATAL("FIXME");
-    }
 
     case CARBON_KIND(SemIR::ArrayIndex index): {
       return PerformArrayIndex(eval_context, index);

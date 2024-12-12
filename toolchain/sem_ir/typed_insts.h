@@ -158,7 +158,8 @@ struct AnyAggregateInit {
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
   static constexpr InstKind Kinds[] = {
-      InstKind::StructValue, InstKind::TupleValue, InstKind::InterfaceWitness};
+      InstKind::StructValue, InstKind::TupleValue, InstKind::ImplWitness,
+      InstKind::InterfaceWitness};
 
   InstKind kind;
   TypeId type_id;
@@ -800,8 +801,7 @@ struct ImplWitness {
 
   // Always the builtin witness type.
   TypeId type_id;
-  ImplId impl_id;
-  SpecificId specific_id;
+  InstBlockId elements_id;
 };
 
 // Accesses an element of an impl witness by index.
@@ -815,7 +815,6 @@ struct ImplWitnessAccess {
 
   TypeId type_id;
   InstId witness_id;
-  // An index into associated constants, in the order defined by the interface.
   ElementIndex index;
 };
 

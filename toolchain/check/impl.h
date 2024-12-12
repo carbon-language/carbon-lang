@@ -10,8 +10,11 @@
 
 namespace Carbon::Check {
 
-// Builds and returns a witness for the impl `impl_id`.
-auto BuildImplWitness(Context& context, SemIR::ImplId impl_id) -> SemIR::InstId;
+// Create the initial witness for `impl`.
+auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId;
+
+// Adds the function members to the witness for `impl`.
+auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
 
 }  // namespace Carbon::Check
 

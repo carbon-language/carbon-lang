@@ -1821,7 +1821,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 // Make a declaration of an impl. This is done as a separate step from
 // importing the impl definition in order to resolve cycles.
 static auto MakeImplDeclaration(ImportContext& context,
-                                const SemIR::Impl& import_impl)
+                                const SemIR::Impl& import_impl,
+                                SemIR::InstId witness_id)
     -> std::pair<SemIR::ImplId, SemIR::ConstantId> {
   SemIR::ImplDecl impl_decl = {.impl_id = SemIR::ImplId::Invalid,
                                .decl_block_id = SemIR::InstBlockId::Empty};
@@ -1832,9 +1833,7 @@ static auto MakeImplDeclaration(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, impl_decl_id, import_impl),
        {.self_id = SemIR::InstId::Invalid,
         .constraint_id = SemIR::InstId::Invalid,
-        // FIXME: create a block with non-function associated constant values
-        .witness_block_id = SemIR::InstBlockId::Invalid,
-        .witness_id = SemIR::InstId::Invalid}});
+        .witness_id = witness_id}});
 
   // Write the impl ID into the ImplDecl.
   context.local_context().ReplaceInstBeforeConstantUse(impl_decl_id, impl_decl);
@@ -1844,12 +1843,8 @@ static auto MakeImplDeclaration(ImportContext& context,
 // Imports the definition of an impl.
 static auto AddImplDefinition(ImportContext& context,
                               const SemIR::Impl& import_impl,
-                              SemIR::Impl& new_impl, SemIR::InstId witness_id)
-    -> void {
+                              SemIR::Impl& new_impl) -> void {
   new_impl.definition_id = new_impl.first_owning_decl_id;
-
-  // FIXME: new_impl.witness_block_id
-  new_impl.witness_id = witness_id;
   new_impl.defined = true;
 
   if (import_impl.scope_id.is_valid()) {
@@ -1894,8 +1889,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
     // On the second phase, create a forward declaration of the impl for any
     // recursive references.
+    auto witness_id = AddImportRef(resolver, import_impl.witness_id);
     std::tie(impl_id, impl_const_id) =
-        MakeImplDeclaration(resolver, import_impl);
+        MakeImplDeclaration(resolver, import_impl, witness_id);
   } else {
     // On the third phase, compute the impl ID from the "constant value" of
     // the declaration, which is a reference to the created ImplDecl.
@@ -1936,8 +1932,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                          import_impl.constraint_id, constraint_const_id);
 
   if (import_impl.is_defined()) {
-    auto witness_id = AddImportRef(resolver, import_impl.witness_id);
-    AddImplDefinition(resolver, import_impl, new_impl, witness_id);
+    AddImplDefinition(resolver, import_impl, new_impl);
   }
 
   // If the `impl` is declared in the API file corresponding to the current
@@ -2221,24 +2216,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
-  auto import_impl_decl_inst_id =
-      // FIXME: latest_decl_id or first_decl_id?
-      resolver.import_impls().Get(inst.impl_id).latest_decl_id();
-  auto impl_const_id = GetLocalConstantId(resolver, import_impl_decl_inst_id);
-  auto impl_inst_id = resolver.local_constant_values().GetInstId(impl_const_id);
-  auto impl_id =
-      resolver.local_insts().GetAs<SemIR::ImplDecl>(impl_inst_id).impl_id;
+  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
+  auto elements_id =
+      GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
       resolver, {.type_id = resolver.local_context().GetSingletonType(
                      SemIR::WitnessType::SingletonInstId),
-                 .impl_id = impl_id,
+                 .elements_id = elements_id,
                  .specific_id = specific_id});
 }
 
