@@ -95,19 +95,20 @@ cc_library(
 )
 
 cc_library(
-    name = "dump_id",
-    srcs = ["dump_id.cpp"],
+    name = "dump",
+    srcs = ["dump.cpp"],
     copts = ["-Wno-missing-prototypes"],
     deps = [
         ":context",
         "//common:check",
         "//common:ostream",
-        "//toolchain/lex:dump_id",
+        "//toolchain/lex:dump",
         "//toolchain/lex:tokenized_buffer",
-        "//toolchain/parse:dump_id",
+        "//toolchain/parse:dump",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
     ],
+    # Always link dump methods.
     alwayslink = 1,
 )
 
@@ -128,7 +129,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
-        ":dump_id",
+        ":dump",
         ":impl",
         ":interface",
         ":pointer_dereference",

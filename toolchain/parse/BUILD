@@ -88,7 +88,7 @@ cc_library(
     ],
     deps = [
         ":context",
-        ":dump_id",
+        ":dump",
         ":node_kind",
         ":state",
         ":tree",
@@ -104,14 +104,15 @@ cc_library(
 )
 
 cc_library(
-    name = "dump_id",
-    srcs = ["dump_id.cpp"],
-    hdrs = ["dump_id.h"],
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
     deps = [
         ":tree",
         "//common:ostream",
-        "//toolchain/lex:dump_id",
+        "//toolchain/lex:dump",
     ],
+    # Always link dump methods.
     alwayslink = 1,
 )
 

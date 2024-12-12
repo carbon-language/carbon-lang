@@ -4,13 +4,13 @@
 
 #ifndef NDEBUG
 
-#include "toolchain/lex/dump_id.h"
+#include "toolchain/lex/dump.h"
 
 #include "common/ostream.h"
 
 namespace Carbon::Lex {
 
-auto DumpIdImpl(const TokenizedBuffer& tokens, TokenIndex token) -> void {
+auto DumpNoNewline(const TokenizedBuffer& tokens, TokenIndex token) -> void {
   if (!token.is_valid()) {
     llvm::errs() << "TokenIndex(invalid)";
     return;
@@ -20,16 +20,14 @@ auto DumpIdImpl(const TokenizedBuffer& tokens, TokenIndex token) -> void {
   auto line = tokens.GetLineNumber(token);
   auto col = tokens.GetColumnNumber(token);
 
-  llvm::errs() << "TokenIndex(kind: ";
-  kind.Print(llvm::errs());
-  llvm::errs() << ", loc: ";
+  llvm::errs() << "TokenIndex(kind: " << kind << ", loc: ";
   llvm::errs().write_escaped(tokens.source().filename());
   llvm::errs() << ":" << line << ":" << col << ")";
 }
 
-LLVM_DUMP_METHOD auto DumpId(const Lex::TokenizedBuffer& tokens,
-                             Lex::TokenIndex token) -> void {
-  DumpIdImpl(tokens, token);
+LLVM_DUMP_METHOD auto Dump(const TokenizedBuffer& tokens, TokenIndex token)
+    -> void {
+  DumpNoNewline(tokens, token);
   llvm::errs() << '\n';
 }
 

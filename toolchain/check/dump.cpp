@@ -2,21 +2,33 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// This library contains functions to assist dumping objects to stderr during
+// interactive debugging. Functions named `Dump` are intended for direct use by
+// developers, and should use overload resolution to determine which will be
+// invoked. The debugger should do namespace resolution automatically. For
+// example:
+//
+// - lldb: `expr Dump(context, id)`
+// - gdb: `call Dump(context, id)`
+//
+// The `DumpNoNewline` functions are helpers that exclude a trailing newline.
+// They're intended to be composed by `Dump` function implementations.
+
 #ifndef NDEBUG
 
-#include "toolchain/lex/dump_id.h"
+#include "toolchain/lex/dump.h"
 
 #include "common/check.h"
 #include "common/ostream.h"
 #include "toolchain/check/context.h"
 #include "toolchain/lex/tokenized_buffer.h"
-#include "toolchain/parse/dump_id.h"
+#include "toolchain/parse/dump.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
 
-static auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
+static auto DumpNoNewline(const Context& context, SemIR::LocId loc_id) -> void {
   if (!loc_id.is_valid()) {
     llvm::errs() << "LocId(invalid)";
     return;
@@ -45,19 +57,19 @@ static auto DumpIdImpl(const Context& context, SemIR::LocId loc_id) -> void {
   }
 }
 
-// A set of DumpId() overloads that dump an object to stderr, useful for
-// calling inside a debugger.
-LLVM_DUMP_METHOD auto DumpId(const Context& context, Lex::TokenIndex token)
+LLVM_DUMP_METHOD auto Dump(const Context& context, Lex::TokenIndex token)
     -> void {
-  Lex::DumpId(context.tokens(), token);
+  Parse::Dump(context.parse_tree(), token);
 }
-LLVM_DUMP_METHOD auto DumpId(const Context& context, Parse::NodeId node_id)
+
+LLVM_DUMP_METHOD auto Dump(const Context& context, Parse::NodeId node_id)
     -> void {
-  Parse::DumpId(context.parse_tree(), node_id);
+  Parse::Dump(context.parse_tree(), node_id);
 }
-LLVM_DUMP_METHOD auto DumpId(const Context& context, SemIR::LocId loc_id)
+
+LLVM_DUMP_METHOD auto Dump(const Context& context, SemIR::LocId loc_id)
     -> void {
-  DumpIdImpl(context, loc_id);
+  DumpNoNewline(context, loc_id);
   llvm::errs() << '\n';
 }
 
