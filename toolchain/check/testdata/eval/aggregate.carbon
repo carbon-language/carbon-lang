@@ -23,7 +23,6 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
@@ -117,17 +116,13 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %tuple.loc11: %tuple.type.2 = tuple_value (%.loc11_35.3, %.loc11_35.5) [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc11_37.1: %tuple.type.2 = converted %.loc11_35.1, %tuple.loc11 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %tuple.elem0.loc11_37.1: %i32 = tuple_access %.loc11_37.1, element0 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_37.2: %i32.builtin = as_compatible %tuple.elem0.loc11_37.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_37.3: %i32 = as_compatible %.loc11_37.2 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %tuple.elem0.loc11_37.2: ref %i32 = tuple_access file.%tuple_copy.var, element0
-// CHECK:STDOUT:   %.loc11_37.4: init %i32 = initialize_from %tuple.elem0.loc11_37.1 to %tuple.elem0.loc11_37.2 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc11_37.2: init %i32 = initialize_from %tuple.elem0.loc11_37.1 to %tuple.elem0.loc11_37.2 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %tuple.elem1.loc11_37.1: %i32 = tuple_access %.loc11_37.1, element1 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_37.5: %i32.builtin = as_compatible %tuple.elem1.loc11_37.1 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_37.6: %i32 = as_compatible %.loc11_37.5 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %tuple.elem1.loc11_37.2: ref %i32 = tuple_access file.%tuple_copy.var, element1
-// CHECK:STDOUT:   %.loc11_37.7: init %i32 = initialize_from %tuple.elem1.loc11_37.1 to %tuple.elem1.loc11_37.2 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc11_37.8: init %tuple.type.2 = tuple_init (%.loc11_37.4, %.loc11_37.7) to file.%tuple_copy.var [template = constants.%tuple.1]
-// CHECK:STDOUT:   %.loc11_50: init %tuple.type.2 = converted %.loc11_37.1, %.loc11_37.8 [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc11_37.3: init %i32 = initialize_from %tuple.elem1.loc11_37.1 to %tuple.elem1.loc11_37.2 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc11_37.4: init %tuple.type.2 = tuple_init (%.loc11_37.2, %.loc11_37.3) to file.%tuple_copy.var [template = constants.%tuple.1]
+// CHECK:STDOUT:   %.loc11_50: init %tuple.type.2 = converted %.loc11_37.1, %.loc11_37.4 [template = constants.%tuple.1]
 // CHECK:STDOUT:   assign file.%tuple_copy.var, %.loc11_50
 // CHECK:STDOUT:   %int_3.loc13: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %int_2.loc13: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
@@ -161,22 +156,16 @@ var struct_access: [i32; 1] = (0,) as [i32; {.a = 3, .b = 1}.b];
 // CHECK:STDOUT:   %struct.loc13: %struct_type.b.a.c = struct_value (%.loc13_71.3, %.loc13_71.5, %.loc13_71.7) [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc13_73.1: %struct_type.b.a.c = converted %.loc13_71.1, %struct.loc13 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc13_73.2: %i32 = struct_access %.loc13_73.1, element1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_73.3: %i32.builtin = as_compatible %.loc13_73.2 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_73.4: %i32 = as_compatible %.loc13_73.3 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_73.5: ref %i32 = struct_access file.%struct_copy.var, element1
-// CHECK:STDOUT:   %.loc13_73.6: init %i32 = initialize_from %.loc13_73.2 to %.loc13_73.5 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_73.7: %i32 = struct_access %.loc13_73.1, element0 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_73.8: %i32.builtin = as_compatible %.loc13_73.7 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_73.9: %i32 = as_compatible %.loc13_73.8 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_73.10: ref %i32 = struct_access file.%struct_copy.var, element0
-// CHECK:STDOUT:   %.loc13_73.11: init %i32 = initialize_from %.loc13_73.7 to %.loc13_73.10 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc13_73.12: %i32 = struct_access %.loc13_73.1, element2 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc13_73.13: %i32.builtin = as_compatible %.loc13_73.12 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc13_73.14: %i32 = as_compatible %.loc13_73.13 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc13_73.15: ref %i32 = struct_access file.%struct_copy.var, element2
-// CHECK:STDOUT:   %.loc13_73.16: init %i32 = initialize_from %.loc13_73.12 to %.loc13_73.15 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc13_73.17: init %struct_type.a.b.c = struct_init (%.loc13_73.6, %.loc13_73.11, %.loc13_73.16) to file.%struct_copy.var [template = constants.%struct.2]
-// CHECK:STDOUT:   %.loc13_103: init %struct_type.a.b.c = converted %.loc13_73.1, %.loc13_73.17 [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc13_73.3: ref %i32 = struct_access file.%struct_copy.var, element1
+// CHECK:STDOUT:   %.loc13_73.4: init %i32 = initialize_from %.loc13_73.2 to %.loc13_73.3 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc13_73.5: %i32 = struct_access %.loc13_73.1, element0 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc13_73.6: ref %i32 = struct_access file.%struct_copy.var, element0
+// CHECK:STDOUT:   %.loc13_73.7: init %i32 = initialize_from %.loc13_73.5 to %.loc13_73.6 [template = constants.%int_2.2]
+// CHECK:STDOUT:   %.loc13_73.8: %i32 = struct_access %.loc13_73.1, element2 [template = constants.%int_3.2]
+// CHECK:STDOUT:   %.loc13_73.9: ref %i32 = struct_access file.%struct_copy.var, element2
+// CHECK:STDOUT:   %.loc13_73.10: init %i32 = initialize_from %.loc13_73.8 to %.loc13_73.9 [template = constants.%int_3.2]
+// CHECK:STDOUT:   %.loc13_73.11: init %struct_type.a.b.c = struct_init (%.loc13_73.4, %.loc13_73.7, %.loc13_73.10) to file.%struct_copy.var [template = constants.%struct.2]
+// CHECK:STDOUT:   %.loc13_103: init %struct_type.a.b.c = converted %.loc13_73.1, %.loc13_73.11 [template = constants.%struct.2]
 // CHECK:STDOUT:   assign file.%struct_copy.var, %.loc13_103
 // CHECK:STDOUT:   %int_0.loc15_30: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %.loc15_32.1: %tuple.type.4 = tuple_literal (%int_0.loc15_30)

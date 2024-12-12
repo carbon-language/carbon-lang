@@ -39,7 +39,6 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [template]
@@ -257,9 +256,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc27_5.2: %i32 = converted %int_0.loc27, %.loc27_5.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc27_6.1: ref %array_type = value_as_ref %b.ref
 // CHECK:STDOUT:   %.loc27_6.2: ref %i32 = array_index %.loc27_6.1, %.loc27_5.2
-// CHECK:STDOUT:   %.loc27_6.3: ref %i32.builtin = as_compatible %.loc27_6.2
-// CHECK:STDOUT:   %.loc27_6.4: ref %i32 = as_compatible %.loc27_6.3
-// CHECK:STDOUT:   %.loc27_6.5: %i32 = bind_value %.loc27_6.2
+// CHECK:STDOUT:   %.loc27_6.3: %i32 = bind_value %.loc27_6.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc28_5.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call: init %array_type = call %F.ref() to %.loc28_5.1
@@ -274,9 +271,7 @@ fn ValueBinding(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc28_7.1: %i32 = value_of_initializer %int.convert_checked.loc28 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc28_7.2: %i32 = converted %int_0.loc28, %.loc28_7.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc28_8.1: ref %i32 = array_index %.loc28_5.2, %.loc28_7.2
-// CHECK:STDOUT:   %.loc28_8.2: ref %i32.builtin = as_compatible %.loc28_8.1
-// CHECK:STDOUT:   %.loc28_8.3: ref %i32 = as_compatible %.loc28_8.2
-// CHECK:STDOUT:   %.loc28_8.4: %i32 = bind_value %.loc28_8.1
+// CHECK:STDOUT:   %.loc28_8.2: %i32 = bind_value %.loc28_8.1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

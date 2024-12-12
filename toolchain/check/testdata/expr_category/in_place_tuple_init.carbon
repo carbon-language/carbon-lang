@@ -31,7 +31,6 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
@@ -119,8 +118,6 @@ fn H() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc20_12.2: ref %tuple.type.2 = temporary %.loc20_12.1, %G.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc20_12.2, element0
-// CHECK:STDOUT:   %.loc20_15.1: ref %i32.builtin = as_compatible %tuple.elem0
-// CHECK:STDOUT:   %.loc20_15.2: ref %i32 = as_compatible %.loc20_15.1
 // CHECK:STDOUT:   %.loc20_13: %i32 = bind_value %tuple.elem0
 // CHECK:STDOUT:   return %.loc20_13
 // CHECK:STDOUT: }

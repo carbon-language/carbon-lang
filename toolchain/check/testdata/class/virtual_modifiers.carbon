@@ -498,7 +498,6 @@ class Derived {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
@@ -582,18 +581,14 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.1 = class_element_access %b1.var, element0
 // CHECK:STDOUT:   %.loc14_35.3: ref %ptr.1 = vtable_ptr
 // CHECK:STDOUT:   %.loc14_35.4: init %ptr.1 = initialize_from %.loc14_35.3 to %.loc14_35.2
-// CHECK:STDOUT:   %.loc14_35.5: ref %i32.builtin = as_compatible %i.ref.loc14_34
-// CHECK:STDOUT:   %.loc14_35.6: ref %i32 = as_compatible %.loc14_35.5
 // CHECK:STDOUT:   %.loc14_34: %i32 = bind_value %i.ref.loc14_34
-// CHECK:STDOUT:   %.loc14_35.7: ref %i32 = class_element_access %b1.var, element2
-// CHECK:STDOUT:   %.loc14_35.8: init %i32 = initialize_from %.loc14_34 to %.loc14_35.7
-// CHECK:STDOUT:   %.loc14_35.9: ref %i32.builtin = as_compatible %i.ref.loc14_25
-// CHECK:STDOUT:   %.loc14_35.10: ref %i32 = as_compatible %.loc14_35.9
+// CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %b1.var, element2
+// CHECK:STDOUT:   %.loc14_35.6: init %i32 = initialize_from %.loc14_34 to %.loc14_35.5
 // CHECK:STDOUT:   %.loc14_25: %i32 = bind_value %i.ref.loc14_25
-// CHECK:STDOUT:   %.loc14_35.11: ref %i32 = class_element_access %b1.var, element1
-// CHECK:STDOUT:   %.loc14_35.12: init %i32 = initialize_from %.loc14_25 to %.loc14_35.11
-// CHECK:STDOUT:   %.loc14_35.13: init %Base = class_init (%.loc14_35.4, %.loc14_35.8, %.loc14_35.12), %b1.var
-// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.13
+// CHECK:STDOUT:   %.loc14_35.7: ref %i32 = class_element_access %b1.var, element1
+// CHECK:STDOUT:   %.loc14_35.8: init %i32 = initialize_from %.loc14_25 to %.loc14_35.7
+// CHECK:STDOUT:   %.loc14_35.9: init %Base = class_init (%.loc14_35.4, %.loc14_35.6, %.loc14_35.8), %b1.var
+// CHECK:STDOUT:   %.loc14_36: init %Base = converted %.loc14_35.1, %.loc14_35.9
 // CHECK:STDOUT:   assign %b1.var, %.loc14_36
 // CHECK:STDOUT:   %b2.var: ref %Base = var b2
 // CHECK:STDOUT:   %b2: ref %Base = bind_name b2, %b2.var

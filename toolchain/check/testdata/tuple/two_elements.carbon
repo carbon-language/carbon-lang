@@ -20,7 +20,6 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %int_102.1: Core.IntLiteral = int_value 102 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
@@ -105,19 +104,15 @@ var y: (i32, i32) = x;
 // CHECK:STDOUT:   assign file.%x.var, %.loc14_29
 // CHECK:STDOUT:   %x.ref: ref %tuple.type.2 = name_ref x, file.%x
 // CHECK:STDOUT:   %tuple.elem0.loc15_21.1: ref %i32 = tuple_access %x.ref, element0
-// CHECK:STDOUT:   %.loc15_21.1: ref %i32.builtin = as_compatible %tuple.elem0.loc15_21.1
-// CHECK:STDOUT:   %.loc15_21.2: ref %i32 = as_compatible %.loc15_21.1
-// CHECK:STDOUT:   %.loc15_21.3: %i32 = bind_value %tuple.elem0.loc15_21.1
+// CHECK:STDOUT:   %.loc15_21.1: %i32 = bind_value %tuple.elem0.loc15_21.1
 // CHECK:STDOUT:   %tuple.elem0.loc15_21.2: ref %i32 = tuple_access file.%y.var, element0
-// CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.3 to %tuple.elem0.loc15_21.2
+// CHECK:STDOUT:   %.loc15_21.2: init %i32 = initialize_from %.loc15_21.1 to %tuple.elem0.loc15_21.2
 // CHECK:STDOUT:   %tuple.elem1.loc15_21.1: ref %i32 = tuple_access %x.ref, element1
-// CHECK:STDOUT:   %.loc15_21.5: ref %i32.builtin = as_compatible %tuple.elem1.loc15_21.1
-// CHECK:STDOUT:   %.loc15_21.6: ref %i32 = as_compatible %.loc15_21.5
-// CHECK:STDOUT:   %.loc15_21.7: %i32 = bind_value %tuple.elem1.loc15_21.1
+// CHECK:STDOUT:   %.loc15_21.3: %i32 = bind_value %tuple.elem1.loc15_21.1
 // CHECK:STDOUT:   %tuple.elem1.loc15_21.2: ref %i32 = tuple_access file.%y.var, element1
-// CHECK:STDOUT:   %.loc15_21.8: init %i32 = initialize_from %.loc15_21.7 to %tuple.elem1.loc15_21.2
-// CHECK:STDOUT:   %.loc15_21.9: init %tuple.type.2 = tuple_init (%.loc15_21.4, %.loc15_21.8) to file.%y.var
-// CHECK:STDOUT:   %.loc15_22: init %tuple.type.2 = converted %x.ref, %.loc15_21.9
+// CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.3 to %tuple.elem1.loc15_21.2
+// CHECK:STDOUT:   %.loc15_21.5: init %tuple.type.2 = tuple_init (%.loc15_21.2, %.loc15_21.4) to file.%y.var
+// CHECK:STDOUT:   %.loc15_22: init %tuple.type.2 = converted %x.ref, %.loc15_21.5
 // CHECK:STDOUT:   assign file.%y.var, %.loc15_22
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -34,7 +34,6 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %UnrelatedScopes.type: type = fn_type @UnrelatedScopes [template]
 // CHECK:STDOUT:   %UnrelatedScopes: %UnrelatedScopes.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -159,10 +158,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %Convert.specific_fn.loc23(%int_0) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc23_28: init %i32 = converted %int_0, %int.convert_checked.loc23 [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign %v.var, %.loc23_28
-// CHECK:STDOUT:   %.loc23_18.1: ref %i32.builtin = as_compatible %v
-// CHECK:STDOUT:   %.loc23_18.2: ref %i32 = as_compatible %.loc23_18.1
-// CHECK:STDOUT:   %.loc23_18.3: %i32 = bind_value %v
-// CHECK:STDOUT:   return %.loc23_18.3
+// CHECK:STDOUT:   %.loc23_18: %i32 = bind_value %v
+// CHECK:STDOUT:   return %.loc23_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
@@ -174,9 +171,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %int.convert_checked.loc26: init %i32 = call %Convert.specific_fn.loc26(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc26_26: init %i32 = converted %int_1, %int.convert_checked.loc26 [template = constants.%int_1.2]
 // CHECK:STDOUT:   assign %w.var, %.loc26_26
-// CHECK:STDOUT:   %.loc26_16.1: ref %i32.builtin = as_compatible %w
-// CHECK:STDOUT:   %.loc26_16.2: ref %i32 = as_compatible %.loc26_16.1
-// CHECK:STDOUT:   %.loc26_16.3: %i32 = bind_value %w
-// CHECK:STDOUT:   return %.loc26_16.3
+// CHECK:STDOUT:   %.loc26_16: %i32 = bind_value %w
+// CHECK:STDOUT:   return %.loc26_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

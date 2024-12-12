@@ -28,7 +28,6 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1.1, %i32 [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_12.1: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
@@ -100,8 +99,6 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc17_16.1: %i32 = value_of_initializer %int.convert_checked.loc17 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc17_16.2: %i32 = converted %int_1, %.loc17_16.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc17_17.1: ref %i32 = array_index %a.ref.loc17, %.loc17_16.2 [template = <error>]
-// CHECK:STDOUT:   %.loc17_18.1: ref %i32.builtin = as_compatible %.loc17_17.1 [template = <error>]
-// CHECK:STDOUT:   %.loc17_18.2: ref %i32 = as_compatible %.loc17_18.1 [template = <error>]
 // CHECK:STDOUT:   %.loc17_17.2: %i32 = bind_value %.loc17_17.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc17_17.2
 // CHECK:STDOUT:   %a.ref.loc22: ref %array_type = name_ref a, file.%a
@@ -115,8 +112,6 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc22_16.1: %i32 = value_of_initializer %int.convert_checked.loc22 [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc22_16.2: %i32 = converted %int_2147483647, %.loc22_16.1 [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc22_27.1: ref %i32 = array_index %a.ref.loc22, %.loc22_16.2 [template = <error>]
-// CHECK:STDOUT:   %.loc22_28.1: ref %i32.builtin = as_compatible %.loc22_27.1 [template = <error>]
-// CHECK:STDOUT:   %.loc22_28.2: ref %i32 = as_compatible %.loc22_28.1 [template = <error>]
 // CHECK:STDOUT:   %.loc22_27.2: %i32 = bind_value %.loc22_27.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc22_27.2
 // CHECK:STDOUT:   return

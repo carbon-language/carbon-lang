@@ -67,7 +67,6 @@ fn Main() {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
@@ -194,14 +193,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc34_17.6: init %tuple.type.2 = tuple_init (%.loc34_17.3, %.loc34_17.5) to %.loc34_8.1 [template = constants.%tuple.3]
 // CHECK:STDOUT:   %.loc34_10: init %tuple.type.2 = converted %.loc34_17.1, %.loc34_17.6 [template = constants.%tuple.3]
 // CHECK:STDOUT:   assign %.loc34_8.1, %.loc34_10
-// CHECK:STDOUT:   %.loc34_8.2: ref %i32.builtin = as_compatible %n.ref.loc34_4
-// CHECK:STDOUT:   %.loc34_8.3: ref %i32 = as_compatible %.loc34_8.2
 // CHECK:STDOUT:   %.loc34_4: %i32 = bind_value %n.ref.loc34_4
-// CHECK:STDOUT:   %.loc34_8.4: ref %i32.builtin = as_compatible %n.ref.loc34_7
-// CHECK:STDOUT:   %.loc34_8.5: ref %i32 = as_compatible %.loc34_8.4
 // CHECK:STDOUT:   %.loc34_7: %i32 = bind_value %n.ref.loc34_7
 // CHECK:STDOUT:   %tuple.loc34: %tuple.type.2 = tuple_value (%.loc34_4, %.loc34_7)
-// CHECK:STDOUT:   %.loc34_8.6: %tuple.type.2 = converted %.loc34_8.1, %tuple.loc34
+// CHECK:STDOUT:   %.loc34_8.2: %tuple.type.2 = converted %.loc34_8.1, %tuple.loc34
 // CHECK:STDOUT:   %int_32.loc39_3: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc39_3: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc39_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -264,15 +259,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc56:
 // CHECK:STDOUT:   %a.ref.loc56_17: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc56_17.1: ref %i32.builtin = as_compatible %a.ref.loc56_17
-// CHECK:STDOUT:   %.loc56_17.2: ref %i32 = as_compatible %.loc56_17.1
-// CHECK:STDOUT:   %.loc56_17.3: %i32 = bind_value %a.ref.loc56_17
-// CHECK:STDOUT:   br !if.expr.result.loc56(%.loc56_17.3)
+// CHECK:STDOUT:   %.loc56_17: %i32 = bind_value %a.ref.loc56_17
+// CHECK:STDOUT:   br !if.expr.result.loc56(%.loc56_17)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc56:
 // CHECK:STDOUT:   %a.ref.loc56_24: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc56_19.1: ref %i32.builtin = as_compatible %a.ref.loc56_24
-// CHECK:STDOUT:   %.loc56_19.2: ref %i32 = as_compatible %.loc56_19.1
 // CHECK:STDOUT:   %.loc56_24: %i32 = bind_value %a.ref.loc56_24
 // CHECK:STDOUT:   br !if.expr.result.loc56(%.loc56_24)
 // CHECK:STDOUT:

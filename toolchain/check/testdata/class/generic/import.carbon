@@ -426,7 +426,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %UseMethod.type: type = fn_type @UseMethod [template]
 // CHECK:STDOUT:   %UseMethod: %UseMethod.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.generic: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
@@ -550,8 +549,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.2 = name_ref v, %v
 // CHECK:STDOUT:   %n.ref: %CompleteClass.elem.2 = name_ref n, imports.%import_ref.10 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
-// CHECK:STDOUT:   %.loc12_13.1: ref %i32.builtin = as_compatible %.loc12_11.1
-// CHECK:STDOUT:   %.loc12_13.2: ref %i32 = as_compatible %.loc12_13.1
 // CHECK:STDOUT:   %.loc12_11.2: %i32 = bind_value %.loc12_11.1
 // CHECK:STDOUT:   return %.loc12_11.2
 // CHECK:STDOUT: }

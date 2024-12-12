@@ -69,7 +69,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.k.1: type = struct_type {.k: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.k.1 [template]
@@ -302,10 +301,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc20
 // CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc17 [template = @Class.%.loc17]
 // CHECK:STDOUT:   %.loc21_14.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc21_14.2: ref %i32.builtin = as_compatible %.loc21_14.1
-// CHECK:STDOUT:   %.loc21_14.3: ref %i32 = as_compatible %.loc21_14.2
-// CHECK:STDOUT:   %.loc21_14.4: %i32 = bind_value %.loc21_14.1
-// CHECK:STDOUT:   return %.loc21_14.4
+// CHECK:STDOUT:   %.loc21_14.2: %i32 = bind_value %.loc21_14.1
+// CHECK:STDOUT:   return %.loc21_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.1]() -> %i32;

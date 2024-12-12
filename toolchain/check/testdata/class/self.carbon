@@ -52,7 +52,6 @@ class Class {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
@@ -156,10 +155,8 @@ class Class {
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc12_14.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc12_14.2: ref %i32.builtin = as_compatible %.loc12_14.1
-// CHECK:STDOUT:   %.loc12_14.3: ref %i32 = as_compatible %.loc12_14.2
-// CHECK:STDOUT:   %.loc12_14.4: %i32 = bind_value %.loc12_14.1
-// CHECK:STDOUT:   return %.loc12_14.4
+// CHECK:STDOUT:   %.loc12_14.2: %i32 = bind_value %.loc12_14.1
+// CHECK:STDOUT:   return %.loc12_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.1]() -> %i32 {
@@ -168,8 +165,6 @@ class Class {
 // CHECK:STDOUT:   %.loc16_11: ref %Class = deref %self.ref
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [template = @Class.%.loc8]
 // CHECK:STDOUT:   %.loc16_17.1: ref %i32 = class_element_access %.loc16_11, element0
-// CHECK:STDOUT:   %.loc16_19.1: ref %i32.builtin = as_compatible %.loc16_17.1
-// CHECK:STDOUT:   %.loc16_19.2: ref %i32 = as_compatible %.loc16_19.1
 // CHECK:STDOUT:   %.loc16_17.2: %i32 = bind_value %.loc16_17.1
 // CHECK:STDOUT:   return %.loc16_17.2
 // CHECK:STDOUT: }

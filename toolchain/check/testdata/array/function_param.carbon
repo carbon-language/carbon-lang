@@ -25,7 +25,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1, %i32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
@@ -110,10 +109,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_15.1: ref %array_type = value_as_ref %arr.ref
 // CHECK:STDOUT:   %.loc12_15.2: ref %i32 = array_index %.loc12_15.1, %i.ref
-// CHECK:STDOUT:   %.loc12_15.3: ref %i32.builtin = as_compatible %.loc12_15.2
-// CHECK:STDOUT:   %.loc12_15.4: ref %i32 = as_compatible %.loc12_15.3
-// CHECK:STDOUT:   %.loc12_15.5: %i32 = bind_value %.loc12_15.2
-// CHECK:STDOUT:   return %.loc12_15.5
+// CHECK:STDOUT:   %.loc12_15.3: %i32 = bind_value %.loc12_15.2
+// CHECK:STDOUT:   return %.loc12_15.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {

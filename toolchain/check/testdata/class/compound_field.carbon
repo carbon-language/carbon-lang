@@ -43,7 +43,6 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.c [template]
@@ -187,10 +186,8 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Derived.ref.loc25: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:   %d.ref.loc25_20: %Derived.elem.2 = name_ref d, @Derived.%.loc20 [template = @Derived.%.loc20]
 // CHECK:STDOUT:   %.loc25_11.1: ref %i32 = class_element_access %d.ref.loc25_10, element1
-// CHECK:STDOUT:   %.loc25_11.2: ref %i32.builtin = as_compatible %.loc25_11.1
-// CHECK:STDOUT:   %.loc25_11.3: ref %i32 = as_compatible %.loc25_11.2
-// CHECK:STDOUT:   %.loc25_11.4: %i32 = bind_value %.loc25_11.1
-// CHECK:STDOUT:   return %.loc25_11.4
+// CHECK:STDOUT:   %.loc25_11.2: %i32 = bind_value %.loc25_11.1
+// CHECK:STDOUT:   return %.loc25_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessBase(%d.param_patt: %Derived) -> %i32 {
@@ -201,8 +198,6 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc29_11.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc29_11.2: ref %Base = converted %d.ref, %.loc29_11.1
 // CHECK:STDOUT:   %.loc29_11.3: ref %i32 = class_element_access %.loc29_11.2, element1
-// CHECK:STDOUT:   %.loc29_20.1: ref %i32.builtin = as_compatible %.loc29_11.3
-// CHECK:STDOUT:   %.loc29_20.2: ref %i32 = as_compatible %.loc29_20.1
 // CHECK:STDOUT:   %.loc29_11.4: %i32 = bind_value %.loc29_11.3
 // CHECK:STDOUT:   return %.loc29_11.4
 // CHECK:STDOUT: }

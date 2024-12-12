@@ -29,7 +29,6 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
@@ -110,10 +109,8 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc13 [template = @Inner.%.loc13]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %oi.ref, element0
-// CHECK:STDOUT:   %.loc18_12.2: ref %i32.builtin = as_compatible %.loc18_12.1
-// CHECK:STDOUT:   %.loc18_12.3: ref %i32 = as_compatible %.loc18_12.2
-// CHECK:STDOUT:   %.loc18_12.4: %i32 = bind_value %.loc18_12.1
-// CHECK:STDOUT:   return %.loc18_12.4
+// CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
+// CHECK:STDOUT:   return %.loc18_12.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o.param_patt: %Outer) {

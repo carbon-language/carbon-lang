@@ -22,7 +22,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32, %i32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -104,18 +103,12 @@ fn F() -> i32 {
 // CHECK:STDOUT:   assign %v.var, %.loc12_37
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.2 = name_ref v, %v
 // CHECK:STDOUT:   %tuple.elem0.loc14: ref %i32 = tuple_access %v.ref, element0
-// CHECK:STDOUT:   %.loc14_28.1: ref %i32.builtin = as_compatible %tuple.elem0.loc14
-// CHECK:STDOUT:   %.loc14_28.2: ref %i32 = as_compatible %.loc14_28.1
-// CHECK:STDOUT:   %.loc14_28.3: %i32 = bind_value %tuple.elem0.loc14
+// CHECK:STDOUT:   %.loc14_28.1: %i32 = bind_value %tuple.elem0.loc14
 // CHECK:STDOUT:   %tuple.elem1.loc14: ref %i32 = tuple_access %v.ref, element1
-// CHECK:STDOUT:   %.loc14_28.4: ref %i32.builtin = as_compatible %tuple.elem1.loc14
-// CHECK:STDOUT:   %.loc14_28.5: ref %i32 = as_compatible %.loc14_28.4
-// CHECK:STDOUT:   %.loc14_28.6: %i32 = bind_value %tuple.elem1.loc14
+// CHECK:STDOUT:   %.loc14_28.2: %i32 = bind_value %tuple.elem1.loc14
 // CHECK:STDOUT:   %tuple.elem2.loc14: ref %i32 = tuple_access %v.ref, element2
-// CHECK:STDOUT:   %.loc14_28.7: ref %i32.builtin = as_compatible %tuple.elem2.loc14
-// CHECK:STDOUT:   %.loc14_28.8: ref %i32 = as_compatible %.loc14_28.7
-// CHECK:STDOUT:   %.loc14_28.9: %i32 = bind_value %tuple.elem2.loc14
-// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc14_28.3, %.loc14_28.6, %.loc14_28.9)
+// CHECK:STDOUT:   %.loc14_28.3: %i32 = bind_value %tuple.elem2.loc14
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc14_28.1, %.loc14_28.2, %.loc14_28.3)
 // CHECK:STDOUT:   %.loc14_29: %tuple.type.2 = converted %v.ref, %tuple
 // CHECK:STDOUT:   %w: %tuple.type.2 = bind_name w, %.loc14_29
 // CHECK:STDOUT:   %w.ref: %tuple.type.2 = name_ref w, %w

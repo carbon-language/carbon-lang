@@ -287,10 +287,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %x.ref.loc11_10: %Class.2 = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc11_11: %Class.elem.2 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
 // CHECK:STDOUT:   %.loc11_11.1: ref %i32 = class_element_access %x.ref.loc11_10, element0
-// CHECK:STDOUT:   %.loc11_11.2: ref %i32.builtin = as_compatible %.loc11_11.1
-// CHECK:STDOUT:   %.loc11_11.3: ref %i32 = as_compatible %.loc11_11.2
-// CHECK:STDOUT:   %.loc11_11.4: %i32 = bind_value %.loc11_11.1
-// CHECK:STDOUT:   return %.loc11_11.4
+// CHECK:STDOUT:   %.loc11_11.2: %i32 = bind_value %.loc11_11.1
+// CHECK:STDOUT:   return %.loc11_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MethodCall(%x.param_patt: %Class.2) -> %i32 {
@@ -319,8 +317,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %.loc19_22.1: %ptr.6 = value_of_initializer %GetAddr.call
 // CHECK:STDOUT:   %.loc19_22.2: %ptr.6 = converted %GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2
-// CHECK:STDOUT:   %.loc19_23.1: ref %i32.builtin = as_compatible %.loc19_10.1
-// CHECK:STDOUT:   %.loc19_23.2: ref %i32 = as_compatible %.loc19_23.1
 // CHECK:STDOUT:   %.loc19_10.2: %i32 = bind_value %.loc19_10.1
 // CHECK:STDOUT:   return %.loc19_10.2
 // CHECK:STDOUT: }

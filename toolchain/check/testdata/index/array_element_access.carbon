@@ -20,7 +20,6 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_12.1: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %int_24.1: Core.IntLiteral = int_value 24 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
@@ -115,20 +114,14 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %.loc13_16.1: %i32 = value_of_initializer %int.convert_checked.loc13 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc13_16.2: %i32 = converted %int_0.loc13, %.loc13_16.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc13_17.1: ref %i32 = array_index %a.ref.loc13, %.loc13_16.2
-// CHECK:STDOUT:   %.loc13_18.1: ref %i32.builtin = as_compatible %.loc13_17.1
-// CHECK:STDOUT:   %.loc13_18.2: ref %i32 = as_compatible %.loc13_18.1
 // CHECK:STDOUT:   %.loc13_17.2: %i32 = bind_value %.loc13_17.1
 // CHECK:STDOUT:   assign file.%c.var, %.loc13_17.2
 // CHECK:STDOUT:   %a.ref.loc14: ref %array_type = name_ref a, file.%a
 // CHECK:STDOUT:   %b.ref: ref %i32 = name_ref b, file.%b
 // CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_16.1: ref %i32.builtin = as_compatible %b.ref
-// CHECK:STDOUT:   %.loc14_16.2: ref %i32 = as_compatible %.loc14_16.1
-// CHECK:STDOUT:   %.loc14_16.3: %i32 = bind_value %b.ref
-// CHECK:STDOUT:   %.loc14_17.1: ref %i32 = array_index %a.ref.loc14, %.loc14_16.3
-// CHECK:STDOUT:   %.loc14_18.1: ref %i32.builtin = as_compatible %.loc14_17.1
-// CHECK:STDOUT:   %.loc14_18.2: ref %i32 = as_compatible %.loc14_18.1
+// CHECK:STDOUT:   %.loc14_16: %i32 = bind_value %b.ref
+// CHECK:STDOUT:   %.loc14_17.1: ref %i32 = array_index %a.ref.loc14, %.loc14_16
 // CHECK:STDOUT:   %.loc14_17.2: %i32 = bind_value %.loc14_17.1
 // CHECK:STDOUT:   assign file.%d.var, %.loc14_17.2
 // CHECK:STDOUT:   return

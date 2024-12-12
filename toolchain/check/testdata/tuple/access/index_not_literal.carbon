@@ -19,7 +19,6 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (bool, %i32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int_34.1: Core.IntLiteral = int_value 34 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (bool, Core.IntLiteral) [template]
@@ -111,8 +110,6 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:   %.loc12_28.2: %struct_type.index.1 = converted %.loc12_28.1, %struct.loc12 [template = constants.%struct.1]
 // CHECK:STDOUT:   %.loc12_29: Core.IntLiteral = struct_access %.loc12_28.2, element0 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %tuple.elem1.loc12: ref %i32 = tuple_access %a.ref.loc12, element1
-// CHECK:STDOUT:   %.loc12_36.1: ref %i32.builtin = as_compatible %tuple.elem1.loc12
-// CHECK:STDOUT:   %.loc12_36.2: ref %i32 = as_compatible %.loc12_36.1
 // CHECK:STDOUT:   %.loc12_15: %i32 = bind_value %tuple.elem1.loc12
 // CHECK:STDOUT:   assign file.%b.var, %.loc12_15
 // CHECK:STDOUT:   %a.ref.loc13: ref %tuple.type.2 = name_ref a, file.%a
@@ -155,8 +152,6 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:   %.loc14_36.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc14_36 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc14_36.3: Core.IntLiteral = converted %.loc14_36.1, %.loc14_36.2 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %tuple.elem1.loc14: ref %i32 = tuple_access %a.ref.loc14, element1
-// CHECK:STDOUT:   %.loc14_43.1: ref %i32.builtin = as_compatible %tuple.elem1.loc14
-// CHECK:STDOUT:   %.loc14_43.2: ref %i32 = as_compatible %.loc14_43.1
 // CHECK:STDOUT:   %.loc14_15: %i32 = bind_value %tuple.elem1.loc14
 // CHECK:STDOUT:   assign file.%d.var, %.loc14_15
 // CHECK:STDOUT:   return

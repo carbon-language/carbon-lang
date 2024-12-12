@@ -310,8 +310,6 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %.loc22_11.1: ref %Base.2 = class_element_access %x.ref, element0
 // CHECK:STDOUT:   %.loc22_11.2: ref %Base.2 = converted %x.ref, %.loc22_11.1
 // CHECK:STDOUT:   %.loc22_11.3: ref %i32 = class_element_access %.loc22_11.2, element0
-// CHECK:STDOUT:   %.loc22_13.1: ref %i32.builtin = as_compatible %.loc22_11.3
-// CHECK:STDOUT:   %.loc22_13.2: ref %i32 = as_compatible %.loc22_13.1
 // CHECK:STDOUT:   %.loc22_11.4: %i32 = bind_value %.loc22_11.3
 // CHECK:STDOUT:   return %.loc22_11.4
 // CHECK:STDOUT: }

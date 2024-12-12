@@ -69,7 +69,6 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template]
@@ -122,10 +121,8 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5_15.1: ref %i32 = array_index %.loc5_12.2, %n.ref
-// CHECK:STDOUT:   %.loc5_15.2: ref %i32.builtin = as_compatible %.loc5_15.1
-// CHECK:STDOUT:   %.loc5_15.3: ref %i32 = as_compatible %.loc5_15.2
-// CHECK:STDOUT:   %.loc5_15.4: %i32 = bind_value %.loc5_15.1
-// CHECK:STDOUT:   return %.loc5_15.4
+// CHECK:STDOUT:   %.loc5_15.2: %i32 = bind_value %.loc5_15.1
+// CHECK:STDOUT:   return %.loc5_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %array_type [from "library.carbon"];

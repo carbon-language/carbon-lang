@@ -175,10 +175,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %c.ref: %Class.2 = name_ref c, %c
 // CHECK:STDOUT:   %x.ref: %Class.elem.2 = name_ref x, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc16_11.2: ref %i32.builtin = as_compatible %.loc16_11.1
-// CHECK:STDOUT:   %.loc16_11.3: ref %i32 = as_compatible %.loc16_11.2
-// CHECK:STDOUT:   %.loc16_11.4: %i32 = bind_value %.loc16_11.1
-// CHECK:STDOUT:   return %.loc16_11.4
+// CHECK:STDOUT:   %.loc16_11.2: %i32 = bind_value %.loc16_11.1
+// CHECK:STDOUT:   return %.loc16_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc19_6.1: type) {

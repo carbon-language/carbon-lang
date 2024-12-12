@@ -551,8 +551,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.ref.loc13: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc13_42.1: ref %B = as_compatible %.loc13_36
 // CHECK:STDOUT:   %.loc13_42.2: ref %B = converted %.loc13_36, %.loc13_42.1
-// CHECK:STDOUT:   %.loc13_46.1: ref %A = as_compatible %.loc13_42.2
-// CHECK:STDOUT:   %.loc13_46.2: ref %B = as_compatible %.loc13_46.1
 // CHECK:STDOUT:   %.loc13_42.3: %B = bind_value %.loc13_42.2
 // CHECK:STDOUT:   %b_value: %B = bind_name b_value, %.loc13_42.3
 // CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -580,8 +578,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc24_41.1: ref %B = as_compatible %.loc24_35
 // CHECK:STDOUT:   %.loc24_41.2: ref %B = converted %.loc24_35, %.loc24_41.1
-// CHECK:STDOUT:   %.loc24_45.1: ref %A = as_compatible %.loc24_41.2
-// CHECK:STDOUT:   %.loc24_45.2: ref %B = as_compatible %.loc24_45.1
 // CHECK:STDOUT:   %.loc24_41.3: %B = bind_value %.loc24_41.2
 // CHECK:STDOUT:   assign file.%b_init.var, <error>
 // CHECK:STDOUT:   return
@@ -598,7 +594,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %Noncopyable) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %tuple.type.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -683,13 +678,10 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc24_45.2: %A = converted %.loc24_22.2, %.loc24_45.1
 // CHECK:STDOUT:   %.loc24_49.1: %tuple.type.2 = as_compatible %.loc24_45.2
 // CHECK:STDOUT:   %tuple.elem0.loc24_49.1: %i32 = tuple_access %.loc24_49.1, element0
-// CHECK:STDOUT:   %.loc24_49.2: %i32.builtin = as_compatible %tuple.elem0.loc24_49.1
-// CHECK:STDOUT:   %.loc24_49.3: %i32 = as_compatible %.loc24_49.2
-// CHECK:STDOUT:   %tuple.elem0.loc24_49.2: ref %i32 = tuple_access %a_init.var, element0
-// CHECK:STDOUT:   %.loc24_49.4: init %i32 = initialize_from %tuple.elem0.loc24_49.1 to %tuple.elem0.loc24_49.2
+// CHECK:STDOUT:   %.loc24_49.2: ref %tuple.type.2 = as_compatible %a_init.var
+// CHECK:STDOUT:   %tuple.elem0.loc24_49.2: ref %i32 = tuple_access %.loc24_49.2, element0
+// CHECK:STDOUT:   %.loc24_49.3: init %i32 = initialize_from %tuple.elem0.loc24_49.1 to %tuple.elem0.loc24_49.2
 // CHECK:STDOUT:   %tuple.elem1: %Noncopyable = tuple_access %.loc24_49.1, element1
-// CHECK:STDOUT:   %.loc24_49.5: %A = as_compatible <error> [template = <error>]
-// CHECK:STDOUT:   %.loc24_49.6: %A = converted %.loc24_45.2, %.loc24_49.5 [template = <error>]
 // CHECK:STDOUT:   assign %a_init.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -757,8 +749,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc21_19: %struct_type.x.2 = struct_literal (%int_1)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc21_21: %B = converted %.loc21_19, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc21_25.1: %A = as_compatible %.loc21_21 [template = <error>]
-// CHECK:STDOUT:   %.loc21_25.2: %B = as_compatible %.loc21_25.1 [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

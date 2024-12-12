@@ -35,7 +35,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
@@ -169,8 +168,6 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [template = @Class.%.loc14]
 // CHECK:STDOUT:   %.loc18_10: ref %i32 = class_element_access %.loc18_4, element0
 // CHECK:STDOUT:   %self.ref.loc18_15: %i32 = name_ref r#self, %self.loc17_30
-// CHECK:STDOUT:   %.loc18_13.1: %i32.builtin = as_compatible %self.ref.loc18_15
-// CHECK:STDOUT:   %.loc18_13.2: %i32 = as_compatible %.loc18_13.1
 // CHECK:STDOUT:   assign %.loc18_10, %self.ref.loc18_15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -180,21 +177,15 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [template = @Class.%.loc14]
 // CHECK:STDOUT:   %.loc22_15.1: ref %i32 = class_element_access %self.ref.loc22_11, element0
-// CHECK:STDOUT:   %.loc22_15.2: ref %i32.builtin = as_compatible %.loc22_15.1
-// CHECK:STDOUT:   %.loc22_15.3: ref %i32 = as_compatible %.loc22_15.2
-// CHECK:STDOUT:   %.loc22_15.4: %i32 = bind_value %.loc22_15.1
+// CHECK:STDOUT:   %.loc22_15.2: %i32 = bind_value %.loc22_15.1
 // CHECK:STDOUT:   %self.ref.loc22_19: %i32 = name_ref r#self, %self.loc21_24
-// CHECK:STDOUT:   %.loc22_25.1: %tuple.type.2 = tuple_literal (%.loc22_15.4, %self.ref.loc22_19)
-// CHECK:STDOUT:   %.loc22_25.2: %i32.builtin = as_compatible %.loc22_15.4
-// CHECK:STDOUT:   %.loc22_25.3: %i32 = as_compatible %.loc22_25.2
+// CHECK:STDOUT:   %.loc22_25.1: %tuple.type.2 = tuple_literal (%.loc22_15.2, %self.ref.loc22_19)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.loc21, element0
-// CHECK:STDOUT:   %.loc22_25.4: init %i32 = initialize_from %.loc22_15.4 to %tuple.elem0
-// CHECK:STDOUT:   %.loc22_25.5: %i32.builtin = as_compatible %self.ref.loc22_19
-// CHECK:STDOUT:   %.loc22_25.6: %i32 = as_compatible %.loc22_25.5
+// CHECK:STDOUT:   %.loc22_25.2: init %i32 = initialize_from %.loc22_15.2 to %tuple.elem0
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.loc21, element1
-// CHECK:STDOUT:   %.loc22_25.7: init %i32 = initialize_from %self.ref.loc22_19 to %tuple.elem1
-// CHECK:STDOUT:   %.loc22_25.8: init %tuple.type.2 = tuple_init (%.loc22_25.4, %.loc22_25.7) to %return.loc21
-// CHECK:STDOUT:   %.loc22_26: init %tuple.type.2 = converted %.loc22_25.1, %.loc22_25.8
+// CHECK:STDOUT:   %.loc22_25.3: init %i32 = initialize_from %self.ref.loc22_19 to %tuple.elem1
+// CHECK:STDOUT:   %.loc22_25.4: init %tuple.type.2 = tuple_init (%.loc22_25.2, %.loc22_25.3) to %return.loc21
+// CHECK:STDOUT:   %.loc22_26: init %tuple.type.2 = converted %.loc22_25.1, %.loc22_25.4
 // CHECK:STDOUT:   return %.loc22_26 to %return.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

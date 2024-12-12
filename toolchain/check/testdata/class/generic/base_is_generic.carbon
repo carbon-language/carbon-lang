@@ -99,7 +99,6 @@ fn H() {
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %i32 [template]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.y [template]
@@ -212,8 +211,6 @@ fn H() {
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
-// CHECK:STDOUT:   %.loc17_15.1: ref %i32.builtin = as_compatible %.loc17_13.1
-// CHECK:STDOUT:   %.loc17_15.2: ref %i32 = as_compatible %.loc17_15.1
 // CHECK:STDOUT:   %.loc17_13.2: %i32 = bind_value %.loc17_13.1
 // CHECK:STDOUT:   return %.loc17_13.2
 // CHECK:STDOUT: }
@@ -259,7 +256,6 @@ fn H() {
 // CHECK:STDOUT:   %Base.elem.2: type = unbound_element_type %Base.2, %Param [template]
 // CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Param} [template]
 // CHECK:STDOUT:   %complete_type.5: <witness> = complete_type_witness %struct_type.x.2 [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess: %ImportedDoubleFieldAccess.type = struct_value () [template]
 // CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %i32 [template]
@@ -357,8 +353,6 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%import_ref.10 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
-// CHECK:STDOUT:   %.loc7_15.1: ref %i32.builtin = as_compatible %.loc7_13.1
-// CHECK:STDOUT:   %.loc7_15.2: ref %i32 = as_compatible %.loc7_15.1
 // CHECK:STDOUT:   %.loc7_13.2: %i32 = bind_value %.loc7_13.1
 // CHECK:STDOUT:   return %.loc7_13.2
 // CHECK:STDOUT: }

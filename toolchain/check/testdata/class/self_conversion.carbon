@@ -39,7 +39,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a [template]
@@ -184,10 +183,8 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc22
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc12 [template = @Base.%.loc12]
 // CHECK:STDOUT:   %.loc23_14.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc23_14.2: ref %i32.builtin = as_compatible %.loc23_14.1
-// CHECK:STDOUT:   %.loc23_14.3: ref %i32 = as_compatible %.loc23_14.2
-// CHECK:STDOUT:   %.loc23_14.4: %i32 = bind_value %.loc23_14.1
-// CHECK:STDOUT:   return %.loc23_14.4
+// CHECK:STDOUT:   %.loc23_14.2: %i32 = bind_value %.loc23_14.1
+// CHECK:STDOUT:   return %.loc23_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddrSelfBase[addr %self.param_patt: %ptr.2]() {

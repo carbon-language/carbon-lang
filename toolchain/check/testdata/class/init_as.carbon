@@ -23,7 +23,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.1 [template]
@@ -111,8 +110,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc17_28: ref %Class = converted %.loc17_26.1, %.loc17_26.10
 // CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc17_37.1: ref %i32 = class_element_access %.loc17_28, element0
-// CHECK:STDOUT:   %.loc17_39.1: ref %i32.builtin = as_compatible %.loc17_37.1
-// CHECK:STDOUT:   %.loc17_39.2: ref %i32 = as_compatible %.loc17_39.1
 // CHECK:STDOUT:   %.loc17_37.2: %i32 = bind_value %.loc17_37.1
 // CHECK:STDOUT:   return %.loc17_37.2
 // CHECK:STDOUT: }

@@ -28,7 +28,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
@@ -150,12 +149,10 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
 // CHECK:STDOUT:   %.loc16_51.1: %struct_type.n = struct_literal (%self.ref)
-// CHECK:STDOUT:   %.loc16_51.2: %i32.builtin = as_compatible %self.ref
-// CHECK:STDOUT:   %.loc16_51.3: %i32 = as_compatible %.loc16_51.2
-// CHECK:STDOUT:   %.loc16_51.4: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc16_51.5: init %i32 = initialize_from %self.ref to %.loc16_51.4
-// CHECK:STDOUT:   %.loc16_51.6: init %X = class_init (%.loc16_51.5), %return
-// CHECK:STDOUT:   %.loc16_52: init %X = converted %.loc16_51.1, %.loc16_51.6
+// CHECK:STDOUT:   %.loc16_51.2: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc16_51.3: init %i32 = initialize_from %self.ref to %.loc16_51.2
+// CHECK:STDOUT:   %.loc16_51.4: init %X = class_init (%.loc16_51.3), %return
+// CHECK:STDOUT:   %.loc16_52: init %X = converted %.loc16_51.1, %.loc16_51.4
 // CHECK:STDOUT:   return %.loc16_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,10 +161,8 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12 [template = @X.%.loc12]
 // CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc20_45.2: ref %i32.builtin = as_compatible %.loc20_45.1
-// CHECK:STDOUT:   %.loc20_45.3: ref %i32 = as_compatible %.loc20_45.2
-// CHECK:STDOUT:   %.loc20_45.4: %i32 = bind_value %.loc20_45.1
-// CHECK:STDOUT:   return %.loc20_45.4
+// CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
+// CHECK:STDOUT:   return %.loc20_45.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

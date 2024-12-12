@@ -38,7 +38,6 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
@@ -237,8 +236,6 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
 // CHECK:STDOUT:   %.loc25_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc25_10.1: ref %i32 = deref %.loc25_11
-// CHECK:STDOUT:   %.loc25_12.1: ref %i32.builtin = as_compatible %.loc25_10.1
-// CHECK:STDOUT:   %.loc25_12.2: ref %i32 = as_compatible %.loc25_12.1
 // CHECK:STDOUT:   %.loc25_10.2: %i32 = bind_value %.loc25_10.1
 // CHECK:STDOUT:   return %.loc25_10.2
 // CHECK:STDOUT: }
@@ -262,8 +259,6 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %w.ref: ref %ptr = name_ref w, %w
 // CHECK:STDOUT:   %.loc31_11: %ptr = bind_value %w.ref
 // CHECK:STDOUT:   %.loc31_10.1: ref %i32 = deref %.loc31_11
-// CHECK:STDOUT:   %.loc31_12.1: ref %i32.builtin = as_compatible %.loc31_10.1
-// CHECK:STDOUT:   %.loc31_12.2: ref %i32 = as_compatible %.loc31_12.1
 // CHECK:STDOUT:   %.loc31_10.2: %i32 = bind_value %.loc31_10.1
 // CHECK:STDOUT:   return %.loc31_10.2
 // CHECK:STDOUT: }

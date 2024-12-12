@@ -20,7 +20,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
@@ -74,8 +73,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc13_12: ref %i32 = deref %addr.loc13_13
 // CHECK:STDOUT:   %addr.loc13_11: %ptr = addr_of %.loc13_12
 // CHECK:STDOUT:   %.loc13_10.1: ref %i32 = deref %addr.loc13_11
-// CHECK:STDOUT:   %.loc13_15.1: ref %i32.builtin = as_compatible %.loc13_10.1
-// CHECK:STDOUT:   %.loc13_15.2: ref %i32 = as_compatible %.loc13_15.1
 // CHECK:STDOUT:   %.loc13_10.2: %i32 = bind_value %.loc13_10.1
 // CHECK:STDOUT:   return %.loc13_10.2
 // CHECK:STDOUT: }

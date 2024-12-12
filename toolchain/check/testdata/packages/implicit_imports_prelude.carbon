@@ -73,7 +73,6 @@ var b: i32 = a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -101,10 +100,8 @@ var b: i32 = a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, imports.%import_ref.1
-// CHECK:STDOUT:   %.loc4_15.1: ref %i32.builtin = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc4_15.2: ref %i32 = as_compatible %.loc4_15.1
-// CHECK:STDOUT:   %.loc4_14: %i32 = bind_value %a.ref
-// CHECK:STDOUT:   assign file.%b.var, %.loc4_14
+// CHECK:STDOUT:   %.loc4: %i32 = bind_value %a.ref
+// CHECK:STDOUT:   assign file.%b.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

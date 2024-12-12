@@ -63,7 +63,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.1 [template]
@@ -235,8 +234,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
 // CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
-// CHECK:STDOUT:   %.loc21_23.1: ref %i32.builtin = as_compatible %.loc21_21.1
-// CHECK:STDOUT:   %.loc21_23.2: ref %i32 = as_compatible %.loc21_23.1
 // CHECK:STDOUT:   %.loc21_21.2: %i32 = bind_value %.loc21_21.1
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc21_21.2
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
@@ -250,8 +247,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
 // CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0
-// CHECK:STDOUT:   %.loc22_23.1: ref %i32.builtin = as_compatible %.loc22_21.1
-// CHECK:STDOUT:   %.loc22_23.2: ref %i32 = as_compatible %.loc22_23.1
 // CHECK:STDOUT:   %.loc22_21.2: %i32 = bind_value %.loc22_21.1
 // CHECK:STDOUT:   assign %b.var, %.loc22_21.2
 // CHECK:STDOUT:   return

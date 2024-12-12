@@ -17,7 +17,6 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -66,11 +65,9 @@ var y: (i32,) = x;
 // CHECK:STDOUT:   assign file.%x.var, %.loc11_21
 // CHECK:STDOUT:   %x.ref: ref %tuple.type.2 = name_ref x, file.%x
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %x.ref, element0
-// CHECK:STDOUT:   %.loc12_17.1: ref %i32.builtin = as_compatible %tuple.elem0
-// CHECK:STDOUT:   %.loc12_17.2: ref %i32 = as_compatible %.loc12_17.1
-// CHECK:STDOUT:   %.loc12_17.3: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %.loc12_17.4: init %tuple.type.2 = tuple_init (%.loc12_17.3) to file.%y.var
-// CHECK:STDOUT:   %.loc12_18: init %tuple.type.2 = converted %x.ref, %.loc12_17.4
+// CHECK:STDOUT:   %.loc12_17.1: %i32 = bind_value %tuple.elem0
+// CHECK:STDOUT:   %.loc12_17.2: init %tuple.type.2 = tuple_init (%.loc12_17.1) to file.%y.var
+// CHECK:STDOUT:   %.loc12_18: init %tuple.type.2 = converted %x.ref, %.loc12_17.2
 // CHECK:STDOUT:   assign file.%y.var, %.loc12_18
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

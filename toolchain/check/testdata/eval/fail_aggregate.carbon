@@ -22,7 +22,6 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %array_type.1: type = array_type %int_1.1, %i32 [template]
-// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int_5.1: Core.IntLiteral = int_value 5 [template]
@@ -135,9 +134,7 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:   %.loc16_70.1: %i32 = value_of_initializer %int.convert_checked.loc16_70 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc16_70.2: %i32 = converted %int_2.loc16_70, %.loc16_70.1 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc16_71.1: ref %i32 = array_index %.loc16_57.2, %.loc16_70.2
-// CHECK:STDOUT:   %.loc16_71.2: ref %i32.builtin = as_compatible %.loc16_71.1
-// CHECK:STDOUT:   %.loc16_71.3: ref %i32 = as_compatible %.loc16_71.2
-// CHECK:STDOUT:   %.loc16_71.4: %i32 = bind_value %.loc16_71.1
+// CHECK:STDOUT:   %.loc16_71.2: %i32 = bind_value %.loc16_71.1
 // CHECK:STDOUT:   assign file.%array_index.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
