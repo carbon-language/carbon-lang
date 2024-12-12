@@ -18,8 +18,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'use.carbon'
 // CHECK:STDOUT: source_filename = "use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global i32
-// CHECK:STDOUT: @b = internal global i32
+// CHECK:STDOUT: @a = internal global i32 0
+// CHECK:STDOUT: @b = internal global i32 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
