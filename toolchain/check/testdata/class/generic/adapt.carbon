@@ -81,10 +81,10 @@ import library "extend_adapt_specific_type_library";
 
 fn ImportedAccess(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Adapter` to `C(Core.Int(32))` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Adapter` to `C(i32)` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+3]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(Core.Int(32)))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+3]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
   return a.x;
@@ -263,7 +263,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -271,14 +271,14 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Int.2) [template]
-// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Int.2} [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%i32) [template]
+// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.1: type = unbound_element_type %C.1, %T [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %i32.builtin [template]
-// CHECK:STDOUT:   %C.elem.2: type = unbound_element_type %C.2, %Int.2 [template]
+// CHECK:STDOUT:   %C.elem.2: type = unbound_element_type %C.2, %i32 [template]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [template]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -312,16 +312,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [template = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.patt: %Adapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %Adapter = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -350,18 +350,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %Int.2 {
+// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%Int.2) [template = constants.%C.2]
+// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc7_13.1: %C.2 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc7_13.2: %C.2 = converted %a.ref, %.loc7_13.1
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, imports.%import_ref.9 [template = imports.%.1]
-// CHECK:STDOUT:   %.loc7_23.1: ref %Int.2 = class_element_access %.loc7_13.2, element0
-// CHECK:STDOUT:   %.loc7_23.2: %Int.2 = bind_value %.loc7_23.1
+// CHECK:STDOUT:   %.loc7_23.1: ref %i32 = class_element_access %.loc7_13.2, element0
+// CHECK:STDOUT:   %.loc7_23.2: %i32 = bind_value %.loc7_23.1
 // CHECK:STDOUT:   return %.loc7_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,9 +370,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Int.2) {
-// CHECK:STDOUT:   %T => constants.%Int.2
-// CHECK:STDOUT:   %T.patt => constants.%Int.2
+// CHECK:STDOUT: specific @C(constants.%i32) {
+// CHECK:STDOUT:   %T => constants.%i32
+// CHECK:STDOUT:   %T.patt => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4
@@ -633,20 +633,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x.1 [symbolic]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%Int.2) [template]
-// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %Int.2} [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%i32) [template]
+// CHECK:STDOUT:   %struct_type.x.2: type = struct_type {.x: %i32} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.1: type = unbound_element_type %C.1, %T [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %i32.builtin [template]
-// CHECK:STDOUT:   %C.elem.2: type = unbound_element_type %C.2, %Int.2 [template]
+// CHECK:STDOUT:   %C.elem.2: type = unbound_element_type %C.2, %i32 [template]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [template]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -680,16 +680,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [template = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.patt: %Adapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %Adapter = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -719,12 +719,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %Int.2 {
+// CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.2 = name_ref x, imports.%import_ref.8 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc14_11.1: %C.2 = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc14_11.2: %Int.2 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc14_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -733,9 +733,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Int.2) {
-// CHECK:STDOUT:   %T => constants.%Int.2
-// CHECK:STDOUT:   %T.patt => constants.%Int.2
+// CHECK:STDOUT: specific @C(constants.%i32) {
+// CHECK:STDOUT:   %T => constants.%i32
+// CHECK:STDOUT:   %T.patt => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4

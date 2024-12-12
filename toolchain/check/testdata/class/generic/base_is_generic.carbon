@@ -246,8 +246,8 @@ fn H() {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %Int.2} [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %i32} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %T} [symbolic]
@@ -264,7 +264,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.5: <witness> = complete_type_witness %struct_type.x.2 [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [template]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess: %ImportedDoubleFieldAccess.type = struct_value () [template]
-// CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %Int.2 [template]
+// CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -303,16 +303,16 @@ fn H() {
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.decl: %ImportedDoubleFieldAccess.type = fn_decl @ImportedDoubleFieldAccess [template = constants.%ImportedDoubleFieldAccess] {
 // CHECK:STDOUT:     %d.patt: %Derived = binding_pattern d
 // CHECK:STDOUT:     %d.param_patt: %Derived = value_param_pattern %d.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %Int.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %Int.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%import_ref.3 [template = constants.%Derived]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
-// CHECK:STDOUT:     %return.param: ref %Int.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %Int.2 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -350,7 +350,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> %Int.2 {
+// CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %x.ref: %Base.elem.2 = name_ref x, imports.%import_ref.13 [template = imports.%.2]
@@ -358,8 +358,8 @@ fn H() {
 // CHECK:STDOUT:   %.loc7_11.2: ref %Base.2 = converted %d.ref, %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
 // CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%import_ref.10 [template = imports.%.1]
-// CHECK:STDOUT:   %.loc7_13.1: ref %Int.2 = class_element_access %.loc7_11.3, element0
-// CHECK:STDOUT:   %.loc7_13.2: %Int.2 = bind_value %.loc7_13.1
+// CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
+// CHECK:STDOUT:   %.loc7_13.2: %i32 = bind_value %.loc7_13.1
 // CHECK:STDOUT:   return %.loc7_13.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

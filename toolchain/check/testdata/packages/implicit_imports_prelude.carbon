@@ -74,11 +74,11 @@ var b: i32 = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref %Int.2 = import_ref Main//lib, a, loaded
+// CHECK:STDOUT:   %import_ref.1: ref %i32 = import_ref Main//lib, a, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.191
 // CHECK:STDOUT:     import Core//prelude
@@ -96,15 +96,15 @@ var b: i32 = a;
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(constants.%int_32) [template = constants.%Int.2]
-// CHECK:STDOUT:   %b.var: ref %Int.2 = var b
-// CHECK:STDOUT:   %b: ref %Int.2 = bind_name b, %b.var
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %b.var: ref %i32 = var b
+// CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: ref %Int.2 = name_ref a, imports.%import_ref.1
-// CHECK:STDOUT:   %.loc4: %Int.2 = bind_value %a.ref
+// CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, imports.%import_ref.1
+// CHECK:STDOUT:   %.loc4: %i32 = bind_value %a.ref
 // CHECK:STDOUT:   assign file.%b.var, %.loc4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
