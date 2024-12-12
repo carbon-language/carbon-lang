@@ -5,7 +5,7 @@
  */
 
 /**
- * ESLint configuration..
+ * ESLint configuration.
  *
  * See https://eslint.style and https://typescript-eslint.io for additional
  * linting options.

@@ -15,7 +15,7 @@ This extension is currently experimental, and being developed alongside Carbon.
 
 1. Install `carbon` to a local path.
     - The extension will look in `bazel-bin` if by default, for the output of
-      `bazel build //toolchain`. However, it will be more reliable to take a
+      `bazel build //toolchain` in the [carbon-lang](https://github.com/carbon-language/carbon-lang) repository. For usage outside that repository, download a
       [release](https://github.com/carbon-language/carbon-lang/releases) and put
       it in a directory.
 2. Install the
@@ -25,7 +25,7 @@ This extension is currently experimental, and being developed alongside Carbon.
 ## Configuration
 
 The configuration is under `carbon-vscode.*`. At present, the only configuration
-is the path to `carbon`. This looks like:
+is the path to the `carbon` binary. This looks like:
 
 ```
 "carbon.carbonPath": "/path/to/carbon"
