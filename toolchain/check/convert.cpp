@@ -793,55 +793,51 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
           loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
 
-    // PeformBuiltinConversion recurses into tuples and structs even when the
-    // types are the same, in order to perform builtin conversions on their
-    // parts. The same is not done for classes since they have to define their
-    // conversions as part of their api.
+    // PerformBuiltinConversion converts each part of a tuple or struct, even
+    // when the types are the same. This is not done for classes since they have
+    // to define their conversions as part of their api.
     //
-    // If a class adapts a tuple or struct, recurse into its parts when there's
-    // no other conversion going on (the source and target types are the same).
-    // To do so, we have to insert a conversion of the value up to the
+    // If a class adapts a tuple or struct, we convert each of its parts when
+    // there's no other conversion going on (the source and target types are the
+    // same). To do so, we have to insert a conversion of the value up to the
     // foundation and back down, and a conversion of the initializing object if
     // there is one.
+    //
+    // Note we do the conversion through a PerformBuiltinConversion() call
+    // rather than a Convert() call to avoid extraneous `converted` semir
+    // instructions on the adapted types, and as a shortcut to doing the
+    // explicit calls to walk the parts of the tuple/struct which happens inside
+    // PerformBuiltinConversion().
     if (auto foundation_type_id =
             GetCompatibleFoundationType(context, value_type_id);
         foundation_type_id != value_type_id &&
         (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
          context.types().Is<SemIR::StructType>(foundation_type_id))) {
-      PendingBlock::DiscardUnusedInstsScope scope(target.init_block);
-
       auto foundation_value_id = context.AddInst<SemIR::AsCompatible>(
           loc_id, {.type_id = foundation_type_id, .source_id = value_id});
 
-      auto init_id = target.init_id;
-      if (init_id != SemIR::InstId::Invalid) {
-        init_id = target.init_block->AddInst<SemIR::AsCompatible>(
-            loc_id, {.type_id = foundation_type_id,
-                     .source_id = target.init_id});
+      auto foundation_init_id = target.init_id;
+      if (foundation_init_id != SemIR::InstId::Invalid) {
+        foundation_init_id = target.init_block->AddInst<SemIR::AsCompatible>(
+            loc_id,
+            {.type_id = foundation_type_id, .source_id = target.init_id});
       }
 
-      // We recurse here, but at most one time, since we have walked the full
-      // adapt chain to the root foundation type before recursing.
-      auto converted_value_id =
+      foundation_value_id =
           PerformBuiltinConversion(context, loc_id, foundation_value_id,
                                    {
                                        .kind = target.kind,
                                        .type_id = foundation_type_id,
-                                       .init_id = init_id,
+                                       .init_id = foundation_init_id,
                                        .init_block = target.init_block,
                                    });
-      if (converted_value_id == SemIR::ErrorInst::SingletonInstId) {
-        return converted_value_id;
+      if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
+        return SemIR::ErrorInst::SingletonInstId;
       }
-      // If no builtin conversion actually happened, we orphan the
-      // AsCompatible instructions and don't refer to them. If a conversion
-      // did happen, then we return the value's conversion back to the adapted
-      // type.
-      if (converted_value_id != foundation_value_id) {
-        return context.AddInst<SemIR::AsCompatible>(
-            loc_id,
-            {.type_id = target.type_id, .source_id = converted_value_id});
-      }
+
+      return context.AddInst<SemIR::AsCompatible>(
+          loc_id,
+          {.type_id = target.type_id, .source_id = foundation_value_id});
     }
   }
 
