@@ -454,6 +454,27 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(TupleValue inst): {
+        auto refs = sem_ir.inst_blocks().Get(inst.elements_id);
+        if (refs.empty()) {
+          out << "()";
+          break;
+        }
+        out << "(";
+        step_stack.PushString(")");
+        // A tuple of one element has a comma to disambiguate from an
+        // expression.
+        if (refs.size() == 1) {
+          step_stack.PushString(",");
+        }
+        for (auto i : llvm::reverse(llvm::seq(refs.size()))) {
+          step_stack.PushInstId(refs[i]);
+          if (i > 0) {
+            step_stack.PushString(", ");
+          }
+        }
+        break;
+      }
       case CARBON_KIND(UnboundElementType inst): {
         out << "<unbound element of class ";
         step_stack.PushString(">");
@@ -522,7 +543,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case TupleAccess::Kind:
       case TupleInit::Kind:
       case TupleLiteral::Kind:
-      case TupleValue::Kind:
       case UnaryOperatorNot::Kind:
       case ValueAsRef::Kind:
       case ValueOfInitializer::Kind:
