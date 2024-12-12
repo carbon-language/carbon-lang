@@ -513,7 +513,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ClassType inst): {
-        if (auto literal_info = TypeLiteralInfo::ForType(*sem_ir_, inst);
+        if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
             literal_info.is_valid()) {
           add_inst_name(literal_info.GetLiteralAsString(*sem_ir_));
           break;

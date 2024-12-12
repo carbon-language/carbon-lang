@@ -147,10 +147,10 @@ struct ReturnTypeInfo {
   InitRepr init_repr;
 };
 
-// Information about the type literal that corresponds to a type.
-struct TypeLiteralInfo {
-  // The kind of a type literal, as determined by the letter that prefixes the
-  // bit width.
+// Information about the numeric type literal that corresponds to a type.
+struct NumericTypeLiteralInfo {
+  // The kind of a numeric type literal, as determined by the letter that
+  // prefixes the bit width.
   enum Kind : char {
     None = 0,
     Int = 'i',
@@ -158,19 +158,20 @@ struct TypeLiteralInfo {
     Float = 'f',
   };
 
-  static const TypeLiteralInfo Invalid;
+  static const NumericTypeLiteralInfo Invalid;
 
-  // Returns the type literal that would evaluate to this class type, if any.
+  // Returns the numeric type literal that would evaluate to this class type, if
+  // any.
   static auto ForType(const File& file, ClassType class_type)
-      -> TypeLiteralInfo;
+      -> NumericTypeLiteralInfo;
 
-  // Prints the type literal that corresponds to this type.
+  // Prints the numeric type literal that corresponds to this type.
   auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
 
   // Gets a string containing the literal.
   auto GetLiteralAsString(const File& file) const -> std::string;
 
-  // Returns whether this is a valid type literal.
+  // Returns whether this is a valid numeric type literal.
   auto is_valid() const -> bool { return kind != None; }
 
   // The kind of this type literal.
@@ -179,7 +180,7 @@ struct TypeLiteralInfo {
   IntId bit_width_id;
 };
 
-inline constexpr TypeLiteralInfo TypeLiteralInfo::Invalid = {
+inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
     .kind = None, .bit_width_id = IntId::Invalid};
 
 }  // namespace Carbon::SemIR

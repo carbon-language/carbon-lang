@@ -67,11 +67,11 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
   }
 }
 
-auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
-    -> TypeLiteralInfo {
+auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
+    -> NumericTypeLiteralInfo {
   // Quickly rule out any class that's not a specific.
   if (!class_type.specific_id.is_valid()) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
 
   // The class must be declared in the `Core` package.
@@ -79,13 +79,13 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
   if (!class_info.scope_id.is_valid() ||
       !file.name_scopes().IsCorePackage(
           file.name_scopes().Get(class_info.scope_id).parent_scope_id())) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
 
   // The class's name must be the name corresponding to a type literal.
   auto name_ident = file.names().GetAsStringIfIdentifier(class_info.name_id);
   if (!name_ident) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
   Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                   .Case("Int", Int)
@@ -93,32 +93,33 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
                   .Case("Float", Float)
                   .Default(None);
   if (kind == None) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
 
   // There must be exactly one argument.
   const auto& specific = file.specifics().Get(class_type.specific_id);
   auto args = file.inst_blocks().Get(specific.args_id);
   if (args.size() != 1) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
 
   // And the argument must be an integer value.
   auto width_arg = file.insts().TryGetAs<IntValue>(args[0]);
   if (!width_arg) {
-    return TypeLiteralInfo::Invalid;
+    return NumericTypeLiteralInfo::Invalid;
   }
   return {.kind = kind, .bit_width_id = width_arg->int_id};
 }
 
-auto TypeLiteralInfo::PrintLiteral(const File& file,
-                                   llvm::raw_ostream& out) const -> void {
+auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
+                                          llvm::raw_ostream& out) const
+    -> void {
   CARBON_CHECK(is_valid());
   out << static_cast<char>(kind);
   file.ints().Get(bit_width_id).print(out, /*isSigned=*/false);
 }
 
-auto TypeLiteralInfo::GetLiteralAsString(const File& file) const
+auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
     -> std::string {
   std::string result;
   llvm::raw_string_ostream out(result);

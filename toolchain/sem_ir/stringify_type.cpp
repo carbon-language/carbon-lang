@@ -204,7 +204,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(ClassType inst): {
         const auto& class_info = sem_ir.classes().Get(inst.class_id);
-        if (auto literal_info = TypeLiteralInfo::ForType(sem_ir, inst);
+        if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir, inst);
             literal_info.is_valid()) {
           literal_info.PrintLiteral(sem_ir, out);
           break;
