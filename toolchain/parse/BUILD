@@ -88,6 +88,7 @@ cc_library(
     ],
     deps = [
         ":context",
+        ":dump",
         ":node_kind",
         ":state",
         ":tree",
@@ -100,6 +101,19 @@ cc_library(
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
     ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":tree",
+        "//common:ostream",
+        "//toolchain/lex:dump",
+    ],
+    # Always link dump methods.
+    alwayslink = 1,
 )
 
 cc_library(

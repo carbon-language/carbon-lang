@@ -184,6 +184,7 @@ cc_library(
     hdrs = ["lex.h"],
     deps = [
         ":character_set",
+        ":dump",
         ":helpers",
         ":numeric_literal",
         ":string_literal",
@@ -196,6 +197,18 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":tokenized_buffer",
+        "//common:ostream",
+    ],
+    # Always link dump methods.
+    alwayslink = 1,
 )
 
 cc_library(

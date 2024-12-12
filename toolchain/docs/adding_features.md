@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Reviewing test deltas](#reviewing-test-deltas)
     -   [Verbose output](#verbose-output)
     -   [Stack traces](#stack-traces)
+    -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
 
 <!-- tocstop -->
 
@@ -496,3 +497,13 @@ While the iterative processing pattern means function stack traces will have
 minimal context for how the current function is reached, we use LLVM's
 `PrettyStackTrace` to include details about the state stack. The state stack
 will be above the function stack in crash output.
+
+### Dumping objects in interactive debuggers
+
+We provide namespace-scoped `Dump` functions in several components, such as
+[check/dump.cpp](/toolchain/check/dump.cpp). These `Dump` functions will print
+contextual information about an object to stderr. The files contain details
+regarding support.
+
+Objects which inherit from `Printable` also have `Dump` member functions, but
+these will lack contextual information.

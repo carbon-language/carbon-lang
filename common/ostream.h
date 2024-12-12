@@ -5,13 +5,14 @@
 #ifndef CARBON_COMMON_OSTREAM_H_
 #define CARBON_COMMON_OSTREAM_H_
 
+// Libraries should include this header instead of raw_ostream.
+
 #include <concepts>
 #include <ostream>
 #include <type_traits>
 
-#include "llvm/Support/raw_os_ostream.h"
-// Libraries should include this header instead of raw_ostream.
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/raw_ostream.h"  // IWYU pragma: export
 
 namespace Carbon {
