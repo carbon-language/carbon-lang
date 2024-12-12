@@ -596,13 +596,14 @@ using InheritancePath =
 
 // Computes the inheritance path from class `derived_id` to class `base_id`.
 // Returns nullopt if `derived_id` is not a class derived from `base_id`.
-static auto ComputeInheritancePath(Context& context, SemIR::TypeId derived_id,
+static auto ComputeInheritancePath(Context& context, SemIRLoc loc,
+                                   SemIR::TypeId derived_id,
                                    SemIR::TypeId base_id)
     -> std::optional<InheritancePath> {
   // We intend for NRVO to be applied to `result`. All `return` statements in
   // this function should `return result;`.
   std::optional<InheritancePath> result(std::in_place);
-  if (!context.TryToCompleteType(derived_id)) {
+  if (!context.TryToCompleteType(derived_id, loc)) {
     // TODO: Should we give an error here? If we don't, and there is an
     // inheritance path when the class is defined, we may have a coherence
     // problem.
@@ -856,8 +857,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
 
     // An expression of type T converts to U if T is a class derived from U.
-    if (auto path =
-            ComputeInheritancePath(context, value_type_id, target.type_id);
+    if (auto path = ComputeInheritancePath(context, loc_id, value_type_id,
+                                           target.type_id);
         path && !path->empty()) {
       return ConvertDerivedToBase(context, loc_id, value_id, *path);
     }
@@ -867,9 +868,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
     if (auto src_pointer_type =
             sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
-      if (auto path =
-              ComputeInheritancePath(context, src_pointer_type->pointee_id,
-                                     target_pointer_type->pointee_id);
+      if (auto path = ComputeInheritancePath(context, loc_id,
+                                             src_pointer_type->pointee_id,
+                                             target_pointer_type->pointee_id);
           path && !path->empty()) {
         return ConvertDerivedPointerToBasePointer(
             context, loc_id, *src_pointer_type, target.type_id, value_id,

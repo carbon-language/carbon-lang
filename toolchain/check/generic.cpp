@@ -249,7 +249,7 @@ static auto MakeGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
       // constraints on the generic rather than properties of the type. For now,
       // require the transformed type to be complete if the original was.
       if (context.types().IsComplete(inst.type_id())) {
-        context.TryToCompleteType(type_id);
+        context.CompleteTypeOrCheckFail(type_id);
       }
       inst.SetType(type_id);
       context.sem_ir().insts().Set(inst_id, inst);
