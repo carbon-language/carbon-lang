@@ -14,7 +14,7 @@
     "Programming Languages"
   ],
   "icon": "images/icon.png",
-	"activationEvents": [],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
@@ -60,13 +60,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
-    "@vscode/vsce": "^2.27.0",
-    "esbuild": "^0.24.0",
-    "typescript": "^5.7.2",
     "@stylistic/eslint-plugin": "^2.9.0",
-    "eslint": "^9.13.0",
     "@types/node": "^20",
     "@types/vscode": "^1.73.0",
+    "@vscode/vsce": "^2.27.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0"
   },
   "dependencies": {

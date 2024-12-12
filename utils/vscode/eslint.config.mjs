@@ -1,15 +1,16 @@
-/**
+/*
  * Part of the Carbon Language project, under the Apache License v2.0 with LLVM
  * Exceptions. See /LICENSE for license information.
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  */
 
-/**
+/*
  * ESLint configuration.
  *
  * See https://eslint.style and https://typescript-eslint.io for additional
  * linting options.
  */
+
 // @ts-check
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
