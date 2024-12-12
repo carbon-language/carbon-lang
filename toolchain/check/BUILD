@@ -72,7 +72,6 @@ cc_library(
         "//common:array_stack",
         "//common:check",
         "//common:map",
-        "//common:ostream",
         "//common:vlog",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
@@ -91,7 +90,6 @@ cc_library(
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],
-    alwayslink = 1,
 )
 
 cc_library(

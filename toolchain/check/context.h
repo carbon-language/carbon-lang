@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_CHECK_CONTEXT_H_
 
 #include "common/map.h"
-#include "common/ostream.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/decl_introducer_state.h"
