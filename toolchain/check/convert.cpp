@@ -922,9 +922,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // When converting between adaptor classes of the same type (we don't
-  // implicitly convert between different adaptors even if they adapt the same
-  // foundation type), and when no other conversion was available on the adaptor
+  // When converting between adapter classes of the same type (we don't
+  // implicitly convert between different adapters even if they adapt the same
+  // foundation type), and when no other conversion was available on the adapter
   // class itself, we do the builtin conversion step on their foundation type.
   // To do so, we have to insert a conversion up to the foundation and back
   // down.
@@ -932,6 +932,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     auto foundation_value_type_id =
         GetCompatibleFoundationType(context, value_type_id);
     if (foundation_value_type_id != value_type_id) {
+      PendingBlock::DiscardUnusedInstsScope scope(target.init_block);
+
       auto foundation_target_type_id =
           GetCompatibleFoundationType(context, target.type_id);
       CARBON_CHECK(foundation_value_type_id == foundation_target_type_id,
@@ -939,6 +941,17 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
 
       auto foundation_value_id = context.AddInst<SemIR::AsCompatible>(
           loc_id, {.type_id = foundation_value_type_id, .source_id = value_id});
+
+      // If there's an initializing expression, the initialization that would
+      // happen in PerformBuiltinConversion() will be done on the foundation
+      // type. Change the object being initialized to be of the foundation type.
+      auto init_id = target.init_id;
+      if (init_id != SemIR::InstId::Invalid) {
+        init_id = target.init_block->AddInst<SemIR::AsCompatible>(
+            loc_id, {.type_id = foundation_target_type_id,
+                     .source_id = target.init_id});
+      }
+
       // We recurse here, but at most one time, since we have walked the full
       // adapt chain to the root foundation type before recursing.
       auto converted_value_id =
@@ -946,16 +959,21 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
                                    {
                                        .kind = target.kind,
                                        .type_id = foundation_target_type_id,
-                                       .init_id = target.init_id,
+                                       .init_id = init_id,
                                        .init_block = target.init_block,
                                    });
-      auto target_value_id = context.AddInst<SemIR::AsCompatible>(
-          loc_id, {.type_id = target.type_id, .source_id = converted_value_id});
-      // If no builtin conversion actually happened, we orphan the two
-      // AsCompatible instructions and don't refer to them. If a conversion did
-      // happen, then we return the result of the second AsCompatible.
-      return converted_value_id == foundation_value_id ? value_id
-                                                       : target_value_id;
+      if (converted_value_id == SemIR::ErrorInst::SingletonInstId) {
+        return converted_value_id;
+      }
+      // If no builtin conversion actually happened, we orphan the
+      // AsCompatible instructions and don't refer to them. If a conversion
+      // did happen, then we return the value's conversion back to the adapted
+      // type.
+      if (converted_value_id != foundation_value_id) {
+        return context.AddInst<SemIR::AsCompatible>(
+            loc_id,
+            {.type_id = target.type_id, .source_id = converted_value_id});
+      }
     }
   }
 
