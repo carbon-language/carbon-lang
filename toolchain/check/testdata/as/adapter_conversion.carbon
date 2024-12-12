@@ -82,6 +82,33 @@ let b_value: B = ({.x = 1, .y = 2} as A) as B;
 // CHECK:STDERR:
 var b_init: B = ({.x = 1, .y = 2} as A) as B;
 
+// --- fail_init_tuple.carbon
+
+library "[[@TEST_NAME]]";
+
+class Noncopyable {
+  // TODO: Ensure this remains non-copyable once we have rules for class copyability.
+}
+
+class A {
+  adapt (i32, Noncopyable);
+}
+
+fn F(a: A) {
+  let a_value: A = (a as (i32, Noncopyable)) as A;
+
+  // TODO: Here, we treat `a as (i32, Noncopyable)` as a value expression, not an
+  // initializing expression, so `(...) as A` is a value expression too, requiring
+  // a copy to perform initialization. It's not clear whether that is the right
+  // behavior.
+
+  // CHECK:STDERR: fail_init_tuple.carbon:[[@LINE+4]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR:   var a_init: A = (a as (i32, Noncopyable)) as A;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var a_init: A = (a as (i32, Noncopyable)) as A;
+}
+
 // --- fail_adapt_init_from_struct.carbon
 
 library "[[@TEST_NAME]]";
@@ -557,6 +584,113 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc24_45.2: ref %B = as_compatible %.loc24_45.1
 // CHECK:STDOUT:   %.loc24_41.3: %B = bind_value %.loc24_41.2
 // CHECK:STDOUT:   assign file.%b_init.var, <error>
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_init_tuple.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Noncopyable: type = class_type @Noncopyable [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %A: type = class_type @A [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %Noncopyable) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %tuple.type.2 [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Noncopyable = %Noncopyable.decl
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Noncopyable.decl: type = class_decl @Noncopyable [template = constants.%Noncopyable] {} {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: %A = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref.loc12: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Noncopyable {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Noncopyable
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
+// CHECK:STDOUT:   %.loc9_26: %tuple.type.1 = tuple_literal (%i32, %Noncopyable.ref)
+// CHECK:STDOUT:   %.loc9_27: type = converted %.loc9_26, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   adapt_decl %.loc9_27 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template = constants.%complete_type.4]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a.param_patt: %A) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref.loc13: %A = name_ref a, %a
+// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Noncopyable.ref.loc13: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
+// CHECK:STDOUT:   %.loc13_43.1: %tuple.type.1 = tuple_literal (%i32.loc13, %Noncopyable.ref.loc13)
+// CHECK:STDOUT:   %.loc13_43.2: type = converted %.loc13_43.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc13_23.1: %tuple.type.2 = as_compatible %a.ref.loc13
+// CHECK:STDOUT:   %.loc13_23.2: %tuple.type.2 = converted %a.ref.loc13, %.loc13_23.1
+// CHECK:STDOUT:   %A.ref.loc13: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc13_46.1: %A = as_compatible %.loc13_23.2
+// CHECK:STDOUT:   %.loc13_46.2: %A = converted %.loc13_23.2, %.loc13_46.1
+// CHECK:STDOUT:   %a_value: %A = bind_name a_value, %.loc13_46.2
+// CHECK:STDOUT:   %a_init.var: ref %A = var a_init
+// CHECK:STDOUT:   %a_init: ref %A = bind_name a_init, %a_init.var
+// CHECK:STDOUT:   %a.ref.loc24: %A = name_ref a, %a
+// CHECK:STDOUT:   %int_32.loc24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Noncopyable.ref.loc24: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
+// CHECK:STDOUT:   %.loc24_42.1: %tuple.type.1 = tuple_literal (%i32.loc24, %Noncopyable.ref.loc24)
+// CHECK:STDOUT:   %.loc24_42.2: type = converted %.loc24_42.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc24_22.1: %tuple.type.2 = as_compatible %a.ref.loc24
+// CHECK:STDOUT:   %.loc24_22.2: %tuple.type.2 = converted %a.ref.loc24, %.loc24_22.1
+// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc24_45.1: %A = as_compatible %.loc24_22.2
+// CHECK:STDOUT:   %.loc24_45.2: %A = converted %.loc24_22.2, %.loc24_45.1
+// CHECK:STDOUT:   %.loc24_49.1: %tuple.type.2 = as_compatible %.loc24_45.2
+// CHECK:STDOUT:   %tuple.elem0.loc24_49.1: %i32 = tuple_access %.loc24_49.1, element0
+// CHECK:STDOUT:   %.loc24_49.2: %i32.builtin = as_compatible %tuple.elem0.loc24_49.1
+// CHECK:STDOUT:   %.loc24_49.3: %i32 = as_compatible %.loc24_49.2
+// CHECK:STDOUT:   %tuple.elem0.loc24_49.2: ref %i32 = tuple_access %a_init.var, element0
+// CHECK:STDOUT:   %.loc24_49.4: init %i32 = initialize_from %tuple.elem0.loc24_49.1 to %tuple.elem0.loc24_49.2
+// CHECK:STDOUT:   %tuple.elem1: %Noncopyable = tuple_access %.loc24_49.1, element1
+// CHECK:STDOUT:   %.loc24_49.5: %A = as_compatible <error> [template = <error>]
+// CHECK:STDOUT:   %.loc24_49.6: %A = converted %.loc24_45.2, %.loc24_49.5 [template = <error>]
+// CHECK:STDOUT:   assign %a_init.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
