@@ -378,8 +378,11 @@ auto FileTestBase::DoArgReplacements(
         }
         it = test_args.erase(it);
         for (const auto& file : test_files) {
-          it = test_args.insert(it, file.filename);
-          ++it;
+          const std::string& filename = file.filename;
+          if (!filename.ends_with(".h")) {
+            it = test_args.insert(it, filename);
+            ++it;
+          }
         }
         // Back up once because the for loop will advance.
         --it;
