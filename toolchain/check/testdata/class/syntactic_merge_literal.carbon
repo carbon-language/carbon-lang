@@ -7,8 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/syntactic_merge_literal.carbon
-// CHECK:STDERR: fail_int_mismatch.carbon: error: `Main//default` previously provided by `int_match.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
 
 // --- int_match.carbon
 
@@ -17,6 +15,8 @@ class D(b:! C(1_000));
 class D(b:! C(1_000)) {}
 
 // --- fail_int_mismatch.carbon
+// CHECK:STDERR: fail_int_mismatch.carbon: error: `Main//default` previously provided by `int_match.carbon` [DuplicateMainApi]
+// CHECK:STDERR:
 
 class C(a:! i32) {}
 class D(b:! C(1000));
