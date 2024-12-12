@@ -1302,6 +1302,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::ArrayType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::SingletonTypeId);
+  auto element_type_const_id =
+      GetLocalConstantId(resolver, inst.element_type_id);
+  auto bound_id = GetLocalConstantInstId(resolver, inst.bound_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto element_type_id =
+      resolver.local_context().GetTypeIdForTypeConstant(element_type_const_id);
+  return ResolveAs<SemIR::ArrayType>(
+      resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
+                 .bound_id = bound_id,
+                 .element_type_id = element_type_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedEntity inst) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
@@ -2475,6 +2493,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   CARBON_KIND_SWITCH(untyped_inst) {
     case CARBON_KIND(SemIR::AdaptDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::ArrayType inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::AssociatedEntity inst): {
       return TryResolveTypedInst(resolver, inst);
