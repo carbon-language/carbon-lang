@@ -23,7 +23,7 @@ fn F(c: AdaptCopyable) -> AdaptCopyable {
   return d;
 }
 
-fn AdaptCopyableInTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
+fn InTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
   var d: (AdaptCopyable, u32) = c;
   return d;
 }
@@ -41,7 +41,7 @@ fn F(c: AdaptTuple) -> AdaptTuple {
   return d;
 }
 
-fn AdaptTupleInTuple(c: (AdaptTuple, u32)) -> (AdaptTuple, u32) {
+fn InTuple(c: (AdaptTuple, u32)) -> (AdaptTuple, u32) {
   var d: (AdaptTuple, u32) = c;
   return d;
 }
@@ -108,7 +108,7 @@ fn I(g: AdaptStruct) -> AdaptStruct {
   return h;
 }
 
-fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
+fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
   var d: (AdaptStruct, u32) = c;
   return d;
 }
@@ -126,8 +126,8 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%AdaptCopyable, %u32) [template]
-// CHECK:STDOUT:   %AdaptCopyableInTuple.type: type = fn_type @AdaptCopyableInTuple [template]
-// CHECK:STDOUT:   %AdaptCopyableInTuple: %AdaptCopyableInTuple.type = struct_value () [template]
+// CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [template]
+// CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,7 +144,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .AdaptCopyable = %AdaptCopyable.decl
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .AdaptCopyableInTuple = %AdaptCopyableInTuple.decl
+// CHECK:STDOUT:     .InTuple = %InTuple.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %AdaptCopyable.decl: type = class_decl @AdaptCopyable [template = constants.%AdaptCopyable] {} {}
@@ -161,24 +161,24 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param: ref %AdaptCopyable = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptCopyable = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptCopyableInTuple.decl: %AdaptCopyableInTuple.type = fn_decl @AdaptCopyableInTuple [template = constants.%AdaptCopyableInTuple] {
+// CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [template = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.2 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %tuple.type.2 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc15_54: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %int_32.loc15_69: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc15_69: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %.loc15_72.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_54, %u32.loc15_69)
-// CHECK:STDOUT:     %.loc15_72.2: type = converted %.loc15_72.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc15_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %int_32.loc15_56: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %u32.loc15_56: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     %.loc15_59.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_41, %u32.loc15_56)
+// CHECK:STDOUT:     %.loc15_59.2: type = converted %.loc15_59.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_47.1: type = splice_block %.loc15_47.3 [template = constants.%tuple.type.2] {
-// CHECK:STDOUT:       %AdaptCopyable.ref.loc15_29: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
-// CHECK:STDOUT:       %int_32.loc15_44: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc15_44: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:       %.loc15_47.2: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_29, %u32.loc15_44)
-// CHECK:STDOUT:       %.loc15_47.3: type = converted %.loc15_47.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %.loc15_34.1: type = splice_block %.loc15_34.3 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:       %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
+// CHECK:STDOUT:       %int_32.loc15_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc15_31: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:       %.loc15_34.2: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %u32.loc15_31)
+// CHECK:STDOUT:       %.loc15_34.3: type = converted %.loc15_34.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
@@ -208,7 +208,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdaptCopyableInTuple(%c.param_patt: %tuple.type.2) -> %return.param_patt: %tuple.type.2 {
+// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.2) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.var: ref %tuple.type.2 = var d
 // CHECK:STDOUT:   %d: ref %tuple.type.2 = bind_name d, %d.var
@@ -249,8 +249,8 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%AdaptTuple, %u32) [template]
-// CHECK:STDOUT:   %AdaptTupleInTuple.type: type = fn_type @AdaptTupleInTuple [template]
-// CHECK:STDOUT:   %AdaptTupleInTuple: %AdaptTupleInTuple.type = struct_value () [template]
+// CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [template]
+// CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -267,7 +267,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .AdaptTuple = %AdaptTuple.decl
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .AdaptTupleInTuple = %AdaptTupleInTuple.decl
+// CHECK:STDOUT:     .InTuple = %InTuple.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %AdaptTuple.decl: type = class_decl @AdaptTuple [template = constants.%AdaptTuple] {} {}
@@ -284,24 +284,24 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param: ref %AdaptTuple = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptTuple = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptTupleInTuple.decl: %AdaptTupleInTuple.type = fn_decl @AdaptTupleInTuple [template = constants.%AdaptTupleInTuple] {
+// CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [template = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.3 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %tuple.type.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.3 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.3 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptTuple.ref.loc13_48: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
-// CHECK:STDOUT:     %int_32.loc13_60: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc13_60: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %.loc13_63.1: %tuple.type.1 = tuple_literal (%AdaptTuple.ref.loc13_48, %u32.loc13_60)
-// CHECK:STDOUT:     %.loc13_63.2: type = converted %.loc13_63.1, constants.%tuple.type.3 [template = constants.%tuple.type.3]
+// CHECK:STDOUT:     %AdaptTuple.ref.loc13_38: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
+// CHECK:STDOUT:     %int_32.loc13_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %u32.loc13_50: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     %.loc13_53.1: %tuple.type.1 = tuple_literal (%AdaptTuple.ref.loc13_38, %u32.loc13_50)
+// CHECK:STDOUT:     %.loc13_53.2: type = converted %.loc13_53.1, constants.%tuple.type.3 [template = constants.%tuple.type.3]
 // CHECK:STDOUT:     %c.param: %tuple.type.3 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc13_41.1: type = splice_block %.loc13_41.3 [template = constants.%tuple.type.3] {
-// CHECK:STDOUT:       %AdaptTuple.ref.loc13_26: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
-// CHECK:STDOUT:       %int_32.loc13_38: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc13_38: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:       %.loc13_41.2: %tuple.type.1 = tuple_literal (%AdaptTuple.ref.loc13_26, %u32.loc13_38)
-// CHECK:STDOUT:       %.loc13_41.3: type = converted %.loc13_41.2, constants.%tuple.type.3 [template = constants.%tuple.type.3]
+// CHECK:STDOUT:     %.loc13_31.1: type = splice_block %.loc13_31.3 [template = constants.%tuple.type.3] {
+// CHECK:STDOUT:       %AdaptTuple.ref.loc13_16: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
+// CHECK:STDOUT:       %int_32.loc13_28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc13_28: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:       %.loc13_31.2: %tuple.type.1 = tuple_literal (%AdaptTuple.ref.loc13_16, %u32.loc13_28)
+// CHECK:STDOUT:       %.loc13_31.3: type = converted %.loc13_31.2, constants.%tuple.type.3 [template = constants.%tuple.type.3]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.3 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.3 = out_param runtime_param1
@@ -358,7 +358,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc10_11.9 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdaptTupleInTuple(%c.param_patt: %tuple.type.3) -> %return.param_patt: %tuple.type.3 {
+// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.3) -> %return.param_patt: %tuple.type.3 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.var: ref %tuple.type.3 = var d
 // CHECK:STDOUT:   %d: ref %tuple.type.3 = bind_name d, %d.var
@@ -589,8 +589,8 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%AdaptStruct, %u32) [template]
-// CHECK:STDOUT:   %AdaptStructInTuple.type: type = fn_type @AdaptStructInTuple [template]
-// CHECK:STDOUT:   %AdaptStructInTuple: %AdaptStructInTuple.type = struct_value () [template]
+// CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [template]
+// CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -607,7 +607,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .AdaptStruct = %AdaptStruct.decl
 // CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:     .AdaptStructInTuple = %AdaptStructInTuple.decl
+// CHECK:STDOUT:     .InTuple = %InTuple.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %AdaptStruct.decl: type = class_decl @AdaptStruct [template = constants.%AdaptStruct] {} {}
@@ -624,24 +624,24 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param: ref %AdaptStruct = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptStruct = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AdaptStructInTuple.decl: %AdaptStructInTuple.type = fn_decl @AdaptStructInTuple [template = constants.%AdaptStructInTuple] {
+// CHECK:STDOUT:   %InTuple.decl: %InTuple.type = fn_decl @InTuple [template = constants.%InTuple] {
 // CHECK:STDOUT:     %c.patt: %tuple.type.2 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %tuple.type.2 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptStruct.ref.loc13_50: type = name_ref AdaptStruct, file.%AdaptStruct.decl [template = constants.%AdaptStruct]
-// CHECK:STDOUT:     %int_32.loc13_63: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc13_63: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %.loc13_66.1: %tuple.type.1 = tuple_literal (%AdaptStruct.ref.loc13_50, %u32.loc13_63)
-// CHECK:STDOUT:     %.loc13_66.2: type = converted %.loc13_66.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %AdaptStruct.ref.loc13_39: type = name_ref AdaptStruct, file.%AdaptStruct.decl [template = constants.%AdaptStruct]
+// CHECK:STDOUT:     %int_32.loc13_52: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %u32.loc13_52: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     %.loc13_55.1: %tuple.type.1 = tuple_literal (%AdaptStruct.ref.loc13_39, %u32.loc13_52)
+// CHECK:STDOUT:     %.loc13_55.2: type = converted %.loc13_55.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc13_43.1: type = splice_block %.loc13_43.3 [template = constants.%tuple.type.2] {
-// CHECK:STDOUT:       %AdaptStruct.ref.loc13_27: type = name_ref AdaptStruct, file.%AdaptStruct.decl [template = constants.%AdaptStruct]
-// CHECK:STDOUT:       %int_32.loc13_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc13_40: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:       %.loc13_43.2: %tuple.type.1 = tuple_literal (%AdaptStruct.ref.loc13_27, %u32.loc13_40)
-// CHECK:STDOUT:       %.loc13_43.3: type = converted %.loc13_43.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %.loc13_32.1: type = splice_block %.loc13_32.3 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:       %AdaptStruct.ref.loc13_16: type = name_ref AdaptStruct, file.%AdaptStruct.decl [template = constants.%AdaptStruct]
+// CHECK:STDOUT:       %int_32.loc13_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc13_29: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:       %.loc13_32.2: %tuple.type.1 = tuple_literal (%AdaptStruct.ref.loc13_16, %u32.loc13_29)
+// CHECK:STDOUT:       %.loc13_32.3: type = converted %.loc13_32.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
@@ -697,7 +697,7 @@ fn AdaptStructInTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return %.loc10_11.13 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AdaptStructInTuple(%c.param_patt: %tuple.type.2) -> %return.param_patt: %tuple.type.2 {
+// CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.2) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.var: ref %tuple.type.2 = var d
 // CHECK:STDOUT:   %d: ref %tuple.type.2 = bind_name d, %d.var
