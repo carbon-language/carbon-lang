@@ -18,7 +18,7 @@ var a: A = {};
 // CHECK:STDOUT: ; ModuleID = 'class_with_fun.carbon'
 // CHECK:STDOUT: source_filename = "class_with_fun.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global {}
+// CHECK:STDOUT: @a = internal global {} zeroinitializer
 // CHECK:STDOUT: @A.val.loc13_12 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @A.val.loc16_14 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]

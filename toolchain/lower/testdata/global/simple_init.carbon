@@ -12,7 +12,7 @@ var a: i32 = 0;
 // CHECK:STDOUT: ; ModuleID = 'simple_init.carbon'
 // CHECK:STDOUT: source_filename = "simple_init.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = internal global i32
+// CHECK:STDOUT: @a = internal global i32 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !4 {
@@ -22,7 +22,7 @@ var a: i32 = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 0, { 1, 0 }
+// CHECK:STDOUT: uselistorder i32 0, { 1, 0, 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
