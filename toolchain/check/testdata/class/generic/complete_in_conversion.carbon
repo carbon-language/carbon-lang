@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/generic/complete_in_conversion.carbon
 
-// --- derived_to_base.carbon
+// --- fail_derived_to_base.carbon
 
 base class B {}
 
 class A(N:! i32) {
   extend base: B;
 
-  // CHECK:STDERR: derived_to_base.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
   // CHECK:STDERR:   var n: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~~~
   var n: Core.Int(N);
 }
 
 fn F(a: A(0)*) {
-  // CHECK:STDERR: derived_to_base.carbon:[[@LINE+3]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   let b: B* = a;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   let b: B* = a;
 }
 
-// CHECK:STDOUT: --- derived_to_base.carbon
+// CHECK:STDOUT: --- fail_derived_to_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [template]
