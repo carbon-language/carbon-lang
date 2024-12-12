@@ -5,7 +5,11 @@
  */
 
 /*
- * This supports using esbuild to bundle the extension for releases.
+ * This supports using esbuild to bundle the extension for releases. This is
+ * invoked through package.json.
+ *
+ * For information about this, see:
+ * https://code.visualstudio.com/api/working-with-extensions/bundling-extension
  */
 
 const esbuild = require('esbuild');
