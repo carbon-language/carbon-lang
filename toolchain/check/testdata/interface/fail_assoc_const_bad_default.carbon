@@ -12,7 +12,7 @@ interface I {
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let T:! type = 42;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   let T:! type = 42;

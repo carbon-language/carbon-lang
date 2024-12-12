@@ -93,6 +93,25 @@ cc_library(
 )
 
 cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    # Contains Dump methods without a forward declaration.
+    copts = ["-Wno-missing-prototypes"],
+    deps = [
+        ":context",
+        "//common:check",
+        "//common:ostream",
+        "//toolchain/lex:dump",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:dump",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+    ],
+    # Always link dump methods.
+    alwayslink = 1,
+)
+
+cc_library(
     name = "check",
     srcs = [
         "check.cpp",
@@ -111,6 +130,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":dump",
         ":impl",
         ":interface",
         ":pointer_dereference",

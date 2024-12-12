@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+6]]:8: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: (1, );
 // CHECK:STDERR:        ^~~~~
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+3]]:8: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (1, );
 // CHECK:STDERR:        ^~~~~
 var x: (1, );

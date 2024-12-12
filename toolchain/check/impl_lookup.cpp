@@ -38,8 +38,7 @@ static auto FindAssociatedImportIRs(Context& context,
   // Push the contents of an instruction block onto our worklist.
   auto push_block = [&](SemIR::InstBlockId block_id) {
     if (block_id.is_valid()) {
-      auto block = context.inst_blocks().Get(block_id);
-      worklist.append(block.begin(), block.end());
+      llvm::append_range(worklist, context.inst_blocks().Get(block_id));
     }
   };
 
@@ -102,11 +101,10 @@ static auto FindAssociatedImportIRs(Context& context,
   }
 
   // Deduplicate.
-  std::sort(result.begin(), result.end(),
-            [](SemIR::ImportIRId a, SemIR::ImportIRId b) {
-              return a.index < b.index;
-            });
-  result.erase(std::unique(result.begin(), result.end()), result.end());
+  llvm::sort(result, [](SemIR::ImportIRId a, SemIR::ImportIRId b) {
+    return a.index < b.index;
+  });
+  result.erase(llvm::unique(result), result.end());
 
   return result;
 }
@@ -162,7 +160,7 @@ auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
     if (specific_id.is_valid()) {
       // We need a definition of the specific `impl` so we can access its
       // witness.
-      ResolveSpecificDefinition(context, specific_id);
+      ResolveSpecificDefinition(context, loc_id, specific_id);
     }
     return context.constant_values().GetInstId(
         SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,

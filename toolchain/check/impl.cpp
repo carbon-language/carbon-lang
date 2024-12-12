@@ -33,7 +33,7 @@ static auto NoteAssociatedFunction(Context& context,
 // Gets the self specific of a generic declaration that is an interface member,
 // given a specific for an enclosing generic, plus a type to use as `Self`.
 static auto GetSelfSpecificForInterfaceMemberWithSelfType(
-    Context& context, SemIR::SpecificId enclosing_specific_id,
+    Context& context, SemIRLoc loc, SemIR::SpecificId enclosing_specific_id,
     SemIR::GenericId generic_id, SemIR::TypeId self_type_id)
     -> SemIR::SpecificId {
   const auto& generic = context.generics().Get(generic_id);
@@ -84,7 +84,7 @@ static auto GetSelfSpecificForInterfaceMemberWithSelfType(
   }
 
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
-  return MakeSpecific(context, generic_id, args_id);
+  return MakeSpecific(context, loc, generic_id, args_id);
 }
 
 // Checks that `impl_function_id` is a valid implementation of the function
@@ -115,7 +115,7 @@ static auto CheckAssociatedFunctionImplementation(
   // parameters.
   auto interface_function_specific_id =
       GetSelfSpecificForInterfaceMemberWithSelfType(
-          context, interface_function_type.specific_id,
+          context, impl_decl_id, interface_function_type.specific_id,
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,

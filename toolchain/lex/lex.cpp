@@ -1555,9 +1555,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
     }
 
     // Find the innermost matching opening symbol.
-    auto opening_it = std::find_if(
-        open_groups_.rbegin(), open_groups_.rend(),
-        [&](TokenIndex opening_token) {
+    auto opening_it = llvm::find_if(
+        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
           return buffer_.GetTokenInfo(opening_token).kind().closing_symbol() ==
                  kind;
         });

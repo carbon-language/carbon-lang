@@ -11,7 +11,7 @@
 // CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+6]]:21: error: cannot implicitly convert from `f64` to `i32` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
 // CHECK:STDERR:                     ^~~~~~~~~~
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: note: type `f64` does not implement interface `ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+3]]:21: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (i32, i32) = (2, 65.89);
 // CHECK:STDERR:                     ^~~~~~~~~~
 var x: (i32, i32) = (2, 65.89);

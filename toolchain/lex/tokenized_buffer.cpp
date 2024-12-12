@@ -25,7 +25,7 @@ auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
-  return GetLineNumber(GetLine(token));
+  return GetLine(token).index + 1;
 }
 
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
@@ -162,10 +162,6 @@ auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return recovery_tokens_[token.index];
 }
 
-auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
-  return line.index + 1;
-}
-
 auto TokenizedBuffer::GetNextLine(LineIndex line) const -> LineIndex {
   LineIndex next(line.index + 1);
   CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
@@ -262,7 +258,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       llvm::right_justify(
           llvm::formatv("'{0}'", token_info.kind().name()).str(),
           widths.kind + 2),
-      llvm::format_decimal(GetLineNumber(GetLine(token)), widths.line),
+      llvm::format_decimal(GetLineNumber(token), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
       llvm::format_decimal(GetIndentColumnNumber(line_index), widths.indent),
       token_text);
@@ -317,10 +313,9 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
 auto TokenizedBuffer::FindLineIndex(int32_t byte_offset) const -> LineIndex {
   CARBON_DCHECK(!line_infos_.empty());
   const auto* line_it =
-      std::partition_point(line_infos_.begin(), line_infos_.end(),
-                           [byte_offset](LineInfo line_info) {
-                             return line_info.start <= byte_offset;
-                           });
+      llvm::partition_point(line_infos_, [byte_offset](LineInfo line_info) {
+        return line_info.start <= byte_offset;
+      });
   --line_it;
 
   // If this isn't the first line but it starts past the end of the source, then
@@ -386,8 +381,8 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   int32_t offset = loc - buffer_->source_->text().begin();
 
   // Find the first line starting after the given location.
-  const auto* next_line_it = std::partition_point(
-      buffer_->line_infos_.begin(), buffer_->line_infos_.end(),
+  const auto* next_line_it = llvm::partition_point(
+      buffer_->line_infos_,
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
