@@ -1261,9 +1261,15 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id) -> bool {
-  // TODO: We need a location here in case we need to instantiate a class type.
-  return TypeCompleter(*this, SemIR::LocId::Invalid, nullptr).Complete(type_id);
+auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc) -> bool {
+  return TypeCompleter(*this, loc, nullptr).Complete(type_id);
+}
+
+auto Context::CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void {
+  bool complete =
+      TypeCompleter(*this, SemIR::LocId::Invalid, nullptr).Complete(type_id);
+  CARBON_CHECK(complete, "Expected {0} to be a complete type",
+               types().GetAsInst(type_id));
 }
 
 auto Context::RequireCompleteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
@@ -1386,8 +1392,7 @@ template <typename InstT, typename... EachArgT>
 static auto GetCompleteTypeImpl(Context& context, EachArgT... each_arg)
     -> SemIR::TypeId {
   auto type_id = GetTypeImpl<InstT>(context, each_arg...);
-  bool complete = context.TryToCompleteType(type_id);
-  CARBON_CHECK(complete, "Type completion should not fail");
+  context.CompleteTypeOrCheckFail(type_id);
   return type_id;
 }
 
@@ -1413,8 +1418,7 @@ auto Context::GetSingletonType(SemIR::InstId singleton_id) -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
   auto type_id = GetTypeIdForTypeInst(singleton_id);
   // To keep client code simpler, complete builtin types before returning them.
-  bool complete = TryToCompleteType(type_id);
-  CARBON_CHECK(complete, "Failed to complete builtin type");
+  CompleteTypeOrCheckFail(type_id);
   return type_id;
 }
 
