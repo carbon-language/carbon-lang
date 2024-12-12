@@ -2217,20 +2217,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
-  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
   auto elements_id =
       GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
-  auto specific_id =
-      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
       resolver, {.type_id = resolver.local_context().GetSingletonType(
                      SemIR::WitnessType::SingletonInstId),
-                 .elements_id = elements_id,
-                 .specific_id = specific_id});
+                 .elements_id = elements_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2243,37 +2239,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveAs<SemIR::ImplWitnessAccess>(
-      resolver,
-      {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
-       .witness_id = witness_id,
-       .index = inst.index});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::InterfaceWitness inst) -> ResolveResult {
-  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  auto elements_id =
-      GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
-  return ResolveAs<SemIR::InterfaceWitness>(
-      resolver, {.type_id = resolver.local_context().GetSingletonType(
-                     SemIR::WitnessType::SingletonInstId),
-                 .elements_id = elements_id});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::InterfaceWitnessAccess inst)
-    -> ResolveResult {
-  auto type_id = GetLocalConstantId(resolver, inst.type_id);
-  auto witness_id = GetLocalConstantInstId(resolver, inst.witness_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  return ResolveAs<SemIR::InterfaceWitnessAccess>(
       resolver,
       {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
        .witness_id = witness_id,
@@ -2566,12 +2531,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::InterfaceDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
-    }
-    case CARBON_KIND(SemIR::InterfaceWitness inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::InterfaceWitnessAccess inst): {
-      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::IntValue inst): {
       return TryResolveTypedInst(resolver, inst);

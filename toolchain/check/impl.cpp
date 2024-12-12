@@ -193,7 +193,7 @@ static auto BuildImplWitnessImpl(
   }
 
   auto table_id = context.inst_blocks().Add(table);
-  return context.AddInst<SemIR::InterfaceWitness>(
+  return context.AddInst<SemIR::ImplWitness>(
       // FIXME: should this instead be `first_owning_decl_id`?
       context.insts().GetLocId(impl.latest_decl_id()),
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),

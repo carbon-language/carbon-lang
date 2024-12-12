@@ -134,8 +134,7 @@ struct ArrayIndex {
 struct AnyAggregateAccess {
   static constexpr InstKind Kinds[] = {
       InstKind::StructAccess, InstKind::TupleAccess,
-      InstKind::ClassElementAccess, InstKind::ImplWitnessAccess,
-      InstKind::InterfaceWitnessAccess};
+      InstKind::ClassElementAccess, InstKind::ImplWitnessAccess};
 
   InstKind kind;
   TypeId type_id;
@@ -158,8 +157,7 @@ struct AnyAggregateInit {
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
   static constexpr InstKind Kinds[] = {
-      InstKind::StructValue, InstKind::TupleValue, InstKind::ImplWitness,
-      InstKind::InterfaceWitness};
+      InstKind::StructValue, InstKind::TupleValue, InstKind::ImplWitness};
 
   InstKind kind;
   TypeId type_id;
@@ -887,34 +885,6 @@ struct InterfaceDecl {
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
   InstBlockId decl_block_id;
-};
-
-// A witness that a type implements an interface.
-struct InterfaceWitness {
-  static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
-      {.ir_name = "interface_witness",
-       .constant_kind = InstConstantKind::Conditional,
-       // TODO: For dynamic dispatch, we might want to lower witness tables as
-       // constants.
-       .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  InstBlockId elements_id;
-};
-
-// Accesses an element of an interface witness by index.
-struct InterfaceWitnessAccess {
-  static constexpr auto Kind =
-      InstKind::InterfaceWitnessAccess.Define<Parse::NodeId>(
-          {.ir_name = "interface_witness_access",
-           .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  TypeId type_id;
-  InstId witness_id;
-  ElementIndex index;
 };
 
 // A literal integer value.

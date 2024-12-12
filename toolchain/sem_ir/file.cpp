@@ -270,8 +270,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
       case PointerType::Kind:

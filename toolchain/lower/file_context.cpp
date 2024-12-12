@@ -585,8 +585,7 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 // Treat non-monomorphized symbolic types as opaque.
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                        SemIR::ImplWitnessAccess,
-                                        SemIR::InterfaceWitnessAccess>())
+                                        SemIR::ImplWitnessAccess>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   return llvm::StructType::get(context.llvm_context());

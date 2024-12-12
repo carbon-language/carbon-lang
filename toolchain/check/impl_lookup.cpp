@@ -111,10 +111,9 @@ static auto FindAssociatedImportIRs(Context& context,
   return result;
 }
 
-auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
-                            SemIR::ConstantId type_const_id,
-                            SemIR::ConstantId interface_const_id)
-    -> SemIR::InstId {
+auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId type_const_id,
+                       SemIR::ConstantId interface_const_id) -> SemIR::InstId {
   auto import_irs =
       FindAssociatedImportIRs(context, type_const_id, interface_const_id);
   for (auto import_ir : import_irs) {
