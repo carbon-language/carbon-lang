@@ -1266,7 +1266,6 @@ auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc) -> bool {
 }
 
 auto Context::CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void {
-  // TODO: We need a location here in case we need to instantiate a class type.
   bool complete =
       TypeCompleter(*this, SemIR::LocId::Invalid, nullptr).Complete(type_id);
   CARBON_CHECK(complete, "Expected {0} to be a complete type",
