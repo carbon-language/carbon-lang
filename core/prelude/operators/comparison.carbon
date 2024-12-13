@@ -20,3 +20,9 @@ interface Ordered {
   fn Greater[self: Self](other: Self) -> bool;
   fn GreaterOrEquivalent[self: Self](other: Self) -> bool;
 }
+
+// Equality comparison for `bool`.
+impl bool as Eq {
+  fn Equal[self: Self](other: Self) -> bool = "bool.eq";
+  fn NotEqual[self: Self](other: Self) -> bool = "bool.neq";
+}

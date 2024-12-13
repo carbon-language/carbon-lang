@@ -1097,6 +1097,18 @@ static auto PerformBuiltinFloatComparison(
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+// Performs a builtin boolean comparison.
+static auto PerformBuiltinBoolComparison(
+    Context& context, SemIR::BuiltinFunctionKind builtin_kind,
+    SemIR::InstId lhs_id, SemIR::InstId rhs_id, SemIR::TypeId bool_type_id) {
+  bool lhs = context.insts().GetAs<SemIR::BoolLiteral>(lhs_id).value.ToBool();
+  bool rhs = context.insts().GetAs<SemIR::BoolLiteral>(rhs_id).value.ToBool();
+  return MakeBoolResult(context, bool_type_id,
+                        builtin_kind == SemIR::BuiltinFunctionKind::BoolEq
+                            ? lhs == rhs
+                            : lhs != rhs);
+}
+
 // Returns a constant for a call to a builtin function.
 static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
                                        SemIR::Call call,
@@ -1234,6 +1246,16 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
       }
       return PerformBuiltinFloatComparison(context, builtin_kind, arg_ids[0],
                                            arg_ids[1], call.type_id);
+    }
+
+    // Bool comparisons.
+    case SemIR::BuiltinFunctionKind::BoolEq:
+    case SemIR::BuiltinFunctionKind::BoolNeq: {
+      if (phase != Phase::Template) {
+        break;
+      }
+      return PerformBuiltinBoolComparison(context, builtin_kind, arg_ids[0],
+                                          arg_ids[1], call.type_id);
     }
   }
 
