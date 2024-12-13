@@ -43,14 +43,6 @@ CheckCondition(bool condition)
                                 const char* condition_str,
                                 llvm::StringRef extra_message) -> void;
 
-// A backport of std::is_scoped_enum_v from C++23.
-template <typename T, bool IsEnum = std::is_enum_v<T>>
-static constexpr bool IsScopedEnum = false;
-
-template <typename T>
-static constexpr bool IsScopedEnum<T, true> =
-    !std::convertible_to<T, std::underlying_type_t<T>>;
-
 // Allow converting format values; the default behaviour is to just pass them
 // through.
 template <typename T>
@@ -60,15 +52,16 @@ auto ConvertFormatValue(T&& t) -> T&& {
 
 // Convert enums to larger integers so that byte-sized enums are not confused
 // with being chars and printed as invalid (or nul-terminating) characters.
+// Scoped enums are explicitly converted to integers so they can be printed
+// without the user writing a cast.
 template <typename T>
-  requires(std::is_enum_v<std::remove_reference_t<T>> &&
-           !IsScopedEnum<std::remove_reference_t<T>>)
+  requires(std::is_enum_v<std::remove_reference_t<T>>)
 auto ConvertFormatValue(T&& t) {
   if constexpr (std::is_signed_v<
                     std::underlying_type_t<std::remove_reference_t<T>>>) {
-    return int64_t{t};
+    return static_cast<int64_t>(t);
   } else {
-    return uint64_t{t};
+    return static_cast<uint64_t>(t);
   }
 }
 
