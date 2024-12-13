@@ -321,9 +321,11 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
       context.scope_stack().compile_time_bindings_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
-    CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty(),
-                 "Have dependent instructions but no compile time bindings are "
-                 "in scope.");
+    CARBON_CHECK(
+        context.generic_region_stack().PeekDependentInsts().empty(),
+        "Have dependent instruction {0} but no compile time bindings are "
+        "in scope.",
+        context.insts().Get(decl_id));
     context.generic_region_stack().Pop();
     return SemIR::GenericId::Invalid;
   }
