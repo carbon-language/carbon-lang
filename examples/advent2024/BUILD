@@ -24,3 +24,10 @@ carbon_binary(
         "day1_part2.carbon",
     ] + utils,
 )
+
+carbon_binary(
+    name = "day2_part1",
+    srcs = [
+        "day2_part1.carbon",
+    ] + utils,
+)

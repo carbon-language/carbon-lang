@@ -6,24 +6,24 @@ library "io_utils";
 
 import Core library "io";
 
-// TODO: Use Core.EOF() rather than 0 as a sentinel here.
-// At the moment, 0 is the only value we can initialize a global to,
-// so we store the value plus 1 here.
-var push_back: i32 = 0;
+// If non-zero, this is the most recently read character plus 2.
+// The +2 is necessary to distinguish the case of no unread character
+// from the case of unreading an EOF.
+var unread_char: i32 = 0;
 
 fn ReadChar() -> i32 {
-  var next: i32 = push_back - 1;
-  push_back = 0;
-  // TODO: assert(push_back == Core.EOF());
-  if (next == Core.EOF()) {
-    next = Core.ReadChar();
+  if (unread_char != 0) {
+    var result: i32 = unread_char - 2;
+    unread_char = 0;
+    return result;
   }
-  return next;
+
+  return Core.ReadChar();
 }
 
 fn UnreadChar(c: i32) {
-  // TODO: assert(push_back == Core.EOF());
-  push_back = c + 1;
+  // TODO: assert(unread_char == 0);
+  unread_char = c + 2;
 }
 
 fn ReadInt(p: i32*) -> bool {
