@@ -8,6 +8,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/print_read.carbon
 
+import Core library "io";
+
 fn PrintChar(c: i8) -> i32 = "print.char";
 fn ReadChar() -> i32 = "read.char";
 
@@ -35,16 +37,16 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %if.else, %entry
 // CHECK:STDOUT:   %read.char = call i32 @getchar(), !dbg !9
-// CHECK:STDOUT:   %int.neq.loc18 = icmp ne i32 %read.char, -1, !dbg !9
-// CHECK:STDOUT:   br i1 %int.neq.loc18, label %while.body, label %while.done, !dbg !8
+// CHECK:STDOUT:   %int.neq.loc20 = icmp ne i32 %read.char, -1, !dbg !9
+// CHECK:STDOUT:   br i1 %int.neq.loc20, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %print.char.loc20 = call i32 @putchar(i32 72), !dbg !10
-// CHECK:STDOUT:   %int.neq.loc20 = icmp ne i32 %print.char.loc20, -1, !dbg !10
-// CHECK:STDOUT:   br i1 %int.neq.loc20, label %if.then, label %if.else, !dbg !11
+// CHECK:STDOUT:   %print.char.loc22 = call i32 @putchar(i32 72), !dbg !10
+// CHECK:STDOUT:   %int.neq.loc22 = icmp ne i32 %print.char.loc22, -1, !dbg !10
+// CHECK:STDOUT:   br i1 %int.neq.loc22, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %while.body
-// CHECK:STDOUT:   %print.char.loc21 = call i32 @putchar(i32 105), !dbg !12
+// CHECK:STDOUT:   %print.char.loc23 = call i32 @putchar(i32 105), !dbg !12
 // CHECK:STDOUT:   br label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %while.body
@@ -70,15 +72,15 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "print_read.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 9, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 10, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 9, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 20, column: 8, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 21, column: 7, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 20, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 9, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 9, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 8, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 7, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 5, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 1, scope: !4)

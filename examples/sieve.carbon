@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+import Core library "io";
+
 // Compute and return the number of primes less than 1000.
 
 class Sieve {

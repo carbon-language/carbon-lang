@@ -2,24 +2,23 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-library "day1_common";
+import Core library "io";
 
-var EOF: i32 = -(1 as i32);
-var push_back: i32 = EOF;
+var push_back: i32 = Core.EOF();
 
 fn ReadCharRaw() -> i32 = "read.char";
 
 fn ReadChar() -> i32 {
   var next: i32 = push_back;
-  push_back = EOF;
-  if (next == EOF) {
+  push_back = Core.EOF();
+  if (next == Core.EOF()) {
     next = ReadCharRaw();
   }
   return next;
 }
 
 fn UnreadChar(c: i32) {
-  // TODO: assert(push_back == EOF);
+  // TODO: assert(push_back == Core.EOF());
   push_back = c;
 }
 
@@ -123,8 +122,7 @@ fn Quicksort(p: [i32; 1000]*, from: i32, to: i32) {
 
 fn Run() {
   // TODO: Global initialization is not implemented yet.
-  EOF = -(1 as i32);
-  push_back = EOF;
+  push_back = Core.EOF();
 
   var a: [i32; 1000];
   var b: [i32; 1000];
