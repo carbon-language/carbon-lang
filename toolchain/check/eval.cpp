@@ -1606,9 +1606,18 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           // then so is the result of indexing, even if the aggregate also
           // contains a symbolic context.
 
-          // FIXME: if `elements[index]` is invalid, should we produce an error
-          // or a symbolic value?
-          auto const_id = eval_context.GetConstantValue(elements[index]);
+          auto element = elements[index];
+          if (!element.is_valid()) {
+            // TODO: Perhaps this should be a `{}` value with incomplete type?
+            // Or make this a symbolic access instruction?
+            CARBON_DIAGNOSTIC(ImplAccessFunctionBeforeComplete, Error,
+                              "Accessing function from impl before the end of "
+                              "its definition");
+            eval_context.emitter().Emit(eval_context.GetDiagnosticLoc(inst_id),
+                                        ImplAccessFunctionBeforeComplete);
+            return SemIR::ErrorInst::SingletonConstantId;
+          }
+          auto const_id = eval_context.GetConstantValue(element);
           return GetConstantInSpecific(eval_context.sem_ir(),
                                        witness->specific_id, const_id);
         } else {
