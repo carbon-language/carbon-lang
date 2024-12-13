@@ -612,11 +612,13 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         break;
       }
       case ImplWitness::Kind: {
-        // TODO: Include name of interface.
+        // TODO: Include name of interface (is this available from the
+        // specific?).
         add_inst_name("impl_witness");
         continue;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
+        // TODO: Include information about the impl?
         std::string name;
         llvm::raw_string_ostream out(name);
         out << "impl.elem" << inst.index.index;

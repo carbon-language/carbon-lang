@@ -292,6 +292,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
+        // FIXME: Does this have to change?
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
         auto witness =

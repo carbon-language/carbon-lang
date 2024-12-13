@@ -196,7 +196,8 @@ static auto BuildImplWitnessImpl(
   return context.AddInst<SemIR::ImplWitness>(
       context.insts().GetLocId(impl.definition_id),
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
-       .elements_id = table_id});
+       .elements_id = table_id,
+       .specific_id = SemIR::SpecificId::Invalid /* FIXME */});
 }
 
 auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId {
@@ -257,6 +258,8 @@ static auto FinishImplWitnessImpl(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
+          // FIXME: need to get the generic, not the specific, version of the
+          // function here.
           witness_block[index] = CheckAssociatedFunctionImplementation(
               context, fn_type, impl_decl_id, self_type_id, impl.witness_id);
         } else {

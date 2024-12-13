@@ -2217,16 +2217,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
   auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
   auto elements_id =
       GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
+  auto specific_id =
+      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
       resolver, {.type_id = resolver.local_context().GetSingletonType(
                      SemIR::WitnessType::SingletonInstId),
-                 .elements_id = elements_id});
+                 .elements_id = elements_id,
+                 .specific_id = specific_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

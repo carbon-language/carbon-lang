@@ -297,10 +297,6 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
-  // FIXME: temporary hack
-  if (!inst_id.is_valid()) {
-    return inst_id;
-  }
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
   return eval_context.constant_values().GetInstId(const_id);
@@ -1390,7 +1386,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::ImplWitness::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::ImplWitness::elements_id);
+                                        &SemIR::ImplWitness::specific_id);
     case CARBON_KIND(SemIR::IntType int_type): {
       return RebuildAndValidateIfFieldsAreConstant(
           eval_context, inst,
@@ -1562,11 +1558,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
-    case SemIR::ImplWitnessAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
 
+    case SemIR::ImplWitnessAccess::Kind: {
+      // FIXME: Is this PerformAggregateAccess + GetConstantInSpecific using
+      // the specific_id from the reference ImplWitness?
+      CARBON_FATAL("FIXME");
+    }
     case CARBON_KIND(SemIR::ArrayIndex index): {
       return PerformArrayIndex(eval_context, index);
     }
