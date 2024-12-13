@@ -297,6 +297,10 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
                              Phase* phase) -> SemIR::InstId {
+  // FIXME: temporary hack
+  if (!inst_id.is_valid()) {
+    return inst_id;
+  }
   auto const_id = eval_context.GetConstantValue(inst_id);
   *phase = LatestPhase(*phase, GetPhase(eval_context, const_id));
   return eval_context.constant_values().GetInstId(const_id);

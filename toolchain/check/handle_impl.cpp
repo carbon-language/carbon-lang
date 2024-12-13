@@ -311,7 +311,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -374,6 +373,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     impl_info.scope_id = context.name_scopes().Add(
         impl_decl_id, SemIR::NameId::Invalid,
         context.decl_name_stack().PeekParentScopeId());
+    impl_info.witness_id = BuildImplWitness(context, impl_info);
   }
 
   context.scope_stack().Push(
