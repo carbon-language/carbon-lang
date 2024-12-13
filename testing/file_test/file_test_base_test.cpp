@@ -170,6 +170,17 @@ static auto TestFileOnlyREOneFile(TestParams& params)
   return {{.success = true}};
 }
 
+// Does printing and returns expected results for no_line_number.carbon.
+static auto TestNoLineNumber(TestParams& params)
+    -> ErrorOr<FileTestBaseTest::RunResult> {
+  params.stdout << "a.carbon: msg1\n"
+                   "msg2\n"
+                   "b.carbon: msg3\n"
+                   "msg4\n"
+                   "a.carbon: msg5\n";
+  return {{.success = true}};
+}
+
 // Does printing and returns expected results for unattached_multi_file.carbon.
 static auto TestUnattachedMultiFile(TestParams& params)
     -> ErrorOr<FileTestBaseTest::RunResult> {
@@ -242,6 +253,7 @@ auto FileTestBaseTest::Run(
           .Case("fail_example.carbon", &TestFailExample)
           .Case("file_only_re_one_file.carbon", &TestFileOnlyREOneFile)
           .Case("file_only_re_multi_file.carbon", &TestFileOnlyREMultiFile)
+          .Case("no_line_number.carbon", &TestNoLineNumber)
           .Case("unattached_multi_file.carbon", &TestUnattachedMultiFile)
           .Case("fail_multi_success_overall_fail.carbon",
                 [&](TestParams&) {
