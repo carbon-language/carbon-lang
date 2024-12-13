@@ -76,6 +76,21 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("No callee in function call.");
 
+    case SemIR::BuiltinFunctionKind::PrintChar: {
+      auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+      llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
+          context.GetValue(arg_ids[0]), i32_type);
+      auto putchar = context.llvm_module().getOrInsertFunction(
+          "putchar", i32_type, i32_type);
+      auto* result = context.builder().CreateCall(putchar, {arg_value});
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateSExtOrTrunc(
+              result, context.GetType(
+                          context.sem_ir().insts().Get(inst_id).type_id())));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::PrintInt: {
       auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
       auto* ptr_type = llvm::PointerType::get(context.llvm_context(), 0);
@@ -90,21 +105,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
           context.GetValue(arg_ids[0]), i32_type);
       context.SetLocal(inst_id, context.builder().CreateCall(
                                     printf, {format_string, arg_value}));
-      return;
-    }
-
-    case SemIR::BuiltinFunctionKind::PrintChar: {
-      auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
-      llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
-          context.GetValue(arg_ids[0]), i32_type);
-      auto putchar = context.llvm_module().getOrInsertFunction(
-          "putchar", i32_type, i32_type);
-      auto* result = context.builder().CreateCall(putchar, {arg_value});
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateSExtOrTrunc(
-              result, context.GetType(
-                          context.sem_ir().insts().Get(inst_id).type_id())));
       return;
     }
 

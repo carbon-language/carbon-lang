@@ -1107,8 +1107,8 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
-    case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::PrintChar:
+    case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar: {
       // These are runtime-only builtins.
       // TODO: Consider tracking this on the `BuiltinFunctionKind`.

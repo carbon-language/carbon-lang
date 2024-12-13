@@ -195,13 +195,13 @@ using FloatT = TypeParam<0, AnyFloat>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
-// Prints an argument.
-constexpr BuiltinInfo PrintInt = {"print.int",
-                                  ValidateSignature<auto(AnyInt)->NoReturn>};
-
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {"print.char",
                                    ValidateSignature<auto(AnyInt)->AnyInt>};
+
+// Prints an integer.
+constexpr BuiltinInfo PrintInt = {"print.int",
+                                  ValidateSignature<auto(AnyInt)->NoReturn>};
 
 // Reads a single character from stdin.
 constexpr BuiltinInfo ReadChar = {"read.char",
