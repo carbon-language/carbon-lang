@@ -226,6 +226,7 @@ repos:
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              utils/vscode/esbuild.js|
               website/.ruby-version|
               website/Gemfile.lock|
               .*\.def|
