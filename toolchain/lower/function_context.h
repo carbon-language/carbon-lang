@@ -38,6 +38,9 @@ class FunctionContext {
   // Builds LLVM IR for the specified instruction.
   auto LowerInst(SemIR::InstId inst_id) -> void;
 
+  // Performs final stesp to finish creating the IR for a function.
+  auto Finish() -> void;
+
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
   auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
@@ -87,6 +90,12 @@ class FunctionContext {
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
     return file_context_->GetTypeAsValue();
+  }
+
+  // Add an alloca to the list of allocas that should be moved to the start of
+  // the entry block.
+  auto AddPendingEntryBlockAlloca(llvm::AllocaInst* alloca) -> void {
+    pending_entry_block_allocas_.push_back(alloca);
   }
 
   // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such
@@ -161,6 +170,9 @@ class FunctionContext {
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
+
+  // The allocas in this function that should be moved to the entry block.
+  llvm::SmallVector<llvm::AllocaInst*> pending_entry_block_allocas_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;

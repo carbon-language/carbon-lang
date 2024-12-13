@@ -121,6 +121,15 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   }
 }
 
+auto FunctionContext::Finish() -> void {
+  // Move allocas into the entry block.
+  auto& entry_block = function_->getEntryBlock();
+  auto insert_point = entry_block.getFirstNonPHIOrDbgOrAlloca();
+  for (auto* alloca : pending_entry_block_allocas_) {
+    alloca->moveBefore(entry_block, insert_point);
+  }
+}
+
 auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
                                   SemIR::TypeId type_id) -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);

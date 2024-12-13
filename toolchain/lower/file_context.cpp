@@ -414,6 +414,9 @@ auto FileContext::BuildFunctionDefinition(SemIR::FunctionId function_id)
         llvm_context(), "entry", llvm_function, entry_block);
     llvm::BranchInst::Create(entry_block, new_entry_block);
   }
+
+  // Perform any final cleanups.
+  function_lowering.Finish();
 }
 
 auto FileContext::BuildDISubprogram(const SemIR::Function& function,

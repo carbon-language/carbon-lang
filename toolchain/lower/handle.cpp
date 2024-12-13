@@ -248,9 +248,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage inst) -> void {
-  context.SetLocal(inst_id,
-                   context.builder().CreateAlloca(context.GetType(inst.type_id),
-                                                  /*ArraySize=*/nullptr));
+  auto* type = context.GetType(inst.type_id);
+  auto* alloca = context.builder().CreateAlloca(type);
+
+  // If we're not in the entry block, make a note that we should the alloca up
+  // into the entry block, and add a lifetime marker to indicate when its
+  // lifetime really begins. This avoids creating a new stack allocation each
+  // time the variable declaration is reached.
+  if (!context.builder().GetInsertBlock()->isEntryBlock()) {
+    context.AddPendingEntryBlockAlloca(alloca);
+    auto size = context.llvm_module().getDataLayout().getTypeAllocSize(type);
+    context.builder().CreateLifetimeStart(
+        alloca,
+        llvm::ConstantInt::get(context.llvm_context(), llvm::APInt(64, size)));
+    // TODO: Create a matching `@llvm.lifetime.end` intrinsic call when the
+    // variable goes out of scope.
+  }
+
+  context.SetLocal(inst_id, alloca);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
