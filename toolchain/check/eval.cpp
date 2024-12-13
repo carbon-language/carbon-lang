@@ -1407,6 +1407,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::ImplWitness::Kind:
+      // We don't replace the `elements_id` field here intentionally. We want to
+      // track that specific InstBlock in particular, not coalesce blocks with
+      // the same members. That block may get updated, and we want to pick up
+      // those changes.
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ImplWitness::specific_id);
     case CARBON_KIND(SemIR::IntType int_type): {
@@ -1587,10 +1591,34 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
 
-    case SemIR::ImplWitnessAccess::Kind: {
-      // FIXME: Is this PerformAggregateAccess + GetConstantInSpecific using
-      // the specific_id from the reference ImplWitness?
-      CARBON_FATAL("FIXME");
+    case CARBON_KIND(SemIR::ImplWitnessAccess access_inst): {
+      // This is PerformAggregateAccess followed by GetConstantInSpecific.
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
+                                        &SemIR::ImplWitnessAccess::witness_id,
+                                        &phase)) {
+        if (auto witness = eval_context.insts().TryGetAs<SemIR::ImplWitness>(
+                access_inst.witness_id)) {
+          auto elements = eval_context.inst_blocks().Get(witness->elements_id);
+          auto index = static_cast<size_t>(access_inst.index.index);
+          CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+          // `Phase` is not used here. If this element is a template constant,
+          // then so is the result of indexing, even if the aggregate also
+          // contains a symbolic context.
+
+          // FIXME: if `elements[index]` is invalid, should we produce an error
+          // or a symbolic value?
+          auto const_id = eval_context.GetConstantValue(elements[index]);
+          return GetConstantInSpecific(eval_context.sem_ir(),
+                                       witness->specific_id, const_id);
+        } else {
+          CARBON_CHECK(phase != Phase::Template,
+                       "Failed to evaluate template constant {0} arg0: {1}",
+                       inst, eval_context.insts().Get(access_inst.witness_id));
+        }
+        return MakeConstantResult(eval_context.context(), access_inst, phase);
+      }
+      return MakeNonConstantResult(phase);
     }
     case CARBON_KIND(SemIR::ArrayIndex index): {
       return PerformArrayIndex(eval_context, index);

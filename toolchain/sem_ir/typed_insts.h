@@ -132,9 +132,9 @@ struct ArrayIndex {
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.
 struct AnyAggregateAccess {
-  static constexpr InstKind Kinds[] = {InstKind::StructAccess,
-                                       InstKind::TupleAccess,
-                                       InstKind::ClassElementAccess};
+  static constexpr InstKind Kinds[] = {InstKind::ClassElementAccess,
+                                       InstKind::StructAccess,
+                                       InstKind::TupleAccess};
 
   InstKind kind;
   TypeId type_id;

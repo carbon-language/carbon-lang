@@ -250,7 +250,7 @@ static auto FinishImplWitnessImpl(
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
-        CARBON_CHECK(struct_value.type_id == SemIR::ErrorInst::SingletonTypeId);
+        CARBON_CHECK(struct_value.type_id != SemIR::ErrorInst::SingletonTypeId);
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.As<SemIR::FunctionType>();
         auto& fn = context.functions().Get(fn_type.function_id);
