@@ -397,7 +397,7 @@ class InstStore {
   // Returns whether the requested instruction is the specified type.
   template <typename InstT>
   auto Is(InstId inst_id) const -> bool {
-    return Get(inst_id).Is<InstT>();
+    return Internal::InstLikeTypeInfo<InstT>::IsKind(kinds_[inst_id.index]);
   }
 
   // Returns the requested instruction, which is known to have the specified
@@ -411,7 +411,10 @@ class InstStore {
   // type.
   template <typename InstT>
   auto TryGetAs(InstId inst_id) const -> std::optional<InstT> {
-    return Get(inst_id).TryAs<InstT>();
+    if (!Is<InstT>(inst_id)) {
+      return std::nullopt;
+    }
+    return GetAs<InstT>(inst_id);
   }
 
   // Returns the requested instruction as the specified type, if it is valid and
