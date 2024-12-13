@@ -141,11 +141,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_64, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_64) [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc6_14.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc6_14.2: %i32 = converted %int_64, %.loc6_14.1 [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc6_14.2)
-// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %float.make_type
-// CHECK:STDOUT:   %.loc6_16.2: type = converted %float.make_type, %.loc6_16.1
+// CHECK:STDOUT:   %.loc10_14.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc10_14.2: %i32 = converted %int_64, %.loc10_14.1 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%.loc10_14.2)
+// CHECK:STDOUT:   %.loc10_16.1: type = value_of_initializer %float.make_type
+// CHECK:STDOUT:   %.loc10_16.2: type = converted %float.make_type, %.loc10_16.1
 // CHECK:STDOUT:   %f.var: ref <error> = var f
 // CHECK:STDOUT:   %f: ref <error> = bind_name f, %f.var
 // CHECK:STDOUT:   %GetFloat.decl: %GetFloat.type = fn_decl @GetFloat [template = constants.%GetFloat] {
@@ -156,8 +156,8 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_23.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_23.2: type = converted %int.make_type_signed, %.loc8_23.1 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_23.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc12_23.2: type = converted %int.make_type_signed, %.loc12_23.1 [template = constants.%i32]
 // CHECK:STDOUT:     %dyn_size.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %dyn_size: %i32 = bind_name dyn_size, %dyn_size.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
@@ -172,9 +172,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %float.make_type
-// CHECK:STDOUT:   %.loc9_25.2: type = converted %float.make_type, %.loc9_25.1
-// CHECK:STDOUT:   return %.loc9_25.2
+// CHECK:STDOUT:   %.loc13_25.1: type = value_of_initializer %float.make_type
+// CHECK:STDOUT:   %.loc13_25.2: type = converted %float.make_type, %.loc13_25.1
+// CHECK:STDOUT:   return %.loc13_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -895,21 +895,21 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc9_13.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc18_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N.2) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_0) [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc9_31.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc9_31.2: %i32 = converted %int_0, %.loc9_31.1 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc18_31.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc18_31.2: %i32 = converted %int_0, %.loc18_31.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%int.convert_checked) [symbolic = constants.%WithNontype.2]
-// CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.2 = temporary_storage
-// CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.2 = class_init (), %.loc9_13.2 [symbolic = constants.%WithNontype.val]
-// CHECK:STDOUT:   %.loc9_13.4: ref %WithNontype.2 = temporary %.loc9_13.2, %.loc9_13.3
-// CHECK:STDOUT:   %.loc9_15: ref %WithNontype.2 = converted %.loc9_13.1, %.loc9_13.4
-// CHECK:STDOUT:   %.loc9_32: %i32 = converted constants.%int.convert_checked, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_13.2: ref %WithNontype.2 = temporary_storage
+// CHECK:STDOUT:   %.loc18_13.3: init %WithNontype.2 = class_init (), %.loc18_13.2 [symbolic = constants.%WithNontype.val]
+// CHECK:STDOUT:   %.loc18_13.4: ref %WithNontype.2 = temporary %.loc18_13.2, %.loc18_13.3
+// CHECK:STDOUT:   %.loc18_15: ref %WithNontype.2 = converted %.loc18_13.1, %.loc18_13.4
+// CHECK:STDOUT:   %.loc18_32: %i32 = converted constants.%int.convert_checked, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

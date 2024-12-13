@@ -611,23 +611,23 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Int.ref: %Int.type.2 = name_ref Int, imports.%import_ref.2 [template = constants.%Int.2]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc12_19: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc12_19: <bound method> = bound_method %int_1, %impl.elem0.loc12_19 [symbolic = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_19: <specific function> = specific_function %Convert.bound.loc12_19, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc12_19: init %iN = call %Convert.specific_fn.loc12_19(%int_1) [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc12_19.1: %i32 = value_of_initializer %int.convert_checked.loc12_19 [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc12_19.2: %i32 = converted %int_1, %.loc12_19.1 [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc12_19.2)
-// CHECK:STDOUT:   %impl.elem0.loc12_20: %Convert.type.6 = impl_witness_access constants.%impl_witness.2, element0 [symbolic = constants.%Convert.5]
-// CHECK:STDOUT:   %Convert.bound.loc12_20: <bound method> = bound_method %int.snegate, %impl.elem0.loc12_20
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_20: <specific function> = specific_function %Convert.bound.loc12_20, @Convert.4(constants.%N)
-// CHECK:STDOUT:   %.loc12_20.1: %iN = converted %int.snegate, <error> [template = <error>]
-// CHECK:STDOUT:   %int.convert_checked.loc12_20: init Core.IntLiteral = call %Convert.specific_fn.loc12_20(<error>)
-// CHECK:STDOUT:   %.loc12_20.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_20
-// CHECK:STDOUT:   %.loc12_20.3: Core.IntLiteral = converted %int.snegate, %.loc12_20.2
-// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc12_20.3)
-// CHECK:STDOUT:   %.loc12_21.1: type = value_of_initializer %int.make_type_signed
-// CHECK:STDOUT:   %.loc12_21.2: type = converted %int.make_type_signed, %.loc12_21.1
+// CHECK:STDOUT:   %impl.elem0.loc37_19: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc37_19: <bound method> = bound_method %int_1, %impl.elem0.loc37_19 [symbolic = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn.loc37_19: <specific function> = specific_function %Convert.bound.loc37_19, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked.loc37_19: init %iN = call %Convert.specific_fn.loc37_19(%int_1) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc37_19.1: %i32 = value_of_initializer %int.convert_checked.loc37_19 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc37_19.2: %i32 = converted %int_1, %.loc37_19.1 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc37_19.2)
+// CHECK:STDOUT:   %impl.elem0.loc37_20: %Convert.type.6 = impl_witness_access constants.%impl_witness.2, element0 [symbolic = constants.%Convert.5]
+// CHECK:STDOUT:   %Convert.bound.loc37_20: <bound method> = bound_method %int.snegate, %impl.elem0.loc37_20
+// CHECK:STDOUT:   %Convert.specific_fn.loc37_20: <specific function> = specific_function %Convert.bound.loc37_20, @Convert.4(constants.%N)
+// CHECK:STDOUT:   %.loc37_20.1: %iN = converted %int.snegate, <error> [template = <error>]
+// CHECK:STDOUT:   %int.convert_checked.loc37_20: init Core.IntLiteral = call %Convert.specific_fn.loc37_20(<error>)
+// CHECK:STDOUT:   %.loc37_20.2: Core.IntLiteral = value_of_initializer %int.convert_checked.loc37_20
+// CHECK:STDOUT:   %.loc37_20.3: Core.IntLiteral = converted %int.snegate, %.loc37_20.2
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc37_20.3)
+// CHECK:STDOUT:   %.loc37_21.1: type = value_of_initializer %int.make_type_signed
+// CHECK:STDOUT:   %.loc37_21.2: type = converted %int.make_type_signed, %.loc37_21.1
 // CHECK:STDOUT:   %n.var: ref <error> = var n
 // CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
 // CHECK:STDOUT: }

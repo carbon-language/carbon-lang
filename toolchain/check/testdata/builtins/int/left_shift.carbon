@@ -122,33 +122,33 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc4: init type = call constants.%Int(%int_32.loc4) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%int_32.loc7) [template = constants.%i32]
 // CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %impl.elem0.loc4_26: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc4_26: <bound method> = bound_method %int_5, %impl.elem0.loc4_26 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc4_26: <specific function> = specific_function %Convert.bound.loc4_26, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc4_26: init %iN = call %Convert.specific_fn.loc4_26(%int_5) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc4_26.1: %i32 = value_of_initializer %int.convert_checked.loc4_26 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc4_26.2: %i32 = converted %int_5, %.loc4_26.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc4_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc4_29: <bound method> = bound_method %int_2, %impl.elem0.loc4_29 [symbolic = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc4_29: <specific function> = specific_function %Convert.bound.loc4_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc4_29: init %iN = call %Convert.specific_fn.loc4_29(%int_2) [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc4_29.1: %i32 = value_of_initializer %int.convert_checked.loc4_29 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc4_29.2: %i32 = converted %int_2, %.loc4_29.1 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%.loc4_26.2, %.loc4_29.2)
-// CHECK:STDOUT:   %.loc4_11.1: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc4_11.2: type = converted %int.make_type_signed.loc4, %.loc4_11.1 [template = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc7_26: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc7_26: <bound method> = bound_method %int_5, %impl.elem0.loc7_26 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc7_26: <specific function> = specific_function %Convert.bound.loc7_26, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc7_26: init %iN = call %Convert.specific_fn.loc7_26(%int_5) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc7_26.1: %i32 = value_of_initializer %int.convert_checked.loc7_26 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc7_26.2: %i32 = converted %int_5, %.loc7_26.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc7_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc7_29: <bound method> = bound_method %int_2, %impl.elem0.loc7_29 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc7_29: <specific function> = specific_function %Convert.bound.loc7_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc7_29: init %iN = call %Convert.specific_fn.loc7_29(%int_2) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc7_29.1: %i32 = value_of_initializer %int.convert_checked.loc7_29 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc7_29.2: %i32 = converted %int_2, %.loc7_29.1 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%.loc7_26.2, %.loc7_29.2)
+// CHECK:STDOUT:   %.loc7_11.1: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_11.2: type = converted %int.make_type_signed.loc7, %.loc7_11.1 [template = constants.%i32]
 // CHECK:STDOUT:   %arr.var: ref <error> = var arr
 // CHECK:STDOUT:   %arr: ref <error> = bind_name arr, %arr.var
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int_32.loc5) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int_32.loc8) [template = constants.%i32]
 // CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [template = constants.%int_20]
-// CHECK:STDOUT:   %.loc5_13.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_13.2: type = converted %int.make_type_signed.loc5, %.loc5_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_signed.loc8, %.loc8_13.1 [template = constants.%i32]
 // CHECK:STDOUT:   %array_type: type = array_type %int_20, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %ptr: type = ptr_type %array_type [template = constants.%ptr]
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
@@ -159,18 +159,18 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc7_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc7_19: init type = call constants.%Int(%int_32.loc7_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_19.1: type = value_of_initializer %int.make_type_signed.loc7_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_19.2: type = converted %int.make_type_signed.loc7_19, %.loc7_19.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc7_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc7_27: init type = call constants.%Int(%int_32.loc7_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_27.1: type = value_of_initializer %int.make_type_signed.loc7_27 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_27.2: type = converted %int.make_type_signed.loc7_27, %.loc7_27.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc7_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc7_35: init type = call constants.%Int(%int_32.loc7_35) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_35.1: type = value_of_initializer %int.make_type_signed.loc7_35 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_35.2: type = converted %int.make_type_signed.loc7_35, %.loc7_35.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc10_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_19: init type = call constants.%Int(%int_32.loc10_19) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_19.1: type = value_of_initializer %int.make_type_signed.loc10_19 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_19.2: type = converted %int.make_type_signed.loc10_19, %.loc10_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc10_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_27: init type = call constants.%Int(%int_32.loc10_27) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_27.1: type = value_of_initializer %int.make_type_signed.loc10_27 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_27.2: type = converted %int.make_type_signed.loc10_27, %.loc10_27.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc10_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc10_35: init type = call constants.%Int(%int_32.loc10_35) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_35.1: type = value_of_initializer %int.make_type_signed.loc10_35 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc10_35.2: type = converted %int.make_type_signed.loc10_35, %.loc10_35.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
@@ -188,9 +188,9 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_25.1: %i32 = value_of_initializer %int.left_shift
-// CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %int.left_shift, %.loc8_25.1
-// CHECK:STDOUT:   return %.loc8_25.2
+// CHECK:STDOUT:   %.loc11_25.1: %i32 = value_of_initializer %int.left_shift
+// CHECK:STDOUT:   %.loc11_25.2: %i32 = converted %int.left_shift, %.loc11_25.1
+// CHECK:STDOUT:   return %.loc11_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -317,34 +317,34 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int_32.loc8) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_signed.loc8, %.loc8_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc9: init type = call constants.%Int(%int_32.loc9) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_13.1: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_13.2: type = converted %int.make_type_signed.loc9, %.loc9_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc10: init type = call constants.%Int(%int_32.loc10) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc10_13.1: type = value_of_initializer %int.make_type_signed.loc10 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc10_13.2: type = converted %int.make_type_signed.loc10, %.loc10_13.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_13.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_13.2: type = converted %int.make_type_signed.loc13, %.loc13_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_17.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_17.2: type = converted %int.make_type_signed.loc13, %.loc13_17.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int_32.loc14) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc14_17.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc14_17.2: type = converted %int.make_type_signed.loc14, %.loc14_17.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed.loc17: init type = call constants.%Int(%int_32.loc17) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_20.1: type = value_of_initializer %int.make_type_signed.loc17 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc17_20.2: type = converted %int.make_type_signed.loc17, %.loc17_20.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc18: init type = call constants.%Int(%int_32.loc18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_13.1: type = value_of_initializer %int.make_type_signed.loc18 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_13.2: type = converted %int.make_type_signed.loc18, %.loc18_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_20.1: type = value_of_initializer %int.make_type_signed.loc18 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc18_20.2: type = converted %int.make_type_signed.loc18, %.loc18_20.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_17.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_17.2: type = converted %int.make_type_signed.loc21, %.loc21_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%int_32.loc26) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_17.1: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_17.2: type = converted %int.make_type_signed.loc26, %.loc26_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc29: init type = call constants.%Int(%int_32.loc29) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc29_20.1: type = value_of_initializer %int.make_type_signed.loc29 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc29_20.2: type = converted %int.make_type_signed.loc29, %.loc29_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc34: init type = call constants.%Int(%int_32.loc34) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc34_20.1: type = value_of_initializer %int.make_type_signed.loc34 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc34_20.2: type = converted %int.make_type_signed.loc34, %.loc34_20.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc40: init type = call constants.%Int(%int_32.loc40) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc40_15.1: type = value_of_initializer %int.make_type_signed.loc40 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc40_15.2: type = converted %int.make_type_signed.loc40, %.loc40_15.1 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc21_15.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
+// CHECK:STDOUT:   %.loc21_15.2: type = converted %int.make_type_signed.loc21, %.loc21_15.1 [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LeftShift(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.left_shift";
@@ -372,143 +372,143 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc8_35.1: %i32 = value_of_initializer %int.left_shift.loc8
 // CHECK:STDOUT:   %.loc8_35.2: %i32 = converted %int.left_shift.loc8, %.loc8_35.1
 // CHECK:STDOUT:   %size_1: %i32 = bind_name size_1, %.loc8_35.2
-// CHECK:STDOUT:   %LeftShift.ref.loc13: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %impl.elem0.loc13_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc13_29: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_29 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc13_29: <specific function> = specific_function %Convert.bound.loc13_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc13_29: init %iN = call %Convert.specific_fn.loc13_29(%int_1.loc13) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc13_29.1: %i32 = value_of_initializer %int.convert_checked.loc13_29 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc13_29.2: %i32 = converted %int_1.loc13, %.loc13_29.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc13_32: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc13_32: <bound method> = bound_method %int_32.loc13, %impl.elem0.loc13_32 [symbolic = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc13_32: <specific function> = specific_function %Convert.bound.loc13_32, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc13_32: init %iN = call %Convert.specific_fn.loc13_32(%int_32.loc13) [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc13_32.1: %i32 = value_of_initializer %int.convert_checked.loc13_32 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc13_32.2: %i32 = converted %int_32.loc13, %.loc13_32.1 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %int.left_shift.loc13: init %i32 = call %LeftShift.ref.loc13(%.loc13_29.2, %.loc13_32.2)
-// CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %int.left_shift.loc13
-// CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %int.left_shift.loc13, %.loc13_35.1
-// CHECK:STDOUT:   %size_2: %i32 = bind_name size_2, %.loc13_35.2
-// CHECK:STDOUT:   %LeftShift.ref.loc18: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %LeftShift.ref.loc9: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %impl.elem0.loc9_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc9_29: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_29 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc9_29: <specific function> = specific_function %Convert.bound.loc9_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc9_29: init %iN = call %Convert.specific_fn.loc9_29(%int_1.loc9) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc9_29.1: %i32 = value_of_initializer %int.convert_checked.loc9_29 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc9_29.2: %i32 = converted %int_1.loc9, %.loc9_29.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc9_32: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc9_32: <bound method> = bound_method %int_32.loc9, %impl.elem0.loc9_32 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc9_32: <specific function> = specific_function %Convert.bound.loc9_32, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc9_32: init %iN = call %Convert.specific_fn.loc9_32(%int_32.loc9) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc9_32.1: %i32 = value_of_initializer %int.convert_checked.loc9_32 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc9_32.2: %i32 = converted %int_32.loc9, %.loc9_32.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.left_shift.loc9: init %i32 = call %LeftShift.ref.loc9(%.loc9_29.2, %.loc9_32.2)
+// CHECK:STDOUT:   %.loc9_35.1: %i32 = value_of_initializer %int.left_shift.loc9
+// CHECK:STDOUT:   %.loc9_35.2: %i32 = converted %int.left_shift.loc9, %.loc9_35.1
+// CHECK:STDOUT:   %size_2: %i32 = bind_name size_2, %.loc9_35.2
+// CHECK:STDOUT:   %LeftShift.ref.loc10: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_33: Core.IntLiteral = int_value 33 [template = constants.%int_33]
-// CHECK:STDOUT:   %impl.elem0.loc18_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc18_29: <bound method> = bound_method %int_1.loc18, %impl.elem0.loc18_29 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc18_29: <specific function> = specific_function %Convert.bound.loc18_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc18_29: init %iN = call %Convert.specific_fn.loc18_29(%int_1.loc18) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc18_29.1: %i32 = value_of_initializer %int.convert_checked.loc18_29 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc18_29.2: %i32 = converted %int_1.loc18, %.loc18_29.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc18_32: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc18_32: <bound method> = bound_method %int_33, %impl.elem0.loc18_32 [symbolic = constants.%Convert.bound.4]
-// CHECK:STDOUT:   %Convert.specific_fn.loc18_32: <specific function> = specific_function %Convert.bound.loc18_32, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.4]
-// CHECK:STDOUT:   %int.convert_checked.loc18_32: init %iN = call %Convert.specific_fn.loc18_32(%int_33) [symbolic = constants.%int.convert_checked.4]
-// CHECK:STDOUT:   %.loc18_32.1: %i32 = value_of_initializer %int.convert_checked.loc18_32 [symbolic = constants.%int.convert_checked.4]
-// CHECK:STDOUT:   %.loc18_32.2: %i32 = converted %int_33, %.loc18_32.1 [symbolic = constants.%int.convert_checked.4]
-// CHECK:STDOUT:   %int.left_shift.loc18: init %i32 = call %LeftShift.ref.loc18(%.loc18_29.2, %.loc18_32.2)
-// CHECK:STDOUT:   %.loc18_35.1: %i32 = value_of_initializer %int.left_shift.loc18
-// CHECK:STDOUT:   %.loc18_35.2: %i32 = converted %int.left_shift.loc18, %.loc18_35.1
-// CHECK:STDOUT:   %size_3: %i32 = bind_name size_3, %.loc18_35.2
+// CHECK:STDOUT:   %impl.elem0.loc10_29: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc10_29: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_29 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_29: <specific function> = specific_function %Convert.bound.loc10_29, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc10_29: init %iN = call %Convert.specific_fn.loc10_29(%int_1.loc10) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_29.1: %i32 = value_of_initializer %int.convert_checked.loc10_29 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_29.2: %i32 = converted %int_1.loc10, %.loc10_29.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc10_32: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc10_32: <bound method> = bound_method %int_33, %impl.elem0.loc10_32 [symbolic = constants.%Convert.bound.4]
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_32: <specific function> = specific_function %Convert.bound.loc10_32, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.4]
+// CHECK:STDOUT:   %int.convert_checked.loc10_32: init %iN = call %Convert.specific_fn.loc10_32(%int_33) [symbolic = constants.%int.convert_checked.4]
+// CHECK:STDOUT:   %.loc10_32.1: %i32 = value_of_initializer %int.convert_checked.loc10_32 [symbolic = constants.%int.convert_checked.4]
+// CHECK:STDOUT:   %.loc10_32.2: %i32 = converted %int_33, %.loc10_32.1 [symbolic = constants.%int.convert_checked.4]
+// CHECK:STDOUT:   %int.left_shift.loc10: init %i32 = call %LeftShift.ref.loc10(%.loc10_29.2, %.loc10_32.2)
+// CHECK:STDOUT:   %.loc10_35.1: %i32 = value_of_initializer %int.left_shift.loc10
+// CHECK:STDOUT:   %.loc10_35.2: %i32 = converted %int.left_shift.loc10, %.loc10_35.1
+// CHECK:STDOUT:   %size_3: %i32 = bind_name size_3, %.loc10_35.2
+// CHECK:STDOUT:   %LeftShift.ref.loc13: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_1000.loc13: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
+// CHECK:STDOUT:   %int_31.loc13: Core.IntLiteral = int_value 31 [template = constants.%int_31]
+// CHECK:STDOUT:   %impl.elem0.loc13_33: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc13_33: <bound method> = bound_method %int_1000.loc13, %impl.elem0.loc13_33 [symbolic = constants.%Convert.bound.5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc13_33: <specific function> = specific_function %Convert.bound.loc13_33, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.5]
+// CHECK:STDOUT:   %int.convert_checked.loc13_33: init %iN = call %Convert.specific_fn.loc13_33(%int_1000.loc13) [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %.loc13_33.1: %i32 = value_of_initializer %int.convert_checked.loc13_33 [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %.loc13_33.2: %i32 = converted %int_1000.loc13, %.loc13_33.1 [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %impl.elem0.loc13_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc13_39: <bound method> = bound_method %int_31.loc13, %impl.elem0.loc13_39 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc13_39: <specific function> = specific_function %Convert.bound.loc13_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc13_39: init %iN = call %Convert.specific_fn.loc13_39(%int_31.loc13) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc13_39.1: %i32 = value_of_initializer %int.convert_checked.loc13_39 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc13_39.2: %i32 = converted %int_31.loc13, %.loc13_39.1 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.left_shift.loc13: init %i32 = call %LeftShift.ref.loc13(%.loc13_33.2, %.loc13_39.2)
+// CHECK:STDOUT:   %.loc13_42.1: %i32 = value_of_initializer %int.left_shift.loc13
+// CHECK:STDOUT:   %.loc13_42.2: %i32 = converted %int.left_shift.loc13, %.loc13_42.1
+// CHECK:STDOUT:   %overflow_1: %i32 = bind_name overflow_1, %.loc13_42.2
+// CHECK:STDOUT:   %LeftShift.ref.loc14: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_1000.loc14: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
+// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %impl.elem0.loc14_33: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc14_33: <bound method> = bound_method %int_1000.loc14, %impl.elem0.loc14_33 [symbolic = constants.%Convert.bound.5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_33: <specific function> = specific_function %Convert.bound.loc14_33, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.5]
+// CHECK:STDOUT:   %int.convert_checked.loc14_33: init %iN = call %Convert.specific_fn.loc14_33(%int_1000.loc14) [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %.loc14_33.1: %i32 = value_of_initializer %int.convert_checked.loc14_33 [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %.loc14_33.2: %i32 = converted %int_1000.loc14, %.loc14_33.1 [symbolic = constants.%int.convert_checked.5]
+// CHECK:STDOUT:   %impl.elem0.loc14_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc14_39: <bound method> = bound_method %int_32.loc14, %impl.elem0.loc14_39 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_39: <specific function> = specific_function %Convert.bound.loc14_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc14_39: init %iN = call %Convert.specific_fn.loc14_39(%int_32.loc14) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc14_39.1: %i32 = value_of_initializer %int.convert_checked.loc14_39 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc14_39.2: %i32 = converted %int_32.loc14, %.loc14_39.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.left_shift.loc14: init %i32 = call %LeftShift.ref.loc14(%.loc14_33.2, %.loc14_39.2)
+// CHECK:STDOUT:   %.loc14_42.1: %i32 = value_of_initializer %int.left_shift.loc14
+// CHECK:STDOUT:   %.loc14_42.2: %i32 = converted %int.left_shift.loc14, %.loc14_42.1
+// CHECK:STDOUT:   %overflow_2: %i32 = bind_name overflow_2, %.loc14_42.2
+// CHECK:STDOUT:   %LeftShift.ref.loc17: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_0.loc17: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_31.loc17: Core.IntLiteral = int_value 31 [template = constants.%int_31]
+// CHECK:STDOUT:   %impl.elem0.loc17_36: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc17_36: <bound method> = bound_method %int_0.loc17, %impl.elem0.loc17_36 [symbolic = constants.%Convert.bound.6]
+// CHECK:STDOUT:   %Convert.specific_fn.loc17_36: <specific function> = specific_function %Convert.bound.loc17_36, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.6]
+// CHECK:STDOUT:   %int.convert_checked.loc17_36: init %iN = call %Convert.specific_fn.loc17_36(%int_0.loc17) [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %.loc17_36.1: %i32 = value_of_initializer %int.convert_checked.loc17_36 [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %.loc17_36.2: %i32 = converted %int_0.loc17, %.loc17_36.1 [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %impl.elem0.loc17_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc17_39: <bound method> = bound_method %int_31.loc17, %impl.elem0.loc17_39 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc17_39: <specific function> = specific_function %Convert.bound.loc17_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc17_39: init %iN = call %Convert.specific_fn.loc17_39(%int_31.loc17) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc17_39.1: %i32 = value_of_initializer %int.convert_checked.loc17_39 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc17_39.2: %i32 = converted %int_31.loc17, %.loc17_39.1 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.left_shift.loc17: init %i32 = call %LeftShift.ref.loc17(%.loc17_36.2, %.loc17_39.2)
+// CHECK:STDOUT:   %.loc17_42.1: %i32 = value_of_initializer %int.left_shift.loc17
+// CHECK:STDOUT:   %.loc17_42.2: %i32 = converted %int.left_shift.loc17, %.loc17_42.1
+// CHECK:STDOUT:   %no_overflow_1: %i32 = bind_name no_overflow_1, %.loc17_42.2
+// CHECK:STDOUT:   %LeftShift.ref.loc18: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:   %int_0.loc18: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_32.loc18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %impl.elem0.loc18_36: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc18_36: <bound method> = bound_method %int_0.loc18, %impl.elem0.loc18_36 [symbolic = constants.%Convert.bound.6]
+// CHECK:STDOUT:   %Convert.specific_fn.loc18_36: <specific function> = specific_function %Convert.bound.loc18_36, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.6]
+// CHECK:STDOUT:   %int.convert_checked.loc18_36: init %iN = call %Convert.specific_fn.loc18_36(%int_0.loc18) [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %.loc18_36.1: %i32 = value_of_initializer %int.convert_checked.loc18_36 [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %.loc18_36.2: %i32 = converted %int_0.loc18, %.loc18_36.1 [symbolic = constants.%int.convert_checked.6]
+// CHECK:STDOUT:   %impl.elem0.loc18_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc18_39: <bound method> = bound_method %int_32.loc18, %impl.elem0.loc18_39 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc18_39: <specific function> = specific_function %Convert.bound.loc18_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc18_39: init %iN = call %Convert.specific_fn.loc18_39(%int_32.loc18) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc18_39.1: %i32 = value_of_initializer %int.convert_checked.loc18_39 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc18_39.2: %i32 = converted %int_32.loc18, %.loc18_39.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.left_shift.loc18: init %i32 = call %LeftShift.ref.loc18(%.loc18_36.2, %.loc18_39.2)
+// CHECK:STDOUT:   %.loc18_42.1: %i32 = value_of_initializer %int.left_shift.loc18
+// CHECK:STDOUT:   %.loc18_42.2: %i32 = converted %int.left_shift.loc18, %.loc18_42.1
+// CHECK:STDOUT:   %no_overflow_2: %i32 = bind_name no_overflow_2, %.loc18_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc21: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_1000.loc21: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:   %int_31.loc21: Core.IntLiteral = int_value 31 [template = constants.%int_31]
-// CHECK:STDOUT:   %impl.elem0.loc21_33: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc21_33: <bound method> = bound_method %int_1000.loc21, %impl.elem0.loc21_33 [symbolic = constants.%Convert.bound.5]
-// CHECK:STDOUT:   %Convert.specific_fn.loc21_33: <specific function> = specific_function %Convert.bound.loc21_33, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.5]
-// CHECK:STDOUT:   %int.convert_checked.loc21_33: init %iN = call %Convert.specific_fn.loc21_33(%int_1000.loc21) [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %.loc21_33.1: %i32 = value_of_initializer %int.convert_checked.loc21_33 [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %.loc21_33.2: %i32 = converted %int_1000.loc21, %.loc21_33.1 [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %impl.elem0.loc21_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc21_39: <bound method> = bound_method %int_31.loc21, %impl.elem0.loc21_39 [symbolic = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc21_39: <specific function> = specific_function %Convert.bound.loc21_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc21_39: init %iN = call %Convert.specific_fn.loc21_39(%int_31.loc21) [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc21_39.1: %i32 = value_of_initializer %int.convert_checked.loc21_39 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc21_39.2: %i32 = converted %int_31.loc21, %.loc21_39.1 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %int.left_shift.loc21: init %i32 = call %LeftShift.ref.loc21(%.loc21_33.2, %.loc21_39.2)
-// CHECK:STDOUT:   %.loc21_42.1: %i32 = value_of_initializer %int.left_shift.loc21
-// CHECK:STDOUT:   %.loc21_42.2: %i32 = converted %int.left_shift.loc21, %.loc21_42.1
-// CHECK:STDOUT:   %overflow_1: %i32 = bind_name overflow_1, %.loc21_42.2
-// CHECK:STDOUT:   %LeftShift.ref.loc26: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_1000.loc26: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:   %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %impl.elem0.loc26_33: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc26_33: <bound method> = bound_method %int_1000.loc26, %impl.elem0.loc26_33 [symbolic = constants.%Convert.bound.5]
-// CHECK:STDOUT:   %Convert.specific_fn.loc26_33: <specific function> = specific_function %Convert.bound.loc26_33, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.5]
-// CHECK:STDOUT:   %int.convert_checked.loc26_33: init %iN = call %Convert.specific_fn.loc26_33(%int_1000.loc26) [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %.loc26_33.1: %i32 = value_of_initializer %int.convert_checked.loc26_33 [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %.loc26_33.2: %i32 = converted %int_1000.loc26, %.loc26_33.1 [symbolic = constants.%int.convert_checked.5]
-// CHECK:STDOUT:   %impl.elem0.loc26_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc26_39: <bound method> = bound_method %int_32.loc26, %impl.elem0.loc26_39 [symbolic = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc26_39: <specific function> = specific_function %Convert.bound.loc26_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc26_39: init %iN = call %Convert.specific_fn.loc26_39(%int_32.loc26) [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc26_39.1: %i32 = value_of_initializer %int.convert_checked.loc26_39 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc26_39.2: %i32 = converted %int_32.loc26, %.loc26_39.1 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %int.left_shift.loc26: init %i32 = call %LeftShift.ref.loc26(%.loc26_33.2, %.loc26_39.2)
-// CHECK:STDOUT:   %.loc26_42.1: %i32 = value_of_initializer %int.left_shift.loc26
-// CHECK:STDOUT:   %.loc26_42.2: %i32 = converted %int.left_shift.loc26, %.loc26_42.1
-// CHECK:STDOUT:   %overflow_2: %i32 = bind_name overflow_2, %.loc26_42.2
-// CHECK:STDOUT:   %LeftShift.ref.loc29: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_0.loc29: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %int_31.loc29: Core.IntLiteral = int_value 31 [template = constants.%int_31]
-// CHECK:STDOUT:   %impl.elem0.loc29_36: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc29_36: <bound method> = bound_method %int_0.loc29, %impl.elem0.loc29_36 [symbolic = constants.%Convert.bound.6]
-// CHECK:STDOUT:   %Convert.specific_fn.loc29_36: <specific function> = specific_function %Convert.bound.loc29_36, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.6]
-// CHECK:STDOUT:   %int.convert_checked.loc29_36: init %iN = call %Convert.specific_fn.loc29_36(%int_0.loc29) [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %.loc29_36.1: %i32 = value_of_initializer %int.convert_checked.loc29_36 [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %.loc29_36.2: %i32 = converted %int_0.loc29, %.loc29_36.1 [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %impl.elem0.loc29_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc29_39: <bound method> = bound_method %int_31.loc29, %impl.elem0.loc29_39 [symbolic = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc29_39: <specific function> = specific_function %Convert.bound.loc29_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc29_39: init %iN = call %Convert.specific_fn.loc29_39(%int_31.loc29) [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc29_39.1: %i32 = value_of_initializer %int.convert_checked.loc29_39 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc29_39.2: %i32 = converted %int_31.loc29, %.loc29_39.1 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %int.left_shift.loc29: init %i32 = call %LeftShift.ref.loc29(%.loc29_36.2, %.loc29_39.2)
-// CHECK:STDOUT:   %.loc29_42.1: %i32 = value_of_initializer %int.left_shift.loc29
-// CHECK:STDOUT:   %.loc29_42.2: %i32 = converted %int.left_shift.loc29, %.loc29_42.1
-// CHECK:STDOUT:   %no_overflow_1: %i32 = bind_name no_overflow_1, %.loc29_42.2
-// CHECK:STDOUT:   %LeftShift.ref.loc34: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_0.loc34: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:   %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %impl.elem0.loc34_36: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc34_36: <bound method> = bound_method %int_0.loc34, %impl.elem0.loc34_36 [symbolic = constants.%Convert.bound.6]
-// CHECK:STDOUT:   %Convert.specific_fn.loc34_36: <specific function> = specific_function %Convert.bound.loc34_36, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.6]
-// CHECK:STDOUT:   %int.convert_checked.loc34_36: init %iN = call %Convert.specific_fn.loc34_36(%int_0.loc34) [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %.loc34_36.1: %i32 = value_of_initializer %int.convert_checked.loc34_36 [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %.loc34_36.2: %i32 = converted %int_0.loc34, %.loc34_36.1 [symbolic = constants.%int.convert_checked.6]
-// CHECK:STDOUT:   %impl.elem0.loc34_39: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc34_39: <bound method> = bound_method %int_32.loc34, %impl.elem0.loc34_39 [symbolic = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc34_39: <specific function> = specific_function %Convert.bound.loc34_39, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc34_39: init %iN = call %Convert.specific_fn.loc34_39(%int_32.loc34) [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc34_39.1: %i32 = value_of_initializer %int.convert_checked.loc34_39 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %.loc34_39.2: %i32 = converted %int_32.loc34, %.loc34_39.1 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %int.left_shift.loc34: init %i32 = call %LeftShift.ref.loc34(%.loc34_36.2, %.loc34_39.2)
-// CHECK:STDOUT:   %.loc34_42.1: %i32 = value_of_initializer %int.left_shift.loc34
-// CHECK:STDOUT:   %.loc34_42.2: %i32 = converted %int.left_shift.loc34, %.loc34_42.1
-// CHECK:STDOUT:   %no_overflow_2: %i32 = bind_name no_overflow_2, %.loc34_42.2
-// CHECK:STDOUT:   %LeftShift.ref.loc40: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
-// CHECK:STDOUT:   %int_1.loc40_31: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc21_31: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_1.loc40_41: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc40_41: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc40_41: <bound method> = bound_method %int_1.loc40_41, %impl.elem0.loc40_41 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc40_41: <specific function> = specific_function %Convert.bound.loc40_41, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc40_41: init %iN = call %Convert.specific_fn.loc40_41(%int_1.loc40_41) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc40_41.1: %i32 = value_of_initializer %int.convert_checked.loc40_41 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc40_41.2: %i32 = converted %int_1.loc40_41, %.loc40_41.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc40_41.2)
-// CHECK:STDOUT:   %impl.elem0.loc40_31: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc40_31: <bound method> = bound_method %int_1.loc40_31, %impl.elem0.loc40_31 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc40_31: <specific function> = specific_function %Convert.bound.loc40_31, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc40_31: init %iN = call %Convert.specific_fn.loc40_31(%int_1.loc40_31) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc40_31.1: %i32 = value_of_initializer %int.convert_checked.loc40_31 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc40_31.2: %i32 = converted %int_1.loc40_31, %.loc40_31.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc40_42.1: %i32 = value_of_initializer %int.snegate
-// CHECK:STDOUT:   %.loc40_42.2: %i32 = converted %int.snegate, %.loc40_42.1
-// CHECK:STDOUT:   %int.left_shift.loc40: init %i32 = call %LeftShift.ref.loc40(%.loc40_31.2, %.loc40_42.2)
-// CHECK:STDOUT:   %.loc40_44.1: %i32 = value_of_initializer %int.left_shift.loc40
-// CHECK:STDOUT:   %.loc40_44.2: %i32 = converted %int.left_shift.loc40, %.loc40_44.1
-// CHECK:STDOUT:   %negative: %i32 = bind_name negative, %.loc40_44.2
+// CHECK:STDOUT:   %int_1.loc21_41: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc21_41: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc21_41: <bound method> = bound_method %int_1.loc21_41, %impl.elem0.loc21_41 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc21_41: <specific function> = specific_function %Convert.bound.loc21_41, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc21_41: init %iN = call %Convert.specific_fn.loc21_41(%int_1.loc21_41) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc21_41.1: %i32 = value_of_initializer %int.convert_checked.loc21_41 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc21_41.2: %i32 = converted %int_1.loc21_41, %.loc21_41.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc21_41.2)
+// CHECK:STDOUT:   %impl.elem0.loc21_31: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc21_31: <bound method> = bound_method %int_1.loc21_31, %impl.elem0.loc21_31 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc21_31: <specific function> = specific_function %Convert.bound.loc21_31, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc21_31: init %iN = call %Convert.specific_fn.loc21_31(%int_1.loc21_31) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc21_31.1: %i32 = value_of_initializer %int.convert_checked.loc21_31 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc21_31.2: %i32 = converted %int_1.loc21_31, %.loc21_31.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc21_42.1: %i32 = value_of_initializer %int.snegate
+// CHECK:STDOUT:   %.loc21_42.2: %i32 = converted %int.snegate, %.loc21_42.1
+// CHECK:STDOUT:   %int.left_shift.loc21: init %i32 = call %LeftShift.ref.loc21(%.loc21_31.2, %.loc21_42.2)
+// CHECK:STDOUT:   %.loc21_44.1: %i32 = value_of_initializer %int.left_shift.loc21
+// CHECK:STDOUT:   %.loc21_44.2: %i32 = converted %int.left_shift.loc21, %.loc21_44.1
+// CHECK:STDOUT:   %negative: %i32 = bind_name negative, %.loc21_44.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -145,17 +145,17 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc12_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_19: init type = call constants.%Int(%int_32.loc12_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_19.1: type = value_of_initializer %int.make_type_signed.loc12_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_19.2: type = converted %int.make_type_signed.loc12_19, %.loc12_19.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc12_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_27: init type = call constants.%Int(%int_32.loc12_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_27.1: type = value_of_initializer %int.make_type_signed.loc12_27 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_27.2: type = converted %int.make_type_signed.loc12_27, %.loc12_27.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc20_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc20_19: init type = call constants.%Int(%int_32.loc20_19) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_signed.loc20_19 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_signed.loc20_19, %.loc20_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc20_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed.loc20_27: init type = call constants.%Int(%int_32.loc20_27) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc20_27.1: type = value_of_initializer %int.make_type_signed.loc20_27 [template = constants.%i32]
+// CHECK:STDOUT:     %.loc20_27.2: type = converted %int.make_type_signed.loc20_27, %.loc20_27.1 [template = constants.%i32]
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc12_35.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc12_35.2: type = converted %bool.make_type, %.loc12_35.1 [template = bool]
+// CHECK:STDOUT:     %.loc20_35.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc20_35.2: type = converted %bool.make_type, %.loc20_35.1 [template = bool]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
@@ -186,67 +186,67 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT: fn @F(%true_.param_patt: %True, %false_.param_patt: %False) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
-// CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
-// CHECK:STDOUT:   %int_1.loc8_19: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %int_1.loc8_22: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc8_19: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc8_19: <bound method> = bound_method %int_1.loc8_19, %impl.elem0.loc8_19 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc8_19: <specific function> = specific_function %Convert.bound.loc8_19, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc8_19: init %iN = call %Convert.specific_fn.loc8_19(%int_1.loc8_19) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc8_19.1: %i32 = value_of_initializer %int.convert_checked.loc8_19 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc8_19.2: %i32 = converted %int_1.loc8_19, %.loc8_19.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc8_22: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc8_22: <bound method> = bound_method %int_1.loc8_22, %impl.elem0.loc8_22 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc8_22: <specific function> = specific_function %Convert.bound.loc8_22, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc8_22: init %iN = call %Convert.specific_fn.loc8_22(%int_1.loc8_22) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc8_22.1: %i32 = value_of_initializer %int.convert_checked.loc8_22 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc8_22.2: %i32 = converted %int_1.loc8_22, %.loc8_22.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %int.eq.loc8: init bool = call %Eq.ref.loc8(%.loc8_19.2, %.loc8_22.2)
-// CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %int.eq.loc8
-// CHECK:STDOUT:   %.loc8_13.2: bool = converted %int.eq.loc8, %.loc8_13.1
-// CHECK:STDOUT:   if %.loc8_13.2 br !if.expr.then.loc8 else br !if.expr.else.loc8
+// CHECK:STDOUT:   %Eq.ref.loc12: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %int_1.loc12_19: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc12_22: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc12_19: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc12_19: <bound method> = bound_method %int_1.loc12_19, %impl.elem0.loc12_19 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_19: <specific function> = specific_function %Convert.bound.loc12_19, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_19: init %iN = call %Convert.specific_fn.loc12_19(%int_1.loc12_19) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_19.1: %i32 = value_of_initializer %int.convert_checked.loc12_19 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_19.2: %i32 = converted %int_1.loc12_19, %.loc12_19.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc12_22: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc12_22: <bound method> = bound_method %int_1.loc12_22, %impl.elem0.loc12_22 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_22: <specific function> = specific_function %Convert.bound.loc12_22, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_22: init %iN = call %Convert.specific_fn.loc12_22(%int_1.loc12_22) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %int.convert_checked.loc12_22 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %int_1.loc12_22, %.loc12_22.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.eq.loc12: init bool = call %Eq.ref.loc12(%.loc12_19.2, %.loc12_22.2)
+// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %int.eq.loc12
+// CHECK:STDOUT:   %.loc12_13.2: bool = converted %int.eq.loc12, %.loc12_13.1
+// CHECK:STDOUT:   if %.loc12_13.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc8:
-// CHECK:STDOUT:   %True.ref.loc8: type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   br !if.expr.result.loc8(%True.ref.loc8)
+// CHECK:STDOUT: !if.expr.then.loc12:
+// CHECK:STDOUT:   %True.ref.loc12: type = name_ref True, file.%True.decl [template = constants.%True]
+// CHECK:STDOUT:   br !if.expr.result.loc12(%True.ref.loc12)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc8:
-// CHECK:STDOUT:   %False.ref.loc8: type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   br !if.expr.result.loc8(%False.ref.loc8)
+// CHECK:STDOUT: !if.expr.else.loc12:
+// CHECK:STDOUT:   %False.ref.loc12: type = name_ref False, file.%False.decl [template = constants.%False]
+// CHECK:STDOUT:   br !if.expr.result.loc12(%False.ref.loc12)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc8:
-// CHECK:STDOUT:   %.loc8_13.3: type = block_arg !if.expr.result.loc8
+// CHECK:STDOUT: !if.expr.result.loc12:
+// CHECK:STDOUT:   %.loc12_13.3: type = block_arg !if.expr.result.loc12
 // CHECK:STDOUT:   %false_.ref: %False = name_ref false_, %false_
-// CHECK:STDOUT:   %Eq.ref.loc9: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
-// CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %Eq.ref.loc17: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %impl.elem0.loc9_20: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc9_20: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_20 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc9_20: <specific function> = specific_function %Convert.bound.loc9_20, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc9_20: init %iN = call %Convert.specific_fn.loc9_20(%int_1.loc9) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc9_20.1: %i32 = value_of_initializer %int.convert_checked.loc9_20 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %.loc9_20.2: %i32 = converted %int_1.loc9, %.loc9_20.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc9_23: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc9_23: <bound method> = bound_method %int_2, %impl.elem0.loc9_23 [symbolic = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc9_23: <specific function> = specific_function %Convert.bound.loc9_23, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc9_23: init %iN = call %Convert.specific_fn.loc9_23(%int_2) [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc9_23.1: %i32 = value_of_initializer %int.convert_checked.loc9_23 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %.loc9_23.2: %i32 = converted %int_2, %.loc9_23.1 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %int.eq.loc9: init bool = call %Eq.ref.loc9(%.loc9_20.2, %.loc9_23.2)
-// CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %int.eq.loc9
-// CHECK:STDOUT:   %.loc9_14.2: bool = converted %int.eq.loc9, %.loc9_14.1
-// CHECK:STDOUT:   if %.loc9_14.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
+// CHECK:STDOUT:   %impl.elem0.loc17_20: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc17_20: <bound method> = bound_method %int_1.loc17, %impl.elem0.loc17_20 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc17_20: <specific function> = specific_function %Convert.bound.loc17_20, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc17_20: init %iN = call %Convert.specific_fn.loc17_20(%int_1.loc17) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc17_20.1: %i32 = value_of_initializer %int.convert_checked.loc17_20 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc17_20.2: %i32 = converted %int_1.loc17, %.loc17_20.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc17_23: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc17_23: <bound method> = bound_method %int_2, %impl.elem0.loc17_23 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc17_23: <specific function> = specific_function %Convert.bound.loc17_23, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc17_23: init %iN = call %Convert.specific_fn.loc17_23(%int_2) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc17_23.1: %i32 = value_of_initializer %int.convert_checked.loc17_23 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc17_23.2: %i32 = converted %int_2, %.loc17_23.1 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.eq.loc17: init bool = call %Eq.ref.loc17(%.loc17_20.2, %.loc17_23.2)
+// CHECK:STDOUT:   %.loc17_14.1: bool = value_of_initializer %int.eq.loc17
+// CHECK:STDOUT:   %.loc17_14.2: bool = converted %int.eq.loc17, %.loc17_14.1
+// CHECK:STDOUT:   if %.loc17_14.2 br !if.expr.then.loc17 else br !if.expr.else.loc17
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc9:
-// CHECK:STDOUT:   %True.ref.loc9: type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   br !if.expr.result.loc9(%True.ref.loc9)
+// CHECK:STDOUT: !if.expr.then.loc17:
+// CHECK:STDOUT:   %True.ref.loc17: type = name_ref True, file.%True.decl [template = constants.%True]
+// CHECK:STDOUT:   br !if.expr.result.loc17(%True.ref.loc17)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %False.ref.loc9: type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   br !if.expr.result.loc9(%False.ref.loc9)
+// CHECK:STDOUT: !if.expr.else.loc17:
+// CHECK:STDOUT:   %False.ref.loc17: type = name_ref False, file.%False.decl [template = constants.%False]
+// CHECK:STDOUT:   br !if.expr.result.loc17(%False.ref.loc17)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9
+// CHECK:STDOUT: !if.expr.result.loc17:
+// CHECK:STDOUT:   %.loc17_14.3: type = block_arg !if.expr.result.loc17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,9 +256,9 @@ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.eq: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc13_18.1: bool = value_of_initializer %int.eq
-// CHECK:STDOUT:   %.loc13_18.2: bool = converted %int.eq, %.loc13_18.1
-// CHECK:STDOUT:   return %.loc13_18.2
+// CHECK:STDOUT:   %.loc21_18.1: bool = value_of_initializer %int.eq
+// CHECK:STDOUT:   %.loc21_18.2: bool = converted %int.eq, %.loc21_18.1
+// CHECK:STDOUT:   return %.loc21_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_decl.carbon
