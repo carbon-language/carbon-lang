@@ -23,6 +23,8 @@
 
 namespace Carbon::SemIR {
 
+class Inst;
+
 // InstLikeTypeInfo is an implementation detail, and not public API.
 namespace Internal {
 
@@ -104,6 +106,16 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
 template <typename T>
 concept InstLikeType = requires { sizeof(InstLikeTypeInfo<T>); };
 
+// Supports storage of an `Inst` object's `kind` separate from its other
+// members.
+struct InstTypeAndArgs {
+  explicit InstTypeAndArgs(Inst inst);
+
+  TypeId type_id;
+  int32_t arg0;
+  int32_t arg1;
+};
+
 }  // namespace Internal
 
 // A type-erased representation of a SemIR instruction, that may be constructed
@@ -164,6 +176,12 @@ class Inst : public Printable<Inst> {
       arg1_ = ToRaw(Info::template Get<1>(typed_inst));
     }
   }
+
+  explicit Inst(InstKind kind, Internal::InstTypeAndArgs fields)
+      : kind_(kind.AsInt()),
+        type_id_(fields.type_id),
+        arg0_(fields.arg0),
+        arg1_(fields.arg1) {}
 
   // Returns whether this instruction has the specified type.
   template <typename TypedInst>
@@ -362,11 +380,14 @@ class InstStore {
   // block.
   auto AddInNoBlock(LocIdAndInst loc_id_and_inst) -> InstId {
     loc_ids_.push_back(loc_id_and_inst.loc_id);
-    return values_.Add(loc_id_and_inst.inst);
+    kinds_.push_back(loc_id_and_inst.inst.kind());
+    return types_and_args_.Add(Internal::InstTypeAndArgs(loc_id_and_inst.inst));
   }
 
   // Returns the requested instruction.
-  auto Get(InstId inst_id) const -> Inst { return values_.Get(inst_id); }
+  auto Get(InstId inst_id) const -> Inst {
+    return Inst(kinds_[inst_id.index], types_and_args_.Get(inst_id));
+  }
 
   // Returns the requested instruction and its location ID.
   auto GetWithLocId(InstId inst_id) const -> LocIdAndInst {
@@ -411,7 +432,10 @@ class InstStore {
   }
 
   // Overwrites a given instruction with a new value.
-  auto Set(InstId inst_id, Inst inst) -> void { values_.Get(inst_id) = inst; }
+  auto Set(InstId inst_id, Inst inst) -> void {
+    kinds_[inst_id.index] = inst.kind();
+    types_and_args_.Get(inst_id) = Internal::InstTypeAndArgs(inst);
+  }
 
   // Overwrites a given instruction's location with a new value.
   auto SetLocId(InstId inst_id, LocId loc_id) -> void {
@@ -427,22 +451,32 @@ class InstStore {
   // Reserves space.
   auto Reserve(size_t size) -> void {
     loc_ids_.reserve(size);
-    values_.Reserve(size);
+    types_and_args_.Reserve(size);
   }
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "loc_ids_"), loc_ids_);
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "kinds_"), kinds_);
+    mem_usage.Collect(MemUsage::ConcatLabel(label, "types_and_args_"),
+                      types_and_args_);
   }
 
-  auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
-  auto size() const -> int { return values_.size(); }
+  auto size() const -> int { return types_and_args_.size(); }
 
  private:
+  // Locations are tracked separately because we expect to read them back out
+  // infrequently, as compared to the number of times we read the instruction.
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId> values_;
+
+  // Kinds are 1 byte, so storing them in a separate vector allows some space
+  // savings. This also allows for efficiently reading the kind separately from
+  // the rest of the instruction.
+  llvm::SmallVector<InstKind> kinds_;
+
+  // Remaining instruction information: the type and args.
+  ValueStore<InstId> types_and_args_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
@@ -481,6 +515,9 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }
+
+inline Internal::InstTypeAndArgs::InstTypeAndArgs(Inst inst)
+    : type_id(inst.type_id()), arg0(inst.arg0()), arg1(inst.arg1()) {}
 
 }  // namespace Carbon::SemIR
 

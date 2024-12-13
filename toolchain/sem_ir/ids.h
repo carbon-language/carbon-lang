@@ -16,7 +16,6 @@ namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
-class Inst;
 class NameScope;
 struct EntityName;
 struct Class;
@@ -30,11 +29,14 @@ struct Impl;
 struct Interface;
 struct StructTypeField;
 struct TypeInfo;
+namespace Internal {
+struct InstTypeAndArgs;
+}
 
 // The ID of an instruction.
 struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
-  using ValueType = Inst;
+  using ValueType = Internal::InstTypeAndArgs;
 
   // An explicitly invalid ID.
   static const InstId Invalid;
