@@ -4,6 +4,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-bazel run -c opt --experimental_convenience_symlinks=ignore \
+"$(dirname "$0")/../../scripts/run_bazel.py" \
+  run -c opt --experimental_convenience_symlinks=ignore \
   --ui_event_filters=-info,-stdout,-stderr,-finish \
   //testing/file_test:file_test_base_test -- --autoupdate "$@"

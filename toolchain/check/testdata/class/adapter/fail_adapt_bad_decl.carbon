@@ -16,7 +16,7 @@ class Bad {
   // CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -37,7 +37,7 @@ class Bad {
   // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_extend_not_type.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   extend adapt 100;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

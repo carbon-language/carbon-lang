@@ -49,29 +49,34 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 // declaration, but not the definition, of the generic.
 //
 // `args_id` should be a canonical instruction block referring to constants.
-auto MakeSpecific(Context& context, SemIR::GenericId generic_id,
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
                   SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
 // Builds a new specific if the given generic is valid. Otherwise returns an
 // invalid specific.
-inline auto MakeSpecificIfGeneric(Context& context, SemIR::GenericId generic_id,
+inline auto MakeSpecificIfGeneric(Context& context, SemIRLoc loc,
+                                  SemIR::GenericId generic_id,
                                   SemIR::InstBlockId args_id)
     -> SemIR::SpecificId {
-  return generic_id.is_valid() ? MakeSpecific(context, generic_id, args_id)
+  return generic_id.is_valid() ? MakeSpecific(context, loc, generic_id, args_id)
                                : SemIR::SpecificId::Invalid;
 }
 
 // Builds the specific that describes how the generic should refer to itself.
 // For example, for a generic `G(T:! type)`, this is the specific `G(T)`. For an
 // invalid `generic_id`, returns an invalid specific ID.
-auto MakeSelfSpecific(Context& context, SemIR::GenericId generic_id)
-    -> SemIR::SpecificId;
+auto MakeSelfSpecific(Context& context, SemIRLoc loc,
+                      SemIR::GenericId generic_id) -> SemIR::SpecificId;
 
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
 // block in the specific. Returns false if a definition is not available.
-auto ResolveSpecificDefinition(Context& context, SemIR::SpecificId specific_id)
-    -> bool;
+auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
+                               SemIR::SpecificId specific_id) -> bool;
+
+// Returns an instruction describing the entity named by the given specific.
+auto GetInstForSpecific(Context& context, SemIR::SpecificId specific_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

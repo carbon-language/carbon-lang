@@ -13,7 +13,7 @@ package User;
 class C {};
 
 fn TestUnary(a: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Negate` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Negate` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return -a;
   // CHECK:STDERR:          ^~
   // CHECK:STDERR:
@@ -21,7 +21,7 @@ fn TestUnary(a: C) -> C {
 }
 
 fn TestBinary(a: C, b: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Add` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Add` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a + b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -30,12 +30,12 @@ fn TestBinary(a: C, b: C) -> C {
 
 fn TestRef(b: C) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `AddAssign` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssign` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   a += b;
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~~
   ++a;

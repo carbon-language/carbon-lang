@@ -45,7 +45,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+4]]:32: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn NonTypeImpls(U:! type where 7 impls type);
 // CHECK:STDERR:                                ^
 // CHECK:STDERR:
@@ -58,7 +58,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+7]]:44: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `Core.IntLiteral` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+4]]:44: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ImplsNonType(U:! type where .Self impls 7);
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -89,7 +89,7 @@ fn DoesNotImplI() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+11]]:3: error: cannot implicitly convert from `type` to `J where...` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+8]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Impls(C);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-14]]:1: in import [InImport]
@@ -107,7 +107,7 @@ fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+9]]:3: error: cannot implicitly convert from `type` to `J where...` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note: type `type` does not implement interface `ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE+6]]:3: note: type `type` does not implement interface `Core.ImplicitAs(J where...)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_constraint.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]

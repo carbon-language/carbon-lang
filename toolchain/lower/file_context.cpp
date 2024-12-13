@@ -608,12 +608,11 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // TODO: Mangle name.
   auto mangled_name =
       *sem_ir().names().GetAsStringIfIdentifier(var_storage.name_id);
-  auto* type =
-      var_storage.type_id.is_valid() ? GetType(var_storage.type_id) : nullptr;
-  return new llvm::GlobalVariable(llvm_module(), type,
-                                  /*isConstant=*/false,
-                                  llvm::GlobalVariable::InternalLinkage,
-                                  /*Initializer=*/nullptr, mangled_name);
+  auto* type = GetType(var_storage.type_id);
+  return new llvm::GlobalVariable(
+      llvm_module(), type,
+      /*isConstant=*/false, llvm::GlobalVariable::InternalLinkage,
+      llvm::Constant::getNullValue(type), mangled_name);
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {

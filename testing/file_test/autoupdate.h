@@ -58,8 +58,8 @@ class FileTestAutoupdater {
         // initialization.
         stdout_(BuildCheckLines(stdout, "STDOUT")),
         stderr_(BuildCheckLines(stderr, "STDERR")),
-        any_attached_stdout_lines_(std::any_of(
-            stdout_.lines.begin(), stdout_.lines.end(),
+        any_attached_stdout_lines_(llvm::any_of(
+            stdout_.lines,
             [&](const CheckLine& line) { return line.line_number() != -1; })),
         non_check_line_(non_check_lines_.begin()) {
     for (const auto& replacement : line_number_replacements_) {

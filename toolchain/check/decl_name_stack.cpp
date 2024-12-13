@@ -115,7 +115,8 @@ auto DeclNameStack::Restore(SuspendedName sus) -> void {
     // Reattempt to resolve the definition of the specific. The generic might
     // have been defined after we suspended this scope.
     if (suspended_scope.entry.specific_id.is_valid()) {
-      ResolveSpecificDefinition(*context_, suspended_scope.entry.specific_id);
+      ResolveSpecificDefinition(*context_, sus.name_context.loc_id,
+                                suspended_scope.entry.specific_id);
     }
 
     context_->scope_stack().Restore(std::move(suspended_scope));
@@ -192,7 +193,7 @@ auto DeclNameStack::LookupOrAddName(NameContext name_context,
 // `fn Class(T:! type).F(n: i32)` we will push the scope for `Class(T:! type)`
 // between the scope containing the declaration of `T` and the scope
 // containing the declaration of `n`.
-static auto PushNameQualifierScope(Context& context,
+static auto PushNameQualifierScope(Context& context, SemIRLoc loc,
                                    SemIR::InstId scope_inst_id,
                                    SemIR::NameScopeId scope_id,
                                    SemIR::SpecificId specific_id,
@@ -203,7 +204,7 @@ static auto PushNameQualifierScope(Context& context,
 
   // When declaring a member of a generic, resolve the self specific.
   if (specific_id.is_valid()) {
-    ResolveSpecificDefinition(context, specific_id);
+    ResolveSpecificDefinition(context, loc, specific_id);
   }
 
   context.scope_stack().Push(scope_inst_id, scope_id, specific_id, has_error);
@@ -229,8 +230,8 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
   // Resolve the qualifier as a scope and enter the new scope.
   auto [scope_id, specific_id] = ResolveAsScope(name_context, name);
   if (scope_id.is_valid()) {
-    PushNameQualifierScope(*context_, name_context.resolved_inst_id, scope_id,
-                           specific_id,
+    PushNameQualifierScope(*context_, name_context.loc_id,
+                           name_context.resolved_inst_id, scope_id, specific_id,
                            context_->name_scopes().Get(scope_id).has_error());
     name_context.parent_scope_id = scope_id;
   } else {

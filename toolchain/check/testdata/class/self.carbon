@@ -35,7 +35,7 @@ class Class {
   // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+6]]:25: error: cannot implicitly convert from `Class` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note: type `Class` does not implement interface `ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_return_self_value.carbon:[[@LINE+3]]:25: note: type `Class` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self]() -> self;
   // CHECK:STDERR:                         ^~~~
   fn F[self: Self]() -> self;
