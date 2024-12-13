@@ -25,16 +25,18 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int_0.2) [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_0) [symbolic]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int.convert_checked) [symbolic]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
@@ -75,16 +77,16 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %tuple.type.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_30.1: %tuple.type.3 = tuple_literal (%int_0)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc11_30.2: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc11_30.3: %i32 = converted %int_0, %.loc11_30.2 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc11_30.3) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc11_31: %tuple.type.2 = converted %.loc11_30.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [symbolic = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_0) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc11_30.2: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc11_30.3: %i32 = converted %int_0, %.loc11_30.2 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc11_30.3) [symbolic = constants.%tuple]
+// CHECK:STDOUT:   %.loc11_31: %tuple.type.2 = converted %.loc11_30.1, %tuple [symbolic = constants.%tuple]
 // CHECK:STDOUT:   return %.loc11_31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,7 +106,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc14_23.2: ref %tuple.type.2 = temporary %.loc14_23.1, %F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc14_23.2, element0
 // CHECK:STDOUT:   %.loc14_23.3: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc14_23.4: ref %i32 = array_index %t.var, %int_0
 // CHECK:STDOUT:   %.loc14_23.5: init %i32 = initialize_from %.loc14_23.3 to %.loc14_23.4
 // CHECK:STDOUT:   %.loc14_23.6: init %array_type = array_init (%.loc14_23.5) to %t.var

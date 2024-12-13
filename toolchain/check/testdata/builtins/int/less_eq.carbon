@@ -17,10 +17,29 @@ class True {}
 class False {}
 
 fn F(true_: True, false_: False) {
+  // CHECK:STDERR: int_less_eq.carbon:[[@LINE+4]]:12: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   true_ as (if LessEq(1, 2) then True else False);
+  // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   true_ as (if LessEq(1, 2) then True else False);
+  // CHECK:STDERR: int_less_eq.carbon:[[@LINE+4]]:12: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   true_ as (if LessEq(1, 1) then True else False);
+  // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   true_ as (if LessEq(1, 1) then True else False);
+  // CHECK:STDERR: int_less_eq.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   false_ as (if LessEq(1, 0) then True else False);
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   false_ as (if LessEq(1, 0) then True else False);
+  // CHECK:STDERR: int_less_eq.carbon:[[@LINE+4]]:12: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   true_ as (if LessEq(Negate(1), 0) then True else False);
+  // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   true_ as (if LessEq(Negate(1), 0) then True else False);
+  // CHECK:STDERR: int_less_eq.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   false_ as (if LessEq(0, Negate(1)) then True else False);
+  // CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   false_ as (if LessEq(0, Negate(1)) then True else False);
 }
 
@@ -47,25 +66,24 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %false: bool = bool_literal false [template]
-// CHECK:STDOUT:   %int_-1: %i32 = int_value -1 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1) [symbolic]
+// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%N) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.2: init %iN = call %Convert.specific_fn.2(%int_2) [symbolic]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_0, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%N) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.3: init %iN = call %Convert.specific_fn.3(%int_0) [symbolic]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -203,23 +221,23 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref.loc9: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %LessEq.ref.loc9: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
-// CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %impl.elem0.loc9_23: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc9_23: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_23 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc9_23: <specific function> = specific_function %Convert.bound.loc9_23, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc9_23: init %i32 = call %Convert.specific_fn.loc9_23(%int_1.loc9) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc9_23.1: %i32 = value_of_initializer %int.convert_checked.loc9_23 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc9_23.2: %i32 = converted %int_1.loc9, %.loc9_23.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc9_26: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc9_26: <bound method> = bound_method %int_2, %impl.elem0.loc9_26 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc9_26: <specific function> = specific_function %Convert.bound.loc9_26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc9_26: init %i32 = call %Convert.specific_fn.loc9_26(%int_2) [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc9_26.1: %i32 = value_of_initializer %int.convert_checked.loc9_26 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %.loc9_26.2: %i32 = converted %int_2, %.loc9_26.1 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %int.less_eq.loc9: init bool = call %LessEq.ref.loc9(%.loc9_23.2, %.loc9_26.2) [template = constants.%true]
-// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.less_eq.loc9 [template = constants.%true]
-// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.less_eq.loc9, %.loc9_13.1 [template = constants.%true]
+// CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:   %impl.elem0.loc9_23: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc9_23: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_23 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc9_23: <specific function> = specific_function %Convert.bound.loc9_23, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc9_23: init %iN = call %Convert.specific_fn.loc9_23(%int_1.loc9) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc9_23.1: %i32 = value_of_initializer %int.convert_checked.loc9_23 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc9_23.2: %i32 = converted %int_1.loc9, %.loc9_23.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc9_26: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc9_26: <bound method> = bound_method %int_2, %impl.elem0.loc9_26 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc9_26: <specific function> = specific_function %Convert.bound.loc9_26, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc9_26: init %iN = call %Convert.specific_fn.loc9_26(%int_2) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc9_26.1: %i32 = value_of_initializer %int.convert_checked.loc9_26 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %.loc9_26.2: %i32 = converted %int_2, %.loc9_26.1 [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.less_eq.loc9: init bool = call %LessEq.ref.loc9(%.loc9_23.2, %.loc9_26.2)
+// CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %int.less_eq.loc9
+// CHECK:STDOUT:   %.loc9_13.2: bool = converted %int.less_eq.loc9, %.loc9_13.1
 // CHECK:STDOUT:   if %.loc9_13.2 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
@@ -231,26 +249,26 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%False.ref.loc9)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9_13.3: type = block_arg !if.expr.result.loc9 [template = constants.%True]
+// CHECK:STDOUT:   %.loc9_13.3: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %true_.ref.loc10: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %LessEq.ref.loc10: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
-// CHECK:STDOUT:   %int_1.loc10_23: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %int_1.loc10_26: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_23: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc10_23: <bound method> = bound_method %int_1.loc10_23, %impl.elem0.loc10_23 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc10_23: <specific function> = specific_function %Convert.bound.loc10_23, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc10_23: init %i32 = call %Convert.specific_fn.loc10_23(%int_1.loc10_23) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc10_23.1: %i32 = value_of_initializer %int.convert_checked.loc10_23 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc10_23.2: %i32 = converted %int_1.loc10_23, %.loc10_23.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc10_26: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc10_26: <bound method> = bound_method %int_1.loc10_26, %impl.elem0.loc10_26 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc10_26: <specific function> = specific_function %Convert.bound.loc10_26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc10_26: init %i32 = call %Convert.specific_fn.loc10_26(%int_1.loc10_26) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc10_26.1: %i32 = value_of_initializer %int.convert_checked.loc10_26 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc10_26.2: %i32 = converted %int_1.loc10_26, %.loc10_26.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %int.less_eq.loc10: init bool = call %LessEq.ref.loc10(%.loc10_23.2, %.loc10_26.2) [template = constants.%true]
-// CHECK:STDOUT:   %.loc10_13.1: bool = value_of_initializer %int.less_eq.loc10 [template = constants.%true]
-// CHECK:STDOUT:   %.loc10_13.2: bool = converted %int.less_eq.loc10, %.loc10_13.1 [template = constants.%true]
+// CHECK:STDOUT:   %int_1.loc10_23: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc10_26: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc10_23: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc10_23: <bound method> = bound_method %int_1.loc10_23, %impl.elem0.loc10_23 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_23: <specific function> = specific_function %Convert.bound.loc10_23, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc10_23: init %iN = call %Convert.specific_fn.loc10_23(%int_1.loc10_23) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_23.1: %i32 = value_of_initializer %int.convert_checked.loc10_23 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_23.2: %i32 = converted %int_1.loc10_23, %.loc10_23.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc10_26: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc10_26: <bound method> = bound_method %int_1.loc10_26, %impl.elem0.loc10_26 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc10_26: <specific function> = specific_function %Convert.bound.loc10_26, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc10_26: init %iN = call %Convert.specific_fn.loc10_26(%int_1.loc10_26) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_26.1: %i32 = value_of_initializer %int.convert_checked.loc10_26 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc10_26.2: %i32 = converted %int_1.loc10_26, %.loc10_26.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.less_eq.loc10: init bool = call %LessEq.ref.loc10(%.loc10_23.2, %.loc10_26.2)
+// CHECK:STDOUT:   %.loc10_13.1: bool = value_of_initializer %int.less_eq.loc10
+// CHECK:STDOUT:   %.loc10_13.2: bool = converted %int.less_eq.loc10, %.loc10_13.1
 // CHECK:STDOUT:   if %.loc10_13.2 br !if.expr.then.loc10 else br !if.expr.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc10:
@@ -262,26 +280,26 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc10(%False.ref.loc10)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc10:
-// CHECK:STDOUT:   %.loc10_13.3: type = block_arg !if.expr.result.loc10 [template = constants.%True]
+// CHECK:STDOUT:   %.loc10_13.3: type = block_arg !if.expr.result.loc10
 // CHECK:STDOUT:   %false_.ref.loc11: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %LessEq.ref.loc11: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
-// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %int_0.loc11: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_24: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc11_24: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11_24 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_24: <specific function> = specific_function %Convert.bound.loc11_24, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc11_24: init %i32 = call %Convert.specific_fn.loc11_24(%int_1.loc11) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_24.1: %i32 = value_of_initializer %int.convert_checked.loc11_24 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_24.2: %i32 = converted %int_1.loc11, %.loc11_24.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc11_27: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc11_27: <bound method> = bound_method %int_0.loc11, %impl.elem0.loc11_27 [template = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_27: <specific function> = specific_function %Convert.bound.loc11_27, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc11_27: init %i32 = call %Convert.specific_fn.loc11_27(%int_0.loc11) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc11_27.1: %i32 = value_of_initializer %int.convert_checked.loc11_27 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc11_27.2: %i32 = converted %int_0.loc11, %.loc11_27.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %int.less_eq.loc11: init bool = call %LessEq.ref.loc11(%.loc11_24.2, %.loc11_27.2) [template = constants.%false]
-// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %int.less_eq.loc11 [template = constants.%false]
-// CHECK:STDOUT:   %.loc11_14.2: bool = converted %int.less_eq.loc11, %.loc11_14.1 [template = constants.%false]
+// CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_0.loc11: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %impl.elem0.loc11_24: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc11_24: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11_24 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_24: <specific function> = specific_function %Convert.bound.loc11_24, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc11_24: init %iN = call %Convert.specific_fn.loc11_24(%int_1.loc11) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc11_24.1: %i32 = value_of_initializer %int.convert_checked.loc11_24 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc11_24.2: %i32 = converted %int_1.loc11, %.loc11_24.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %impl.elem0.loc11_27: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc11_27: <bound method> = bound_method %int_0.loc11, %impl.elem0.loc11_27 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_27: <specific function> = specific_function %Convert.bound.loc11_27, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc11_27: init %iN = call %Convert.specific_fn.loc11_27(%int_0.loc11) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc11_27.1: %i32 = value_of_initializer %int.convert_checked.loc11_27 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc11_27.2: %i32 = converted %int_0.loc11, %.loc11_27.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.less_eq.loc11: init bool = call %LessEq.ref.loc11(%.loc11_24.2, %.loc11_27.2)
+// CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %int.less_eq.loc11
+// CHECK:STDOUT:   %.loc11_14.2: bool = converted %int.less_eq.loc11, %.loc11_14.1
 // CHECK:STDOUT:   if %.loc11_14.2 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
@@ -293,30 +311,30 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc11(%False.ref.loc11)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc11:
-// CHECK:STDOUT:   %.loc11_14.3: type = block_arg !if.expr.result.loc11 [template = constants.%False]
+// CHECK:STDOUT:   %.loc11_14.3: type = block_arg !if.expr.result.loc11
 // CHECK:STDOUT:   %true_.ref.loc12: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %LessEq.ref.loc12: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
 // CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %impl.elem0.loc12_30: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc12_30: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_30 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_30: <specific function> = specific_function %Convert.bound.loc12_30, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc12_30: init %i32 = call %Convert.specific_fn.loc12_30(%int_1.loc12) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc12_30.1: %i32 = value_of_initializer %int.convert_checked.loc12_30 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc12_30.2: %i32 = converted %int_1.loc12, %.loc12_30.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %int.snegate.loc12: init %i32 = call %Negate.ref.loc12(%.loc12_30.2) [template = constants.%int_-1]
-// CHECK:STDOUT:   %int_0.loc12: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc12_31.1: %i32 = value_of_initializer %int.snegate.loc12 [template = constants.%int_-1]
-// CHECK:STDOUT:   %.loc12_31.2: %i32 = converted %int.snegate.loc12, %.loc12_31.1 [template = constants.%int_-1]
-// CHECK:STDOUT:   %impl.elem0.loc12_34: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc12_34: <bound method> = bound_method %int_0.loc12, %impl.elem0.loc12_34 [template = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_34: <specific function> = specific_function %Convert.bound.loc12_34, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc12_34: init %i32 = call %Convert.specific_fn.loc12_34(%int_0.loc12) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %int.convert_checked.loc12_34 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_0.loc12, %.loc12_34.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %int.less_eq.loc12: init bool = call %LessEq.ref.loc12(%.loc12_31.2, %.loc12_34.2) [template = constants.%true]
-// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %int.less_eq.loc12 [template = constants.%true]
-// CHECK:STDOUT:   %.loc12_13.2: bool = converted %int.less_eq.loc12, %.loc12_13.1 [template = constants.%true]
+// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc12_30: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc12_30: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_30 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_30: <specific function> = specific_function %Convert.bound.loc12_30, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_30: init %iN = call %Convert.specific_fn.loc12_30(%int_1.loc12) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_30.1: %i32 = value_of_initializer %int.convert_checked.loc12_30 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc12_30.2: %i32 = converted %int_1.loc12, %.loc12_30.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.snegate.loc12: init %i32 = call %Negate.ref.loc12(%.loc12_30.2)
+// CHECK:STDOUT:   %int_0.loc12: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %.loc12_31.1: %i32 = value_of_initializer %int.snegate.loc12
+// CHECK:STDOUT:   %.loc12_31.2: %i32 = converted %int.snegate.loc12, %.loc12_31.1
+// CHECK:STDOUT:   %impl.elem0.loc12_34: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc12_34: <bound method> = bound_method %int_0.loc12, %impl.elem0.loc12_34 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_34: <specific function> = specific_function %Convert.bound.loc12_34, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc12_34: init %iN = call %Convert.specific_fn.loc12_34(%int_0.loc12) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %int.convert_checked.loc12_34 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_0.loc12, %.loc12_34.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.less_eq.loc12: init bool = call %LessEq.ref.loc12(%.loc12_31.2, %.loc12_34.2)
+// CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %int.less_eq.loc12
+// CHECK:STDOUT:   %.loc12_13.2: bool = converted %int.less_eq.loc12, %.loc12_13.1
 // CHECK:STDOUT:   if %.loc12_13.2 br !if.expr.then.loc12 else br !if.expr.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc12:
@@ -328,30 +346,30 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc12(%False.ref.loc12)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc12:
-// CHECK:STDOUT:   %.loc12_13.3: type = block_arg !if.expr.result.loc12 [template = constants.%True]
+// CHECK:STDOUT:   %.loc12_13.3: type = block_arg !if.expr.result.loc12
 // CHECK:STDOUT:   %false_.ref.loc13: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %LessEq.ref.loc13: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
-// CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %Negate.ref.loc13: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %impl.elem0.loc13_34: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc13_34: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_34 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc13_34: <specific function> = specific_function %Convert.bound.loc13_34, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc13_34: init %i32 = call %Convert.specific_fn.loc13_34(%int_1.loc13) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_34.1: %i32 = value_of_initializer %int.convert_checked.loc13_34 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_1.loc13, %.loc13_34.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %int.snegate.loc13: init %i32 = call %Negate.ref.loc13(%.loc13_34.2) [template = constants.%int_-1]
-// CHECK:STDOUT:   %impl.elem0.loc13_24: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound.loc13_24: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13_24 [template = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc13_24: <specific function> = specific_function %Convert.bound.loc13_24, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc13_24: init %i32 = call %Convert.specific_fn.loc13_24(%int_0.loc13) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc13_24.1: %i32 = value_of_initializer %int.convert_checked.loc13_24 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc13_24.2: %i32 = converted %int_0.loc13, %.loc13_24.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %int.snegate.loc13 [template = constants.%int_-1]
-// CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %int.snegate.loc13, %.loc13_35.1 [template = constants.%int_-1]
-// CHECK:STDOUT:   %int.less_eq.loc13: init bool = call %LessEq.ref.loc13(%.loc13_24.2, %.loc13_35.2) [template = constants.%false]
-// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %int.less_eq.loc13 [template = constants.%false]
-// CHECK:STDOUT:   %.loc13_14.2: bool = converted %int.less_eq.loc13, %.loc13_14.1 [template = constants.%false]
+// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc13_34: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc13_34: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13_34 [symbolic = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc13_34: <specific function> = specific_function %Convert.bound.loc13_34, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc13_34: init %iN = call %Convert.specific_fn.loc13_34(%int_1.loc13) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc13_34.1: %i32 = value_of_initializer %int.convert_checked.loc13_34 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_1.loc13, %.loc13_34.1 [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.snegate.loc13: init %i32 = call %Negate.ref.loc13(%.loc13_34.2)
+// CHECK:STDOUT:   %impl.elem0.loc13_24: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound.loc13_24: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13_24 [symbolic = constants.%Convert.bound.3]
+// CHECK:STDOUT:   %Convert.specific_fn.loc13_24: <specific function> = specific_function %Convert.bound.loc13_24, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:   %int.convert_checked.loc13_24: init %iN = call %Convert.specific_fn.loc13_24(%int_0.loc13) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc13_24.1: %i32 = value_of_initializer %int.convert_checked.loc13_24 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc13_24.2: %i32 = converted %int_0.loc13, %.loc13_24.1 [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %int.snegate.loc13
+// CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %int.snegate.loc13, %.loc13_35.1
+// CHECK:STDOUT:   %int.less_eq.loc13: init bool = call %LessEq.ref.loc13(%.loc13_24.2, %.loc13_35.2)
+// CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %int.less_eq.loc13
+// CHECK:STDOUT:   %.loc13_14.2: bool = converted %int.less_eq.loc13, %.loc13_14.1
 // CHECK:STDOUT:   if %.loc13_14.2 br !if.expr.then.loc13 else br !if.expr.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc13:
@@ -363,7 +381,7 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   br !if.expr.result.loc13(%False.ref.loc13)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result.loc13:
-// CHECK:STDOUT:   %.loc13_14.3: type = block_arg !if.expr.result.loc13 [template = constants.%False]
+// CHECK:STDOUT:   %.loc13_14.3: type = block_arg !if.expr.result.loc13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

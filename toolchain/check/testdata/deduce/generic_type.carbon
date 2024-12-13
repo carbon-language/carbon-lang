@@ -62,6 +62,15 @@ class WithNontype(N:! i32) {}
 fn F[N:! i32](x: WithNontype(N)) -> i32 { return N; }
 
 fn G() -> i32 {
+  // CHECK:STDERR: nontype.carbon:[[@LINE+9]]:10: error: cannot implicitly convert from `Core.Int(N)` to `i32` [ImplicitAsConversionFailure]
+  // CHECK:STDERR:   return F({} as WithNontype(0));
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: nontype.carbon:[[@LINE+6]]:10: note: type `Core.Int(N)` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return F({} as WithNontype(0));
+  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: nontype.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F[N:! i32](x: WithNontype(N)) -> i32 { return N; }
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   return F({} as WithNontype(0));
 }
 
@@ -772,17 +781,18 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %WithNontype.1 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.14 [template]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %WithNontype.2: type = class_type @WithNontype, @WithNontype(%int_0.2) [template]
-// CHECK:STDOUT:   %WithNontype.val: %WithNontype.2 = struct_value () [template]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_0.2) [template]
+// CHECK:STDOUT:   %N.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %iN: type = int_type signed, %N.2 [symbolic]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N.2) [symbolic]
+// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N.2) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_0) [symbolic]
+// CHECK:STDOUT:   %WithNontype.2: type = class_type @WithNontype, @WithNontype(%int.convert_checked) [symbolic]
+// CHECK:STDOUT:   %WithNontype.val: %WithNontype.2 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -887,24 +897,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc9_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc9_31.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc9_31.2: %i32 = converted %int_0, %.loc9_31.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%int_0.2) [template = constants.%WithNontype.2]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [symbolic = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N.2) [symbolic = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_0) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc9_31.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %.loc9_31.2: %i32 = converted %int_0, %.loc9_31.1 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %WithNontype: type = class_type @WithNontype, @WithNontype(constants.%int.convert_checked) [symbolic = constants.%WithNontype.2]
 // CHECK:STDOUT:   %.loc9_13.2: ref %WithNontype.2 = temporary_storage
-// CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.2 = class_init (), %.loc9_13.2 [template = constants.%WithNontype.val]
+// CHECK:STDOUT:   %.loc9_13.3: init %WithNontype.2 = class_init (), %.loc9_13.2 [symbolic = constants.%WithNontype.val]
 // CHECK:STDOUT:   %.loc9_13.4: ref %WithNontype.2 = temporary %.loc9_13.2, %.loc9_13.3
-// CHECK:STDOUT:   %.loc9_15.1: ref %WithNontype.2 = converted %.loc9_13.1, %.loc9_13.4
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_0.2) [template = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc9_15.2: %WithNontype.2 = bind_value %.loc9_15.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.2)
-// CHECK:STDOUT:   %.loc9_33.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc9_33.2: %i32 = converted %F.call, %.loc9_33.1
-// CHECK:STDOUT:   return %.loc9_33.2
+// CHECK:STDOUT:   %.loc9_15: ref %WithNontype.2 = converted %.loc9_13.1, %.loc9_13.4
+// CHECK:STDOUT:   %.loc9_32: %i32 = converted constants.%int.convert_checked, <error> [template = <error>]
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%N.1) {
@@ -925,19 +931,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithNontype(constants.%int_0.2) {
-// CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0.2
-// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int_0.2
+// CHECK:STDOUT: specific @WithNontype(constants.%int.convert_checked) {
+// CHECK:STDOUT:   %N.loc4_19.2 => constants.%int.convert_checked
+// CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int.convert_checked
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%int_0.2) {
-// CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_0.2
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%int_0.2
-// CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
