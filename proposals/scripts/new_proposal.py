@@ -56,6 +56,13 @@ def _parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         "by default.",
     )
     parser.add_argument(
+        "--remote",
+        metavar="REMOTE",
+        default="origin",
+        help="The git remote name where the branch will be pushed. Defaults to "
+        "'origin'.",
+    )
+    parser.add_argument(
         "--proposals-dir",
         metavar="PROPOSALS_DIR",
         help="The proposals directory, mainly for testing cross-repository. "
@@ -177,7 +184,7 @@ def main() -> None:
     _run(
         [git_bin, "switch", "--create", branch, parsed_args.branch_start_point]
     )
-    _run([git_bin, "push", "-u", "origin", branch])
+    _run([git_bin, "push", "-u", parsed_args.remote, branch])
 
     # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "scripts/template.md")

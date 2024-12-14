@@ -34,11 +34,11 @@ fn Run() {
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_23.1.temp), !dbg !11
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_23.1.temp, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc14_23.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, {} zeroinitializer, !dbg !11
+// CHECK:STDOUT:   %.loc14_23.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc14_23.3, ptr %.loc14_23.4.array.index, align 4, !dbg !11
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_23.1.temp, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc14_23.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc14_23.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, {} zeroinitializer, !dbg !11
+// CHECK:STDOUT:   %.loc14_23.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc14_23.6, ptr %.loc14_23.7.array.index, align 4, !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
