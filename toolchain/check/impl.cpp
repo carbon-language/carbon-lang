@@ -197,7 +197,8 @@ static auto BuildImplWitnessImpl(
       context.insts().GetLocId(impl.definition_id),
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
        .elements_id = table_id,
-       .specific_id = SemIR::SpecificId::Invalid /* FIXME */});
+       .specific_id =
+           context.generics().GetSelfSpecific(impl.generic_id) /* FIXME */});
 }
 
 auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId {

@@ -378,7 +378,6 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     impl_info.scope_id = context.name_scopes().Add(
         impl_decl_id, SemIR::NameId::Invalid,
         context.decl_name_stack().PeekParentScopeId());
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
   }
 
   context.scope_stack().Push(
@@ -399,6 +398,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   // We may need to track a list of instruction blocks here, as we do for a
   // function.
   impl_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  if (!impl_info.is_defined()) {
+    impl_info.witness_id = BuildImplWitness(context, impl_info);
+  }
   return true;
 }
 
