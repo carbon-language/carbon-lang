@@ -29,9 +29,25 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   auto* array_value = context.GetValue(inst.array_id);
   auto* llvm_type =
       context.GetType(context.sem_ir().insts().Get(inst.array_id).type_id());
+
+  // The index in an `ArrayIndex` can be of any integer type, including
+  // IntLiteral. If it is an IntLiteral, its value representation is empty, so
+  // create a ConstantInt from its SemIR value directly.
+  llvm::Value* index;
+  if (context.sem_ir().types().GetInstId(
+          context.sem_ir().insts().Get(inst.index_id).type_id()) ==
+      SemIR::IntLiteralType::SingletonInstId) {
+    auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
+        context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
+    index = llvm::ConstantInt::get(context.llvm_context(),
+                                   context.sem_ir().ints().Get(value.int_id));
+  } else {
+    index = context.GetValue(inst.index_id);
+  }
+
   llvm::Value* indexes[2] = {
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(context.llvm_context()), 0),
-      context.GetValue(inst.index_id)};
+      index};
   context.SetLocal(inst_id,
                    context.builder().CreateInBoundsGEP(llvm_type, array_value,
                                                        indexes, "array.index"));
