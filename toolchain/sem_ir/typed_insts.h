@@ -914,7 +914,9 @@ struct IntLiteralType {
   TypeId type_id;
 };
 
-// An integer type.
+// A primitive integer type whose representation and operations are defined by
+// the toolchain. The `Core.Int` and `Core.UInt` classes are defined as adapters
+// for this type.
 struct IntType {
   static constexpr auto Kind = InstKind::IntType.Define<Parse::InvalidNodeId>(
       {.ir_name = "int_type",
