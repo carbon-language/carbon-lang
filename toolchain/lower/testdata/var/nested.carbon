@@ -10,9 +10,9 @@
 
 fn Run() -> i32 {
   var a: i32 = 1;
-  while (a < 1000) {
+  while (true) {
     var b: i32 = a;
-    a = b + 1;
+    a = b;
   }
   return a;
 }
@@ -28,29 +28,26 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   br label %while.cond, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
-// CHECK:STDOUT:   %.loc13_10 = load i32, ptr %a.var, align 4, !dbg !11
-// CHECK:STDOUT:   %int.less = icmp slt i32 %.loc13_10, 1000, !dbg !11
-// CHECK:STDOUT:   br i1 %int.less, label %while.body, label %while.done, !dbg !10
+// CHECK:STDOUT:   br i1 true, label %while.body, label %while.done, !dbg !10
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !8
-// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !12
-// CHECK:STDOUT:   store i32 %.loc14, ptr %b.var, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc15_9 = load i32, ptr %b.var, align 4, !dbg !14
-// CHECK:STDOUT:   %int.sadd = add i32 %.loc15_9, 1, !dbg !14
-// CHECK:STDOUT:   store i32 %int.sadd, ptr %a.var, align 4, !dbg !15
-// CHECK:STDOUT:   br label %while.cond, !dbg !16
+// CHECK:STDOUT:   %.loc14_18 = load i32, ptr %a.var, align 4, !dbg !11
+// CHECK:STDOUT:   store i32 %.loc14_18, ptr %b.var, align 4, !dbg !12
+// CHECK:STDOUT:   %.loc15 = load i32, ptr %b.var, align 4, !dbg !13
+// CHECK:STDOUT:   store i32 %.loc15, ptr %a.var, align 4, !dbg !14
+// CHECK:STDOUT:   br label %while.cond, !dbg !15
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %.loc17 = load i32, ptr %a.var, align 4, !dbg !17
-// CHECK:STDOUT:   ret i32 %.loc17, !dbg !18
+// CHECK:STDOUT:   %.loc17 = load i32, ptr %a.var, align 4, !dbg !16
+// CHECK:STDOUT:   ret i32 %.loc17, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 1, 3 }
+// CHECK:STDOUT: uselistorder i32 1, { 1, 0, 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -68,11 +65,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 9, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 13, column: 9, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 10, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 18, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 9, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 15, column: 5, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 10, scope: !4)
-// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 18, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 5, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 9, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 5, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 10, scope: !4)
+// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !4)
