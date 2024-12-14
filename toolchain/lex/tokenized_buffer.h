@@ -156,9 +156,6 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // For example, a closing paren inserted to match an unmatched paren.
   auto IsRecoveryToken(TokenIndex token) const -> bool;
 
-  // Returns the 1-based line number.
-  auto GetLineNumber(LineIndex line) const -> int;
-
   // Returns the 1-based indentation column number.
   auto GetIndentColumnNumber(LineIndex line) const -> int;
 

@@ -43,6 +43,28 @@ CheckCondition(bool condition)
                                 const char* condition_str,
                                 llvm::StringRef extra_message) -> void;
 
+// Allow converting format values; the default behaviour is to just pass them
+// through.
+template <typename T>
+auto ConvertFormatValue(T&& t) -> T&& {
+  return std::forward<T>(t);
+}
+
+// Convert enums to larger integers so that byte-sized enums are not confused
+// with being chars and printed as invalid (or nul-terminating) characters.
+// Scoped enums are explicitly converted to integers so they can be printed
+// without the user writing a cast.
+template <typename T>
+  requires(std::is_enum_v<std::remove_reference_t<T>>)
+auto ConvertFormatValue(T&& t) {
+  if constexpr (std::is_signed_v<
+                    std::underlying_type_t<std::remove_reference_t<T>>>) {
+    return static_cast<int64_t>(t);
+  } else {
+    return static_cast<uint64_t>(t);
+  }
+}
+
 // Prints a check failure, including rendering any user-provided message using
 // a format string.
 //
@@ -64,9 +86,10 @@ template <TemplateString Kind, TemplateString File, int Line,
     // at all, just the condition.
     CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(), "");
   } else {
-    CheckFailImpl(
-        Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
-        llvm::formatv(FormatStr.c_str(), std::forward<Ts>(values)...).str());
+    CheckFailImpl(Kind.c_str(), File.c_str(), Line, ConditionStr.c_str(),
+                  llvm::formatv(FormatStr.c_str(),
+                                ConvertFormatValue(std::forward<Ts>(values))...)
+                      .str());
   }
 }
 

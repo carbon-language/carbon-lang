@@ -25,7 +25,7 @@ auto TokenizedBuffer::GetLine(TokenIndex token) const -> LineIndex {
 }
 
 auto TokenizedBuffer::GetLineNumber(TokenIndex token) const -> int {
-  return GetLineNumber(GetLine(token));
+  return GetLine(token).index + 1;
 }
 
 auto TokenizedBuffer::GetColumnNumber(TokenIndex token) const -> int {
@@ -162,10 +162,6 @@ auto TokenizedBuffer::IsRecoveryToken(TokenIndex token) const -> bool {
   return recovery_tokens_[token.index];
 }
 
-auto TokenizedBuffer::GetLineNumber(LineIndex line) const -> int {
-  return line.index + 1;
-}
-
 auto TokenizedBuffer::GetNextLine(LineIndex line) const -> LineIndex {
   LineIndex next(line.index + 1);
   CARBON_DCHECK(static_cast<size_t>(next.index) < line_infos_.size());
@@ -262,7 +258,7 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream,
       llvm::right_justify(
           llvm::formatv("'{0}'", token_info.kind().name()).str(),
           widths.kind + 2),
-      llvm::format_decimal(GetLineNumber(GetLine(token)), widths.line),
+      llvm::format_decimal(GetLineNumber(token), widths.line),
       llvm::format_decimal(GetColumnNumber(token), widths.column),
       llvm::format_decimal(GetIndentColumnNumber(line_index), widths.indent),
       token_text);

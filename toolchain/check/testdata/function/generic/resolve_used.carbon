@@ -7,9 +7,9 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
-// CHECK:STDERR: fail_todo_call_monomorphization_error.carbon: error: integer type width of 0 is not positive [IntWidthNotPositive]
 
 // --- fail_todo_call_monomorphization_error.carbon
+// CHECK:STDERR: fail_todo_call_monomorphization_error.carbon: error: integer type width of 0 is not positive [IntWidthNotPositive]
 
 library "[[@TEST_NAME]]";
 

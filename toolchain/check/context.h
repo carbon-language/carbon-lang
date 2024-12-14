@@ -495,10 +495,15 @@ class Context {
   }
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
-  auto parse_tree() -> const Parse::Tree& { return sem_ir_->parse_tree(); }
+  auto parse_tree() const -> const Parse::Tree& {
+    return sem_ir_->parse_tree();
+  }
 
-  auto tokens() -> const Lex::TokenizedBuffer& { return parse_tree().tokens(); }
+  auto tokens() const -> const Lex::TokenizedBuffer& {
+    return parse_tree().tokens();
+  }
 
   auto node_stack() -> NodeStack& { return node_stack_; }
 

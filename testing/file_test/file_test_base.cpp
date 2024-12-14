@@ -277,7 +277,7 @@ auto FileTestBase::GetLineNumberReplacements(
     -> llvm::SmallVector<LineNumberReplacement> {
   return {{.has_file = true,
            .re = std::make_shared<RE2>(
-               llvm::formatv(R"(({0}):(\d+))", llvm::join(filenames, "|"))),
+               llvm::formatv(R"(({0}):(\d+)?)", llvm::join(filenames, "|"))),
            .line_formatv = R"({0})"}};
 }
 
@@ -378,8 +378,11 @@ auto FileTestBase::DoArgReplacements(
         }
         it = test_args.erase(it);
         for (const auto& file : test_files) {
-          it = test_args.insert(it, file.filename);
-          ++it;
+          const std::string& filename = file.filename;
+          if (!filename.ends_with(".h")) {
+            it = test_args.insert(it, filename);
+            ++it;
+          }
         }
         // Back up once because the for loop will advance.
         --it;
