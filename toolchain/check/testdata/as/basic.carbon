@@ -27,7 +27,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.7, @impl.5(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.9: %Convert.type.9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.9) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.9), @impl.5(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.9 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.7(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]

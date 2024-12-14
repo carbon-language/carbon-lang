@@ -1,0 +1,14 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+check/testdata/class/generic/complete_in_conversion.carbon
+check/testdata/class/generic/import.carbon
+check/testdata/deduce/tuple.carbon
+check/testdata/impl/extend_impl_generic.carbon
+check/testdata/impl/no_prelude/import_generic.carbon
+check/testdata/impl/no_prelude/import_use_generic.carbon
+check/testdata/impl/no_prelude/no_definition_in_impl_file.carbon
+check/testdata/interface/no_prelude/import_interface_decl.carbon
+check/testdata/struct/import.carbon
+check/testdata/tuple/import.carbon

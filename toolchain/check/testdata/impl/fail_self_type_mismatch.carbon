@@ -47,10 +47,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %impl_witness [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,6 +90,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %.loc17_6.2: type = converted %int.make_type_signed, %.loc17_6.1 [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -123,11 +125,10 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc11_9.1: type, %X.loc11_19.1: @C.%T.loc11_9.2 (%T)) {

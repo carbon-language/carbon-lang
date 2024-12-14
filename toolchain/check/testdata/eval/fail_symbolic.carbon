@@ -40,7 +40,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %iN [symbolic]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4, @impl.3(%N.2) [symbolic]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.5) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.5), @impl.3(%N.2) [symbolic]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.1, %Convert.5 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.4(%N.2) [symbolic]
 // CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %ImplicitAs.type.4 [symbolic]

@@ -356,11 +356,11 @@ var m: UInt(1000000000);
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4, @impl.3(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.5) [template]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.5), @impl.3(%N) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

@@ -37,9 +37,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
 // CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, %impl_witness [template]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [template]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -67,6 +68,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %.loc15_6.2: type = converted %int.make_type_signed, %.loc15_6.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
@@ -109,11 +111,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %Simple.type) {
@@ -130,7 +131,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [template = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref: %G.assoc_type = name_ref G, @Simple.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %G.type.1 = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %impl.elem0: %G.type.1 = impl_witness_access constants.%impl_witness, element0 [template = <error>]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

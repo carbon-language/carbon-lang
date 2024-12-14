@@ -53,7 +53,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5, @impl.4(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1) [symbolic]
@@ -68,7 +68,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.3: init %iN = call %Convert.specific_fn.3(%int_3) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.4: init %u32 = call %ConvertToU32(%int.convert_checked.3) [symbolic]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.7) [template]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.7), @impl.4(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.convert_checked.4, %Convert.7 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.5(%N) [symbolic]
 // CHECK:STDOUT: }

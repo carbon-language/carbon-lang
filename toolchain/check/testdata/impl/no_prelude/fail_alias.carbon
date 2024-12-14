@@ -32,6 +32,7 @@ impl AC as AI {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,6 +52,7 @@ impl AC as AI {}
 // CHECK:STDOUT:     %AC.ref.loc17: type = name_ref AC, file.%AC [template = constants.%C]
 // CHECK:STDOUT:     %AI.ref.loc17: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %AC.ref.loc25: type = name_ref AC, file.%AC [template = constants.%C]
 // CHECK:STDOUT:     %AI.ref.loc25: type = name_ref AI, file.%AI [template = constants.%I.type]
@@ -67,7 +69,7 @@ impl AC as AI {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %AC.ref.loc17 as %AI.ref.loc17 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <unexpected>.inst30.loc17_15
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -88,7 +88,10 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T.4: %L.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.4: %L.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.4: type = facet_access_type %T.4 [symbolic]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (), @impl.5(%T.1) [symbolic]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (), @impl.6(%T.2) [symbolic]
+// CHECK:STDOUT:   %impl_witness.3: <witness> = impl_witness (), @impl.7(%T.3) [symbolic]
+// CHECK:STDOUT:   %impl_witness.4: <witness> = impl_witness (), @impl.8(%T.4) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -164,6 +167,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.param: %I.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc18_14.1: %I.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_14.2 (constants.%T.1)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (), @impl.5(constants.%T.1) [symbolic = constants.%impl_witness.1]
 // CHECK:STDOUT:   impl_decl @impl.6 [template] {
 // CHECK:STDOUT:     %T.patt.loc19_14.1: %J.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: %J.type = value_param_pattern %T.patt.loc19_14.1, runtime_param<invalid> [symbolic = %T.patt.loc19_14.2 (constants.%T.patt.2)]
@@ -176,6 +180,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.param: %J.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc19_14.1: %J.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc19_14.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (), @impl.6(constants.%T.2) [symbolic = constants.%impl_witness.2]
 // CHECK:STDOUT:   impl_decl @impl.7 [template] {
 // CHECK:STDOUT:     %T.patt.loc20_14.1: %K.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.3)]
 // CHECK:STDOUT:     %T.param_patt: %K.type = value_param_pattern %T.patt.loc20_14.1, runtime_param<invalid> [symbolic = %T.patt.loc20_14.2 (constants.%T.patt.3)]
@@ -188,6 +193,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.param: %K.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc20_14.1: %K.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc20_14.2 (constants.%T.3)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc20: <witness> = impl_witness (), @impl.7(constants.%T.3) [symbolic = constants.%impl_witness.3]
 // CHECK:STDOUT:   impl_decl @impl.8 [template] {
 // CHECK:STDOUT:     %T.patt.loc21_14.1: %L.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.4)]
 // CHECK:STDOUT:     %T.param_patt: %L.type = value_param_pattern %T.patt.loc21_14.1, runtime_param<invalid> [symbolic = %T.patt.loc21_14.2 (constants.%T.patt.4)]
@@ -200,6 +206,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.param: %L.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21_14.1: %L.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T.4)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc21: <witness> = impl_witness (), @impl.8(constants.%T.4) [symbolic = constants.%impl_witness.4]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
@@ -282,10 +289,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc18 as %Interface.ref {
-// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %interface
+// CHECK:STDOUT:     witness = file.%impl_witness.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,10 +302,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc19 as %Interface.ref {
-// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %interface
+// CHECK:STDOUT:     witness = file.%impl_witness.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,10 +315,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc20 as %Interface.ref {
-// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %interface
+// CHECK:STDOUT:     witness = file.%impl_witness.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,10 +328,8 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc21 as %Interface.ref {
-// CHECK:STDOUT:     %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = %interface
+// CHECK:STDOUT:     witness = file.%impl_witness.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -392,6 +391,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %T: %I.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %I.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -413,6 +413,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %T.param.loc7: %I.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc7_14.1: %I.type = bind_symbolic_name T, 0, %T.param.loc7 [symbolic = %T.loc7_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (), @impl(constants.%T) [symbolic = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc7_14.1: %I.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %I.type = value_param_pattern %T.patt.loc7_14.1, runtime_param<invalid> [symbolic = %T.patt.loc7_14.2 (constants.%T.patt)]
@@ -452,7 +453,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7 as %J.ref.loc7 {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = <unexpected>.inst38.loc7_28
+// CHECK:STDOUT:     witness = file.%impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -468,7 +469,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [template]
@@ -485,6 +486,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref.loc14_7: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc14_10: type = name_ref C, file.%C.decl [template = constants.%C]
@@ -495,6 +497,7 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT:     %tuple.elem0: type = tuple_access %.loc14_11.2, element0 [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -506,17 +509,13 @@ impl (C, C).0 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %I.ref {
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %tuple.elem0 as %I.ref {
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
