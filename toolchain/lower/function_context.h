@@ -89,6 +89,19 @@ class FunctionContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Returns the instruction immediately after all the existing static allocas.
+  // This is the insert point for future static allocas.
+  auto GetInstructionAfterAllocas() const -> llvm::Instruction* {
+    return after_allocas_;
+  }
+
+  // Sets the instruction after static allocas. This should be called once,
+  // after the first alloca is created.
+  auto SetInstructionAfterAllocas(llvm::Instruction* after_allocas) {
+    CARBON_CHECK(!after_allocas_);
+    after_allocas_ = after_allocas;
+  }
+
   // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
@@ -156,7 +169,13 @@ class FunctionContext {
   // The IR function we're generating.
   llvm::Function* function_;
 
+  // Builder for creating code in this function. The insertion point is held at
+  // the location of the current SemIR instruction.
   llvm::IRBuilder<llvm::ConstantFolder, Inserter> builder_;
+
+  // The instruction after all allocas. This is used as the insert point for new
+  // allocas.
+  llvm::Instruction* after_allocas_ = nullptr;
 
   llvm::DISubprogram* di_subprogram_;
 

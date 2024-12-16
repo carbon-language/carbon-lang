@@ -42,10 +42,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !13
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !13
+// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %a.var), !dbg !13
 // CHECK:STDOUT:   %.loc15_23.1.temp = alloca { i32, i32 }, align 8, !dbg !14
 // CHECK:STDOUT:   call void @_CA.Main(ptr %.loc15_23.1.temp), !dbg !14
@@ -80,7 +80,7 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 4, 6, 7, 8, 5, 3, 2, 9, 10 }
+// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 4, 6, 7, 2, 3, 5, 8, 9, 10 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:

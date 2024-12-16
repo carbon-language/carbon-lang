@@ -78,9 +78,9 @@ fn Fn() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !7
-// CHECK:STDOUT:   %i.var = alloca { ptr, {} }, align 8, !dbg !7
 // CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %i.var = alloca { ptr, {} }, align 8, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %b.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %i.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d.var), !dbg !7
@@ -99,7 +99,6 @@ fn Fn() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -126,8 +125,8 @@ fn Fn() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CFn.MemberInit() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !7
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %v.var), !dbg !7
@@ -145,7 +144,6 @@ fn Fn() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 3, 2 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

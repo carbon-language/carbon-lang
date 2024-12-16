@@ -26,11 +26,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !7
-// CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %c.var = alloca [5 x {}], align 8, !dbg !7
-// CHECK:STDOUT:   %b.var = alloca [2 x double], align 8, !dbg !7
 // CHECK:STDOUT:   %a.var = alloca [1 x i32], align 4, !dbg !7
+// CHECK:STDOUT:   %b.var = alloca [2 x double], align 8, !dbg !7
+// CHECK:STDOUT:   %c.var = alloca [5 x {}], align 8, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_24.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, {} zeroinitializer, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.1.loc12_25, i64 4, i1 false), !dbg !9
@@ -73,7 +73,7 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 6, 5, 4, 3, 1, 7 }
+// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 1, 3, 4, 5, 6, 7 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 3, 2, 1, 0 }
 // CHECK:STDOUT:

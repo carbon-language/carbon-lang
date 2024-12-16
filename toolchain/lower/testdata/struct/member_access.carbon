@@ -22,9 +22,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_48.2.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_48.5.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
@@ -46,7 +46,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 1, 3, 4, 2, 0, 5 }
+// CHECK:STDOUT: uselistorder i32 1, { 1, 3, 0, 2, 4, 5 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

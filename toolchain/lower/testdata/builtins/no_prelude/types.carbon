@@ -25,9 +25,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca i1, align 1, !dbg !7
-// CHECK:STDOUT:   %f.var = alloca double, align 8, !dbg !7
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   %f.var = alloca double, align 8, !dbg !7
+// CHECK:STDOUT:   %b.var = alloca i1, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %i.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %f.var), !dbg !7
@@ -41,7 +41,6 @@ fn F() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

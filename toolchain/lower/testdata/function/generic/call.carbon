@@ -35,9 +35,9 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !7
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %d.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_16, i64 0, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %d.var), !dbg !7
@@ -67,7 +67,6 @@ fn G() {
 // CHECK:STDOUT: declare void @_CF.Main.49(%type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
