@@ -283,6 +283,9 @@ class Inst : public Printable<Inst> {
  private:
   friend class InstTestHelper;
 
+  // For FromRaw.
+  friend class InstStore;
+
   // Table mapping instruction kinds to their argument kinds.
   static const std::pair<IdKind, IdKind> ArgKindTable[];
 
@@ -332,14 +335,14 @@ inline auto operator<<(llvm::raw_ostream& out, TypedInst inst)
 }
 
 // Associates a LocId and Inst in order to provide type-checking that the
-// TypedNodeId corresponds to the InstT.
+// TypedNodeId corresponds to the TypedInst.
 struct LocIdAndInst {
   // Constructs a LocIdAndInst with no associated location. This should be used
   // very sparingly: only when it doesn't make sense to store a location even
   // when the instruction kind usually has one, such as for instructions in the
   // constants block.
-  template <typename InstT>
-  static auto NoLoc(InstT inst) -> LocIdAndInst {
+  template <typename TypedInst>
+  static auto NoLoc(TypedInst inst) -> LocIdAndInst {
     return LocIdAndInst(LocId::Invalid, inst, /*is_unchecked=*/true);
   }
 
@@ -350,16 +353,17 @@ struct LocIdAndInst {
   }
 
   // Construction for the common case with a typed node.
-  template <typename InstT>
-    requires(Internal::HasNodeId<InstT>)
-  LocIdAndInst(decltype(InstT::Kind)::TypedNodeId node_id, InstT inst)
+  template <typename TypedInst>
+    requires(Internal::HasNodeId<TypedInst>)
+  LocIdAndInst(decltype(TypedInst::Kind)::TypedNodeId node_id, TypedInst inst)
       : loc_id(node_id), inst(inst) {}
 
   // Construction for the case where the instruction can have any associated
   // node.
-  template <typename InstT>
-    requires(Internal::HasUntypedNodeId<InstT>)
-  LocIdAndInst(SemIR::LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+  template <typename TypedInst>
+    requires(Internal::HasUntypedNodeId<TypedInst>)
+  LocIdAndInst(SemIR::LocId loc_id, TypedInst inst)
+      : loc_id(loc_id), inst(inst) {}
 
   LocId loc_id;
   Inst inst;
@@ -395,36 +399,67 @@ class InstStore {
   }
 
   // Returns whether the requested instruction is the specified type.
-  template <typename InstT>
+  template <typename TypedInst>
   auto Is(InstId inst_id) const -> bool {
-    return Internal::InstLikeTypeInfo<InstT>::IsKind(kinds_[inst_id.index]);
+    return Internal::InstLikeTypeInfo<TypedInst>::IsKind(kinds_[inst_id.index]);
   }
 
   // Returns the requested instruction, which is known to have the specified
   // type.
-  template <typename InstT>
-  auto GetAs(InstId inst_id) const -> InstT {
-    return Get(inst_id).As<InstT>();
+  template <typename TypedInst>
+  auto GetAs(InstId inst_id) const -> TypedInst {
+    using Info = Internal::InstLikeTypeInfo<TypedInst>;
+    CARBON_DCHECK(Is<TypedInst>(inst_id), "Casting inst {0} to wrong kind {1}",
+                  Get(inst_id), Info::DebugName());
+    auto type_and_args = types_and_args_.Get(inst_id);
+
+    auto build_with_type_id_onwards = [&](auto... type_id_onwards) {
+      if constexpr (Internal::HasKindMemberAsField<TypedInst>) {
+        return TypedInst{kinds_[inst_id.index], type_id_onwards...};
+      } else {
+        return TypedInst{type_id_onwards...};
+      }
+    };
+
+    auto build_with_args = [&](auto... args) {
+      if constexpr (Internal::HasTypeIdMember<TypedInst>) {
+        return build_with_type_id_onwards(type_and_args.type_id, args...);
+      } else {
+        return build_with_type_id_onwards(args...);
+      }
+    };
+
+    if constexpr (Info::NumArgs == 0) {
+      return build_with_args();
+    } else if constexpr (Info::NumArgs == 1) {
+      return build_with_args(Inst::FromRaw<typename Info::template ArgType<0>>(
+          type_and_args.arg0));
+    } else if constexpr (Info::NumArgs == 2) {
+      return build_with_args(
+          Inst::FromRaw<typename Info::template ArgType<0>>(type_and_args.arg0),
+          Inst::FromRaw<typename Info::template ArgType<1>>(
+              type_and_args.arg1));
+    }
   }
 
   // Returns the requested instruction as the specified type, if it is of that
   // type.
-  template <typename InstT>
-  auto TryGetAs(InstId inst_id) const -> std::optional<InstT> {
-    if (!Is<InstT>(inst_id)) {
+  template <typename TypedInst>
+  auto TryGetAs(InstId inst_id) const -> std::optional<TypedInst> {
+    if (!Is<TypedInst>(inst_id)) {
       return std::nullopt;
     }
-    return GetAs<InstT>(inst_id);
+    return GetAs<TypedInst>(inst_id);
   }
 
   // Returns the requested instruction as the specified type, if it is valid and
   // of that type. Otherwise returns nullopt.
-  template <typename InstT>
-  auto TryGetAsIfValid(InstId inst_id) const -> std::optional<InstT> {
+  template <typename TypedInst>
+  auto TryGetAsIfValid(InstId inst_id) const -> std::optional<TypedInst> {
     if (!inst_id.is_valid()) {
       return std::nullopt;
     }
-    return TryGetAs<InstT>(inst_id);
+    return TryGetAs<TypedInst>(inst_id);
   }
 
   auto GetLocId(InstId inst_id) const -> LocId {
