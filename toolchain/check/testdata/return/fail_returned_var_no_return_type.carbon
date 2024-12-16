@@ -16,7 +16,7 @@ fn Procedure() {
   // CHECK:STDERR: fn Procedure() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~
   returned var v: () = ();
-  return;
+  return var;
 }
 
 // CHECK:STDOUT: --- fail_returned_var_no_return_type.carbon
@@ -25,6 +25,7 @@ fn Procedure() {
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [template]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -50,6 +51,8 @@ fn Procedure() {
 // CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
 // CHECK:STDOUT:   %.loc18_25: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_16: %empty_tuple.type = converted %v, %tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc18_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -28,7 +28,6 @@ static auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
   auto return_slot_id = context.scope_stack()
                             .LookupInLexicalScopes(SemIR::NameId::ReturnSlot)
                             .first;
-  CARBON_CHECK(return_slot_id.is_valid());
   return return_slot_id;
 }
 
