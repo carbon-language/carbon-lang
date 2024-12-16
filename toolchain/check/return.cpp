@@ -175,6 +175,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
     expr_id = SemIR::ErrorInst::SingletonInstId;
   } else if (return_info.has_return_slot()) {
     return_slot_id = GetCurrentReturnSlot(context);
+    CARBON_CHECK(return_slot_id.is_valid());
     // Note that this can import a function and invalidate `function`.
     expr_id = Initialize(context, node_id, return_slot_id, expr_id);
   } else {
