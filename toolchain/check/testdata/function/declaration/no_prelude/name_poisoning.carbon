@@ -7,7 +7,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/declaration/no_prelude/name_poisoning.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/name_poisoning.carbon
-// CHECK:STDERR: fail_poison_class_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 // --- no_poison.carbon
 
@@ -32,6 +31,7 @@ namespace N;
 fn N.F1(x: C);
 
 // --- fail_poison_class_without_usage.carbon
+// CHECK:STDERR: fail_poison_class_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -43,14 +43,14 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_class_without_usage.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_class_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_interface_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 class N.C {}
 
 // --- fail_poison_interface_without_usage.carbon
+// CHECK:STDERR: fail_poison_interface_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -62,14 +62,14 @@ fn N.F1(x: I);
 
 // Should fail here since I was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_interface_without_usage.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_interface_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface N.I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_namespace_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 interface N.I {}
 
 // --- fail_poison_namespace_without_usage.carbon
+// CHECK:STDERR: fail_poison_namespace_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -81,14 +81,14 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_namespace_without_usage.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_namespace_without_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: namespace N.C;
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_member_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 namespace N.C;
 
 // --- fail_poison_member_without_usage.carbon
+// CHECK:STDERR: fail_poison_member_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -101,15 +101,15 @@ class D {
   class C2 {};
   // Should fail here since C1 was poisoned for namespace class D when it was
   // used in D context without qualification.
-  // CHECK:STDERR: fail_poison_member_without_usage.carbon:[[@LINE+5]]:7: note: declared here [NameUseBeforeDeclNote]
+  // CHECK:STDERR: fail_poison_member_without_usage.carbon:[[@LINE+4]]:7: note: declared here [NameUseBeforeDeclNote]
   // CHECK:STDERR:   var C1: C2;
   // CHECK:STDERR:       ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_poison_function_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
   var C1: C2;
 }
 
 // --- fail_poison_function_without_usage.carbon
+// CHECK:STDERR: fail_poison_function_without_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -138,14 +138,14 @@ namespace N;
 fn N.F1() -> C;
 
 // Try to use N.C which was never defined and poisoned.
-// CHECK:STDERR: fail_use_undefined_poisoned_name.carbon:[[@LINE+5]]:14: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fail_use_undefined_poisoned_name.carbon:[[@LINE+4]]:14: error: member name `C` not found in `N` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn N.F2() -> N.C;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_with_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 fn N.F2() -> N.C;
 
 // --- fail_poison_with_usage.carbon
+// CHECK:STDERR: fail_poison_with_usage.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -157,11 +157,10 @@ fn N.F1(x: C);
 
 // Should fail here since C was poisoned for namespace N when it was used in N
 // context without qualification.
-// CHECK:STDERR: fail_poison_with_usage.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_with_usage.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N.C {}
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
 class N.C {}
 
 // Should not fail here since both N.F2() and N.F1() input is the class C and
@@ -169,6 +168,7 @@ class N.C {}
 fn N.F2(x: C) { N.F1(x); }
 
 // --- fail_poison_multiple_scopes.carbon
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -225,14 +225,14 @@ class N1.C {}
 // CHECK:STDERR: fail_poison_multiple_scopes.carbon: error: name used before it was declared [NameUseBeforeDecl]
 interface N1.N2.C {}
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+5]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:1: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: class N1.N2.N3.C {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_alias.carbon: error: name used before it was declared [NameUseBeforeDecl]
 class N1.N2.N3.C {}
 
 // --- fail_alias.carbon
+// CHECK:STDERR: fail_alias.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 library "[[@TEST_NAME]]";
 
@@ -777,8 +777,8 @@ class N.C {}
 // CHECK:STDOUT:     .D1 = %D1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D1.decl: type = class_decl @D1 [template = constants.%D1] {} {}
-// CHECK:STDOUT:   %.decl.loc48: type = class_decl @.4 [template = constants.%.6] {} {}
-// CHECK:STDOUT:   %.decl.loc55: type = interface_decl @.6 [template = constants.%.type] {} {}
+// CHECK:STDOUT:   %.decl.loc49: type = class_decl @.4 [template = constants.%.6] {} {}
+// CHECK:STDOUT:   %.decl.loc56: type = interface_decl @.6 [template = constants.%.type] {} {}
 // CHECK:STDOUT:   %.decl.loc62: type = class_decl @.5 [template = constants.%.7] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -924,7 +924,7 @@ class N.C {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc10: type = bind_alias <invalid>, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %.loc11: type = bind_alias <invalid>, %C.decl [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
