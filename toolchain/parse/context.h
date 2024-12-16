@@ -107,7 +107,7 @@ class Context {
                                kind != NodeKind::InvalidParseStart &&
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
-    tree_->node_impls_.emplace_back(kind, has_error, token);
+    tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
   }
 
   // Adds an invalid parse node.
