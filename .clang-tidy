@@ -9,14 +9,14 @@ UseColor: true
 WarningsAsErrors: '*'
 
 Checks:
-  # We turn on all `bugprone`, `google`, `modernize`, `performance`, and
-  # `readability` by default.
+  # We turn on all of a few categories by default.
   - '-*'
   - 'bugprone-*'
   - 'google-*'
   - 'modernize-*'
   - 'performance-*'
   - 'readability-*'
+
   # `misc` is selectively enabled because we want a minority of them.
   - 'misc-definitions-in-headers'
   - 'misc-misplaced-const'
