@@ -245,7 +245,8 @@ auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
 
 auto FileTestAutoupdater::AddCheckLines(CheckLines& check_lines,
                                         bool to_file_end) -> void {
-  for (; ShouldAddCheckLine(check_lines, to_file_end); ++check_lines.cursor) {
+  for (; ShouldAddCheckLine(check_lines, to_file_end);
+       std::advance(check_lines.cursor, 1)) {
     new_lines_.push_back(check_lines.cursor);
     check_lines.cursor->SetOutputLine(
         to_file_end ? "" : non_check_line_->indent(), output_file_number_,
@@ -294,7 +295,7 @@ auto FileTestAutoupdater::StartSplitFile() -> void {
     AddCheckLines(stdout_, /*to_file_end=*/false);
   }
 
-  ++non_check_line_;
+  std::advance(non_check_line_, 1);
 }
 
 auto FileTestAutoupdater::Run(bool dry_run) -> bool {
@@ -304,7 +305,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
                      non_check_line_->file_number() == 0,
                  "Missed autoupdate?");
     AddRemappedNonCheckLine();
-    ++non_check_line_;
+    std::advance(non_check_line_, 1);
   }
 
   // Add the AUTOUPDATE line along with any early STDERR lines, so that the
@@ -319,7 +320,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
       AddCheckLines(stdout_, /*to_file_end=*/false);
     }
   }
-  ++non_check_line_;
+  std::advance(non_check_line_, 1);
 
   // Loop through remaining content.
   while (non_check_line_ != non_check_lines_.end()) {
@@ -345,7 +346,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
       AddCheckLines(stdout_, /*to_file_end=*/false);
     }
 
-    ++non_check_line_;
+    std::advance(non_check_line_, 1);
   }
 
   // When autoupdate_split_ was true, this will result in all check lines (and

@@ -1215,14 +1215,14 @@ TEST_F(LexerTest, IndentedComments) {
     std::string simd_source =
         source +
         "\"Add a bunch of padding so that SIMD logic shouldn't hit EOF\"";
-    auto& simd_buffer = compile_helper_.GetTokenizedBuffer(source);
+    auto& simd_buffer = compile_helper_.GetTokenizedBuffer(simd_source);
     ASSERT_FALSE(simd_buffer.has_errors());
     EXPECT_THAT(simd_buffer.comments_size(), Eq(1));
   }
 }
 
 TEST_F(LexerTest, MultipleComments) {
-  constexpr llvm::StringLiteral Format = R"(
+  constexpr char Format[] = R"(
 {0}
   {1}
 
@@ -1252,7 +1252,7 @@ x
       "//\n"
       "// Valid\n",
       "// This uses a high indent, which stops SIMD.\n", "//\n"};
-  std::string source = llvm::formatv(Format.data(), Comments[0], Comments[1],
+  std::string source = llvm::formatv(Format, Comments[0], Comments[1],
                                      Comments[2], Comments[3], Comments[4])
                            .str();
 

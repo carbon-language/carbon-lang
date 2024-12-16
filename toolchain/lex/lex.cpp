@@ -660,6 +660,7 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
     // that because this is a must-tail return, this cannot fail to tail-call
     // and will not grow the stack. This is in essence a loop with dynamic
     // tail dispatch to the next stage of the loop.
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchTable[static_cast<unsigned char>(
         source_text[position])](lexer, source_text, position);
   }

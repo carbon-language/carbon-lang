@@ -591,6 +591,7 @@ inline auto MapToRawDataType(const T& value) -> const T& {
   // This overload should never be selected for `std::nullptr_t`, so
   // static_assert to get some better compiler error messages.
   static_assert(!std::same_as<T, std::nullptr_t>);
+  // NOLINTNEXTLINE(bugprone-return-const-ref-from-parameter)
   return value;
 }
 inline auto MapToRawDataType(std::nullptr_t /*value*/) -> const void* {

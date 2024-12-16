@@ -77,10 +77,10 @@ class NodeExtractor {
 
   // Split out trace logic. The noinline saves a few seconds on compilation.
   template <typename... ArgT>
-  [[clang::noinline]] auto MaybeTrace(llvm::StringLiteral format,
-                                      ArgT... args) const -> void {
+  [[clang::noinline]] auto MaybeTrace(const char* format, ArgT... args) const
+      -> void {
     if (trace_) {
-      *trace_ << llvm::formatv(format.data(), args...);
+      *trace_ << llvm::formatv(format, args...);
     }
   }
 
