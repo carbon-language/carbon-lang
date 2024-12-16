@@ -31,9 +31,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: define i32 @_CG.Main() !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_20.3.temp = alloca [3 x i32], align 4, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, {} zeroinitializer, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, {} zeroinitializer, !dbg !10
-// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, {} zeroinitializer, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, i64 0, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, i64 1, !dbg !10
+// CHECK:STDOUT:   %.loc16_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc16_20.3.temp, i32 0, i64 2, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc16_20.3.temp, ptr align 4 @array.loc16_20.13, i64 12, i1 false), !dbg !10
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc16_20.3.temp, i32 1), !dbg !11
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !12

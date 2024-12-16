@@ -54,7 +54,7 @@ repos:
         name: prettier
         language: node
         additional_dependencies: ['prettier@3.3.3']
-        types_or: [html, javascript, markdown, yaml]
+        types_or: [html, javascript, json, markdown, yaml]
         entry: npx prettier --write --log-level=warn
   - repo: local
     hooks:
@@ -189,6 +189,11 @@ repos:
           - '// '
           - ''
           - --custom_format
+          - '\.(js|ts|mjs)$'
+          - '/*'
+          - ' * '
+          - ' */'
+          - --custom_format
           - '\.(l|lpp|y)$'
           - '/*'
           - ''
@@ -221,9 +226,11 @@ repos:
               compile_flags.txt|
               github_tools/requirements.txt|
               third_party/.*|
+              utils/vscode/esbuild.js|
               website/.ruby-version|
               website/Gemfile.lock|
               .*\.def|
+              .*\.png|
               .*\.svg|
               .*/fuzzer_corpus/.*|
               .*/testdata/.*\.golden

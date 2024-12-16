@@ -1,7 +1,7 @@
 {
   "name": "carbon-vscode",
   "displayName": "Carbon Language",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "carbon-lang",
   "description": "Carbon language support for Visual Studio Code.",
   "repository": {
@@ -15,7 +15,7 @@
   ],
   "icon": "images/icon.png",
   "activationEvents": [],
-  "main": "./src/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
@@ -35,16 +35,41 @@
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Carbon Language",
+      "properties": {
+        "carbon.carbonPath": {
+          "type": "string",
+          "description": "The path to the 'carbon' binary."
+        }
+      }
+    }
   },
   "scripts": {
-    "package": "mkdir -p out && vsce package -o out/carbon.vsix"
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint"
   },
   "devDependencies": {
-    "@vscode/vsce": "^2.27.0"
+    "@eslint/js": "^9.13.0",
+    "@stylistic/eslint-plugin": "^2.9.0",
+    "@types/node": "^20",
+    "@types/vscode": "^1.73.0",
+    "@vscode/vsce": "^2.27.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.13.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0"
   },
   "dependencies": {
-    "@vscode/vsce": "^2.27.0",
     "vscode-languageclient": "^9.0.1"
   }
 }
