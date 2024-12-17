@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
-import library "io_utils";
 
-fn Abs(n: i32) -> i32 { return if n < 0 then -n else n; }
+import library "day2_common";
+import library "io_utils";
 
 class ReportState {
   fn Make() -> ReportState {
@@ -15,8 +15,7 @@ class ReportState {
   fn Add[addr self: Self*](level: i32) {
     ++self->levels_so_far;
     if (self->levels_so_far >= 2) {
-      var abs_delta: i32 = Abs(level - self->previous);
-      if (abs_delta == 0 or abs_delta > 3) {
+      if (not IsSafeDelta(self->previous, level)) {
         // Difference is zero or too large.
         self->safe_so_far = false;
       }

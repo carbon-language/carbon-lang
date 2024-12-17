@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
-import library "io_utils";
 
-fn Abs(n: i32) -> i32 { return if n < 0 then -n else n; }
+import library "day2_common";
+import library "io_utils";
 
 // A three-element sliding window of recent levels.
 class Window {
@@ -23,9 +23,8 @@ class Window {
 
 // Determines whether a transition from `from` to `to` is safe.
 fn IsSafe(from: i32, to: i32, want_increase: bool) -> bool {
-  var abs_delta: i32 = Abs(from - to);
   var is_increase: bool = to > from;
-  return abs_delta >= 1 and abs_delta <= 3 and is_increase == want_increase;
+  return IsSafeDelta(from, to) and is_increase == want_increase;
 }
 
 class ReportState {
