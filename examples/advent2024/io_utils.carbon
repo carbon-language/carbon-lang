@@ -44,30 +44,33 @@ fn ReadInt(p: i32*) -> bool {
   return read_any_digits;
 }
 
+fn PeekChar() -> i32 {
+  var next: i32 = ReadChar();
+  UnreadChar(next);
+  return next;
+}
+
+fn ConsumeChar(c: i32) -> bool {
+  var next: i32 = ReadChar();
+  if (next != c) {
+    UnreadChar(next);
+    return false;
+  }
+  return true;
+}
+
 fn SkipSpaces() -> bool {
   var skipped_any_spaces: bool = false;
-  while (true) {
-    var c: i32 = ReadChar();
-    if (c != 0x20) {
-      UnreadChar(c);
-      break;
-    }
+  while (ConsumeChar(0x20)) {
     skipped_any_spaces = true;
   }
   return skipped_any_spaces;
 }
 
 fn SkipNewline() -> bool {
-  var c: i32 = ReadChar();
   // Optional carriage return.
-  if (c == 0x0D) {
-    c = ReadChar();
-  }
+  ConsumeChar(0x0D);
   // Newline.
-  if (c == 0x0A) {
-    return true;
-  }
-  // TODO: Unread the CR?
-  UnreadChar(c);
-  return false;
+  // TODO: Unread the CR if it was present?
+  return ConsumeChar(0x0A);
 }
