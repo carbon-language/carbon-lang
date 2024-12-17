@@ -1613,11 +1613,11 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           auto element = elements[index];
           if (!element.is_valid()) {
             // TODO: Perhaps this should be a `{}` value with incomplete type?
-            CARBON_DIAGNOSTIC(ImplAccessFunctionBeforeComplete, Error,
-                              "Accessing function from impl before the end of "
+            CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
+                              "accessing member from impl before the end of "
                               "its definition");
             eval_context.emitter().Emit(eval_context.GetDiagnosticLoc(inst_id),
-                                        ImplAccessFunctionBeforeComplete);
+                                        ImplAccessMemberBeforeComplete);
             return SemIR::ErrorInst::SingletonConstantId;
           }
           LoadImportRef(eval_context.context(), element);

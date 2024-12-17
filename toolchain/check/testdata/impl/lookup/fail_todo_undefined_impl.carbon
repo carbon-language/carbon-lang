@@ -22,7 +22,7 @@ class C {
 
 fn F() -> i32 {
   // TODO: This should produce a more useful error message.
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: error: Accessing function from impl before the end of its definition [ImplAccessFunctionBeforeComplete]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+3]]:10: error: accessing member from impl before the end of its definition [ImplAccessMemberBeforeComplete]
   // CHECK:STDERR:   return C.F();
   // CHECK:STDERR:          ^~~
   return C.F();

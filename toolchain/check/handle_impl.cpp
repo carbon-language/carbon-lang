@@ -125,7 +125,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
-                       Parse::AnyImplDeclId node_id,
+                       Parse::AnyImplDeclId node_id, SemIR::ImplId impl_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node,
                        SemIR::InstId constraint_inst_id,
@@ -179,16 +179,10 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     parent_scope.set_has_error();
     return;
   }
-  if (!context.RequireDefinedType(constraint_id, node_id, [&] {
-        CARBON_DIAGNOSTIC(
-            ExtendUndefinedInterface, Error,
-            "`extend impl` requires a definition for facet type {0}",
-            InstIdAsType);
-        return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                       constraint_inst_id);
-      })) {
+  const auto& impl = context.impls().Get(impl_id);
+  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
-  };
+  }
 
   parent_scope.AddExtendedScope(constraint_inst_id);
 }
@@ -353,8 +347,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
            .specific_id =
                context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
-    ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               name.implicit_params_loc_id, constraint_inst_id,
+    ExtendImpl(context, extend_node, node_id, impl_decl.impl_id, self_type_node,
+               self_type_id, name.implicit_params_loc_id, constraint_inst_id,
                constraint_type_id);
   }
 
