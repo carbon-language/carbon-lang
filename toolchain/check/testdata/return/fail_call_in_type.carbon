@@ -22,9 +22,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [template]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [template]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [template]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template]
@@ -32,7 +30,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -68,10 +66,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: fn @ReturnType() -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_37.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_37.2: type = converted %int.make_type_signed, %.loc13_37.1 [template = constants.%i32]
-// CHECK:STDOUT:   return %.loc13_37.2
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   return %i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Six() -> <error> {

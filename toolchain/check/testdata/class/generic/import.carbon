@@ -95,20 +95,18 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.generic: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.1: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass.1, %i32 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
@@ -119,7 +117,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -153,9 +151,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, file.%CompleteClass.decl [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_28.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_28.2: type = converted %int.make_type_signed, %.loc11_28.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.2]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.2 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.2 = return_slot %return.param
@@ -181,26 +177,22 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_10.2: type = converted %int.make_type_signed, %.loc7_10.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_8: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc7: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %F.decl: @CompleteClass.%F.type (%F.type.1) = fn_decl @F.1 [symbolic = @CompleteClass.%F (constants.%F.1)] {
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_13.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_13.2: type = converted %int.make_type_signed, %.loc8_13.1 [template = constants.%i32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.1]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%CompleteClass.1
-// CHECK:STDOUT:     .n = %.loc7_8
+// CHECK:STDOUT:     .n = %.loc7
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
@@ -212,7 +204,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
@@ -255,27 +247,25 @@ class Class(U:! type) {
 // CHECK:STDOUT: --- foo.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %T} [symbolic]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [symbolic]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x [symbolic]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.generic: %CompleteClass.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %struct_type.n.1: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.n.1 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.n.1 [template]
 // CHECK:STDOUT:   %CompleteClass.1: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.1: type = unbound_element_type %CompleteClass.1, %i32 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
@@ -284,11 +274,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.n.2: type = struct_type {.n: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %Convert.type.13: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.14: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.14: %Convert.type.14 = struct_value () [template]
-// CHECK:STDOUT:   %interface.9: <witness> = interface_witness (%Convert.14) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.1, %Convert.14 [template]
+// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %CompleteClass.val: %CompleteClass.2 = struct_value (%int_1.2) [template]
@@ -297,15 +287,15 @@ class Class(U:! type) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.42
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.43
+// CHECK:STDOUT:     .Int = %import_ref.197
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.198
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.38: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.39 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.40 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.41 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %import_ref.193: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.4]
+// CHECK:STDOUT:   %import_ref.194 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.195 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.196 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -331,9 +321,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_28.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_28.2: type = converted %int.make_type_signed, %.loc8_28.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.2]
 // CHECK:STDOUT:     %return.param: ref %CompleteClass.2 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %CompleteClass.2 = return_slot %return.param
@@ -345,16 +333,16 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %T.patt.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.1 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete (constants.%require_complete.7)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Class.%T.1 (%T) [symbolic = %require_complete (constants.%require_complete.5)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @Class.%Class (%Class), @Class.%T.1 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x)]
-// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.x (%struct_type.x) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Class.%struct_type.x (%struct_type.x) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4 [symbolic = %T.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Class.%Class.elem (%Class.elem) = field_decl x, element0 [template]
-// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
+// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
@@ -375,10 +363,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.39
-// CHECK:STDOUT:     .n = imports.%import_ref.40
-// CHECK:STDOUT:     .F = imports.%import_ref.41
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.38
+// CHECK:STDOUT:     .Self = imports.%import_ref.194
+// CHECK:STDOUT:     .n = imports.%import_ref.195
+// CHECK:STDOUT:     .F = imports.%import_ref.196
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.193
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -392,7 +380,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.2 = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.13 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.9 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
@@ -447,15 +435,13 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %UseMethod.type: type = fn_type @UseMethod [template]
 // CHECK:STDOUT:   %UseMethod: %UseMethod.type = struct_value () [template]
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.generic: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.1: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
@@ -482,10 +468,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.7: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.1) = import_ref Main//foo, loc7_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.10: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.1) = import_ref Main//foo, loc7_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.11: @CompleteClass.%F.type (%F.type.1) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -504,9 +490,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5: init type = call constants.%Int(%int_32.loc5) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_19.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_19.2: type = converted %int.make_type_signed.loc5, %.loc5_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -515,9 +499,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc10: init type = call constants.%Int(%int_32.loc10) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc10_18.1: type = value_of_initializer %int.make_type_signed.loc10 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc10_18.2: type = converted %int.make_type_signed.loc10, %.loc10_18.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -535,10 +517,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.6
-// CHECK:STDOUT:     .n = imports.%import_ref.7
-// CHECK:STDOUT:     .F = imports.%import_ref.8
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.5
+// CHECK:STDOUT:     .Self = imports.%import_ref.9
+// CHECK:STDOUT:     .n = imports.%import_ref.10
+// CHECK:STDOUT:     .F = imports.%import_ref.11
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -546,18 +528,16 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%int_32.loc6) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_27.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_27.2: type = converted %int.make_type_signed.loc6, %.loc6_27.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.2]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.2 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.2 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc6: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc6_7: ref %CompleteClass.2 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.2 = call %F.ref.loc6() to %.loc6_7
+// CHECK:STDOUT:   %.loc6: ref %CompleteClass.2 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.2 = call %F.ref.loc6() to %.loc6
 // CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.2 = name_ref v, %v
-// CHECK:STDOUT:   %.loc7_11: %F.type.2 = specific_constant imports.%import_ref.8, @CompleteClass(constants.%i32) [template = constants.%F.2]
+// CHECK:STDOUT:   %.loc7_11: %F.type.2 = specific_constant imports.%import_ref.11, @CompleteClass(constants.%i32) [template = constants.%F.2]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type.2 = name_ref F, %.loc7_11 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref.loc7, @F.1(constants.%i32) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call.loc7: init %i32 = call %F.specific_fn()
@@ -578,18 +558,16 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_27.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_27.2: type = converted %int.make_type_signed.loc11, %.loc11_27.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.2]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.2 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.2 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref: %F.type.3 = name_ref F, imports.%import_ref.3 [template = constants.%F.3]
-// CHECK:STDOUT:   %.loc11_7: ref %CompleteClass.2 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.2 = call %F.ref() to %.loc11_7
+// CHECK:STDOUT:   %.loc11: ref %CompleteClass.2 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call: init %CompleteClass.2 = call %F.ref() to %.loc11
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.2 = name_ref v, %v
-// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.2 = name_ref n, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.2 = name_ref n, imports.%import_ref.10 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc12_11.2: %i32 = bind_value %.loc12_11.1
 // CHECK:STDOUT:   return %.loc12_11.2
@@ -636,17 +614,15 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.type: type = generic_class_type @CompleteClass [template]
 // CHECK:STDOUT:   %CompleteClass.generic: %CompleteClass.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.1: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.elem.1: type = unbound_element_type %CompleteClass.1, %i32 [symbolic]
 // CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %CompleteClass.2: type = class_type @CompleteClass, @CompleteClass(%ptr.1) [template]
 // CHECK:STDOUT:   %CompleteClass.elem.2: type = unbound_element_type %CompleteClass.2, %i32 [template]
@@ -665,15 +641,15 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %import_ref.3: %F.type.3 = import_ref Main//foo, F, loaded [template = constants.%F.3]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.8
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.9
+// CHECK:STDOUT:     .Int = %import_ref.11
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -701,10 +677,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.5
-// CHECK:STDOUT:     .n = imports.%import_ref.6
-// CHECK:STDOUT:     .F = imports.%import_ref.7
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.4
+// CHECK:STDOUT:     .Self = imports.%import_ref.8
+// CHECK:STDOUT:     .n = imports.%import_ref.9
+// CHECK:STDOUT:     .F = imports.%import_ref.10
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -712,9 +688,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_27.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_27.2: type = converted %int.make_type_signed, %.loc14_27.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.1]
 // CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%ptr.1) [template = constants.%CompleteClass.2]
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.2 = var v

@@ -67,15 +67,14 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.as_wit.1: <witness> = facet_access_witness %I.1 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.1: %T = interface_witness_access %I.as_wit.1, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Interface.type.3: type = facet_type <@Interface, @Interface(%i32)> [template]
 // CHECK:STDOUT:   %I.2: %Interface.type.3 = bind_symbolic_name I, 0 [symbolic]
 // CHECK:STDOUT:   %I.patt.2: %Interface.type.3 = symbolic_binding_pattern I, 0 [symbolic]
 // CHECK:STDOUT:   %AccessConcrete.type: type = fn_type @AccessConcrete [template]
 // CHECK:STDOUT:   %AccessConcrete: %AccessConcrete.type = struct_value () [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32 [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %Interface.type.3, %i32 [template]
 // CHECK:STDOUT:   %assoc0.2: %assoc_type.2 = assoc_entity element0, @Interface.%X [template]
 // CHECK:STDOUT:   %I.as_wit.2: <witness> = facet_access_witness %I.2 [symbolic]
@@ -84,7 +83,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -132,14 +131,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: %Interface.type.1 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:     %int_32.loc12_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_33: init type = call constants.%Int(%int_32.loc12_33) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_36.1: type = value_of_initializer %int.make_type_signed.loc12_33 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_36.2: type = converted %int.make_type_signed.loc12_33, %.loc12_36.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface, @Interface(constants.%i32)> [template = constants.%Interface.type.3]
 // CHECK:STDOUT:     %int_32.loc12_42: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_42: init type = call constants.%Int(%int_32.loc12_42) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_42.1: type = value_of_initializer %int.make_type_signed.loc12_42 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_42.2: type = converted %int.make_type_signed.loc12_42, %.loc12_42.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12_42: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.param: %Interface.type.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %I.loc12_19.1: %Interface.type.3 = bind_symbolic_name I, 0, %I.param [symbolic = %I.loc12_19.2 (constants.%I.2)]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
@@ -253,7 +248,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT:   %assoc_type => constants.%assoc_type.2
 // CHECK:STDOUT:   %assoc0.loc5_12.2 => constants.%assoc0.2
 // CHECK:STDOUT: }
@@ -281,22 +276,21 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %AccessMissingGeneric: %AccessMissingGeneric.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Interface.type.2 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Interface.type.3: type = facet_type <@Interface, @Interface(%i32)> [template]
 // CHECK:STDOUT:   %I.2: %Interface.type.3 = bind_symbolic_name I, 0 [symbolic]
 // CHECK:STDOUT:   %I.patt.2: %Interface.type.3 = symbolic_binding_pattern I, 0 [symbolic]
 // CHECK:STDOUT:   %AccessMissingConcrete.type: type = fn_type @AccessMissingConcrete [template]
 // CHECK:STDOUT:   %AccessMissingConcrete: %AccessMissingConcrete.type = struct_value () [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32 [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %Interface.type.3, %i32 [template]
 // CHECK:STDOUT:   %assoc0.2: %assoc_type.2 = assoc_entity element0, @Interface.%X [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -344,14 +338,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Interface.ref: %Interface.type.1 = name_ref Interface, file.%Interface.decl [template = constants.%Interface.generic]
 // CHECK:STDOUT:     %int_32.loc16_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc16_40: init type = call constants.%Int(%int_32.loc16_40) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_43.1: type = value_of_initializer %int.make_type_signed.loc16_40 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_43.2: type = converted %int.make_type_signed.loc16_40, %.loc16_43.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc16_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Interface.type: type = facet_type <@Interface, @Interface(constants.%i32)> [template = constants.%Interface.type.3]
 // CHECK:STDOUT:     %int_32.loc16_49: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc16_49: init type = call constants.%Int(%int_32.loc16_49) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_49.1: type = value_of_initializer %int.make_type_signed.loc16_49 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_49.2: type = converted %int.make_type_signed.loc16_49, %.loc16_49.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc16_49: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.param: %Interface.type.3 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %I.loc16_26.1: %Interface.type.3 = bind_symbolic_name I, 0, %I.param [symbolic = %I.loc16_26.2 (constants.%I.2)]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
@@ -452,7 +442,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Interface.type => constants.%Interface.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT:   %assoc_type => constants.%assoc_type.2
 // CHECK:STDOUT:   %assoc0.loc5_12.2 => constants.%assoc0.2
 // CHECK:STDOUT: }

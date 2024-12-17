@@ -344,8 +344,11 @@ class Context {
   // symbolic.
   //
   // Avoid calling this where possible, as it can lead to coherence issues.
-  // TODO: Remove the remaining call to this and delete this function.
-  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc) -> bool;
+  // However, it's important that we use it during monomorphization, where we
+  // don't want to trigger a request for more monomorphization.
+  // TODO: Remove the other call to this function.
+  auto TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
+                         BuildDiagnosticFn diagnoser = nullptr) -> bool;
 
   // Completes the type `type_id`. CHECK-fails if it can't be completed.
   auto CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void;

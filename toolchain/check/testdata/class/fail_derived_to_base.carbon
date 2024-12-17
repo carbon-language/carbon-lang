@@ -45,19 +45,17 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A1: type = class_type @A1 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %A1.elem: type = unbound_element_type %A1, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [template]
 // CHECK:STDOUT:   %A2.elem: type = unbound_element_type %A2, %i32 [template]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [template]
 // CHECK:STDOUT:   %B2.elem.1: type = unbound_element_type %B2, %A2 [template]
 // CHECK:STDOUT:   %B2.elem.2: type = unbound_element_type %B2, %i32 [template]
 // CHECK:STDOUT:   %struct_type.base.b.1: type = struct_type {.base: %A2, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.b.1 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base.b.1 [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %B2 [template]
 // CHECK:STDOUT:   %ptr.3: type = ptr_type %A1 [template]
 // CHECK:STDOUT:   %ConvertUnrelated.type: type = fn_type @ConvertUnrelated [template]
@@ -72,7 +70,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -127,29 +125,25 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %A1.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %A1.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_10.2: type = converted %int.make_type_signed, %.loc16_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_8: %A2.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16: %A2.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .a = %.loc16_8
+// CHECK:STDOUT:   .a = %.loc16
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -157,16 +151,14 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:   %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
 // CHECK:STDOUT:   %.loc20: %B2.elem.1 = base_decl %A2.ref, element0 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_signed, %.loc21_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8: %B2.elem.2 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.1 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc21: %B2.elem.2 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
 // CHECK:STDOUT:   .base = %.loc20
-// CHECK:STDOUT:   .b = %.loc21_8
+// CHECK:STDOUT:   .b = %.loc21
 // CHECK:STDOUT:   extend %A2.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

@@ -105,10 +105,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AdaptCopyable: type = class_type @AdaptCopyable [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
@@ -119,7 +118,7 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -155,18 +154,14 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %int_32.loc15_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc15_31: init type = call constants.%Int(%int_32.loc15_31) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %int.make_type_signed.loc15_31)
-// CHECK:STDOUT:     %.loc15_34.2: type = value_of_initializer %int.make_type_signed.loc15_31 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.3: type = converted %int.make_type_signed.loc15_31, %.loc15_34.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.4: type = converted %.loc15_34.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc15_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_34.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %i32.loc15_31)
+// CHECK:STDOUT:     %.loc15_34.2: type = converted %.loc15_34.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc15_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %int_32.loc15_56: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc15_56: init type = call constants.%Int(%int_32.loc15_56) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_59.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_41, %int.make_type_signed.loc15_56)
-// CHECK:STDOUT:     %.loc15_59.2: type = value_of_initializer %int.make_type_signed.loc15_56 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_59.3: type = converted %int.make_type_signed.loc15_56, %.loc15_59.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_59.4: type = converted %.loc15_59.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc15_56: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc15_59.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_41, %i32.loc15_56)
+// CHECK:STDOUT:     %.loc15_59.2: type = converted %.loc15_59.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
@@ -176,11 +171,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptCopyable {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_12.2: type = converted %int.make_type_signed, %.loc5_12.1 [template = constants.%i32]
-// CHECK:STDOUT:   adapt_decl %.loc5_12.2 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32 [template = constants.%complete_type]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   adapt_decl %i32 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptCopyable
@@ -203,11 +196,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %AdaptCopyable.ref.loc16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int_32.loc16) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc16, %int.make_type_signed.loc16)
-// CHECK:STDOUT:   %.loc16_29.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.3: type = converted %int.make_type_signed.loc16, %.loc16_29.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.4: type = converted %.loc16_29.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc16_29.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc16, %i32.loc16)
+// CHECK:STDOUT:   %.loc16_29.2: type = converted %.loc16_29.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %d.var: ref %tuple.type.2 = var d
 // CHECK:STDOUT:   %d: ref %tuple.type.2 = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: %tuple.type.2 = name_ref c, %c
@@ -239,19 +230,17 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AdaptTuple: type = class_type @AdaptTuple [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %tuple.type.2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -282,17 +271,13 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptTuple {
 // CHECK:STDOUT:   %int_32.loc5_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc5_10: init type = call constants.%Int(%int_32.loc5_10) [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc5_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc5_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc5_15: init type = call constants.%Int(%int_32.loc5_15) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_18: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc5_10, %int.make_type_signed.loc5_15)
-// CHECK:STDOUT:   %.loc5_19.1: type = value_of_initializer %int.make_type_signed.loc5_10 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_19.2: type = converted %int.make_type_signed.loc5_10, %.loc5_19.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_19.3: type = value_of_initializer %int.make_type_signed.loc5_15 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_19.4: type = converted %int.make_type_signed.loc5_15, %.loc5_19.3 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_19.5: type = converted %.loc5_18, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   adapt_decl %.loc5_19.5 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template = constants.%complete_type]
+// CHECK:STDOUT:   %i32.loc5_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc5_18: %tuple.type.1 = tuple_literal (%i32.loc5_10, %i32.loc5_15)
+// CHECK:STDOUT:   %.loc5_19: type = converted %.loc5_18, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   adapt_decl %.loc5_19 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptTuple
@@ -392,19 +377,17 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %AdaptNoncopyableIndirect: type = class_type @AdaptNoncopyableIndirect [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %Noncopyable, %i32) [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %tuple.type.2 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %tuple.type.2 [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -445,18 +428,14 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptNoncopyableIndirect {
 // CHECK:STDOUT:   %int_32.loc9_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9_10: init type = call constants.%Int(%int_32.loc9_10) [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc9_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
 // CHECK:STDOUT:   %int_32.loc9_28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9_28: init type = call constants.%Int(%int_32.loc9_28) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_31: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc9_10, %Noncopyable.ref, %int.make_type_signed.loc9_28)
-// CHECK:STDOUT:   %.loc9_32.1: type = value_of_initializer %int.make_type_signed.loc9_10 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_32.2: type = converted %int.make_type_signed.loc9_10, %.loc9_32.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_32.3: type = value_of_initializer %int.make_type_signed.loc9_28 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_32.4: type = converted %int.make_type_signed.loc9_28, %.loc9_32.3 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_32.5: type = converted %.loc9_31, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   adapt_decl %.loc9_32.5 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %i32.loc9_28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9_31: %tuple.type.1 = tuple_literal (%i32.loc9_10, %Noncopyable.ref, %i32.loc9_28)
+// CHECK:STDOUT:   %.loc9_32: type = converted %.loc9_31, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   adapt_decl %.loc9_32 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.2 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptNoncopyableIndirect

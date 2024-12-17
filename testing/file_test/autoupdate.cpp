@@ -15,10 +15,14 @@
 
 namespace Carbon::Testing {
 
-// Converts a matched line number to an int, trimming whitespace.
+// Converts a matched line number to an int, trimming whitespace. Returns 0 if
+// there is no line number, to assist early placement.
 static auto ParseLineNumber(absl::string_view matched_line_number) -> int {
   llvm::StringRef trimmed = matched_line_number;
   trimmed = trimmed.trim();
+  if (trimmed.empty()) {
+    return 0;
+  }
   // NOLINTNEXTLINE(google-runtime-int): API requirement.
   long long val;
   CARBON_CHECK(!llvm::getAsSignedInteger(trimmed, 10, val), "{0}",
@@ -41,7 +45,6 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
     return;
   }
 
-  bool found_one = false;
   // Use a cursor for the line so that we can't keep matching the same
   // content, which may occur when we keep a literal line number.
   int line_offset = 0;
@@ -60,10 +63,8 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
       RE2::PartialMatch(line_cursor, *replacement_->re, &matched_line_number);
     }
     if (matched_line_number.empty()) {
-      CARBON_CHECK(found_one, "{0}", line_);
       return;
     }
-    found_one = true;
 
     // Update the cursor offset from the match.
     line_offset = matched_line_number.begin() - line_.c_str();

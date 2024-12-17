@@ -31,9 +31,7 @@ interface Interface {
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Interface.type, %G.type [template]
@@ -42,7 +40,7 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -70,17 +68,11 @@ interface Interface {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc21_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc21_19: init type = call constants.%Int(%int_32.loc21_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_19.1: type = value_of_initializer %int.make_type_signed.loc21_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_19.2: type = converted %int.make_type_signed.loc21_19, %.loc21_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc21_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc21_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc21_27: init type = call constants.%Int(%int_32.loc21_27) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_27.1: type = value_of_initializer %int.make_type_signed.loc21_27 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_27.2: type = converted %int.make_type_signed.loc21_27, %.loc21_27.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc21_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc21_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc21_35: init type = call constants.%Int(%int_32.loc21_35) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_35.1: type = value_of_initializer %int.make_type_signed.loc21_35 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_35.2: type = converted %int.make_type_signed.loc21_35, %.loc21_35.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc21_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1

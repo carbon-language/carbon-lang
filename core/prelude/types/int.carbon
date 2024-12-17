@@ -2,11 +2,35 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-package Core library "prelude/types/i32";
+package Core library "prelude/types/int";
 
-// For Int():
-import library "prelude/types";
+import library "prelude/types/int_literal";
 import library "prelude/operators";
+
+private fn MakeInt(size: IntLiteral()) -> type = "int.make_type_signed";
+
+class Int(N:! IntLiteral()) {
+  adapt MakeInt(N);
+}
+
+impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(Int(N)) {
+  fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as ImplicitAs(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
+
+// TODO: Remove these once ImplicitAs extends As.
+impl forall [N:! IntLiteral()] IntLiteral() as As(Int(N)) {
+  fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as As(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
+
+// TODO: Make these operations generic.
 
 impl i32 as Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";

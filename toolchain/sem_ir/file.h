@@ -248,7 +248,7 @@ class File : public Printable<File> {
   InstStore insts_;
 
   // Storage for name scopes.
-  NameScopeStore name_scopes_;
+  NameScopeStore name_scopes_ = NameScopeStore(this);
 
   // Constant values for instructions.
   ConstantValueStore constant_values_;

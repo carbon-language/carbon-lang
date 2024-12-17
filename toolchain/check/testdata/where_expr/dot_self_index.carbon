@@ -50,9 +50,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Empty_where.type.1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Empty.type.4: type = facet_type <@Empty, @Empty(%i32)> [template]
 // CHECK:STDOUT:   %.Self.2: %Empty.type.4 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %assoc_type.3: type = assoc_entity_type %Empty.type.4, type [template]
@@ -65,15 +63,15 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %Empty.type.4 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %Empty.type.4 [template]
 // CHECK:STDOUT:   %H.specific_fn: <specific function> = specific_function %H, @H(%i32, bool) [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %Empty_where.type.2 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %Empty_where.type.2 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -129,9 +127,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
 // CHECK:STDOUT:     %int_32.loc20_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc20_15: init type = call constants.%Int(%int_32.loc20_15) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_18.1: type = value_of_initializer %int.make_type_signed.loc20_15 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_18.2: type = converted %int.make_type_signed.loc20_15, %.loc20_18.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc20_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Empty.type: type = facet_type <@Empty, @Empty(constants.%i32)> [template = constants.%Empty.type.4]
 // CHECK:STDOUT:     %.Self: %Empty.type.4 = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:     %.Self.ref: %Empty.type.4 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
@@ -140,9 +136,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit.2]
 // CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0.2]
 // CHECK:STDOUT:     %int_32.loc20_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc20_31: init type = call constants.%Int(%int_32.loc20_31) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_34.1: type = value_of_initializer %int.make_type_signed.loc20_31 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_34.2: type = converted %int.make_type_signed.loc20_31, %.loc20_34.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc20_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr.2]
 // CHECK:STDOUT:     %.loc20_20: type = where_expr %.Self [template = constants.%Empty_where.type.2] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ptr
@@ -202,13 +196,11 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [template = constants.%H]
 // CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %U.ref: %Empty_where.type.2 = name_ref U, %U
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc21_17.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_17.2: type = converted %int.make_type_signed.loc21, %.loc21_17.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_17.3: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc21_17.4: type = converted %bool.make_type, %.loc21_17.3 [template = bool]
+// CHECK:STDOUT:   %.loc21_17.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:   %.loc21_17.2: type = converted %bool.make_type, %.loc21_17.1 [template = bool]
 // CHECK:STDOUT:   %H.specific_fn: <specific function> = specific_function %H.ref, @H(constants.%i32, bool) [template = constants.%H.specific_fn]
 // CHECK:STDOUT:   %H.call: init %empty_tuple.type = call %H.specific_fn(%U.ref)
 // CHECK:STDOUT:   return
@@ -272,7 +264,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %T.patt.loc18_6.2 => constants.%i32
 // CHECK:STDOUT:   %Empty.type.loc18_26.2 => constants.%Empty.type.4
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.2
-// CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.1
+// CHECK:STDOUT:   %require_complete.loc18_34 => constants.%complete_type.2
 // CHECK:STDOUT:   %assoc_type => constants.%assoc_type.3
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.3
 // CHECK:STDOUT:   %.Self.as_wit.loc18_34.2 => constants.%.Self.as_wit.2
@@ -283,6 +275,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %V.patt.loc18_43.2 => bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc18_17 => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete.loc18_17 => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -32,18 +32,18 @@ fn Run() {
 // CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !7
-// CHECK:STDOUT:   %.loc12_24.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, {} zeroinitializer, !dbg !8
+// CHECK:STDOUT:   %.loc12_24.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, i64 0, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.1.loc12_25, i64 4, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   %.loc13_32.2.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, {} zeroinitializer, !dbg !10
-// CHECK:STDOUT:   %.loc13_32.4.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, {} zeroinitializer, !dbg !10
+// CHECK:STDOUT:   %.loc13_32.2.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 0, !dbg !10
+// CHECK:STDOUT:   %.loc13_32.4.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b.var, ptr align 8 @array.2.loc13_33, i64 16, i1 false), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
-// CHECK:STDOUT:   %.loc14_40.2.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, {} zeroinitializer, !dbg !12
-// CHECK:STDOUT:   %.loc14_40.4.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, {} zeroinitializer, !dbg !12
-// CHECK:STDOUT:   %.loc14_40.6.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, {} zeroinitializer, !dbg !12
-// CHECK:STDOUT:   %.loc14_40.8.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, {} zeroinitializer, !dbg !12
-// CHECK:STDOUT:   %.loc14_40.10.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, {} zeroinitializer, !dbg !12
+// CHECK:STDOUT:   %.loc14_40.2.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 0, !dbg !12
+// CHECK:STDOUT:   %.loc14_40.4.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 1, !dbg !12
+// CHECK:STDOUT:   %.loc14_40.6.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 2, !dbg !12
+// CHECK:STDOUT:   %.loc14_40.8.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 3, !dbg !12
+// CHECK:STDOUT:   %.loc14_40.10.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 4, !dbg !12
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @array.3.loc14_41, i64 0, i1 false), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %d.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !14
@@ -53,15 +53,15 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %e.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc16.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !16
 // CHECK:STDOUT:   %.loc16_21.1 = load i32, ptr %tuple.elem0.loc16.tuple.elem, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc16_21.2.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, {} zeroinitializer, !dbg !16
+// CHECK:STDOUT:   %.loc16_21.2.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, i64 0, !dbg !16
 // CHECK:STDOUT:   store i32 %.loc16_21.1, ptr %.loc16_21.2.array.index, align 4, !dbg !16
 // CHECK:STDOUT:   %tuple.elem1.loc16.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !16
 // CHECK:STDOUT:   %.loc16_21.4 = load i32, ptr %tuple.elem1.loc16.tuple.elem, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc16_21.5.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, {} zeroinitializer, !dbg !16
+// CHECK:STDOUT:   %.loc16_21.5.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, i64 1, !dbg !16
 // CHECK:STDOUT:   store i32 %.loc16_21.4, ptr %.loc16_21.5.array.index, align 4, !dbg !16
 // CHECK:STDOUT:   %tuple.elem2.loc16.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !16
 // CHECK:STDOUT:   %.loc16_21.7 = load i32, ptr %tuple.elem2.loc16.tuple.elem, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc16_21.8.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, {} zeroinitializer, !dbg !16
+// CHECK:STDOUT:   %.loc16_21.8.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, i64 2, !dbg !16
 // CHECK:STDOUT:   store i32 %.loc16_21.7, ptr %.loc16_21.8.array.index, align 4, !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }

@@ -442,10 +442,6 @@ class CompilationUnit {
 
     sem_ir_.emplace(&*parse_tree_, check_ir_id, parse_tree_->packaging_decl(),
                     value_stores_, input_filename_);
-    if (mem_usage_) {
-      mem_usage_->Collect("sem_ir_", *sem_ir_);
-    }
-
     sem_ir_converter_.emplace(node_converters, &*sem_ir_);
     return {.consumer = consumer_,
             .value_stores = &value_stores_,
@@ -464,6 +460,10 @@ class CompilationUnit {
     // diagnostics now, so that the developer sees them sooner and doesn't need
     // to wait for code generation.
     consumer_->Flush();
+
+    if (mem_usage_) {
+      mem_usage_->Collect("sem_ir_", *sem_ir_);
+    }
 
     if (options_.dump_raw_sem_ir && IncludeInDumps()) {
       CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);

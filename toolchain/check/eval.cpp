@@ -1803,19 +1803,16 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
       // If the type is a template constant, require it to be complete now.
       if (phase == Phase::Template) {
-        // No location is needed here because we know the type is not a symbolic
-        // constant.
-        complete_type_id = eval_context.context().AsCompleteType(
-            complete_type_id, SemIR::LocId::Invalid, [&] {
-              CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
-                                "{0} evaluates to incomplete type {1}",
-                                SemIR::TypeId, SemIR::TypeId);
-              return eval_context.emitter().Build(
-                  eval_context.GetDiagnosticLoc(inst_id),
-                  IncompleteTypeInMonomorphization,
-                  require_complete.complete_type_id, complete_type_id);
-            });
-        if (complete_type_id == SemIR::ErrorInst::SingletonTypeId) {
+        if (!eval_context.context().TryToCompleteType(
+                complete_type_id, eval_context.GetDiagnosticLoc(inst_id), [&] {
+                  CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
+                                    "{0} evaluates to incomplete type {1}",
+                                    SemIR::TypeId, SemIR::TypeId);
+                  return eval_context.emitter().Build(
+                      eval_context.GetDiagnosticLoc(inst_id),
+                      IncompleteTypeInMonomorphization,
+                      require_complete.complete_type_id, complete_type_id);
+                })) {
           return SemIR::ErrorInst::SingletonConstantId;
         }
         return MakeConstantResult(

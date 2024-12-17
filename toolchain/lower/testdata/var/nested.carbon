@@ -33,8 +33,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   %.loc14_18 = load i32, ptr %a.var, align 4, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc14_18, ptr %b.var, align 4, !dbg !11
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %a.var, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc14, ptr %b.var, align 4, !dbg !11
 // CHECK:STDOUT:   %.loc15 = load i32, ptr %b.var, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc15, ptr %a.var, align 4, !dbg !13
 // CHECK:STDOUT:   br label %while.cond, !dbg !14

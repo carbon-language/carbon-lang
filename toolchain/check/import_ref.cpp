@@ -2292,8 +2292,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   const auto& name_scope =
       resolver.import_name_scopes().Get(inst.name_scope_id);
+  // A package from a different file becomes a child of the package here, as it
+  // would be if it were imported.
   auto parent_scope_id =
-      GetLocalNameScopeId(resolver, name_scope.parent_scope_id());
+      inst.name_scope_id == SemIR::NameScopeId::Package
+          ? SemIR::NameScopeId::Package
+          : GetLocalNameScopeId(resolver, name_scope.parent_scope_id());
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -2312,6 +2316,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, name_scope.name_id());
   namespace_decl.name_scope_id =
       resolver.local_name_scopes().Add(inst_id, name_id, parent_scope_id);
+  // Namespaces from this package are eagerly imported, so anything we load here
+  // must be a closed import.
+  resolver.local_name_scopes()
+      .Get(namespace_decl.name_scope_id)
+      .set_is_closed_import(true);
   resolver.local_context().ReplaceInstBeforeConstantUse(inst_id,
                                                         namespace_decl);
   return {.const_id = resolver.local_constant_values().Get(inst_id)};

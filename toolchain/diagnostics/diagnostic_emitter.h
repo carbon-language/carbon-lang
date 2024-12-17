@@ -79,7 +79,7 @@ class DiagnosticEmitter {
       if (!emitter_) {
         return;
       }
-      for (auto annotate_fn : emitter_->annotate_fns_) {
+      for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
         annotate_fn(*this);
       }
       emitter_->consumer_->HandleDiagnostic(std::move(diagnostic_));

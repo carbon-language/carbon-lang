@@ -14,40 +14,42 @@ def _carbon_binary_impl(ctx):
         toolchain_driver = ctx.executable.internal_target_toolchain_driver
         toolchain_data = ctx.files.internal_target_toolchain_data
 
+    # Build object files for the prelude and for the binary itself.
+    # TODO: Eventually the prelude should be build as a separate `carbon_library`.
+    srcs_and_flags = [
+        (ctx.files.prelude_srcs, ["--no-prelude-import"]),
+        (ctx.files.srcs, []),
+    ]
     objs = []
-    for src in ctx.files.srcs:
-        # Build each source file. For now, we pass all sources to each compile
-        # because we don't have visibility into dependencies and have no way to
-        # specify multiple output files. Object code for each input is written
-        # into the output file in turn, so the final carbon source file
-        # specified ends up determining the contents of the object file.
-        #
-        # TODO: This is a hack; replace with something better once the toolchain
-        # supports doing so.
-        #
-        # TODO: Switch to the `prefix_root` based rule similar to linking when
-        # the prelude moves there.
-        out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
-            ctx.label.name,
-            src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
-        ))
-        objs.append(out)
-        srcs_reordered = [s for s in ctx.files.srcs if s != src] + [src]
-        ctx.actions.run(
-            outputs = [out],
-            inputs = srcs_reordered,
-            executable = toolchain_driver,
-            tools = depset(toolchain_data),
-            arguments = ["compile", "--output=" + out.path] + [s.path for s in srcs_reordered],
-            mnemonic = "CarbonCompile",
-            progress_message = "Compiling " + src.short_path,
-        )
+    for (srcs, extra_flags) in srcs_and_flags:
+        for src in srcs:
+            # Build each source file. For now, we pass all sources to each compile
+            # because we don't have visibility into dependencies and have no way to
+            # specify multiple output files. Object code for each input is written
+            # into the output file in turn, so the final carbon source file
+            # specified ends up determining the contents of the object file.
+            #
+            # TODO: This is a hack; replace with something better once the toolchain
+            # supports doing so.
+            #
+            # TODO: Switch to the `prefix_root` based rule similar to linking when
+            # the prelude moves there.
+            out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
+                ctx.label.name,
+                src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
+            ))
+            objs.append(out)
+            srcs_reordered = [s for s in srcs if s != src] + [src]
+            ctx.actions.run(
+                outputs = [out],
+                inputs = srcs_reordered,
+                executable = toolchain_driver,
+                tools = depset(toolchain_data),
+                arguments = ["compile", "--output=" + out.path] + [s.path for s in srcs_reordered] + extra_flags,
+                mnemonic = "CarbonCompile",
+                progress_message = "Compiling " + src.short_path,
+            )
 
-    # For now, we assume that the prelude doesn't produce any necessary object
-    # code, and don't include the .o files for //core/prelude... in the final
-    # linked binary.
-    #
-    # TODO: This will need to be revisited eventually.
     bin = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.run(
         outputs = [bin],
@@ -90,6 +92,7 @@ _carbon_binary_internal = rule(
             executable = True,
             cfg = "target",
         ),
+        "prelude_srcs": attr.label_list(allow_files = [".carbon"]),
         "srcs": attr.label_list(allow_files = [".carbon"]),
     },
     executable = True,
@@ -105,6 +108,7 @@ def carbon_binary(name, srcs):
     _carbon_binary_internal(
         name = name,
         srcs = srcs,
+        prelude_srcs = ["//core:prelude_files"],
 
         # We synthesize two sets of attributes from mirrored `select`s here
         # because we want to select on an internal property of these attributes

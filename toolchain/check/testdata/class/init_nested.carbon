@@ -29,25 +29,23 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.a.b [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b [template]
 // CHECK:STDOUT:   %MakeInner.type: type = fn_type @MakeInner [template]
 // CHECK:STDOUT:   %MakeInner: %MakeInner.type = struct_value () [template]
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [template]
 // CHECK:STDOUT:   %Outer.elem: type = unbound_element_type %Outer, %Inner [template]
 // CHECK:STDOUT:   %struct_type.c.d.1: type = struct_type {.c: %Inner, .d: %Inner} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.c.d.1 [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.c.d.1 [template]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [template]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -84,21 +82,17 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
 // CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed.loc12, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %Inner.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc12: %Inner.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %Inner.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc12_8
-// CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +101,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc19: %Outer.elem = field_decl c, element0 [template]
 // CHECK:STDOUT:   %Inner.ref.loc20: type = name_ref Inner, file.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %.loc20: %Outer.elem = field_decl d, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.1 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer

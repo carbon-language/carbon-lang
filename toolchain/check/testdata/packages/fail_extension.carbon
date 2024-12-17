@@ -7,17 +7,17 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/packages/fail_extension.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_extension.carbon
+
+// --- fail_main.incorrect
 // CHECK:STDERR: fail_main.incorrect: error: file extension of `.carbon` required for api [IncorrectExtension]
 // CHECK:STDERR:
+
+// --- fail_main_redundant_with_swapped_ext.impl.carbon
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: `Main//default` previously provided by `fail_main.incorrect` [DuplicateMainApi]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: error: file extension of `.carbon` required for api [IncorrectExtension]
 // CHECK:STDERR: fail_main_redundant_with_swapped_ext.impl.carbon: note: file extension of `.impl.carbon` only allowed for `impl` [IncorrectExtensionImplNote]
 // CHECK:STDERR:
-
-// --- fail_main.incorrect
-
-// --- fail_main_redundant_with_swapped_ext.impl.carbon
 
 // --- fail_main_lib.incorrect
 

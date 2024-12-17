@@ -8,6 +8,7 @@ load("//bazel/manifest:defs.bzl", "manifest")
 filegroup(
     name = "prelude_files",
     srcs = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
+    visibility = ["//visibility:public"],
 )
 
 # A list of prelude inputs.
