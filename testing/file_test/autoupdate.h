@@ -105,7 +105,9 @@ class FileTestAutoupdater {
   };
 
   // A CHECK line which is integrated into autoupdate output.
-  class CheckLine : public FileTestLineBase {
+  //
+  // `final` because we use pointer arithmetic on this type.
+  class CheckLine final : public FileTestLineBase {
    public:
     // RE2 is passed by a pointer because it doesn't support std::optional.
     explicit CheckLine(FileAndLineNumber file_and_line_number, std::string line)

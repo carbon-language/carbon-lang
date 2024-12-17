@@ -8,33 +8,33 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/no_definition_in_impl_file.carbon
 
-// --- decl_in_api_definition_in_impl.carbon
+// --- fail_decl_in_api_definition_in_impl.carbon
 
 library "[[@TEST_NAME]]";
 
-interface A {};
+interface A {}
 
-// CHECK:STDERR: decl_in_api_definition_in_impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: impl () as A;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as A;
 
-// --- decl_in_api_definition_in_impl.impl.carbon
+// --- fail_decl_in_api_definition_in_impl.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: decl_in_api_definition_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl () as A;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: impl () as A;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as A;
 
-// CHECK:STDERR: decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl () as A {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -50,13 +50,13 @@ impl library "[[@TEST_NAME]]";
 
 import library "decl_in_api_definition_in_impl";
 
-// --- decl_only_in_api.carbon
+// --- fail_decl_only_in_api.carbon
 
 library "[[@TEST_NAME]]";
 
-interface B {};
+interface B {}
 
-// CHECK:STDERR: decl_only_in_api.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_only_in_api.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: impl () as B;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -66,13 +66,13 @@ impl () as B;
 
 impl library "[[@TEST_NAME]]";
 
-// --- decl_in_api_decl_in_impl.carbon
+// --- fail_decl_in_api_decl_in_impl.carbon
 
 library "[[@TEST_NAME]]";
 
-interface C {};
+interface C {}
 
-// CHECK:STDERR: decl_in_api_decl_in_impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: impl () as C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -100,14 +100,14 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-interface D {};
+interface D {}
 
 // CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: impl () as D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 impl () as D;
 
-// CHECK:STDOUT: --- decl_in_api_definition_in_impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
@@ -139,7 +139,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc10_7.2 as %A.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_in_api_definition_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
@@ -174,13 +174,13 @@ impl () as D;
 // CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @A [from "decl_in_api_definition_in_impl.carbon"] {
+// CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "decl_in_api_definition_in_impl.carbon"];
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_decl_in_api_definition_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc12_7.2 as %A.ref;
 // CHECK:STDOUT:
@@ -209,7 +209,7 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_only_in_api.carbon
+// CHECK:STDOUT: --- fail_decl_only_in_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [template]
@@ -263,15 +263,15 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @B [from "decl_only_in_api.carbon"] {
+// CHECK:STDOUT: interface @B [from "fail_decl_only_in_api.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.4 as imports.%import_ref.5 [from "decl_only_in_api.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_decl_only_in_api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_in_api_decl_in_impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [template]
@@ -332,13 +332,13 @@ impl () as D;
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @C [from "decl_in_api_decl_in_impl.carbon"] {
+// CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "decl_in_api_decl_in_impl.carbon"];
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc12_7.2 as %C.ref;
 // CHECK:STDOUT:

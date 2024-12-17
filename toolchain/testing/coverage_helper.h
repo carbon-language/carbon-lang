@@ -21,15 +21,17 @@ namespace Carbon::Testing {
 //
 // should_be_covered should return false when a kind is either untestable or not
 // yet tested.
+//
+// TODO: Switch `kind_pattern` to `llvm::StringLiteral` if
+// `llvm::StringLiteral::c_str` is added.
 template <typename KindT>
 auto TestKindCoverage(const std::string& manifest_path,
-                      llvm::StringLiteral kind_pattern,
-                      llvm::ArrayRef<KindT> kinds,
+                      const char* kind_pattern, llvm::ArrayRef<KindT> kinds,
                       llvm::ArrayRef<KindT> untested_kinds) {
   std::ifstream manifest_in(manifest_path.c_str());
   ASSERT_TRUE(manifest_in.good());
 
-  RE2 kind_re(kind_pattern.data());
+  RE2 kind_re(kind_pattern);
   ASSERT_TRUE(kind_re.ok()) << kind_re.error();
 
   Set<std::string> covered_kinds;

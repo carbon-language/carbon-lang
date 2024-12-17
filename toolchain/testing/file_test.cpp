@@ -38,8 +38,10 @@ class ToolchainFileTest : public FileTestBase {
            llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
       -> ErrorOr<RunResult> override {
     CARBON_ASSIGN_OR_RETURN(auto prelude, installation_.ReadPreludeManifest());
-    for (const auto& file : prelude) {
-      CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
+    if (!is_no_prelude()) {
+      for (const auto& file : prelude) {
+        CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
+      }
     }
 
     Driver driver(fs, &installation_, stdout, stderr);
@@ -83,8 +85,7 @@ class ToolchainFileTest : public FileTestBase {
     // For `lex` and `parse`, we don't need to import the prelude; exclude it to
     // focus errors. In other phases we only do this for explicit "no_prelude"
     // tests.
-    if (component_ == "lex" || component_ == "parse" ||
-        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
+    if (component_ == "lex" || component_ == "parse" || is_no_prelude()) {
       args.push_back("--no-prelude-import");
     }
 
@@ -130,7 +131,7 @@ class ToolchainFileTest : public FileTestBase {
           R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
       RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
     } else {
-      return FileTestBase::DoExtraCheckReplacements(check_line);
+      FileTestBase::DoExtraCheckReplacements(check_line);
     }
   }
 
@@ -159,6 +160,10 @@ class ToolchainFileTest : public FileTestBase {
     test_name = test_name.drop_front(pos + strlen("toolchain/"));
     test_name = test_name.take_front(test_name.find("/"));
     return test_name;
+  }
+
+  auto is_no_prelude() const -> bool {
+    return test_name().find("/no_prelude/") != llvm::StringRef::npos;
   }
 
   const llvm::StringRef component_;

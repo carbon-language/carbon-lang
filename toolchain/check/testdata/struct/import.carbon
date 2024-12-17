@@ -43,10 +43,10 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C(<cannot stringify inst570 kind StructValue>)` to `C(<cannot stringify inst550 kind StructValue>)` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `C({.a = <cannot stringify inst569 kind Call>, .b = <cannot stringify inst565 kind Call>})` to `C({.a = <cannot stringify inst537 kind Call>, .b = <cannot stringify inst546 kind Call>})` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C(<cannot stringify inst570 kind StructValue>)` does not implement interface `Core.ImplicitAs(C(<cannot stringify inst550 kind StructValue>))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1: note: type `C({.a = <cannot stringify inst569 kind Call>, .b = <cannot stringify inst565 kind Call>})` does not implement interface `Core.ImplicitAs(C({.a = <cannot stringify inst537 kind Call>, .b = <cannot stringify inst546 kind Call>}))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 var c_bad: C({.a = 3, .b = 4}) = F();
