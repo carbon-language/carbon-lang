@@ -348,10 +348,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {
-// CHECK:STDOUT:   %N.loc11_13.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc11_13.2 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@impl.%N.loc15_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%N) {
 // CHECK:STDOUT:   %N.loc15_14.2 => constants.%N
@@ -365,10 +362,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %interface.loc15_48.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {
-// CHECK:STDOUT:   %N.loc11_13.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc11_13.2 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
@@ -382,16 +376,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%MyInt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%N.loc15_14.2) {
-// CHECK:STDOUT:   %N.loc15_14.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc15_14.2 => constants.%N
-// CHECK:STDOUT:   %MyInt.loc15_39.2 => constants.%MyInt
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%N.loc15_14.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {
-// CHECK:STDOUT:   %N.loc11_13.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc11_13.2 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%N) {
 // CHECK:STDOUT:   %N.loc19_11.2 => constants.%N
@@ -399,11 +386,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MyInt.loc19_39.2 => constants.%MyInt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@Double.%N.loc19_11.2) {
-// CHECK:STDOUT:   %N.loc15_14.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc15_14.2 => constants.%N
-// CHECK:STDOUT:   %MyInt.loc15_39.2 => constants.%MyInt
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(@Double.%N.loc19_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_generic_impl.carbon
 // CHECK:STDOUT:
@@ -625,10 +608,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@impl.%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@impl.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
@@ -642,16 +622,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %interface => constants.%interface.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
-// CHECK:STDOUT:   %MyInt => constants.%MyInt.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%N) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@Op.2.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.2(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
@@ -679,10 +652,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MyInt(@Double.%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MyInt(@Double.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
@@ -690,11 +660,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(@Double.%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %N.patt => constants.%N
-// CHECK:STDOUT:   %MyInt => constants.%MyInt.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(@Double.%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
@@ -978,12 +944,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Make.specific_fn.loc9_52.2 => constants.%Make.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%N.loc9_9.2) {
-// CHECK:STDOUT:   %N.loc9_9.2 => constants.%N.1
-// CHECK:STDOUT:   %N.patt.loc9_9.2 => constants.%N.1
-// CHECK:STDOUT:   %int.convert_checked.loc9_40.2 => constants.%int.convert_checked.1
-// CHECK:STDOUT:   %iN.builtin => constants.%iN.builtin.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Make(%N.loc9_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeFromClass(constants.%N.2) {
 // CHECK:STDOUT:   %N.loc18_18.2 => constants.%N.2
@@ -997,13 +958,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MakeFromClass.specific_fn.loc18_63.2 => constants.%MakeFromClass.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MakeFromClass(%N.loc18_18.2) {
-// CHECK:STDOUT:   %N.loc18_18.2 => constants.%N.2
-// CHECK:STDOUT:   %N.patt.loc18_18.2 => constants.%N.2
-// CHECK:STDOUT:   %ToLiteral.bound.loc18_40.2 => constants.%ToLiteral.bound
-// CHECK:STDOUT:   %int.convert_checked.loc18_51.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %iN.builtin => constants.%iN.builtin.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MakeFromClass(%N.loc18_18.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_convert_symbolic.carbon
 // CHECK:STDOUT:
@@ -1167,12 +1122,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Make.specific_fn => constants.%Make.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%N) {
-// CHECK:STDOUT:   %N => constants.%N.1
-// CHECK:STDOUT:   %N.patt => constants.%N.1
-// CHECK:STDOUT:   %int.convert_checked => constants.%int.convert_checked.1
-// CHECK:STDOUT:   %iN.builtin => constants.%iN.builtin.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Make(%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%int_64.2) {
 // CHECK:STDOUT:   %N => constants.%int_64.2
@@ -1197,13 +1147,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %MakeFromClass.specific_fn => constants.%MakeFromClass.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @MakeFromClass(%N) {
-// CHECK:STDOUT:   %N => constants.%N.2
-// CHECK:STDOUT:   %N.patt => constants.%N.2
-// CHECK:STDOUT:   %ToLiteral.bound => constants.%ToLiteral.bound.1
-// CHECK:STDOUT:   %int.convert_checked => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %iN.builtin => constants.%iN.builtin.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @MakeFromClass(%N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeFromClass(constants.%int_64.2) {
 // CHECK:STDOUT:   %N => constants.%int_64.2
