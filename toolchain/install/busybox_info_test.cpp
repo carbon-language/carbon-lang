@@ -18,7 +18,7 @@ namespace {
 using ::testing::Eq;
 
 class BusyboxInfoTest : public ::testing::Test {
- protected:
+ public:
   // Set up a temp directory for the test case.
   explicit BusyboxInfoTest() {
     const char* tmpdir = std::getenv("TEST_TMPDIR");
