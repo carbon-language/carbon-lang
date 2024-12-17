@@ -32,7 +32,7 @@ class StepStack {
   // An individual step in the stack, which stringifies some component of a type
   // name.
   struct Step {
-    // The discriminator for the `Step` union.
+    // The kind of step to perform.
     enum Kind : uint8_t {
       Inst,
       FixedString,
@@ -40,7 +40,6 @@ class StepStack {
       Name,
     };
 
-    // The kind of step to perform.
     Kind kind;
 
     union {
