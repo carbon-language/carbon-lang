@@ -663,7 +663,7 @@ class Context {
   // pattern-match SemIR for it.
   //
   // TODO: Consider putting this behind a narrower API to guard against emitting
-  // multiple times
+  // multiple times.
   struct BindingPatternInfo {
     // The corresponding AnyBindName inst.
     SemIR::InstId bind_name_id;
@@ -787,7 +787,7 @@ class Context {
 
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
 
-  // Stack of regions being being built as a result of BeginSubpattern calls.
+  // Stack of regions being built.
   llvm::SmallVector<SemIR::Region> region_stack_;
 };
 

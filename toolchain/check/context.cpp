@@ -810,9 +810,8 @@ auto Context::AddToRegion(SemIR::InstBlockId block_id) -> void {
 }
 
 auto Context::BeginSubpattern() -> void {
-  auto entry_block_id = sem_ir().inst_blocks().AddDefaultValue();
-  inst_block_stack().Push(entry_block_id);
-  PushRegion(entry_block_id);
+  inst_block_stack().Push();
+  PushRegion(inst_block_stack().PeekOrAdd());
 }
 
 auto Context::EndSubpatternAsExpression(SemIR::InstId result_id)
@@ -846,7 +845,7 @@ auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
   auto loc_id = insts().GetLocId(region.result_id);
   auto exit_block = inst_blocks().Get(region.block_ids.back());
   if (region.block_ids.size() == 1) {
-    // TODO: Is it possible to avoid leaving an "orphan" the block in IR in the
+    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
     // first two cases?
     if (exit_block.size() == 0) {
       return region.result_id;
