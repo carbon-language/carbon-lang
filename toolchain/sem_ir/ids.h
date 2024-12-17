@@ -544,6 +544,20 @@ constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
 
+// An ID of an instruction block that is referenced absolutely by an
+// instruction. This should only be used as the type of a field within a typed
+// instruction class. See AbsoluteInstId.
+class AbsoluteInstBlockId : public InstBlockId {
+ public:
+  // Support implicit conversion from InstBlockId so that InstBlockId and
+  // AbsoluteInstBlockId have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr AbsoluteInstBlockId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
+
+  using InstBlockId::InstBlockId;
+};
+
 // The ID of a struct type field block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static constexpr llvm::StringLiteral Label = "struct_type_fields";

@@ -23,7 +23,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDERR: canonicalize_index.carbon:[[@LINE+6]]:14: note: type `u32` does not implement interface `Core.ImplicitAs(Core.UInt(N))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:35:14: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:35:14: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:              ^~~~~~~~~~
 let c: [i32; ConvertToU32(3)]* = &a;
@@ -53,7 +53,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5, @impl.4(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1) [symbolic]
@@ -68,7 +68,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.3: init %iN = call %Convert.specific_fn.3(%int_3) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.4: init %u32 = call %ConvertToU32(%int.convert_checked.3) [symbolic]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.7), @impl.4(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.11: <witness> = impl_witness (%Convert.7), @impl.4(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int.convert_checked.4, %Convert.7 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.4: <specific function> = specific_function %Convert.bound.4, @Convert.5(%N) [symbolic]
 // CHECK:STDOUT: }
@@ -144,13 +144,13 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, %Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %impl.elem0.loc18_18: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc18_18: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc18_18: <bound method> = bound_method %int_1, %impl.elem0.loc18_18 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_18: <specific function> = specific_function %Convert.bound.loc18_18, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc18_18: init %iN = call %Convert.specific_fn.loc18_18(%int_1) [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:   %.loc18_18.1: %i32 = value_of_initializer %int.convert_checked.loc18_18 [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:   %.loc18_18.2: %i32 = converted %int_1, %.loc18_18.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc18_21: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc18_21: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc18_21: <bound method> = bound_method %int_2, %impl.elem0.loc18_21 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_21: <specific function> = specific_function %Convert.bound.loc18_21, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc18_21: init %iN = call %Convert.specific_fn.loc18_21(%int_2) [symbolic = constants.%int.convert_checked.2]
@@ -172,7 +172,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int.make_type_signed.loc29: init type = call constants.%Int(%int_32.loc29) [template = constants.%i32]
 // CHECK:STDOUT:   %ConvertToU32.ref: %ConvertToU32.type = name_ref ConvertToU32, %ConvertToU32.decl [template = constants.%ConvertToU32]
 // CHECK:STDOUT:   %int_3.loc29: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:   %impl.elem0.loc29_27: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc29_27: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc29_27: <bound method> = bound_method %int_3.loc29, %impl.elem0.loc29_27 [symbolic = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc29_27: <specific function> = specific_function %Convert.bound.loc29_27, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc29_27: init %iN = call %Convert.specific_fn.loc29_27(%int_3.loc29) [symbolic = constants.%int.convert_checked.3]
@@ -181,7 +181,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int.convert_checked.loc29_28.1: init %u32 = call %ConvertToU32.ref(%.loc29_27.2) [symbolic = constants.%int.convert_checked.4]
 // CHECK:STDOUT:   %.loc29_9.1: type = value_of_initializer %int.make_type_signed.loc29 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc29_9.2: type = converted %int.make_type_signed.loc29, %.loc29_9.1 [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc29_28: %Convert.type.6 = impl_witness_access constants.%impl_witness.2, element0 [symbolic = constants.%Convert.7]
+// CHECK:STDOUT:   %impl.elem0.loc29_28: %Convert.type.6 = impl_witness_access constants.%impl_witness.11, element0 [symbolic = constants.%Convert.7]
 // CHECK:STDOUT:   %Convert.bound.loc29_28: <bound method> = bound_method %int.convert_checked.loc29_28.1, %impl.elem0.loc29_28 [symbolic = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc29_28: <specific function> = specific_function %Convert.bound.loc29_28, @Convert.5(constants.%N) [symbolic = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %.loc29_28.1: %uN = converted %int.convert_checked.loc29_28.1, <error> [template = <error>]

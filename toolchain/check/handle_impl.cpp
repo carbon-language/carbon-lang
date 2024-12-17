@@ -250,8 +250,21 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
     return false;
   }
 
-  // TODO: CheckIsAllowedRedecl. We don't have a suitable NameId; decide if we
-  // need to treat the `T as I` as a kind of name.
+  // Following #4672, disallowing defining non-extern declarations in another
+  // file.
+  // FIXME: Testing witness_id works, but is there something else that would
+  // be more appropriate?
+  if (auto import_ref =
+          context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.witness_id)) {
+    // TODO: Handle extern.
+    CARBON_DIAGNOSTIC(RedeclImportedImpl, Error,
+                      "redeclaration of imported impl");
+    // TODO: Note imported declaration
+    context.emitter().Emit(new_impl.latest_decl_id(), RedeclImportedImpl);
+    return false;
+  }
+
+  // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
   // TODO: Merge information from the new declaration into the old one as
   // needed.
@@ -315,7 +328,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
-    impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_info.generic_id = BuildGeneric(context, impl_decl_id);
+    impl_info.witness_id = BuildImplWitness(context, impl_info);
+    FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -343,7 +358,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                constraint_type_id);
   }
 
-  if (!is_definition && context.IsImplFile()) {
+  // Impl definitions are required in the same file as the declaration.
+  if (!is_definition) {
     context.definitions_required().push_back(impl_decl_id);
   }
 
@@ -378,7 +394,6 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     impl_info.scope_id = context.name_scopes().Add(
         impl_decl_id, SemIR::NameId::Invalid,
         context.decl_name_stack().PeekParentScopeId());
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
   }
 
   context.scope_stack().Push(
@@ -386,6 +401,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
 
+  ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 

@@ -24,7 +24,15 @@ auto DiscardGenericDecl(Context& context) -> void;
 // Finish processing a potentially generic declaration and produce a
 // corresponding generic object. Returns SemIR::GenericId::Invalid if this
 // declaration is not actually generic.
-auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
+auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
+
+// Builds eval block for the declaration.
+// FIXME: use SemIRLoc instead for decl_id
+auto FinishGenericDecl(Context& context, SemIR::InstId decl_id,
+                       SemIR::GenericId generic_id) -> void;
+
+// FIXME: BuildGeneric + FinishGenericDecl
+auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId;
 
 // Merge a redeclaration of an entity that might be a generic into the original

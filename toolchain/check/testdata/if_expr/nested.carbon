@@ -29,7 +29,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1) [symbolic]
@@ -112,7 +112,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc12_25: init type = call constants.%Int(%int_32.loc12_25) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_25.1: type = value_of_initializer %int.make_type_signed.loc12_25 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_25.2: type = converted %int.make_type_signed.loc12_25, %.loc12_25.1 [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc12_25: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc12_25: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc12_25: <bound method> = bound_method %int_1, %impl.elem0.loc12_25 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_25: <specific function> = specific_function %Convert.bound.loc12_25, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc12_25: init %iN = call %Convert.specific_fn.loc12_25(%int_1) [symbolic = constants.%int.convert_checked.1]
@@ -122,7 +122,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc12_20:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %impl.elem0.loc12_32: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc12_32: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc12_32: <bound method> = bound_method %int_2, %impl.elem0.loc12_32 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_32: <specific function> = specific_function %Convert.bound.loc12_32, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc12_32: init %iN = call %Convert.specific_fn.loc12_32(%int_2) [symbolic = constants.%int.convert_checked.2]
@@ -144,7 +144,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %int.make_type_signed.loc12_49: init type = call constants.%Int(%int_32.loc12_49) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_49.1: type = value_of_initializer %int.make_type_signed.loc12_49 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_49.2: type = converted %int.make_type_signed.loc12_49, %.loc12_49.1 [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc12_49: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc12_49: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc12_49: <bound method> = bound_method %int_3, %impl.elem0.loc12_49 [symbolic = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_49: <specific function> = specific_function %Convert.bound.loc12_49, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc12_49: init %iN = call %Convert.specific_fn.loc12_49(%int_3) [symbolic = constants.%int.convert_checked.3]
@@ -154,7 +154,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc12_44:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4]
-// CHECK:STDOUT:   %impl.elem0.loc12_56: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc12_56: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc12_56: <bound method> = bound_method %int_4, %impl.elem0.loc12_56 [symbolic = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_56: <specific function> = specific_function %Convert.bound.loc12_56, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc12_56: init %iN = call %Convert.specific_fn.loc12_56(%int_4) [symbolic = constants.%int.convert_checked.4]

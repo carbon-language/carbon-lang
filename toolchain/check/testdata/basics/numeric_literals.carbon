@@ -50,7 +50,7 @@ fn F() {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_8, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_8) [symbolic]
@@ -116,7 +116,7 @@ fn F() {
 // CHECK:STDOUT:   %int_2147483647.loc19: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647]
 // CHECK:STDOUT:   %int_2147483647.loc20: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647]
 // CHECK:STDOUT:   %.loc21_3.1: %tuple.type.1 = tuple_literal (%int_8.loc15, %int_9, %int_8.loc17, %int_8.loc18, %int_2147483647.loc19, %int_2147483647.loc20)
-// CHECK:STDOUT:   %impl.elem0.loc21_3.1: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.1: <bound method> = bound_method %int_8.loc15, %impl.elem0.loc21_3.1 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.1: <specific function> = specific_function %Convert.bound.loc21_3.1, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.1: init %iN = call %Convert.specific_fn.loc21_3.1(%int_8.loc15) [symbolic = constants.%int.convert_checked.1]
@@ -124,7 +124,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0.loc21: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc21_3.3: ref %i32 = array_index %ints.var, %int_0.loc21
 // CHECK:STDOUT:   %.loc21_3.4: init %i32 = initialize_from %.loc21_3.2 to %.loc21_3.3 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc21_3.2: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.2: <bound method> = bound_method %int_9, %impl.elem0.loc21_3.2 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.2: <specific function> = specific_function %Convert.bound.loc21_3.2, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.2: init %iN = call %Convert.specific_fn.loc21_3.2(%int_9) [symbolic = constants.%int.convert_checked.2]
@@ -132,7 +132,7 @@ fn F() {
 // CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc21_3.6: ref %i32 = array_index %ints.var, %int_1.loc21
 // CHECK:STDOUT:   %.loc21_3.7: init %i32 = initialize_from %.loc21_3.5 to %.loc21_3.6 [symbolic = constants.%int.convert_checked.2]
-// CHECK:STDOUT:   %impl.elem0.loc21_3.3: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.3: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.3: <bound method> = bound_method %int_8.loc17, %impl.elem0.loc21_3.3 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.3: <specific function> = specific_function %Convert.bound.loc21_3.3, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.3: init %iN = call %Convert.specific_fn.loc21_3.3(%int_8.loc17) [symbolic = constants.%int.convert_checked.1]
@@ -140,7 +140,7 @@ fn F() {
 // CHECK:STDOUT:   %int_2.loc21: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %.loc21_3.9: ref %i32 = array_index %ints.var, %int_2.loc21
 // CHECK:STDOUT:   %.loc21_3.10: init %i32 = initialize_from %.loc21_3.8 to %.loc21_3.9 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc21_3.4: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.4: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.4: <bound method> = bound_method %int_8.loc18, %impl.elem0.loc21_3.4 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.4: <specific function> = specific_function %Convert.bound.loc21_3.4, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.4: init %iN = call %Convert.specific_fn.loc21_3.4(%int_8.loc18) [symbolic = constants.%int.convert_checked.1]
@@ -148,7 +148,7 @@ fn F() {
 // CHECK:STDOUT:   %int_3.loc21: Core.IntLiteral = int_value 3 [template = constants.%int_3]
 // CHECK:STDOUT:   %.loc21_3.12: ref %i32 = array_index %ints.var, %int_3.loc21
 // CHECK:STDOUT:   %.loc21_3.13: init %i32 = initialize_from %.loc21_3.11 to %.loc21_3.12 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc21_3.5: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.5: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.5: <bound method> = bound_method %int_2147483647.loc19, %impl.elem0.loc21_3.5 [symbolic = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.5: <specific function> = specific_function %Convert.bound.loc21_3.5, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.5: init %iN = call %Convert.specific_fn.loc21_3.5(%int_2147483647.loc19) [symbolic = constants.%int.convert_checked.3]
@@ -156,7 +156,7 @@ fn F() {
 // CHECK:STDOUT:   %int_4.loc21: Core.IntLiteral = int_value 4 [template = constants.%int_4]
 // CHECK:STDOUT:   %.loc21_3.15: ref %i32 = array_index %ints.var, %int_4.loc21
 // CHECK:STDOUT:   %.loc21_3.16: init %i32 = initialize_from %.loc21_3.14 to %.loc21_3.15 [symbolic = constants.%int.convert_checked.3]
-// CHECK:STDOUT:   %impl.elem0.loc21_3.6: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc21_3.6: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc21_3.6: <bound method> = bound_method %int_2147483647.loc20, %impl.elem0.loc21_3.6 [symbolic = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc21_3.6: <specific function> = specific_function %Convert.bound.loc21_3.6, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc21_3.6: init %iN = call %Convert.specific_fn.loc21_3.6(%int_2147483647.loc20) [symbolic = constants.%int.convert_checked.3]

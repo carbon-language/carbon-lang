@@ -16,7 +16,7 @@ fn G(N:! i32) {
   // CHECK:STDERR: fail_symbolic.carbon:[[@LINE+6]]:16: note: type `i32` does not implement interface `Core.ImplicitAs(Core.Int(N))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var k: [i32; N];
   // CHECK:STDERR:                ^
-  // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:14: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
   // CHECK:STDERR:              ^~~~~~~~~~
   var k: [i32; N];
@@ -37,13 +37,13 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %N.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.2 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <@ImplicitAs, @ImplicitAs(%iN)> [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %iN [symbolic]
+// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %ImplicitAs.type.4 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %iN [symbolic]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4, @impl.3(%N.2) [symbolic]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.5), @impl.3(%N.2) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.5), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.1, %Convert.5 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.4(%N.2) [symbolic]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %ImplicitAs.type.4 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,9 +85,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Convert.bound.loc22_16.2: <bound method> = bound_method %N.loc12_6.2, %Convert [symbolic = %Convert.bound.loc22_16.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:   %Convert.specific_fn.loc22_16.2: <specific function> = specific_function %Convert.bound.loc22_16.2, @Convert.4(%N.loc22) [symbolic = %Convert.specific_fn.loc22_16.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.loc22 [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:   %require_complete.loc22_16.1: <witness> = require_complete_type @G.%iN (%iN) [symbolic = %require_complete.loc22_16.1 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc22_16.1: <witness> = require_complete_type @G.%iN (%iN) [symbolic = %require_complete.loc22_16.1 (constants.%require_complete.2)]
 // CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%iN)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.4)]
-// CHECK:STDOUT:   %require_complete.loc22_16.2: <witness> = require_complete_type @G.%ImplicitAs.type (%ImplicitAs.type.4) [symbolic = %require_complete.loc22_16.2 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete.loc22_16.2: <witness> = require_complete_type @G.%ImplicitAs.type (%ImplicitAs.type.4) [symbolic = %require_complete.loc22_16.2 (constants.%require_complete.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: %i32) {
 // CHECK:STDOUT:   !entry:
@@ -96,7 +96,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc12_6.1 [symbolic = %N.loc12_6.2 (constants.%N.1)]
 // CHECK:STDOUT:     %.loc22_11.1: type = value_of_initializer %int.make_type_signed.loc22 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc22_11.2: type = converted %int.make_type_signed.loc22, %.loc22_11.1 [template = constants.%i32]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = %Convert (constants.%Convert.5)]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = %Convert (constants.%Convert.5)]
 // CHECK:STDOUT:     %Convert.bound.loc22_16.1: <bound method> = bound_method %N.ref, %impl.elem0 [symbolic = %Convert.bound.loc22_16.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:     %Convert.specific_fn.loc22_16.1: <specific function> = specific_function %Convert.bound.loc22_16.1, @Convert.4(constants.%N.2) [symbolic = %Convert.specific_fn.loc22_16.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:     %.loc22_16.1: @G.%iN (%iN) = converted %N.ref, <error> [template = <error>]

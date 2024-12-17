@@ -799,7 +799,7 @@ struct ImplWitness {
 
   // Always the builtin witness type.
   TypeId type_id;
-  InstBlockId elements_id;
+  AbsoluteInstBlockId elements_id;
   SpecificId specific_id;
 };
 

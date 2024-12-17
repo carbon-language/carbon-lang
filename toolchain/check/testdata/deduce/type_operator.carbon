@@ -184,11 +184,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
-// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
@@ -329,12 +325,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
-// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.1
-// CHECK:STDOUT:   %ptr.loc6_26.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
@@ -473,11 +464,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_37.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
-// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc6_20.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%const) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%const
@@ -613,10 +600,5 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc6_6.2) {
-// CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %const.loc6_19.2 => constants.%const.1
-// CHECK:STDOUT:   %ptr.loc6_26.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc6_6.2) {}
 // CHECK:STDOUT:

@@ -1594,17 +1594,17 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case CARBON_KIND(SemIR::ImplWitnessAccess access_inst): {
       // This is PerformAggregateAccess followed by GetConstantInSpecific.
       Phase phase = Phase::Template;
-      llvm::errs() << "A: " << access_inst << "\n";
+      // FIXME: llvm::errs() << "A: " << access_inst << "\n";
       if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
                                         &SemIR::ImplWitnessAccess::witness_id,
                                         &phase)) {
-        llvm::errs() << "AAA B: " << int(phase) << "\n";
+        // FIXME: llvm::errs() << "AAA B: " << int(phase) << "\n";
         if (auto witness = eval_context.insts().TryGetAs<SemIR::ImplWitness>(
                 access_inst.witness_id)) {
-          llvm::errs() << "AAA C: " << witness << "\n";
+          // FIXME: llvm::errs() << "AAA C: " << witness << "\n";
           auto elements = eval_context.inst_blocks().Get(witness->elements_id);
           auto index = static_cast<size_t>(access_inst.index.index);
-          llvm::errs() << "AAA D: " << index << "\n";
+          // FIXME: llvm::errs() << "AAA D: " << index << "\n";
           CARBON_CHECK(index < elements.size(), "Access out of bounds.");
           // `Phase` is not used here. If this element is a template constant,
           // then so is the result of indexing, even if the aggregate also
@@ -1612,7 +1612,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
           auto element = elements[index];
           if (!element.is_valid()) {
-            llvm::errs() << "AAA E\n";
+            // FIXME: llvm::errs() << "AAA E\n";
             // TODO: Perhaps this should be a `{}` value with incomplete type?
             // Or make this a symbolic access instruction?
             CARBON_DIAGNOSTIC(ImplAccessFunctionBeforeComplete, Error,
@@ -1623,21 +1623,25 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             return SemIR::ErrorInst::SingletonConstantId;
           }
           auto const_id = eval_context.GetConstantValue(element);
-          llvm::errs() << "AAA F: " << const_id << "\n";
+          // FIXME: llvm::errs() << "AAA F: " << const_id << "\n";
           auto ret = GetConstantInSpecific(eval_context.sem_ir(),
                                            witness->specific_id, const_id);
-          llvm::errs() << "AAA F2: " << ret << "\n";
+          // FIXME: llvm::errs() << "AAA F2: " << ret << "\n";
+          // FIXME: llvm::errs() << "AAA F3: "
+          // FIXME:              << eval_context.insts().Get(
+          // FIXME: eval_context.constant_values().GetInstId(ret))
+          // FIXME:              << "\n";
           return ret;
         } else {
-          llvm::errs() << "AAA G: " << int(phase) << "\n";
+          // FIXME: llvm::errs() << "AAA G: " << int(phase) << "\n";
           CARBON_CHECK(phase != Phase::Template,
                        "Failed to evaluate template constant {0} arg0: {1}",
                        inst, eval_context.insts().Get(access_inst.witness_id));
         }
-        llvm::errs() << "AAA H: " << int(phase) << "\n";
+        // FIXME: llvm::errs() << "AAA H: " << int(phase) << "\n";
         return MakeConstantResult(eval_context.context(), access_inst, phase);
       }
-      llvm::errs() << "AAA I\n";
+      // FIXME: llvm::errs() << "AAA I\n";
       return MakeNonConstantResult(phase);
     }
     case CARBON_KIND(SemIR::ArrayIndex index): {

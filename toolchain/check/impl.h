@@ -13,8 +13,14 @@ namespace Carbon::Check {
 // Create the initial witness for `impl`.
 auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId;
 
+// Update `impl`'s witness at the start of a definition.
+auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
+
 // Adds the function members to the witness for `impl`.
 auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void;
+
+// Sets all unset members of the witness for `impl` to the error instruction.
+auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
 }  // namespace Carbon::Check
 

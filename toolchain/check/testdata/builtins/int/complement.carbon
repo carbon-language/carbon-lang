@@ -40,7 +40,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1193046, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1193046) [symbolic]
@@ -125,7 +125,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %And.ref: %And.type = name_ref And, %And.decl [template = constants.%And]
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, %Complement.decl [template = constants.%Complement]
 // CHECK:STDOUT:   %int_1193046: Core.IntLiteral = int_value 1193046 [template = constants.%int_1193046]
-// CHECK:STDOUT:   %impl.elem0.loc8_31: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc8_31: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc8_31: <bound method> = bound_method %int_1193046, %impl.elem0.loc8_31 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8_31: <specific function> = specific_function %Convert.bound.loc8_31, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc8_31: init %iN = call %Convert.specific_fn.loc8_31(%int_1193046) [symbolic = constants.%int.convert_checked.1]
@@ -135,7 +135,7 @@ fn RuntimeCall(a: i32) -> i32 {
 // CHECK:STDOUT:   %int_16777215: Core.IntLiteral = int_value 16777215 [template = constants.%int_16777215]
 // CHECK:STDOUT:   %.loc8_39.1: %i32 = value_of_initializer %int.complement
 // CHECK:STDOUT:   %.loc8_39.2: %i32 = converted %int.complement, %.loc8_39.1
-// CHECK:STDOUT:   %impl.elem0.loc8_42: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc8_42: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc8_42: <bound method> = bound_method %int_16777215, %impl.elem0.loc8_42 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8_42: <specific function> = specific_function %Convert.bound.loc8_42, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc8_42: init %iN = call %Convert.specific_fn.loc8_42(%int_16777215) [symbolic = constants.%int.convert_checked.2]

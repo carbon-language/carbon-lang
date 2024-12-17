@@ -341,20 +341,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Get.%T) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Get(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetAddr.%T) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@Get.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -363,10 +355,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc2_13.2) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(%T.loc2_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%i32) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%i32
@@ -548,11 +539,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make => constants.%Make
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@Make.%T) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Make(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc5_23.1 => constants.%Class
@@ -562,15 +548,9 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@Make.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@StaticMemberFunctionCall.%T.loc8_29.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StaticMemberFunctionCall(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_29.2 => constants.%T
@@ -578,8 +558,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.loc8_49.2 => constants.%Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(@StaticMemberFunctionCall.%T.loc8_29.2) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %Class.loc5_23.1 => constants.%Class
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@StaticMemberFunctionCall.%T.loc8_29.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Make(@StaticMemberFunctionCall.%T.loc8_29.2) {}
 // CHECK:STDOUT:

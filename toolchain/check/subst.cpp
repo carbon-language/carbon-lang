@@ -187,14 +187,10 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
         return arg;
       }
       auto& specific = context.specifics().Get(specific_id);
-      auto args_id =
+      auto args_id = SemIR::InstBlockId(
           PopOperand(context, worklist, SemIR::IdKind::For<SemIR::InstBlockId>,
-                     specific.args_id.index);
-      // TODO: Provide a location here.
-      SemIRLoc loc = SemIR::InstId::Invalid;
-      return MakeSpecific(context, loc, specific.generic_id,
-                          SemIR::InstBlockId(args_id))
-          .index;
+                     specific.args_id.index));
+      return context.specifics().GetOrAdd(specific.generic_id, args_id).index;
     }
     case SemIR::IdKind::For<SemIR::FacetTypeId>: {
       const auto& old_facet_type_info =

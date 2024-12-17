@@ -32,7 +32,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %As.type.1: type = generic_interface_type @As [template]
 // CHECK:STDOUT:   %As.generic: %As.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %As.type.3: type = facet_type <@As, @As(%X)> [template]
@@ -50,7 +50,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.12: type = fn_type @Convert.9, @impl.7(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.12: %Convert.type.12 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.3: <witness> = impl_witness (%Convert.12), @impl.7(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.11: <witness> = impl_witness (%Convert.12), @impl.7(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_4, %Convert.12 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.1, @Convert.9(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_4) [symbolic]
@@ -155,7 +155,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
@@ -190,7 +190,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int.make_type_signed.loc23_21: init type = call constants.%Int(%int_32.loc23_21) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_signed.loc23_21 [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_signed.loc23_21, %.loc23_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = impl_witness_access constants.%impl_witness.3, element0 [symbolic = constants.%Convert.12]
+// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = impl_witness_access constants.%impl_witness.11, element0 [symbolic = constants.%Convert.12]
 // CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.9(constants.%N) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_4) [symbolic = constants.%int.convert_checked]

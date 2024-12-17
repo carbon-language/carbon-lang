@@ -342,11 +342,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
@@ -375,11 +371,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%struct_type.a
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%struct_type.a
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.3
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon
 // CHECK:STDOUT:
@@ -498,22 +490,14 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamConst(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_34.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_34.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_vs_deduced.carbon
 // CHECK:STDOUT:
@@ -641,11 +625,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {
-// CHECK:STDOUT:   %T.loc6_27.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%A) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%A
@@ -780,11 +760,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
@@ -824,12 +800,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_2) [symbolic]
 // CHECK:STDOUT:   %tuple: %tuple.type.4 = tuple_value (%int_1, %int.convert_checked) [symbolic]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %tuple.type.4 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %tuple.type.4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -890,7 +866,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %.loc7_19.1: %tuple.type.3 = tuple_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %TupleParam.specific_fn: <specific function> = specific_function %TupleParam.ref, @TupleParam(Core.IntLiteral) [template = constants.%TupleParam.specific_fn]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_2) [symbolic = constants.%int.convert_checked]
@@ -914,7 +890,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- deduce_nested_struct.carbon
@@ -943,12 +919,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_2) [symbolic]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.3 = struct_value (%int_1, %int.convert_checked) [symbolic]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.a.b.3 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.a.b.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1008,7 +984,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %.loc7_30.1: %struct_type.a.b.2 = struct_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %StructParam.specific_fn: <specific function> = specific_function %StructParam.ref, @StructParam(Core.IntLiteral) [template = constants.%StructParam.specific_fn]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_2) [symbolic = constants.%int.convert_checked]
@@ -1032,7 +1008,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %struct_type.a.b.loc4_44.2 => constants.%struct_type.a.b.3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon

@@ -109,7 +109,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.2 [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N.2) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N.2) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_5, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N.2) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_5) [symbolic]
@@ -160,7 +160,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %.loc6_17.2: type = converted %int.make_type_signed, %.loc6_17.1 [template = constants.%i32]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.1]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
-// CHECK:STDOUT:   %impl.elem0.loc6: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc6: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc6: <bound method> = bound_method %int_5, %impl.elem0.loc6 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc6: <specific function> = specific_function %Convert.bound.loc6, @Convert.2(constants.%N.2) [symbolic = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc6: init %iN = call %Convert.specific_fn.loc6(%int_5) [symbolic = constants.%int.convert_checked.1]
@@ -173,7 +173,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %.loc9_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc9_19.1: type = converted %.loc9_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %impl.elem0.loc9: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc9: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc9: <bound method> = bound_method %int_0, %impl.elem0.loc9 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc9: <specific function> = specific_function %Convert.bound.loc9, @Convert.2(constants.%N.2) [symbolic = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %iN = call %Convert.specific_fn.loc9(%int_0) [symbolic = constants.%int.convert_checked.2]
@@ -743,15 +743,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D => constants.%D.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@A.%T) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Outer.loc4_22.1 => constants.%Outer.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@A.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%U) {
 // CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
@@ -762,15 +759,12 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.generic => constants.%Inner.generic.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@B.%U) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%U
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %Outer.loc7_22.1 => constants.%Outer.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@B.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%T) {
 // CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
@@ -788,16 +782,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %D => constants.%D.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@C.%T) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {
-// CHECK:STDOUT:   %U.loc3_15.2 => constants.%T
-// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.1
@@ -805,15 +789,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc10_22.1 => constants.%Inner.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@D.%T) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Outer(@C.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {
-// CHECK:STDOUT:   %U.loc3_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Inner(@C.%T, @C.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -823,13 +801,11 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %Inner.loc13_22.1 => constants.%Inner.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {
-// CHECK:STDOUT:   %U.loc3_15.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc3_15.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Outer(@D.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {
-// CHECK:STDOUT:   %T.loc2_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc2_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Inner(@D.%T, @D.%U) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(%T, %U.loc3_15.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(%T.loc2_13.2) {}
 // CHECK:STDOUT:

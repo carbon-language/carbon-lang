@@ -49,8 +49,8 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %iN.1: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %iN.1 [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %iN.1 [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_0, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.1: init %iN.1 = call %Convert.specific_fn.1(%int_0) [symbolic]
@@ -60,7 +60,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Convert.15: %Convert.type.15 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_0, %Convert.15 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%F.1) [symbolic]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %iN.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.8: <witness> = require_complete_type %iN.2 [symbolic]
 // CHECK:STDOUT:   %int.convert_checked.2: init %iN.2 = call %Convert.specific_fn.2(<invalid return info>) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,13 +167,13 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Convert.bound.loc8_29.2: <bound method> = bound_method constants.%int_0, %Convert [symbolic = %Convert.bound.loc8_29.2 (constants.%Convert.bound.1)]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8_29.2: <specific function> = specific_function %Convert.bound.loc8_29.2, @Convert.2(%N) [symbolic = %Convert.specific_fn.loc8_29.2 (constants.%Convert.specific_fn.1)]
 // CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic = %iN (constants.%iN.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%iN (%iN.1) [symbolic = %require_complete (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%iN (%iN.1) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:   %int.convert_checked.loc8_29.2: init @F.%iN (%iN.1) = call %Convert.specific_fn.loc8_29.2(constants.%int_0) [symbolic = %int.convert_checked.loc8_29.2 (constants.%int.convert_checked.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = %Convert (constants.%Convert.3)]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = %Convert (constants.%Convert.3)]
 // CHECK:STDOUT:     %Convert.bound.loc8_29.1: <bound method> = bound_method %int_0, %impl.elem0 [symbolic = %Convert.bound.loc8_29.2 (constants.%Convert.bound.1)]
 // CHECK:STDOUT:     %Convert.specific_fn.loc8_29.1: <specific function> = specific_function %Convert.bound.loc8_29.1, @Convert.2(constants.%N) [symbolic = %Convert.specific_fn.loc8_29.2 (constants.%Convert.specific_fn.1)]
 // CHECK:STDOUT:     %int.convert_checked.loc8_29.1: init @F.%iN (%iN.1) = call %Convert.specific_fn.loc8_29.1(%int_0) [symbolic = %int.convert_checked.loc8_29.2 (constants.%int.convert_checked.1)]
@@ -226,7 +226,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Convert.bound.loc8_29.2 => constants.%Convert.bound.2
 // CHECK:STDOUT:   %Convert.specific_fn.loc8_29.2 => constants.%Convert.specific_fn.2
 // CHECK:STDOUT:   %iN => constants.%iN.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.3
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.8
 // CHECK:STDOUT:   %int.convert_checked.loc8_29.2 => constants.%int.convert_checked.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

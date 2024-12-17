@@ -52,10 +52,10 @@ library "[[@TEST_NAME]]";
 
 class C(N:! i32) {}
 
-// CHECK:STDERR: fail_int_value.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `()` to `C(<cannot stringify inst327 kind Call>)` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_int_value.carbon:[[@LINE+6]]:1: error: cannot implicitly convert from `()` to `C(<cannot stringify inst352 kind Call>)` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var v: C(123) = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_int_value.carbon:[[@LINE+3]]:1: note: type `()` does not implement interface `Core.ImplicitAs(C(<cannot stringify inst327 kind Call>))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_int_value.carbon:[[@LINE+3]]:1: note: type `()` does not implement interface `Core.ImplicitAs(C(<cannot stringify inst352 kind Call>))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var v: C(123) = ();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 var v: C(123) = ();
@@ -258,10 +258,7 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.1) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.1
@@ -300,7 +297,7 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %iN: type = int_type signed, %N.2 [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N.2) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N.2) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_123, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N.2) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_123) [symbolic]
@@ -336,7 +333,7 @@ var v: C(123) = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_123, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N.2) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_123) [symbolic = constants.%int.convert_checked]

@@ -19,12 +19,16 @@ class C {
 }
 
 class D {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+7]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+11]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+8]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // CHECK:STDERR:   extend impl D as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl D as I;
 }
@@ -121,6 +125,7 @@ class E {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

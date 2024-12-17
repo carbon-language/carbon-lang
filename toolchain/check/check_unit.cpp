@@ -8,6 +8,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/node_id_traversal.h"
@@ -390,8 +391,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         break;
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        if (!context_.impls().Get(impl_decl.impl_id).is_defined()) {
+        auto& impl = context_.impls().Get(impl_decl.impl_id);
+        if (!impl.is_defined()) {
           emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+          FillImplWitnessWithErrors(context_, impl);
         }
         break;
       }

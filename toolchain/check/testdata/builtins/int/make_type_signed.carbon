@@ -86,14 +86,14 @@ fn Negate(n: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: types.carbon:5:8: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR: fn Int(n: IntLiteral()) -> type = "int.make_type_signed";
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:14: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:14: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:              ^~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+11]]:12: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: var n: Int(Negate(1));
 // CHECK:STDERR:            ^~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/operators/as.carbon:31:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE-28]]:1: in import [InImport]
@@ -561,11 +561,11 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4, @impl.3(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (%Convert.5), @impl.3(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.10: <witness> = impl_witness (%Convert.5), @impl.3(%int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -611,14 +611,14 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Int.ref: %Int.type.2 = name_ref Int, imports.%import_ref.2 [template = constants.%Int.2]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, %Negate.decl [template = constants.%Negate]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc37_19: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc37_19: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc37_19: <bound method> = bound_method %int_1, %impl.elem0.loc37_19 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc37_19: <specific function> = specific_function %Convert.bound.loc37_19, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc37_19: init %iN = call %Convert.specific_fn.loc37_19(%int_1) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc37_19.1: %i32 = value_of_initializer %int.convert_checked.loc37_19 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc37_19.2: %i32 = converted %int_1, %.loc37_19.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%.loc37_19.2)
-// CHECK:STDOUT:   %impl.elem0.loc37_20: %Convert.type.6 = impl_witness_access constants.%impl_witness.2, element0 [symbolic = constants.%Convert.5]
+// CHECK:STDOUT:   %impl.elem0.loc37_20: %Convert.type.6 = impl_witness_access constants.%impl_witness.10, element0 [symbolic = constants.%Convert.5]
 // CHECK:STDOUT:   %Convert.bound.loc37_20: <bound method> = bound_method %int.snegate, %impl.elem0.loc37_20
 // CHECK:STDOUT:   %Convert.specific_fn.loc37_20: <specific function> = specific_function %Convert.bound.loc37_20, @Convert.4(constants.%N)
 // CHECK:STDOUT:   %.loc37_20.1: %iN = converted %int.snegate, <error> [template = <error>]
