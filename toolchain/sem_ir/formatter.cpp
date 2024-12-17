@@ -20,6 +20,11 @@
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
+// TODO: Consider addressing recursion here, although it's not critical because
+// the formatter isn't required to work on arbitrary code. Still, it may help
+// in the future to debug complex code.
+// NOLINTBEGIN(misc-no-recursion)
+
 namespace Carbon::SemIR {
 
 // Formatter for printing textual Semantics IR.
@@ -1379,3 +1384,5 @@ auto Formatter::Print(llvm::raw_ostream& out) -> void {
 }
 
 }  // namespace Carbon::SemIR
+
+// NOLINTEND(misc-no-recursion)

@@ -13,20 +13,15 @@ Checks:
   - '-*'
   - 'bugprone-*'
   - 'google-*'
+  - 'misc-*'
   - 'modernize-*'
   - 'performance-*'
   - 'readability-*'
 
-  # `misc` is selectively enabled because we want a minority of them.
-  - 'misc-definitions-in-headers'
-  - 'misc-misplaced-const'
-  - 'misc-redundant-expression'
-  - 'misc-static-assert'
-  - 'misc-unconventional-assign-operator'
-  - 'misc-uniqueptr-reset-release'
-  - 'misc-unused-*'
-
   # Disabled due to the implied style choices.
+  - '-misc-const-correctness'
+  - '-misc-include-cleaner'
+  - '-misc-use-anonymous-namespace'
   - '-modernize-return-braced-init-list'
   - '-modernize-use-default-member-init'
   - '-modernize-use-integer-sign-comparison'
@@ -68,6 +63,11 @@ Checks:
   - '-google-readability-function-size'
   # Suggests usernames on TODOs, which we don't want.
   - '-google-readability-todo'
+  # Even with `IgnoreClassesWithAllMemberVariablesBeingPublic` to allow structs,
+  # we use `protected` members in too many tests.
+  - '-misc-non-private-member-variables-in-classes'
+  # Overlaps with `-Wno-missing-prototypes`.
+  - '-misc-use-internal-linkage'
   # Suggests `std::array`, which we could migrate to, but conflicts with the
   # status quo.
   - '-modernize-avoid-c-arrays'
