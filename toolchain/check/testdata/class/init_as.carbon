@@ -77,22 +77,14 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed.loc12, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13, %.loc13_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8: %Class.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc13: %Class.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .a = %.loc12_8
-// CHECK:STDOUT:   .b = %.loc13_8
+// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,7 +112,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc17_26.9: init %Class = class_init (%.loc17_26.5, %.loc17_26.8), %.loc17_26.3 [template = constants.%Class.val]
 // CHECK:STDOUT:   %.loc17_26.10: ref %Class = temporary %.loc17_26.3, %.loc17_26.9
 // CHECK:STDOUT:   %.loc17_28: ref %Class = converted %.loc17_26.1, %.loc17_26.10
-// CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%.loc12_8 [template = @Class.%.loc12_8]
+// CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%.loc12 [template = @Class.%.loc12]
 // CHECK:STDOUT:   %.loc17_37.1: ref %i32 = class_element_access %.loc17_28, element0
 // CHECK:STDOUT:   %.loc17_37.2: %i32 = bind_value %.loc17_37.1
 // CHECK:STDOUT:   return %.loc17_37.2

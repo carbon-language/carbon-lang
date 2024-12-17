@@ -53,34 +53,30 @@ class C {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_signed, %.loc12_17.1 [template = constants.%i32]
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_signed, %.loc14_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_8: %C.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc14: %C.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .a = %.loc14_8
+// CHECK:STDOUT:   .a = %.loc14
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc14_8 [template = @C.%.loc14_8]
+// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc14 [template = @C.%.loc14]
 // CHECK:STDOUT:   %.loc12_31.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc12_31.2: %i32 = bind_value %.loc12_31.1
 // CHECK:STDOUT:   return %.loc12_31.2

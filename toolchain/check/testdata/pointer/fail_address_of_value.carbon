@@ -199,11 +199,13 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %param.patt: %i32 = binding_pattern param
 // CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc95: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc95: init type = call constants.%Int(%int_32.loc95) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_signed.loc95 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_signed.loc95, %.loc95_26.1 [template = constants.%i32]
 // CHECK:STDOUT:     %param.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc95_26.3: type = splice_block %.loc95_26.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc95_26.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:       %.loc95_26.2: type = converted %int.make_type_signed, %.loc95_26.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %i32 = bind_name param, %param.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -295,11 +297,6 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: %i32) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc99: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc99: init type = call constants.%Int(%int_32.loc99) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_signed.loc99 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc99_22.2: type = converted %int.make_type_signed.loc99, %.loc99_22.1 [template = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.7]
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.7 = var param_addr
 // CHECK:STDOUT:   %param_addr: ref %ptr.7 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param

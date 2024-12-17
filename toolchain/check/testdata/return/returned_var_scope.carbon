@@ -76,10 +76,10 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_signed.loc11, %.loc11_25.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_25.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc11_25.2: type = converted %int.make_type_signed, %.loc11_25.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -89,14 +89,16 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc21_25.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc21_25.2: type = converted %bool.make_type, %.loc21_25.1 [template = bool]
-// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_34.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_34.2: type = converted %int.make_type_signed.loc21, %.loc21_34.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_34.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc21_34.2: type = converted %int.make_type_signed, %.loc21_34.1 [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %.loc21_25.3: type = splice_block %.loc21_25.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc21_25.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc21_25.2: type = converted %bool.make_type, %.loc21_25.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -109,10 +111,6 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   if %true.loc12 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed.loc13, %.loc13_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
@@ -120,8 +118,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Convert.bound.loc13: <bound method> = bound_method %int_0.loc13, %impl.elem0.loc13 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13: <specific function> = specific_function %Convert.bound.loc13, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %Convert.specific_fn.loc13(%int_0.loc13) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc13_28: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign %v.var, %.loc13_28
+// CHECK:STDOUT:   %.loc13: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign %v.var, %.loc13
 // CHECK:STDOUT:   br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
@@ -129,10 +127,6 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   if %true.loc15 br !if.then.loc15 else br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc15:
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int_32.loc16) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_21.1: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_21.2: type = converted %int.make_type_signed.loc16, %.loc16_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -140,8 +134,8 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Convert.bound.loc16: <bound method> = bound_method %int_1, %impl.elem0.loc16 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc16: <specific function> = specific_function %Convert.bound.loc16, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %Convert.specific_fn.loc16(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc16_28: init %i32 = converted %int_1, %int.convert_checked.loc16 [template = constants.%int_1.2]
-// CHECK:STDOUT:   assign %w.var, %.loc16_28
+// CHECK:STDOUT:   %.loc16: init %i32 = converted %int_1, %int.convert_checked.loc16 [template = constants.%int_1.2]
+// CHECK:STDOUT:   assign %w.var, %.loc16
 // CHECK:STDOUT:   br !if.else.loc15
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc15:
@@ -161,10 +155,6 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc23: init type = call constants.%Int(%int_32.loc23) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_21.1: type = value_of_initializer %int.make_type_signed.loc23 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_21.2: type = converted %int.make_type_signed.loc23, %.loc23_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
@@ -178,10 +168,6 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   return %.loc23_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
-// CHECK:STDOUT:   %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc26: init type = call constants.%Int(%int_32.loc26) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_19.1: type = value_of_initializer %int.make_type_signed.loc26 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc26_19.2: type = converted %int.make_type_signed.loc26, %.loc26_19.1 [template = constants.%i32]
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]

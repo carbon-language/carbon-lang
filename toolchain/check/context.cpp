@@ -744,6 +744,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
@@ -763,6 +764,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
@@ -799,30 +801,79 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 }
 
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
-  CARBON_CHECK(!inst_block_stack().empty(), "no current code block");
-
-  if (return_scope_stack().empty()) {
-    CARBON_CHECK(node_id.is_valid(),
-                 "No current function, but node_id not provided");
-    TODO(node_id,
-         "Control flow expressions are currently only supported inside "
-         "functions.");
+auto Context::AddToRegion(SemIR::InstBlockId block_id) -> void {
+  if (region_stack_.empty() || block_id == SemIR::InstBlockId::Unreachable) {
     return;
   }
 
-  if (!inst_block_stack().is_current_block_reachable()) {
-    // Don't include unreachable blocks in the function.
-    return;
-  }
+  region_stack_.back().block_ids.push_back(block_id);
+}
 
-  auto function_id =
-      insts()
-          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back().decl_id)
-          .function_id;
-  functions()
-      .Get(function_id)
-      .body_block_ids.push_back(inst_block_stack().PeekOrAdd());
+auto Context::BeginSubpattern() -> void {
+  auto entry_block_id = sem_ir().inst_blocks().AddDefaultValue();
+  inst_block_stack().Push(entry_block_id);
+  PushRegion(entry_block_id);
+}
+
+auto Context::EndSubpatternAsExpression(SemIR::InstId result_id)
+    -> SemIR::RegionId {
+  // TODO: Is it possible to validate that this region is genuinely
+  // single-entry, single-exit?
+  SemIR::Region region = PopRegion(result_id);
+  CARBON_CHECK(region.block_ids.back() == inst_block_stack().PeekOrAdd());
+  if (region.block_ids.size() > 1) {
+    // End the exit block with a branch to a successor block, whose contents
+    // will be determined later.
+    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+        {.target_id = inst_blocks().AddDefaultValue()}));
+  } else {
+    // This single-block region will be inserted as a SpliceBlock, so we don't
+    // need control flow out of it.
+  }
+  inst_block_stack().Pop();
+  return sem_ir().regions().Add(region);
+}
+
+auto Context::EndSubpatternAsEmpty() -> void {
+  auto region = region_stack_.pop_back_val();
+  CARBON_CHECK(region.block_ids.front() == inst_block_stack().PeekOrAdd());
+  CARBON_CHECK(inst_block_stack().PeekCurrentBlockContents().empty());
+  inst_block_stack().PopAndDiscard();
+}
+
+auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
+  auto region = sem_ir_->regions().Get(region_id);
+  auto loc_id = insts().GetLocId(region.result_id);
+  auto exit_block = inst_blocks().Get(region.block_ids.back());
+  if (region.block_ids.size() == 1) {
+    // TODO: Is it possible to avoid leaving an "orphan" the block in IR in the
+    // first two cases?
+    if (exit_block.size() == 0) {
+      return region.result_id;
+    } else if (exit_block.size() == 1) {
+      inst_block_stack_.AddInstId(exit_block.front());
+      return region.result_id;
+    } else {
+      return AddInst<SemIR::SpliceBlock>(
+          loc_id, {.type_id = insts().Get(region.result_id).type_id(),
+                   .block_id = region.block_ids.front(),
+                   .result_id = region.result_id});
+    }
+  } else {
+    if (region_stack_.empty()) {
+      return SemIR::ErrorInst::SingletonInstId;
+    }
+    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+        {.target_id = region.block_ids.front()}));
+    inst_block_stack_.Pop();
+    region_stack_.back().block_ids.append(region.block_ids);
+    auto resume_with_block_id =
+        insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+    CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+    inst_block_stack_.Push(resume_with_block_id);
+    AddToRegion(resume_with_block_id);
+    return region.result_id;
+  }
 }
 
 auto Context::is_current_position_reachable() -> bool {

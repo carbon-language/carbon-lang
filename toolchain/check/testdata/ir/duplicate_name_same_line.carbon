@@ -17,8 +17,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -58,10 +56,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
-// CHECK:STDOUT:   %int_32.loc11_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11_29: init type = call constants.%Int(%int_32.loc11_29) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_29.1: type = value_of_initializer %int.make_type_signed.loc11_29 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_29.2: type = converted %int.make_type_signed.loc11_29, %.loc11_29.1 [template = constants.%i32]
 // CHECK:STDOUT:   %n.var.loc11_26: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_26: ref %i32 = bind_name n, %n.var.loc11_26
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -78,10 +72,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
-// CHECK:STDOUT:   %int_32.loc11_59: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11_59: init type = call constants.%Int(%int_32.loc11_59) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_59.1: type = value_of_initializer %int.make_type_signed.loc11_59 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_59.2: type = converted %int.make_type_signed.loc11_59, %.loc11_59.1 [template = constants.%i32]
 // CHECK:STDOUT:   %n.var.loc11_56: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_56: ref %i32 = bind_name n, %n.var.loc11_56
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]

@@ -45,8 +45,6 @@ fn Run() {
 // CHECK:STDOUT:   %Unused.type: type = fn_type @Unused [template]
 // CHECK:STDOUT:   %Unused: %Unused.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %i32, .unused: %i32} [template]
@@ -81,36 +79,28 @@ fn Run() {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int_32.loc8) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_signed.loc8, %.loc8_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_8: %Base.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9: init type = call constants.%Int(%int_32.loc9) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_15.1: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_15.2: type = converted %int.make_type_signed.loc9, %.loc9_15.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_13: %Base.elem = field_decl unused, element1 [template]
+// CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Unused = %Unused.decl
-// CHECK:STDOUT:   .x = %.loc8_8
-// CHECK:STDOUT:   .unused = %.loc9_13
+// CHECK:STDOUT:   .x = %.loc8
+// CHECK:STDOUT:   .unused = %.loc9
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,7 +211,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref %Child = var a
 // CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]

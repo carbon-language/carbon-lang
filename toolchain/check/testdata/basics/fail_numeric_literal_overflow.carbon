@@ -41,8 +41,6 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_39999999999999999993.1: Core.IntLiteral = int_value 39999999999999999993 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
@@ -56,9 +54,6 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2147483648.1, %Convert.14 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2147483648.2: %i32 = int_value 2147483648 [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,26 +76,6 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:     .e = @__global_init.%e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc15: init type = call constants.%Int(%int_32.loc15) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_8.1: type = value_of_initializer %int.make_type_signed.loc15 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_8.2: type = converted %int.make_type_signed.loc15, %.loc15_8.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_8.2: type = converted %int.make_type_signed.loc21, %.loc21_8.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc27: init type = call constants.%Int(%int_32.loc27) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc27_8.1: type = value_of_initializer %int.make_type_signed.loc27 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc27_8.2: type = converted %int.make_type_signed.loc27, %.loc27_8.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_64.loc33: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type.loc33: init type = call constants.%Float(%int_64.loc33) [template = f64]
-// CHECK:STDOUT:   %.loc33_8.1: type = value_of_initializer %float.make_type.loc33 [template = f64]
-// CHECK:STDOUT:   %.loc33_8.2: type = converted %float.make_type.loc33, %.loc33_8.1 [template = f64]
-// CHECK:STDOUT:   %int_64.loc38: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type.loc38: init type = call constants.%Float(%int_64.loc38) [template = f64]
-// CHECK:STDOUT:   %.loc38_8.1: type = value_of_initializer %float.make_type.loc38 [template = f64]
-// CHECK:STDOUT:   %.loc38_8.2: type = converted %float.make_type.loc38, %.loc38_8.1 [template = f64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

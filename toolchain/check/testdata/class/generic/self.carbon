@@ -144,8 +144,8 @@ class Class(T:! type) {
 // CHECK:STDOUT: generic fn @F(@Class.%T.loc11_13.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %Class.loc17_19.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Class.loc17_19.2 (%Class) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Class (%Class) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %MakeSelf.type: type = fn_type @MakeSelf, @Class(%T) [symbolic = %MakeSelf.type (constants.%MakeSelf.type)]
 // CHECK:STDOUT:   %MakeSelf: @F.%MakeSelf.type (%MakeSelf.type) = struct_value () [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:   %MakeSelf.specific_fn.loc17_23.2: <specific function> = specific_function %MakeSelf, @MakeSelf(%T) [symbolic = %MakeSelf.specific_fn.loc17_23.2 (constants.%MakeSelf.specific_fn)]
@@ -155,26 +155,21 @@ class Class(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %Class.ref: %Class.type = name_ref Class, file.%Class.decl [template = constants.%Class.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:     %Class.loc17_19.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:     %c.var: ref @F.%Class.loc17_19.2 (%Class) = var c
-// CHECK:STDOUT:     %c: ref @F.%Class.loc17_19.2 (%Class) = bind_name c, %c.var
+// CHECK:STDOUT:     %c.var: ref @F.%Class (%Class) = var c
+// CHECK:STDOUT:     %c: ref @F.%Class (%Class) = bind_name c, %c.var
 // CHECK:STDOUT:     %.loc17_23: @F.%MakeSelf.type (%MakeSelf.type) = specific_constant @Class.%MakeSelf.decl, @Class(constants.%T) [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.ref: @F.%MakeSelf.type (%MakeSelf.type) = name_ref MakeSelf, %.loc17_23 [symbolic = %MakeSelf (constants.%MakeSelf)]
 // CHECK:STDOUT:     %MakeSelf.specific_fn.loc17_23.1: <specific function> = specific_function %MakeSelf.ref, @MakeSelf(constants.%T) [symbolic = %MakeSelf.specific_fn.loc17_23.2 (constants.%MakeSelf.specific_fn)]
-// CHECK:STDOUT:     %.loc17_9: ref @F.%Class.loc17_19.2 (%Class) = splice_block %c.var {}
-// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeSelf.specific_fn.loc17_23.1() to %.loc17_9
+// CHECK:STDOUT:     %.loc17_9: ref @F.%Class (%Class) = splice_block %c.var {}
+// CHECK:STDOUT:     %MakeSelf.call: init @F.%Class (%Class) = call %MakeSelf.specific_fn.loc17_23.1() to %.loc17_9
 // CHECK:STDOUT:     assign %c.var, %MakeSelf.call
-// CHECK:STDOUT:     %.loc18_12: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, %.loc18_12 [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:     %s.var: ref @F.%Class.loc17_19.2 (%Class) = var s
-// CHECK:STDOUT:     %s: ref @F.%Class.loc17_19.2 (%Class) = bind_name s, %s.var
+// CHECK:STDOUT:     %s.var: ref @F.%Class (%Class) = var s
+// CHECK:STDOUT:     %s: ref @F.%Class (%Class) = bind_name s, %s.var
 // CHECK:STDOUT:     %.loc18_19: @F.%MakeClass.type (%MakeClass.type) = specific_constant @Class.%MakeClass.decl, @Class(constants.%T) [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.ref: @F.%MakeClass.type (%MakeClass.type) = name_ref MakeClass, %.loc18_19 [symbolic = %MakeClass (constants.%MakeClass)]
 // CHECK:STDOUT:     %MakeClass.specific_fn.loc18_19.1: <specific function> = specific_function %MakeClass.ref, @MakeClass(constants.%T) [symbolic = %MakeClass.specific_fn.loc18_19.2 (constants.%MakeClass.specific_fn)]
-// CHECK:STDOUT:     %.loc18_9: ref @F.%Class.loc17_19.2 (%Class) = splice_block %s.var {}
-// CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeClass.specific_fn.loc18_19.1() to %.loc18_9
+// CHECK:STDOUT:     %.loc18_9: ref @F.%Class (%Class) = splice_block %s.var {}
+// CHECK:STDOUT:     %MakeClass.call: init @F.%Class (%Class) = call %MakeClass.specific_fn.loc18_19.1() to %.loc18_9
 // CHECK:STDOUT:     assign %s.var, %MakeClass.call
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

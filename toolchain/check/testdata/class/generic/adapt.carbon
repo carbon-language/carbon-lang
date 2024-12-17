@@ -176,12 +176,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_26.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_26.2: type = converted %int.make_type_signed.loc12, %.loc12_26.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -200,7 +200,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -323,12 +322,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc6: init type = call constants.%Int(%int_32.loc6) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_34.2: type = converted %int.make_type_signed.loc6, %.loc6_34.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -456,12 +455,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_26.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc12_26.2: type = converted %int.make_type_signed, %.loc12_26.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -480,7 +479,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -599,7 +597,6 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness @C.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_9.1 [symbolic = %T.loc7_9.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc8: @C.%C.elem (%C.elem.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -704,12 +701,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_34.2: type = converted %int.make_type_signed, %.loc6_34.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -821,17 +818,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: %Adapter.type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter.generic]
-// CHECK:STDOUT:     %int_32.loc8_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc8_23: init type = call constants.%Int(%int_32.loc8_23) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_26.1: type = value_of_initializer %int.make_type_signed.loc8_23 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_26.2: type = converted %int.make_type_signed.loc8_23, %.loc8_26.1 [template = constants.%i32]
-// CHECK:STDOUT:     %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [template = constants.%Adapter.2]
 // CHECK:STDOUT:     %int_32.loc8_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc8_32: init type = call constants.%Int(%int_32.loc8_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_signed.loc8_32 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_signed.loc8_32, %.loc8_32.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc8_26.3: type = splice_block %Adapter [template = constants.%Adapter.2] {
+// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, file.%Adapter.decl [template = constants.%Adapter.generic]
+// CHECK:STDOUT:       %int_32.loc8_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc8_23: init type = call constants.%Int(%int_32.loc8_23) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc8_26.1: type = value_of_initializer %int.make_type_signed.loc8_23 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc8_26.2: type = converted %int.make_type_signed.loc8_23, %.loc8_26.1 [template = constants.%i32]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [template = constants.%Adapter.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %Adapter.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -939,17 +938,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
-// CHECK:STDOUT:     %int_32.loc6_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_31: init type = call constants.%Int(%int_32.loc6_31) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int.make_type_signed.loc6_31 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_34.2: type = converted %int.make_type_signed.loc6_31, %.loc6_34.1 [template = constants.%i32]
-// CHECK:STDOUT:     %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [template = constants.%Adapter.2]
 // CHECK:STDOUT:     %int_32.loc6_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc6_40: init type = call constants.%Int(%int_32.loc6_40) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_40.1: type = value_of_initializer %int.make_type_signed.loc6_40 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_40.2: type = converted %int.make_type_signed.loc6_40, %.loc6_40.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_34.3: type = splice_block %Adapter [template = constants.%Adapter.2] {
+// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
+// CHECK:STDOUT:       %int_32.loc6_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc6_31: init type = call constants.%Int(%int_32.loc6_31) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc6_34.1: type = value_of_initializer %int.make_type_signed.loc6_31 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc6_34.2: type = converted %int.make_type_signed.loc6_31, %.loc6_34.1 [template = constants.%i32]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [template = constants.%Adapter.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %Adapter.2 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -961,14 +962,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
-// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [template = constants.%Adapter.3]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_43.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_43.2: type = converted %int.make_type_signed, %.loc14_43.1 [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter.3 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_37: type = splice_block %Adapter [template = constants.%Adapter.3] {
+// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
+// CHECK:STDOUT:       %C.ref.loc14: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [template = constants.%Adapter.3]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %Adapter.3 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -991,16 +994,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_10.2: type = converted %int.make_type_signed, %.loc11_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_8: %C.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc11: %C.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc11_8
+// CHECK:STDOUT:   .n = %.loc11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1022,7 +1021,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: %C = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc15_13.2: %C = converted %a.ref, %.loc15_13.1
-// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc11_8 [template = @C.%.loc11_8]
+// CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc11 [template = @C.%.loc11]
 // CHECK:STDOUT:   %.loc15_18.1: ref %i32 = class_element_access %.loc15_13.2, element0
 // CHECK:STDOUT:   %.loc15_18.2: %i32 = bind_value %.loc15_18.1
 // CHECK:STDOUT:   return %.loc15_18.2

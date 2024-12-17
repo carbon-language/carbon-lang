@@ -127,9 +127,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
@@ -141,12 +138,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
@@ -295,20 +292,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %.loc4_43.4: type = converted %int.make_type_signed.loc4_40, %.loc4_43.3 [template = constants.%i32]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%i32, constants.%i32)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc10_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc10_9: init type = call constants.%Int(%int_32.loc10_9) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc10_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc10_14: init type = call constants.%Int(%int_32.loc10_14) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc10_9, %int.make_type_signed.loc10_14)
-// CHECK:STDOUT:   %.loc10_17.2: type = value_of_initializer %int.make_type_signed.loc10_9 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.3: type = converted %int.make_type_signed.loc10_9, %.loc10_17.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.4: type = value_of_initializer %int.make_type_signed.loc10_14 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.5: type = converted %int.make_type_signed.loc10_14, %.loc10_17.4 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.6: type = converted %.loc10_17.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_8.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_8.2: type = converted %int.make_type_signed.loc11, %.loc11_8.1 [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %.loc4_15.6 as %IndexWith.type {
@@ -320,18 +303,20 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%.loc4_15.6 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:     %int_32.loc5_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5_32: init type = call constants.%Int(%int_32.loc5_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_32.1: type = value_of_initializer %int.make_type_signed.loc5_32 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_32.2: type = converted %int.make_type_signed.loc5_32, %.loc5_32.1 [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc5_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc5_40: init type = call constants.%Int(%int_32.loc5_40) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc5_40.1: type = value_of_initializer %int.make_type_signed.loc5_40 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc5_40.2: type = converted %int.make_type_signed.loc5_40, %.loc5_40.1 [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%.loc4_15.6 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %self: %tuple.type.2 = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc5_32.3: type = splice_block %.loc5_32.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc5_32: init type = call constants.%Int(%int_32.loc5_32) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc5_32.1: type = value_of_initializer %int.make_type_signed.loc5_32 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc5_32.2: type = converted %int.make_type_signed.loc5_32, %.loc5_32.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: %i32 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -439,8 +424,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %IndexWith.type {
@@ -452,12 +435,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
@@ -531,8 +514,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
@@ -555,11 +536,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_8.2: type = converted %int.make_type_signed, %.loc10_8.1 [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

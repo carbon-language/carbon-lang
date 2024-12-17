@@ -50,7 +50,6 @@ var a: A = {};
 // CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT: }

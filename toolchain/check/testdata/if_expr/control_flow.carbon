@@ -90,14 +90,16 @@ fn F(b: bool) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc14_9.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc14_9.2: type = converted %bool.make_type, %.loc14_9.1 [template = bool]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_18.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc14_18.2: type = converted %int.make_type_signed, %.loc14_18.1 [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_9.3: type = splice_block %.loc14_9.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc14_9.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc14_9.2: type = converted %bool.make_type, %.loc14_9.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param

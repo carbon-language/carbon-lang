@@ -35,6 +35,22 @@
 
 namespace Carbon::SemIR {
 
+// A single-entry/single-exit region: `block_ids` consists of all blocks that
+// are dominated by `block_ids.front()` and post-dominated by
+// `block_ids.back()`. `block_ids` should be in lexical order. This region may
+// represent an expression; if so, `result_id` represents the result of
+// evaluating it. `block_ids` cannot be empty. If it has a single element, then
+// the region should be used via a `SpliceBlock` inst. Otherwise, the region
+// should be used by branching to the entry block, and the last inst in the exit
+// block will likewise be a branch.
+struct Region {
+  explicit Region(InstBlockId entry_block)
+      : block_ids({entry_block}), result_id(SemIR::InstId::Invalid) {}
+
+  llvm::SmallVector<InstBlockId> block_ids;
+  InstId result_id;
+};
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -166,6 +182,9 @@ class File : public Printable<File> {
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
 
+  auto regions() -> ValueStore<RegionId>& { return regions_; }
+  auto regions() const -> const ValueStore<RegionId>& { return regions_; }
+
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
@@ -272,6 +291,10 @@ class File : public Printable<File> {
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);
+
+  // Single-entry/single-exit regions that are referenced as units, e.g. because
+  // they represent expressions.
+  ValueStore<RegionId> regions_;
 };
 
 // The expression category of a sem_ir instruction. See /docs/design/values.md

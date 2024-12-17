@@ -79,12 +79,14 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:     %b.patt: %B = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %B = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %A} [template = constants.%struct_type.a.1]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %s.param: %struct_type.a.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc19: type = splice_block %struct_type.a [template = constants.%struct_type.a.1] {
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:       %struct_type.a: type = struct_type {.a: %A} [template = constants.%struct_type.a.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %struct_type.a.1 = bind_name s, %s.param
 // CHECK:STDOUT:     %b.param: %B = value_param runtime_param1
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %b: %B = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -93,11 +95,13 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc12: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %ptr: type = ptr_type %A [template = constants.%ptr.1]
 // CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_20: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:       %ptr: type = ptr_type %A [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
@@ -109,7 +113,6 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: %B.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:

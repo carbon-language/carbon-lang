@@ -135,44 +135,50 @@ class D {
 // CHECK:STDOUT:     %T.patt.loc8_15.1: %I_where.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: %I_where.type = value_param_pattern %T.patt.loc8_15.1, runtime_param<invalid> [symbolic = %T.patt.loc8_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.loc8_37: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_21: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_equivalent %.Self.ref, %.loc8_37
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: %I_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc8_21.2: type = splice_block %.loc8_21.1 [template = constants.%I_where.type] {
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:       %.loc8_37: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc8_21.1: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc8_37
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_15.1: %I_where.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [template = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt.loc10_17.1: %I_where.type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt.loc10_17.1, runtime_param<invalid> [symbolic = %U.patt.loc10_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
-// CHECK:STDOUT:     %Member.ref: %assoc_type = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc10_41: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_23: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %.loc10_41
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc10_23.2: type = splice_block %.loc10_23.1 [template = constants.%I_where.type] {
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
+// CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %.loc10_41: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_23.1: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc10_41
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc10_17.1: %I_where.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc10_17.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [template = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt.loc12_18.1: %type_where = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %V.param_patt: %type_where = value_param_pattern %V.patt.loc12_18.1, runtime_param<invalid> [symbolic = %V.patt.loc12_18.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.loc12: type = where_expr %.Self [template = constants.%type_where] {
-// CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.param: %type_where = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc12_27.2: type = splice_block %.loc12_27.1 [template = constants.%type_where] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:       %.loc12_27.1: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:         requirement_impls %.Self.ref, %I.ref
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc12_18.1: %type_where = bind_symbolic_name V, 0, %V.param [symbolic = %V.loc12_18.2 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -257,15 +263,17 @@ class D {
 // CHECK:STDOUT:     %W.patt.loc12_19.1: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:     %W.param_patt: <error> = value_param_pattern %W.patt.loc12_19.1, runtime_param<invalid> [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
-// CHECK:STDOUT:     %.loc12_44: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_25: type = where_expr %.Self [template = <error>] {
-// CHECK:STDOUT:       requirement_rewrite %Mismatch.ref, <error>
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc12_25.2: type = splice_block %.loc12_25.1 [template = <error>] {
+// CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:       %Mismatch.ref: <error> = name_ref Mismatch, <error> [template = <error>]
+// CHECK:STDOUT:       %.loc12_44: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_25.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:         requirement_rewrite %Mismatch.ref, <error>
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %W: <error> = bind_symbolic_name W, 0, %W.param [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -325,8 +333,6 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]

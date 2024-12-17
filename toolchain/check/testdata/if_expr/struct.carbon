@@ -67,26 +67,30 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %s.patt: %struct_type.a.b.1 = binding_pattern s
 // CHECK:STDOUT:     %s.param_patt: %struct_type.a.b.1 = value_param_pattern %s.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc11_14: init type = call constants.%Int(%int_32.loc11_14) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_14.1: type = value_of_initializer %int.make_type_signed.loc11_14 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_14.2: type = converted %int.make_type_signed.loc11_14, %.loc11_14.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc11_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc11_23: init type = call constants.%Int(%int_32.loc11_23) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_23.1: type = value_of_initializer %int.make_type_signed.loc11_23 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_23.2: type = converted %int.make_type_signed.loc11_23, %.loc11_23.1 [template = constants.%i32]
-// CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11_26: type = splice_block %struct_type.a.b [template = constants.%struct_type.a.b.1] {
+// CHECK:STDOUT:       %int_32.loc11_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc11_14: init type = call constants.%Int(%int_32.loc11_14) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_14.1: type = value_of_initializer %int.make_type_signed.loc11_14 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_14.2: type = converted %int.make_type_signed.loc11_14, %.loc11_14.1 [template = constants.%i32]
+// CHECK:STDOUT:       %int_32.loc11_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc11_23: init type = call constants.%Int(%int_32.loc11_23) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_23.1: type = value_of_initializer %int.make_type_signed.loc11_23 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_23.2: type = converted %int.make_type_signed.loc11_23, %.loc11_23.1 [template = constants.%i32]
+// CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %struct_type.a.b.1 = bind_name s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %cond.patt: bool = binding_pattern cond
 // CHECK:STDOUT:     %cond.param_patt: bool = value_param_pattern %cond.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
 // CHECK:STDOUT:     %cond.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %.loc13_12.3: type = splice_block %.loc13_12.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %cond: bool = bind_name cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -95,15 +99,6 @@ fn F(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%cond.param_patt: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc14_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14_15: init type = call constants.%Int(%int_32.loc14_15) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_15.1: type = value_of_initializer %int.make_type_signed.loc14_15 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_15.2: type = converted %int.make_type_signed.loc14_15, %.loc14_15.1 [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14_24: init type = call constants.%Int(%int_32.loc14_24) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_24.1: type = value_of_initializer %int.make_type_signed.loc14_24 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_24.2: type = converted %int.make_type_signed.loc14_24, %.loc14_24.1 [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.b.1 = var a
 // CHECK:STDOUT:   %a: ref %struct_type.a.b.1 = bind_name a, %a.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]

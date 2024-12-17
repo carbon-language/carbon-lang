@@ -71,29 +71,13 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int_32.loc16) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_8.1: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_8.2: type = converted %int.make_type_signed.loc16, %.loc16_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc23: init type = call constants.%Int(%int_32.loc23) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_8.1: type = value_of_initializer %int.make_type_signed.loc23 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc23_8.2: type = converted %int.make_type_signed.loc23, %.loc23_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int_32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc29: init type = call constants.%Int(%int_32.loc29) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc29_8.1: type = value_of_initializer %int.make_type_signed.loc29 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc29_8.2: type = converted %int.make_type_signed.loc29, %.loc29_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %c.var: ref %i32 = var c
 // CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc34: init type = call constants.%Int(%int_32.loc34) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc34_8.1: type = value_of_initializer %int.make_type_signed.loc34 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc34_8.2: type = converted %int.make_type_signed.loc34, %.loc34_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }

@@ -72,11 +72,11 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [template = constants.%Different.type]
 // CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc36_6.1 [symbolic = %U.loc36_6.2 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @Interface.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:     %U.param: %Different.type = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [template = constants.%Different.type]
 // CHECK:STDOUT:     %U.loc36_6.1: %Different.type = bind_symbolic_name U, 0, %U.param [symbolic = %U.loc36_6.2 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
@@ -112,11 +112,8 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
+// CHECK:STDOUT:   %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %Interface.ref.loc28: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
-// CHECK:STDOUT:   %T.ref: %assoc_type = name_ref T, @Interface.%assoc1 [template = constants.%assoc1]
-// CHECK:STDOUT:   %.loc28: type = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   return

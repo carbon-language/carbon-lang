@@ -71,12 +71,6 @@ var array_index: [i32; 1] = (0,) as [i32; ((5, 7, 1, 9) as [i32; 4])[2]];
 // CHECK:STDOUT:     .array_index = %array_index
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc16_19.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_19.2: type = converted %int.make_type_signed, %.loc16_19.1 [template = constants.%i32]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [template = constants.%array_type.1]
 // CHECK:STDOUT:   %array_index.var: ref %array_type.1 = var array_index
 // CHECK:STDOUT:   %array_index: ref %array_type.1 = bind_name array_index, %array_index.var
 // CHECK:STDOUT: }

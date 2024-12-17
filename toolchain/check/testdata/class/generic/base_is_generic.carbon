@@ -148,12 +148,12 @@ fn H() {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_37.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc16_37.2: type = converted %int.make_type_signed, %.loc16_37.1 [template = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -172,7 +172,6 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Base.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.1 [symbolic = %T.loc4_17.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -184,16 +183,12 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_signed, %.loc9_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_8: %Param.elem = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .y = %.loc9_8
+// CHECK:STDOUT:   .y = %.loc9
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +213,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc17_11.1: ref %Base.2 = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base.2 = converted %d.ref, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
-// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9_8 [template = @Param.%.loc9_8]
+// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
 // CHECK:STDOUT:   %.loc17_13.2: %i32 = bind_value %.loc17_13.1
 // CHECK:STDOUT:   return %.loc17_13.2
@@ -314,12 +309,12 @@ fn H() {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%import_ref.3 [template = constants.%Derived]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_45.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
 // CHECK:STDOUT:     %.loc6_45.2: type = converted %int.make_type_signed, %.loc6_45.1 [template = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%import_ref.3 [template = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -649,15 +644,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc13_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13_10: init type = call constants.%Int(%int_32.loc13_10) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.1: type = value_of_initializer %int.make_type_signed.loc13_10 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %int.make_type_signed.loc13_10, %.loc13_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:   %int_32.loc13_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13_18: init type = call constants.%Int(%int_32.loc13_18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed.loc13_18 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed.loc13_18, %.loc13_21.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed, %.loc13_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc13_22: %G.type.3 = specific_constant @X.%G.decl, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc13_22 [template = constants.%G.3]
@@ -868,15 +859,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc7_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc7_10: init type = call constants.%Int(%int_32.loc7_10) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_10.1: type = value_of_initializer %int.make_type_signed.loc7_10 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_10.2: type = converted %int.make_type_signed.loc7_10, %.loc7_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
-// CHECK:STDOUT:   %int_32.loc7_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc7_18: init type = call constants.%Int(%int_32.loc7_18) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_21.1: type = value_of_initializer %int.make_type_signed.loc7_18 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_21.2: type = converted %int.make_type_signed.loc7_18, %.loc7_21.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_21.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:   %.loc7_21.2: type = converted %int.make_type_signed, %.loc7_21.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc7_22: %G.type.3 = specific_constant imports.%import_ref.7, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc7_22 [template = constants.%G.3]

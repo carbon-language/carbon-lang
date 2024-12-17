@@ -31,8 +31,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc13_17.2 = load i32, ptr %.loc13_17.1.b, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc13_17.2, ptr %y.var, align 4, !dbg !12
 // CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc14_16 = load i32, ptr %y.var, align 4, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc14_16, ptr %z.var, align 4, !dbg !15
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %y.var, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc14, ptr %z.var, align 4, !dbg !15
 // CHECK:STDOUT:   ret i32 0, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

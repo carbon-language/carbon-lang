@@ -62,8 +62,6 @@ class X(U:! type) {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @HasF.%F.decl [symbolic]
 // CHECK:STDOUT:   %Param: type = class_type @Param [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Param.elem: type = unbound_element_type %Param, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.1: type = struct_type {.x: %i32} [template]
@@ -125,8 +123,8 @@ class X(U:! type) {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -179,16 +177,12 @@ class X(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %int.make_type_signed, %.loc9_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_8: %Param.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.1 [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .x = %.loc9_8
+// CHECK:STDOUT:   .x = %.loc9
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,10 +225,6 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_10.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc21_10.2: type = converted %int.make_type_signed.loc21, %.loc21_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc21_17: %F.assoc_type.2 = specific_constant @HasF.%assoc0.loc5_14.1, @HasF(constants.%Param) [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %F.ref.loc21: %F.assoc_type.2 = name_ref F, %.loc21_17 [template = constants.%assoc0.2]
@@ -242,14 +232,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
-// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
+// CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
 // CHECK:STDOUT:   %.loc21_21.2: %i32 = bind_value %.loc21_21.1
 // CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc21_21.2
-// CHECK:STDOUT:   %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc22: init type = call constants.%Int(%int_32.loc22) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc22_10.1: type = value_of_initializer %int.make_type_signed.loc22 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc22_10.2: type = converted %int.make_type_signed.loc22, %.loc22_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
@@ -259,7 +245,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
 // CHECK:STDOUT:   %F.call.loc22: init %Param = call %impl.elem0.loc22() to %.loc22_20.1
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %F.call.loc22
-// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9_8 [template = @Param.%.loc9_8]
+// CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [template = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0
 // CHECK:STDOUT:   %.loc22_21.2: %i32 = bind_value %.loc22_21.1
 // CHECK:STDOUT:   assign %b.var, %.loc22_21.2
@@ -382,14 +368,16 @@ class X(U:! type) {
 // CHECK:STDOUT:       %t.patt: @F.1.%T (%T) = binding_pattern t
 // CHECK:STDOUT:       %t.param_patt: @F.1.%T (%T) = value_param_pattern %t.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc5_14.1: @F.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.ref: @F.1.%I.type (%I.type.2) = name_ref Self, %.loc5_14.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @I.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc5_14.3: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc5_14.1: @F.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @F.1.%I.type (%I.type.2) = name_ref Self, %.loc5_14.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:       %t.param: @F.1.%T (%T) = value_param runtime_param1
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @I.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_25.1: @I.%F.assoc_type (%F.assoc_type.1) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_25.2 (constants.%assoc0.1)]
@@ -419,12 +407,14 @@ class X(U:! type) {
 // CHECK:STDOUT:       %t.patt: @F.2.%U (%U) = binding_pattern t
 // CHECK:STDOUT:       %t.param_patt: @F.2.%U (%U) = value_param_pattern %t.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc10: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc10 [symbolic = %X (constants.%X)]
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %self.param: @F.2.%X (%X) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc10_16.2: type = splice_block %Self.ref [symbolic = %X (constants.%X)] {
+// CHECK:STDOUT:         %.loc10_16.1: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_16.1 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.2.%X (%X) = bind_name self, %self.param
 // CHECK:STDOUT:       %t.param: @F.2.%U (%U) = value_param runtime_param1
+// CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %t: @F.2.%U (%U) = bind_name t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %interface.loc9_23.1: <witness> = interface_witness (%F.decl) [symbolic = %interface.loc9_23.2 (constants.%interface)]

@@ -66,16 +66,20 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc16_12.2: type = converted %int.make_type_signed, %.loc16_12.1 [template = constants.%i32]
-// CHECK:STDOUT:     %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %Class.ref.loc16_34: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16_12.3: type = splice_block %.loc16_12.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc16_12.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:       %.loc16_12.2: type = converted %int.make_type_signed, %.loc16_12.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.1 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc16_28: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %Class.ref.loc16_23: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.1 = bind_name next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
@@ -88,16 +92,20 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_19.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc20_19.2: type = converted %int.make_type_signed, %.loc20_19.1 [template = constants.%i32]
-// CHECK:STDOUT:     %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %Class.ref.loc20_41: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc20_19.3: type = splice_block %.loc20_19.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc20_19.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:       %.loc20_19.2: type = converted %int.make_type_signed, %.loc20_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.1 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc20_35: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %Class.ref.loc20_30: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %next: %ptr.1 = bind_name next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
@@ -105,19 +113,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %int.make_type_signed, %.loc12_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8: %Class.elem.1 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:   %.loc12: %Class.elem.1 = field_decl n, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Class.elem.2 = field_decl next, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .n = %.loc12
 // CHECK:STDOUT:   .next = %.loc13
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

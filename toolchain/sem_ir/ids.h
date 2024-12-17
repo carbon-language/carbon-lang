@@ -29,6 +29,7 @@ struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;
+struct Region;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -543,6 +544,20 @@ constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Invalid = InstBlockId(InvalidIndex);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(InvalidIndex - 1);
+
+// TODO: Move this out of sem_ir and into check, if we don't wind up using it
+// in the SemIR for expression patterns.
+struct RegionId : public IdBase<RegionId> {
+  static constexpr llvm::StringLiteral Label = "region";
+  using ValueType = Region;
+
+  // An explicitly invalid ID.
+  static const RegionId Invalid;
+
+  using IdBase::IdBase;
+};
+
+constexpr RegionId RegionId::Invalid = RegionId(InvalidIndex);
 
 // The ID of a struct type field block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {

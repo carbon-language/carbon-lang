@@ -200,8 +200,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_12.2: type = converted %.loc10_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc10_17: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_18: %empty_tuple.type = converted %.loc10_17, %empty_tuple [template = constants.%empty_tuple]
@@ -250,8 +248,6 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc9_17: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_18: %empty_tuple.type = converted %.loc9_17, %empty_tuple [template = constants.%empty_tuple]
@@ -321,8 +317,6 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc9_17: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple.loc9: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_18: %empty_tuple.type = converted %.loc9_17, %empty_tuple.loc9 [template = constants.%empty_tuple]
@@ -331,21 +325,15 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %b.patt.loc10_8.2: %tuple.type.1 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:     %b.param_patt: %tuple.type.1 = value_param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_14: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_16.1: %tuple.type.1 = tuple_literal (%.loc10_14)
-// CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_14, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_16.3: type = converted %.loc10_16.1, constants.%tuple.type.1 [template = constants.%tuple.type.1]
 // CHECK:STDOUT:     %b.param: %tuple.type.1 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc10_16.4: type = splice_block %.loc10_16.3 [template = constants.%tuple.type.1] {
+// CHECK:STDOUT:       %.loc10_14: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_16.1: %tuple.type.1 = tuple_literal (%.loc10_14)
+// CHECK:STDOUT:       %.loc10_16.2: type = converted %.loc10_14, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc10_16.3: type = converted %.loc10_16.1, constants.%tuple.type.1 [template = constants.%tuple.type.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc10_8.2: %tuple.type.1 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_13: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_17: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_21: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_22.1: %tuple.type.2 = tuple_literal (%.loc22_13, %.loc22_17, %.loc22_21)
-// CHECK:STDOUT:   %.loc22_22.2: type = converted %.loc22_13, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc22_22.3: type = converted %.loc22_17, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc22_22.4: type = converted %.loc22_21, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc22_22.5: type = converted %.loc22_22.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %.loc22_28: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_32: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc22_36: %empty_tuple.type = tuple_literal ()
@@ -381,12 +369,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%b.param_patt: %tuple.type.1) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc11_15: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_19: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc11_20.1: %tuple.type.3 = tuple_literal (%.loc11_15, %.loc11_19)
-// CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc11_20.3: type = converted %.loc11_19, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc11_20.4: type = converted %.loc11_20.1, constants.%tuple.type.3 [template = constants.%tuple.type.3]
 // CHECK:STDOUT:     %.loc11_26: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_30: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_31.1: %tuple.type.3 = tuple_literal (%.loc11_26, %.loc11_30)
@@ -397,18 +379,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %tuple: %tuple.type.3 = tuple_value (%.loc11_31.2, %.loc11_31.3) [template = constants.%tuple.2]
 // CHECK:STDOUT:     %.loc11_32: %tuple.type.3 = converted %.loc11_31.1, %tuple [template = constants.%tuple.2]
 // CHECK:STDOUT:     %c.loc11_9.1: %tuple.type.3 = bind_symbolic_name c, 1, %.loc11_32 [symbolic = %c.loc11_9.2 (constants.%c)]
-// CHECK:STDOUT:     %.loc13_14.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %a1.var: ref %empty_tuple.type = var a1
 // CHECK:STDOUT:     %a1: ref %empty_tuple.type = bind_name a1, %a1.var
 // CHECK:STDOUT:     %a.ref: %empty_tuple.type = name_ref a, @C.%a
 // CHECK:STDOUT:     %.loc13_18: init %empty_tuple.type = tuple_init () to %a1.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_19: init %empty_tuple.type = converted %a.ref, %.loc13_18 [template = constants.%empty_tuple]
 // CHECK:STDOUT:     assign %a1.var, %.loc13_19
-// CHECK:STDOUT:     %.loc14_15: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc14_17.1: %tuple.type.1 = tuple_literal (%.loc14_15)
-// CHECK:STDOUT:     %.loc14_17.2: type = converted %.loc14_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc14_17.3: type = converted %.loc14_17.1, constants.%tuple.type.1 [template = constants.%tuple.type.1]
 // CHECK:STDOUT:     %b1.var: ref %tuple.type.1 = var b1
 // CHECK:STDOUT:     %b1: ref %tuple.type.1 = bind_name b1, %b1.var
 // CHECK:STDOUT:     %b.ref: %tuple.type.1 = name_ref b, %b.loc10_8.2 [symbolic = %b.loc10_8.1 (constants.%b)]
@@ -419,12 +395,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc14_21.3: init %tuple.type.1 = tuple_init (%.loc14_21.2) to %b1.var [template = constants.%tuple.3]
 // CHECK:STDOUT:     %.loc14_22: init %tuple.type.1 = converted %b.ref, %.loc14_21.3 [template = constants.%tuple.3]
 // CHECK:STDOUT:     assign %b1.var, %.loc14_22
-// CHECK:STDOUT:     %.loc15_15: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_20.1: %tuple.type.3 = tuple_literal (%.loc15_15, %.loc15_19)
-// CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc15_20.3: type = converted %.loc15_19, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc15_20.4: type = converted %.loc15_20.1, constants.%tuple.type.3 [template = constants.%tuple.type.3]
 // CHECK:STDOUT:     %c1.var: ref %tuple.type.3 = var c1
 // CHECK:STDOUT:     %c1: ref %tuple.type.3 = bind_name c1, %c1.var
 // CHECK:STDOUT:     %c.ref: %tuple.type.3 = name_ref c, %c.loc11_9.1 [symbolic = %c.loc11_9.2 (constants.%c)]
@@ -439,14 +409,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc15_24.5: init %tuple.type.3 = tuple_init (%.loc15_24.2, %.loc15_24.4) to %c1.var [template = constants.%tuple.2]
 // CHECK:STDOUT:     %.loc15_25: init %tuple.type.3 = converted %c.ref, %.loc15_24.5 [template = constants.%tuple.2]
 // CHECK:STDOUT:     assign %c1.var, %.loc15_25
-// CHECK:STDOUT:     %.loc16_15: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc16_19: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc16_23: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc16_24.1: %tuple.type.2 = tuple_literal (%.loc16_15, %.loc16_19, %.loc16_23)
-// CHECK:STDOUT:     %.loc16_24.2: type = converted %.loc16_15, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc16_24.3: type = converted %.loc16_19, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc16_24.4: type = converted %.loc16_23, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc16_24.5: type = converted %.loc16_24.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %d1.var: ref %tuple.type.2 = var d1
 // CHECK:STDOUT:     %d1: ref %tuple.type.2 = bind_name d1, %d1.var
 // CHECK:STDOUT:     %d.ref: %tuple.type.2 = name_ref d, @C.%d
@@ -512,8 +474,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_12.2: type = converted %.loc14_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_name x, <error>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
@@ -571,10 +531,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc4: init type = call constants.%Int(%int_32.loc4) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed.loc4, %.loc4_11.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed, %.loc4_11.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -582,10 +542,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc5: init type = call constants.%Int(%int_32.loc5) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_14.1: type = value_of_initializer %int.make_type_signed.loc5 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc5_14.2: type = converted %int.make_type_signed.loc5, %.loc5_14.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
@@ -642,10 +598,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc4: init type = call constants.%Int(%int_32.loc4) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed.loc4 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed.loc4, %.loc4_11.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed, %.loc4_11.1 [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -657,10 +613,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc6: init type = call constants.%Int(%int_32.loc6) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_16.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc6_16.2: type = converted %int.make_type_signed.loc6, %.loc6_16.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %impl.elem0.loc6: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound.loc6: <bound method> = bound_method %int_0, %impl.elem0.loc6 [template = constants.%Convert.bound.1]
@@ -892,10 +844,10 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [template = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
-// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6: init type = call constants.%Int(%int_32.loc6) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_signed.loc6, %.loc6_6.1 [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_6.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_6.2: type = converted %int.make_type_signed, %.loc6_6.1 [template = constants.%i32]
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [template = constants.%Empty.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -909,10 +861,6 @@ impl i32 as Empty {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %.loc6_6.2 as %Empty.ref {
-// CHECK:STDOUT:   %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc10: init type = call constants.%Int(%int_32.loc10) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer %int.make_type_signed.loc10 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_14.2: type = converted %int.make_type_signed.loc10, %.loc10_14.1 [template = constants.%i32]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.9, element0 [template = constants.%Convert.14]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]

@@ -15,8 +15,6 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
@@ -47,18 +45,8 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_13.2: type = converted %int.make_type_signed.loc11, %.loc11_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.loc11: type = struct_type {.a: %i32} [template = constants.%struct_type.a.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_13.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_13.2: type = converted %int.make_type_signed.loc12, %.loc12_13.1 [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.loc12: type = struct_type {.a: %i32} [template = constants.%struct_type.a.1]
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.1 = var y
 // CHECK:STDOUT:   %y: ref %struct_type.a.1 = bind_name y, %y.var
 // CHECK:STDOUT: }

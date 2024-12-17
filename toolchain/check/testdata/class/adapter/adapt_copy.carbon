@@ -140,9 +140,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %return.patt: %AdaptCopyable = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %AdaptCopyable = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc10_9: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc10_27: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %c.param: %AdaptCopyable = value_param runtime_param0
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc10_9: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %c: %AdaptCopyable = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %AdaptCopyable = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptCopyable = return_slot %return.param
@@ -153,13 +153,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %int_32.loc15_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc15_31: init type = call constants.%Int(%int_32.loc15_31) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %int.make_type_signed.loc15_31)
-// CHECK:STDOUT:     %.loc15_34.2: type = value_of_initializer %int.make_type_signed.loc15_31 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.3: type = converted %int.make_type_signed.loc15_31, %.loc15_34.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc15_34.4: type = converted %.loc15_34.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc15_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %int_32.loc15_56: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc15_56: init type = call constants.%Int(%int_32.loc15_56) [template = constants.%i32]
@@ -168,6 +161,15 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %.loc15_59.3: type = converted %int.make_type_signed.loc15_56, %.loc15_59.2 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc15_59.4: type = converted %.loc15_59.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15_34.5: type = splice_block %.loc15_34.4 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:       %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
+// CHECK:STDOUT:       %int_32.loc15_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc15_31: init type = call constants.%Int(%int_32.loc15_31) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc15_34.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %int.make_type_signed.loc15_31)
+// CHECK:STDOUT:       %.loc15_34.2: type = value_of_initializer %int.make_type_signed.loc15_31 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc15_34.3: type = converted %int.make_type_signed.loc15_31, %.loc15_34.2 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc15_34.4: type = converted %.loc15_34.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.2 = return_slot %return.param
@@ -189,7 +191,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %AdaptCopyable) -> %AdaptCopyable {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %AdaptCopyable.ref.loc11: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:   %d.var: ref %AdaptCopyable = var d
 // CHECK:STDOUT:   %d: ref %AdaptCopyable = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: %AdaptCopyable = name_ref c, %c
@@ -201,13 +202,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InTuple(%c.param_patt: %tuple.type.2) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %AdaptCopyable.ref.loc16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc16: init type = call constants.%Int(%int_32.loc16) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc16, %int.make_type_signed.loc16)
-// CHECK:STDOUT:   %.loc16_29.2: type = value_of_initializer %int.make_type_signed.loc16 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.3: type = converted %int.make_type_signed.loc16, %.loc16_29.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc16_29.4: type = converted %.loc16_29.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %d.var: ref %tuple.type.2 = var d
 // CHECK:STDOUT:   %d: ref %tuple.type.2 = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: %tuple.type.2 = name_ref c, %c
@@ -271,9 +265,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %return.patt: %AdaptTuple = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %AdaptTuple = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptTuple.ref.loc10_9: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
 // CHECK:STDOUT:     %AdaptTuple.ref.loc10_24: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
 // CHECK:STDOUT:     %c.param: %AdaptTuple = value_param runtime_param0
+// CHECK:STDOUT:     %AdaptTuple.ref.loc10_9: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
 // CHECK:STDOUT:     %c: %AdaptTuple = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %AdaptTuple = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptTuple = return_slot %return.param
@@ -301,7 +295,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %AdaptTuple) -> %return.param_patt: %AdaptTuple {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %AdaptTuple.ref.loc15: type = name_ref AdaptTuple, file.%AdaptTuple.decl [template = constants.%AdaptTuple]
 // CHECK:STDOUT:   %d.var: ref %AdaptTuple = var d
 // CHECK:STDOUT:   %d: ref %AdaptTuple = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref: %AdaptTuple = name_ref c, %c
@@ -345,9 +338,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %return.patt: %AdaptNoncopyable = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyable = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_9: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [template = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_30: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [template = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:     %a.param: %AdaptNoncopyable = value_param runtime_param0
+// CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_9: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [template = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:     %a: %AdaptNoncopyable = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %AdaptNoncopyable = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptNoncopyable = return_slot %return.param
@@ -374,7 +367,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%a.param_patt: %AdaptNoncopyable) -> %return.param_patt: %AdaptNoncopyable {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %AdaptNoncopyable.ref.loc17: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [template = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:   %b.var: ref %AdaptNoncopyable = var b
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyable = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyable = name_ref a, %a
@@ -426,9 +418,9 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %return.patt: %AdaptNoncopyableIndirect = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %AdaptNoncopyableIndirect = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_9: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [template = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_38: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [template = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:     %a.param: %AdaptNoncopyableIndirect = value_param runtime_param0
+// CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_9: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [template = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:     %a: %AdaptNoncopyableIndirect = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %AdaptNoncopyableIndirect = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %AdaptNoncopyableIndirect = return_slot %return.param
@@ -465,7 +457,6 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H(%a.param_patt: %AdaptNoncopyableIndirect) -> %return.param_patt: %AdaptNoncopyableIndirect {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %AdaptNoncopyableIndirect.ref.loc17: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [template = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:   %b.var: ref %AdaptNoncopyableIndirect = var b
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyableIndirect = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyableIndirect = name_ref a, %a

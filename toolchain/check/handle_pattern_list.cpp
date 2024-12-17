@@ -11,11 +11,17 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
+  context.BeginSubpattern();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
+  if (context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
+    // End the subpattern started by a trailing comma, or the opening delimiter
+    // of an empty list.
+    context.EndSubpatternAsEmpty();
+  }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
@@ -26,20 +32,32 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
+static auto HandleTuplePatternStart(Context& context, Parse::NodeId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
+  context.BeginSubpattern();
   return true;
+}
+
+auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
+    -> bool {
+  return HandleTuplePatternStart(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
   context.param_and_arg_refs_stack().ApplyComma();
+  context.BeginSubpattern();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
+  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart)) {
+    // End the subpattern started by a trailing comma, or the opening delimiter
+    // of an empty list.
+    context.EndSubpatternAsEmpty();
+  }
   // Note the Start node remains on the stack, where the param list handler can
   // make use of it.
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(

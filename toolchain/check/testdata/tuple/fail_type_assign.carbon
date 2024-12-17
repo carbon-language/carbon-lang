@@ -42,12 +42,6 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_14.1: %tuple.type.1 = tuple_literal (%int.make_type_signed)
-// CHECK:STDOUT:   %.loc17_14.2: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_14.3: type = converted %int.make_type_signed, %.loc17_14.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_14.4: type = converted %.loc17_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %x.var: ref %tuple.type.2 = var x
 // CHECK:STDOUT:   %x: ref %tuple.type.2 = bind_name x, %x.var
 // CHECK:STDOUT: }

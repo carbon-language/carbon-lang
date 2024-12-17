@@ -373,9 +373,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
+  context.PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
-  context.AddCurrentCodeBlockToFunction();
 
   CheckFunctionDefinitionSignature(context, function);
 
@@ -436,8 +436,11 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
 
-  // If this is a generic function, collect information about the definition.
   auto& function = context.functions().Get(function_id);
+  auto region = context.PopRegion(SemIR::InstId::Invalid);
+  function.body_block_ids = std::move(region.block_ids);
+
+  // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
 
   return true;

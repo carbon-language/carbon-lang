@@ -77,22 +77,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc14_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14_12: init type = call constants.%Int(%int_32.loc14_12) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14_17: init type = call constants.%Int(%int_32.loc14_17) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14_22: init type = call constants.%Int(%int_32.loc14_22) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc14_12, %int.make_type_signed.loc14_17, %int.make_type_signed.loc14_22)
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc14_25.2: type = value_of_initializer %int.make_type_signed.loc14_12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.3: type = converted %int.make_type_signed.loc14_12, %.loc14_25.2 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.4: type = value_of_initializer %int.make_type_signed.loc14_17 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.5: type = converted %int.make_type_signed.loc14_17, %.loc14_25.4 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.6: type = value_of_initializer %int.make_type_signed.loc14_22 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.7: type = converted %int.make_type_signed.loc14_22, %.loc14_25.6 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.8: type = converted %.loc14_25.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %array_type: type = array_type %int_2, %tuple.type.2 [template = constants.%array_type]
 // CHECK:STDOUT:   %v.var: ref %array_type = var v
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]

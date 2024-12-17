@@ -16,13 +16,10 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT: --- index_not_literal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (bool, %i32) [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %int_34.1: Core.IntLiteral = int_value 34 [template]
@@ -81,32 +78,12 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %bool.make_type.loc11: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_18.1: %tuple.type.1 = tuple_literal (%bool.make_type.loc11, %int.make_type_signed.loc11)
-// CHECK:STDOUT:   %.loc11_18.2: type = value_of_initializer %bool.make_type.loc11 [template = bool]
-// CHECK:STDOUT:   %.loc11_18.3: type = converted %bool.make_type.loc11, %.loc11_18.2 [template = bool]
-// CHECK:STDOUT:   %.loc11_18.4: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_18.5: type = converted %int.make_type_signed.loc11, %.loc11_18.4 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_18.6: type = converted %.loc11_18.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %a.var: ref %tuple.type.2 = var a
 // CHECK:STDOUT:   %a: ref %tuple.type.2 = bind_name a, %a.var
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_signed.loc12, %.loc12_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %bool.make_type.loc13: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %bool.make_type.loc13 [template = bool]
-// CHECK:STDOUT:   %.loc13_8.2: type = converted %bool.make_type.loc13, %.loc13_8.1 [template = bool]
 // CHECK:STDOUT:   %c.var: ref bool = var c
 // CHECK:STDOUT:   %c: ref bool = bind_name c, %c.var
-// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int_32.loc14) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_8.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_8.2: type = converted %int.make_type_signed.loc14, %.loc14_8.1 [template = constants.%i32]
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }

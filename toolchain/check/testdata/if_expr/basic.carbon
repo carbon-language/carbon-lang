@@ -64,26 +64,32 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param3
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc11_9.2: type = converted %bool.make_type, %.loc11_9.1 [template = bool]
-// CHECK:STDOUT:     %int_32.loc11_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc11_18: init type = call constants.%Int(%int_32.loc11_18) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_18.1: type = value_of_initializer %int.make_type_signed.loc11_18 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_18.2: type = converted %int.make_type_signed.loc11_18, %.loc11_18.1 [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc11_26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc11_26: init type = call constants.%Int(%int_32.loc11_26) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_26.1: type = value_of_initializer %int.make_type_signed.loc11_26 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_26.2: type = converted %int.make_type_signed.loc11_26, %.loc11_26.1 [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc11_34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc11_34: init type = call constants.%Int(%int_32.loc11_34) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_34.1: type = value_of_initializer %int.make_type_signed.loc11_34 [template = constants.%i32]
 // CHECK:STDOUT:     %.loc11_34.2: type = converted %int.make_type_signed.loc11_34, %.loc11_34.1 [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11_9.3: type = splice_block %.loc11_9.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc11_9.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc11_9.2: type = converted %bool.make_type, %.loc11_9.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc11_18.3: type = splice_block %.loc11_18.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc11_18: init type = call constants.%Int(%int_32.loc11_18) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_18.1: type = value_of_initializer %int.make_type_signed.loc11_18 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_18.2: type = converted %int.make_type_signed.loc11_18, %.loc11_18.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param runtime_param2
+// CHECK:STDOUT:     %.loc11_26.3: type = splice_block %.loc11_26.2 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %int.make_type_signed.loc11_26: init type = call constants.%Int(%int_32.loc11_26) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_26.1: type = value_of_initializer %int.make_type_signed.loc11_26 [template = constants.%i32]
+// CHECK:STDOUT:       %.loc11_26.2: type = converted %int.make_type_signed.loc11_26, %.loc11_26.1 [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %m: %i32 = bind_name m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -92,12 +98,6 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool, %n.param_patt: %i32, %m.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc12_11.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_11.2: type = converted %int.make_type_signed.loc12, %.loc12_11.1 [template = constants.%i32]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %x.var: ref %array_type = var x
 // CHECK:STDOUT:   %x: ref %array_type = bind_name x, %x.var
 // CHECK:STDOUT:   %int_0.loc12_22: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]

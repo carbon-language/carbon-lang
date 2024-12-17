@@ -92,10 +92,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_10.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_10.2: type = converted %int.make_type_signed, %.loc14_10.1 [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
@@ -103,8 +99,8 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_3, %impl.elem0 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_3) [template = constants.%int_3.2]
-// CHECK:STDOUT:   %.loc14_17: init %i32 = converted %int_3, %int.convert_checked [template = constants.%int_3.2]
-// CHECK:STDOUT:   assign %a.var, %.loc14_17
+// CHECK:STDOUT:   %.loc14: init %i32 = converted %int_3, %int.convert_checked [template = constants.%int_3.2]
+// CHECK:STDOUT:   assign %a.var, %.loc14
 // CHECK:STDOUT:   %a.ref.loc19_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc19_10: ref %i32 = name_ref a, %a

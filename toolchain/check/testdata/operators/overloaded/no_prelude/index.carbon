@@ -191,16 +191,18 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:       %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc6_15.1: @At.1.%IndexWith.type (%IndexWith.type.2) = specific_constant @IndexWith.%Self.1, @IndexWith(constants.%SubscriptType) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.ref: @At.1.%IndexWith.type (%IndexWith.type.2) = name_ref Self, %.loc6_15.1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc6_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc6_15.2: type = converted %Self.ref, %Self.as_type.loc6_15.2 [symbolic = %Self.as_type.loc6_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc5_26.1 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:       %.loc6_51.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc6_51.2: type = converted %.loc6_51.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %self.param: @At.1.%Self.as_type.loc6_15.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc6_15.3: type = splice_block %.loc6_15.2 [symbolic = %Self.as_type.loc6_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc6_15.1: @At.1.%IndexWith.type (%IndexWith.type.2) = specific_constant @IndexWith.%Self.1, @IndexWith(constants.%SubscriptType) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @At.1.%IndexWith.type (%IndexWith.type.2) = name_ref Self, %.loc6_15.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc6_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc6_15.2: type = converted %Self.ref, %Self.as_type.loc6_15.2 [symbolic = %Self.as_type.loc6_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @At.1.%Self.as_type.loc6_15.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:       %subscript.param: @At.1.%SubscriptType (%SubscriptType) = value_param runtime_param1
+// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc5_26.1 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:       %subscript: @At.1.%SubscriptType (%SubscriptType) = bind_name subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
@@ -223,14 +225,16 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc9_7.2 [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_33.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_33.2: type = converted %.loc10_33.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc10_40.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_40.2: type = converted %.loc10_40.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%.loc9_7.2 [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %empty_tuple.type = value_param runtime_param1
+// CHECK:STDOUT:     %.loc10_33.3: type = splice_block %.loc10_33.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc10_33.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_33.2: type = converted %.loc10_33.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: %empty_tuple.type = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param

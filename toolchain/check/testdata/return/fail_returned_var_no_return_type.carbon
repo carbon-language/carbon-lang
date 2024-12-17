@@ -45,10 +45,8 @@ fn Procedure() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_20.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc18_20.2: type = converted %.loc18_20.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
-// CHECK:STDOUT:   %.loc18_25: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

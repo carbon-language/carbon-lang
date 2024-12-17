@@ -48,7 +48,5 @@ class A {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
