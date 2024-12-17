@@ -1619,9 +1619,8 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                         ImplAccessFunctionBeforeComplete);
             return SemIR::ErrorInst::SingletonConstantId;
           }
-          auto const_id = eval_context.GetConstantValue(element);
-          return GetConstantInSpecific(eval_context.sem_ir(),
-                                       witness->specific_id, const_id);
+          return GetConstantValueInSpecific(eval_context.sem_ir(),
+                                            witness->specific_id, element);
         } else {
           CARBON_CHECK(phase != Phase::Template,
                        "Failed to evaluate template constant {0} arg0: {1}",
