@@ -56,10 +56,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %MyInt32: type = class_type @MyInt32 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %MyAdd.type: type = fn_type @MyAdd [template]
 // CHECK:STDOUT:   %MyAdd: %MyAdd.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
@@ -154,9 +154,9 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [template = constants.%MyIntLiteral]
 // CHECK:STDOUT:   %.loc13_16.1: %MyIntLiteral = as_compatible %int_32 [template = constants.%int_32]
 // CHECK:STDOUT:   %.loc13_16.2: %MyIntLiteral = converted %int_32, %.loc13_16.1 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc13_16.2) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_32.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_32.2: type = converted %int.make_type_signed, %.loc13_32.1 [template = constants.%i32]
+// CHECK:STDOUT:   %int.make_type_signed: init type = call %Int.ref(%.loc13_16.2) [template = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc13_32.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32.builtin]
+// CHECK:STDOUT:   %.loc13_32.2: type = converted %int.make_type_signed, %.loc13_32.1 [template = constants.%i32.builtin]
 // CHECK:STDOUT:   adapt_decl %.loc13_32.2 [template]
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %a.patt: %MyIntLiteral = binding_pattern a
@@ -171,7 +171,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.param.loc15: ref %MyInt32 = out_param runtime_param1
 // CHECK:STDOUT:     %return.loc15: ref %MyInt32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyInt32

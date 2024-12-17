@@ -187,20 +187,14 @@ class C(T:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@G.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_member_inline.carbon
 // CHECK:STDOUT:
@@ -291,13 +285,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc4_9.2) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(%T.loc4_9.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(@F.%T) {}
 // CHECK:STDOUT:

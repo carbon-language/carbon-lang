@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
 
@@ -203,6 +204,11 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       }
       case CARBON_KIND(ClassType inst): {
         const auto& class_info = sem_ir.classes().Get(inst.class_id);
+        if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir, inst);
+            literal_info.is_valid()) {
+          literal_info.PrintLiteral(sem_ir, out);
+          break;
+        }
         step_stack.PushEntityName(class_info, inst.specific_id);
         break;
       }
@@ -321,12 +327,14 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         break;
       }
       case CARBON_KIND(IntType inst): {
+        out << "<builtin ";
+        step_stack.PushString(">");
         if (auto width_value =
                 sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
           out << (inst.int_kind.is_signed() ? "i" : "u");
           sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
         } else {
-          out << (inst.int_kind.is_signed() ? "Core.Int(" : "Core.UInt(");
+          out << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
           step_stack.PushString(")");
           step_stack.PushInstId(inst.bit_width_id);
         }

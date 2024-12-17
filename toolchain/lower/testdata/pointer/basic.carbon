@@ -29,10 +29,16 @@ fn F() -> i32 {
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !10
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !11
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main(ptr %n.var), !dbg !12
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

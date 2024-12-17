@@ -54,7 +54,7 @@ class CompileBenchmark {
 };
 
 // An enumerator used to select compilation phases to benchmark.
-enum class Phase {
+enum class Phase : uint8_t {
   Lex,
   Parse,
   Check,

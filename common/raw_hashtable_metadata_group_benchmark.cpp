@@ -189,6 +189,7 @@ const auto bench_metadata = BuildBenchMetadata<Kind>();
 // group.
 template <BenchKind Kind, typename GroupT = MetadataGroup>
 static void BM_LoadMatch(benchmark::State& s) {
+  // NOLINTNEXTLINE(google-readability-casting): Same as on `bench_metadata`.
   BenchMetadata bm = bench_metadata<Kind>[0];
 
   // We want to make the index used by the next iteration of the benchmark have

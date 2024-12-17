@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/name_scope.h"
 
+#include "toolchain/sem_ir/file.h"
+
 namespace Carbon::SemIR {
 
 auto NameScope::Print(llvm::raw_ostream& out) const -> void {
@@ -66,6 +68,27 @@ auto NameScope::AddPoison(NameId name_id) -> void {
   names_.push_back({.name_id = name_id,
                     .inst_id = InstId::PoisonedName,
                     .access_kind = AccessKind::Public});
+}
+
+auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
+    -> std::pair<InstId, std::optional<Inst>> {
+  if (!scope_id.is_valid()) {
+    return {InstId::Invalid, std::nullopt};
+  }
+  auto inst_id = Get(scope_id).inst_id();
+  if (!inst_id.is_valid()) {
+    return {InstId::Invalid, std::nullopt};
+  }
+  return {inst_id, file_->insts().Get(inst_id)};
+}
+
+auto NameScopeStore::IsCorePackage(NameScopeId scope_id) const -> bool {
+  if (!IsPackage(scope_id)) {
+    return false;
+  }
+  auto scope_name =
+      file_->names().GetAsStringIfIdentifier(Get(scope_id).name_id());
+  return scope_name == "Core";
 }
 
 }  // namespace Carbon::SemIR

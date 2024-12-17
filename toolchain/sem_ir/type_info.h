@@ -147,6 +147,42 @@ struct ReturnTypeInfo {
   InitRepr init_repr;
 };
 
+// Information about the numeric type literal that corresponds to a type.
+struct NumericTypeLiteralInfo {
+  // The kind of a numeric type literal, as determined by the letter that
+  // prefixes the bit width.
+  enum Kind : char {
+    None = 0,
+    Int = 'i',
+    UInt = 'u',
+    Float = 'f',
+  };
+
+  static const NumericTypeLiteralInfo Invalid;
+
+  // Returns the numeric type literal that would evaluate to this class type, if
+  // any.
+  static auto ForType(const File& file, ClassType class_type)
+      -> NumericTypeLiteralInfo;
+
+  // Prints the numeric type literal that corresponds to this type.
+  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
+
+  // Gets a string containing the literal.
+  auto GetLiteralAsString(const File& file) const -> std::string;
+
+  // Returns whether this is a valid numeric type literal.
+  auto is_valid() const -> bool { return kind != None; }
+
+  // The kind of this type literal.
+  Kind kind;
+  // The bit width of this type literal.
+  IntId bit_width_id;
+};
+
+inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
+    .kind = None, .bit_width_id = IntId::Invalid};
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_TYPE_INFO_H_

@@ -2,5 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+*.vsix
+/dist
 /node_modules
-/out

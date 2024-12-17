@@ -1,39 +1,45 @@
+# Carbon Language
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# VS Code Extension for Carbon
+This extension provides support for the
+[Carbon Language](https://github.com/carbon-language/carbon-lang).
 
-Currently only contains basic syntax highlighting.
+This extension is currently experimental, and being developed alongside Carbon.
 
-## Installing
+## Quickstart
 
-1. Install Node JS.
-2. To generate VS Code extension file (.vsix).
+1. Download and install a `carbon`
+   [release](https://github.com/carbon-language/carbon-lang/releases).
+    - By default, the extension will look for `carbon` under `./bazel-bin`. This
+      is for developers actively working on Carbon and running VS Code inside a
+      [carbon-lang](https://github.com/carbon-language/carbon-lang) clone.
+2. Install the
+   [Carbon Language extension](https://marketplace.visualstudio.com/items?itemName=carbon-lang.carbon-vscode).
+3. Configure the installed path to `carbon`.
 
-```shell
-npm install && npm run package
+## Configuration
+
+The configuration is under `carbon-vscode.*`. At present, the only configuration
+is the path to the `carbon` binary. This looks like:
+
+```
+"carbon.carbonPath": "/path/to/carbon"
 ```
 
-3. Install the extension
+## Communication
 
-```shell
-code --install-extension out/carbon.vsix
-```
+See Carbon's
+[collaboration systems](https://github.com/carbon-language/carbon-lang/blob/trunk/CONTRIBUTING.md#collaboration-systems).
+We're most active on [Discord](https://discord.gg/ZjVdShJDAs) and have a
+#editor-integrations channel. We'll also respond to questions on
+[GitHub Discussions](https://github.com/carbon-language/carbon-lang/discussions).
 
-## Development
+## Documentation
 
-1. `bazel build //toolchain` in project root.
-2. Open utils/vscode folder in VS Code.
-3. Launch the extension using Run command (F5).
-4. In the opened window, open the carbon-lang repository as folder.
-5. Open a carbon file.
-6. Open code outline (Ctrl+Shift+O).
-
-To update dependencies:
-
-```shell
-npm update
-```
+Carbon currently only has project-level documentation. See the
+[GitHub repository](https://github.com/carbon-language/carbon-lang).

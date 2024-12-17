@@ -103,9 +103,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %i32} [template]
@@ -148,7 +146,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -172,9 +170,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc11_11.2: type = converted %int.make_type_signed, %.loc11_11.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -183,9 +179,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %return.param_patt: %struct_type.a.1 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_16.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc13_16.2: type = converted %int.make_type_signed, %.loc13_16.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a.1]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.1 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.1 = return_slot %return.param
@@ -200,9 +194,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc95: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc95: init type = call constants.%Int(%int_32.loc95) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc95_26.1: type = value_of_initializer %int.make_type_signed.loc95 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc95_26.2: type = converted %int.make_type_signed.loc95, %.loc95_26.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc95: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %param.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %param: %i32 = bind_name param, %param.param
 // CHECK:STDOUT:   }
@@ -268,12 +260,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32.loc79: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc79: init type = call constants.%Int(%int_32.loc79) [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc79: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %addr.loc79: %ptr.8 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   %int_32.loc84: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc84: init type = call constants.%Int(%int_32.loc84) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc84_5.1: type = value_of_initializer %int.make_type_signed.loc84 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc84_5.2: type = converted %int.make_type_signed.loc84, %.loc84_5.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc84: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %const: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [template = constants.%ptr.9]
 // CHECK:STDOUT:   %addr.loc84: %ptr.8 = addr_of <error> [template = <error>]
@@ -296,9 +286,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32.loc99: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc99: init type = call constants.%Int(%int_32.loc99) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc99_22.1: type = value_of_initializer %int.make_type_signed.loc99 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc99_22.2: type = converted %int.make_type_signed.loc99, %.loc99_22.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc99: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.7]
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.7 = var param_addr
 // CHECK:STDOUT:   %param_addr: ref %ptr.7 = bind_name param_addr, %param_addr.var

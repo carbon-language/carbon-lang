@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -388,7 +389,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
           (sem_ir_->names().GetIRBaseName(name_id).str() + suffix).str());
     };
     auto add_int_or_float_type_name = [&](char type_literal_prefix,
-                                          SemIR::InstId bit_width_id) {
+                                          SemIR::InstId bit_width_id,
+                                          llvm::StringRef suffix = "") {
       std::string name;
       llvm::raw_string_ostream out(name);
       out << type_literal_prefix;
@@ -397,6 +399,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       } else {
         out << "N";
       }
+      out << suffix;
       add_inst_name(std::move(name));
     };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
@@ -510,6 +513,11 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(ClassType inst): {
+        if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
+            literal_info.is_valid()) {
+          add_inst_name(literal_info.GetLiteralAsString(*sem_ir_));
+          break;
+        }
         add_inst_name_id(sem_ir_->classes().Get(inst.class_id).name_id);
         continue;
       }
@@ -658,7 +666,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(IntType inst): {
         add_int_or_float_type_name(inst.int_kind == IntKind::Signed ? 'i' : 'u',
-                                   inst.bit_width_id);
+                                   inst.bit_width_id, ".builtin");
         continue;
       }
       case CARBON_KIND(IntValue inst): {
