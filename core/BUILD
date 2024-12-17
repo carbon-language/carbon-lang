@@ -5,9 +5,10 @@
 load("//bazel/manifest:defs.bzl", "manifest")
 
 # Raw prelude files.
+# TODO: This includes all of Core, not just the prelude.
 filegroup(
     name = "prelude_files",
-    srcs = ["prelude.carbon"] + glob(["prelude/**/*.carbon"]),
+    srcs = glob(["**/*.carbon"]),
     visibility = ["//visibility:public"],
 )
 

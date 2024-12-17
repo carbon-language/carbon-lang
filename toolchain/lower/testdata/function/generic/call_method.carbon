@@ -28,20 +28,29 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: define i32 @_CCallF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc18_16, i64 0, i1 false), !dbg !8
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc20_14 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.40(ptr %c.var, i32 %.loc20_14), !dbg !12
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc20_14 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.40(ptr %c.var, i32 %.loc20_14), !dbg !11
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CF.C.Main.40(ptr, i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -55,8 +64,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 7, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 20, column: 14, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 10, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 14, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 20, column: 10, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 3, scope: !4)

@@ -285,20 +285,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc5 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T.loc6) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(@G.%T.loc6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc6 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
@@ -455,11 +449,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(@F.%T.loc6, @F.%N.loc6) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %N.loc5_11.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc5_11.2 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @B(@F.%T.loc6, @F.%N.loc6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc6 => constants.%T
@@ -467,16 +457,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B => constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(%T, %N.loc5_11.2) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %N.loc5_11.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc5_11.2 => constants.%N
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @B(%T, %N.loc5_11.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%T.loc4_9.2) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @A(%T.loc4_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_not_generic_vs_generic.carbon
 // CHECK:STDOUT:
@@ -616,10 +599,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooFew(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_too_many_args.carbon
 // CHECK:STDOUT:
@@ -712,10 +692,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TooMany(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc15_12.2 => constants.%T
@@ -814,10 +791,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WrongType(constants.%T.1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T.1
-// CHECK:STDOUT:   %T.patt.loc4_15.2 => constants.%T.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.2) {
 // CHECK:STDOUT:   %T.loc14_12.2 => constants.%T.2

@@ -120,13 +120,13 @@ class Tree : public Printable<Tree> {
   // full expected structure of the grammar.
   auto node_has_error(NodeId n) const -> bool {
     CARBON_DCHECK(n.is_valid());
-    return node_impls_[n.index].has_error;
+    return node_impls_[n.index].has_error();
   }
 
   // Returns the kind of the given parse tree node.
   auto node_kind(NodeId n) const -> NodeKind {
     CARBON_DCHECK(n.is_valid());
-    return node_impls_[n.index].kind;
+    return node_impls_[n.index].kind();
   }
 
   // Returns the token the given parse tree node models.
@@ -201,12 +201,24 @@ class Tree : public Printable<Tree> {
 
   // The in-memory representation of data used for a particular node in the
   // tree.
-  struct NodeImpl {
-    // The kind of this node. Note that this is only a single byte.
-    NodeKind kind;
+  class NodeImpl {
+   public:
+    explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
+        : kind_(kind), has_error_(has_error), token_index_(token.index) {
+      CARBON_DCHECK(token.index >= 0, "Unexpected token for node: {0}", token);
+    }
 
-    // We have 3 bytes of padding here that we can pack flags or other compact
-    // data into.
+    auto kind() const -> NodeKind { return kind_; }
+    auto set_kind(NodeKind kind) -> void { kind_ = kind; }
+    auto has_error() const -> bool { return has_error_; }
+    auto token() const -> Lex::TokenIndex {
+      return Lex::TokenIndex(token_index_);
+    }
+
+   private:
+    // The kind of this node. Note that this is only a single byte.
+    NodeKind kind_;
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
 
     // Whether this node is or contains a parse error.
     //
@@ -221,20 +233,20 @@ class Tree : public Printable<Tree> {
     // optional (and will depend on the particular parse implementation
     // strategy). The goal is that you can rely on grammar-based structural
     // invariants *until* you encounter a node with this set.
-    bool has_error;
+    bool has_error_ : 1;
 
     // The token root of this node.
-    Lex::TokenIndex token;
+    unsigned token_index_ : Lex::TokenIndex::Bits;
   };
 
-  static_assert(sizeof(NodeImpl) == 8,
+  static_assert(sizeof(NodeImpl) == 4,
                 "Unexpected size of node implementation!");
 
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
   // `Verify` testable.
   auto SetNodeKindForTesting(NodeId node_id, NodeKind kind) -> void {
-    node_impls_[node_id.index].kind = kind;
+    node_impls_[node_id.index].set_kind(kind);
   }
 
   // Depth-first postorder sequence of node implementation data.

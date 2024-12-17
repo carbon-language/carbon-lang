@@ -107,7 +107,7 @@ class NameScope : public Printable<NameScope> {
   auto AddImportIRScope(
       const std::pair<SemIR::ImportIRId, SemIR::NameScopeId>& import_ir_scope)
       -> void {
-    return import_ir_scopes_.push_back(import_ir_scope);
+    import_ir_scopes_.push_back(import_ir_scope);
   }
 
  private:

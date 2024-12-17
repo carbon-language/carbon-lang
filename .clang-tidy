@@ -29,12 +29,15 @@ Checks:
   # Disabled due to the implied style choices.
   - '-modernize-return-braced-init-list'
   - '-modernize-use-default-member-init'
+  - '-modernize-use-integer-sign-comparison'
   - '-modernize-use-emplace'
+  - '-readability-avoid-nested-conditional-operator'
   - '-readability-convert-member-functions-to-static'
   - '-readability-else-after-return'
   - '-readability-identifier-length'
   - '-readability-implicit-bool-conversion'
   - '-readability-make-member-function-const'
+  - '-readability-math-missing-parentheses'
   - '-readability-static-definition-in-anonymous-namespace'
   - '-readability-use-anyofallof'
 

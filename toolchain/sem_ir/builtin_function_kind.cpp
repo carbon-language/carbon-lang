@@ -63,7 +63,8 @@ struct BuiltinType {
   }
 };
 
-// Constraint that the function has no return.
+// Constraint that a type is `()`, used as the return type of builtin functions
+// with no return value.
 struct NoReturn {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
                     TypeId type_id) -> bool {
@@ -194,9 +195,17 @@ using FloatT = TypeParam<0, AnyFloat>;
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
-// Prints an argument.
+// Prints a single character.
+constexpr BuiltinInfo PrintChar = {"print.char",
+                                   ValidateSignature<auto(AnyInt)->AnyInt>};
+
+// Prints an integer.
 constexpr BuiltinInfo PrintInt = {"print.int",
                                   ValidateSignature<auto(AnyInt)->NoReturn>};
+
+// Reads a single character from stdin.
+constexpr BuiltinInfo ReadChar = {"read.char",
+                                  ValidateSignature<auto()->AnyInt>};
 
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",

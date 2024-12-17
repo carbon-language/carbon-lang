@@ -130,7 +130,7 @@ class ToolchainFileTest : public FileTestBase {
           R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
       RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
     } else {
-      return FileTestBase::DoExtraCheckReplacements(check_line);
+      FileTestBase::DoExtraCheckReplacements(check_line);
     }
   }
 
