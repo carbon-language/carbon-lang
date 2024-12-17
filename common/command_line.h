@@ -314,8 +314,6 @@ class ArgBuilder {
   auto arg() -> Arg* { return arg_; }
 
  private:
-  // TODO: Style: this should be private with a mutator.
-  // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
   Arg* arg_;
 };
 
