@@ -441,6 +441,32 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         break;
       }
+      case CARBON_KIND(StructValue inst): {
+        auto field_values = sem_ir.inst_blocks().Get(inst.elements_id);
+        if (field_values.empty()) {
+          out << "{}";
+          break;
+        }
+        auto struct_type = sem_ir.types().GetAs<StructType>(inst.type_id);
+        auto fields = sem_ir.struct_type_fields().Get(struct_type.fields_id);
+        if (fields.size() != field_values.size()) {
+          out << "{<struct value type length mismatch>}";
+          break;
+        }
+        out << "{";
+        step_stack.PushString("}");
+        for (auto index : llvm::reverse(llvm::seq(fields.size()))) {
+          SemIR::InstId value_inst_id = field_values[index];
+          step_stack.PushInstId(value_inst_id);
+          step_stack.PushString(" = ");
+          step_stack.PushNameId(fields[index].name_id);
+          step_stack.PushString(".");
+          if (index > 0) {
+            step_stack.PushString(", ");
+          }
+        }
+        break;
+      }
       case CARBON_KIND(TupleType inst): {
         auto refs = sem_ir.type_blocks().Get(inst.elements_id);
         if (refs.empty()) {
@@ -544,7 +570,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case StructAccess::Kind:
       case StructInit::Kind:
       case StructLiteral::Kind:
-      case StructValue::Kind:
       case SymbolicBindingPattern::Kind:
       case Temporary::Kind:
       case TemporaryStorage::Kind:
