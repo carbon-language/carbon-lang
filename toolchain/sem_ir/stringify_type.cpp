@@ -37,7 +37,7 @@ class StepStack {
     Name,
   };
 
-  // An individual step in the stack.
+  // An individual step in the stack, which prints some component of a type name.
   struct Step {
     // The kind of step to perform.
     Kind kind;
