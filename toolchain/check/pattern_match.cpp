@@ -35,7 +35,7 @@ static auto GetPrettyName(Context& context, ParamPattern param_pattern)
 namespace {
 
 // Selects between the different kinds of pattern matching.
-enum class MatchKind {
+enum class MatchKind : uint8_t {
   // Caller pattern matching occurs on the caller side of a function call, and
   // is responsible for matching the argument expression against the portion
   // of the pattern above the ParamPattern insts.

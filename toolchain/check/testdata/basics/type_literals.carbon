@@ -33,7 +33,10 @@ var test_i1: i1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_i15: i15;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: var test_i1000000000: i1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -74,7 +77,10 @@ var test_u1: u1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_u15: u15;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:23: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: var test_u1000000000: u1000000000;
+// CHECK:STDERR:                       ^~~~~~~~~~~
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -123,16 +129,16 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
-// CHECK:STDOUT:   %i8: type = int_type signed, %int_8 [template]
+// CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [template]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %i16: type = int_type signed, %int_16 [template]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [template]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %i64: type = int_type signed, %int_64 [template]
+// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -165,16 +171,16 @@ var test_f128: f128;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
-// CHECK:STDOUT:   %u8: type = int_type unsigned, %int_8 [template]
+// CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [template]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template]
-// CHECK:STDOUT:   %u16: type = int_type unsigned, %int_16 [template]
+// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(%int_16) [template]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %u64: type = int_type unsigned, %int_64 [template]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .UInt = %import_ref
+// CHECK:STDOUT:     .UInt = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

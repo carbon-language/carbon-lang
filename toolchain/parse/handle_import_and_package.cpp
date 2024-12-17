@@ -15,8 +15,8 @@ namespace Carbon::Parse {
 // Provides common error exiting logic that skips to the semi, if present.
 static auto OnParseError(Context& context, Context::StateStackEntry state,
                          NodeKind declaration) -> void {
-  return context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
-                         /*has_error=*/true);
+  context.AddNode(declaration, context.SkipPastLikelyEnd(state.token),
+                  /*has_error=*/true);
 }
 
 // Determines whether the specified modifier appears within the introducer of

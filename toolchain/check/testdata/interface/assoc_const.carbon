@@ -21,14 +21,14 @@ interface I {
 // CHECK:STDOUT:   %assoc_type.1: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type.1 = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %I.type, %i32 [template]
 // CHECK:STDOUT:   %assoc1: %assoc_type.2 = assoc_entity element1, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

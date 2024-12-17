@@ -32,7 +32,6 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       filename_(std::move(filename)),
       impls_(*this),
       type_blocks_(allocator_),
-      name_scopes_(&insts_),
       constant_values_(ConstantId::NotConstant),
       inst_blocks_(allocator_),
       constants_(this) {

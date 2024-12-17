@@ -118,8 +118,5 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Simple.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc15_14.2) {
-// CHECK:STDOUT:   %T.loc15_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_14.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%T.loc15_14.2) {}
 // CHECK:STDOUT:

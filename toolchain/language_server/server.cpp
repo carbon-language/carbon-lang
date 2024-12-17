@@ -30,13 +30,13 @@ Server::Server(std::FILE* input_stream, llvm::raw_ostream& output_stream)
 
 auto Server::Run() -> ErrorOr<Success> {
   llvm::Error err = transport_->loop(*this);
-  if (err.success()) {
-    return Success();
-  } else {
+  if (err) {
     std::string str;
     llvm::raw_string_ostream out(str);
     out << err;
     return Error(str);
+  } else {
+    return Success();
   }
 }
 

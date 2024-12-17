@@ -245,10 +245,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc8_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_19.2 => constants.%T
@@ -264,10 +261,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.1
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C
@@ -466,10 +460,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %T.patt.loc8_16.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Function(@CallGeneric.%T.loc8_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericPtr(constants.%T) {
 // CHECK:STDOUT:   %T.loc12_19.2 => constants.%T
@@ -485,10 +476,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.1
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Function(@CallGenericPtr.%ptr.loc12_33.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%C

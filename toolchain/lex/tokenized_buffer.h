@@ -85,10 +85,6 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 // `HasError` returning true.
 class TokenizedBuffer : public Printable<TokenizedBuffer> {
  public:
-  // The maximum number of tokens that can be stored in the buffer, including
-  // the FileStart and FileEnd tokens.
-  static constexpr int MaxTokens = 1 << 23;
-
   // A comment, which can be a block of lines.
   //
   // This is the API version of `CommentData`.
@@ -281,7 +277,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   class TokenInfo {
    public:
     // The kind for this token.
-    auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
+    auto kind() const -> TokenKind { return kind_; }
 
     // Whether this token is preceded by whitespace. We only store the preceding
     // state, and look at the next token to check for trailing whitespace.
@@ -364,6 +360,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     // Make sure we have enough payload bits to represent token-associated IDs.
     static_assert(PayloadBits >= IntId::TokenIdBits);
+    static_assert(PayloadBits >= TokenIndex::Bits);
 
     // Constructor for a TokenKind that carries no payload, or where the payload
     // will be set later.
@@ -397,13 +394,12 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Payload values are typically ID types for which we create at most one per
     // token, so we ensure that `token_payload_` is large enough to fit any
     // token index. Stores to this field may overflow, but we produce an error
-    // in `Lexer::Finalize` if the file has more than `MaxTokens` tokens, so
-    // this value never overflows if lexing succeeds.
-    TokenKind::RawEnumType kind_ : sizeof(TokenKind) * 8;
+    // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
+    // so this value never overflows if lexing succeeds.
+    TokenKind kind_;
+    static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
     bool has_leading_space_ : 1;
     unsigned token_payload_ : PayloadBits;
-    static_assert(MaxTokens <= 1 << PayloadBits,
-                  "Not enough payload bits to store a token index");
 
     // Separate storage for the byte offset, this is hot while lexing but then
     // generally cold.

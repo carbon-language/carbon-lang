@@ -184,15 +184,9 @@ class C {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {
-// CHECK:STDOUT:   %T.loc11_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @GenericInterface(%T.loc11_28.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc19_23.2) {
-// CHECK:STDOUT:   %T.loc11_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_28.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @GenericInterface(@impl.%T.loc19_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_23.2 => constants.%T
@@ -214,9 +208,5 @@ class C {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc19_23.2) {
-// CHECK:STDOUT:   %T.loc19_23.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc19_23.2 => constants.%T
-// CHECK:STDOUT:   %GenericInterface.type.loc19_54.2 => constants.%GenericInterface.type.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%T.loc19_23.2) {}
 // CHECK:STDOUT:

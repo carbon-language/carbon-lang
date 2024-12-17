@@ -73,7 +73,7 @@ class ParamAndArgRefsStack {
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void {
-    return stack_.PrintForStackDump(indent, output);
+    stack_.PrintForStackDump(indent, output);
   }
 
  private:

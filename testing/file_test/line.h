@@ -31,7 +31,9 @@ class FileTestLineBase : public Printable<FileTestLineBase> {
 };
 
 // A line in the original file test.
-class FileTestLine : public FileTestLineBase {
+//
+// `final` because we use pointer arithmetic on this type.
+class FileTestLine final : public FileTestLineBase {
  public:
   explicit FileTestLine(int file_number, int line_number, llvm::StringRef line)
       : FileTestLineBase(file_number, line_number), line_(line) {}

@@ -21,7 +21,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %float: f64 = float_literal 4 [template]
 // CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%float) [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
