@@ -12,7 +12,7 @@
 // CHECK:STDERR: fn F((a: {}, b: {}), c: {});
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+3]]:6: error: semantics TODO: `Error recovery from keyword name.` [SemanticsTodo]
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+3]]:6: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F((a: {}, b: {}), c: {});
 // CHECK:STDERR:      ^
 fn F((a: {}, b: {}), c: {});
