@@ -1429,6 +1429,41 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .entity_name_id = entity_name_id});
 }
 
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::BoundMethod inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::BoundMethodType::SingletonInstId);
+  auto object_id = GetLocalConstantInstId(resolver, inst.object_id);
+  auto function_id = GetLocalConstantInstId(resolver, inst.function_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::BoundMethod>(
+      resolver, {.type_id = resolver.local_context().GetSingletonType(
+                     SemIR::BoundMethodType::SingletonInstId),
+                 .object_id = object_id,
+                 .function_id = function_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
+    -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto callee_id = GetLocalConstantInstId(resolver, inst.callee_id);
+  auto args = GetLocalInstBlockContents(resolver, inst.args_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAs<SemIR::Call>(
+      resolver,
+      {.type_id = resolver.local_context().GetTypeIdForTypeConstant(type_id),
+       .callee_id = callee_id,
+       .args_id = GetLocalCanonicalInstBlockId(resolver, inst.args_id, args)});
+}
+
 // Makes an incomplete class. This is necessary even with classes with a
 // complete declaration, because things such as `Self` may refer back to the
 // type.
@@ -2523,6 +2558,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return ResolveResult::Done(SemIR::ConstantId::NotConstant);
     }
     case CARBON_KIND(SemIR::BindSymbolicName inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::BoundMethod inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::Call inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ClassDecl inst): {
