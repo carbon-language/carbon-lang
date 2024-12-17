@@ -447,7 +447,8 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           out << "{}";
           break;
         }
-        auto struct_type = sem_ir.types().GetAs<StructType>(inst.type_id);
+        auto struct_type = sem_ir.types().GetAs<StructType>(
+            sem_ir.types().GetObjectRepr(inst.type_id));
         auto fields = sem_ir.struct_type_fields().Get(struct_type.fields_id);
         if (fields.size() != field_values.size()) {
           out << "{<struct value type length mismatch>}";
