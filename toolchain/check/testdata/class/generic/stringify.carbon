@@ -73,19 +73,19 @@ class D {
 class E(F:! D) {}
 
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE+13]]:8: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-// CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4});
+// CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE-5]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
 // CHECK:STDERR: class E(F:! D) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE+6]]:36: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-// CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4});
-// CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
+// CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE-12]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
 // CHECK:STDERR: class E(F:! D) {}
 // CHECK:STDERR:         ^
-var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4});
+var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 
 // CHECK:STDOUT: --- fail_empty_params.carbon
 // CHECK:STDOUT:
@@ -528,6 +528,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4});
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
 // CHECK:STDOUT:   %.loc24_53.1: %struct_type.a.b.2 = struct_literal (%int_3, %int_4)
+// CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:   %impl.elem0.loc24_53.1: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc24_53.1: <bound method> = bound_method %int_3, %impl.elem0.loc24_53.1 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc24_53.1: <specific function> = specific_function %Convert.bound.loc24_53.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
@@ -545,8 +546,8 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4});
 // CHECK:STDOUT:   %.loc24_53.8: init %i32 = initialize_from %.loc24_53.6 to %.loc24_53.7 [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc24_53.9: init %D = class_init (%.loc24_53.5, %.loc24_53.8), %.loc24_53.3 [template = constants.%D.val.2]
 // CHECK:STDOUT:   %.loc24_53.10: ref %D = temporary %.loc24_53.3, %.loc24_53.9
-// CHECK:STDOUT:   %.loc24_54.1: ref %D = converted %.loc24_53.1, %.loc24_53.10
-// CHECK:STDOUT:   %.loc24_54.2: %D = bind_value %.loc24_54.1
+// CHECK:STDOUT:   %.loc24_55.1: ref %D = converted %.loc24_53.1, %.loc24_53.10
+// CHECK:STDOUT:   %.loc24_55.2: %D = bind_value %.loc24_55.1
 // CHECK:STDOUT:   assign file.%g.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
