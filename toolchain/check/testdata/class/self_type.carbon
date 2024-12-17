@@ -27,9 +27,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -37,12 +35,12 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %ptr.1 [template]
 // CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.1} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.p [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -63,9 +61,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc21: init type = call constants.%Int(%int_32.loc21) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_29.1: type = value_of_initializer %int.make_type_signed.loc21 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc21_29.2: type = converted %int.make_type_signed.loc21, %.loc21_29.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc21: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %self.param.loc21
 // CHECK:STDOUT:     %return.param.loc21: ref %i32 = out_param runtime_param1
@@ -82,9 +78,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_25.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_25.2: type = converted %int.make_type_signed.loc12, %.loc12_25.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc12: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %self.param.loc12
 // CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param runtime_param1
@@ -101,7 +95,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc18: %Class.elem = field_decl p, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

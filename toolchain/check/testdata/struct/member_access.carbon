@@ -19,22 +19,20 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: f64, .b: %i32} [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: f64, .b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%Convert.3), @impl.1(%N) [symbolic]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%float, %int.convert_checked) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -42,7 +40,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Float = %import_ref.1
 // CHECK:STDOUT:     .Int = %import_ref.2
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.3
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -61,22 +59,16 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %float.make_type [template = f64]
 // CHECK:STDOUT:   %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [template = f64]
 // CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc11: init type = call constants.%Int(%int_32.loc11) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_22.1: type = value_of_initializer %int.make_type_signed.loc11 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_22.2: type = converted %int.make_type_signed.loc11, %.loc11_22.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: f64, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.1 = bind_name x, %x.var
 // CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc12: init type = call constants.%Int(%int_32.loc12) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8.1: type = value_of_initializer %int.make_type_signed.loc12 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_8.2: type = converted %int.make_type_signed.loc12, %.loc12_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_signed.loc13, %.loc13_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %z.var: ref %i32 = var z
 // CHECK:STDOUT:   %z: ref %i32 = bind_name z, %z.var
 // CHECK:STDOUT: }
@@ -88,10 +80,10 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc11_46.1: %struct_type.a.b.2 = struct_literal (%float, %int_1)
 // CHECK:STDOUT:   %.loc11_46.2: ref f64 = struct_access file.%x.var, element0
 // CHECK:STDOUT:   %.loc11_46.3: init f64 = initialize_from %float to %.loc11_46.2 [template = constants.%float]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc11_46.4: init %i32 = converted %int_1, %int.convert_checked [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc11_46.5: ref %i32 = struct_access file.%x.var, element1
 // CHECK:STDOUT:   %.loc11_46.6: init %i32 = initialize_from %.loc11_46.4 to %.loc11_46.5 [symbolic = constants.%int.convert_checked]

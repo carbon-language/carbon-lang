@@ -319,10 +319,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Simple(%T.loc4_18.2) {
-// CHECK:STDOUT:   %T.loc4_18.2 => constants.%T.1
-// CHECK:STDOUT:   %T.patt.loc4_18.2 => constants.%T.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Simple(%T.loc4_18.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithAssocFn(constants.%T.1) {
 // CHECK:STDOUT:   %T.loc8_23.2 => constants.%T.1
@@ -331,10 +328,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T.1, constants.%Self.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithAssocFn(%T.loc8_23.2) {
-// CHECK:STDOUT:   %T.loc8_23.2 => constants.%T.1
-// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @WithAssocFn(%T.loc8_23.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple(constants.%C) {
 // CHECK:STDOUT:   %T.loc4_18.2 => constants.%C
@@ -379,10 +373,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc25_9.2 => constants.%T.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Receive(@Pass.%T.loc25_9.2) {
-// CHECK:STDOUT:   %T.loc24_12.2 => constants.%T.2
-// CHECK:STDOUT:   %T.patt.loc24_12.2 => constants.%T.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Receive(@Pass.%T.loc25_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatched_args.carbon
 // CHECK:STDOUT:
@@ -508,10 +499,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(%T.loc4_19.2) {
-// CHECK:STDOUT:   %T.loc4_19.2 => constants.%T.1
-// CHECK:STDOUT:   %T.patt.loc4_19.2 => constants.%T.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Generic(%T.loc4_19.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%A) {
 // CHECK:STDOUT:   %T.loc4_19.2 => constants.%A

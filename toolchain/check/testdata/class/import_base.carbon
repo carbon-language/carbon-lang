@@ -45,21 +45,19 @@ fn Run() {
 // CHECK:STDOUT:   %Unused.type: type = fn_type @Unused [template]
 // CHECK:STDOUT:   %Unused: %Unused.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.x.unused: type = struct_type {.x: %i32, .unused: %i32} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.unused [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.x.unused [template]
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
 // CHECK:STDOUT:   %Child.elem: type = unbound_element_type %Child, %Base [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -94,30 +92,26 @@ fn Run() {
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int_32.loc8) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_10.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %int.make_type_signed.loc8, %.loc8_10.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_8: %Base.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc9: init type = call constants.%Int(%int_32.loc9) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_15.1: type = value_of_initializer %int.make_type_signed.loc9 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_15.2: type = converted %int.make_type_signed.loc9, %.loc9_15.1 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc9_13: %Base.elem = field_decl unused, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Unused = %Unused.decl
-// CHECK:STDOUT:   .x = %.loc8_8
-// CHECK:STDOUT:   .unused = %.loc9_13
+// CHECK:STDOUT:   .x = %.loc8
+// CHECK:STDOUT:   .unused = %.loc9
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc13: %Child.elem = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Child
@@ -139,34 +133,34 @@ fn Run() {
 // CHECK:STDOUT:   %Child: type = class_type @Child [template]
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.x.unused.1: type = struct_type {.x: %i32, .unused: %i32} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x.unused.1 [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.x.unused.1 [template]
 // CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.base.1 [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.x.unused.2: type = struct_type {.x: Core.IntLiteral, .unused: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %struct_type.base.3: type = struct_type {.base: %struct_type.x.unused.2} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_0, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_0) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.1: init %Int = call %Convert.specific_fn.1(%int_0) [symbolic]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.2: init %iN = call %Convert.specific_fn.2(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.2: init %Int = call %Convert.specific_fn.2(%int_1) [symbolic]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%int.convert_checked.1, %int.convert_checked.2) [symbolic]
 // CHECK:STDOUT:   %Child.val: %Child = struct_value (%Base.val) [symbolic]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_2, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.3: init %iN = call %Convert.specific_fn.3(%int_2) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.3: init %Int = call %Convert.specific_fn.3(%int_2) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -175,20 +169,20 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, Base, unloaded
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Child, loaded [template = constants.%Child]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.14
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.17
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.1]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.5: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//a, loc6_26, unloaded
-// CHECK:STDOUT:   %import_ref.7: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//a, loc9_13, unloaded
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, inst59 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//a, loc13_20, unloaded
-// CHECK:STDOUT:   %import_ref.13: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//a, loc10_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8: %F.type = import_ref Main//a, loc5_21, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//a, loc6_26, unloaded
+// CHECK:STDOUT:   %import_ref.10: %Base.elem = import_ref Main//a, loc8_8, loaded [template = %.1]
+// CHECK:STDOUT:   %import_ref.11 = import_ref Main//a, loc9_13, unloaded
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//a, loc14_1, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.14 = import_ref Main//a, inst70 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.15 = import_ref Main//a, loc13_20, unloaded
+// CHECK:STDOUT:   %import_ref.16: type = import_ref Main//a, loc13_16, loaded [template = constants.%Base]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -205,20 +199,20 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.11
-// CHECK:STDOUT:   .base = imports.%import_ref.12
-// CHECK:STDOUT:   extend imports.%import_ref.13
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
+// CHECK:STDOUT:   .Self = imports.%import_ref.14
+// CHECK:STDOUT:   .base = imports.%import_ref.15
+// CHECK:STDOUT:   extend imports.%import_ref.16
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   .F = imports.%import_ref.5
-// CHECK:STDOUT:   .Unused = imports.%import_ref.6
-// CHECK:STDOUT:   .x = imports.%import_ref.7
-// CHECK:STDOUT:   .unused = imports.%import_ref.8
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.7
+// CHECK:STDOUT:   .F = imports.%import_ref.8
+// CHECK:STDOUT:   .Unused = imports.%import_ref.9
+// CHECK:STDOUT:   .x = imports.%import_ref.10
+// CHECK:STDOUT:   .unused = imports.%import_ref.11
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -230,18 +224,18 @@ fn Run() {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc7_47.1: %struct_type.x.unused.2 = struct_literal (%int_0, %int_1)
 // CHECK:STDOUT:   %.loc7_48.1: %struct_type.base.3 = struct_literal (%.loc7_47.1)
-// CHECK:STDOUT:   %impl.elem0.loc7_47.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc7_47.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc7_47.1: <bound method> = bound_method %int_0, %impl.elem0.loc7_47.1 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc7_47.1: <specific function> = specific_function %Convert.bound.loc7_47.1, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc7_47.1: init %iN = call %Convert.specific_fn.loc7_47.1(%int_0) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:   %int.convert_checked.loc7_47.1: init %Int = call %Convert.specific_fn.loc7_47.1(%int_0) [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:   %.loc7_47.2: init %i32 = converted %int_0, %int.convert_checked.loc7_47.1 [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:   %.loc7_48.2: ref %Base = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_47.3: ref %i32 = class_element_access %.loc7_48.2, element0
 // CHECK:STDOUT:   %.loc7_47.4: init %i32 = initialize_from %.loc7_47.2 to %.loc7_47.3 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:   %impl.elem0.loc7_47.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc7_47.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc7_47.2: <bound method> = bound_method %int_1, %impl.elem0.loc7_47.2 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc7_47.2: <specific function> = specific_function %Convert.bound.loc7_47.2, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc7_47.2: init %iN = call %Convert.specific_fn.loc7_47.2(%int_1) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:   %int.convert_checked.loc7_47.2: init %Int = call %Convert.specific_fn.loc7_47.2(%int_1) [symbolic = constants.%int.convert_checked.2]
 // CHECK:STDOUT:   %.loc7_47.5: init %i32 = converted %int_1, %int.convert_checked.loc7_47.2 [symbolic = constants.%int.convert_checked.2]
 // CHECK:STDOUT:   %.loc7_47.6: ref %i32 = class_element_access %.loc7_48.2, element1
 // CHECK:STDOUT:   %.loc7_47.7: init %i32 = initialize_from %.loc7_47.5 to %.loc7_47.6 [symbolic = constants.%int.convert_checked.2]
@@ -251,19 +245,19 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_49: init %Child = converted %.loc7_48.1, %.loc7_48.4 [symbolic = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_49
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%import_ref.7 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%import_ref.10 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0
 // CHECK:STDOUT:   %.loc8_4.2: ref %Base = converted %a.ref.loc8, %.loc8_4.1
 // CHECK:STDOUT:   %.loc8_4.3: ref %i32 = class_element_access %.loc8_4.2, element0
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc8: <bound method> = bound_method %int_2, %impl.elem0.loc8 [symbolic = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8: <specific function> = specific_function %Convert.bound.loc8, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.3]
-// CHECK:STDOUT:   %int.convert_checked.loc8: init %iN = call %Convert.specific_fn.loc8(%int_2) [symbolic = constants.%int.convert_checked.3]
+// CHECK:STDOUT:   %int.convert_checked.loc8: init %Int = call %Convert.specific_fn.loc8(%int_2) [symbolic = constants.%int.convert_checked.3]
 // CHECK:STDOUT:   %.loc8_7: init %i32 = converted %int_2, %int.convert_checked.loc8 [symbolic = constants.%int.convert_checked.3]
 // CHECK:STDOUT:   assign %.loc8_4.3, %.loc8_7
 // CHECK:STDOUT:   %a.ref.loc9: ref %Child = name_ref a, %a
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.8 [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref.loc9, %F.ref
 // CHECK:STDOUT:   %.loc9_3.1: ref %Base = class_element_access %a.ref.loc9, element0
 // CHECK:STDOUT:   %.loc9_3.2: ref %Base = converted %a.ref.loc9, %.loc9_3.1

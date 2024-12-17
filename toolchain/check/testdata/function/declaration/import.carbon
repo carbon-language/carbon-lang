@@ -261,9 +261,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
@@ -279,7 +277,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -303,13 +301,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5_9: init type = call constants.%Int(%int_32.loc5_9) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_9.1: type = value_of_initializer %int.make_type_signed.loc5_9 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_9.2: type = converted %int.make_type_signed.loc5_9, %.loc5_9.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc5_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5_17: init type = call constants.%Int(%int_32.loc5_17) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_17.1: type = value_of_initializer %int.make_type_signed.loc5_17 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_17.2: type = converted %int.make_type_signed.loc5_17, %.loc5_17.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -322,15 +316,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %return.param_patt: %struct_type.c = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_10: init type = call constants.%Int(%int_32.loc6_10) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_14.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc6_10)
-// CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %int.make_type_signed.loc6_10 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_14.3: type = converted %int.make_type_signed.loc6_10, %.loc6_14.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_14.4: type = converted %.loc6_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_14.1: %tuple.type.1 = tuple_literal (%i32.loc6_10)
+// CHECK:STDOUT:     %.loc6_14.2: type = converted %.loc6_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int_32.loc6_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_25: init type = call constants.%Int(%int_32.loc6_25) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_25.1: type = value_of_initializer %int.make_type_signed.loc6_25 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_25.2: type = converted %int.make_type_signed.loc6_25, %.loc6_25.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc6_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
@@ -360,9 +350,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
@@ -378,7 +366,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -402,13 +390,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5_44: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5_44: init type = call constants.%Int(%int_32.loc5_44) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_44.1: type = value_of_initializer %int.make_type_signed.loc5_44 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_44.2: type = converted %int.make_type_signed.loc5_44, %.loc5_44.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5_44: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc5_52: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc5_52: init type = call constants.%Int(%int_32.loc5_52) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_52.1: type = value_of_initializer %int.make_type_signed.loc5_52 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc5_52.2: type = converted %int.make_type_signed.loc5_52, %.loc5_52.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc5_52: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -421,15 +405,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %return.param_patt: %struct_type.c = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6_45: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_45: init type = call constants.%Int(%int_32.loc6_45) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_49.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc6_45)
-// CHECK:STDOUT:     %.loc6_49.2: type = value_of_initializer %int.make_type_signed.loc6_45 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_49.3: type = converted %int.make_type_signed.loc6_45, %.loc6_49.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_49.4: type = converted %.loc6_49.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc6_45: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc6_49.1: %tuple.type.1 = tuple_literal (%i32.loc6_45)
+// CHECK:STDOUT:     %.loc6_49.2: type = converted %.loc6_49.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int_32.loc6_60: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_60: init type = call constants.%Int(%int_32.loc6_60) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_60.1: type = value_of_initializer %int.make_type_signed.loc6_60 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_60.2: type = converted %int.make_type_signed.loc6_60, %.loc6_60.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc6_60: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
@@ -460,21 +440,19 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
@@ -499,7 +477,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.7
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.8
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.11
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -526,15 +504,11 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc7: init type = call constants.%Int(%int_32.loc7) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_8.1: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc7_8.2: type = converted %int.make_type_signed.loc7, %.loc7_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc8: init type = call constants.%Int(%int_32.loc8) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_13.1: type = value_of_initializer %int.make_type_signed.loc8 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc8_13.2: type = converted %int.make_type_signed.loc8, %.loc8_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
@@ -565,10 +539,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc7: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc7: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc7: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc7: <bound method> = bound_method %int_1.loc7, %impl.elem0.loc7 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc7: <specific function> = specific_function %Convert.bound.loc7, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc7: init %iN = call %Convert.specific_fn.loc7(%int_1.loc7) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc7: init %Int = call %Convert.specific_fn.loc7(%int_1.loc7) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc7_16.1: %i32 = value_of_initializer %int.convert_checked.loc7 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc7_16.2: %i32 = converted %int_1.loc7, %.loc7_16.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc7_16.2)
@@ -576,10 +550,10 @@ import library "extern_api";
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc8_25.1: %tuple.type.2 = tuple_literal (%int_1.loc8)
-// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8: <specific function> = specific_function %Convert.bound.loc8, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc8: init %iN = call %Convert.specific_fn.loc8(%int_1.loc8) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc8: init %Int = call %Convert.specific_fn.loc8(%int_1.loc8) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc8_25.2: %i32 = value_of_initializer %int.convert_checked.loc8 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc8_25.3: %i32 = converted %int_1.loc8, %.loc8_25.2 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %tuple: %tuple.type.1 = tuple_value (%.loc8_25.3) [symbolic = constants.%tuple]
@@ -603,9 +577,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
@@ -619,14 +593,12 @@ import library "extern_api";
 // CHECK:STDOUT:   %E: %E.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int.convert_checked) [symbolic]
 // CHECK:STDOUT: }
@@ -638,7 +610,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.7
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.8
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.11
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -663,13 +635,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {
 // CHECK:STDOUT:     %int_32.loc23_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc23_16: init type = call constants.%Int(%int_32.loc23_16) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_16.1: type = value_of_initializer %int.make_type_signed.loc23_16 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_16.2: type = converted %int.make_type_signed.loc23_16, %.loc23_16.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc23_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc23_24: init type = call constants.%Int(%int_32.loc23_24) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_24.1: type = value_of_initializer %int.make_type_signed.loc23_24 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc23_24.2: type = converted %int.make_type_signed.loc23_24, %.loc23_24.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -677,15 +645,11 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int_32.loc32_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc32_17: init type = call constants.%Int(%int_32.loc32_17) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_21.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc32_17)
-// CHECK:STDOUT:     %.loc32_21.2: type = value_of_initializer %int.make_type_signed.loc32_17 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_21.3: type = converted %int.make_type_signed.loc32_17, %.loc32_21.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_21.4: type = converted %.loc32_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc32_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc32_21.1: %tuple.type.1 = tuple_literal (%i32.loc32_17)
+// CHECK:STDOUT:     %.loc32_21.2: type = converted %.loc32_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int_32.loc32_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc32_32: init type = call constants.%Int(%int_32.loc32_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_32.1: type = value_of_initializer %int.make_type_signed.loc32_32 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc32_32.2: type = converted %int.make_type_signed.loc32_32, %.loc32_32.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc32_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
@@ -699,15 +663,11 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc53: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc53: init type = call constants.%Int(%int_32.loc53) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_signed.loc53 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_signed.loc53, %.loc53_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc53: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_32.loc54: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc54: init type = call constants.%Int(%int_32.loc54) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_signed.loc54 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_signed.loc54, %.loc54_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc54: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
@@ -738,10 +698,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc53: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc53: <specific function> = specific_function %Convert.bound.loc53, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc53: init %iN = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc53: init %Int = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %int.convert_checked.loc53 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
@@ -749,10 +709,10 @@ import library "extern_api";
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc54_25.1: %tuple.type.3 = tuple_literal (%int_1.loc54)
-// CHECK:STDOUT:   %impl.elem0.loc54: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc54: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc54: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc54: <specific function> = specific_function %Convert.bound.loc54, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc54: init %iN = call %Convert.specific_fn.loc54(%int_1.loc54) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc54: init %Int = call %Convert.specific_fn.loc54(%int_1.loc54) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %int.convert_checked.loc54 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc54_25.3) [symbolic = constants.%tuple]
@@ -776,9 +736,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
@@ -792,14 +752,12 @@ import library "extern_api";
 // CHECK:STDOUT:   %E: %E.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int.convert_checked) [symbolic]
 // CHECK:STDOUT: }
@@ -811,7 +769,7 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.7
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.8
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.11
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -836,13 +794,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {} {
 // CHECK:STDOUT:     %int_32.loc7_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc7_16: init type = call constants.%Int(%int_32.loc7_16) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_16.1: type = value_of_initializer %int.make_type_signed.loc7_16 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_16.2: type = converted %int.make_type_signed.loc7_16, %.loc7_16.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc7_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc7_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc7_24: init type = call constants.%Int(%int_32.loc7_24) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_24.1: type = value_of_initializer %int.make_type_signed.loc7_24 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc7_24.2: type = converted %int.make_type_signed.loc7_24, %.loc7_24.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc7_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -850,15 +804,11 @@ import library "extern_api";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {
 // CHECK:STDOUT:     %int_32.loc8_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc8_17: init type = call constants.%Int(%int_32.loc8_17) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_21.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc8_17)
-// CHECK:STDOUT:     %.loc8_21.2: type = value_of_initializer %int.make_type_signed.loc8_17 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_21.3: type = converted %int.make_type_signed.loc8_17, %.loc8_21.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_21.4: type = converted %.loc8_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc8_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_21.1: %tuple.type.1 = tuple_literal (%i32.loc8_17)
+// CHECK:STDOUT:     %.loc8_21.2: type = converted %.loc8_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %int_32.loc8_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc8_32: init type = call constants.%Int(%int_32.loc8_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_32.1: type = value_of_initializer %int.make_type_signed.loc8_32 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_32.2: type = converted %int.make_type_signed.loc8_32, %.loc8_32.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc8_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
@@ -872,15 +822,11 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_8.2: type = converted %int.make_type_signed.loc13, %.loc13_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc14: init type = call constants.%Int(%int_32.loc14) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_13.1: type = value_of_initializer %int.make_type_signed.loc14 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_13.2: type = converted %int.make_type_signed.loc14, %.loc14_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
@@ -911,10 +857,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc13: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc13: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc13: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13: <specific function> = specific_function %Convert.bound.loc13, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc13: init %iN = call %Convert.specific_fn.loc13(%int_1.loc13) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc13: init %Int = call %Convert.specific_fn.loc13(%int_1.loc13) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc13_16.1: %i32 = value_of_initializer %int.convert_checked.loc13 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc13_16.2: %i32 = converted %int_1.loc13, %.loc13_16.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc13_16.2)
@@ -922,10 +868,10 @@ import library "extern_api";
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc14_25.1: %tuple.type.3 = tuple_literal (%int_1.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc14: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc14: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc14: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14: <specific function> = specific_function %Convert.bound.loc14, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc14: init %iN = call %Convert.specific_fn.loc14(%int_1.loc14) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc14: init %Int = call %Convert.specific_fn.loc14(%int_1.loc14) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc14_25.2: %i32 = value_of_initializer %int.convert_checked.loc14 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc14_25.3: %i32 = converted %int_1.loc14, %.loc14_25.2 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%.loc14_25.3) [symbolic = constants.%tuple]
@@ -949,21 +895,19 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
@@ -988,7 +932,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.12
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.13
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.16
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1015,15 +959,11 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc53: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc53: init type = call constants.%Int(%int_32.loc53) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_8.1: type = value_of_initializer %int.make_type_signed.loc53 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_8.2: type = converted %int.make_type_signed.loc53, %.loc53_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc53: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_32.loc54: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc54: init type = call constants.%Int(%int_32.loc54) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc54_13.1: type = value_of_initializer %int.make_type_signed.loc54 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc54_13.2: type = converted %int.make_type_signed.loc54, %.loc54_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc54: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
@@ -1054,10 +994,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc53: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc53: <specific function> = specific_function %Convert.bound.loc53, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc53: init %iN = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc53: init %Int = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %int.convert_checked.loc53 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
@@ -1065,10 +1005,10 @@ import library "extern_api";
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc54_25.1: %tuple.type.2 = tuple_literal (%int_1.loc54)
-// CHECK:STDOUT:   %impl.elem0.loc54: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc54: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc54: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc54: <specific function> = specific_function %Convert.bound.loc54, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc54: init %iN = call %Convert.specific_fn.loc54(%int_1.loc54) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc54: init %Int = call %Convert.specific_fn.loc54(%int_1.loc54) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %int.convert_checked.loc54 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %tuple: %tuple.type.1 = tuple_value (%.loc54_25.3) [symbolic = constants.%tuple]
@@ -1092,21 +1032,19 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %iN = call %Convert.specific_fn(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
@@ -1131,7 +1069,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %import_ref.6: %E.type = import_ref Main//extern_api, E, loaded [template = constants.%E]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.12
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.13
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.16
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1158,15 +1096,11 @@ import library "extern_api";
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %int_32.loc52: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc52: init type = call constants.%Int(%int_32.loc52) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc52_8.1: type = value_of_initializer %int.make_type_signed.loc52 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc52_8.2: type = converted %int.make_type_signed.loc52, %.loc52_8.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc52: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_32.loc53: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc53: init type = call constants.%Int(%int_32.loc53) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_13.1: type = value_of_initializer %int.make_type_signed.loc53 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc53_13.2: type = converted %int.make_type_signed.loc53, %.loc53_13.1 [template = constants.%i32]
+// CHECK:STDOUT:   %i32.loc53: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var c
 // CHECK:STDOUT:   %c: ref %struct_type.c = bind_name c, %c.var
@@ -1197,10 +1131,10 @@ import library "extern_api";
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc52: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc52: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc52: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc52: <bound method> = bound_method %int_1.loc52, %impl.elem0.loc52 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc52: <specific function> = specific_function %Convert.bound.loc52, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc52: init %iN = call %Convert.specific_fn.loc52(%int_1.loc52) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc52: init %Int = call %Convert.specific_fn.loc52(%int_1.loc52) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc52_16.1: %i32 = value_of_initializer %int.convert_checked.loc52 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc52_16.2: %i32 = converted %int_1.loc52, %.loc52_16.1 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc52_16.2)
@@ -1208,10 +1142,10 @@ import library "extern_api";
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %.loc53_25.1: %tuple.type.2 = tuple_literal (%int_1.loc53)
-// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc53: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc53: <specific function> = specific_function %Convert.bound.loc53, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc53: init %iN = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %int.convert_checked.loc53: init %Int = call %Convert.specific_fn.loc53(%int_1.loc53) [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_25.2: %i32 = value_of_initializer %int.convert_checked.loc53 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %.loc53_25.3: %i32 = converted %int_1.loc53, %.loc53_25.2 [symbolic = constants.%int.convert_checked]
 // CHECK:STDOUT:   %tuple: %tuple.type.1 = tuple_value (%.loc53_25.3) [symbolic = constants.%tuple]

@@ -264,9 +264,41 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage inst) -> void {
-  context.SetLocal(inst_id,
-                   context.builder().CreateAlloca(context.GetType(inst.type_id),
-                                                  /*ArraySize=*/nullptr));
+  auto* type = context.GetType(inst.type_id);
+
+  // Position the first alloca right before the start of the executable code in
+  // the function.
+  auto saved_ip = context.builder().saveIP();
+  if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
+    context.builder().SetInsertPoint(after_allocas);
+  } else {
+    context.builder().SetInsertPointPastAllocas(&context.llvm_function());
+  }
+
+  // Create an alloca for this variable in the entry block.
+  auto* alloca = context.builder().CreateAlloca(type);
+  context.builder().restoreIP(saved_ip);
+
+  // Create a lifetime start intrinsic here to indicate where its scope really
+  // begins.
+  auto size = context.llvm_module().getDataLayout().getTypeAllocSize(type);
+  context.builder().CreateLifetimeStart(
+      alloca,
+      llvm::ConstantInt::get(context.llvm_context(), llvm::APInt(64, size)));
+
+  // If we just created the first alloca, there is now definitely at least one
+  // instruction after it -- there is a lifetime start instruction if nothing
+  // else. Use that instruction as our insert point for all future allocas.
+  if (!context.GetInstructionAfterAllocas()) {
+    auto loc = alloca->getIterator();
+    ++loc;
+    context.SetInstructionAfterAllocas(&*loc);
+  }
+
+  // TODO: Create a matching `@llvm.lifetime.end` intrinsic call when the
+  // variable goes out of scope.
+
+  context.SetLocal(inst_id, alloca);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

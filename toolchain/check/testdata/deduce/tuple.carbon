@@ -229,9 +229,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %Pair: %tuple.type.2 = bind_symbolic_name Pair, 0 [symbolic]
@@ -240,7 +240,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.generic: %HasPair.type = struct_value () [template]
 // CHECK:STDOUT:   %HasPair.1: type = class_type @HasPair, @HasPair(%Pair) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A: %i32 = bind_symbolic_name A, 0 [symbolic]
 // CHECK:STDOUT:   %A.patt: %i32 = symbolic_binding_pattern A, 0 [symbolic]
 // CHECK:STDOUT:   %B: %i32 = bind_symbolic_name B, 1 [symbolic]
@@ -249,22 +249,20 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.2: type = class_type @HasPair, @HasPair(%tuple.1) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %HasPair.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %HasPair.2 [symbolic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.1: init %iN = call %Convert.specific_fn.1(%int_1) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.1: init %Int = call %Convert.specific_fn.1(%int_1) [symbolic]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2, %Convert.3 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.2: init %iN = call %Convert.specific_fn.2(%int_2) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked.2: init %Int = call %Convert.specific_fn.2(%int_2) [symbolic]
 // CHECK:STDOUT:   %tuple.2: %tuple.type.2 = tuple_value (%int.convert_checked.1, %int.convert_checked.2) [symbolic]
 // CHECK:STDOUT:   %HasPair.3: type = class_type @HasPair, @HasPair(%tuple.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -274,7 +272,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -293,15 +291,11 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %Pair.param_patt: %tuple.type.2 = value_param_pattern %Pair.patt.loc4_15.1, runtime_param<invalid> [symbolic = %Pair.patt.loc4_15.2 (constants.%Pair.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc4_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc4_23: init type = call constants.%Int(%int_32.loc4_23) [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc4_23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc4_28: init type = call constants.%Int(%int_32.loc4_28) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_31.1: %tuple.type.1 = tuple_literal (%int.make_type_signed.loc4_23, %int.make_type_signed.loc4_28)
-// CHECK:STDOUT:     %.loc4_31.2: type = value_of_initializer %int.make_type_signed.loc4_23 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_31.3: type = converted %int.make_type_signed.loc4_23, %.loc4_31.2 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_31.4: type = value_of_initializer %int.make_type_signed.loc4_28 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_31.5: type = converted %int.make_type_signed.loc4_28, %.loc4_31.4 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc4_31.6: type = converted %.loc4_31.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %i32.loc4_28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc4_31.1: %tuple.type.1 = tuple_literal (%i32.loc4_23, %i32.loc4_28)
+// CHECK:STDOUT:     %.loc4_31.2: type = converted %.loc4_31.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %Pair.param: %tuple.type.2 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %Pair.loc4_15.1: %tuple.type.2 = bind_symbolic_name Pair, 0, %Pair.param [symbolic = %Pair.loc4_15.2 (constants.%Pair)]
 // CHECK:STDOUT:   }
@@ -316,13 +310,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_10: init type = call constants.%Int(%int_32.loc6_10) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_10.1: type = value_of_initializer %int.make_type_signed.loc6_10 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_10.2: type = converted %int.make_type_signed.loc6_10, %.loc6_10.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc6_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_19: init type = call constants.%Int(%int_32.loc6_19) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_19.1: type = value_of_initializer %int.make_type_signed.loc6_19 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_19.2: type = converted %int.make_type_signed.loc6_19, %.loc6_19.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc6_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [template = constants.%HasPair.generic]
 // CHECK:STDOUT:     %A.ref: %i32 = name_ref A, %A.loc6_6.1 [symbolic = %A.loc6_6.2 (constants.%A)]
 // CHECK:STDOUT:     %B.ref.loc6_39: %i32 = name_ref B, %B.loc6_15.1 [symbolic = %B.loc6_15.2 (constants.%B)]
@@ -331,9 +321,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc6_41: %tuple.type.2 = converted %.loc6_40, %tuple.loc6_40.1 [symbolic = %tuple.loc6_40.2 (constants.%tuple.1)]
 // CHECK:STDOUT:     %HasPair.loc6_41.1: type = class_type @HasPair, @HasPair(constants.%tuple.1) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.2)]
 // CHECK:STDOUT:     %int_32.loc6_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc6_47: init type = call constants.%Int(%int_32.loc6_47) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_47.1: type = value_of_initializer %int.make_type_signed.loc6_47 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc6_47.2: type = converted %int.make_type_signed.loc6_47, %.loc6_47.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc6_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %A.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %A.loc6_6.1: %i32 = bind_symbolic_name A, 0, %A.param [symbolic = %A.loc6_6.2 (constants.%A)]
 // CHECK:STDOUT:     %B.param: %i32 = value_param runtime_param<invalid>
@@ -353,25 +341,23 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:     %.loc8_22.1: %tuple.type.3 = tuple_literal (%int_1, %int_2)
-// CHECK:STDOUT:     %impl.elem0.loc8_22.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:     %impl.elem0.loc8_22.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:     %Convert.bound.loc8_22.1: <bound method> = bound_method %int_1, %impl.elem0.loc8_22.1 [symbolic = constants.%Convert.bound.1]
 // CHECK:STDOUT:     %Convert.specific_fn.loc8_22.1: <specific function> = specific_function %Convert.bound.loc8_22.1, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:     %int.convert_checked.loc8_22.1: init %iN = call %Convert.specific_fn.loc8_22.1(%int_1) [symbolic = constants.%int.convert_checked.1]
+// CHECK:STDOUT:     %int.convert_checked.loc8_22.1: init %Int = call %Convert.specific_fn.loc8_22.1(%int_1) [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:     %.loc8_22.2: %i32 = value_of_initializer %int.convert_checked.loc8_22.1 [symbolic = constants.%int.convert_checked.1]
 // CHECK:STDOUT:     %.loc8_22.3: %i32 = converted %int_1, %.loc8_22.2 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:     %impl.elem0.loc8_22.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.9, element0 [symbolic = constants.%Convert.3]
+// CHECK:STDOUT:     %impl.elem0.loc8_22.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
 // CHECK:STDOUT:     %Convert.bound.loc8_22.2: <bound method> = bound_method %int_2, %impl.elem0.loc8_22.2 [symbolic = constants.%Convert.bound.2]
 // CHECK:STDOUT:     %Convert.specific_fn.loc8_22.2: <specific function> = specific_function %Convert.bound.loc8_22.2, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:     %int.convert_checked.loc8_22.2: init %iN = call %Convert.specific_fn.loc8_22.2(%int_2) [symbolic = constants.%int.convert_checked.2]
+// CHECK:STDOUT:     %int.convert_checked.loc8_22.2: init %Int = call %Convert.specific_fn.loc8_22.2(%int_2) [symbolic = constants.%int.convert_checked.2]
 // CHECK:STDOUT:     %.loc8_22.4: %i32 = value_of_initializer %int.convert_checked.loc8_22.2 [symbolic = constants.%int.convert_checked.2]
 // CHECK:STDOUT:     %.loc8_22.5: %i32 = converted %int_2, %.loc8_22.4 [symbolic = constants.%int.convert_checked.2]
 // CHECK:STDOUT:     %tuple: %tuple.type.2 = tuple_value (%.loc8_22.3, %.loc8_22.5) [symbolic = constants.%tuple.2]
 // CHECK:STDOUT:     %.loc8_23: %tuple.type.2 = converted %.loc8_22.1, %tuple [symbolic = constants.%tuple.2]
 // CHECK:STDOUT:     %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.2) [symbolic = constants.%HasPair.3]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_29.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_29.2: type = converted %int.make_type_signed, %.loc8_29.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %h.param: %HasPair.3 = value_param runtime_param0
 // CHECK:STDOUT:     %h: %HasPair.3 = bind_name h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -386,7 +372,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%HasPair.1
@@ -403,7 +389,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(%tuple.loc6_40.2) [symbolic = %HasPair.loc6_41.2 (constants.%HasPair.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HasPair.loc6_41.2 (%HasPair.2) [symbolic = %require_complete (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%HasPair.loc6_41.2 (%HasPair.2) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%A.param_patt: %i32, %B.param_patt: %i32](%h.param_patt: @F.%HasPair.loc6_41.2 (%HasPair.2)) -> %i32 {
 // CHECK:STDOUT:   !entry:

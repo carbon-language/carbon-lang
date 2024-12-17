@@ -295,16 +295,16 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (@impl.1.%F.decl), @impl.1(%T) [symbolic]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl.1(%T) [symbolic]
+// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (@impl.%F.decl), @impl(%T) [symbolic]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %T, %impl_witness.1 [symbolic]
 // CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.1.%F.decl), @impl.1(%empty_struct_type) [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl.1(%empty_struct_type) [template]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.%F.decl), @impl(%empty_struct_type) [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2, @impl(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +324,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [template = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {
+// CHECK:STDOUT:   impl_decl @impl [template] {
 // CHECK:STDOUT:     %T.patt.loc8_14.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc8_14.1, runtime_param<invalid> [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -333,7 +333,7 @@ fn G(x: A) {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%F.decl), @impl.1(constants.%T) [symbolic = @impl.1.%impl_witness (constants.%impl_witness.1)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl), @impl(constants.%T) [symbolic = @impl.%impl_witness (constants.%impl_witness.1)]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
@@ -378,24 +378,24 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.1(%T.loc8_14.1: type) {
+// CHECK:STDOUT: generic impl @impl(%T.loc8_14.1: type) {
 // CHECK:STDOUT:   %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc8_14.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_14.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%F.decl), @impl.1(%T.loc8_14.2) [symbolic = %impl_witness (constants.%impl_witness.1)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%F.decl), @impl(%T.loc8_14.2) [symbolic = %impl_witness (constants.%impl_witness.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl.1(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
-// CHECK:STDOUT:   %F: @impl.1.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
+// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %HasF.ref {
-// CHECK:STDOUT:     %F.decl: @impl.1.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.1.%F (constants.%F.2)] {
+// CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.2) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.2)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%T (%T) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @F.2.%T (%T) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %return.patt: @F.2.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.1.%T.ref [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.1.%T.loc8_14.1 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @F.2.%T (%T) = value_param runtime_param0
 // CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
@@ -415,7 +415,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   fn[%self.param_patt: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type.1)]() -> @F.1.%Self.as_type.loc5_14.1 (%Self.as_type.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.1.%T.loc8_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.%T.loc8_14.1: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -447,7 +447,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.1(constants.%T) {
+// CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%T
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.1
@@ -457,7 +457,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.1(%T.loc8_14.2) {}
+// CHECK:STDOUT: specific @impl(%T.loc8_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -471,7 +471,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.1(constants.%empty_struct_type) {
+// CHECK:STDOUT: specific @impl(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %T.patt.loc8_14.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %impl_witness => constants.%impl_witness.2

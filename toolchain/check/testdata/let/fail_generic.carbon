@@ -32,9 +32,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -44,7 +42,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -63,13 +61,9 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc12_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_9: init type = call constants.%Int(%int_32.loc12_9) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_9.1: type = value_of_initializer %int.make_type_signed.loc12_9 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_9.2: type = converted %int.make_type_signed.loc12_9, %.loc12_9.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc12_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed.loc12_17: init type = call constants.%Int(%int_32.loc12_17) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_17.1: type = value_of_initializer %int.make_type_signed.loc12_17 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc12_17.2: type = converted %int.make_type_signed.loc12_17, %.loc12_17.1 [template = constants.%i32]
+// CHECK:STDOUT:     %i32.loc12_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -80,10 +74,8 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: fn @F(%a.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %int.make_type_signed.loc13: init type = call constants.%Int(%int_32.loc13) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.1: type = value_of_initializer %int.make_type_signed.loc13 [template = constants.%i32]
-// CHECK:STDOUT:   %.loc13_21.2: type = converted %int.make_type_signed.loc13, %.loc13_21.1 [template = constants.%i32]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %.loc13_21.2 [symbolic = constants.%T]
+// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32.loc13 [symbolic = constants.%T]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
 // CHECK:STDOUT:   %.loc21: %T = converted %int_5, <error> [template = <error>]

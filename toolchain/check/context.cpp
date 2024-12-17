@@ -1261,8 +1261,9 @@ class TypeCompleter {
 };
 }  // namespace
 
-auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc) -> bool {
-  return TypeCompleter(*this, loc, nullptr).Complete(type_id);
+auto Context::TryToCompleteType(SemIR::TypeId type_id, SemIRLoc loc,
+                                BuildDiagnosticFn diagnoser) -> bool {
+  return TypeCompleter(*this, loc, diagnoser).Complete(type_id);
 }
 
 auto Context::CompleteTypeOrCheckFail(SemIR::TypeId type_id) -> void {

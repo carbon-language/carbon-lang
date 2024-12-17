@@ -20,17 +20,25 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !9
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc13_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.1, 0, !dbg !10
-// CHECK:STDOUT:   store { i32 } %.loc13_20.2.tuple.init, ptr %y.var, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 0, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !7
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc13_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc13_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc13_20.1, 0, !dbg !9
+// CHECK:STDOUT:   store { i32 } %.loc13_20.2.tuple.init, ptr %y.var, align 4, !dbg !10
+// CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder i32 1, { 0, 2, 1 }
+// CHECK:STDOUT: uselistorder i32 1, { 2, 0, 1 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -44,7 +52,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 7, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 20, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 20, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)

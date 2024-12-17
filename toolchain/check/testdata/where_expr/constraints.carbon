@@ -496,9 +496,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %i32: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %type_where = symbolic_binding_pattern U, 0 [symbolic]
@@ -508,7 +506,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -527,10 +525,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_51.2: type = converted %int.make_type_signed, %.loc8_51.1 [template = constants.%i32]
-// CHECK:STDOUT:     %.loc8_33: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<invalid>
@@ -604,7 +600,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -633,7 +629,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %J.ref {
+// CHECK:STDOUT: impl @impl: %C.ref as %J.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

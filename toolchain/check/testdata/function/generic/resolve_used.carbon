@@ -17,7 +17,10 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although
   // that's not how we currently model `Core.Int`.
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+6]]:10: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR:   var v: Core.Int(N);
+  // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: note: in `i0` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   var v: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~~~
   var v: Core.Int(N);
@@ -40,14 +43,16 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %ErrorIfNIsZero.type: type = fn_type @ErrorIfNIsZero [template]
 // CHECK:STDOUT:   %ErrorIfNIsZero: %ErrorIfNIsZero.type = struct_value () [template]
-// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
-// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
-// CHECK:STDOUT:   %iN: type = int_type signed, %N [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %iN [symbolic]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [template]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Int [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [template]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %ErrorIfNIsZero.specific_fn: <specific function> = specific_function %ErrorIfNIsZero, @ErrorIfNIsZero(%int_0) [template]
+// CHECK:STDOUT:   %i0: type = class_type @Int, @Int(%int_0) [template]
+// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness <error> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -57,8 +62,8 @@ fn CallNegative() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types, IntLiteral, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types, Int, loaded [template = constants.%Int]
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types/int, Int, loaded [template = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -88,19 +93,17 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.patt.loc4_19.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %iN: type = int_type signed, %N.loc4_19.2 [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ErrorIfNIsZero.%iN (%iN) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %Int.loc15_20.2: type = class_type @Int, @Int(%N.loc4_19.2) [symbolic = %Int.loc15_20.2 (constants.%Int)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @ErrorIfNIsZero.%Int.loc15_20.2 (%Int) [symbolic = %require_complete (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:     %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int.generic]
 // CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc4_19.1 [symbolic = %N.loc4_19.2 (constants.%N)]
-// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%N.ref) [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:     %.loc12_20.1: type = value_of_initializer %int.make_type_signed [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:     %.loc12_20.2: type = converted %int.make_type_signed, %.loc12_20.1 [symbolic = %iN (constants.%iN)]
-// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%iN (%iN) = var v
-// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%iN (%iN) = bind_name v, %v.var
+// CHECK:STDOUT:     %Int.loc15_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc15_20.2 (constants.%Int)]
+// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc15_20.2 (%Int) = var v
+// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc15_20.2 (%Int) = bind_name v, %v.var
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -124,7 +127,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.patt.loc4_19.2 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %iN => <error>
-// CHECK:STDOUT:   %require_complete => <error>
+// CHECK:STDOUT:   %Int.loc15_20.2 => constants.%i0
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

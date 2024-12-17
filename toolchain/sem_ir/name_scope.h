@@ -163,7 +163,7 @@ class NameScope : public Printable<NameScope> {
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
-  explicit NameScopeStore(InstStore* insts) : insts_(insts) {}
+  explicit NameScopeStore(const File* file) : file_(file) {}
 
   // Adds a name scope, returning an ID to reference it.
   auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)
@@ -191,16 +191,20 @@ class NameScopeStore {
   // Returns the instruction owning the requested name scope, or Invalid with
   // nullopt if the scope is either invalid or has no associated instruction.
   auto GetInstIfValid(NameScopeId scope_id) const
-      -> std::pair<InstId, std::optional<Inst>> {
+      -> std::pair<InstId, std::optional<Inst>>;
+
+  // Returns whether the provided scope ID is for a package scope.
+  auto IsPackage(NameScopeId scope_id) const -> bool {
     if (!scope_id.is_valid()) {
-      return {InstId::Invalid, std::nullopt};
+      return false;
     }
-    auto inst_id = Get(scope_id).inst_id();
-    if (!inst_id.is_valid()) {
-      return {InstId::Invalid, std::nullopt};
-    }
-    return {inst_id, insts_->Get(inst_id)};
+    // A package is either the current package or an imported package.
+    return scope_id == SemIR::NameScopeId::Package ||
+           Get(scope_id).is_imported_package();
   }
+
+  // Returns whether the provided scope ID is for the Core package.
+  auto IsCorePackage(NameScopeId scope_id) const -> bool;
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
@@ -213,7 +217,7 @@ class NameScopeStore {
   }
 
  private:
-  InstStore* insts_;
+  const File* file_;
   ValueStore<NameScopeId> values_;
 };
 

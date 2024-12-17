@@ -8,7 +8,3 @@ package Core library "prelude";
 
 export import library "prelude/operators";
 export import library "prelude/types";
-
-// TODO: Support printing other types.
-// TODO: Consider rewriting using native support once library support exists.
-fn Print(x: i32) = "print.int";

@@ -360,7 +360,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
 // CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Equal.decl, @impl.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.2: type = fn_type @Equal.2 [template]
@@ -395,12 +395,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.1 [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Equal.decl, @impl.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [template = constants.%TestRhsBad] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -443,7 +443,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %C.ref as %Eq.ref {
+// CHECK:STDOUT: impl @impl: %C.ref as %Eq.ref {
 // CHECK:STDOUT:   %Equal.decl: %Equal.type.2 = fn_decl @Equal.2 [template = constants.%Equal.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
