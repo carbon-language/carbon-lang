@@ -1222,6 +1222,8 @@ TEST_F(LexerTest, IndentedComments) {
 }
 
 TEST_F(LexerTest, MultipleComments) {
+  // TODO: Switch format to `llvm::StringLiteral` if
+  // `llvm::StringLiteral::c_str` is added.
   constexpr char Format[] = R"(
 {0}
   {1}
