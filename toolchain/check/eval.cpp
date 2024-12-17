@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -1619,6 +1620,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
                                         ImplAccessFunctionBeforeComplete);
             return SemIR::ErrorInst::SingletonConstantId;
           }
+          LoadImportRef(eval_context.context(), element);
           return GetConstantValueInSpecific(eval_context.sem_ir(),
                                             witness->specific_id, element);
         } else {

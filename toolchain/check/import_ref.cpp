@@ -2258,14 +2258,18 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ImplWitness inst) -> ResolveResult {
-  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto elements_id =
-      GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
+  llvm::SmallVector<SemIR::InstId> elements;
+  auto import_elements = resolver.import_inst_blocks().Get(inst.elements_id);
+  elements.reserve(import_elements.size());
+  for (auto element : import_elements) {
+    elements.push_back(AddImportRef(resolver, element));
+  }
+  auto elements_id = resolver.local_inst_blocks().Add(elements);
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
   return ResolveAs<SemIR::ImplWitness>(
