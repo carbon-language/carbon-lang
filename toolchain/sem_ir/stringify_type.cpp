@@ -29,16 +29,17 @@ namespace {
 // Contains the stack of steps for `StringifyTypeExpr`.
 class StepStack {
  public:
-  // The discriminator for the `Step` union.
-  enum Kind : uint8_t {
-    Inst,
-    FixedString,
-    ArrayBound,
-    Name,
-  };
-
-  // An individual step in the stack, which prints some component of a type name.
+  // An individual step in the stack, which stringifies some component of a type
+  // name.
   struct Step {
+    // The discriminator for the `Step` union.
+    enum Kind : uint8_t {
+      Inst,
+      FixedString,
+      ArrayBound,
+      Name,
+    };
+
     // The kind of step to perform.
     Kind kind;
 
@@ -63,16 +64,16 @@ class StepStack {
 
   // These push basic entries onto the stack.
   auto PushInstId(InstId inst_id) -> void {
-    steps_.push_back({.kind = Inst, .inst_id = inst_id});
+    steps_.push_back({.kind = Step::Inst, .inst_id = inst_id});
   }
   auto PushString(const char* string) -> void {
-    steps_.push_back({.kind = FixedString, .fixed_string = string});
+    steps_.push_back({.kind = Step::FixedString, .fixed_string = string});
   }
   auto PushArrayBound(InstId bound_id) -> void {
-    steps_.push_back({.kind = ArrayBound, .bound_id = bound_id});
+    steps_.push_back({.kind = Step::ArrayBound, .bound_id = bound_id});
   }
   auto PushNameId(NameId name_id) -> void {
-    steps_.push_back({.kind = Name, .name_id = name_id});
+    steps_.push_back({.kind = Step::Name, .name_id = name_id});
   }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
@@ -163,16 +164,16 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     auto step = step_stack.Pop();
 
     switch (step.kind) {
-      case StepStack::FixedString:
+      case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
-      case StepStack::ArrayBound:
+      case StepStack::Step::ArrayBound:
         out << sem_ir.GetArrayBoundValue(step.bound_id);
         continue;
-      case StepStack::Name:
+      case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
-      case StepStack::Inst:
+      case StepStack::Step::Inst:
         if (!step.inst_id.is_valid()) {
           out << "<invalid type>";
           continue;
