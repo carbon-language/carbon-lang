@@ -11,6 +11,16 @@
 // --- a.carbon
 library "[[@TEST_NAME]]";
 interface A;
+// CHECK:STDERR: a.carbon:[[@LINE+10]]:1: error: implementation of undefined interface A [ImplOfUndefinedInterface]
+// CHECK:STDERR: impl () as A;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: a.carbon:[[@LINE-4]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface A;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: a.carbon:[[@LINE+3]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: impl () as A;
+// CHECK:STDERR: ^~~~~~~~~~~~~
 impl () as A;
 
 
@@ -30,15 +40,15 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [template = constants.%A.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc3_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc3_7.2 as %A.ref;
+// CHECK:STDOUT: impl @impl: %.loc13_7.2 as %A.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
@@ -49,8 +59,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//a, A, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, loc3_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, loc3_12, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//a, loc13_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//a, loc13_12, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,5 +73,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.2 as imports.%import_ref.3 [from "a.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 [from "a.carbon"];
 // CHECK:STDOUT:

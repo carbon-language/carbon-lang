@@ -82,7 +82,7 @@ fn Negate(n: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+22]]:12: note: type `i32` does not implement interface `Core.ImplicitAs(Core.Int(N))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var n: Int(Negate(1));
 // CHECK:STDERR:            ^~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:21:14: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:21:14: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:              ^~~~~~~~~~
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE-17]]:1: in import [InImport]
@@ -93,7 +93,7 @@ fn Negate(n: i32) -> i32 = "int.snegate";
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+11]]:12: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: var n: Int(Negate(1));
 // CHECK:STDERR:            ^~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:21:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/int.carbon:21:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE-28]]:1: in import [InImport]

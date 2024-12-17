@@ -401,7 +401,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
 
-  ImplWitnessStartDefinition(context, impl_info);
+  if (!impl_info.is_defined()) {
+    ImplWitnessStartDefinition(context, impl_info);
+  }
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 

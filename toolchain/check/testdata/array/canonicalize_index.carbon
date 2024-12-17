@@ -23,7 +23,7 @@ let b: [i32; 3]* = &a;
 // CHECK:STDERR: canonicalize_index.carbon:[[@LINE+6]]:14: note: type `u32` does not implement interface `Core.ImplicitAs(Core.UInt(N))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
-// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-opt/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:21:14: note: initializing function parameter [InCallToFunctionParam]
+// CHECK:STDERR: /usr/local/google/home/joshl/.cache/bazel/_bazel_joshl/6f495ed483b744d19e67a46396fa6c5a/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/uint.carbon:21:14: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:              ^~~~~~~~~~
 let c: [i32; ConvertToU32(3)]* = &a;

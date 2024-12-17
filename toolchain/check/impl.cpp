@@ -323,7 +323,8 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
 }
 
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
-  if (impl.witness_id.is_valid()) {
+  if (impl.witness_id.is_valid() &&
+      impl.witness_id != SemIR::ErrorInst::SingletonInstId) {
     auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
     auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
     for (auto& elem : witness_block) {
