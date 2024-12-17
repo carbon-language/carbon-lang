@@ -27,8 +27,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
@@ -45,14 +43,14 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.2.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.7, @impl.5(%N) [symbolic]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [symbolic]
-// CHECK:STDOUT:   %impl_witness.7: <witness> = impl_witness (%Convert.10), @impl.5(%int_32) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_4, %Convert.10 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.1, @Convert.7(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_4) [symbolic]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int.convert_checked, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
+// CHECK:STDOUT:   %impl_witness.7: <witness> = impl_witness (imports.%import_ref.27), @impl.5(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.13: type = fn_type @Convert.7, @impl.5(%int_32) [template]
+// CHECK:STDOUT:   %Convert.13: %Convert.type.13 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_4.1, %Convert.13 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.1, @Convert.7(%int_32) [template]
+// CHECK:STDOUT:   %int_4.2: %i32 = int_value 4 [template]
+// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_4.2, %Convert.3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -171,18 +169,18 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
 // CHECK:STDOUT:   %int_32.loc23_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = impl_witness_access constants.%impl_witness.7, element0 [symbolic = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.7(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_4) [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc23_18.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc23_18.2: %i32 = converted %int_4, %.loc23_18.1 [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = impl_witness_access constants.%impl_witness.7, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.7(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.2]
+// CHECK:STDOUT:   %.loc23_18.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_4.2]
+// CHECK:STDOUT:   %.loc23_18.2: %i32 = converted %int_4, %.loc23_18.1 [template = constants.%int_4.2]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %impl.elem0.loc23_26: %Convert.type.2 = impl_witness_access constants.%impl_witness.1, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc23_26: <bound method> = bound_method %.loc23_18.2, %impl.elem0.loc23_26 [symbolic = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.bound.loc23_26: <bound method> = bound_method %.loc23_18.2, %impl.elem0.loc23_26 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %.loc23_26.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Convert.call.loc23_26: init %X = call %Convert.bound.loc23_26(%.loc23_18.2) to %.loc23_26.1
 // CHECK:STDOUT:   %.loc23_26.2: init %X = converted %.loc23_18.2, %Convert.call.loc23_26

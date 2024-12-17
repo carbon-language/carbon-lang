@@ -34,8 +34,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %Int.1: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %a: %i32 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %i32 = symbolic_binding_pattern a, 0 [symbolic]
@@ -44,26 +42,17 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %int_1000: Core.IntLiteral = int_value 1000 [template]
+// CHECK:STDOUT:   %int_1000.1: Core.IntLiteral = int_value 1000 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %Int.1 [symbolic]
-// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1000, %Convert.3 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.1: init %Int.1 = call %Convert.specific_fn.1(%int_1000) [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%int.convert_checked.1) [symbolic]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_1000.2: %i32 = int_value 1000 [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%int_1000.2) [template]
 // CHECK:STDOUT:   %b: %C.2 = bind_symbolic_name b, 0 [symbolic]
 // CHECK:STDOUT:   %b.patt: %C.2 = symbolic_binding_pattern b, 0 [symbolic]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%b) [symbolic]
-// CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.2, @impl.1(%b) [symbolic]
-// CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_1000, %Convert.11 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%b) [symbolic]
-// CHECK:STDOUT:   %require_complete.6: <witness> = require_complete_type %Int.2 [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.2: init %Int.2 = call %Convert.specific_fn.2(<invalid return info>) [symbolic]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%int.convert_checked.2) [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %D: type = class_type @D, @D(%b) [symbolic]
@@ -99,30 +88,30 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %b.param_patt: %C.2 = value_param_pattern %b.patt.loc6, runtime_param<invalid> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc5: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %int_1000.loc5: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:     %impl.elem0.loc5: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:     %Convert.bound.loc5_20.1: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [symbolic = %Convert.bound.loc5_20.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc5_20.1: <specific function> = specific_function %Convert.bound.loc5_20.1, @Convert.2(constants.%N) [symbolic = %Convert.specific_fn.loc5_20.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:     %int.convert_checked.loc5_20.1: init @D.%Int (%Int.1) = call %Convert.specific_fn.loc5_20.1(%int_1000.loc5) [symbolic = %int.convert_checked.loc5_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc5_20.1: %i32 = value_of_initializer %int.convert_checked.loc5_20.1 [symbolic = %int.convert_checked.loc5_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc5_20.2: %i32 = converted %int_1000.loc5, %.loc5_20.1 [symbolic = %int.convert_checked.loc5_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %C.loc5_20.1: type = class_type @C, @C(constants.%int.convert_checked.1) [symbolic = %C.loc5_20.2 (constants.%C.2)]
-// CHECK:STDOUT:     %b.param.loc5: @D.%C.loc5_20.2 (%C.2) = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc5_9.1: @D.%C.loc5_20.2 (%C.2) = bind_symbolic_name b, 0, %b.param.loc5 [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %int_1000.loc5: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
+// CHECK:STDOUT:     %impl.elem0.loc5: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound.loc5: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %Convert.specific_fn.loc5: <specific function> = specific_function %Convert.bound.loc5, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked.loc5: init %i32 = call %Convert.specific_fn.loc5(%int_1000.loc5) [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc5_20.1: %i32 = value_of_initializer %int.convert_checked.loc5 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc5_20.2: %i32 = converted %int_1000.loc5, %.loc5_20.1 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %C.loc5: type = class_type @C, @C(constants.%int_1000.2) [template = constants.%C.2]
+// CHECK:STDOUT:     %b.param.loc5: %C.2 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.loc5_9.1: %C.2 = bind_symbolic_name b, 0, %b.param.loc5 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc6: %D.type = class_decl @D [template = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt.loc6: %C.2 = symbolic_binding_pattern b, 0 [symbolic = constants.%b.patt]
 // CHECK:STDOUT:     %b.param_patt: %C.2 = value_param_pattern %b.patt.loc6, runtime_param<invalid> [symbolic = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc6: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %int_1000.loc6: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:     %impl.elem0.loc6: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = constants.%Convert.3]
-// CHECK:STDOUT:     %Convert.bound.loc6: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [symbolic = constants.%Convert.bound.1]
-// CHECK:STDOUT:     %Convert.specific_fn.loc6: <specific function> = specific_function %Convert.bound.loc6, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:     %int.convert_checked.loc6: init %Int.1 = call %Convert.specific_fn.loc6(%int_1000.loc6) [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:     %.loc6_20.1: %i32 = value_of_initializer %int.convert_checked.loc6 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:     %.loc6_20.2: %i32 = converted %int_1000.loc6, %.loc6_20.1 [symbolic = constants.%int.convert_checked.1]
-// CHECK:STDOUT:     %C.loc6: type = class_type @C, @C(constants.%int.convert_checked.1) [symbolic = constants.%C.2]
+// CHECK:STDOUT:     %int_1000.loc6: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
+// CHECK:STDOUT:     %impl.elem0.loc6: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound.loc6: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %Convert.specific_fn.loc6: <specific function> = specific_function %Convert.bound.loc6, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked.loc6: init %i32 = call %Convert.specific_fn.loc6(%int_1000.loc6) [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc6_20.1: %i32 = value_of_initializer %int.convert_checked.loc6 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc6_20.2: %i32 = converted %int_1000.loc6, %.loc6_20.1 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %C.loc6: type = class_type @C, @C(constants.%int_1000.2) [template = constants.%C.2]
 // CHECK:STDOUT:     %b.param.loc6: %C.2 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %b.loc6: %C.2 = bind_symbolic_name b, 0, %b.param.loc6 [symbolic = constants.%b]
 // CHECK:STDOUT:   }
@@ -143,16 +132,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%b.loc5_9.1: @D.%C.loc5_20.2 (%C.2)) {
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.2, @impl.1(%N) [symbolic = %Convert.type (constants.%Convert.type.3)]
-// CHECK:STDOUT:   %Convert: @D.%Convert.type (%Convert.type.3) = struct_value () [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:   %Convert.bound.loc5_20.2: <bound method> = bound_method constants.%int_1000, %Convert [symbolic = %Convert.bound.loc5_20.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc5_20.2: <specific function> = specific_function %Convert.bound.loc5_20.2, @Convert.2(%N) [symbolic = %Convert.specific_fn.loc5_20.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @D.%Int (%Int.1) [symbolic = %require_complete (constants.%require_complete.3)]
-// CHECK:STDOUT:   %int.convert_checked.loc5_20.2: init @D.%Int (%Int.1) = call %Convert.specific_fn.loc5_20.2(constants.%int_1000) [symbolic = %int.convert_checked.loc5_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:   %C.loc5_20.2: type = class_type @C, @C(%int.convert_checked.loc5_20.2) [symbolic = %C.loc5_20.2 (constants.%C.2)]
+// CHECK:STDOUT: generic class @D(%b.loc5_9.1: %C.2) {
 // CHECK:STDOUT:   %b.loc5_9.2: %C.2 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   %b.patt.loc5: %C.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5 (constants.%b.patt)]
 // CHECK:STDOUT:
@@ -172,38 +152,20 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%int.convert_checked.1) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int.convert_checked.1
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int.convert_checked.1
+// CHECK:STDOUT: specific @C(constants.%int_1000.2) {
+// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int_1000.2
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int_1000.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%b) {
-// CHECK:STDOUT:   %N => constants.%b
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.11
-// CHECK:STDOUT:   %Convert => constants.%Convert.11
-// CHECK:STDOUT:   %Convert.bound.loc5_20.2 => constants.%Convert.bound.2
-// CHECK:STDOUT:   %Convert.specific_fn.loc5_20.2 => constants.%Convert.specific_fn.2
-// CHECK:STDOUT:   %Int => constants.%Int.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.6
-// CHECK:STDOUT:   %int.convert_checked.loc5_20.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %C.loc5_20.2 => constants.%C.3
 // CHECK:STDOUT:   %b.loc5_9.2 => constants.%b
 // CHECK:STDOUT:   %b.patt.loc5 => constants.%b
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@D.%int.convert_checked.loc5_20.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%int.convert_checked.2) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int.convert_checked.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_int_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %Int.1: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %a: %i32 = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %a.patt: %i32 = symbolic_binding_pattern a, 0 [symbolic]
@@ -212,26 +174,17 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %int_1000: Core.IntLiteral = int_value 1000 [template]
+// CHECK:STDOUT:   %int_1000.1: Core.IntLiteral = int_value 1000 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %Int.1 [symbolic]
-// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (%Convert.3), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1000, %Convert.3 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.1: init %Int.1 = call %Convert.specific_fn.1(%int_1000) [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%int.convert_checked.1) [symbolic]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_1000.2: %i32 = int_value 1000 [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%int_1000.2) [template]
 // CHECK:STDOUT:   %b: %C.2 = bind_symbolic_name b, 0 [symbolic]
 // CHECK:STDOUT:   %b.patt: %C.2 = symbolic_binding_pattern b, 0 [symbolic]
-// CHECK:STDOUT:   %Int.2: type = class_type @Int, @Int(%b) [symbolic]
-// CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.2, @impl.1(%b) [symbolic]
-// CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_1000, %Convert.11 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%b) [symbolic]
-// CHECK:STDOUT:   %require_complete.6: <witness> = require_complete_type %Int.2 [symbolic]
-// CHECK:STDOUT:   %int.convert_checked.2: init %Int.2 = call %Convert.specific_fn.2(<invalid return info>) [symbolic]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%int.convert_checked.2) [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
@@ -265,36 +218,36 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %a.loc4_9.1: %i32 = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc4_9.2 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: %D.type = class_decl @D [template = constants.%D.generic] {
-// CHECK:STDOUT:     %b.patt.loc5_9.1: @D.%C.loc5_19.2 (%C.2) = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: @D.%C.loc5_19.2 (%C.2) = value_param_pattern %b.patt.loc5_9.1, runtime_param<invalid> [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.patt.loc5_9.1: %C.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %C.2 = value_param_pattern %b.patt.loc5_9.1, runtime_param<invalid> [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:     %Convert.bound.loc5_19.1: <bound method> = bound_method %int_1000, %impl.elem0 [symbolic = %Convert.bound.loc5_19.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc5_19.1: <specific function> = specific_function %Convert.bound.loc5_19.1, @Convert.2(constants.%N) [symbolic = %Convert.specific_fn.loc5_19.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:     %int.convert_checked.loc5_19.1: init @D.%Int (%Int.1) = call %Convert.specific_fn.loc5_19.1(%int_1000) [symbolic = %int.convert_checked.loc5_19.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc5_19.1: %i32 = value_of_initializer %int.convert_checked.loc5_19.1 [symbolic = %int.convert_checked.loc5_19.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc5_19.2: %i32 = converted %int_1000, %.loc5_19.1 [symbolic = %int.convert_checked.loc5_19.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %C.loc5_19.1: type = class_type @C, @C(constants.%int.convert_checked.1) [symbolic = %C.loc5_19.2 (constants.%C.2)]
-// CHECK:STDOUT:     %b.param: @D.%C.loc5_19.2 (%C.2) = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc5_9.1: @D.%C.loc5_19.2 (%C.2) = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc5_9.2 (constants.%b)]
+// CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc5_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc5_19.2: %i32 = converted %int_1000, %.loc5_19.1 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_1000.2) [template = constants.%C.2]
+// CHECK:STDOUT:     %b.param: %C.2 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.loc5_9.1: %C.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %b.patt.loc12_9.1: @.1.%C.loc12_20.2 (%C.2) = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc12_9.2 (constants.%b.patt)]
-// CHECK:STDOUT:     %b.param_patt: @.1.%C.loc12_20.2 (%C.2) = value_param_pattern %b.patt.loc12_9.1, runtime_param<invalid> [symbolic = %b.patt.loc12_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.patt.loc12_9.1: %C.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc12_9.2 (constants.%b.patt)]
+// CHECK:STDOUT:     %b.param_patt: %C.2 = value_param_pattern %b.patt.loc12_9.1, runtime_param<invalid> [symbolic = %b.patt.loc12_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:     %Convert.bound.loc12_20.1: <bound method> = bound_method %int_1000, %impl.elem0 [symbolic = %Convert.bound.loc12_20.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc12_20.1: <specific function> = specific_function %Convert.bound.loc12_20.1, @Convert.2(constants.%N) [symbolic = %Convert.specific_fn.loc12_20.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:     %int.convert_checked.loc12_20.1: init @.1.%Int (%Int.1) = call %Convert.specific_fn.loc12_20.1(%int_1000) [symbolic = %int.convert_checked.loc12_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc12_20.1: %i32 = value_of_initializer %int.convert_checked.loc12_20.1 [symbolic = %int.convert_checked.loc12_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %.loc12_20.2: %i32 = converted %int_1000, %.loc12_20.1 [symbolic = %int.convert_checked.loc12_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:     %C.loc12_20.1: type = class_type @C, @C(constants.%int.convert_checked.1) [symbolic = %C.loc12_20.2 (constants.%C.2)]
-// CHECK:STDOUT:     %b.param: @.1.%C.loc12_20.2 (%C.2) = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %b.loc12_9.1: @.1.%C.loc12_20.2 (%C.2) = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc12_9.2 (constants.%b)]
+// CHECK:STDOUT:     %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_1000, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc12_20.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %.loc12_20.2: %i32 = converted %int_1000, %.loc12_20.1 [template = constants.%int_1000.2]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_1000.2) [template = constants.%C.2]
+// CHECK:STDOUT:     %b.param: %C.2 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %b.loc12_9.1: %C.2 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc12_9.2 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -313,31 +266,14 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%b.loc5_9.1: @D.%C.loc5_19.2 (%C.2)) {
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.2, @impl.1(%N) [symbolic = %Convert.type (constants.%Convert.type.3)]
-// CHECK:STDOUT:   %Convert: @D.%Convert.type (%Convert.type.3) = struct_value () [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:   %Convert.bound.loc5_19.2: <bound method> = bound_method constants.%int_1000, %Convert [symbolic = %Convert.bound.loc5_19.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc5_19.2: <specific function> = specific_function %Convert.bound.loc5_19.2, @Convert.2(%N) [symbolic = %Convert.specific_fn.loc5_19.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @D.%Int (%Int.1) [symbolic = %require_complete (constants.%require_complete.3)]
-// CHECK:STDOUT:   %int.convert_checked.loc5_19.2: init @D.%Int (%Int.1) = call %Convert.specific_fn.loc5_19.2(constants.%int_1000) [symbolic = %int.convert_checked.loc5_19.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:   %C.loc5_19.2: type = class_type @C, @C(%int.convert_checked.loc5_19.2) [symbolic = %C.loc5_19.2 (constants.%C.2)]
+// CHECK:STDOUT: generic class @D(%b.loc5_9.1: %C.2) {
 // CHECK:STDOUT:   %b.loc5_9.2: %C.2 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.2 (constants.%b)]
 // CHECK:STDOUT:   %b.patt.loc5_9.2: %C.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc5_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%b.loc12_9.1: @.1.%C.loc12_20.2 (%C.2)) {
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert.2, @impl.1(%N) [symbolic = %Convert.type (constants.%Convert.type.3)]
-// CHECK:STDOUT:   %Convert: @.1.%Convert.type (%Convert.type.3) = struct_value () [symbolic = %Convert (constants.%Convert.3)]
-// CHECK:STDOUT:   %Convert.bound.loc12_20.2: <bound method> = bound_method constants.%int_1000, %Convert [symbolic = %Convert.bound.loc12_20.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_20.2: <specific function> = specific_function %Convert.bound.loc12_20.2, @Convert.2(%N) [symbolic = %Convert.specific_fn.loc12_20.2 (constants.%Convert.specific_fn.1)]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.1)]
-// CHECK:STDOUT:   %int.convert_checked.loc12_20.2: init @.1.%Int (%Int.1) = call %Convert.specific_fn.loc12_20.2(constants.%int_1000) [symbolic = %int.convert_checked.loc12_20.2 (constants.%int.convert_checked.1)]
-// CHECK:STDOUT:   %C.loc12_20.2: type = class_type @C, @C(%int.convert_checked.loc12_20.2) [symbolic = %C.loc12_20.2 (constants.%C.2)]
+// CHECK:STDOUT: generic class @.1(%b.loc12_9.1: %C.2) {
 // CHECK:STDOUT:   %b.loc12_9.2: %C.2 = bind_symbolic_name b, 0 [symbolic = %b.loc12_9.2 (constants.%b)]
 // CHECK:STDOUT:   %b.patt.loc12_9.2: %C.2 = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc12_9.2 (constants.%b.patt)]
 // CHECK:STDOUT:
@@ -357,44 +293,18 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%int.convert_checked.1) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int.convert_checked.1
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int.convert_checked.1
+// CHECK:STDOUT: specific @C(constants.%int_1000.2) {
+// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int_1000.2
+// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int_1000.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%b) {
-// CHECK:STDOUT:   %N => constants.%b
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.11
-// CHECK:STDOUT:   %Convert => constants.%Convert.11
-// CHECK:STDOUT:   %Convert.bound.loc5_19.2 => constants.%Convert.bound.2
-// CHECK:STDOUT:   %Convert.specific_fn.loc5_19.2 => constants.%Convert.specific_fn.2
-// CHECK:STDOUT:   %Int => constants.%Int.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.6
-// CHECK:STDOUT:   %int.convert_checked.loc5_19.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %C.loc5_19.2 => constants.%C.3
 // CHECK:STDOUT:   %b.loc5_9.2 => constants.%b
 // CHECK:STDOUT:   %b.patt.loc5_9.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@D.%int.convert_checked.loc5_19.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%int.convert_checked.2) {
-// CHECK:STDOUT:   %a.loc4_9.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %a.patt.loc4_9.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%b) {
-// CHECK:STDOUT:   %N => constants.%b
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.11
-// CHECK:STDOUT:   %Convert => constants.%Convert.11
-// CHECK:STDOUT:   %Convert.bound.loc12_20.2 => constants.%Convert.bound.2
-// CHECK:STDOUT:   %Convert.specific_fn.loc12_20.2 => constants.%Convert.specific_fn.2
-// CHECK:STDOUT:   %Int => constants.%Int.2
-// CHECK:STDOUT:   %int.convert_checked.loc12_20.2 => constants.%int.convert_checked.2
-// CHECK:STDOUT:   %C.loc12_20.2 => constants.%C.3
 // CHECK:STDOUT:   %b.loc12_9.2 => constants.%b
 // CHECK:STDOUT:   %b.patt.loc12_9.2 => constants.%b
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@.1.%int.convert_checked.loc12_20.2) {}
 // CHECK:STDOUT:
