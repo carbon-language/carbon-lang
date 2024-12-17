@@ -254,10 +254,7 @@ var v: C(123) = ();
 // CHECK:STDOUT:   %U.patt.loc5_15.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%ptr.1) {
 // CHECK:STDOUT:   %T.loc4_13.2 => constants.%ptr.1

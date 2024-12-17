@@ -154,10 +154,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_9.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(@impl.%T.loc10_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
@@ -174,11 +171,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T.loc10_14.2) {
-// CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc10_14.2 => constants.%T
-// CHECK:STDOUT:   %C.loc10_27.2 => constants.%C
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%T.loc10_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_in_fn_decl.carbon
 // CHECK:STDOUT:
@@ -328,10 +321,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@impl.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(@impl.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -344,11 +334,7 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   %interface => constants.%interface.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT:   %C => constants.%C.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%T) {}
 // CHECK:STDOUT:

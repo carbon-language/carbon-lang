@@ -166,12 +166,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {
-// CHECK:STDOUT:   %T.loc11_9.2 => constants.%I.type
-// CHECK:STDOUT:   %T.patt.loc11_9.2 => constants.%I.type
-// CHECK:STDOUT:   %X.loc11_19.2 => constants.%Self
-// CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%Self
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self

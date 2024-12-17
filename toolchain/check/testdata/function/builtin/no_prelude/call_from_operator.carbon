@@ -465,10 +465,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%T) {
-// CHECK:STDOUT:   %T.loc11_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @As(@Convert.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%T, constants.%Self.2) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -477,20 +474,14 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self.as_type.loc12_20.1 => constants.%Self.as_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%T.loc11_14.2) {
-// CHECK:STDOUT:   %T.loc11_14.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_14.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @As(%T.loc11_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_22.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc15_22.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%T) {
-// CHECK:STDOUT:   %T.loc15_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%T, constants.%Self.3) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -499,10 +490,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self.as_type.loc16_20.1 => constants.%Self.as_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T.loc15_22.2) {
-// CHECK:STDOUT:   %T.loc15_22.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc15_22.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%T.loc15_22.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Op.1(constants.%Add.facet) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet
@@ -887,15 +875,9 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @As(%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @As(@Convert.1.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @As(@Convert.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.1(constants.%T, constants.%Self.1) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -935,15 +917,9 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitAs(@Convert.2.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Convert.2(constants.%T, constants.%Self.3) {
 // CHECK:STDOUT:   %T => constants.%T

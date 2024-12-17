@@ -148,15 +148,9 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc5_13.2) {
-// CHECK:STDOUT:   %T.loc5_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(%T.loc5_13.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.1.%T.loc7_14.2) {
-// CHECK:STDOUT:   %T.loc5_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.1.%T.loc7_14.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_14.2 => constants.%T
@@ -173,10 +167,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %Self.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.2.%ptr.loc8_32.2) {
-// CHECK:STDOUT:   %T.loc5_13.2 => constants.%ptr
-// CHECK:STDOUT:   %T.patt.loc5_13.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.2.%ptr.loc8_32.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_14.2 => constants.%T
@@ -295,15 +286,9 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.1.%T.1) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.1.%T.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.1(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T
@@ -316,10 +301,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.2.%ptr) {
-// CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %T.patt => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.2.%ptr) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -423,15 +405,9 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.1.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -444,10 +420,7 @@ impl forall [T:! type] C as I(T*) {}
 // CHECK:STDOUT:   %T.patt => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.2.%ptr.1) {
-// CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %T.patt => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.2.%ptr.1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl.2(constants.%T) {
 // CHECK:STDOUT:   %T.1 => constants.%T

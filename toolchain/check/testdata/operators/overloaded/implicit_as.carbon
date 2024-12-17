@@ -284,10 +284,7 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Source(%T.loc27_11.2) {
-// CHECK:STDOUT:   %T.loc27_11.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Source(%T.loc27_11.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc27_11.2 => constants.%X

@@ -212,19 +212,11 @@ fn G() {
 // CHECK:STDOUT:   %Make.specific_fn.loc12_27.2 => constants.%Make.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(%T.loc11_12.2) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Wrap(%T.loc11_12.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Wrap(@Make.%T) {
-// CHECK:STDOUT:   %T.loc11_12.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc11_12.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Wrap(@Make.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @Make(%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap(constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_12.2 => constants.%i32

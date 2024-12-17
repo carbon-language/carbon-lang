@@ -285,10 +285,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc6_28.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.1(%T.loc6_28.2) {
-// CHECK:STDOUT:   %T.loc6_28.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_28.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @GenericAndParams.1(%T.loc6_28.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
@@ -304,15 +301,9 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %U.patt.loc10_30.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GenericAndParams.2(%T, %U.loc10_30.2) {
-// CHECK:STDOUT:   %U.loc10_30.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc10_30.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @GenericAndParams.2(%T, %U.loc10_30.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(%T.loc8_9.2) {
-// CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @C(%T.loc8_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.1(constants.%X) {
 // CHECK:STDOUT:   %T.loc6_28.2 => constants.%X

@@ -109,10 +109,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%T.loc7_6.2) {
-// CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_6.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(@G.%T.loc7_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- user.carbon
 // CHECK:STDOUT:
@@ -210,10 +207,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(@G.%T) {
-// CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %T.patt => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(@G.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
 // CHECK:STDOUT:   %T => constants.%C

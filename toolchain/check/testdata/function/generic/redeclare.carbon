@@ -173,11 +173,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2 => constants.%F.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc4_6.2) {
-// CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_20.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc4_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_different_return_type.carbon
 // CHECK:STDOUT:
