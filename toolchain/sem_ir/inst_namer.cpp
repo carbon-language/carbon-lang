@@ -366,19 +366,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   Scope& scope = GetScopeInfo(top_scope_id);
 
   std::deque<std::pair<ScopeId, InstId>> insts;
-  for (auto inst_id : block) {
-    insts.emplace_back(top_scope_id, inst_id);
-  }
 
   // Appends a scope and instructions to walk. Avoids recursion while allowing
   // the loop to below append more instructions during iteration.
-  auto append_block = [&](ScopeId scope_id, InstBlockId block_id) {
+  auto append_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
     if (block_id.is_valid()) {
       for (auto inst_id : sem_ir_->inst_blocks().Get(block_id)) {
         insts.emplace_back(scope_id, inst_id);
       }
     }
   };
+  auto append_block_insts = [&](ScopeId scope_id,
+                                llvm::ArrayRef<InstId> inst_ids) {
+    for (auto inst_id : inst_ids) {
+      insts.emplace_back(scope_id, inst_id);
+    }
+  };
+
+  append_block_insts(top_scope_id, block);
 
   // Use bound names where available. Otherwise, assign a backup name.
   while (!insts.empty()) {
@@ -524,8 +529,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        append_block(class_scope_id, class_info.pattern_block_id);
-        append_block(class_scope_id, inst.decl_block_id);
+        append_block_id(class_scope_id, class_info.pattern_block_id);
+        append_block_id(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -609,8 +614,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        append_block(function_scope_id, function_info.pattern_block_id);
-        append_block(function_scope_id, inst.decl_block_id);
+        append_block_id(function_scope_id, function_info.pattern_block_id);
+        append_block_id(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -630,9 +635,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        append_block(impl_scope_id,
-                     sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
-        append_block(impl_scope_id, inst.decl_block_id);
+        append_block_id(impl_scope_id,
+                        sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
+        append_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -653,7 +658,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
-            append_block(ScopeId::ImportRefs, const_inst_id);
+            append_block_insts(ScopeId::ImportRefs,
+                               llvm::ArrayRef(const_inst_id));
           }
         }
         continue;
@@ -663,8 +669,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        append_block(interface_scope_id, interface_info.pattern_block_id);
-        append_block(interface_scope_id, inst.decl_block_id);
+        append_block_id(interface_scope_id, interface_info.pattern_block_id);
+        append_block_id(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case InterfaceWitness::Kind: {
@@ -744,7 +750,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {
-        append_block(scope_id, inst.block_id);
+        append_block_id(scope_id, inst.block_id);
         break;
       }
       case StringLiteral::Kind: {
