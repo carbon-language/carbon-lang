@@ -22,6 +22,8 @@ interface Ordered {
 }
 
 // Equality comparison for `bool`.
+// Note that this must be provided in this library as `bool` doesn't have any
+// associated libraries of its own.
 impl bool as Eq {
   fn Equal[self: Self](other: Self) -> bool = "bool.eq";
   fn NotEqual[self: Self](other: Self) -> bool = "bool.neq";
