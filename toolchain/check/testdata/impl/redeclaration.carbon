@@ -10,14 +10,14 @@
 
 interface I {}
 
-// CHECK:STDERR: redeclaration.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: redeclaration.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl i32 as I;
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl i32 as I;
 
 class X {
-  // CHECK:STDERR: redeclaration.carbon:[[@LINE+3]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // CHECK:STDERR: redeclaration.carbon:[[@LINE+3]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
   // CHECK:STDERR:   impl i32 as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   impl i32 as I;

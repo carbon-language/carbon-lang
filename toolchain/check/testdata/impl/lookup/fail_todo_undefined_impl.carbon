@@ -13,7 +13,9 @@ interface I {
 }
 
 class C {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // This doesn't match `impl C as I` below under proposal #3763.
+
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -27,6 +29,8 @@ fn F() -> i32 {
   return C.F();
 }
 
+// TODO: This should be written `impl C.(Self as I)`..., once
+// that is supported.
 impl C as I {
   fn F() {}
 }

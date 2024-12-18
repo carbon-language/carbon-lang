@@ -15,7 +15,7 @@ library "[[@TEST_NAME]]";
 class C {}
 interface I(T:! type) {}
 
-// CHECK:STDERR: import_generic.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: import_generic.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl forall [T:! type] C as I(T);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

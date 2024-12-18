@@ -261,6 +261,7 @@ CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
 CARBON_DIAGNOSTIC_KIND(ImplAssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(MissingImplDefinition)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)

@@ -26,7 +26,7 @@ class D {
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

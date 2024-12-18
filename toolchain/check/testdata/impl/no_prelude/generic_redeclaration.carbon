@@ -19,22 +19,22 @@ interface J {}
 interface K {}
 interface L {}
 
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl forall [T:! I] T as Interface;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! I] T as Interface;
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl forall [T:! J] T as Interface;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! J] T as Interface;
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl forall [T:! K] T as Interface;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! K] T as Interface;
-// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR: same_self_and_interface.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
 // CHECK:STDERR: impl forall [T:! L] T as Interface;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

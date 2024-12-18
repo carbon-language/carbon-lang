@@ -17,7 +17,7 @@ class C {
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   extend impl as i32;

@@ -18,7 +18,7 @@ class C {
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -393,8 +393,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
         auto& impl = context_.impls().Get(impl_decl.impl_id);
         if (!impl.is_defined()) {
-          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
           FillImplWitnessWithErrors(context_, impl);
+          CARBON_DIAGNOSTIC(MissingImplDefinition, Error,
+                            "no definition found for declaration of impl");
+          emitter_.Emit(decl_inst_id, MissingImplDefinition);
         }
         break;
       }
