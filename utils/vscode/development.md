@@ -16,26 +16,29 @@ npm install -g vsce
 
 ## Common operations
 
--   Build and install locally:
+-   Build and install:
 
-    ```
-    npm install && vsce package -o carbon.vsix && code --install-extension carbon.vsix
-    ```
+    -   Locally:
 
--   Build and install from a remote SSH host using VS Code Server:
+        ```
+        npm install && vsce package -o carbon.vsix && code --install-extension carbon.vsix
+        ```
 
-    ```
-    npm install && vsce package -o carbon.vsix && ~/.vscode-server/cli/servers/Stable-*/server/bin/code-server --install-extension carbon.vsix
-    ```
+    -   From a remote SSH host using VS Code Server:
 
--   Build and install using the UI:
+        ```
+        npm install && vsce package -o carbon.vsix && ~/.vscode-server/cli/servers/Stable-*/server/bin/code-server --install-extension carbon.vsix
+        ```
 
-    1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
-        - This installs dependencies, builds the VSIX file, and prints the path.
-    2. Open the
-       [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)
-       and select "Extensions: Install from VSIX...".
-    3. Enter the path printed by the above command.
+    -   Using the UI:
+
+        1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
+            - This installs dependencies, builds the VSIX file, and prints the
+              path.
+        2. Open the
+           [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)
+           and select "Extensions: Install from VSIX...".
+        3. Enter the path printed by the above command.
 
 -   Build and publish the release using the website:
 
