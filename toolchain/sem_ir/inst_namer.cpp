@@ -358,13 +358,13 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
 
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
     -> void {
-  CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
+  if (block_id.is_valid()) {
+    CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
+  }
 }
 
 auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
-  Scope& scope = GetScopeInfo(top_scope_id);
-
   std::deque<std::pair<ScopeId, InstId>> insts;
 
   // Appends a scope and instructions to walk. Avoids recursion while allowing
@@ -392,6 +392,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     if (!inst_id.is_valid()) {
       continue;
     }
+
+    Scope& scope = GetScopeInfo(scope_id);
 
     auto untyped_inst = sem_ir_->insts().Get(inst_id);
     auto add_inst_name = [&](std::string name) {
