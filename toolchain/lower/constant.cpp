@@ -48,6 +48,11 @@ class ConstantContext {
     return nullptr;
   }
 
+  // Gets the value to use for an integer literal.
+  auto GetIntLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetIntLiteralAsValue();
+  }
+
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
     return file_context_->GetFunction(function_id);
@@ -187,9 +192,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
   // represented as an LLVM integer type.
   auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
-    CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
-    return llvm::ConstantStruct::get(struct_type);
+    auto* int_literal_value = context.GetIntLiteralAsValue();
+    CARBON_CHECK(int_literal_value->getType() == type);
+    return int_literal_value;
   }
 
   auto val = context.sem_ir().ints().Get(inst.int_id);
