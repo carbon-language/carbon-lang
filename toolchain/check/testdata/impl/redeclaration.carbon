@@ -47,16 +47,16 @@ impl i32 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc19: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,9 +68,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %i32.loc13 as %I.ref.loc13;
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %i32 as %I.ref {
+// CHECK:STDOUT: impl @impl: %i32.loc13 as %I.ref.loc13 {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -78,7 +76,7 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref.loc16: type = name_ref I, file.%I.decl [template = constants.%I.type]
