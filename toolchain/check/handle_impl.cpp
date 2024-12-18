@@ -233,8 +233,6 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
                             SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
 
-  // TODO: Following #3763, disallow redeclarations in different scopes.
-
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
@@ -243,6 +241,14 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
+  return true;
+}
+
+static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
+                              SemIR::ImplId prev_impl_id) -> bool {
+  auto& prev_impl = context.impls().Get(prev_impl_id);
+
+  // TODO: Following #3763, disallow redeclarations in different scopes.
 
   // Following #4672, disallowing defining non-extern declarations in another
   // file.
@@ -312,10 +318,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
   // Add the impl declaration.
+  bool valid_redeclaration = true;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
-      impl_decl.impl_id = prev_impl_id;
+      valid_redeclaration = IsValidImplRedecl(context, impl_info, prev_impl_id);
+      if (valid_redeclaration) {
+        impl_decl.impl_id = prev_impl_id;
+      }
       break;
     }
   }
@@ -353,7 +363,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   // Impl definitions are required in the same file as the declaration.
-  if (!is_definition) {
+  if (!is_definition && valid_redeclaration) {
     context.definitions_required().push_back(impl_decl_id);
   }
 

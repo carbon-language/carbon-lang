@@ -24,11 +24,7 @@ impl () as A;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
-// CHECK:STDERR: impl () as A;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl () as A;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -82,11 +78,7 @@ impl () as C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+8]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
-// CHECK:STDERR: impl () as C;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl () as C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -161,17 +153,17 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %.loc12_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.1 [template = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc12: <witness> = impl_witness () [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
-// CHECK:STDOUT:     %.loc18_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc18_7.2: type = converted %.loc18_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.1 [template = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness () [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
@@ -182,11 +174,11 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_decl_in_api_definition_in_impl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc12_7.2 as %A.ref;
+// CHECK:STDOUT: impl @impl.2: %.loc8_7.2 as %A.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3: %.loc18_7.2 as %A.ref {
+// CHECK:STDOUT: impl @impl.3: %.loc14_7.2 as %A.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc18
+// CHECK:STDOUT:   witness = file.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_decl_in_api.carbon
@@ -325,8 +317,8 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %.loc12_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
@@ -340,7 +332,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %.loc12_7.2 as %C.ref;
+// CHECK:STDOUT: impl @impl.2: %.loc8_7.2 as %C.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:
