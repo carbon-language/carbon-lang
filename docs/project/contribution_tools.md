@@ -22,6 +22,8 @@ contributions.
     -   [Main tools](#main-tools)
         -   [Running pre-commit](#running-pre-commit)
     -   [Optional tools](#optional-tools)
+        -   [Using LLDB with VS Code](#using-lldb-with-vs-code)
+        -   [Using GDB with VS Code](#using-gdb-with-vs-code)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
@@ -238,6 +240,44 @@ considering if they fit your workflow.
         ./scripts/create_compdb.py
         ```
         -   **NOTE**: This assumes you have `python` 3 installed on your system.
+
+#### Using LLDB with VS Code
+
+The required setup for LLDB is:
+
+1.  Install a minimum of LLVM 19 instead of LLVM 16.
+    -   The `lldb-dap` tool was added as part of LLVM 19.
+2.  Symlink `lldb_launch.json` to `launch.json`:
+    `ln -s lldb_launch.json .vscode/launch.json`
+3.  Install the
+    [`llvm-vs-code-extensions.lldb-dap` extension](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.lldb-dap).
+4.  In VS Code settings, it may be necessary to set `lldb-dap.executable-path`
+    to the path of `lldb-dap`.
+
+A typical debug session looks like:
+
+1. `bazel build -c dbg //toolchain/testing:file_test`
+2. Open a `.carbon` testdata file to debug. This must be the active file in VS
+   Code.
+3. Go to the "Run and debug" panel in VS Code.
+4. Select and run the `file_test (lldb)` configuration.
+
+#### Using GDB with VS Code
+
+The required setup for GDB is:
+
+1.  Symlink `gdb_launch.json` to `launch.json`:
+    `ln -s gdb_launch.json .vscode/launch.json`
+2.  Install the
+    [`coolchyni.beyond-debug` extension](https://marketplace.visualstudio.com/items?itemName=coolchyni.beyond-debug).
+
+A typical debug session looks like:
+
+1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags --fission=no //toolchain/testing:file_test`
+2. Open a `.carbon` testdata file to debug. This must be the active file in VS
+   Code.
+3. Go to the "Run and debug" panel in VS Code.
+4. Select and run the `file_test (gdb)` configuration.
 
 ### Manually building Clang and LLVM (not recommended)
 
