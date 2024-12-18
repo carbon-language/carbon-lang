@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst_namer.h"
 
+#include <deque>
+
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
