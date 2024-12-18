@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/inst_namer.h"
 
 #include "common/ostream.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -355,23 +356,34 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
   AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
 }
 
-// TODO: Consider addressing recursion here. It may be important because
-// InstNamer is used for debug info.
-// NOLINTNEXTLINE(misc-no-recursion)
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
     -> void {
-  if (block_id.is_valid()) {
-    CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
-  }
+  CollectNamesInBlock(scope_id, sem_ir_->inst_blocks().Get(block_id));
 }
 
-// NOLINTNEXTLINE(misc-no-recursion): See above TODO.
-auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
+auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
-  Scope& scope = GetScopeInfo(scope_id);
+  Scope& scope = GetScopeInfo(top_scope_id);
+
+  std::deque<std::pair<ScopeId, InstId>> insts;
+  for (auto inst_id : block) {
+    insts.emplace_back(top_scope_id, inst_id);
+  }
+
+  // Appends a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below append more instructions during iteration.
+  auto append_block = [&](ScopeId scope_id, InstBlockId block_id) {
+    if (block_id.is_valid()) {
+      for (auto inst_id : sem_ir_->inst_blocks().Get(block_id)) {
+        insts.emplace_back(scope_id, inst_id);
+      }
+    }
+  };
 
   // Use bound names where available. Otherwise, assign a backup name.
-  for (auto inst_id : block) {
+  while (!insts.empty()) {
+    auto [scope_id, inst_id] = insts.front();
+    insts.pop_front();
     if (!inst_id.is_valid()) {
       continue;
     }
@@ -512,8 +524,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        CollectNamesInBlock(class_scope_id, class_info.pattern_block_id);
-        CollectNamesInBlock(class_scope_id, inst.decl_block_id);
+        append_block(class_scope_id, class_info.pattern_block_id);
+        append_block(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -597,8 +609,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
-        CollectNamesInBlock(function_scope_id, inst.decl_block_id);
+        append_block(function_scope_id, function_info.pattern_block_id);
+        append_block(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -618,9 +630,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        CollectNamesInBlock(
-            impl_scope_id, sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
-        CollectNamesInBlock(impl_scope_id, inst.decl_block_id);
+        append_block(impl_scope_id,
+                     sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
+        append_block(impl_scope_id, inst.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -641,7 +653,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
-            CollectNamesInBlock(ScopeId::ImportRefs, const_inst_id);
+            append_block(ScopeId::ImportRefs, const_inst_id);
           }
         }
         continue;
@@ -651,9 +663,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        CollectNamesInBlock(interface_scope_id,
-                            interface_info.pattern_block_id);
-        CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
+        append_block(interface_scope_id, interface_info.pattern_block_id);
+        append_block(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case InterfaceWitness::Kind: {
@@ -733,7 +744,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {
-        CollectNamesInBlock(scope_id, inst.block_id);
+        append_block(scope_id, inst.block_id);
         break;
       }
       case StringLiteral::Kind: {
