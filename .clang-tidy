@@ -8,89 +8,114 @@ UseColor: true
 # This is necessary for `--config=clang-tidy` to catch errors.
 WarningsAsErrors: '*'
 
+# TODO: clang-tidy-16 doesn't support this format; it's retained for comments.
+# Switch once we update the minimum version.
+#
+# # We turn on all of a few categories by default.
+# - '-*'
+# - 'bugprone-*'
+# - 'google-*'
+# - 'misc-*'
+# - 'modernize-*'
+# - 'performance-*'
+# - 'readability-*'
+#
+# # Disabled due to the implied style choices.
+# - '-misc-const-correctness'
+# - '-misc-include-cleaner'
+# - '-misc-use-anonymous-namespace'
+# - '-modernize-return-braced-init-list'
+# - '-modernize-use-default-member-init'
+# - '-modernize-use-integer-sign-comparison'
+# - '-modernize-use-emplace'
+# - '-readability-avoid-nested-conditional-operator'
+# - '-readability-convert-member-functions-to-static'
+# - '-readability-else-after-return'
+# - '-readability-identifier-length'
+# - '-readability-implicit-bool-conversion'
+# - '-readability-make-member-function-const'
+# - '-readability-math-missing-parentheses'
+# - '-readability-static-definition-in-anonymous-namespace'
+# - '-readability-use-anyofallof'
+#
+# # Warns when we have multiple empty cases in switches, which we do for comment
+# # reasons.
+# - '-bugprone-branch-clone'
+# # Frequently warns on multiple parameters of the same type.
+# - '-bugprone-easily-swappable-parameters'
+# # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
+# # unlikely to find real issues.
+# - '-bugprone-exception-escape'
+# # Has false positives in places such as using an argument to declare a name,
+# # which cannot have parentheses. For our limited use of macros, this is a
+# # common conflict.
+# - '-bugprone-macro-parentheses'
+# # Conflicts with integer type C++ style.
+# - '-bugprone-narrowing-conversions'
+# # Has false positives for `enum_base.h`. Clang's built-in switch warnings
+# # cover most of our risk of bugs here.
+# - '-bugprone-switch-missing-default-case'
+# # In clang-tidy 16, has false positives on code like:
+# #     while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
+# #       inst_id = name_ref->value_id;
+# #                 ^ unchecked access to optional value
+# #     }
+# - '-bugprone-unchecked-optional-access'
+# # Overlaps with `readability-function-size`.
+# - '-google-readability-function-size'
+# # Suggests usernames on TODOs, which we don't want.
+# - '-google-readability-todo'
+# # Even with `IgnoreClassesWithAllMemberVariablesBeingPublic` to allow structs,
+# # we use `protected` members in too many tests.
+# - '-misc-non-private-member-variables-in-classes'
+# # Overlaps with `-Wno-missing-prototypes`.
+# - '-misc-use-internal-linkage'
+# # Suggests `std::array`, which we could migrate to, but conflicts with the
+# # status quo.
+# - '-modernize-avoid-c-arrays'
+# # Warns on creation of SemIR typed insts, for which we do not currently want
+# # to use designated initialization.
+# - '-modernize-use-designated-initializers'
+# # Only fixes const methods, not non-const, which yields distracting results on
+# # accessors.
+# - '-modernize-use-nodiscard'
+# # Duplicates `modernize-pass-by-value`.
+# - '-performance-unnecessary-value-param'
+# # Warns on enums which use the `LastValue = Value` pattern if all the other
+# # discriminants aren't given an explicit value.
+# - '-readability-enum-initial-value'
+# # Warns too frequently.
+# - '-readability-function-cognitive-complexity'
+# # Warns in reasonably documented situations.
+# - '-readability-magic-numbers'
+# # Warns on `= {}` which is also used to indicate which fields do not need to
+# # be explicitly initialized in aggregate initialization.
+# - '-readability-redundant-member-init'
+# # Warns when callers use similar names as different parameters.
+# - '-readability-suspicious-call-argument'
 Checks:
-  # We turn on all of a few categories by default.
-  - '-*'
-  - 'bugprone-*'
-  - 'google-*'
-  - 'misc-*'
-  - 'modernize-*'
-  - 'performance-*'
-  - 'readability-*'
-
-  # Disabled due to the implied style choices.
-  - '-misc-const-correctness'
-  - '-misc-include-cleaner'
-  - '-misc-use-anonymous-namespace'
-  - '-modernize-return-braced-init-list'
-  - '-modernize-use-default-member-init'
-  - '-modernize-use-integer-sign-comparison'
-  - '-modernize-use-emplace'
-  - '-readability-avoid-nested-conditional-operator'
-  - '-readability-convert-member-functions-to-static'
-  - '-readability-else-after-return'
-  - '-readability-identifier-length'
-  - '-readability-implicit-bool-conversion'
-  - '-readability-make-member-function-const'
-  - '-readability-math-missing-parentheses'
-  - '-readability-static-definition-in-anonymous-namespace'
-  - '-readability-use-anyofallof'
-
-  # Warns when we have multiple empty cases in switches, which we do for comment
-  # reasons.
-  - '-bugprone-branch-clone'
-  # Frequently warns on multiple parameters of the same type.
-  - '-bugprone-easily-swappable-parameters'
-  # Finds issues like out-of-memory in main(). We don't use exceptions, so it's
-  # unlikely to find real issues.
-  - '-bugprone-exception-escape'
-  # Has false positives in places such as using an argument to declare a name,
-  # which cannot have parentheses. For our limited use of macros, this is a
-  # common conflict.
-  - '-bugprone-macro-parentheses'
-  # Conflicts with integer type C++ style.
-  - '-bugprone-narrowing-conversions'
-  # Has false positives for `enum_base.h`. Clang's built-in switch warnings
-  # cover most of our risk of bugs here.
-  - '-bugprone-switch-missing-default-case'
-  # In clang-tidy 16, has false positives on code like:
-  #     while (auto name_ref = insts().Get(inst_id).TryAs<SemIR::NameRef>()) {
-  #       inst_id = name_ref->value_id;
-  #                 ^ unchecked access to optional value
-  #     }
-  - '-bugprone-unchecked-optional-access'
-  # Overlaps with `readability-function-size`.
-  - '-google-readability-function-size'
-  # Suggests usernames on TODOs, which we don't want.
-  - '-google-readability-todo'
-  # Even with `IgnoreClassesWithAllMemberVariablesBeingPublic` to allow structs,
-  # we use `protected` members in too many tests.
-  - '-misc-non-private-member-variables-in-classes'
-  # Overlaps with `-Wno-missing-prototypes`.
-  - '-misc-use-internal-linkage'
-  # Suggests `std::array`, which we could migrate to, but conflicts with the
-  # status quo.
-  - '-modernize-avoid-c-arrays'
-  # Warns on creation of SemIR typed insts, for which we do not currently want
-  # to use designated initialization.
-  - '-modernize-use-designated-initializers'
-  # Only fixes const methods, not non-const, which yields distracting results on
-  # accessors.
-  - '-modernize-use-nodiscard'
-  # Duplicates `modernize-pass-by-value`.
-  - '-performance-unnecessary-value-param'
-  # Warns on enums which use the `LastValue = Value` pattern if all the other
-  # discriminants aren't given an explicit value.
-  - '-readability-enum-initial-value'
-  # Warns too frequently.
-  - '-readability-function-cognitive-complexity'
-  # Warns in reasonably documented situations.
-  - '-readability-magic-numbers'
-  # Warns on `= {}` which is also used to indicate which fields do not need to
-  # be explicitly initialized in aggregate initialization.
-  - '-readability-redundant-member-init'
-  # Warns when callers use similar names as different parameters.
-  - '-readability-suspicious-call-argument'
+  -*, bugprone-*, google-*, misc-*, modernize-*, performance-*, readability-*,
+  -misc-const-correctness, -misc-include-cleaner, -misc-use-anonymous-namespace,
+  -modernize-return-braced-init-list, -modernize-use-default-member-init,
+  -modernize-use-integer-sign-comparison, -modernize-use-emplace,
+  -readability-avoid-nested-conditional-operator,
+  -readability-convert-member-functions-to-static,
+  -readability-else-after-return, -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-make-member-function-const,
+  -readability-math-missing-parentheses,
+  -readability-static-definition-in-anonymous-namespace,
+  -readability-use-anyofallof, -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters, -bugprone-exception-escape,
+  -bugprone-macro-parentheses, -bugprone-narrowing-conversions,
+  -bugprone-switch-missing-default-case, -bugprone-unchecked-optional-access,
+  -google-readability-function-size, -google-readability-todo,
+  -misc-non-private-member-variables-in-classes, -misc-use-internal-linkage,
+  -modernize-avoid-c-arrays, -modernize-use-designated-initializers,
+  -modernize-use-nodiscard, -performance-unnecessary-value-param,
+  -readability-enum-initial-value, -readability-function-cognitive-complexity,
+  -readability-magic-numbers, -readability-redundant-member-init,
+  -readability-suspicious-call-argument
 CheckOptions:
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
