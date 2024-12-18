@@ -50,7 +50,7 @@ class C {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Float = %import_ref.193
+// CHECK:STDOUT:     .Float = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -74,8 +74,8 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected>.inst559.loc37_8
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst561.loc38_1
+// CHECK:STDOUT:   .n = <unexpected>.inst607.loc37_8
+// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst609.loc38_1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

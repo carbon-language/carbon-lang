@@ -59,9 +59,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Negate = %import_ref.1
-// CHECK:STDOUT:     .Add = %import_ref.6
-// CHECK:STDOUT:     .AddAssign = %import_ref.11
-// CHECK:STDOUT:     .Inc = %import_ref.16
+// CHECK:STDOUT:     .Add = %import_ref.39
+// CHECK:STDOUT:     .AddAssign = %import_ref.41
+// CHECK:STDOUT:     .Inc = %import_ref.46
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

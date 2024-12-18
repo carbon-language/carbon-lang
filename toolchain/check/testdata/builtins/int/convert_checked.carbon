@@ -960,7 +960,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.29
-// CHECK:STDOUT:     .Int = %import_ref.217
+// CHECK:STDOUT:     .Int = %import_ref.253
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1122,7 +1122,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.29
-// CHECK:STDOUT:     .Int = %import_ref.217
+// CHECK:STDOUT:     .Int = %import_ref.253
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1469,7 +1469,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.29
-// CHECK:STDOUT:     .Int = %import_ref.217
+// CHECK:STDOUT:     .Int = %import_ref.253
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1718,7 +1718,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .UInt = %import_ref.22
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.29
-// CHECK:STDOUT:     .Int = %import_ref.217
+// CHECK:STDOUT:     .Int = %import_ref.253
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
