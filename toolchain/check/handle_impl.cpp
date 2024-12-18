@@ -211,7 +211,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-  Parse::NodeId last_param_node_id = end_of_decl_node_id;
+  // Subtracting 1 since we don't want to include the final `{` or `;` of the
+  // declaration.
+  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,

@@ -40,7 +40,7 @@ impl forall [T:! K] T as Interface;
 // CHECK:STDERR:
 impl forall [T:! L] T as Interface;
 
-// These are two different impls, so this is not a redefinition, even though the
+// These are different impls, so they are not redefinitions, even though the
 // self type and constraint type are the same.
 impl forall [T:! I] T as Interface {}
 impl forall [T:! J] T as Interface {}

@@ -15,6 +15,8 @@ interface I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 impl i32 as I;
 
+impl i32 as I {}
+
 // CHECK:STDOUT: --- declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
