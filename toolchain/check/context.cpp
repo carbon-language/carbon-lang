@@ -814,12 +814,10 @@ auto Context::BeginSubpattern() -> void {
   PushRegion(inst_block_stack().PeekOrAdd());
 }
 
-auto Context::EndSubpatternAsExpression(SemIR::InstId result_id)
-    -> SemIR::RegionId {
+auto Context::EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::RegionId {
   // TODO: Is it possible to validate that this region is genuinely
   // single-entry, single-exit?
   SemIR::Region region = PopRegion(result_id);
-  CARBON_CHECK(region.block_ids.back() == inst_block_stack().PeekOrAdd());
   if (region.block_ids.size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
@@ -829,15 +827,16 @@ auto Context::EndSubpatternAsExpression(SemIR::InstId result_id)
     // This single-block region will be inserted as a SpliceBlock, so we don't
     // need control flow out of it.
   }
-  inst_block_stack().Pop();
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region.block_ids.back());
   return sem_ir().regions().Add(region);
 }
 
 auto Context::EndSubpatternAsEmpty() -> void {
   auto region = region_stack_.pop_back_val();
-  CARBON_CHECK(region.block_ids.front() == inst_block_stack().PeekOrAdd());
-  CARBON_CHECK(inst_block_stack().PeekCurrentBlockContents().empty());
-  inst_block_stack().PopAndDiscard();
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region.block_ids.front());
+  CARBON_CHECK(inst_blocks().Get(block_id).empty());
 }
 
 auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
@@ -849,15 +848,15 @@ auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
     // first two cases?
     if (exit_block.size() == 0) {
       return region.result_id;
-    } else if (exit_block.size() == 1) {
+    }
+    if (exit_block.size() == 1) {
       inst_block_stack_.AddInstId(exit_block.front());
       return region.result_id;
-    } else {
-      return AddInst<SemIR::SpliceBlock>(
-          loc_id, {.type_id = insts().Get(region.result_id).type_id(),
-                   .block_id = region.block_ids.front(),
-                   .result_id = region.result_id});
     }
+    return AddInst<SemIR::SpliceBlock>(
+        loc_id, {.type_id = insts().Get(region.result_id).type_id(),
+                 .block_id = region.block_ids.front(),
+                 .result_id = region.result_id});
   } else {
     if (region_stack_.empty()) {
       return SemIR::ErrorInst::SingletonInstId;
@@ -865,6 +864,8 @@ auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
     AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
         {.target_id = region.block_ids.front()}));
     inst_block_stack_.Pop();
+    // TODO: this will cumulatively cost O(MN) running time for M blocks
+    // at the Nth level of the stack. Figure out how to do better.
     region_stack_.back().block_ids.append(region.block_ids);
     auto resume_with_block_id =
         insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;

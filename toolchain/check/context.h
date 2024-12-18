@@ -639,7 +639,7 @@ class Context {
   // Ends a region started by BeginSubpattern (in stack order), treating it as
   // an expression with the given result, and returns the ID of the region. The
   // region will not yet have any control-flow edges into or out of it.
-  auto EndSubpatternAsExpression(SemIR::InstId result_id) -> SemIR::RegionId;
+  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::RegionId;
 
   // Ends a region started by BeginSubpattern (in stack order), asserting that
   // it was empty.
