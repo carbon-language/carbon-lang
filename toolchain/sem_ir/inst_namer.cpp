@@ -374,14 +374,18 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   auto append_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
     if (block_id.is_valid()) {
       for (auto inst_id : llvm::reverse(sem_ir_->inst_blocks().Get(block_id))) {
-        insts.emplace_front(scope_id, inst_id);
+        if (inst_id.is_valid()) {
+          insts.emplace_front(scope_id, inst_id);
+        }
       }
     }
   };
   auto append_block_insts = [&](ScopeId scope_id,
                                 llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
-      insts.emplace_front(scope_id, inst_id);
+      if (inst_id.is_valid()) {
+        insts.emplace_front(scope_id, inst_id);
+      }
     }
   };
 
@@ -391,9 +395,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   while (!insts.empty()) {
     auto [scope_id, inst_id] = insts.front();
     insts.pop_front();
-    if (!inst_id.is_valid()) {
-      continue;
-    }
 
     Scope& scope = GetScopeInfo(scope_id);
 
