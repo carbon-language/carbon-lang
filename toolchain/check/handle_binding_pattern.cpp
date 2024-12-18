@@ -20,7 +20,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // TODO: Handle `_` bindings.
 
-  SemIR::RegionId type_expr_region_id =
+  SemIR::ExprRegionId type_expr_region_id =
       context.EndSubpatternAsExpr(cast_type_inst_id);
 
   // Every other kind of pattern binding has a name.

@@ -437,8 +437,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.decl_name_stack().PopScope();
 
   auto& function = context.functions().Get(function_id);
-  auto region = context.PopRegion(SemIR::InstId::Invalid);
-  function.body_block_ids = std::move(region.block_ids);
+  function.body_block_ids = context.PopRegion();
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);

@@ -275,23 +275,25 @@ class Context {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
 
-  // Mark the start of a new single-entry single-exit region, beginning with
-  // entry_block_id.
+  // Mark the start of a new single-entry region with the given entry block.
   auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
-    region_stack_.push_back(SemIR::Region(entry_block_id));
+    region_stack_.PushArray();
+    region_stack_.AppendToTop(entry_block_id);
   }
 
-  // Add block_id to the most recently pushed region. In order to ensure the
-  // region's blocks are in lexical order, this should be called when the first
-  // parse node associated with this block is handled, or as close as
-  // possible.
+  // Add `block_id` to the most recently pushed single-entry region. To preserve
+  // the single-entry property, `block_id` must not be directly reachable from
+  // any block outside the region. To ensure the region's blocks are in lexical
+  // order, this should be called when the first parse node associated with this
+  // block is handled, or as close as possible.
   auto AddToRegion(SemIR::InstBlockId block_id) -> void;
 
-  // Complete creation of the most recently pushed region, set its result_id,
-  // and return it.
-  auto PopRegion(SemIR::InstId result_id) -> SemIR::Region {
-    region_stack_.back().result_id = result_id;
-    return region_stack_.pop_back_val();
+  // Complete creation of the most recently pushed single-entry region, and
+  // return a list of its blocks.
+  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
+    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
+    region_stack_.PopArray();
+    return result;
   }
 
   // Adds a `Branch` instruction branching to a new instruction block, and
@@ -639,7 +641,7 @@ class Context {
   // Ends a region started by BeginSubpattern (in stack order), treating it as
   // an expression with the given result, and returns the ID of the region. The
   // region will not yet have any control-flow edges into or out of it.
-  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::RegionId;
+  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::ExprRegionId;
 
   // Ends a region started by BeginSubpattern (in stack order), asserting that
   // it was empty.
@@ -653,7 +655,7 @@ class Context {
   // block of the region, and add future insts to a new block which is the
   // immediate successor of the region's exit block. As a result, this cannot be
   // called more than once for the same region.
-  auto InsertHere(SemIR::RegionId region_id) -> SemIR::InstId;
+  auto InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId;
 
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
@@ -668,7 +670,7 @@ class Context {
     // The corresponding AnyBindName inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
-    SemIR::RegionId type_expr_id;
+    SemIR::ExprRegionId type_expr_id;
   };
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;
@@ -787,8 +789,8 @@ class Context {
 
   Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
 
-  // Stack of regions being built.
-  llvm::SmallVector<SemIR::Region> region_stack_;
+  // Stack of single-entry regions being built.
+  ArrayStack<SemIR::InstBlockId> region_stack_;
 };
 
 }  // namespace Carbon::Check

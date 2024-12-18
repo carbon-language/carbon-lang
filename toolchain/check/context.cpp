@@ -806,7 +806,7 @@ auto Context::AddToRegion(SemIR::InstBlockId block_id) -> void {
     return;
   }
 
-  region_stack_.back().block_ids.push_back(block_id);
+  region_stack_.AppendToTop(block_id);
 }
 
 auto Context::BeginSubpattern() -> void {
@@ -814,11 +814,9 @@ auto Context::BeginSubpattern() -> void {
   PushRegion(inst_block_stack().PeekOrAdd());
 }
 
-auto Context::EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::RegionId {
-  // TODO: Is it possible to validate that this region is genuinely
-  // single-entry, single-exit?
-  SemIR::Region region = PopRegion(result_id);
-  if (region.block_ids.size() > 1) {
+auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
+    -> SemIR::ExprRegionId {
+  if (region_stack_.PeekArray().size() > 1) {
     // End the exit block with a branch to a successor block, whose contents
     // will be determined later.
     AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
@@ -828,19 +826,23 @@ auto Context::EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::RegionId {
     // need control flow out of it.
   }
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region.block_ids.back());
-  return sem_ir().regions().Add(region);
+  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+
+  // TODO: Is it possible to validate that this region is genuinely
+  // single-entry, single-exit?
+  return sem_ir().expr_regions().Add(
+      {.block_ids = PopRegion(), .result_id = result_id});
 }
 
 auto Context::EndSubpatternAsEmpty() -> void {
-  auto region = region_stack_.pop_back_val();
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region.block_ids.front());
+  CARBON_CHECK(block_id == region_stack_.PeekArray().front());
   CARBON_CHECK(inst_blocks().Get(block_id).empty());
+  region_stack_.PopArray();
 }
 
-auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
-  auto region = sem_ir_->regions().Get(region_id);
+auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
+  auto region = sem_ir_->expr_regions().Get(region_id);
   auto loc_id = insts().GetLocId(region.result_id);
   auto exit_block = inst_blocks().Get(region.block_ids.back());
   if (region.block_ids.size() == 1) {
@@ -866,7 +868,7 @@ auto Context::InsertHere(SemIR::RegionId region_id) -> SemIR::InstId {
     inst_block_stack_.Pop();
     // TODO: this will cumulatively cost O(MN) running time for M blocks
     // at the Nth level of the stack. Figure out how to do better.
-    region_stack_.back().block_ids.append(region.block_ids);
+    region_stack_.AppendToTop(region.block_ids);
     auto resume_with_block_id =
         insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
     CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
