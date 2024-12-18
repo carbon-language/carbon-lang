@@ -1616,6 +1616,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
             CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
                               "accessing member from impl before the end of "
                               "its definition");
+            // TODO: Add note pointing to the impl declaration.
             eval_context.emitter().Emit(eval_context.GetDiagnosticLoc(inst_id),
                                         ImplAccessMemberBeforeComplete);
             return SemIR::ErrorInst::SingletonConstantId;
