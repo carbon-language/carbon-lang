@@ -371,15 +371,15 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
   // the loop to below append more instructions during iteration.
   auto append_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
     if (block_id.is_valid()) {
-      for (auto inst_id : sem_ir_->inst_blocks().Get(block_id)) {
-        insts.emplace_back(scope_id, inst_id);
+      for (auto inst_id : llvm::reverse(sem_ir_->inst_blocks().Get(block_id))) {
+        insts.emplace_front(scope_id, inst_id);
       }
     }
   };
   auto append_block_insts = [&](ScopeId scope_id,
                                 llvm::ArrayRef<InstId> inst_ids) {
-    for (auto inst_id : inst_ids) {
-      insts.emplace_back(scope_id, inst_id);
+    for (auto inst_id : llvm::reverse(inst_ids)) {
+      insts.emplace_front(scope_id, inst_id);
     }
   };
 
