@@ -65,10 +65,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_20.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_20.2: type = converted %.loc12_20.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
-// CHECK:STDOUT:   %.loc12_25: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -100,8 +98,6 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_20.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_20.2: type = converted %.loc11_20.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
 // CHECK:STDOUT:   %.loc11_25: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>

@@ -112,8 +112,6 @@ fn A {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_10.2: type = converted %.loc8_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_symbolic_name x, %x.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}

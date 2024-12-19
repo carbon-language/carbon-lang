@@ -64,15 +64,11 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %ReadChar.ref.loc16: %ReadChar.type.1 = name_ref ReadChar, file.%ReadChar.decl [template = constants.%ReadChar.1]
 // CHECK:STDOUT:   %read.char.loc16: init %i32 = call %ReadChar.ref.loc16()
 // CHECK:STDOUT:   %.loc16_26.1: %i32 = value_of_initializer %read.char.loc16
 // CHECK:STDOUT:   %.loc16_26.2: %i32 = converted %read.char.loc16, %.loc16_26.1
 // CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc16_26.2
-// CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.2 = name_ref ReadChar, imports.%import_ref.5 [template = constants.%ReadChar.2]
 // CHECK:STDOUT:   %read.char.loc17: init %i32 = call %ReadChar.ref.loc17()

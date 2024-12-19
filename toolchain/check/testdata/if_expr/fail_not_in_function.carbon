@@ -8,13 +8,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: let x: i32 = if true then 1 else 0;
+// CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
@@ -22,18 +26,26 @@
 // CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var y: if true then i32 else f64;
+// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var y: if true then i32 else f64;
+
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fn F(a: if true then i32 else f64);
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fn F(a: if true then i32 else f64);
+// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:
+fn F(a: if true then i32 else f64);
+
 class C {
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+11]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+7]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:18: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-  // CHECK:STDERR:   var n: if true then i32 else f64;
-  // CHECK:STDERR:                  ^~~~~~~~
   var n: if true then i32 else f64;
 }
 
@@ -43,7 +55,12 @@ class C {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [template]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
+// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,24 +76,35 @@ class C {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .x = <unexpected>.inst43.loc23_5
+// CHECK:STDOUT:     .x = <unexpected>.inst43.loc27_5
+// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %y.var: ref %i32 = var y
+// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:   %.loc49: %C.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = <unexpected>.inst559.loc37_8
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst561.loc38_1
+// CHECK:STDOUT:   .n = %.loc49
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%a.param_patt: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

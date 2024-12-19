@@ -22,6 +22,7 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
+  context.BeginSubpattern();
   return true;
 }
 

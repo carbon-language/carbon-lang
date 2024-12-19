@@ -26,9 +26,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [template]
 // CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,10 +57,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:   %.loc18_19.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc18_19.2: type = converted %float.make_type, %.loc18_19.1 [template = f64]
 // CHECK:STDOUT:   %v: f64 = bind_name v, <error>
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template = constants.%float]
 // CHECK:STDOUT:   assign <error>, <error>

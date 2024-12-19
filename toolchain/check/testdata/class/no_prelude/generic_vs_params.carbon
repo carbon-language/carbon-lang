@@ -82,7 +82,6 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %NotGenericButParams.val: %NotGenericButParams = struct_value () [template]
 // CHECK:STDOUT:   %GenericAndParams.3: type = class_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.val.1: %GenericAndParams.3 = struct_value () [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.type.3: type = generic_class_type @GenericAndParams.2, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.generic.3: %GenericAndParams.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %GenericNoParams.val: %GenericNoParams.1 = struct_value () [template]
@@ -120,31 +119,14 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%NotGenericNoParams]
 // CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var a
 // CHECK:STDOUT:   %a: ref %NotGenericNoParams = bind_name a, %a.var
-// CHECK:STDOUT:   %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [template = constants.%NotGenericButParams.generic]
-// CHECK:STDOUT:   %NotGenericButParams: type = class_type @NotGenericButParams [template = constants.%NotGenericButParams]
 // CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var b
 // CHECK:STDOUT:   %b: ref %NotGenericButParams = bind_name b, %b.var
-// CHECK:STDOUT:   %GenericAndParams.ref.loc17: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.generic.1]
-// CHECK:STDOUT:   %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %GenericAndParams.loc17: type = class_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%GenericAndParams.3]
 // CHECK:STDOUT:   %c.var: ref %GenericAndParams.3 = var c
 // CHECK:STDOUT:   %c: ref %GenericAndParams.3 = bind_name c, %c.var
-// CHECK:STDOUT:   %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:   %X.ref.loc18: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %C.loc18: type = class_type @C, @C(constants.%X) [template = constants.%C.2]
-// CHECK:STDOUT:   %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%GenericNoParams.1]
 // CHECK:STDOUT:   %d.var: ref %GenericNoParams.1 = var d
 // CHECK:STDOUT:   %d: ref %GenericNoParams.1 = bind_name d, %d.var
-// CHECK:STDOUT:   %C.ref.loc19: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:   %X.ref.loc19_10: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %C.loc19: type = class_type @C, @C(constants.%X) [template = constants.%C.2]
-// CHECK:STDOUT:   %.loc19: %GenericAndParams.type.3 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.generic.3]
-// CHECK:STDOUT:   %GenericAndParams.ref.loc19: %GenericAndParams.type.3 = name_ref GenericAndParams, %.loc19 [template = constants.%GenericAndParams.generic.3]
-// CHECK:STDOUT:   %X.ref.loc19_30: type = name_ref X, %X.decl [template = constants.%X]
-// CHECK:STDOUT:   %GenericAndParams.loc19: type = class_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%GenericAndParams.4]
 // CHECK:STDOUT:   %e.var: ref %GenericAndParams.4 = var e
 // CHECK:STDOUT:   %e: ref %GenericAndParams.4 = bind_name e, %e.var
 // CHECK:STDOUT: }

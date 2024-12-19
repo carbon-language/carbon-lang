@@ -87,8 +87,8 @@ class C {
 // CHECK:STDOUT:       %x.patt: @F.1.%T (%T) = binding_pattern x
 // CHECK:STDOUT:       %x.param_patt: @F.1.%T (%T) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11_28.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x.param: @F.1.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc11_28.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.1.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc12_13.1: @GenericInterface.%F.assoc_type (%F.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc12_13.2 (constants.%assoc0)]
@@ -116,8 +116,8 @@ class C {
 // CHECK:STDOUT:       %x.patt: @F.2.%T (%T) = binding_pattern x
 // CHECK:STDOUT:       %x.param_patt: @F.2.%T (%T) = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc19_23.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x.param: @F.2.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc19_23.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @F.2.%T (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %interface.loc19_56.1: <witness> = interface_witness (%F.decl) [symbolic = %interface.loc19_56.2 (constants.%interface)]

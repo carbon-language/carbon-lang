@@ -50,18 +50,20 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:     %U.patt: %I_where.type = binding_pattern U
 // CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %.loc14: type = where_expr %.Self [template = constants.%I_where.type] {
-// CHECK:STDOUT:       requirement_equivalent %impl.elem0, %i32
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_21.2: type = splice_block %.loc14_21.1 [template = constants.%I_where.type] {
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:       %T.ref: %assoc_type = name_ref T, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %.loc14_21.1: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_equivalent %impl.elem0, %i32
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: %I_where.type = bind_name U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

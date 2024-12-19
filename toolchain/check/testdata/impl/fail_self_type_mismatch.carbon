@@ -73,10 +73,10 @@ impl i32 as I {
 // CHECK:STDOUT:     %X.patt.loc11_19.1: @C.%T.loc11_9.2 (%T) = symbolic_binding_pattern X, 1 [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
 // CHECK:STDOUT:     %X.param_patt: @C.%T.loc11_9.2 (%T) = value_param_pattern %X.patt.loc11_19.1, runtime_param<invalid> [symbolic = %X.patt.loc11_19.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_9.1 [symbolic = %T.loc11_9.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc11_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc11_9.2 (constants.%T)]
 // CHECK:STDOUT:     %X.param: @C.%T.loc11_9.2 (%T) = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_9.1 [symbolic = %T.loc11_9.2 (constants.%T)]
 // CHECK:STDOUT:     %X.loc11_19.1: @C.%T.loc11_9.2 (%T) = bind_symbolic_name X, 1, %X.param [symbolic = %X.loc11_19.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
@@ -93,10 +93,12 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.patt: @F.1.%C.loc14_17.1 (%C.2) = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: @F.1.%C.loc14_17.1 (%C.2) = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %C.loc14_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_17.1 (constants.%C.2)]
 // CHECK:STDOUT:     %c.param: @F.1.%C.loc14_17.1 (%C.2) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14: type = splice_block %C.loc14_17.2 [symbolic = %C.loc14_17.1 (constants.%C.2)] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %C.loc14_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_17.1 (constants.%C.2)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.2) = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
@@ -112,11 +114,13 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.patt: %C.3 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C.3 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(type, constants.%i32) [template = constants.%C.3]
 // CHECK:STDOUT:     %c.param: %C.3 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc24: type = splice_block %C [template = constants.%C.3] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %C: type = class_type @C, @C(type, constants.%i32) [template = constants.%C.3]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (<error>) [template = <error>]
