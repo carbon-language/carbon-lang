@@ -15,8 +15,8 @@ namespace Carbon::Lex {
 namespace {
 
 class StringLiteralTest : public ::testing::Test {
- protected:
-  StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
+ public:
+  StringLiteralTest() : error_tracker_(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> StringLiteral {
     std::optional<StringLiteral> result = StringLiteral::Lex(text);
@@ -28,12 +28,12 @@ class StringLiteralTest : public ::testing::Test {
   auto Parse(llvm::StringRef text) -> llvm::StringRef {
     StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticConverter converter(text);
-    DiagnosticEmitter<const char*> emitter(converter, error_tracker);
-    return token.ComputeValue(allocator, emitter);
+    DiagnosticEmitter<const char*> emitter(converter, error_tracker_);
+    return token.ComputeValue(allocator_, emitter);
   }
 
-  llvm::BumpPtrAllocator allocator;
-  ErrorTrackingDiagnosticConsumer error_tracker;
+  llvm::BumpPtrAllocator allocator_;
+  ErrorTrackingDiagnosticConsumer error_tracker_;
 };
 
 TEST_F(StringLiteralTest, StringLiteralBounds) {
@@ -207,9 +207,9 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
   };
 
   for (auto [test, expected] : testcases) {
-    error_tracker.Reset();
+    error_tracker_.Reset();
     auto value = Parse(test.trim());
-    EXPECT_FALSE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_FALSE(error_tracker_.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, expected);
   }
 }
@@ -238,9 +238,9 @@ TEST_F(StringLiteralTest, DoubleQuotedMultiLineLiteral) {
   };
 
   for (auto [test, contents] : testcases) {
-    error_tracker.Reset();
+    error_tracker_.Reset();
     auto value = Parse(test.trim());
-    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker_.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -262,9 +262,9 @@ TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   };
 
   for (auto [test, contents] : testcases) {
-    error_tracker.Reset();
+    error_tracker_.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker_.seen_error()) << "`" << test << "`";
     EXPECT_EQ(value, contents);
   }
 }
@@ -311,28 +311,28 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   };
 
   for (llvm::StringLiteral test : testcases) {
-    error_tracker.Reset();
+    error_tracker_.Reset();
     Parse(test);
-    EXPECT_TRUE(error_tracker.seen_error()) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker_.seen_error()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
 }
 
 TEST_F(StringLiteralTest, TabInString) {
   auto value = Parse("\"x\ty\"");
-  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_TRUE(error_tracker_.seen_error());
   EXPECT_EQ(value, "x\ty");
 }
 
 TEST_F(StringLiteralTest, TabAtEndOfString) {
   auto value = Parse("\"\t\t\t\"");
-  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_TRUE(error_tracker_.seen_error());
   EXPECT_EQ(value, "\t\t\t");
 }
 
 TEST_F(StringLiteralTest, TabInBlockString) {
   auto value = Parse("'''\nx\ty\n'''");
-  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_TRUE(error_tracker_.seen_error());
   EXPECT_EQ(value, "x\ty\n");
 }
 
@@ -341,7 +341,7 @@ TEST_F(StringLiteralTest, UnicodeTooManyDigits) {
   text.append(10000, '9');
   text.append("}");
   auto value = Parse("\"\\" + text + "\"");
-  EXPECT_TRUE(error_tracker.seen_error());
+  EXPECT_TRUE(error_tracker_.seen_error());
   EXPECT_EQ(value, text);
 }
 

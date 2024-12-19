@@ -40,7 +40,7 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 }
 
 class DriverTest : public testing::Test {
- protected:
+ public:
   DriverTest()
       : installation_(
             InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),

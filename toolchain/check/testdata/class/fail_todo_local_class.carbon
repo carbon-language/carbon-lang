@@ -15,7 +15,7 @@ class A {
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
+    // CHECK:STDERR: fail_todo_local_class.carbon:[[@LINE+3]]:5: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
     // CHECK:STDERR:     class B {
     // CHECK:STDERR:     ^~~~~
     class B {

@@ -99,7 +99,7 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
 }
 
 // Modes for GetBazelCommand.
-enum class BazelMode {
+enum class BazelMode : uint8_t {
   Autoupdate,
   Dump,
   Test,
@@ -1081,9 +1081,9 @@ static auto Main(int argc, char** argv) -> int {
     llvm::errs() << "\nDone!\n";
     return EXIT_SUCCESS;
   } else {
-    for (llvm::StringRef test_name : tests) {
+    for (const std::string& test_name : tests) {
       testing::RegisterTest(
-          test_factory.name, test_name.data(), nullptr, test_name.data(),
+          test_factory.name, test_name.c_str(), nullptr, test_name.c_str(),
           __FILE__, __LINE__,
           [&test_factory, &exe_path, test_name = test_name]() {
             return test_factory.factory_fn(exe_path, nullptr, test_name);

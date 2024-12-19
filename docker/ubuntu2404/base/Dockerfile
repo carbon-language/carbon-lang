@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-FROM ubuntu:22.04 as carbon-ubuntu2204-base
+FROM ubuntu:24.04 as carbon-ubuntu2404-base
 
 # Install apt tools:
 #   git: Used by VS Code.
@@ -16,9 +16,11 @@ RUN apt-get update && \
   gnupg \
   golang \
   python3-pip \
-  python3.9 \
+  python3 \
   software-properties-common \
-  wget
+  wget \
+  nodejs \
+  npm
 
 ENV PATH="/root/go/bin:${PATH}"
 
@@ -32,13 +34,16 @@ RUN go install github.com/bazelbuild/buildtools/buildifier@5.1.0
 # Install LLVM from apt.llvm.org.
 RUN wget https://apt.llvm.org/llvm.sh
 RUN chmod +x llvm.sh
-RUN ./llvm.sh 15 all
+RUN ./llvm.sh 18 all
 RUN rm llvm.sh
 
 # Add the lib dir to the PATH. This helps Bazel find clang and VS Code find
 # clangd, without version suffixes.
-ENV PATH="/usr/lib/llvm-15/bin:${PATH}"
+ENV PATH="/usr/lib/llvm-18/bin:${PATH}"
 
 # Update pip and install black and pre-commit.
-RUN pip3 install -U pip
-RUN pip3 install black pre-commit
+RUN pip3 install black pre-commit --break-system-packages
+
+# Create .cache directory with proper ownership. We will mount a named volume
+# at this location to allow caching of bazel build files.
+RUN mkdir /home/ubuntu/.cache && chown -R ubuntu:ubuntu /home/ubuntu/.cache

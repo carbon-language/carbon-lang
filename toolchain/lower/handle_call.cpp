@@ -18,8 +18,10 @@ static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
     -> llvm::CmpInst::Predicate {
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntEq:
+    case SemIR::BuiltinFunctionKind::BoolEq:
       return llvm::CmpInst::ICMP_EQ;
     case SemIR::BuiltinFunctionKind::IntNeq:
+    case SemIR::BuiltinFunctionKind::BoolNeq:
       return llvm::CmpInst::ICMP_NE;
     case SemIR::BuiltinFunctionKind::IntLess:
       return is_signed ? llvm::CmpInst::ICMP_SLT : llvm::CmpInst::ICMP_ULT;
@@ -76,20 +78,48 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("No callee in function call.");
 
+    case SemIR::BuiltinFunctionKind::PrintChar: {
+      auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+      llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
+          context.GetValue(arg_ids[0]), i32_type);
+      auto putchar = context.llvm_module().getOrInsertFunction(
+          "putchar", i32_type, i32_type);
+      auto* result = context.builder().CreateCall(putchar, {arg_value});
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateSExtOrTrunc(
+              result, context.GetType(
+                          context.sem_ir().insts().Get(inst_id).type_id())));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::PrintInt: {
-      llvm::Type* char_type[] = {llvm::PointerType::get(
-          llvm::Type::getInt8Ty(context.llvm_context()), 0)};
-      auto* printf_type = llvm::FunctionType::get(
-          llvm::IntegerType::getInt32Ty(context.llvm_context()),
-          llvm::ArrayRef<llvm::Type*>(char_type, 1), /*isVarArg=*/true);
-      auto callee =
+      auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+      auto* ptr_type = llvm::PointerType::get(context.llvm_context(), 0);
+      auto* printf_type = llvm::FunctionType::get(i32_type, {ptr_type},
+                                                  /*isVarArg=*/true);
+      llvm::FunctionCallee printf =
           context.llvm_module().getOrInsertFunction("printf", printf_type);
 
-      llvm::SmallVector<llvm::Value*, 1> args = {
-          context.builder().CreateGlobalString("%d\n", "printf.int.format")};
-      args.push_back(context.GetValue(arg_ids[0]));
-      context.SetLocal(inst_id,
-                       context.builder().CreateCall(callee, args, "printf"));
+      llvm::Value* format_string =
+          context.builder().CreateGlobalString("%d\n", "printf.int.format");
+      llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
+          context.GetValue(arg_ids[0]), i32_type);
+      context.SetLocal(inst_id, context.builder().CreateCall(
+                                    printf, {format_string, arg_value}));
+      return;
+    }
+
+    case SemIR::BuiltinFunctionKind::ReadChar: {
+      auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+      auto getchar =
+          context.llvm_module().getOrInsertFunction("getchar", i32_type);
+      auto* result = context.builder().CreateCall(getchar, {});
+      context.SetLocal(
+          inst_id,
+          context.builder().CreateSExtOrTrunc(
+              result, context.GetType(
+                          context.sem_ir().insts().Get(inst_id).type_id())));
       return;
     }
 
@@ -235,7 +265,9 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLess:
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
-    case SemIR::BuiltinFunctionKind::IntGreaterEq: {
+    case SemIR::BuiltinFunctionKind::IntGreaterEq:
+    case SemIR::BuiltinFunctionKind::BoolEq:
+    case SemIR::BuiltinFunctionKind::BoolNeq: {
       context.SetLocal(
           inst_id,
           context.builder().CreateICmp(

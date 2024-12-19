@@ -12,6 +12,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "testing/fuzzing/carbon.pb.h"
 
+// This is a test file, so the recursion is okay.
+// NOLINTBEGIN(misc-no-recursion)
+
 namespace Carbon {
 
 static auto ExpressionToCarbon(const Fuzzing::Expression& expression,
@@ -1023,3 +1026,5 @@ auto ParseCarbonTextProto(const std::string& contents)
 }
 
 }  // namespace Carbon
+
+// NOLINTEND(misc-no-recursion)

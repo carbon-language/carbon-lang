@@ -110,6 +110,7 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
       SemIR::InstId::Invalid, SemIR::AccessKind::Public);
   if (!inserted) {
     auto prev_inst_id = parent_scope->GetEntry(entry_id).inst_id;
+    CARBON_CHECK(!prev_inst_id.is_poisoned());
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(prev_inst_id)) {
       if (diagnose_duplicate_namespace) {
@@ -333,6 +334,9 @@ static auto ImportScopeFromApiFile(Context& context,
   auto& impl_scope = context.name_scopes().Get(impl_scope_id);
 
   for (const auto& api_entry : api_scope.entries()) {
+    if (api_entry.inst_id.is_poisoned()) {
+      continue;
+    }
     auto impl_name_id =
         CopyNameFromImportIR(context, api_sem_ir, api_entry.name_id);
     if (auto ns =

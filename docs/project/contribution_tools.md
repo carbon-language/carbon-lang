@@ -22,6 +22,8 @@ contributions.
     -   [Main tools](#main-tools)
         -   [Running pre-commit](#running-pre-commit)
     -   [Optional tools](#optional-tools)
+        -   [Using LLDB with VS Code](#using-lldb-with-vs-code)
+        -   [Using GDB with VS Code](#using-gdb-with-vs-code)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
@@ -29,7 +31,6 @@ contributions.
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
     -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
-    -   [Disabling split debug info](#disabling-split-debug-info)
     -   [Debugging other build modes](#debugging-other-build-modes)
     -   [Debugging on MacOS](#debugging-on-macos)
 
@@ -239,6 +240,44 @@ considering if they fit your workflow.
         ```
         -   **NOTE**: This assumes you have `python` 3 installed on your system.
 
+#### Using LLDB with VS Code
+
+The required setup for LLDB is:
+
+1.  Install a minimum of LLVM 19 instead of LLVM 16.
+    -   The `lldb-dap` tool was added as part of LLVM 19.
+2.  In the `.vscode` subdirectory, symlink `lldb_launch.json` to `launch.json`.
+    For example: `ln -s lldb_launch.json .vscode/launch.json`
+3.  Install the
+    [`llvm-vs-code-extensions.lldb-dap` extension](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.lldb-dap).
+4.  In VS Code settings, it may be necessary to set `lldb-dap.executable-path`
+    to the path of `lldb-dap`.
+
+A typical debug session looks like:
+
+1. `bazel build -c dbg //toolchain/testing:file_test`
+2. Open a `.carbon` testdata file to debug. This must be the active file in VS
+   Code.
+3. Go to the "Run and debug" panel in VS Code.
+4. Select and run the `file_test (lldb)` configuration.
+
+#### Using GDB with VS Code
+
+The required setup for GDB is:
+
+1.  In the `.vscode` subdirectory, symlink `gdb_launch.json` to `launch.json`.
+    For example: `ln -s gdb_launch.json .vscode/launch.json`
+2.  Install the
+    [`coolchyni.beyond-debug` extension](https://marketplace.visualstudio.com/items?itemName=coolchyni.beyond-debug).
+
+A typical debug session looks like:
+
+1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
+2. Open a `.carbon` testdata file to debug. This must be the active file in VS
+   Code.
+3. Go to the "Run and debug" panel in VS Code.
+4. Select and run the `file_test (gdb)` configuration.
+
 ### Manually building Clang and LLVM (not recommended)
 
 We primarily test against [apt.llvm.org](https://apt.llvm.org) and Homebrew
@@ -247,9 +286,10 @@ comfortable with it. The essential CMake options to pass in order for this to
 work reliably include:
 
 ```
--DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld
+-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld;lldb
 -DLLVM_ENABLE_RUNTIMES=compiler-rt;libcxx;libcxxabi;libunwind
 -DRUNTIMES_CMAKE_ARGS=-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON;-DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF;-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON;-DLIBCXX_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_LLVM_UNWINDER=ON
+-DLLDB_ENABLE_PYTHON=ON
 ```
 
 ## Troubleshooting build issues
@@ -335,13 +375,6 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
-
-### Disabling split debug info
-
-Our build uses split debug info by default on Linux to improve build and
-debugger performance and reduce the size impact of debug information which can
-be extremely large. If you encounter problems, you can disable it by passing
-`--fission=no` to Bazel.
 
 ### Debugging other build modes
 

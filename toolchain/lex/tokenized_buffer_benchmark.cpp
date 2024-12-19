@@ -610,6 +610,7 @@ template <const DispatchTableT& Table>
 auto BasicDispatch(ssize_t& index, const char* text, char* buffer) -> void {
   *buffer = text[index];
   ++index;
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
   [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
       index, text, buffer);
 }
@@ -620,6 +621,7 @@ auto SpecializedDispatch(ssize_t& index, const char* text, char* buffer)
   CARBON_CHECK(C == text[index]);
   *buffer = C;
   ++index;
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
   [[clang::musttail]] return Table[static_cast<unsigned char>(text[index])](
       index, text, buffer);
 }

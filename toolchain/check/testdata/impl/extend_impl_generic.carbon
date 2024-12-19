@@ -267,10 +267,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {
-// CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_16.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @HasF(%T.loc4_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%Param) {
 // CHECK:STDOUT:   %T.loc4_16.2 => constants.%Param
@@ -482,10 +479,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.1.%T) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@F.1.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -494,10 +488,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(%T.loc4_13.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(%T.loc4_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%U) {
 // CHECK:STDOUT:   %U.loc8_9.2 => constants.%U
@@ -521,15 +512,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %assoc0.loc5_25.2 => constants.%assoc0.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@impl.%U) {
-// CHECK:STDOUT:   %U.loc8_9.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc8_9.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @X(@impl.%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@impl.%U) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@impl.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @impl(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
@@ -543,15 +528,9 @@ class X(U:! type) {
 // CHECK:STDOUT:   %interface.loc9_23.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(@F.2.%U) {
-// CHECK:STDOUT:   %U.loc8_9.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc8_9.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @X(@F.2.%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.2.%U) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@F.2.%U) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.2(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
@@ -567,14 +546,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(%U) {
-// CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:   %X => constants.%X
-// CHECK:STDOUT:   %I.type.loc9_21.2 => constants.%I.type.3
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @impl(%U) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@X.%U.loc8_9.2) {
-// CHECK:STDOUT:   %T.loc4_13.2 => constants.%U
-// CHECK:STDOUT:   %T.patt.loc4_13.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @I(@X.%U.loc8_9.2) {}
 // CHECK:STDOUT:

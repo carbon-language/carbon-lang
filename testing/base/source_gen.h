@@ -54,7 +54,7 @@ namespace Carbon::Testing {
 // identifiers that should be generalized.
 class SourceGen {
  public:
-  enum class Language {
+  enum class Language : uint8_t {
     Carbon,
     Cpp,
   };

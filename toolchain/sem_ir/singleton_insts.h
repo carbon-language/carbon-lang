@@ -28,16 +28,16 @@ static constexpr std::array SingletonInstKinds = {
 };
 
 // Returns true if the InstKind is a singleton.
-inline constexpr auto IsSingletonInstKind(InstKind kind) -> bool;
+constexpr auto IsSingletonInstKind(InstKind kind) -> bool;
 
 // Provides the InstId for singleton instructions. These are exposed as
 // `InstT::SingletonInstId` in `typed_insts.h`.
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-inline constexpr auto MakeSingletonInstId() -> InstId;
+constexpr auto MakeSingletonInstId() -> InstId;
 
 // Returns true if the InstId corresponds to a singleton inst.
-inline constexpr auto IsSingletonInstId(InstId id) -> bool {
+constexpr auto IsSingletonInstId(InstId id) -> bool {
   return id.index >= 0 &&
          id.index < static_cast<int32_t>(SingletonInstKinds.size());
 }
@@ -47,7 +47,7 @@ inline constexpr auto IsSingletonInstId(InstId id) -> bool {
 namespace Internal {
 
 // Returns the index for a singleton instruction, or -1 if it's not a singleton.
-inline constexpr auto GetSingletonInstIndex(InstKind kind) -> int32_t {
+constexpr auto GetSingletonInstIndex(InstKind kind) -> int32_t {
   for (int32_t i = 0; i < static_cast<int32_t>(SingletonInstKinds.size());
        ++i) {
     if (SingletonInstKinds[i] == kind) {
@@ -59,13 +59,13 @@ inline constexpr auto GetSingletonInstIndex(InstKind kind) -> int32_t {
 
 }  // namespace Internal
 
-inline constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
+constexpr auto IsSingletonInstKind(InstKind kind) -> bool {
   return Internal::GetSingletonInstIndex(kind) >= 0;
 }
 
 template <InstKind::RawEnumType Kind>
   requires(IsSingletonInstKind(InstKind::Make(Kind)))
-inline constexpr auto MakeSingletonInstId() -> InstId {
+constexpr auto MakeSingletonInstId() -> InstId {
   auto index = Internal::GetSingletonInstIndex(InstKind::Make(Kind));
   return InstId(index);
 }

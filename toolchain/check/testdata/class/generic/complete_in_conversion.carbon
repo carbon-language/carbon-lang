@@ -213,10 +213,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A(%N.loc6_9.2) {
-// CHECK:STDOUT:   %N.loc6_9.2 => constants.%N.2
-// CHECK:STDOUT:   %N.patt.loc6_9.2 => constants.%N.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @A(%N.loc6_9.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%int_0.2) {
 // CHECK:STDOUT:   %N.loc6_9.2 => constants.%int_0.2

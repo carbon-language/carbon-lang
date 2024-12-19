@@ -22,25 +22,35 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_46.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc12_46.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.loc12_47, i64 8, i1 false), !dbg !9
-// CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc13_31.2 = load i32, ptr %.loc13_31.1.a, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc13_31.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc13_31.2, ptr %.loc13_31.3.a, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc13_31.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc13_31.6 = load i32, ptr %.loc13_31.5.b, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc13_31.7.b = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc13_31.6, ptr %.loc13_31.7.b, align 4, !dbg !11
-// CHECK:STDOUT:   ret i32 0, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %y.var), !dbg !7
+// CHECK:STDOUT:   %.loc13_31.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc13_31.2 = load i32, ptr %.loc13_31.1.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_31.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc13_31.2, ptr %.loc13_31.3.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_31.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   %.loc13_31.6 = load i32, ptr %.loc13_31.5.b, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc13_31.7.b = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc13_31.6, ptr %.loc13_31.7.b, align 4, !dbg !10
+// CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #0
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #0
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder i32 1, { 0, 1, 3, 2, 4, 5 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -55,6 +65,5 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 12, column: 31, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 7, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 31, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 31, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)

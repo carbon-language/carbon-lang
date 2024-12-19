@@ -200,13 +200,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(%T.loc7_6.2, %U.loc7_16.2) {
-// CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
-// CHECK:STDOUT:   %U.loc7_16.2 => constants.%U
-// CHECK:STDOUT:   %U.patt.loc7_16.2 => constants.%U
-// CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(%T.loc7_6.2, %U.loc7_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%C
@@ -416,10 +410,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @HasPair(@F.%tuple.loc6_40.2) {
-// CHECK:STDOUT:   %Pair.loc4_15.2 => constants.%tuple.1
-// CHECK:STDOUT:   %Pair.patt.loc4_15.2 => constants.%tuple.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @HasPair(@F.%tuple.loc6_40.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
 // CHECK:STDOUT:   %A.loc6_6.2 => constants.%A

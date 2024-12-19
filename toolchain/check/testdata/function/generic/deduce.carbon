@@ -336,11 +336,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32
@@ -369,11 +365,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%struct_type.a
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%struct_type.a
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr.3
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamWithGenericArg.%struct_type.a.loc10_62.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon
 // CHECK:STDOUT:
@@ -492,22 +484,14 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_50.2 => constants.%ExplicitGenericParam.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallExplicitGenericParamConst(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_34.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_34.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_39.2 => constants.%ptr
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitGenericParam(@CallExplicitGenericParamConst.%T.loc6_34.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_vs_deduced.carbon
 // CHECK:STDOUT:
@@ -635,11 +619,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {
-// CHECK:STDOUT:   %T.loc6_27.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc6_27.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc6_47.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(%T.loc6_27.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%A) {
 // CHECK:STDOUT:   %T.loc6_27.2 => constants.%A
@@ -769,11 +749,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {
-// CHECK:STDOUT:   %T.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %T.patt.loc4_25.2 => constants.%T
-// CHECK:STDOUT:   %ptr.loc4_45.2 => constants.%ptr.1
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplicitGenericParam(%T.loc4_25.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitGenericParam(constants.%i32) {
 // CHECK:STDOUT:   %T.loc4_25.2 => constants.%i32

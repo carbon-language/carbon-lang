@@ -94,8 +94,8 @@ static auto BuildAssociatedConstantDecl(Context& context,
   auto assoc_id = BuildAssociatedEntity(context, interface_id, decl_id);
   auto name_context =
       context.decl_name_stack().MakeUnqualifiedName(pattern.loc_id, name_id);
-  context.decl_name_stack().AddNameOrDiagnoseDuplicate(name_context, assoc_id,
-                                                       access_kind);
+  context.decl_name_stack().AddNameOrDiagnose(name_context, assoc_id,
+                                              access_kind);
 }
 
 // Adds name bindings. Returns the resulting ID for the references.
@@ -109,16 +109,16 @@ static auto HandleNameBinding(Context& context, SemIR::InstId pattern_id,
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
         context.insts().GetLocId(pattern_id),
         context.entity_names().Get(bind_name->entity_name_id).name_id);
-    context.decl_name_stack().AddNameOrDiagnoseDuplicate(
-        name_context, pattern_id, access_kind);
+    context.decl_name_stack().AddNameOrDiagnose(name_context, pattern_id,
+                                                access_kind);
     return bind_name->value_id;
   } else if (auto field_decl =
                  context.insts().TryGetAs<SemIR::FieldDecl>(pattern_id)) {
     // Introduce the field name into the class.
     auto name_context = context.decl_name_stack().MakeUnqualifiedName(
         context.insts().GetLocId(pattern_id), field_decl->name_id);
-    context.decl_name_stack().AddNameOrDiagnoseDuplicate(
-        name_context, pattern_id, access_kind);
+    context.decl_name_stack().AddNameOrDiagnose(name_context, pattern_id,
+                                                access_kind);
     return pattern_id;
   } else {
     // TODO: Handle other kinds of pattern.

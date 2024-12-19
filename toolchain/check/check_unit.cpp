@@ -346,6 +346,11 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     node_id = *maybe_node_id;
     auto parse_kind = context_.parse_tree().node_kind(node_id);
 
+    if (context_.parse_tree().node_has_error(node_id)) {
+      context_.TODO(node_id, "handle invalid parse trees in `check`");
+      return false;
+    }
+
     bool result;
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                              \

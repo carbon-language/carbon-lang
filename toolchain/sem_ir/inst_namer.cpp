@@ -355,6 +355,9 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
   AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
 }
 
+// TODO: Consider addressing recursion here. It may be important because
+// InstNamer is used for debug info.
+// NOLINTNEXTLINE(misc-no-recursion)
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
     -> void {
   if (block_id.is_valid()) {
@@ -362,6 +365,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion): See above TODO.
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
   Scope& scope = GetScopeInfo(scope_id);

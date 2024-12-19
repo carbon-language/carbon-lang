@@ -12,7 +12,7 @@
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:13: error: semantics TODO: `Error recovery from keyword name.` [SemanticsTodo]
+// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+4]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F() -> {.class: i32};
 // CHECK:STDERR:             ^~~~~
 // CHECK:STDERR:
