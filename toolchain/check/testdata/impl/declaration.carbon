@@ -10,7 +10,12 @@
 
 interface I {}
 
+// CHECK:STDERR: declaration.carbon:[[@LINE+3]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
+// CHECK:STDERR: impl i32 as I;
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 impl i32 as I;
+
+impl i32 as I {}
 
 // CHECK:STDOUT: --- declaration.carbon
 // CHECK:STDOUT:
@@ -19,6 +24,7 @@ impl i32 as I;
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -36,7 +42,12 @@ impl i32 as I;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
@@ -51,5 +62,12 @@ impl i32 as I;
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %i32 as %I.ref;
+// CHECK:STDOUT: impl @impl.1: %i32 as %I.ref;
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.2: %i32 as %I.ref {
+// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -179,14 +179,14 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %F.assoc_type.1: type = assoc_entity_type %I.type.2, %F.type.1 [symbolic]
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, imports.%import_ref.9 [symbolic]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%InInterfaceArgs)> [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @I(%InInterfaceArgs) [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @I(%InInterfaceArgs) [template]
-// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %X, %X [symbolic]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -239,7 +239,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %X.ref as %I.type {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.2 [template = constants.%F.3] {} {}
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -287,8 +287,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.3
-// CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
 // CHECK:STDOUT: }
@@ -463,14 +463,14 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, imports.%import_ref.9 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %I.type.3: type = facet_type <@I, @I(%X)> [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @I(%X) [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @I(%X) [template]
-// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.3 [template]
+// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %I.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.9 [template]
+// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet: %I.type.2 = facet_value %C.2, %C.2 [symbolic]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.3) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -527,7 +527,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C as %I.type {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.2 [template = constants.%F.3] {} {}
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -598,8 +598,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.3
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.3
-// CHECK:STDOUT:   %F => constants.%F.3
+// CHECK:STDOUT:   %F.type => constants.%F.type.2
+// CHECK:STDOUT:   %F => constants.%F.2
 // CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
 // CHECK:STDOUT: }
