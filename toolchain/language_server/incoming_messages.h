@@ -7,6 +7,10 @@
 
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
+#include "common/check.h"
+#include "common/map.h"
+#include "toolchain/language_server/context.h"
+#include "toolchain/language_server/handler_registry.h"
 
 namespace Carbon::LanguageServer {
 
@@ -15,18 +19,20 @@ namespace Carbon::LanguageServer {
 //
 // Handlers can return false to indicate server shutdown. Currently we only
 // return true.
+//
+// TODO: Consider adding multithreading support for calls.
 class IncomingMessages : public clang::clangd::Transport::MessageHandler {
  public:
-  explicit IncomingMessages(clang::clangd::Transport* transport)
-      : transport_(transport) {}
-
-  // Forwards notifications.
-  auto onNotify(llvm::StringRef method, llvm::json::Value value)
-      -> bool override;
+  explicit IncomingMessages(clang::clangd::Transport* transport,
+                            Context* context);
 
   // Calls the requested method.
   auto onCall(llvm::StringRef method, llvm::json::Value params,
               llvm::json::Value id) -> bool override;
+
+  // Forwards notifications.
+  auto onNotify(llvm::StringRef method, llvm::json::Value value)
+      -> bool override;
 
   // Handles replies.
   // TODO: Implement when needed.
@@ -35,16 +41,17 @@ class IncomingMessages : public clang::clangd::Transport::MessageHandler {
     return true;
   }
 
-  auto handlers() -> clang::clangd::LSPBinder::RawHandlers& {
-    return handlers_;
-  }
-
  private:
   // The connection to the client.
   clang::clangd::Transport* transport_;
+  // The context for handlers.
+  Context* context_;
 
-  // Used with `LSPBinder` to attach message handlers.
-  clang::clangd::LSPBinder::RawHandlers handlers_;
+  // Handlers for LSP calls.
+  Map<std::string, CallHandler> call_handlers_;
+
+  // Handlers for LSP notifications.
+  Map<std::string, NotificationHandler> notification_handlers_;
 };
 
 }  // namespace Carbon::LanguageServer

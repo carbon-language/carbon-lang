@@ -7,6 +7,7 @@
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
 #include "toolchain/language_server/context.h"
+#include "toolchain/language_server/handler_registry.h"
 #include "toolchain/language_server/incoming_messages.h"
 #include "toolchain/language_server/outgoing_messages.h"
 
@@ -19,19 +20,9 @@ auto Run(std::FILE* input_stream, llvm::raw_ostream& output_stream)
       clang::clangd::newJSONTransport(input_stream, output_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
-  IncomingMessages incoming(transport.get());
-  OutgoingMessages outgoing(transport.get());
-
-  // Bind context handlers.
-  clang::clangd::LSPBinder binder(incoming.handlers(), outgoing);
   Context context;
-  binder.notification("textDocument/didChange", &context,
-                      &Context::HandleDidChangeTextDocument);
-  binder.notification("textDocument/didOpen", &context,
-                      &Context::HandleDidOpenTextDocument);
-  binder.method("initialize", &context, &Context::HandleInitialize);
-  binder.method("textDocument/documentSymbol", &context,
-                &Context::HandleDocumentSymbol);
+  IncomingMessages incoming(transport.get(), &context);
+  OutgoingMessages outgoing(transport.get());
 
   // Run the server loop.
   llvm::Error err = transport->loop(incoming);

@@ -11,27 +11,10 @@
 
 namespace Carbon::LanguageServer {
 
-// Handles LSP calls. This is the main implementation.
+// Context for LSP call handling.
 class Context {
  public:
-  // Updates the content of already-open documents.
-  auto HandleDidChangeTextDocument(
-      const clang::clangd::DidChangeTextDocumentParams& params) -> void;
-
-  // Stores the content of newly-opened documents.
-  auto HandleDidOpenTextDocument(
-      const clang::clangd::DidOpenTextDocumentParams& params) -> void;
-
-  // Tells the client what features are supported.
-  auto HandleInitialize(const clang::clangd::NoParams& client_capabilities,
-                        clang::clangd::Callback<llvm::json::Object> on_done)
-      -> void;
-
-  // Provides information about document symbols.
-  auto HandleDocumentSymbol(
-      const clang::clangd::DocumentSymbolParams& params,
-      clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>>
-          on_done) -> void;
+  auto files() -> Map<std::string, std::string>& { return files_; }
 
  private:
   // Content of files managed by the language client.

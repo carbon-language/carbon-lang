@@ -2,10 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/language_server/context.h"
-
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
+#include "toolchain/language_server/context.h"
+#include "toolchain/language_server/handler_registry.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/parse.h"
@@ -13,28 +13,6 @@
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon::LanguageServer {
-
-void Context::HandleDidOpenTextDocument(
-    const clang::clangd::DidOpenTextDocumentParams& params) {
-  files_.Update(params.textDocument.uri.file(), params.textDocument.text);
-}
-
-void Context::HandleDidChangeTextDocument(
-    const clang::clangd::DidChangeTextDocumentParams& params) {
-  // Full text is sent if full sync is specified in capabilities.
-  CARBON_CHECK(params.contentChanges.size() == 1);
-  files_.Update(params.textDocument.uri.file(), params.contentChanges[0].text);
-}
-
-void Context::HandleInitialize(
-    const clang::clangd::NoParams& /*client_capabilities*/,
-    clang::clangd::Callback<llvm::json::Object> on_done) {
-  llvm::json::Object capabilities{{"documentSymbolProvider", true},
-                                  {"textDocumentSync", /*Full=*/1}};
-
-  llvm::json::Object reply{{"capabilities", std::move(capabilities)}};
-  on_done(reply);
-}
 
 // Returns the text of first child of kind Parse::NodeKind::IdentifierName.
 static auto GetIdentifierName(const SharedValueStores& value_stores,
@@ -53,13 +31,15 @@ static auto GetIdentifierName(const SharedValueStores& value_stores,
   return std::nullopt;
 }
 
-void Context::HandleDocumentSymbol(
-    const clang::clangd::DocumentSymbolParams& params,
-    clang::clangd::Callback<std::vector<clang::clangd::DocumentSymbol>>
-        on_done) {
+// Provides information about document symbols.
+static auto HandleDocumentSymbol(
+    Context& context, const clang::clangd::DocumentSymbolParams& params,
+    llvm::function_ref<
+        void(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)>
+        on_done) -> void {
   SharedValueStores value_stores;
   llvm::vfs::InMemoryFileSystem vfs;
-  auto lookup = files_.Lookup(params.textDocument.uri.file());
+  auto lookup = context.files().Lookup(params.textDocument.uri.file());
   CARBON_CHECK(lookup);
   vfs.addFile(lookup.key(), /*mtime=*/0,
               llvm::MemoryBuffer::getMemBufferCopy(lookup.value()));
@@ -109,5 +89,8 @@ void Context::HandleDocumentSymbol(
   }
   on_done(result);
 }
+
+static RegisterCallHandler<HandleDocumentSymbol> register_call(
+    "textDocument/didChange", "");
 
 }  // namespace Carbon::LanguageServer
