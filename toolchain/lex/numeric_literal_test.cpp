@@ -22,7 +22,7 @@ using ::testing::Truly;
 using ::testing::VariantWith;
 
 class NumericLiteralTest : public ::testing::Test {
- protected:
+ public:
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
   auto Lex(llvm::StringRef text) -> NumericLiteral {

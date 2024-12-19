@@ -44,8 +44,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_12.2: type = converted %.loc14_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %NS.var: ref %empty_tuple.type = var NS
 // CHECK:STDOUT:   %NS: ref %empty_tuple.type = bind_name NS, %NS.var
 // CHECK:STDOUT:   %.loc14_17.1: %empty_tuple.type = tuple_literal ()
@@ -57,8 +55,6 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_9.2: init %empty_tuple.type = tuple_init () to %NS.ref [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_6: init %empty_tuple.type = converted %.loc15_9.1, %.loc15_9.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %NS.ref, %.loc15_6
-// CHECK:STDOUT:   %.loc17_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_11.2: type = converted %.loc17_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var.loc17: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x.loc17: ref %empty_tuple.type = bind_name x, %x.var.loc17
 // CHECK:STDOUT:   %.loc17_16.1: %empty_tuple.type = tuple_literal ()
@@ -69,8 +65,6 @@ fn Main() {
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %.loc19_13.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc19_13.2: type = converted %.loc19_13.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var.loc19: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x.loc19: ref %empty_tuple.type = bind_name x, %x.var.loc19
 // CHECK:STDOUT:   %.loc19_18.1: %empty_tuple.type = tuple_literal ()

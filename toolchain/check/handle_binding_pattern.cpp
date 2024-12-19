@@ -20,6 +20,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // TODO: Handle `_` bindings.
 
+  SemIR::ExprRegionId type_expr_region_id =
+      context.EndSubpatternAsExpr(cast_type_inst_id);
+
   // Every other kind of pattern binding has a name.
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
@@ -212,10 +215,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context.AddNameToLookup(name_id, bind_id);
         auto entity_name_id =
             context.insts().GetAs<SemIR::AnyBindName>(bind_id).entity_name_id;
-        bool inserted = context.bind_name_cache()
-                            .Insert(entity_name_id, bind_id)
-                            .is_inserted();
-        CARBON_CHECK(inserted);
         auto pattern_inst_id = SemIR::InstId::Invalid;
         if (is_generic) {
           pattern_inst_id =
@@ -227,6 +226,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               name_node,
               {.type_id = cast_type_id, .entity_name_id = entity_name_id});
         }
+        bool inserted =
+            context.bind_name_map()
+                .Insert(pattern_inst_id, {.bind_name_id = bind_id,
+                                          .type_expr_id = type_expr_region_id})
+                .is_inserted();
+        CARBON_CHECK(inserted);
         param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
             node_id,
             {

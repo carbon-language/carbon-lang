@@ -100,23 +100,25 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %V.patt.loc18_43.1: type = symbolic_binding_pattern V, 1 [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:     %V.param_patt: type = value_param_pattern %V.patt.loc18_43.1, runtime_param<invalid> [symbolic = %V.patt.loc18_43.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
-// CHECK:STDOUT:     %T.ref.loc18_25: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
-// CHECK:STDOUT:     %Empty.type.loc18_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3)]
-// CHECK:STDOUT:     %.Self.1: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.Self.ref: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
-// CHECK:STDOUT:     %.loc18_34: @H.%assoc_type (%assoc_type.2) = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.2)]
-// CHECK:STDOUT:     %A.ref: @H.%assoc_type (%assoc_type.2) = name_ref A, %.loc18_34 [symbolic = %assoc0 (constants.%assoc0.2)]
-// CHECK:STDOUT:     %.Self.as_wit.loc18_34.1: <witness> = facet_access_witness %.Self.ref [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.1)]
-// CHECK:STDOUT:     %impl.elem0.loc18_34.1: type = interface_witness_access %.Self.as_wit.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.1)]
-// CHECK:STDOUT:     %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc18_40.1: type = ptr_type %T [symbolic = %ptr.loc18_40.2 (constants.%ptr.1)]
-// CHECK:STDOUT:     %.loc18_28: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc18_34.1, %ptr.loc18_40.1
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18_28.2: type = splice_block %.loc18_28.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
+// CHECK:STDOUT:       %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
+// CHECK:STDOUT:       %T.ref.loc18_25: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
+// CHECK:STDOUT:       %Empty.type.loc18_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3)]
+// CHECK:STDOUT:       %.Self.1: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = bind_symbolic_name .Self [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc18_26.2 (%Empty.type.3) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.1)]
+// CHECK:STDOUT:       %.loc18_34: @H.%assoc_type (%assoc_type.2) = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.2)]
+// CHECK:STDOUT:       %A.ref: @H.%assoc_type (%assoc_type.2) = name_ref A, %.loc18_34 [symbolic = %assoc0 (constants.%assoc0.2)]
+// CHECK:STDOUT:       %.Self.as_wit.loc18_34.1: <witness> = facet_access_witness %.Self.ref [symbolic = %.Self.as_wit.loc18_34.2 (constants.%.Self.as_wit.1)]
+// CHECK:STDOUT:       %impl.elem0.loc18_34.1: type = interface_witness_access %.Self.as_wit.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.1)]
+// CHECK:STDOUT:       %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
+// CHECK:STDOUT:       %ptr.loc18_40.1: type = ptr_type %T [symbolic = %ptr.loc18_40.2 (constants.%ptr.1)]
+// CHECK:STDOUT:       %.loc18_28.1: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_34.1, %ptr.loc18_40.1
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.1) = bind_name U, %U.param
 // CHECK:STDOUT:     %V.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %V.loc18_43.1: type = bind_symbolic_name V, 1, %V.param [symbolic = %V.loc18_43.2 (constants.%V)]
@@ -125,23 +127,25 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %U.patt: %Empty_where.type.2 = binding_pattern U
 // CHECK:STDOUT:     %U.param_patt: %Empty_where.type.2 = value_param_pattern %U.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
-// CHECK:STDOUT:     %int_32.loc20_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %Empty.type: type = facet_type <@Empty, @Empty(constants.%i32)> [template = constants.%Empty.type.4]
-// CHECK:STDOUT:     %.Self: %Empty.type.4 = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %.Self.ref: %Empty.type.4 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
-// CHECK:STDOUT:     %.loc20_26: %assoc_type.3 = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%i32) [template = constants.%assoc0.3]
-// CHECK:STDOUT:     %A.ref: %assoc_type.3 = name_ref A, %.loc20_26 [template = constants.%assoc0.3]
-// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit.2]
-// CHECK:STDOUT:     %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0.2]
-// CHECK:STDOUT:     %int_32.loc20_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc20_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr.2]
-// CHECK:STDOUT:     %.loc20_20: type = where_expr %.Self [template = constants.%Empty_where.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ptr
-// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.param: %Empty_where.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc20_20.2: type = splice_block %.loc20_20.1 [template = constants.%Empty_where.type.2] {
+// CHECK:STDOUT:       %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
+// CHECK:STDOUT:       %int_32.loc20_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc20_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %Empty.type: type = facet_type <@Empty, @Empty(constants.%i32)> [template = constants.%Empty.type.4]
+// CHECK:STDOUT:       %.Self: %Empty.type.4 = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:       %.Self.ref: %Empty.type.4 = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
+// CHECK:STDOUT:       %.loc20_26: %assoc_type.3 = specific_constant @Empty.%assoc0.loc12_15.1, @Empty(constants.%i32) [template = constants.%assoc0.3]
+// CHECK:STDOUT:       %A.ref: %assoc_type.3 = name_ref A, %.loc20_26 [template = constants.%assoc0.3]
+// CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit.2]
+// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0.2]
+// CHECK:STDOUT:       %int_32.loc20_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc20_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:       %.loc20_20.1: type = where_expr %.Self [template = constants.%Empty_where.type.2] {
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0, %ptr
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: %Empty_where.type.2 = bind_name U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

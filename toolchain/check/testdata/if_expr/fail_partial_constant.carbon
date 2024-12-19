@@ -46,8 +46,6 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %ConditionIsNonConstant.type: type = fn_type @ConditionIsNonConstant [template]
 // CHECK:STDOUT:   %ConditionIsNonConstant: %ConditionIsNonConstant.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,31 +68,18 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_30.3: type = splice_block %.loc4_30.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc4_30.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc4_30.2: type = converted %bool.make_type, %.loc4_30.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b.param_patt: bool) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
-// CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then:
-// CHECK:STDOUT:   %int_32.loc12_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_20)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %int_32.loc12_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_29: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result(%i32.loc12_29)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc12: type = block_arg !if.expr.result
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
@@ -107,11 +92,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.type: type = fn_type @ChosenBranchIsNonConstant [template]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: %ChosenBranchIsNonConstant.type = struct_value () [template]
-// CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -139,38 +120,10 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t.param_patt: type) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:   if %true br !if.expr.then.loc9 else br !if.expr.else.loc9
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc9:
-// CHECK:STDOUT:   %t.ref.loc9: type = name_ref t, %t
-// CHECK:STDOUT:   br !if.expr.result.loc9(%t.ref.loc9)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result.loc9(%i32.loc9)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc9:
-// CHECK:STDOUT:   %.loc9: type = block_arg !if.expr.result.loc9
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
-// CHECK:STDOUT:   if %false br !if.expr.then.loc13 else br !if.expr.else.loc13
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc13:
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   br !if.expr.result.loc13(%i32.loc13)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc13:
-// CHECK:STDOUT:   %t.ref.loc13: type = name_ref t, %t
-// CHECK:STDOUT:   br !if.expr.result.loc13(%t.ref.loc13)
-// CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc13:
-// CHECK:STDOUT:   %.loc13: type = block_arg !if.expr.result.loc13
 // CHECK:STDOUT:   %w.var: ref <error> = var w
 // CHECK:STDOUT:   %w: ref <error> = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]

@@ -44,11 +44,11 @@ fn G() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %d.var, ptr align 1 @D.val.loc19_16, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_CF.Main.40(ptr %c.var), !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main.41(ptr %d.var), !dbg !12
+// CHECK:STDOUT:   call void @_CF.Main.118(ptr %c.var), !dbg !11
+// CHECK:STDOUT:   call void @_CF.Main.119(ptr %d.var), !dbg !12
 // CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.42(i32 %.loc24), !dbg !14
-// CHECK:STDOUT:   call void @_CF.Main.43(%type zeroinitializer), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main.120(i32 %.loc24), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main.121(%type zeroinitializer), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,13 +58,13 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.40(ptr)
+// CHECK:STDOUT: declare void @_CF.Main.118(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.41(ptr)
+// CHECK:STDOUT: declare void @_CF.Main.119(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.42(i32)
+// CHECK:STDOUT: declare void @_CF.Main.120(i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.43(%type)
+// CHECK:STDOUT: declare void @_CF.Main.121(%type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }

@@ -93,7 +93,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_0.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
@@ -125,11 +125,11 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %int_2147483647.2: %i32 = int_value 2147483647 [template]
 // CHECK:STDOUT:   %Expect.5: type = class_type @Expect, @Expect(%int_2147483647.2) [template]
 // CHECK:STDOUT:   %Test.specific_fn.4: <specific function> = specific_function %Test, @Test(%int_2147483647.2) [template]
-// CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %interface.6: <witness> = interface_witness (%Op.2) [template]
-// CHECK:STDOUT:   %Op.bound.1: <bound method> = bound_method %int_1.1, %Op.2 [template]
+// CHECK:STDOUT:   %Op.type.13: type = fn_type @Op.13 [template]
+// CHECK:STDOUT:   %Op.type.14: type = fn_type @Op.14 [template]
+// CHECK:STDOUT:   %Op.14: %Op.type.14 = struct_value () [template]
+// CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Op.14) [template]
+// CHECK:STDOUT:   %Op.bound.1: <bound method> = bound_method %int_1.1, %Op.14 [template]
 // CHECK:STDOUT:   %int_-1.1: Core.IntLiteral = int_value -1 [template]
 // CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int_-1.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.7: <specific function> = specific_function %Convert.bound.7, @Convert.2(%int_32) [template]
@@ -137,7 +137,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %int_-2147483647.1: %i32 = int_value -2147483647 [template]
 // CHECK:STDOUT:   %Expect.6: type = class_type @Expect, @Expect(%int_-2147483647.1) [template]
 // CHECK:STDOUT:   %Test.specific_fn.5: <specific function> = specific_function %Test, @Test(%int_-2147483647.1) [template]
-// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_2147483647.1, %Op.2 [template]
+// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_2147483647.1, %Op.14 [template]
 // CHECK:STDOUT:   %int_-2147483647.2: Core.IntLiteral = int_value -2147483647 [template]
 // CHECK:STDOUT:   %Convert.bound.8: <bound method> = bound_method %int_-2147483647.2, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.8: <specific function> = specific_function %Convert.bound.8, @Convert.2(%int_32) [template]
@@ -178,15 +178,19 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc4_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_11: type = splice_block %i32.loc4_11 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc4_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc4_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_19: type = splice_block %i32.loc4_19 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc4_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc4_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -195,9 +199,11 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %N.patt.loc6_14.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_14.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc6_14.1, runtime_param<invalid> [symbolic = %N.patt.loc6_14.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc6: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_14.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_14.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
@@ -206,12 +212,14 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: @Test.%Expect.loc7_29.2 (%Expect.1) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Test.%Expect.loc7_29.2 (%Expect.1) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Expect.ref: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:     %N.ref: %i32 = name_ref N, %N.loc7_9.1 [symbolic = %N.loc7_9.2 (constants.%N.2)]
 // CHECK:STDOUT:     %Expect.loc7_29.1: type = class_type @Expect, @Expect(constants.%N.2) [symbolic = %Expect.loc7_29.2 (constants.%Expect.1)]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc7_13: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc7_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_9.2 (constants.%N.2)]
 // CHECK:STDOUT:     %return.param: ref @Test.%Expect.loc7_29.2 (%Expect.1) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Test.%Expect.loc7_29.2 (%Expect.1) = return_slot %return.param
@@ -225,15 +233,19 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc18_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc18_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18_19: type = splice_block %i32.loc18_19 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc18_27: type = splice_block %i32.loc18_27 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc18_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc18_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -281,13 +293,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc10: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_0.loc10_12: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %int_0.loc10_15: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc10_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc10_12: <bound method> = bound_method %int_0.loc10_12, %impl.elem0.loc10_12 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10_12: <specific function> = specific_function %Convert.bound.loc10_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc10_12: init %i32 = call %Convert.specific_fn.loc10_12(%int_0.loc10_12) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc10_12.1: %i32 = value_of_initializer %int.convert_checked.loc10_12 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc10_12.2: %i32 = converted %int_0.loc10_12, %.loc10_12.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %impl.elem0.loc10_15: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc10_15: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc10_15: <bound method> = bound_method %int_0.loc10_15, %impl.elem0.loc10_15 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10_15: <specific function> = specific_function %Convert.bound.loc10_15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc10_15: init %i32 = call %Convert.specific_fn.loc10_15(%int_0.loc10_15) [template = constants.%int_0.2]
@@ -301,7 +313,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc10: init %Expect.2 = call %Test.specific_fn.loc10() to %.loc10_17.3
 // CHECK:STDOUT:   %Expect.ref.loc10: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_0.loc10_29: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_30: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc10_30: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc10_30: <bound method> = bound_method %int_0.loc10_29, %impl.elem0.loc10_30 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10_30: <specific function> = specific_function %Convert.bound.loc10_30, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc10_30: init %i32 = call %Convert.specific_fn.loc10_30(%int_0.loc10_29) [template = constants.%int_0.2]
@@ -313,13 +325,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc11: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_0.loc11_12: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %int_3.loc11: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc11_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc11_12: <bound method> = bound_method %int_0.loc11_12, %impl.elem0.loc11_12 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11_12: <specific function> = specific_function %Convert.bound.loc11_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc11_12: init %i32 = call %Convert.specific_fn.loc11_12(%int_0.loc11_12) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc11_12.1: %i32 = value_of_initializer %int.convert_checked.loc11_12 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc11_12.2: %i32 = converted %int_0.loc11_12, %.loc11_12.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %impl.elem0.loc11_15: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc11_15: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc11_15: <bound method> = bound_method %int_3.loc11, %impl.elem0.loc11_15 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11_15: <specific function> = specific_function %Convert.bound.loc11_15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc11_15: init %i32 = call %Convert.specific_fn.loc11_15(%int_3.loc11) [template = constants.%int_3.2]
@@ -333,7 +345,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc11: init %Expect.2 = call %Test.specific_fn.loc11() to %.loc11_17.3
 // CHECK:STDOUT:   %Expect.ref.loc11: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_0.loc11_29: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_30: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc11_30: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc11_30: <bound method> = bound_method %int_0.loc11_29, %impl.elem0.loc11_30 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11_30: <specific function> = specific_function %Convert.bound.loc11_30, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc11_30: init %i32 = call %Convert.specific_fn.loc11_30(%int_0.loc11_29) [template = constants.%int_0.2]
@@ -345,13 +357,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc12: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2.loc12_15: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %impl.elem0.loc12_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc12_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc12_12: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_12 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_12: <specific function> = specific_function %Convert.bound.loc12_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc12_12: init %i32 = call %Convert.specific_fn.loc12_12(%int_1.loc12) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc12_12.1: %i32 = value_of_initializer %int.convert_checked.loc12_12 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc12_12.2: %i32 = converted %int_1.loc12, %.loc12_12.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc12_15: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc12_15: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc12_15: <bound method> = bound_method %int_2.loc12_15, %impl.elem0.loc12_15 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_15: <specific function> = specific_function %Convert.bound.loc12_15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc12_15: init %i32 = call %Convert.specific_fn.loc12_15(%int_2.loc12_15) [template = constants.%int_2.2]
@@ -365,7 +377,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc12: init %Expect.3 = call %Test.specific_fn.loc12() to %.loc12_17.3
 // CHECK:STDOUT:   %Expect.ref.loc12: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_2.loc12_29: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %impl.elem0.loc12_30: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc12_30: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc12_30: <bound method> = bound_method %int_2.loc12_29, %impl.elem0.loc12_30 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12_30: <specific function> = specific_function %Convert.bound.loc12_30, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc12_30: init %i32 = call %Convert.specific_fn.loc12_30(%int_2.loc12_29) [template = constants.%int_2.2]
@@ -377,13 +389,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc13: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_3.loc13: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %int_2.loc13: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
-// CHECK:STDOUT:   %impl.elem0.loc13_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc13_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc13_12: <bound method> = bound_method %int_3.loc13, %impl.elem0.loc13_12 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13_12: <specific function> = specific_function %Convert.bound.loc13_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc13_12: init %i32 = call %Convert.specific_fn.loc13_12(%int_3.loc13) [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc13_12.1: %i32 = value_of_initializer %int.convert_checked.loc13_12 [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc13_12.2: %i32 = converted %int_3.loc13, %.loc13_12.1 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %impl.elem0.loc13_15: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc13_15: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc13_15: <bound method> = bound_method %int_2.loc13, %impl.elem0.loc13_15 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13_15: <specific function> = specific_function %Convert.bound.loc13_15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc13_15: init %i32 = call %Convert.specific_fn.loc13_15(%int_2.loc13) [template = constants.%int_2.2]
@@ -397,7 +409,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc13: init %Expect.4 = call %Test.specific_fn.loc13() to %.loc13_17.3
 // CHECK:STDOUT:   %Expect.ref.loc13: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6.2]
-// CHECK:STDOUT:   %impl.elem0.loc13_30: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc13_30: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc13_30: <bound method> = bound_method %int_6, %impl.elem0.loc13_30 [template = constants.%Convert.bound.5]
 // CHECK:STDOUT:   %Convert.specific_fn.loc13_30: <specific function> = specific_function %Convert.bound.loc13_30, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5]
 // CHECK:STDOUT:   %int.convert_checked.loc13_30: init %i32 = call %Convert.specific_fn.loc13_30(%int_6) [template = constants.%int_6.1]
@@ -409,13 +421,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc14: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_2147483647.loc14_12: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %impl.elem0.loc14_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_12: <bound method> = bound_method %int_2147483647.loc14_12, %impl.elem0.loc14_12 [template = constants.%Convert.bound.6]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_12: <specific function> = specific_function %Convert.bound.loc14_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.6]
 // CHECK:STDOUT:   %int.convert_checked.loc14_12: init %i32 = call %Convert.specific_fn.loc14_12(%int_2147483647.loc14_12) [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc14_12.1: %i32 = value_of_initializer %int.convert_checked.loc14_12 [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc14_12.2: %i32 = converted %int_2147483647.loc14_12, %.loc14_12.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %impl.elem0.loc14_25: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_25: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_25: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14_25 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_25: <specific function> = specific_function %Convert.bound.loc14_25, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc14_25: init %i32 = call %Convert.specific_fn.loc14_25(%int_1.loc14) [template = constants.%int_1.2]
@@ -429,7 +441,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc14: init %Expect.5 = call %Test.specific_fn.loc14() to %.loc14_27.3
 // CHECK:STDOUT:   %Expect.ref.loc14: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_2147483647.loc14_39: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc14_50: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_50: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_50: <bound method> = bound_method %int_2147483647.loc14_39, %impl.elem0.loc14_50 [template = constants.%Convert.bound.6]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_50: <specific function> = specific_function %Convert.bound.loc14_50, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.6]
 // CHECK:STDOUT:   %int.convert_checked.loc14_50: init %i32 = call %Convert.specific_fn.loc14_50(%int_2147483647.loc14_39) [template = constants.%int_2147483647.2]
@@ -441,16 +453,16 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc15: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_2147483647.loc15_12: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %impl.elem0.loc15_25.1: %Op.type.1 = interface_witness_access constants.%interface.6, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %impl.elem0.loc15_25.1: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
 // CHECK:STDOUT:   %Op.bound.loc15_25: <bound method> = bound_method %int_1.loc15, %impl.elem0.loc15_25.1 [template = constants.%Op.bound.1]
 // CHECK:STDOUT:   %int.snegate.loc15_25: init Core.IntLiteral = call %Op.bound.loc15_25(%int_1.loc15) [template = constants.%int_-1.1]
-// CHECK:STDOUT:   %impl.elem0.loc15_12: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15_12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15_12: <bound method> = bound_method %int_2147483647.loc15_12, %impl.elem0.loc15_12 [template = constants.%Convert.bound.6]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_12: <specific function> = specific_function %Convert.bound.loc15_12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.6]
 // CHECK:STDOUT:   %int.convert_checked.loc15_12: init %i32 = call %Convert.specific_fn.loc15_12(%int_2147483647.loc15_12) [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc15_12.1: %i32 = value_of_initializer %int.convert_checked.loc15_12 [template = constants.%int_2147483647.2]
 // CHECK:STDOUT:   %.loc15_12.2: %i32 = converted %int_2147483647.loc15_12, %.loc15_12.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %impl.elem0.loc15_25.2: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15_25.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15_25: <bound method> = bound_method %int.snegate.loc15_25, %impl.elem0.loc15_25.2 [template = constants.%Convert.bound.7]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_25: <specific function> = specific_function %Convert.bound.loc15_25, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.7]
 // CHECK:STDOUT:   %.loc15_25.1: Core.IntLiteral = value_of_initializer %int.snegate.loc15_25 [template = constants.%int_-1.1]
@@ -466,10 +478,10 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Test.call.loc15: init %Expect.6 = call %Test.specific_fn.loc15() to %.loc15_28.3
 // CHECK:STDOUT:   %Expect.ref.loc15: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:   %int_2147483647.loc15_41: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc15_40: %Op.type.1 = interface_witness_access constants.%interface.6, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %impl.elem0.loc15_40: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
 // CHECK:STDOUT:   %Op.bound.loc15_40: <bound method> = bound_method %int_2147483647.loc15_41, %impl.elem0.loc15_40 [template = constants.%Op.bound.2]
 // CHECK:STDOUT:   %int.snegate.loc15_40: init Core.IntLiteral = call %Op.bound.loc15_40(%int_2147483647.loc15_41) [template = constants.%int_-2147483647.2]
-// CHECK:STDOUT:   %impl.elem0.loc15_52: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15_52: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15_52: <bound method> = bound_method %int.snegate.loc15_40, %impl.elem0.loc15_52 [template = constants.%Convert.bound.8]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_52: <specific function> = specific_function %Convert.bound.loc15_52, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.8]
 // CHECK:STDOUT:   %.loc15_40.1: Core.IntLiteral = value_of_initializer %int.snegate.loc15_40 [template = constants.%int_-2147483647.2]
@@ -684,24 +696,28 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Core.ref.loc4_11: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_15: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_27: init type = call %IntLiteral.ref.loc4_15() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_27.2: type = converted %int_literal.make_type.loc4_27, %.loc4_27.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %Core.ref.loc4_33: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_37: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_49: init type = call %IntLiteral.ref.loc4_37() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_49.1: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_49.2: type = converted %int_literal.make_type.loc4_49, %.loc4_49.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %Core.ref.loc4_55: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %IntLiteral.ref.loc4_59: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc4_71: init type = call %IntLiteral.ref.loc4_59() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_71.1: type = value_of_initializer %int_literal.make_type.loc4_71 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_71.2: type = converted %int_literal.make_type.loc4_71, %.loc4_71.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_27.3: type = splice_block %.loc4_27.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_11: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_15: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_27: init type = call %IntLiteral.ref.loc4_15() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.1: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.2: type = converted %int_literal.make_type.loc4_27, %.loc4_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_49.3: type = splice_block %.loc4_49.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_33: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_37: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_49: init type = call %IntLiteral.ref.loc4_37() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.1: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.2: type = converted %int_literal.make_type.loc4_49, %.loc4_49.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
@@ -710,12 +726,14 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %N.patt.loc6_14.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_14.1, runtime_param<invalid> [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc6_34.2: type = converted %int_literal.make_type, %.loc6_34.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc6_34.3: type = splice_block %.loc6_34.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.2: type = converted %int_literal.make_type, %.loc6_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_14.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_14.2 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
@@ -724,15 +742,17 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: @Test.%Expect.loc7_43.2 (%Expect.1) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Test.%Expect.loc7_43.2 (%Expect.1) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc7_29.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc7_29.2: type = converted %int_literal.make_type, %.loc7_29.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %Expect.ref: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
 // CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc7_9.1 [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %Expect.loc7_43.1: type = class_type @Expect, @Expect(constants.%N) [symbolic = %Expect.loc7_43.2 (constants.%Expect.1)]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc7_29.3: type = splice_block %.loc7_29.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.2: type = converted %int_literal.make_type, %.loc7_29.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc7_9.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref @Test.%Expect.loc7_43.2 (%Expect.1) = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref @Test.%Expect.loc7_43.2 (%Expect.1) = return_slot %return.param
@@ -1171,7 +1191,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_32767.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_32767.2: %i32 = int_value 32767 [template]
@@ -1211,23 +1231,23 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc4_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_11: type = splice_block %i32.loc4_11 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc4_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc4_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_19: type = splice_block %i32.loc4_19 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc4_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc4_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mul.1(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.smul";
@@ -1237,13 +1257,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc6: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_32767: Core.IntLiteral = int_value 32767 [template = constants.%int_32767.1]
 // CHECK:STDOUT:   %int_65536.loc6: Core.IntLiteral = int_value 65536 [template = constants.%int_65536.1]
-// CHECK:STDOUT:   %impl.elem0.loc6_18: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc6_18: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc6_18: <bound method> = bound_method %int_32767, %impl.elem0.loc6_18 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc6_18: <specific function> = specific_function %Convert.bound.loc6_18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc6_18: init %i32 = call %Convert.specific_fn.loc6_18(%int_32767) [template = constants.%int_32767.2]
 // CHECK:STDOUT:   %.loc6_18.1: %i32 = value_of_initializer %int.convert_checked.loc6_18 [template = constants.%int_32767.2]
 // CHECK:STDOUT:   %.loc6_18.2: %i32 = converted %int_32767, %.loc6_18.1 [template = constants.%int_32767.2]
-// CHECK:STDOUT:   %impl.elem0.loc6_26: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc6_26: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc6_26: <bound method> = bound_method %int_65536.loc6, %impl.elem0.loc6_26 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc6_26: <specific function> = specific_function %Convert.bound.loc6_26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc6_26: init %i32 = call %Convert.specific_fn.loc6_26(%int_65536.loc6) [template = constants.%int_65536.2]
@@ -1256,13 +1276,13 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref.loc10: %Mul.type.1 = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
 // CHECK:STDOUT:   %int_32768: Core.IntLiteral = int_value 32768 [template = constants.%int_32768.1]
 // CHECK:STDOUT:   %int_65536.loc10: Core.IntLiteral = int_value 65536 [template = constants.%int_65536.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_18: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc10_18: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc10_18: <bound method> = bound_method %int_32768, %impl.elem0.loc10_18 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10_18: <specific function> = specific_function %Convert.bound.loc10_18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc10_18: init %i32 = call %Convert.specific_fn.loc10_18(%int_32768) [template = constants.%int_32768.2]
 // CHECK:STDOUT:   %.loc10_18.1: %i32 = value_of_initializer %int.convert_checked.loc10_18 [template = constants.%int_32768.2]
 // CHECK:STDOUT:   %.loc10_18.2: %i32 = converted %int_32768, %.loc10_18.1 [template = constants.%int_32768.2]
-// CHECK:STDOUT:   %impl.elem0.loc10_26: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc10_26: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc10_26: <bound method> = bound_method %int_65536.loc10, %impl.elem0.loc10_26 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc10_26: <specific function> = specific_function %Convert.bound.loc10_26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc10_26: init %i32 = call %Convert.specific_fn.loc10_26(%int_65536.loc10) [template = constants.%int_65536.2]

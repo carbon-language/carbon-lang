@@ -357,8 +357,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
 // CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -673,10 +673,12 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %c.patt: %C.2 = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C.2 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
-// CHECK:STDOUT:     %InClassArgs.ref: type = name_ref InClassArgs, imports.%import_ref.4 [template = constants.%InClassArgs]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.2]
 // CHECK:STDOUT:     %c.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_22: type = splice_block %C [template = constants.%C.2] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
+// CHECK:STDOUT:       %InClassArgs.ref: type = name_ref InClassArgs, imports.%import_ref.4 [template = constants.%InClassArgs]
+// CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%InClassArgs) [template = constants.%C.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %C.2 = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -737,8 +739,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.ref: %I.type.1 = name_ref I, imports.%import_ref.1 [template = constants.%I.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, imports.%import_ref.3 [template = constants.%X]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%X)> [template = constants.%I.type.3]
-// CHECK:STDOUT:   %.loc6: %F.assoc_type.2 = specific_constant imports.%import_ref.10, @I(constants.%X) [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %F.ref: %F.assoc_type.2 = name_ref F, %.loc6 [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %.loc6_34: %F.assoc_type.2 = specific_constant imports.%import_ref.10, @I(constants.%X) [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %F.ref: %F.assoc_type.2 = name_ref F, %.loc6_34 [template = constants.%assoc0.2]
 // CHECK:STDOUT:   %impl.elem0: %F.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%F.3]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   return

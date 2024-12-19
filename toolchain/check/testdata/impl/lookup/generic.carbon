@@ -174,9 +174,11 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -325,11 +327,13 @@ fn G(x: A) {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc12_17.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
@@ -344,13 +348,15 @@ fn G(x: A) {
 // CHECK:STDOUT:     %return.patt: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref.loc5_14 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc5_14: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %Self.ref.loc5_25: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_25: type = facet_access_type %Self.ref.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5_25: type = converted %Self.ref.loc5_25, %Self.as_type.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc5_14.2: type = splice_block %.loc5_14.1 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref.loc5_14 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.1: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = return_slot %return.param
@@ -379,9 +385,9 @@ fn G(x: A) {
 // CHECK:STDOUT:       %return.patt: @F.2.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @F.2.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @impl.%T.loc8_14.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @F.2.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%T.ref [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self: @F.2.%T (%T) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.2.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.2.%T (%T) = return_slot %return.param
@@ -541,11 +547,13 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.patt: %C.2 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %.loc14_12: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc14_13: type = converted %.loc14_12, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [template = constants.%C.2]
 // CHECK:STDOUT:     %x.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_13.2: type = splice_block %C [template = constants.%C.2] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:       %.loc14_12: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc14_13.1: type = converted %.loc14_12, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%empty_struct_type) [template = constants.%C.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %C.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -740,9 +748,11 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -941,9 +951,11 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc13_10.2: type = converted %.loc13_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc13_10.3: type = splice_block %.loc13_10.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc13_10.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc13_10.2: type = converted %.loc13_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1093,8 +1105,8 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.patt: %A = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %A = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %x.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %x: %A = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

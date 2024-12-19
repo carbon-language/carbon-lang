@@ -13,6 +13,8 @@ class Int(N:! IntLiteral()) {
   adapt MakeInt(N);
 }
 
+// Conversions.
+
 impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(Int(N)) {
   fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
 }
@@ -30,109 +32,14 @@ impl forall [N:! IntLiteral()] Int(N) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Make these operations generic.
+// Comparisons.
 
-impl i32 as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
-}
-impl i32 as AddAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // TODO: Once operator lookup works inside Core.
-    // *self = *self + other;
-    *self = self->(Add.Op)(other);
-  }
-}
-impl i32 as Inc {
-  fn Op[addr self: Self*]() {
-    // *self += 1;
-    self->(AddAssign.Op)(1);
-  }
-}
-
-impl i32 as BitAnd {
-  fn Op[self: Self](other: Self) -> Self = "int.and";
-}
-impl i32 as BitAndAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self & other;
-    *self = self->(BitAnd.Op)(other);
-  }
-}
-
-impl i32 as BitComplement {
-  fn Op[self: Self]() -> Self = "int.complement";
-}
-
-impl i32 as BitOr {
-  fn Op[self: Self](other: Self) -> Self = "int.or";
-}
-impl i32 as BitOrAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self | other;
-    *self = self->(BitOr.Op)(other);
-  }
-}
-
-impl i32 as BitXor {
-  fn Op[self: Self](other: Self) -> Self = "int.xor";
-}
-impl i32 as BitXorAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self ^ other;
-    *self = self->(BitXor.Op)(other);
-  }
-}
-
-impl i32 as Div {
-  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
-}
-impl i32 as DivAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self / other;
-    *self = self->(Div.Op)(other);
-  }
-}
-
-impl i32 as Eq {
+impl forall [N:! IntLiteral()] Int(N) as Eq {
   fn Equal[self: Self](other: Self) -> bool = "int.eq";
   fn NotEqual[self: Self](other: Self) -> bool = "int.neq";
 }
 
-impl i32 as LeftShift {
-  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
-}
-impl i32 as LeftShiftAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self << other;
-    *self = self->(LeftShift.Op)(other);
-  }
-}
-
-impl i32 as Mod {
-  fn Op[self: Self](other: Self) -> Self = "int.smod";
-}
-impl i32 as ModAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self % other;
-    *self = self->(Mod.Op)(other);
-  }
-}
-
-impl i32 as Mul {
-  fn Op[self: Self](other: Self) -> Self = "int.smul";
-}
-impl i32 as MulAssign {
-  fn Op[addr self: Self*](other: Self) {
-    // *self = *self * other;
-    *self = self->(Mul.Op)(other);
-  }
-}
-
-impl i32 as Negate {
-  fn Op[self: Self]() -> Self = "int.snegate";
-}
-
-impl i32 as Ordered {
+impl forall [N:! IntLiteral()] Int(N) as Ordered {
   // TODO: fn Compare
   fn Less[self: Self](other: Self) -> bool = "int.less";
   fn LessOrEquivalent[self: Self](other: Self) -> bool = "int.less_eq";
@@ -140,28 +47,145 @@ impl i32 as Ordered {
   fn GreaterOrEquivalent[self: Self](other: Self) -> bool = "int.greater_eq";
 }
 
-impl i32 as RightShift {
+// Arithmetic.
+
+impl forall [N:! IntLiteral()] Int(N) as Add {
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as Div {
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as Mod {
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as Mul {
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as Negate {
+  fn Op[self: Self]() -> Self = "int.snegate";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as Sub {
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+}
+
+// Bitwise operators.
+
+impl forall [N:! IntLiteral()] Int(N) as BitAnd {
+  fn Op[self: Self](other: Self) -> Self = "int.and";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as BitComplement {
+  fn Op[self: Self]() -> Self = "int.complement";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as BitOr {
+  fn Op[self: Self](other: Self) -> Self = "int.or";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as BitXor {
+  fn Op[self: Self](other: Self) -> Self = "int.xor";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as LeftShift {
+  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
+}
+
+impl forall [N:! IntLiteral()] Int(N) as RightShift {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
-impl i32 as RightShiftAssign {
+
+// Compound assignments.
+
+// TODO: Once we can lower specific functions, make these generic.
+// Each function has a commented out generic signature.
+
+// impl forall [N:! IntLiteral()] Int(N) as AddAssign {
+impl i32 as AddAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self >> other;
-    *self = self->(RightShift.Op)(other);
+    *self = *self + other;
   }
 }
 
-impl i32 as Sub {
-  fn Op[self: Self](other: Self) -> Self = "int.ssub";
-}
-impl i32 as SubAssign {
+// impl forall [N:! IntLiteral()] Int(N) as BitAndAssign {
+impl i32 as BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self - other;
-    *self = self->(Sub.Op)(other);
+    *self = *self & other;
   }
 }
+
+// impl forall [N:! IntLiteral()] Int(N) as BitOrAssign {
+impl i32 as BitOrAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self | other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as BitXorAssign {
+impl i32 as BitXorAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self ^ other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as DivAssign {
+impl i32 as DivAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self / other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as LeftShiftAssign {
+impl i32 as LeftShiftAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self << other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as ModAssign {
+impl i32 as ModAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self % other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as MulAssign {
+impl i32 as MulAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self * other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as RightShiftAssign {
+impl i32 as RightShiftAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self >> other;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as SubAssign {
+impl i32 as SubAssign {
+  fn Op[addr self: Self*](other: Self) {
+    *self = *self - other;
+  }
+}
+
+// Increment and decrement.
+
+// impl forall [N:! IntLiteral()] Int(N) as Dec {
 impl i32 as Dec {
   fn Op[addr self: Self*]() {
-    // *self -= 1;
-    self->(SubAssign.Op)(1);
+    *self -= 1;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as Inc {
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self += 1;
   }
 }

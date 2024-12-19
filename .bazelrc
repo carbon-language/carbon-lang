@@ -122,7 +122,9 @@ build:linux --define=pfm=1
 #
 # Note: if using GDB, see documentation to get that working:
 # https://docs.carbon-lang.dev/docs/project/contribution_tools.html#debugging-with-gdb-instead-of-lldb
-build:linux --fission=yes
+#
+# TODO: Bazel has a bug where it doesn't manage dwo files in the cache correctly.
+# build:linux --fission=yes
 
 # Disables `actions.declare_symlink`. Done for cross-environment support.
 build --allow_unresolved_symlinks=false

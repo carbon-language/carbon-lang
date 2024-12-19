@@ -101,9 +101,9 @@ class C(T:! type) {
 // CHECK:STDOUT:       %return.patt: @F.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @F.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc5_17: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %n.param: @F.%T (%T) = value_param runtime_param0
+// CHECK:STDOUT:       %T.ref.loc5_11: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %n.param
 // CHECK:STDOUT:       %return.param: ref @F.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @F.%T (%T) = return_slot %return.param
@@ -114,15 +114,16 @@ class C(T:! type) {
 // CHECK:STDOUT:       %return.patt: @G.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @G.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc9: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc9 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc4_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @G.%Class (%Class) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc9_14.2: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:         %.loc9_14.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_14.1 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @G.%Class (%Class) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @G.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @G.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.1 [symbolic = %T.loc4_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc13: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
@@ -246,15 +247,13 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {} {}
-// CHECK:STDOUT:     %.loc11_14.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc11_11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
+// CHECK:STDOUT:     %.loc11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .data = %.loc11_11
+// CHECK:STDOUT:     .data = %.loc11
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -267,7 +266,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11_11 [template = @C.%.loc11_11]
+// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11 [template = @C.%.loc11]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -118,12 +118,37 @@ static auto EmitAggregateInitializer(FunctionContext& context,
                                      SemIR::InstBlockId refs_id,
                                      llvm::Twine name) -> llvm::Value* {
   auto* llvm_type = context.GetType(type_id);
+  auto refs = context.sem_ir().inst_blocks().Get(refs_id);
 
   switch (SemIR::InitRepr::ForType(context.sem_ir(), type_id).kind) {
-    case SemIR::InitRepr::None:
-    case SemIR::InitRepr::InPlace:
+    case SemIR::InitRepr::None: {
       // TODO: Add a helper to poison a value slot.
       return llvm::PoisonValue::get(llvm_type);
+    }
+
+    case SemIR::InitRepr::InPlace: {
+      // Finish initialization of constant fields. We will have skipped this
+      // when emitting the initializers because they have constant values.
+      //
+      // TODO: This emits the initializers for constant fields after all
+      // initialization of non-constant fields. This may be observable in some
+      // ways such as under a debugger in a debug build. It would be preferable
+      // to initialize the constant portions of the aggregate first, but this
+      // will likely need a change to the SemIR representation.
+      //
+      // TODO: If most of the bytes of the result have known constant values,
+      // it'd be nice to emit a memcpy from a constant followed by the
+      // non-constant initialization.
+      for (auto [i, ref_id] : llvm::enumerate(refs)) {
+        if (context.sem_ir().constant_values().Get(ref_id).is_constant()) {
+          auto init =
+              context.sem_ir().insts().GetAs<SemIR::InitializeFrom>(ref_id);
+          HandleInst(context, ref_id, init);
+        }
+      }
+      // TODO: Add a helper to poison a value slot.
+      return llvm::PoisonValue::get(llvm_type);
+    }
 
     case SemIR::InitRepr::ByCopy: {
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);

@@ -152,16 +152,10 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_i64 = %test_i64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
-// CHECK:STDOUT:   %i8: type = class_type @Int, @Int(constants.%int_8) [template = constants.%i8]
 // CHECK:STDOUT:   %test_i8.var: ref %i8 = var test_i8
 // CHECK:STDOUT:   %test_i8: ref %i8 = bind_name test_i8, %test_i8.var
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var test_i16
 // CHECK:STDOUT:   %test_i16: ref %i16 = bind_name test_i16, %test_i16.var
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var test_i64
 // CHECK:STDOUT:   %test_i64: ref %i64 = bind_name test_i64, %test_i64.var
 // CHECK:STDOUT: }
@@ -200,16 +194,10 @@ var test_f128: f128;
 // CHECK:STDOUT:     .test_u64 = %test_u64
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
-// CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(constants.%int_8) [template = constants.%u8]
 // CHECK:STDOUT:   %test_u8.var: ref %u8 = var test_u8
 // CHECK:STDOUT:   %test_u8: ref %u8 = bind_name test_u8, %test_u8.var
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var test_u16
 // CHECK:STDOUT:   %test_u16: ref %u16 = bind_name test_u16, %test_u16.var
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var test_u64
 // CHECK:STDOUT:   %test_u64: ref %u64 = bind_name test_u64, %test_u64.var
 // CHECK:STDOUT: }

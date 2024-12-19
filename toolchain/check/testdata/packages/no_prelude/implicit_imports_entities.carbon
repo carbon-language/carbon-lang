@@ -347,10 +347,8 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%import_ref.1 [template = constants.%C1]
 // CHECK:STDOUT:   %c1.var: ref %C1 = var c1
 // CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
-// CHECK:STDOUT:   %C2.ref: type = name_ref C2, imports.%import_ref.2 [template = constants.%C2]
 // CHECK:STDOUT:   %c2.var: ref %C2 = var c2
 // CHECK:STDOUT:   %c2: ref %C2 = bind_name c2, %c2.var
 // CHECK:STDOUT: }
@@ -415,7 +413,6 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%import_ref.1 [template = constants.%C1]
 // CHECK:STDOUT:   %c1.var: ref %C1 = var c1
 // CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var
 // CHECK:STDOUT: }
@@ -465,7 +462,6 @@ import Other library "o1";
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.1, [template] {
 // CHECK:STDOUT:     .C = %import_ref.2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//use_ns, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//ns, loc5_13, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//ns, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -477,8 +473,6 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -531,10 +525,8 @@ import Other library "o1";
 // CHECK:STDOUT:     import Other//o2
 // CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//o1, O1, loaded [template = constants.%O1]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//o1, loc4_11, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//o1, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Other//o2, O2, loaded [template = constants.%O2]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Other//o2, loc4_11, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Other//o2, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -548,12 +540,8 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref.loc6: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %O1.ref: type = name_ref O1, imports.%import_ref.1 [template = constants.%O1]
 // CHECK:STDOUT:   %o1.var: ref %O1 = var o1
 // CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
-// CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %O2.ref: type = name_ref O2, imports.%import_ref.4 [template = constants.%O2]
 // CHECK:STDOUT:   %o2.var: ref %O2 = var o2
 // CHECK:STDOUT:   %o2: ref %O2 = bind_name o2, %o2.var
 // CHECK:STDOUT: }
@@ -612,7 +600,6 @@ import Other library "o1";
 // CHECK:STDOUT:     .O1 = %import_ref.1
 // CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//o1, O1, loaded [template = constants.%O1]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//o1, loc4_11, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//o1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -625,8 +612,6 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %O1.ref: type = name_ref O1, imports.%import_ref.1 [template = constants.%O1]
 // CHECK:STDOUT:   %o1.var: ref %O1 = var o1
 // CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var
 // CHECK:STDOUT: }

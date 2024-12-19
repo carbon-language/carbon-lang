@@ -27,6 +27,7 @@ fn Make() -> C {
 // CHECK:STDOUT:   %.loc18_30.3.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc18_30.5.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !7
 // CHECK:STDOUT:   store ptr %return, ptr %.loc18_30.5.next, align 8, !dbg !7
+// CHECK:STDOUT:   store i32 42, ptr %.loc18_30.3.data, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

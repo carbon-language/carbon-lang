@@ -25,10 +25,6 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT: --- fail_bound_overflow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %int_39999999999999999993: Core.IntLiteral = int_value 39999999999999999993 [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,16 +43,8 @@ var b: [1; 39999999999999999993];
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_39999999999999999993.loc15: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
-// CHECK:STDOUT:   %array_type.loc15: type = array_type %int_39999999999999999993.loc15, %i32 [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %int_39999999999999999993.loc23: Core.IntLiteral = int_value 39999999999999999993 [template = constants.%int_39999999999999999993]
-// CHECK:STDOUT:   %.loc23: type = converted %int_1, <error> [template = <error>]
-// CHECK:STDOUT:   %array_type.loc23: type = array_type %int_39999999999999999993.loc23, <error> [template = <error>]
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
 // CHECK:STDOUT: }
