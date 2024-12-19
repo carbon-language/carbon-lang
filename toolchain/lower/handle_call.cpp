@@ -84,6 +84,33 @@ static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
       context.sem_ir().insts().Get(int_id).type_id());
 }
 
+// Creates a zext or sext instruction depending on the signedness of the
+// operand.
+static auto CreateZExtOrSExt(FunctionContext& context, llvm::Value* value,
+                             llvm::Type* type, bool is_signed,
+                             const llvm::Twine& name = "") -> llvm::Value* {
+  return is_signed ? context.builder().CreateSExt(value, type, name)
+                   : context.builder().CreateZExt(value, type, name);
+}
+
+// Handles a call to a builtin integer bit shift operator.
+static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
+                           llvm::Instruction::BinaryOps bin_op,
+                           SemIR::InstId lhs_id, SemIR::InstId rhs_id) -> void {
+  llvm::Value* lhs = context.GetValue(lhs_id);
+  llvm::Value* rhs = GetIntOrIntLiteralValue(context, rhs_id);
+
+  // Weirdly, LLVM requires the operands of bit shift operators to be of the
+  // same type. We can always use the width of the LHS, because if the RHS
+  // doesn't fit in that then the cast is out of range anyway.
+  //
+  // TODO: In a development build we should trap in that case.
+  rhs = context.builder().CreateZExtOrTrunc(rhs, lhs->getType(), "rhs");
+
+  context.SetLocal(inst_id, context.builder().CreateBinOp(bin_op, lhs, rhs));
+}
+
+// Handles a call to a builtin integer comparison operator.
 static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
                                 SemIR::BuiltinFunctionKind builtin_kind,
                                 SemIR::InstId lhs_id, SemIR::InstId rhs_id)
@@ -118,12 +145,8 @@ static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
   auto* cmp_type = llvm::IntegerType::get(context.llvm_context(), cmp_width);
 
   // Widen the operands as needed.
-  auto zext_or_sext = [&](llvm::Value* value, bool is_signed) {
-    return is_signed ? context.builder().CreateSExt(value, cmp_type)
-                     : context.builder().CreateZExt(value, cmp_type);
-  };
-  lhs = zext_or_sext(lhs, lhs_signed);
-  rhs = zext_or_sext(rhs, rhs_signed);
+  lhs = CreateZExtOrSExt(context, lhs, cmp_type, lhs_signed, "lhs");
+  rhs = CreateZExtOrSExt(context, rhs, cmp_type, rhs_signed, "rhs");
 
   context.SetLocal(
       inst_id,
@@ -311,21 +334,15 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::IntLeftShift: {
-      context.SetLocal(inst_id,
-                       context.builder().CreateShl(
-                           context.GetValue(arg_ids[0]),
-                           GetIntOrIntLiteralValue(context, arg_ids[1])));
+      HandleIntShift(context, inst_id, llvm::Instruction::Shl, arg_ids[0],
+                     arg_ids[1]);
       return;
     }
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      context.SetLocal(inst_id,
-                       IsSignedInt(context, inst_id)
-                           ? context.builder().CreateAShr(
-                                 context.GetValue(arg_ids[0]),
-                                 GetIntOrIntLiteralValue(context, arg_ids[1]))
-                           : context.builder().CreateLShr(
-                                 context.GetValue(arg_ids[0]),
-                                 GetIntOrIntLiteralValue(context, arg_ids[1])));
+      HandleIntShift(context, inst_id,
+                     IsSignedInt(context, inst_id) ? llvm::Instruction::AShr
+                                                   : llvm::Instruction::LShr,
+                     arg_ids[0], arg_ids[1]);
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
