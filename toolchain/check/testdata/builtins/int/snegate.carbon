@@ -20,7 +20,7 @@ let n: i32 = Negate(1);
 fn RuntimeCall(a: i32, b: i32) -> i32 {
   return Negate(a);
 }
- 
+
 // --- literal.carbon
 
 library "[[@TEST_NAME]]";

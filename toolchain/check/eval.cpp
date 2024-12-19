@@ -792,7 +792,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
           CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                             "integer overflow in negation of {0}", TypedInt);
           context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,
-                                {.type = op.type_id, .value = op_val});
+                                 {.type = op.type_id, .value = op_val});
         } else {
           // Widen the integer so we don't overflow into the sign bit.
           op_val = op_val.sext(op_val.getBitWidth() +
@@ -827,7 +827,7 @@ struct APIntBinaryOperands {
   llvm::APInt lhs;
   llvm::APInt rhs;
 };
-}
+}  // namespace
 
 // Get a pair of integers at the same suitable bit-width: either their actual
 // width if they have a fixed width, or the smallest canonical width in which
@@ -860,7 +860,7 @@ struct BinaryIntOpResult {
   bool overflow;
   Lex::TokenKind op_token;
 };
-}
+}  // namespace
 
 // Computes the result of a homogeneous binary (int, int) -> int operation.
 static auto ComputeBinaryIntOpResult(SemIR::BuiltinFunctionKind builtin_kind,
@@ -1014,7 +1014,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
           // Ensure we don't generate a ridiculously large integer through a bit
           // shift.
           auto width = rhs_orig_val.trySExtValue();
-          if (!width || *width > IntStore::MaxIntWidth - lhs_val.getSignificantBits()) {
+          if (!width ||
+              *width > IntStore::MaxIntWidth - lhs_val.getSignificantBits()) {
             CARBON_DIAGNOSTIC(CompileTimeUnsizedShiftOutOfRange, Error,
                               "shift distance of {0} would result in an "
                               "integer whose width is greater than the "
@@ -1029,7 +1030,8 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
               lhs_val.getSignificantBits() + *width));
         }
 
-        result_val = lhs_val.shl(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
+        result_val =
+            lhs_val.shl(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
       } else if (lhs_is_signed) {
         result_val =
             lhs_val.ashr(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
