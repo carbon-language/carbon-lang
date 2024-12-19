@@ -72,3 +72,19 @@ carbon_binary(
         "day4_part2.carbon",
     ] + utils,
 )
+
+carbon_binary(
+    name = "day5_part1",
+    srcs = [
+        "day5_common.carbon",
+        "day5_part1.carbon",
+    ] + utils,
+)
+
+carbon_binary(
+    name = "day5_part2",
+    srcs = [
+        "day5_common.carbon",
+        "day5_part2.carbon",
+    ] + utils,
+)
