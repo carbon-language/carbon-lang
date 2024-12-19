@@ -246,8 +246,8 @@ The required setup for LLDB is:
 
 1.  Install a minimum of LLVM 19 instead of LLVM 16.
     -   The `lldb-dap` tool was added as part of LLVM 19.
-2.  In the `.vscode` subdirectory, symlink `lldb_launch.json` to `launch.json`:
-    `ln -s lldb_launch.json .vscode/launch.json`
+2.  In the `.vscode` subdirectory, symlink `lldb_launch.json` to `launch.json`.
+    For example: `ln -s lldb_launch.json .vscode/launch.json`
 3.  Install the
     [`llvm-vs-code-extensions.lldb-dap` extension](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.lldb-dap).
 4.  In VS Code settings, it may be necessary to set `lldb-dap.executable-path`
@@ -265,8 +265,8 @@ A typical debug session looks like:
 
 The required setup for GDB is:
 
-1.  In the `.vscode` subdirectory, symlink `gdb_launch.json` to `launch.json`:
-    `ln -s gdb_launch.json .vscode/launch.json`
+1.  In the `.vscode` subdirectory, symlink `gdb_launch.json` to `launch.json`.
+    For example: `ln -s gdb_launch.json .vscode/launch.json`
 2.  Install the
     [`coolchyni.beyond-debug` extension](https://marketplace.visualstudio.com/items?itemName=coolchyni.beyond-debug).
 
