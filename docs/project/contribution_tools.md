@@ -31,7 +31,6 @@ contributions.
     -   [Asking for help](#asking-for-help)
 -   [Troubleshooting debug issues](#troubleshooting-debug-issues)
     -   [Debugging with GDB instead of LLDB](#debugging-with-gdb-instead-of-lldb)
-    -   [Disabling split debug info](#disabling-split-debug-info)
     -   [Debugging other build modes](#debugging-other-build-modes)
     -   [Debugging on MacOS](#debugging-on-macos)
 
@@ -273,7 +272,7 @@ The required setup for GDB is:
 
 A typical debug session looks like:
 
-1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags --fission=no //toolchain/testing:file_test`
+1. `bazel build -c dbg --features=-lldb_flags --features=gdb_flags //toolchain/testing:file_test`
 2. Open a `.carbon` testdata file to debug. This must be the active file in VS
    Code.
 3. Go to the "Run and debug" panel in VS Code.
@@ -375,13 +374,6 @@ Dwarf Error: DW_FORM_strx1 found in non-DWO CU
 
 It means that the version of GDB used is too old, and does not support the DWARF
 v5 format.
-
-### Disabling split debug info
-
-Our build uses split debug info by default on Linux to improve build and
-debugger performance and reduce the size impact of debug information which can
-be extremely large. If you encounter problems, you can disable it by passing
-`--fission=no` to Bazel.
 
 ### Debugging other build modes
 
