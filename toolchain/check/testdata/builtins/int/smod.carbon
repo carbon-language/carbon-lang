@@ -35,7 +35,7 @@ let b: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), 1);
 
 // -0x8000_0000 / -1 overflows, so -0x8000_0000 % -1 is disallowed, even though
 // its result is representable.
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation -2147483648 % -1 [CompileTimeIntegerOverflow]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `-2147483648 % -1` [CompileTimeIntegerOverflow]
 // CHECK:STDERR: let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

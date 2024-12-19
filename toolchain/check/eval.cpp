@@ -979,13 +979,11 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
       llvm::APInt lhs_val =
           GetIntAtSuitableWidth(context, lhs_bit_width_id, lhs.int_id);
       const auto& rhs_orig_val = context.ints().Get(rhs.int_id);
-      if ((lhs_bit_width_id.is_valid() &&
-           rhs_orig_val.uge(lhs_val.getBitWidth())) ||
-          (rhs_orig_val.isNegative() &&
-           context.sem_ir().types().IsSignedInt(rhs.type_id))) {
+      if (lhs_bit_width_id.is_valid() &&
+          rhs_orig_val.uge(lhs_val.getBitWidth())) {
         CARBON_DIAGNOSTIC(
             CompileTimeShiftOutOfRange, Error,
-            "shift distance not in range [0, {0}) in {1} {2:<<|>>} {3}",
+            "shift distance >= type width of {0} in `{1} {2:<<|>>} {3}`",
             unsigned, TypedInt, BoolAsSelect, TypedInt);
         context.emitter().Emit(
             loc, CompileTimeShiftOutOfRange, lhs_val.getBitWidth(),
@@ -996,9 +994,23 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
         return SemIR::ErrorInst::SingletonConstantId;
       }
 
+      if (rhs_orig_val.isNegative() &&
+          context.sem_ir().types().IsSignedInt(rhs.type_id)) {
+        CARBON_DIAGNOSTIC(CompileTimeShiftNegative, Error,
+                          "shift distance negative in `{0} {1:<<|>>} {2}`",
+                          TypedInt, BoolAsSelect, TypedInt);
+        context.emitter().Emit(
+            loc, CompileTimeShiftNegative,
+            {.type = lhs.type_id, .value = lhs_val},
+            builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift,
+            {.type = rhs.type_id, .value = rhs_orig_val});
+        // TODO: Is it useful to recover by returning 0 or -1?
+        return SemIR::ErrorInst::SingletonConstantId;
+      }
+
       llvm::APInt result_val;
       if (builtin_kind == SemIR::BuiltinFunctionKind::IntLeftShift) {
-        if (!lhs_bit_width_id.is_valid()) {
+        if (!lhs_bit_width_id.is_valid() && !lhs_val.isZero()) {
           // Ensure we don't generate a ridiculously large integer through a bit
           // shift.
           auto width = rhs_orig_val.trySExtValue();
@@ -1062,7 +1074,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   if (result.overflow) {
     CARBON_DIAGNOSTIC(CompileTimeIntegerOverflow, Error,
-                      "integer overflow in calculation {0} {1} {2}", TypedInt,
+                      "integer overflow in calculation `{0} {1} {2}`", TypedInt,
                       Lex::TokenKind, TypedInt);
     context.emitter().Emit(loc, CompileTimeIntegerOverflow,
                            {.type = lhs.type_id, .value = lhs_val},
