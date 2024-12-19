@@ -1029,13 +1029,15 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
               lhs_val.getSignificantBits() + *width));
         }
 
-        result_val = lhs_val.shl(rhs_orig_val);
+        result_val = lhs_val.shl(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
       } else if (lhs_is_signed) {
-        result_val = lhs_val.ashr(rhs_orig_val);
+        result_val =
+            lhs_val.ashr(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
       } else {
         CARBON_CHECK(lhs_bit_width_id.is_valid(),
                      "Logical shift on unsized int");
-        result_val = lhs_val.lshr(rhs_orig_val);
+        result_val =
+            lhs_val.lshr(rhs_orig_val.getLimitedValue(lhs_val.getBitWidth()));
       }
       return MakeIntResult(context, lhs.type_id, lhs_is_signed,
                            std::move(result_val));
@@ -1428,7 +1430,9 @@ static auto MakeConstantForCall(EvalContext& eval_context, SemIRLoc loc,
   // If any operand of the call is non-constant, the call is non-constant.
   // TODO: Some builtin calls might allow some operands to be non-constant.
   if (!has_constant_operands) {
-    if (builtin_kind.IsCompTimeOnly(eval_context.sem_ir(), call.type_id)) {
+    if (builtin_kind.IsCompTimeOnly(
+            eval_context.sem_ir(), eval_context.inst_blocks().Get(call.args_id),
+            call.type_id)) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,

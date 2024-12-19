@@ -58,25 +58,6 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
   }
 }
 
-// Given an argument that is either a sized integer or integer literal, produces
-// a corresponding value.
-static auto GetIntOrIntLiteralValue(FunctionContext& context,
-                                    SemIR::InstId arg_id) -> llvm::Value* {
-  auto* result = context.GetValue(arg_id);
-
-  // An IntLiteral value will have been lowered to an empty struct. Produce a
-  // ConstantInt with its constant value instead.
-  if (isa<llvm::ConstantStruct>(result)) {
-    CARBON_CHECK(result == context.GetIntLiteralAsValue());
-    auto int_value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
-        context.sem_ir().constant_values().GetConstantInstId(arg_id));
-    return llvm::ConstantInt::get(
-        context.llvm_context(), context.sem_ir().ints().Get(int_value.int_id));
-  }
-
-  return result;
-}
-
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
@@ -98,7 +79,7 @@ static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
                            llvm::Instruction::BinaryOps bin_op,
                            SemIR::InstId lhs_id, SemIR::InstId rhs_id) -> void {
   llvm::Value* lhs = context.GetValue(lhs_id);
-  llvm::Value* rhs = GetIntOrIntLiteralValue(context, rhs_id);
+  llvm::Value* rhs = context.GetValue(rhs_id);
 
   // Weirdly, LLVM requires the operands of bit shift operators to be of the
   // same type. We can always use the width of the LHS, because if the RHS
@@ -115,8 +96,8 @@ static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
                                 SemIR::BuiltinFunctionKind builtin_kind,
                                 SemIR::InstId lhs_id, SemIR::InstId rhs_id)
     -> void {
-  llvm::Value* lhs = GetIntOrIntLiteralValue(context, lhs_id);
-  llvm::Value* rhs = GetIntOrIntLiteralValue(context, rhs_id);
+  llvm::Value* lhs = context.GetValue(lhs_id);
+  llvm::Value* rhs = context.GetValue(rhs_id);
   const auto* lhs_type = cast<llvm::IntegerType>(lhs->getType());
   const auto* rhs_type = cast<llvm::IntegerType>(rhs->getType());
 
@@ -402,7 +383,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
-          context.sem_ir(), context.sem_ir().insts().Get(inst_id).type_id()));
+          context.sem_ir(), arg_ids,
+          context.sem_ir().insts().Get(inst_id).type_id()));
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
   }

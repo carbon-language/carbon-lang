@@ -25,14 +25,21 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn AndLit(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+fn And(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
 
-var arr_lit: [i32; AndLit(12, 10)];
-let arr_lit_p: [i32; 8]* = &arr_lit;
+class Expect(N:! Core.IntLiteral()) {}
+fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
 
-// & between a positive and negative literal should produce a positive value.
-var arr_lit_large: [i32; AndLit(0x8000_0000_0000_0000, -1) >> 48]*;
-let arr_lit_large_p: [i32; 0x8000]* = arr_lit_large;
+fn F() {
+  Test(And(1, 2)) as Expect(0);
+  Test(And(12, 10)) as Expect(8);
+
+  Test(And(1, -1)) as Expect(1);
+  Test(And(-2, -3)) as Expect(-4);
+  // Ensure the sign bit is treated properly even for 64-bit numbers.
+  Test(And(0x7FFF_FFFF_FFFF_FFFF, -3)) as Expect(0x7FFF_FFFF_FFFF_FFFD);
+  Test(And(0x8000_0000_0000_0000, -1)) as Expect(0x8000_0000_0000_0000);
+}
 
 // --- fail_literal_runtime.carbon
 
@@ -205,40 +212,68 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
-// CHECK:STDOUT:   %AndLit.type: type = fn_type @AndLit [template]
-// CHECK:STDOUT:   %AndLit: %AndLit.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %And.type: type = fn_type @And [template]
+// CHECK:STDOUT:   %And: %And.type = struct_value () [template]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %Expect.type: type = generic_class_type @Expect [template]
+// CHECK:STDOUT:   %Expect.generic: %Expect.type = struct_value () [template]
+// CHECK:STDOUT:   %Expect.1: type = class_type @Expect, @Expect(%N) [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Expect.1 [symbolic]
+// CHECK:STDOUT:   %Expect.val.1: %Expect.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %Expect.2: type = class_type @Expect, @Expect(%int_0) [template]
+// CHECK:STDOUT:   %Test.specific_fn.1: <specific function> = specific_function %Test, @Test(%int_0) [template]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template]
-// CHECK:STDOUT:   %array_type.1: type = array_type %int_8, %i32 [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %array_type.1 [template]
-// CHECK:STDOUT:   %int_9223372036854775808: Core.IntLiteral = int_value 9223372036854775808 [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %Expect.3: type = class_type @Expect, @Expect(%int_8) [template]
+// CHECK:STDOUT:   %Test.specific_fn.2: <specific function> = specific_function %Test, @Test(%int_8) [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%Op.2) [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.2) [template]
 // CHECK:STDOUT:   %Op.bound.1: <bound method> = bound_method %int_1, %Op.2 [template]
 // CHECK:STDOUT:   %int_-1: Core.IntLiteral = int_value -1 [template]
-// CHECK:STDOUT:   %int_48: Core.IntLiteral = int_value 48 [template]
-// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
-// CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Op.4) [template]
-// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_9223372036854775808, %Op.4 [template]
-// CHECK:STDOUT:   %int_32768: Core.IntLiteral = int_value 32768 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_32768, %i32 [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %array_type.2 [template]
+// CHECK:STDOUT:   %Expect.4: type = class_type @Expect, @Expect(%int_1) [template]
+// CHECK:STDOUT:   %Test.specific_fn.3: <specific function> = specific_function %Test, @Test(%int_1) [template]
+// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_2, %Op.2 [template]
+// CHECK:STDOUT:   %int_-2: Core.IntLiteral = int_value -2 [template]
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %Op.bound.3: <bound method> = bound_method %int_3, %Op.2 [template]
+// CHECK:STDOUT:   %int_-3: Core.IntLiteral = int_value -3 [template]
+// CHECK:STDOUT:   %int_-4: Core.IntLiteral = int_value -4 [template]
+// CHECK:STDOUT:   %Expect.5: type = class_type @Expect, @Expect(%int_-4) [template]
+// CHECK:STDOUT:   %Test.specific_fn.4: <specific function> = specific_function %Test, @Test(%int_-4) [template]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template]
+// CHECK:STDOUT:   %Op.bound.4: <bound method> = bound_method %int_4, %Op.2 [template]
+// CHECK:STDOUT:   %int_9223372036854775807: Core.IntLiteral = int_value 9223372036854775807 [template]
+// CHECK:STDOUT:   %int_9223372036854775805: Core.IntLiteral = int_value 9223372036854775805 [template]
+// CHECK:STDOUT:   %Expect.6: type = class_type @Expect, @Expect(%int_9223372036854775805) [template]
+// CHECK:STDOUT:   %Test.specific_fn.5: <specific function> = specific_function %Test, @Test(%int_9223372036854775805) [template]
+// CHECK:STDOUT:   %int_9223372036854775808: Core.IntLiteral = int_value 9223372036854775808 [template]
+// CHECK:STDOUT:   %Expect.7: type = class_type @Expect, @Expect(%int_9223372036854775808) [template]
+// CHECK:STDOUT:   %Test.specific_fn.6: <specific function> = specific_function %Test, @Test(%int_9223372036854775808) [template]
+// CHECK:STDOUT:   %Expect.val.2: %Expect.2 = struct_value () [template]
+// CHECK:STDOUT:   %Expect.val.3: %Expect.3 = struct_value () [template]
+// CHECK:STDOUT:   %Expect.val.4: %Expect.4 = struct_value () [template]
+// CHECK:STDOUT:   %Expect.val.5: %Expect.5 = struct_value () [template]
+// CHECK:STDOUT:   %Expect.val.6: %Expect.6 = struct_value () [template]
+// CHECK:STDOUT:   %Expect.val.7: %Expect.7 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Int = %import_ref.2
-// CHECK:STDOUT:     .Negate = %import_ref.6
-// CHECK:STDOUT:     .RightShift = %import_ref.44
+// CHECK:STDOUT:     .Negate = %import_ref.2
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -248,14 +283,13 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .AndLit = %AndLit.decl
-// CHECK:STDOUT:     .arr_lit = %arr_lit
-// CHECK:STDOUT:     .arr_lit_p = @__global_init.%arr_lit_p
-// CHECK:STDOUT:     .arr_lit_large = %arr_lit_large
-// CHECK:STDOUT:     .arr_lit_large_p = @__global_init.%arr_lit_large_p
+// CHECK:STDOUT:     .And = %And.decl
+// CHECK:STDOUT:     .Expect = %Expect.decl
+// CHECK:STDOUT:     .Test = %Test.decl
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %AndLit.decl: %AndLit.type = fn_decl @AndLit [template = constants.%AndLit] {
+// CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
 // CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
@@ -263,21 +297,21 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Core.ref.loc4_14: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_18: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_30: init type = call %IntLiteral.ref.loc4_18() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_30.1: type = value_of_initializer %int_literal.make_type.loc4_30 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_30.2: type = converted %int_literal.make_type.loc4_30, %.loc4_30.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %Core.ref.loc4_36: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_40: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_52: init type = call %IntLiteral.ref.loc4_40() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_52.1: type = value_of_initializer %int_literal.make_type.loc4_52 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_52.2: type = converted %int_literal.make_type.loc4_52, %.loc4_52.1 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %Core.ref.loc4_58: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_62: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc4_74: init type = call %IntLiteral.ref.loc4_62() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_74.1: type = value_of_initializer %int_literal.make_type.loc4_74 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_74.2: type = converted %int_literal.make_type.loc4_74, %.loc4_74.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %Core.ref.loc4_11: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc4_15: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_27: init type = call %IntLiteral.ref.loc4_15() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_27.1: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_27.2: type = converted %int_literal.make_type.loc4_27, %.loc4_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %Core.ref.loc4_33: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc4_37: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_49: init type = call %IntLiteral.ref.loc4_37() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_49.1: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_49.2: type = converted %int_literal.make_type.loc4_49, %.loc4_49.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %Core.ref.loc4_55: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc4_59: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_71: init type = call %IntLiteral.ref.loc4_59() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_71.1: type = value_of_initializer %int_literal.make_type.loc4_71 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_71.2: type = converted %int_literal.make_type.loc4_71, %.loc4_71.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
@@ -285,63 +319,309 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %AndLit.ref.loc6: %AndLit.type = name_ref AndLit, %AndLit.decl [template = constants.%AndLit]
-// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %int.and.loc6: init Core.IntLiteral = call %AndLit.ref.loc6(%int_12, %int_10) [template = constants.%int_8]
-// CHECK:STDOUT:   %.loc6_33.1: Core.IntLiteral = value_of_initializer %int.and.loc6 [template = constants.%int_8]
-// CHECK:STDOUT:   %.loc6_33.2: Core.IntLiteral = converted %int.and.loc6, %.loc6_33.1 [template = constants.%int_8]
-// CHECK:STDOUT:   %array_type.loc6: type = array_type %.loc6_33.2, %i32 [template = constants.%array_type.1]
-// CHECK:STDOUT:   %arr_lit.var: ref %array_type.1 = var arr_lit
-// CHECK:STDOUT:   %arr_lit: ref %array_type.1 = bind_name arr_lit, %arr_lit.var
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
-// CHECK:STDOUT:   %array_type.loc7: type = array_type %int_8, %i32 [template = constants.%array_type.1]
-// CHECK:STDOUT:   %ptr.loc7: type = ptr_type %array_type.1 [template = constants.%ptr.1]
-// CHECK:STDOUT:   %int_32.loc10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %AndLit.ref.loc10: %AndLit.type = name_ref AndLit, %AndLit.decl [template = constants.%AndLit]
-// CHECK:STDOUT:   %int_9223372036854775808: Core.IntLiteral = int_value 9223372036854775808 [template = constants.%int_9223372036854775808]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0.loc10_56: %Op.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%Op.2]
-// CHECK:STDOUT:   %Op.bound.loc10_56: <bound method> = bound_method %int_1, %impl.elem0.loc10_56 [template = constants.%Op.bound.1]
-// CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound.loc10_56(%int_1) [template = constants.%int_-1]
-// CHECK:STDOUT:   %.loc10_56.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-1]
-// CHECK:STDOUT:   %.loc10_56.2: Core.IntLiteral = converted %int.snegate, %.loc10_56.1 [template = constants.%int_-1]
-// CHECK:STDOUT:   %int.and.loc10: init Core.IntLiteral = call %AndLit.ref.loc10(%int_9223372036854775808, %.loc10_56.2) [template = constants.%int_9223372036854775808]
-// CHECK:STDOUT:   %int_48: Core.IntLiteral = int_value 48 [template = constants.%int_48]
-// CHECK:STDOUT:   %impl.elem0.loc10_60: %Op.type.3 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.4]
-// CHECK:STDOUT:   %Op.bound.loc10_60: <bound method> = bound_method %int.and.loc10, %impl.elem0.loc10_60 [template = constants.%Op.bound.2]
-// CHECK:STDOUT:   %.loc10_58.1: Core.IntLiteral = value_of_initializer %int.and.loc10 [template = constants.%int_9223372036854775808]
-// CHECK:STDOUT:   %.loc10_58.2: Core.IntLiteral = converted %int.and.loc10, %.loc10_58.1 [template = constants.%int_9223372036854775808]
-// CHECK:STDOUT:   %int.right_shift: init Core.IntLiteral = call %Op.bound.loc10_60(%.loc10_58.2, %int_48) [template = constants.%int_32768]
-// CHECK:STDOUT:   %.loc10_60.1: Core.IntLiteral = value_of_initializer %int.right_shift [template = constants.%int_32768]
-// CHECK:STDOUT:   %.loc10_60.2: Core.IntLiteral = converted %int.right_shift, %.loc10_60.1 [template = constants.%int_32768]
-// CHECK:STDOUT:   %array_type.loc10: type = array_type %.loc10_60.2, %i32 [template = constants.%array_type.2]
-// CHECK:STDOUT:   %ptr.loc10: type = ptr_type %array_type.2 [template = constants.%ptr.2]
-// CHECK:STDOUT:   %arr_lit_large.var: ref %ptr.2 = var arr_lit_large
-// CHECK:STDOUT:   %arr_lit_large: ref %ptr.2 = bind_name arr_lit_large, %arr_lit_large.var
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32768: Core.IntLiteral = int_value 32768 [template = constants.%int_32768]
-// CHECK:STDOUT:   %array_type.loc11: type = array_type %int_32768, %i32 [template = constants.%array_type.2]
-// CHECK:STDOUT:   %ptr.loc11: type = ptr_type %array_type.2 [template = constants.%ptr.2]
+// CHECK:STDOUT:   %Expect.decl: %Expect.type = class_decl @Expect [template = constants.%Expect.generic] {
+// CHECK:STDOUT:     %N.patt.loc6_14.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_14.1, runtime_param<invalid> [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc6_34.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc6_34.2: type = converted %int_literal.make_type, %.loc6_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc6_14.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_14.2 (constants.%N)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
+// CHECK:STDOUT:     %N.patt.loc7_9.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_9.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc7_9.1, runtime_param<invalid> [symbolic = %N.patt.loc7_9.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %return.patt: @Test.%Expect.loc7_43.2 (%Expect.1) = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: @Test.%Expect.loc7_43.2 (%Expect.1) = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc7_29.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc7_29.2: type = converted %int_literal.make_type, %.loc7_29.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %Expect.ref: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc7_9.1 [symbolic = %N.loc7_9.2 (constants.%N)]
+// CHECK:STDOUT:     %Expect.loc7_43.1: type = class_type @Expect, @Expect(constants.%N) [symbolic = %Expect.loc7_43.2 (constants.%Expect.1)]
+// CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %N.loc7_9.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_9.2 (constants.%N)]
+// CHECK:STDOUT:     %return.param: ref @Test.%Expect.loc7_43.2 (%Expect.1) = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref @Test.%Expect.loc7_43.2 (%Expect.1) = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AndLit(%a.param_patt: Core.IntLiteral, %b.param_patt: Core.IntLiteral) -> Core.IntLiteral = "int.and";
+// CHECK:STDOUT: generic class @Expect(%N.loc6_14.1: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc6_14.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc6_14.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc6_14.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Expect.1
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @And(%a.param_patt: Core.IntLiteral, %b.param_patt: Core.IntLiteral) -> Core.IntLiteral = "int.and";
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Test(%N.loc7_9.1: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc7_9.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc7_9.2 (constants.%N)]
+// CHECK:STDOUT:   %N.patt.loc7_9.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_9.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %Expect.loc7_43.2: type = class_type @Expect, @Expect(%N.loc7_9.2) [symbolic = %Expect.loc7_43.2 (constants.%Expect.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Test.%Expect.loc7_43.2 (%Expect.1) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %Expect.val: @Test.%Expect.loc7_43.2 (%Expect.1) = struct_value () [symbolic = %Expect.val (constants.%Expect.val.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%N.param_patt: Core.IntLiteral) -> %return.param_patt: @Test.%Expect.loc7_43.2 (%Expect.1) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc7_55.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc7_55.2: init @Test.%Expect.loc7_43.2 (%Expect.1) = class_init (), %return [symbolic = %Expect.val (constants.%Expect.val.1)]
+// CHECK:STDOUT:     %.loc7_56: init @Test.%Expect.loc7_43.2 (%Expect.1) = converted %.loc7_55.1, %.loc7_55.2 [symbolic = %Expect.val (constants.%Expect.val.1)]
+// CHECK:STDOUT:     return %.loc7_56 to %return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %arr_lit.ref: ref %array_type.1 = name_ref arr_lit, file.%arr_lit
-// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %arr_lit.ref
-// CHECK:STDOUT:   %arr_lit_p: %ptr.1 = bind_name arr_lit_p, %addr
-// CHECK:STDOUT:   %arr_lit_large.ref: ref %ptr.2 = name_ref arr_lit_large, file.%arr_lit_large
-// CHECK:STDOUT:   %.loc11: %ptr.2 = bind_value %arr_lit_large.ref
-// CHECK:STDOUT:   %arr_lit_large_p: %ptr.2 = bind_name arr_lit_large_p, %.loc11
+// CHECK:STDOUT:   %Test.ref.loc10: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc10: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:   %int.and.loc10: init Core.IntLiteral = call %And.ref.loc10(%int_1.loc10, %int_2.loc10) [template = constants.%int_0]
+// CHECK:STDOUT:   %.loc10_17.1: Core.IntLiteral = value_of_initializer %int.and.loc10 [template = constants.%int_0]
+// CHECK:STDOUT:   %.loc10_17.2: Core.IntLiteral = converted %int.and.loc10, %.loc10_17.1 [template = constants.%int_0]
+// CHECK:STDOUT:   %Test.specific_fn.loc10: <specific function> = specific_function %Test.ref.loc10, @Test(constants.%int_0) [template = constants.%Test.specific_fn.1]
+// CHECK:STDOUT:   %.loc10_17.3: ref %Expect.2 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc10: init %Expect.2 = call %Test.specific_fn.loc10() to %.loc10_17.3
+// CHECK:STDOUT:   %Expect.ref.loc10: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %Expect.loc10: type = class_type @Expect, @Expect(constants.%int_0) [template = constants.%Expect.2]
+// CHECK:STDOUT:   %.loc10_17.4: ref %Expect.2 = temporary %.loc10_17.3, %Test.call.loc10
+// CHECK:STDOUT:   %Test.ref.loc11: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc11: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
+// CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
+// CHECK:STDOUT:   %int.and.loc11: init Core.IntLiteral = call %And.ref.loc11(%int_12, %int_10) [template = constants.%int_8]
+// CHECK:STDOUT:   %.loc11_19.1: Core.IntLiteral = value_of_initializer %int.and.loc11 [template = constants.%int_8]
+// CHECK:STDOUT:   %.loc11_19.2: Core.IntLiteral = converted %int.and.loc11, %.loc11_19.1 [template = constants.%int_8]
+// CHECK:STDOUT:   %Test.specific_fn.loc11: <specific function> = specific_function %Test.ref.loc11, @Test(constants.%int_8) [template = constants.%Test.specific_fn.2]
+// CHECK:STDOUT:   %.loc11_19.3: ref %Expect.3 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc11: init %Expect.3 = call %Test.specific_fn.loc11() to %.loc11_19.3
+// CHECK:STDOUT:   %Expect.ref.loc11: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [template = constants.%int_8]
+// CHECK:STDOUT:   %Expect.loc11: type = class_type @Expect, @Expect(constants.%int_8) [template = constants.%Expect.3]
+// CHECK:STDOUT:   %.loc11_19.4: ref %Expect.3 = temporary %.loc11_19.3, %Test.call.loc11
+// CHECK:STDOUT:   %Test.ref.loc13: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc13: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_1.loc13_12: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc13_16: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc13: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc13: <bound method> = bound_method %int_1.loc13_16, %impl.elem0.loc13 [template = constants.%Op.bound.1]
+// CHECK:STDOUT:   %int.snegate.loc13: init Core.IntLiteral = call %Op.bound.loc13(%int_1.loc13_16) [template = constants.%int_-1]
+// CHECK:STDOUT:   %.loc13_15.1: Core.IntLiteral = value_of_initializer %int.snegate.loc13 [template = constants.%int_-1]
+// CHECK:STDOUT:   %.loc13_15.2: Core.IntLiteral = converted %int.snegate.loc13, %.loc13_15.1 [template = constants.%int_-1]
+// CHECK:STDOUT:   %int.and.loc13: init Core.IntLiteral = call %And.ref.loc13(%int_1.loc13_12, %.loc13_15.2) [template = constants.%int_1]
+// CHECK:STDOUT:   %.loc13_18.1: Core.IntLiteral = value_of_initializer %int.and.loc13 [template = constants.%int_1]
+// CHECK:STDOUT:   %.loc13_18.2: Core.IntLiteral = converted %int.and.loc13, %.loc13_18.1 [template = constants.%int_1]
+// CHECK:STDOUT:   %Test.specific_fn.loc13: <specific function> = specific_function %Test.ref.loc13, @Test(constants.%int_1) [template = constants.%Test.specific_fn.3]
+// CHECK:STDOUT:   %.loc13_18.3: ref %Expect.4 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc13: init %Expect.4 = call %Test.specific_fn.loc13() to %.loc13_18.3
+// CHECK:STDOUT:   %Expect.ref.loc13: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_1.loc13_30: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %Expect.loc13: type = class_type @Expect, @Expect(constants.%int_1) [template = constants.%Expect.4]
+// CHECK:STDOUT:   %.loc13_18.4: ref %Expect.4 = temporary %.loc13_18.3, %Test.call.loc13
+// CHECK:STDOUT:   %Test.ref.loc14: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc14: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_2.loc14: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:   %impl.elem0.loc14_12: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc14_12: <bound method> = bound_method %int_2.loc14, %impl.elem0.loc14_12 [template = constants.%Op.bound.2]
+// CHECK:STDOUT:   %int.snegate.loc14_12: init Core.IntLiteral = call %Op.bound.loc14_12(%int_2.loc14) [template = constants.%int_-2]
+// CHECK:STDOUT:   %int_3.loc14: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:   %impl.elem0.loc14_16: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc14_16: <bound method> = bound_method %int_3.loc14, %impl.elem0.loc14_16 [template = constants.%Op.bound.3]
+// CHECK:STDOUT:   %int.snegate.loc14_16: init Core.IntLiteral = call %Op.bound.loc14_16(%int_3.loc14) [template = constants.%int_-3]
+// CHECK:STDOUT:   %.loc14_12.1: Core.IntLiteral = value_of_initializer %int.snegate.loc14_12 [template = constants.%int_-2]
+// CHECK:STDOUT:   %.loc14_12.2: Core.IntLiteral = converted %int.snegate.loc14_12, %.loc14_12.1 [template = constants.%int_-2]
+// CHECK:STDOUT:   %.loc14_16.1: Core.IntLiteral = value_of_initializer %int.snegate.loc14_16 [template = constants.%int_-3]
+// CHECK:STDOUT:   %.loc14_16.2: Core.IntLiteral = converted %int.snegate.loc14_16, %.loc14_16.1 [template = constants.%int_-3]
+// CHECK:STDOUT:   %int.and.loc14: init Core.IntLiteral = call %And.ref.loc14(%.loc14_12.2, %.loc14_16.2) [template = constants.%int_-4]
+// CHECK:STDOUT:   %.loc14_19.1: Core.IntLiteral = value_of_initializer %int.and.loc14 [template = constants.%int_-4]
+// CHECK:STDOUT:   %.loc14_19.2: Core.IntLiteral = converted %int.and.loc14, %.loc14_19.1 [template = constants.%int_-4]
+// CHECK:STDOUT:   %Test.specific_fn.loc14: <specific function> = specific_function %Test.ref.loc14, @Test(constants.%int_-4) [template = constants.%Test.specific_fn.4]
+// CHECK:STDOUT:   %.loc14_19.3: ref %Expect.5 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc14: init %Expect.5 = call %Test.specific_fn.loc14() to %.loc14_19.3
+// CHECK:STDOUT:   %Expect.ref.loc14: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4]
+// CHECK:STDOUT:   %impl.elem0.loc14_31: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc14_31: <bound method> = bound_method %int_4, %impl.elem0.loc14_31 [template = constants.%Op.bound.4]
+// CHECK:STDOUT:   %int.snegate.loc14_31: init Core.IntLiteral = call %Op.bound.loc14_31(%int_4) [template = constants.%int_-4]
+// CHECK:STDOUT:   %.loc14_33.1: Core.IntLiteral = value_of_initializer %int.snegate.loc14_31 [template = constants.%int_-4]
+// CHECK:STDOUT:   %.loc14_33.2: Core.IntLiteral = converted %int.snegate.loc14_31, %.loc14_33.1 [template = constants.%int_-4]
+// CHECK:STDOUT:   %Expect.loc14: type = class_type @Expect, @Expect(constants.%int_-4) [template = constants.%Expect.5]
+// CHECK:STDOUT:   %.loc14_19.4: ref %Expect.5 = temporary %.loc14_19.3, %Test.call.loc14
+// CHECK:STDOUT:   %Test.ref.loc16: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc16: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_9223372036854775807: Core.IntLiteral = int_value 9223372036854775807 [template = constants.%int_9223372036854775807]
+// CHECK:STDOUT:   %int_3.loc16: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:   %impl.elem0.loc16: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc16: <bound method> = bound_method %int_3.loc16, %impl.elem0.loc16 [template = constants.%Op.bound.3]
+// CHECK:STDOUT:   %int.snegate.loc16: init Core.IntLiteral = call %Op.bound.loc16(%int_3.loc16) [template = constants.%int_-3]
+// CHECK:STDOUT:   %.loc16_35.1: Core.IntLiteral = value_of_initializer %int.snegate.loc16 [template = constants.%int_-3]
+// CHECK:STDOUT:   %.loc16_35.2: Core.IntLiteral = converted %int.snegate.loc16, %.loc16_35.1 [template = constants.%int_-3]
+// CHECK:STDOUT:   %int.and.loc16: init Core.IntLiteral = call %And.ref.loc16(%int_9223372036854775807, %.loc16_35.2) [template = constants.%int_9223372036854775805]
+// CHECK:STDOUT:   %.loc16_38.1: Core.IntLiteral = value_of_initializer %int.and.loc16 [template = constants.%int_9223372036854775805]
+// CHECK:STDOUT:   %.loc16_38.2: Core.IntLiteral = converted %int.and.loc16, %.loc16_38.1 [template = constants.%int_9223372036854775805]
+// CHECK:STDOUT:   %Test.specific_fn.loc16: <specific function> = specific_function %Test.ref.loc16, @Test(constants.%int_9223372036854775805) [template = constants.%Test.specific_fn.5]
+// CHECK:STDOUT:   %.loc16_38.3: ref %Expect.6 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc16: init %Expect.6 = call %Test.specific_fn.loc16() to %.loc16_38.3
+// CHECK:STDOUT:   %Expect.ref.loc16: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_9223372036854775805: Core.IntLiteral = int_value 9223372036854775805 [template = constants.%int_9223372036854775805]
+// CHECK:STDOUT:   %Expect.loc16: type = class_type @Expect, @Expect(constants.%int_9223372036854775805) [template = constants.%Expect.6]
+// CHECK:STDOUT:   %.loc16_38.4: ref %Expect.6 = temporary %.loc16_38.3, %Test.call.loc16
+// CHECK:STDOUT:   %Test.ref.loc17: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %And.ref.loc17: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_9223372036854775808.loc17_12: Core.IntLiteral = int_value 9223372036854775808 [template = constants.%int_9223372036854775808]
+// CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem0.loc17: %Op.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%Op.2]
+// CHECK:STDOUT:   %Op.bound.loc17: <bound method> = bound_method %int_1.loc17, %impl.elem0.loc17 [template = constants.%Op.bound.1]
+// CHECK:STDOUT:   %int.snegate.loc17: init Core.IntLiteral = call %Op.bound.loc17(%int_1.loc17) [template = constants.%int_-1]
+// CHECK:STDOUT:   %.loc17_35.1: Core.IntLiteral = value_of_initializer %int.snegate.loc17 [template = constants.%int_-1]
+// CHECK:STDOUT:   %.loc17_35.2: Core.IntLiteral = converted %int.snegate.loc17, %.loc17_35.1 [template = constants.%int_-1]
+// CHECK:STDOUT:   %int.and.loc17: init Core.IntLiteral = call %And.ref.loc17(%int_9223372036854775808.loc17_12, %.loc17_35.2) [template = constants.%int_9223372036854775808]
+// CHECK:STDOUT:   %.loc17_38.1: Core.IntLiteral = value_of_initializer %int.and.loc17 [template = constants.%int_9223372036854775808]
+// CHECK:STDOUT:   %.loc17_38.2: Core.IntLiteral = converted %int.and.loc17, %.loc17_38.1 [template = constants.%int_9223372036854775808]
+// CHECK:STDOUT:   %Test.specific_fn.loc17: <specific function> = specific_function %Test.ref.loc17, @Test(constants.%int_9223372036854775808) [template = constants.%Test.specific_fn.6]
+// CHECK:STDOUT:   %.loc17_38.3: ref %Expect.7 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc17: init %Expect.7 = call %Test.specific_fn.loc17() to %.loc17_38.3
+// CHECK:STDOUT:   %Expect.ref.loc17: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_9223372036854775808.loc17_50: Core.IntLiteral = int_value 9223372036854775808 [template = constants.%int_9223372036854775808]
+// CHECK:STDOUT:   %Expect.loc17: type = class_type @Expect, @Expect(constants.%int_9223372036854775808) [template = constants.%Expect.7]
+// CHECK:STDOUT:   %.loc17_38.4: ref %Expect.7 = temporary %.loc17_38.3, %Test.call.loc17
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%N) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%N
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(@Test.%N.loc7_9.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%N) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%N
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%N
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_0) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_0
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_0
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_0) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_0
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_0
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_8) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_8
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_8
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.3
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_8) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_8
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_8
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_1) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_1
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_1
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_1) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_1
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_-4) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_-4
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_-4
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.5
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.5
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_-4) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_-4
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_-4
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_9223372036854775805) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_9223372036854775805
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_9223372036854775805
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.6
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.6
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_9223372036854775805) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_9223372036854775805
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_9223372036854775805
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Test(constants.%int_9223372036854775808) {
+// CHECK:STDOUT:   %N.loc7_9.2 => constants.%int_9223372036854775808
+// CHECK:STDOUT:   %N.patt.loc7_9.2 => constants.%int_9223372036854775808
+// CHECK:STDOUT:   %Expect.loc7_43.2 => constants.%Expect.7
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %Expect.val => constants.%Expect.val.7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Expect(constants.%int_9223372036854775808) {
+// CHECK:STDOUT:   %N.loc6_14.2 => constants.%int_9223372036854775808
+// CHECK:STDOUT:   %N.patt.loc6_14.2 => constants.%int_9223372036854775808
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_literal_runtime.carbon

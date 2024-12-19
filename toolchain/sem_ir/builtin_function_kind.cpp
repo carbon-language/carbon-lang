@@ -422,6 +422,7 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 }
 
 auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
+                                         llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
     case IntConvertChecked:
@@ -438,8 +439,22 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case IntAnd:
     case IntOr:
     case IntXor:
+      // Integer builtins producing an IntLiteral are compile-time only.
+      // TODO: We could allow these at runtime and just produce an empty struct
+      // result. Should we?
+      return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
+
     case IntLeftShift:
     case IntRightShift:
+      // Shifts by an integer literal amount are compile-time only. We don't
+      // have a value for the shift amount at runtime in general.
+      // TODO: We could allow these in the case where the shift amount has a
+      // compile-time value.
+      if (sem_ir.types().Is<SemIR::IntLiteralType>(
+              sem_ir.insts().Get(arg_ids[1]).type_id())) {
+        return true;
+      }
+
       // Integer builtins producing an IntLiteral are compile-time only.
       // TODO: We could allow these at runtime and just produce an empty struct
       // result. Should we?
