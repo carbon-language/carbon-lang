@@ -204,6 +204,16 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
+    case SemIR::BuiltinFunctionKind::IntConvert: {
+      context.SetLocal(
+          inst_id,
+          CreateZExtOrSExt(
+              context, context.GetValue(arg_ids[0]),
+              context.GetType(context.sem_ir().insts().Get(inst_id).type_id()),
+              IsSignedInt(context, arg_ids[0])));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::IntSNegate: {
       // Lower `-x` as `0 - x`.
       auto* operand = context.GetValue(arg_ids[0]);
