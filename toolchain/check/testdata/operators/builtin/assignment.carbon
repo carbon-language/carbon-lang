@@ -45,7 +45,6 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_9.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_9.2: %i32 = int_value 9 [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -101,8 +100,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12.1]
@@ -120,12 +117,6 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %Convert.specific_fn.loc13(%int_9) [template = constants.%int_9.2]
 // CHECK:STDOUT:   %.loc13: init %i32 = converted %int_9, %int.convert_checked.loc13 [template = constants.%int_9.2]
 // CHECK:STDOUT:   assign %a.ref.loc13, %.loc13
-// CHECK:STDOUT:   %int_32.loc15_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc15_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc15_19.1: %tuple.type.1 = tuple_literal (%i32.loc15_11, %i32.loc15_16)
-// CHECK:STDOUT:   %.loc15_19.2: type = converted %.loc15_19.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %b.var: ref %tuple.type.2 = var b
 // CHECK:STDOUT:   %b: ref %tuple.type.2 = bind_name b, %b.var
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -168,11 +159,6 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %Convert.specific_fn.loc17(%int_4.loc17) [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc17: init %i32 = converted %int_4.loc17, %int.convert_checked.loc17 [template = constants.%int_4.2]
 // CHECK:STDOUT:   assign %tuple.elem1.loc17, %.loc17
-// CHECK:STDOUT:   %int_32.loc19_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc19_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc19_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc19_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %c.var: ref %struct_type.a.b.1 = var c
 // CHECK:STDOUT:   %c: ref %struct_type.a.b.1 = bind_name c, %c.var
 // CHECK:STDOUT:   %int_1.loc19: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -213,9 +199,6 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc21: init %i32 = call %Convert.specific_fn.loc21(%int_4.loc21) [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc21_7: init %i32 = converted %int_4.loc21, %int.convert_checked.loc21 [template = constants.%int_4.2]
 // CHECK:STDOUT:   assign %.loc21_4, %.loc21_7
-// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr.3]
 // CHECK:STDOUT:   %p.var: ref %ptr.3 = var p
 // CHECK:STDOUT:   %p: ref %ptr.3 = bind_name p, %p.var
 // CHECK:STDOUT:   %a.ref.loc23: ref %i32 = name_ref a, %a

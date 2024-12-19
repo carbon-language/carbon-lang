@@ -71,12 +71,14 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %ptr.1 = value_param_pattern %p.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Class.ref.loc20_9: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:     %p.param: %ptr.1 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc20: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %Class.ref.loc20_19: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.1 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -85,19 +87,21 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc12: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12_24: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

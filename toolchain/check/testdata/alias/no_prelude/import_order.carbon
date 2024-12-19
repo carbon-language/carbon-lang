@@ -60,14 +60,12 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_19.2: type = converted %.loc4_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc4_16: %C.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc4: %C.elem = field_decl v, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .v = %.loc4_16
+// CHECK:STDOUT:   .v = %.loc4
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,16 +105,12 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:     .a_val = %a_val
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %d.ref: type = name_ref d, imports.%import_ref.5 [template = constants.%C]
 // CHECK:STDOUT:   %d_val.var: ref %C = var d_val
 // CHECK:STDOUT:   %d_val: ref %C = bind_name d_val, %d_val.var
-// CHECK:STDOUT:   %c.ref: type = name_ref c, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
 // CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
-// CHECK:STDOUT:   %b.ref: type = name_ref b, imports.%import_ref.3 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
 // CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
-// CHECK:STDOUT:   %a.ref: type = name_ref a, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %a_val.var: ref %C = var a_val
 // CHECK:STDOUT:   %a_val: ref %C = bind_name a_val, %a_val.var
 // CHECK:STDOUT: }

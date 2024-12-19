@@ -30,9 +30,6 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %array.1: %array_type.1 = tuple_value (%int_1.2) [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %array_type.2: type = array_type %int_2, f64 [template]
 // CHECK:STDOUT:   %float.1: f64 = float_literal 11.100000000000001 [template]
@@ -66,24 +63,10 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %array_type.loc11: type = array_type %int_1, %i32 [template = constants.%array_type.1]
 // CHECK:STDOUT:   %a.var: ref %array_type.1 = var a
 // CHECK:STDOUT:   %a: ref %array_type.1 = bind_name a, %a.var
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc12_9.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc12_9.2: type = converted %float.make_type, %.loc12_9.1 [template = f64]
-// CHECK:STDOUT:   %array_type.loc12: type = array_type %int_2, f64 [template = constants.%array_type.2]
 // CHECK:STDOUT:   %b.var: ref %array_type.2 = var b
 // CHECK:STDOUT:   %b: ref %array_type.2 = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc13_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
-// CHECK:STDOUT:   %.loc13_10.2: type = converted %.loc13_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %array_type.loc13: type = array_type %int_5, %empty_tuple.type [template = constants.%array_type.3]
 // CHECK:STDOUT:   %c.var: ref %array_type.3 = var c
 // CHECK:STDOUT:   %c: ref %array_type.3 = bind_name c, %c.var
 // CHECK:STDOUT: }

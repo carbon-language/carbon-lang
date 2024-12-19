@@ -182,16 +182,16 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAdapterMethod.decl: %TestAdapterMethod.type = fn_decl @TestAdapterMethod [template = constants.%TestAdapterMethod] {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -208,19 +208,15 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7: %SomeClass.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %SomeClass.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %StaticMemberFunction.decl: %StaticMemberFunction.type = fn_decl @StaticMemberFunction [template = constants.%StaticMemberFunction] {} {}
 // CHECK:STDOUT:   %AdapterMethod.decl: %AdapterMethod.type = fn_decl @AdapterMethod [template = constants.%AdapterMethod] {
 // CHECK:STDOUT:     %self.patt: %SomeClassAdapter = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %SomeClassAdapter = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %self.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl.loc4 [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %self: %SomeClassAdapter = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.3]
@@ -291,8 +287,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %a.patt: %SomeClassAdapter = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %SomeClassAdapter = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -302,8 +298,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %self.patt: %SomeClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %SomeClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
 // CHECK:STDOUT:     %self.param: %SomeClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SomeClass [template = constants.%SomeClass]
 // CHECK:STDOUT:     %self: %SomeClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
@@ -376,10 +372,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %SomeClassAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %SomeClassAdapter.ref: type = name_ref SomeClassAdapter, file.%SomeClassAdapter.decl [template = constants.%SomeClassAdapter]
 // CHECK:STDOUT:     %a: %SomeClassAdapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -387,11 +383,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -456,10 +448,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %StructAdapter.ref: type = name_ref StructAdapter, file.%StructAdapter.decl [template = constants.%StructAdapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %StructAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %StructAdapter.ref: type = name_ref StructAdapter, file.%StructAdapter.decl [template = constants.%StructAdapter]
 // CHECK:STDOUT:     %a: %StructAdapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -524,10 +516,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %TupleAdapter.ref: type = name_ref TupleAdapter, file.%TupleAdapter.decl [template = constants.%TupleAdapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %TupleAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %TupleAdapter.ref: type = name_ref TupleAdapter, file.%TupleAdapter.decl [template = constants.%TupleAdapter]
 // CHECK:STDOUT:     %a: %TupleAdapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -597,12 +589,14 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.patt: type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_31.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc4_31.2: type = converted %int_literal.make_type, %.loc4_31.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_31.3: type = splice_block %.loc4_31.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_31.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_31.2: type = converted %int_literal.make_type, %.loc4_31.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
@@ -614,10 +608,10 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %IntAdapter.ref: type = name_ref IntAdapter, file.%IntAdapter.decl [template = constants.%IntAdapter]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %IntAdapter = value_param runtime_param0
+// CHECK:STDOUT:     %IntAdapter.ref: type = name_ref IntAdapter, file.%IntAdapter.decl [template = constants.%IntAdapter]
 // CHECK:STDOUT:     %a: %IntAdapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param

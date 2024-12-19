@@ -47,11 +47,8 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
-// CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic = constants.%ptr]
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
-// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a.var: ref %T = var a
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p

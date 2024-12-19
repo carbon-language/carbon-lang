@@ -82,7 +82,6 @@ let a: T = 0;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%import_ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -28,12 +28,12 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<invalid>, index: comp_time_bind0}
 // CHECK:STDOUT:     entity_name1:    {name: name2, parent_scope: name_scope<invalid>, index: comp_time_bind<invalid>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst31, body: [inst_block14]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, return_slot_pattern: inst31, body: [inst_block16]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:
-// CHECK:STDOUT:     generic0:        {decl: inst36, bindings: inst_block10}
+// CHECK:STDOUT:     generic0:        {decl: inst36, bindings: inst_block12}
 // CHECK:STDOUT:   specifics:
-// CHECK:STDOUT:     specific0:       {generic: generic0, args: inst_block12}
+// CHECK:STDOUT:     specific0:       {generic: generic0, args: inst_block14}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
@@ -74,7 +74,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst23:          {kind: TupleType, arg0: type_block0, type: type(TypeType)}
 // CHECK:STDOUT:     inst24:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst23)}
 // CHECK:STDOUT:     inst25:          {kind: TupleType, arg0: type_block1, type: type(TypeType)}
-// CHECK:STDOUT:     inst26:          {kind: TupleLiteral, arg0: inst_block6, type: type(inst25)}
+// CHECK:STDOUT:     inst26:          {kind: TupleLiteral, arg0: inst_block8, type: type(inst25)}
 // CHECK:STDOUT:     inst27:          {kind: Converted, arg0: inst24, arg1: inst23, type: type(TypeType)}
 // CHECK:STDOUT:     inst28:          {kind: TupleType, arg0: type_block2, type: type(TypeType)}
 // CHECK:STDOUT:     inst29:          {kind: Converted, arg0: inst26, arg1: inst28, type: type(TypeType)}
@@ -84,7 +84,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst33:          {kind: ValueParam, arg0: runtime_param0, arg1: name2, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst34:          {kind: OutParam, arg0: runtime_param1, arg1: name(ReturnSlot), type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst35:          {kind: ReturnSlot, arg0: inst26, arg1: inst34, type: type(symbolic_constant5)}
-// CHECK:STDOUT:     inst36:          {kind: FunctionDecl, arg0: function0, arg1: inst_block9, type: type(inst40)}
+// CHECK:STDOUT:     inst36:          {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(inst40)}
 // CHECK:STDOUT:     inst37:          {kind: BindSymbolicName, arg0: entity_name0, arg1: inst<invalid>, type: type(TypeType)}
 // CHECK:STDOUT:     inst38:          {kind: SymbolicBindingPattern, arg0: entity_name0, type: type(TypeType)}
 // CHECK:STDOUT:     inst39:          {kind: TupleType, arg0: type_block3, type: type(TypeType)}
@@ -97,7 +97,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst46:          {kind: RequireCompleteType, arg0: type(symbolic_constant0), type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst47:          {kind: NameRef, arg0: name2, arg1: inst19, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst48:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst23)}
-// CHECK:STDOUT:     inst49:          {kind: TupleLiteral, arg0: inst_block15, type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst49:          {kind: TupleLiteral, arg0: inst_block17, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst50:          {kind: RequireCompleteType, arg0: type(symbolic_constant5), type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst51:          {kind: TupleAccess, arg0: inst35, arg1: element0, type: type(symbolic_constant3)}
 // CHECK:STDOUT:     inst52:          {kind: RequireCompleteType, arg0: type(symbolic_constant0), type: type(inst(WitnessType))}
@@ -106,7 +106,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst55:          {kind: TupleInit, arg0: inst_block_empty, arg1: inst54, type: type(inst23)}
 // CHECK:STDOUT:     inst56:          {kind: TupleValue, arg0: inst_block_empty, type: type(inst23)}
 // CHECK:STDOUT:     inst57:          {kind: Converted, arg0: inst48, arg1: inst55, type: type(inst23)}
-// CHECK:STDOUT:     inst58:          {kind: TupleInit, arg0: inst_block16, arg1: inst35, type: type(symbolic_constant5)}
+// CHECK:STDOUT:     inst58:          {kind: TupleInit, arg0: inst_block18, arg1: inst35, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst59:          {kind: Converted, arg0: inst49, arg1: inst58, type: type(symbolic_constant5)}
 // CHECK:STDOUT:     inst60:          {kind: ReturnExpr, arg0: inst59, arg1: inst35}
 // CHECK:STDOUT:     inst61:          {kind: RequireCompleteType, arg0: type(symbolic_constant5), type: type(inst(WitnessType))}
@@ -161,49 +161,52 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       0:               inst36
 // CHECK:STDOUT:     import_refs:     {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block4:
-// CHECK:STDOUT:       0:               inst17
+// CHECK:STDOUT:     inst_block4:     {}
 // CHECK:STDOUT:     inst_block5:
-// CHECK:STDOUT:       0:               inst21
+// CHECK:STDOUT:       0:               inst17
 // CHECK:STDOUT:     inst_block6:
+// CHECK:STDOUT:       0:               inst18
+// CHECK:STDOUT:     inst_block7:
+// CHECK:STDOUT:       0:               inst21
+// CHECK:STDOUT:     inst_block8:
 // CHECK:STDOUT:       0:               inst22
 // CHECK:STDOUT:       1:               inst24
-// CHECK:STDOUT:     inst_block7:
+// CHECK:STDOUT:     inst_block9:
 // CHECK:STDOUT:       0:               inst33
 // CHECK:STDOUT:       1:               inst34
-// CHECK:STDOUT:     inst_block8:
+// CHECK:STDOUT:     inst_block10:
 // CHECK:STDOUT:       0:               inst15
 // CHECK:STDOUT:       1:               inst17
 // CHECK:STDOUT:       2:               inst20
 // CHECK:STDOUT:       3:               inst21
 // CHECK:STDOUT:       4:               inst30
 // CHECK:STDOUT:       5:               inst31
-// CHECK:STDOUT:     inst_block9:
-// CHECK:STDOUT:       0:               inst18
-// CHECK:STDOUT:       1:               inst22
-// CHECK:STDOUT:       2:               inst24
-// CHECK:STDOUT:       3:               inst26
-// CHECK:STDOUT:       4:               inst27
-// CHECK:STDOUT:       5:               inst29
-// CHECK:STDOUT:       6:               inst32
-// CHECK:STDOUT:       7:               inst13
-// CHECK:STDOUT:       8:               inst33
+// CHECK:STDOUT:     inst_block11:
+// CHECK:STDOUT:       0:               inst22
+// CHECK:STDOUT:       1:               inst24
+// CHECK:STDOUT:       2:               inst26
+// CHECK:STDOUT:       3:               inst27
+// CHECK:STDOUT:       4:               inst29
+// CHECK:STDOUT:       5:               inst32
+// CHECK:STDOUT:       6:               inst13
+// CHECK:STDOUT:       7:               inst33
+// CHECK:STDOUT:       8:               inst18
 // CHECK:STDOUT:       9:               inst19
 // CHECK:STDOUT:       10:              inst34
 // CHECK:STDOUT:       11:              inst35
-// CHECK:STDOUT:     inst_block10:
+// CHECK:STDOUT:     inst_block12:
 // CHECK:STDOUT:       0:               inst13
-// CHECK:STDOUT:     inst_block11:
+// CHECK:STDOUT:     inst_block13:
 // CHECK:STDOUT:       0:               inst37
 // CHECK:STDOUT:       1:               inst38
 // CHECK:STDOUT:       2:               inst39
-// CHECK:STDOUT:     inst_block12:
+// CHECK:STDOUT:     inst_block14:
 // CHECK:STDOUT:       0:               inst14
-// CHECK:STDOUT:     inst_block13:
+// CHECK:STDOUT:     inst_block15:
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:       1:               inst14
 // CHECK:STDOUT:       2:               inst28
-// CHECK:STDOUT:     inst_block14:
+// CHECK:STDOUT:     inst_block16:
 // CHECK:STDOUT:       0:               inst47
 // CHECK:STDOUT:       1:               inst48
 // CHECK:STDOUT:       2:               inst49
@@ -215,16 +218,16 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:       8:               inst58
 // CHECK:STDOUT:       9:               inst59
 // CHECK:STDOUT:       10:              inst60
-// CHECK:STDOUT:     inst_block15:
+// CHECK:STDOUT:     inst_block17:
 // CHECK:STDOUT:       0:               inst47
 // CHECK:STDOUT:       1:               inst48
-// CHECK:STDOUT:     inst_block16:
+// CHECK:STDOUT:     inst_block18:
 // CHECK:STDOUT:       0:               inst53
 // CHECK:STDOUT:       1:               inst57
-// CHECK:STDOUT:     inst_block17:
+// CHECK:STDOUT:     inst_block19:
 // CHECK:STDOUT:       0:               inst61
 // CHECK:STDOUT:       1:               inst62
-// CHECK:STDOUT:     inst_block18:
+// CHECK:STDOUT:     inst_block20:
 // CHECK:STDOUT:       0:               inst12
 // CHECK:STDOUT:       1:               inst36
 // CHECK:STDOUT: ...

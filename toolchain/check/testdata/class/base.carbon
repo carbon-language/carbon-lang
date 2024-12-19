@@ -116,7 +116,6 @@ class Derived {
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %int_32.loc17_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc17_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -124,6 +123,7 @@ class Derived {
 // CHECK:STDOUT:     %.loc17_35.1: %tuple.type.1 = tuple_literal (%i32.loc17_27, %i32.loc17_32)
 // CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.2 = return_slot %return.param
@@ -131,8 +131,6 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc4: %Base.elem = field_decl b, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -145,8 +143,6 @@ class Derived {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem.1 = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc10: %Derived.elem.2 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
@@ -251,8 +247,6 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc7: %Derived.elem = field_decl d, element0 [template]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [template = constants.%complete_type.4]

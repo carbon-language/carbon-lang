@@ -88,8 +88,6 @@ var a: i32 = NS.A();
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT: }

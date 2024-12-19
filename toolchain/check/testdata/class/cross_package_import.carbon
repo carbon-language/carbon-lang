@@ -201,7 +201,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -214,8 +213,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -238,7 +235,6 @@ var c: Other.C = {};
 // CHECK:STDOUT: --- fail_extern.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,7 +247,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:     .C = %import_ref
 // CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref: type = import_ref Other//other_extern, C, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -262,8 +257,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -296,7 +289,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -309,8 +301,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -349,7 +339,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//other_define, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -362,8 +351,6 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }

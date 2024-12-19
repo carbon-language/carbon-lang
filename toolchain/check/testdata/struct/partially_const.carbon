@@ -52,8 +52,6 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:     %return.patt: %struct_type.a.b.c.1 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %struct_type.a.b.c.1 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc11_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc11_34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -62,6 +60,10 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:     %i32.loc11_43: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template = constants.%struct_type.a.b.c.1]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11: type = splice_block %i32.loc11_12 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b.c.1 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %struct_type.a.b.c.1 = return_slot %return.param

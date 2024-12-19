@@ -68,9 +68,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc23_20: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc23_14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -84,9 +84,9 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc18_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc18_15: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param

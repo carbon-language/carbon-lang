@@ -83,8 +83,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -92,8 +92,8 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -105,8 +105,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0.loc13: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
@@ -116,8 +114,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %Convert.specific_fn.loc13(%int_0.loc13) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc13: init %i32 = converted %int_0.loc13, %int.convert_checked.loc13 [template = constants.%int_0.2]
 // CHECK:STDOUT:   assign %v.var, %.loc13
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -146,8 +142,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %true.loc27 br !if.then.loc27 else br !if.else.loc27
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc27:
-// CHECK:STDOUT:   %int_32.loc28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
@@ -161,8 +155,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   if %true.loc29 br !if.then.loc29 else br !if.else.loc29
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc29:
-// CHECK:STDOUT:   %int_32.loc36: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc36: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %w.var: ref %i32 = var w
 // CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]

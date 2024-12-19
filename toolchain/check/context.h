@@ -148,6 +148,8 @@ class Context {
 
   // Adds an instruction to the current pattern block, returning the produced
   // ID.
+  // TODO: Is it possible to remove this and pattern_block_stack, now that
+  // we have BeginSubpattern etc. instead?
   auto AddPatternInst(SemIR::LocIdAndInst loc_id_and_inst) -> SemIR::InstId {
     auto inst_id = AddInstInNoBlock(loc_id_and_inst);
     pattern_block_stack_.AddInstId(inst_id);
@@ -276,6 +278,27 @@ class Context {
     return scope_stack().GetCurrentScopeAs<InstT>(sem_ir());
   }
 
+  // Mark the start of a new single-entry region with the given entry block.
+  auto PushRegion(SemIR::InstBlockId entry_block_id) -> void {
+    region_stack_.PushArray();
+    region_stack_.AppendToTop(entry_block_id);
+  }
+
+  // Add `block_id` to the most recently pushed single-entry region. To preserve
+  // the single-entry property, `block_id` must not be directly reachable from
+  // any block outside the region. To ensure the region's blocks are in lexical
+  // order, this should be called when the first parse node associated with this
+  // block is handled, or as close as possible.
+  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
+
+  // Complete creation of the most recently pushed single-entry region, and
+  // return a list of its blocks.
+  auto PopRegion() -> llvm::SmallVector<SemIR::InstBlockId> {
+    llvm::SmallVector<SemIR::InstBlockId> result(region_stack_.PeekArray());
+    region_stack_.PopArray();
+    return result;
+  }
+
   // Adds a `Branch` instruction branching to a new instruction block, and
   // returns the ID of the new block. All paths to the branch target must go
   // through the current block, though not necessarily through this branch.
@@ -297,16 +320,18 @@ class Context {
 
   // Handles recovergence of control flow. Adds branches from the top
   // `num_blocks` on the instruction block stack to a new block, pops the
-  // existing blocks, and pushes the new block onto the instruction block stack.
+  // existing blocks, pushes the new block onto the instruction block stack,
+  // and adds it to the most recently pushed region.
   auto AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
       -> void;
 
   // Handles recovergence of control flow with a result value. Adds branches
   // from the top few blocks on the instruction block stack to a new block, pops
-  // the existing blocks, and pushes the new block onto the instruction block
-  // stack. The number of blocks popped is the size of `block_args`, and the
-  // corresponding result values are the elements of `block_args`. Returns an
-  // instruction referring to the result value.
+  // the existing blocks,  pushes the new block onto the instruction block
+  // stack, and adds it to the most recently pushed region. The number of blocks
+  // popped is the size of `block_args`, and the corresponding result values are
+  // the elements of `block_args`. Returns an instruction referring to the
+  // result value.
   auto AddConvergenceBlockWithArgAndPush(
       Parse::NodeId node_id, std::initializer_list<SemIR::InstId> block_args)
       -> SemIR::InstId;
@@ -321,13 +346,6 @@ class Context {
                                           SemIR::InstId cond_id,
                                           SemIR::InstId if_true,
                                           SemIR::InstId if_false) -> void;
-
-  // Add the current code block to the enclosing function.
-  // TODO: The node_id is taken for expressions, which can occur in
-  // non-function contexts. This should be refactored to support non-function
-  // contexts, and node_id removed.
-  auto AddCurrentCodeBlockToFunction(
-      Parse::NodeId node_id = Parse::NodeId::Invalid) -> void;
 
   // Returns whether the current position in the current block is reachable.
   auto is_current_position_reachable() -> bool;
@@ -619,12 +637,46 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
+  // Marks the start of a region of insts in a pattern context that might
+  // represent an expression or a pattern.
+  auto BeginSubpattern() -> void;
+
+  // Ends a region started by BeginSubpattern (in stack order), treating it as
+  // an expression with the given result, and returns the ID of the region. The
+  // region will not yet have any control-flow edges into or out of it.
+  auto EndSubpatternAsExpr(SemIR::InstId result_id) -> SemIR::ExprRegionId;
+
+  // Ends a region started by BeginSubpattern (in stack order), asserting that
+  // it was empty.
+  auto EndSubpatternAsEmpty() -> void;
+
+  // TODO: Add EndSubpatternAsPattern, when needed.
+
+  // Inserts the given region into the current code block. If the region
+  // consists of a single block, this will be implemented as a `splice_block`
+  // inst. Otherwise, this will end the current block with a branch to the entry
+  // block of the region, and add future insts to a new block which is the
+  // immediate successor of the region's exit block. As a result, this cannot be
+  // called more than once for the same region.
+  auto InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId;
+
   auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
     return import_ref_ids_;
   }
 
-  auto bind_name_cache() -> Map<SemIR::EntityNameId, SemIR::InstId>& {
-    return bind_name_cache_;
+  // Map from an AnyBindingPattern inst to precomputed parts of the
+  // pattern-match SemIR for it.
+  //
+  // TODO: Consider putting this behind a narrower API to guard against emitting
+  // multiple times.
+  struct BindingPatternInfo {
+    // The corresponding AnyBindName inst.
+    SemIR::InstId bind_name_id;
+    // The region of insts that computes the type of the binding.
+    SemIR::ExprRegionId type_expr_id;
+  };
+  auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
+    return bind_name_map_;
   }
 
  private:
@@ -738,10 +790,10 @@ class Context {
   // FinalizeImportRefBlock() will produce an inst block for them.
   llvm::SmallVector<SemIR::InstId> import_ref_ids_;
 
-  // Cache of allocated AnyBindName insts, keyed by the entity names they refer
-  // to. These are allocated while generating the pattern IR, but are emitted
-  // later as part of the pattern-match IR.
-  Map<SemIR::EntityNameId, SemIR::InstId> bind_name_cache_;
+  Map<SemIR::InstId, BindingPatternInfo> bind_name_map_;
+
+  // Stack of single-entry regions being built.
+  ArrayStack<SemIR::InstBlockId> region_stack_;
 };
 
 }  // namespace Carbon::Check

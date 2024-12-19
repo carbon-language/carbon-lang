@@ -16,7 +16,6 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: %i32, .b: %tuple.type.2} [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
@@ -53,22 +52,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc11_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_27.1: %tuple.type.1 = tuple_literal (%i32.loc11_23)
-// CHECK:STDOUT:   %.loc11_27.2: type = converted %.loc11_27.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %struct_type.a.b.loc11: type = struct_type {.a: %i32, .b: %tuple.type.2} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc12_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc12_23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc12_27.1: %tuple.type.1 = tuple_literal (%i32.loc12_23)
-// CHECK:STDOUT:   %.loc12_27.2: type = converted %.loc12_27.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %struct_type.a.b.loc12: type = struct_type {.a: %i32, .b: %tuple.type.2} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.b.1 = var y
 // CHECK:STDOUT:   %y: ref %struct_type.a.b.1 = bind_name y, %y.var
 // CHECK:STDOUT: }

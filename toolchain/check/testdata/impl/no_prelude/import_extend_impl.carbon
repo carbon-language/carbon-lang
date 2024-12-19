@@ -151,8 +151,8 @@ fn G(c: C) {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

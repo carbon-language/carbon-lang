@@ -76,14 +76,8 @@ class Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc17: %Class.elem = field_decl j, element0 [template]
-// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc23: %Class.elem = field_decl k, element1 [template]
-// CHECK:STDOUT:   %int_32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc29: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %impl.elem0.loc29: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc29: <bound method> = bound_method %int_0, %impl.elem0.loc29 [template = constants.%Convert.bound.1]
@@ -92,8 +86,6 @@ class Class {
 // CHECK:STDOUT:   %.loc29_25.1: %i32 = value_of_initializer %int.convert_checked.loc29 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc29_25.2: %i32 = converted %int_0, %.loc29_25.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %l: %i32 = bind_name l, %.loc29_25.2
-// CHECK:STDOUT:   %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc34: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %impl.elem0.loc34: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc34: <bound method> = bound_method %int_1, %impl.elem0.loc34 [template = constants.%Convert.bound.2]

@@ -72,12 +72,8 @@ fn Main() {
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -135,8 +131,6 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
@@ -144,8 +138,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %x.var: ref %i32 = var x
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -155,8 +147,6 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc7: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   assign %x.var, %.loc7
-// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]

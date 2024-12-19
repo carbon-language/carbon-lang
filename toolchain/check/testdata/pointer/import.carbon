@@ -53,13 +53,8 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     .a_ref = %a_ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %a_orig.var: ref %i32 = var a_orig
 // CHECK:STDOUT:   %a_orig: ref %i32 = bind_name a_orig, %a_orig.var
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:   %a_ref.var: ref %ptr = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %ptr = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
@@ -107,9 +102,6 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT: }

@@ -162,13 +162,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
 // CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %D [template = constants.%C]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %b_ptr.var: ref %ptr.2 = var b_ptr
 // CHECK:STDOUT:   %b_ptr: ref %ptr.2 = bind_name b_ptr, %b_ptr.var
 // CHECK:STDOUT: }
@@ -221,13 +218,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %E: type = bind_alias E, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
 // CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
-// CHECK:STDOUT:   %E.ref: type = name_ref E, %E [template = constants.%C]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %c_ptr.var: ref %ptr.2 = var c_ptr
 // CHECK:STDOUT:   %c_ptr: ref %ptr.2 = bind_name c_ptr, %c_ptr.var
 // CHECK:STDOUT: }
@@ -281,17 +275,14 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.4
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %ptr.loc8_11: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -343,17 +334,14 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .C = imports.%import_ref.4
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %ptr.loc8_11: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -409,17 +397,14 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .c_ptr = imports.%import_ref.6
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %E.ref: type = name_ref E, imports.%import_ref.4 [template = constants.%C]
-// CHECK:STDOUT:   %ptr.loc8_11: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -475,17 +460,14 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.6
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
-// CHECK:STDOUT:     .ptr = %ptr.loc8_5
+// CHECK:STDOUT:     .ptr = %ptr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.4 [template = constants.%C]
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %E.ref: type = name_ref E, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %ptr.loc8_11: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {

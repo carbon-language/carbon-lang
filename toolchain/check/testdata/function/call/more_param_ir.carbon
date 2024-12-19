@@ -26,7 +26,6 @@ fn Main() {
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
@@ -67,13 +66,17 @@ fn Main() {
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc11_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11_11: type = splice_block %i32.loc11_11 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc11_19: type = splice_block %i32.loc11_19 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
@@ -86,10 +89,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_15.1: %tuple.type.1 = tuple_literal (%i32)
-// CHECK:STDOUT:   %.loc14_15.2: type = converted %.loc14_15.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %x.var: ref %tuple.type.2 = var x
 // CHECK:STDOUT:   %x: ref %tuple.type.2 = bind_name x, %x.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]

@@ -86,10 +86,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %t.var: ref %array_type = var t
 // CHECK:STDOUT:   %t: ref %array_type = bind_name t, %t.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]

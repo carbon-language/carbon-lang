@@ -62,22 +62,12 @@ var d: i32 = a[b];
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %c.var: ref %i32 = var c
 // CHECK:STDOUT:   %c: ref %i32 = bind_name c, %c.var
-// CHECK:STDOUT:   %int_32.loc14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }

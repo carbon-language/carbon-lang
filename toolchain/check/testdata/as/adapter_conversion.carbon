@@ -157,24 +157,14 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %A.ref.loc17: type = name_ref A, %A.decl [template = constants.%A]
 // CHECK:STDOUT:   %a_ref.var: ref %A = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %A = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %A.ref.loc18: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %B.ref.loc21: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %ptr: type = ptr_type %B [template = constants.%ptr.2]
-// CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_factory.var: ref %B = var b_factory
 // CHECK:STDOUT:   %b_factory: ref %B = bind_name b_factory, %b_factory.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %A = return_slot_pattern
@@ -311,9 +301,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
-// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [template = constants.%A]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -384,7 +371,6 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -485,18 +471,12 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %B.ref.loc13: type = name_ref B, %B.decl [template = constants.%B]
-// CHECK:STDOUT:   %B.ref.loc24: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b_init.var: ref %B = var b_init
 // CHECK:STDOUT:   %b_init: ref %B = bind_name b_init, %b_init.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -609,14 +589,11 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.var: ref %B = var b
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:

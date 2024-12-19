@@ -15,8 +15,6 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%tuple.type.1, type) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %tuple.type.4: type = tuple_type (%tuple.type.3, %i32) [template]
 // CHECK:STDOUT:   %int_12.1: Core.IntLiteral = int_value 12 [template]
@@ -56,16 +54,6 @@ var x: ((i32, i32), i32) = ((12, 76), 6);
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc11_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_18: %tuple.type.1 = tuple_literal (%i32.loc11_10, %i32.loc11_15)
-// CHECK:STDOUT:   %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_24.1: %tuple.type.2 = tuple_literal (%.loc11_18, %i32.loc11_21)
-// CHECK:STDOUT:   %.loc11_24.2: type = converted %.loc11_18, constants.%tuple.type.3 [template = constants.%tuple.type.3]
-// CHECK:STDOUT:   %.loc11_24.3: type = converted %.loc11_24.1, constants.%tuple.type.4 [template = constants.%tuple.type.4]
 // CHECK:STDOUT:   %x.var: ref %tuple.type.4 = var x
 // CHECK:STDOUT:   %x: ref %tuple.type.4 = bind_name x, %x.var
 // CHECK:STDOUT: }

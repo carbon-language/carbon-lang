@@ -48,13 +48,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT: }

@@ -80,11 +80,7 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -153,8 +149,8 @@ fn F(a: AdaptNotExtend) {
 // CHECK:STDOUT:     %a.patt: %AdaptNotExtend = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %AdaptNotExtend = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
 // CHECK:STDOUT:     %a.param: %AdaptNotExtend = value_param runtime_param0
+// CHECK:STDOUT:     %AdaptNotExtend.ref: type = name_ref AdaptNotExtend, file.%AdaptNotExtend.decl [template = constants.%AdaptNotExtend]
 // CHECK:STDOUT:     %a: %AdaptNotExtend = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

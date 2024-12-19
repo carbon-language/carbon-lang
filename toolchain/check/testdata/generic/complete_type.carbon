@@ -125,10 +125,12 @@ fn G() { F(B); }
 // CHECK:STDOUT:     %x.patt: %A.2 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %A.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl.loc4 [template = constants.%B]
-// CHECK:STDOUT:     %A: type = class_type @A, @A(constants.%B) [template = constants.%A.2]
 // CHECK:STDOUT:     %x.param: %A.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc27: type = splice_block %A [template = constants.%A.2] {
+// CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
+// CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [template = constants.%B]
+// CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [template = constants.%A.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %A.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [template = constants.%B] {} {}
@@ -154,7 +156,6 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_9.1 [symbolic = %T.loc6_9.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.1) = field_decl v, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
@@ -250,7 +251,6 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return
@@ -331,7 +331,6 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %v.var: ref @F.%T.loc6_6.2 (%T) = var v
 // CHECK:STDOUT:     %v: ref @F.%T.loc6_6.2 (%T) = bind_name v, %v.var
 // CHECK:STDOUT:     return

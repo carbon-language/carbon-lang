@@ -80,15 +80,17 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc32: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc32_10.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N.2)]
-// CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
-// CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:     %n.param: <error> = value_param runtime_param1
+// CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [template = <error>]
 // CHECK:STDOUT:     %n: <error> = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -107,7 +109,6 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @Class.%struct_type.a (%struct_type.a) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem) = field_decl a, element0 [template]
 // CHECK:STDOUT:     %F.decl: @Class.%F.type (%F.type) = fn_decl @F [symbolic = @Class.%F (constants.%F)] {
 // CHECK:STDOUT:       %self.patt: @F.%Class (%Class) = binding_pattern self
@@ -115,12 +116,14 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %n.patt: @F.%T (%T) = binding_pattern n
 // CHECK:STDOUT:       %n.param_patt: @F.%T (%T) = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc13: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc13 [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @F.%Class (%Class) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc13_14.2: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:         %.loc13_14.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc13_14.1 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.%Class (%Class) = bind_name self, %self.param
 // CHECK:STDOUT:       %n.param: @F.%T (%T) = value_param runtime_param1
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %n: @F.%T (%T) = bind_name n, %n.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.1)]

@@ -71,8 +71,6 @@ interface I {
 // CHECK:STDOUT:   %.loc16_36: type = converted %.loc16_35, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type.1 = assoc_entity element0, %T [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]

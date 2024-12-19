@@ -71,17 +71,21 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
-// CHECK:STDOUT:     %array_type: type = array_type %int_3, %i32 [template = constants.%array_type]
-// CHECK:STDOUT:     %int_32.loc11_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc11_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc11_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %arr.param: %array_type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11_18: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:       %int_32.loc11_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
+// CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: %array_type = bind_name arr, %arr.param
 // CHECK:STDOUT:     %i.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc11_24: type = splice_block %i32.loc11_24 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc11_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %i: %i32 = bind_name i, %i.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param

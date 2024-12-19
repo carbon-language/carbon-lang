@@ -50,13 +50,15 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %bool.make_type.loc17: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc17_27.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
-// CHECK:STDOUT:     %.loc17_27.2: type = converted %bool.make_type.loc17, %.loc17_27.1 [template = bool]
 // CHECK:STDOUT:     %self.param.loc17: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc17: %Class = bind_name self, %self.param.loc17
 // CHECK:STDOUT:     %b.param.loc17: bool = value_param runtime_param1
+// CHECK:STDOUT:     %.loc17_27.3: type = splice_block %.loc17_27.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc17: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc17_27.1: type = value_of_initializer %bool.make_type.loc17 [template = bool]
+// CHECK:STDOUT:       %.loc17_27.2: type = converted %bool.make_type.loc17, %.loc17_27.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc17: bool = bind_name b, %b.param.loc17
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -68,13 +70,15 @@ fn Class.F[self: Self](b: bool) {}
 // CHECK:STDOUT:     %b.patt: bool = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: bool = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %bool.make_type.loc14: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc14_23.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
-// CHECK:STDOUT:     %.loc14_23.2: type = converted %bool.make_type.loc14, %.loc14_23.1 [template = bool]
 // CHECK:STDOUT:     %self.param.loc14: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc14: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc14: %Class = bind_name self, %self.param.loc14
 // CHECK:STDOUT:     %b.param.loc14: bool = value_param runtime_param1
+// CHECK:STDOUT:     %.loc14_23.3: type = splice_block %.loc14_23.2 [template = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc14: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:       %.loc14_23.1: type = value_of_initializer %bool.make_type.loc14 [template = bool]
+// CHECK:STDOUT:       %.loc14_23.2: type = converted %bool.make_type.loc14, %.loc14_23.1 [template = bool]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc14: bool = bind_name b, %b.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

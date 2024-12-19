@@ -26,9 +26,6 @@ var test_type: type = i32;
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0.10000000000000001 [template]
 // CHECK:STDOUT:   %str: String = string_literal "Test" [template]
 // CHECK:STDOUT: }
@@ -52,14 +49,8 @@ var test_type: type = i32;
 // CHECK:STDOUT:     .test_type = %test_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var test_i32
 // CHECK:STDOUT:   %test_i32: ref %i32 = bind_name test_i32, %test_i32.var
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:   %.loc12_15.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc12_15.2: type = converted %float.make_type, %.loc12_15.1 [template = f64]
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var test_f64
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var
 // CHECK:STDOUT:   %test_type.var: ref type = var test_type

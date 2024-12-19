@@ -103,8 +103,6 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %Field.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.4]
 // CHECK:STDOUT:
@@ -119,18 +117,20 @@ fn Run() {
 // CHECK:STDOUT:     %self.patt: %ForwardDeclared = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ForwardDeclared = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %self.param: %ForwardDeclared = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
 // CHECK:STDOUT:     %self: %ForwardDeclared = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %self.patt: %ptr = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc15: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc15_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared [template = constants.%ptr]
 // CHECK:STDOUT:     %self.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15_23: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%ForwardDeclared [template = constants.%ForwardDeclared]
+// CHECK:STDOUT:       %ptr: type = ptr_type %ForwardDeclared [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
@@ -261,14 +261,12 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%import_ref.1 [template = constants.%Empty]
 // CHECK:STDOUT:   %a.var: ref %Empty = var a
 // CHECK:STDOUT:   %a: ref %Empty = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc7_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_19.2: init %Empty = class_init (), %a.var [template = constants.%Empty.val]
 // CHECK:STDOUT:   %.loc7_20: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [template = constants.%Empty.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_20
-// CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%import_ref.2 [template = constants.%Field]
 // CHECK:STDOUT:   %b.var: ref %Field = var b
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -293,7 +291,6 @@ fn Run() {
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %Convert.specific_fn.loc10(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc10_7: init %i32 = converted %int_2, %int.convert_checked.loc10 [template = constants.%int_2.2]
 // CHECK:STDOUT:   assign %.loc10_4, %.loc10_7
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.1]
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.1 = var c
 // CHECK:STDOUT:   %c: ref %ForwardDeclared.1 = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal ()
@@ -310,15 +307,11 @@ fn Run() {
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref.loc14, %G.ref
 // CHECK:STDOUT:   %addr.loc14: %ptr.3 = addr_of %c.ref.loc14
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(%addr.loc14)
-// CHECK:STDOUT:   %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%import_ref.3 [template = constants.%ForwardDeclared.1]
-// CHECK:STDOUT:   %ptr.loc16: type = ptr_type %ForwardDeclared.1 [template = constants.%ptr.3]
 // CHECK:STDOUT:   %d.var: ref %ptr.3 = var d
 // CHECK:STDOUT:   %d: ref %ptr.3 = bind_name d, %d.var
 // CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.1 = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc16: %ptr.3 = addr_of %c.ref.loc16
 // CHECK:STDOUT:   assign %d.var, %addr.loc16
-// CHECK:STDOUT:   %Incomplete.ref: type = name_ref Incomplete, imports.%import_ref.4 [template = constants.%Incomplete]
-// CHECK:STDOUT:   %ptr.loc18: type = ptr_type %Incomplete [template = constants.%ptr.4]
 // CHECK:STDOUT:   %e.var: ref %ptr.4 = var e
 // CHECK:STDOUT:   %e: ref %ptr.4 = bind_name e, %e.var
 // CHECK:STDOUT:   return

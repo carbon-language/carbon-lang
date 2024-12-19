@@ -93,9 +93,11 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:     %a.patt: %ptr.2 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %ptr.2 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Outer.ref.loc41: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:     %ptr.loc41: type = ptr_type %Outer [template = constants.%ptr.2]
 // CHECK:STDOUT:     %a.param: %ptr.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc41: type = splice_block %ptr [template = constants.%ptr.2] {
+// CHECK:STDOUT:       %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Outer [template = constants.%ptr.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.2 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -104,14 +106,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [template = constants.%Inner] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [template = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc36: type = ptr_type %Outer [template = constants.%ptr.2]
 // CHECK:STDOUT:   %.loc36: %Outer.elem.1 = field_decl po, element0 [template]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc37: type = ptr_type %Outer [template = constants.%ptr.2]
 // CHECK:STDOUT:   %.loc37: %Outer.elem.1 = field_decl qo, element1 [template]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc38: type = ptr_type %Inner [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc38: %Outer.elem.2 = field_decl pi, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.po.qo.pi [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -127,14 +123,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [template = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc19: type = ptr_type %Inner [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc19: %Inner.elem.1 = field_decl pi, element0 [template]
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc20: type = ptr_type %Outer [template = constants.%ptr.2]
 // CHECK:STDOUT:   %.loc20: %Inner.elem.2 = field_decl po, element1 [template]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc21: type = ptr_type %Inner [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc21: %Inner.elem.1 = field_decl qi, element2 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.pi.po.qi [template = constants.%complete_type.1]
@@ -150,10 +140,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
@@ -161,10 +149,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
@@ -172,10 +158,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
 // CHECK:STDOUT:   %o.var: ref %Outer = var o
 // CHECK:STDOUT:   %o: ref %Outer = bind_name o, %o.var
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
 // CHECK:STDOUT:   %i.var: ref %Inner = var i
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
 // CHECK:STDOUT:   return
@@ -183,9 +167,6 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%a.param_patt: %ptr.2) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Outer.ref.loc42: type = name_ref Outer, file.%Outer.decl [template = constants.%Outer]
-// CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [template = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc42: type = ptr_type %Inner [template = constants.%ptr.1]
 // CHECK:STDOUT:   %a.ref.loc42: %ptr.2 = name_ref a, %a
 // CHECK:STDOUT:   %.loc42_26: ref %Outer = deref %a.ref.loc42
 // CHECK:STDOUT:   %pi.ref.loc42: %Outer.elem.2 = name_ref pi, @Outer.%.loc38 [template = @Outer.%.loc38]

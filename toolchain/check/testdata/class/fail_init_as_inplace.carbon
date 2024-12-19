@@ -79,20 +79,18 @@ fn F() {
 // CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %ptr.1 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:     %p.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.1 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13: %Class.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -107,13 +105,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref.loc25_10: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc25_33.1: %struct_type.a.b.2 = struct_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %Class.ref.loc25_38: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %impl.elem0.loc25_33.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc25_33.1: <bound method> = bound_method %int_1, %impl.elem0.loc25_33.1 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc25_33.1: <specific function> = specific_function %Convert.bound.loc25_33.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]

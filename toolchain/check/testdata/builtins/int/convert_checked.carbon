@@ -345,11 +345,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc4_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4: type = splice_block %i32.loc4_17 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc4_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc4_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -362,15 +364,19 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc5_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc5_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %int_32.loc5_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc5_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc5_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5_30: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc5_14: type = splice_block %i32.loc5_14 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc5_22: type = splice_block %i32.loc5_22 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -383,15 +389,19 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc6_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc6_14: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %int_32.loc6_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc6_22: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_32.loc6_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc6_30: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_14: type = splice_block %u32.loc6_14 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32.loc6_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc6_14: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %u32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc6_22: type = splice_block %u32.loc6_22 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32.loc6_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc6_22: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %u32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %u32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
@@ -409,11 +419,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc10_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc10_20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc10_28: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc10_28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc10: type = splice_block %i32.loc10_20 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc10_20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc10_20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -424,11 +436,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc11_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc11_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
@@ -439,11 +453,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc12_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_32.loc12_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc12: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32.loc12_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -454,11 +470,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc13_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc13_22: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_32.loc13_30: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc13_30: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc13: type = splice_block %u32.loc13_22 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32.loc13_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32.loc13_22: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
@@ -469,15 +487,17 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %IntLiteral.ref.loc14_30: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type.loc14_41: init type = call %IntLiteral.ref.loc14_30() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc14_41.1: type = value_of_initializer %int_literal.make_type.loc14_41 [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc14_41.2: type = converted %int_literal.make_type.loc14_41, %.loc14_41.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %IntLiteral.ref.loc14_47: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc14_58: init type = call %IntLiteral.ref.loc14_47() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc14_58.1: type = value_of_initializer %int_literal.make_type.loc14_58 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc14_58.2: type = converted %int_literal.make_type.loc14_58, %.loc14_58.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_41.3: type = splice_block %.loc14_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %IntLiteral.ref.loc14_30: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc14_41: init type = call %IntLiteral.ref.loc14_30() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc14_41.1: type = value_of_initializer %int_literal.make_type.loc14_41 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc14_41.2: type = converted %int_literal.make_type.loc14_41, %.loc14_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
@@ -488,11 +508,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i16 = return_slot %return.param
@@ -503,11 +525,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc19: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u16 = return_slot %return.param
@@ -518,11 +542,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc20: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i16 = return_slot %return.param
@@ -533,11 +559,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc21: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u16 = return_slot %return.param
@@ -548,13 +576,15 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc22_36.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc22_36.2: type = converted %int_literal.make_type, %.loc22_36.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc22_36.3: type = splice_block %.loc22_36.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc22_36.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc22_36.2: type = converted %int_literal.make_type, %.loc22_36.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i16 = return_slot %return.param
@@ -565,13 +595,15 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u16 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u16 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
-// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc23_37.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:     %.loc23_37.2: type = converted %int_literal.make_type, %.loc23_37.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
 // CHECK:STDOUT:     %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc23_37.3: type = splice_block %.loc23_37.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc23_37.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc23_37.2: type = converted %int_literal.make_type, %.loc23_37.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u16 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u16 = return_slot %return.param
@@ -582,11 +614,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc26: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i64 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i64 = return_slot %return.param
@@ -597,11 +631,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc27: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u64 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u64 = return_slot %return.param
@@ -612,11 +648,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %i64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc28: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i64 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i64 = return_slot %return.param
@@ -627,11 +665,13 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: %u64 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %u64 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc29: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %u64 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %u64 = return_slot %return.param
@@ -642,13 +682,15 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc30_44.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc30_44.2: type = converted %int_literal.make_type, %.loc30_44.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc30_25: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
@@ -659,13 +701,15 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc31_46.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc31_46.2: type = converted %int_literal.make_type, %.loc31_46.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc31_27: type = splice_block %u32 [template = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
@@ -814,16 +858,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.4 [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc8_19.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc8_19.2: type = converted %int_literal.make_type, %.loc8_19.1 [template = Core.IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToInt32(%a.param_patt: %i32) -> %i32 = "int.convert_checked" [from "int_ops.carbon"];
@@ -995,10 +1029,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint32(%a.param_patt: %i32) -> %u32 = "int.convert_checked" [from "int_ops.carbon"];
@@ -1167,30 +1197,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16.loc5: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc5: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
-// CHECK:STDOUT:   %int_16.loc6: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc6: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
-// CHECK:STDOUT:   %int_16.loc8: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc8: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc9: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc9: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc11: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc11: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
-// CHECK:STDOUT:   %int_16.loc12: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc12: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
-// CHECK:STDOUT:   %int_16.loc14: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc14: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc15: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc15: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc17: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc17: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc18: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16.loc18: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_16.loc20: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc20: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
-// CHECK:STDOUT:   %int_16.loc21: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16.loc21: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint16(%a.param_patt: %i32) -> %u16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -1506,14 +1512,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_64.loc5: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64.loc5: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
-// CHECK:STDOUT:   %int_64.loc6: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64.loc6: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
-// CHECK:STDOUT:   %int_64.loc11: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64.loc11: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
-// CHECK:STDOUT:   %int_64.loc12: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64.loc12: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Uint32ToUint64(%a.param_patt: %u32) -> %u64 = "int.convert_checked" [from "int_ops.carbon"];
@@ -1755,14 +1753,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_64.loc5: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64.loc5: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
-// CHECK:STDOUT:   %int_64.loc6: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64.loc6: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
-// CHECK:STDOUT:   %int_64.loc8: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64.loc8: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
-// CHECK:STDOUT:   %int_64.loc9: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64.loc9: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint64(%a.param_patt: %i32) -> %u64 = "int.convert_checked" [from "int_ops.carbon"];
@@ -1929,8 +1919,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Uint32ToInt32(%a.param_patt: %u32) -> %i32 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2053,8 +2041,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToInt16(%a.param_patt: %i32) -> %i16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2154,8 +2140,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint16(%a.param_patt: %i32) -> %u16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2259,8 +2243,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Uint32ToInt16(%a.param_patt: %u32) -> %i16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2370,8 +2352,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Uint32ToUint16(%a.param_patt: %u32) -> %u16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2484,8 +2464,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(constants.%int_16) [template = constants.%u16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint16(%a.param_patt: %i32) -> %u16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2604,8 +2582,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint32(%a.param_patt: %i32) -> %u32 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2725,8 +2701,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(constants.%int_64) [template = constants.%u64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToUint64(%a.param_patt: %i32) -> %u64 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2842,8 +2816,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToInt16(%a.param_patt: %i32) -> %i16 = "int.convert_checked" [from "int_ops.carbon"];
@@ -2957,14 +2929,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [template = constants.%int_16]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [template = constants.%i16]
-// CHECK:STDOUT:   %int_32.loc25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(constants.%int_64) [template = constants.%i64]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int32ToInt16(%a.param_patt: %i32) -> %i16 = "int.convert_checked" [from "int_ops.carbon"];

@@ -54,14 +54,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %array_type: type = array_type %int_2, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %c.var: ref %array_type = var c
 // CHECK:STDOUT:   %c: ref %array_type = bind_name c, %c.var
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }

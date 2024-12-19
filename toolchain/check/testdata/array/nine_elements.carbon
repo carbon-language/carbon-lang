@@ -76,10 +76,6 @@ var a: [i32; 9] = (1, 2, 3, 4, 5, 6, 7, 8, 9);
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [template = constants.%int_9.1]
-// CHECK:STDOUT:   %array_type: type = array_type %int_9, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT: }

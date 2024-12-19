@@ -37,8 +37,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %return.patt: %tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_20: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_24: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_25.1: %tuple.type = tuple_literal (%.loc15_20, %.loc15_24)
@@ -46,6 +44,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     %.loc15_25.3: type = converted %.loc15_24, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_25.4: type = converted %.loc15_25.1, constants.%tuple.type [template = constants.%tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15_12.3: type = splice_block %.loc15_12.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc15_12.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc15_12.2: type = converted %.loc15_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %tuple.type = return_slot %return.param

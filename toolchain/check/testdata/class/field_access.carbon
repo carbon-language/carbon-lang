@@ -67,11 +67,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl j, element0 [template]
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc13: %Class.elem = field_decl k, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -84,7 +80,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref.loc18: ref %Class = name_ref c, %c
@@ -107,8 +102,6 @@ fn Run() {
 // CHECK:STDOUT:   %int.convert_checked.loc19: init %i32 = call %Convert.specific_fn.loc19(%int_2) [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc19_7: init %i32 = converted %int_2, %int.convert_checked.loc19 [template = constants.%int_2.2]
 // CHECK:STDOUT:   assign %.loc19_4, %.loc19_7
-// CHECK:STDOUT:   %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %cj.var: ref %i32 = var cj
 // CHECK:STDOUT:   %cj: ref %i32 = bind_name cj, %cj.var
 // CHECK:STDOUT:   %c.ref.loc20: ref %Class = name_ref c, %c
@@ -116,8 +109,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc20_18.1: ref %i32 = class_element_access %c.ref.loc20, element0
 // CHECK:STDOUT:   %.loc20_18.2: %i32 = bind_value %.loc20_18.1
 // CHECK:STDOUT:   assign %cj.var, %.loc20_18.2
-// CHECK:STDOUT:   %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %ck.var: ref %i32 = var ck
 // CHECK:STDOUT:   %ck: ref %i32 = bind_name ck, %ck.var
 // CHECK:STDOUT:   %c.ref.loc21: ref %Class = name_ref c, %c

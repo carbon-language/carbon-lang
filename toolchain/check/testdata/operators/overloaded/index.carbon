@@ -127,9 +127,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [template = constants.%SubscriptType.1]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
@@ -141,12 +138,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
@@ -285,14 +282,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %i32.loc4_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%i32, constants.%i32)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc10_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc10_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc10_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc10_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc10_17.1: %tuple.type.1 = tuple_literal (%i32.loc10_9, %i32.loc10_14)
-// CHECK:STDOUT:   %.loc10_17.2: type = converted %.loc10_17.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %.loc4_15.2 as %IndexWith.type {
@@ -304,14 +293,16 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%.loc4_15.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:     %int_32.loc5_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc5_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc5_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %tuple.type.2 = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.1.%.loc4_15.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %self: %tuple.type.2 = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5_32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc5_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc5_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: %i32 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -419,8 +410,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.1, constants.%ElementType.1)> [template = constants.%IndexWith.type.3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
@@ -432,12 +421,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.patt: %ElementType.1 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ElementType.1 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
-// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [template = constants.%ElementType.1]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.1 = value_param runtime_param1
+// CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [template = constants.%SubscriptType.1]
 // CHECK:STDOUT:     %subscript: %SubscriptType.1 = bind_name subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType.1 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %ElementType.1 = return_slot %return.param
@@ -533,9 +522,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

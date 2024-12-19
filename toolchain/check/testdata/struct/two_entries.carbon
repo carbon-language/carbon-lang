@@ -54,28 +54,8 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc11_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b.loc11: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
-// CHECK:STDOUT:   %int_32.loc12_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc12_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b.loc12: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
-// CHECK:STDOUT:   %int_32.loc14_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc15_13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15_13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc15_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %y.var: ref %struct_type.a.b.1 = var y
 // CHECK:STDOUT:   %y: ref %struct_type.a.b.1 = bind_name y, %y.var
 // CHECK:STDOUT: }

@@ -15,9 +15,6 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: f64, .b: %i32} [template]
@@ -52,21 +49,10 @@ var z: i32 = y;
 // CHECK:STDOUT:     .z = %z
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:   %.loc11_13.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:   %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [template = f64]
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: f64, .b: %i32} [template = constants.%struct_type.a.b.1]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.1 = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.1 = bind_name x, %x.var
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
-// CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %z.var: ref %i32 = var z
 // CHECK:STDOUT:   %z: ref %i32 = bind_name z, %z.var
 // CHECK:STDOUT: }

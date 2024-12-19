@@ -16,7 +16,6 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32, %i32) [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
@@ -56,20 +55,8 @@ var b: [i32; 3] = a;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc11_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc11_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc11_22.1: %tuple.type.1 = tuple_literal (%i32.loc11_9, %i32.loc11_14, %i32.loc11_19)
-// CHECK:STDOUT:   %.loc11_22.2: type = converted %.loc11_22.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %a.var: ref %tuple.type.2 = var a
 // CHECK:STDOUT:   %a: ref %tuple.type.2 = bind_name a, %a.var
-// CHECK:STDOUT:   %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
-// CHECK:STDOUT:   %array_type: type = array_type %int_3, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %b.var: ref %array_type = var b
 // CHECK:STDOUT:   %b: ref %array_type = bind_name b, %b.var
 // CHECK:STDOUT: }

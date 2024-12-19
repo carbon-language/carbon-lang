@@ -79,23 +79,19 @@ fn Run() {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Unused.decl: %Unused.type = fn_decl @Unused [template = constants.%Unused] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self.param: %Base = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -215,7 +211,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%import_ref.2 [template = constants.%Child]
 // CHECK:STDOUT:   %a.var: ref %Child = var a
 // CHECK:STDOUT:   %a: ref %Child = bind_name a, %a.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]

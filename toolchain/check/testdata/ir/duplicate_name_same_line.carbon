@@ -56,8 +56,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_14 br !if.then.loc11_18 else br !if.else.loc11_18
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_18:
-// CHECK:STDOUT:   %int_32.loc11_29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_29: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %n.var.loc11_26: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_26: ref %i32 = bind_name n, %n.var.loc11_26
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
@@ -74,8 +72,6 @@ fn A() { if (true) { var n: i32 = 1; } if (true) { var n: i32 = 2; } }
 // CHECK:STDOUT:   if %true.loc11_44 br !if.then.loc11_48 else br !if.else.loc11_48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11_48:
-// CHECK:STDOUT:   %int_32.loc11_59: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11_59: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %n.var.loc11_56: ref %i32 = var n
 // CHECK:STDOUT:   %n.loc11_56: ref %i32 = bind_name n, %n.var.loc11_56
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]

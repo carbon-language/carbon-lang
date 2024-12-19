@@ -265,11 +265,7 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Shape {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %Shape.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %Shape.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -289,7 +285,6 @@ class B {
 // CHECK:STDOUT:     %return.patt: %tuple.type.2 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.2 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
 // CHECK:STDOUT:     %int_32.loc12_36: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12_36: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc12_41: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -297,6 +292,7 @@ class B {
 // CHECK:STDOUT:     %.loc12_44.1: %tuple.type.1 = tuple_literal (%i32.loc12_36, %i32.loc12_41)
 // CHECK:STDOUT:     %.loc12_44.2: type = converted %.loc12_44.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %self.param: %Circle = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [template = constants.%Circle]
 // CHECK:STDOUT:     %self: %Circle = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.2 = return_slot %return.param
@@ -423,10 +419,10 @@ class B {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %.loc15_26.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_26.2: type = converted %.loc15_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
@@ -506,8 +502,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_5, %impl.elem0 [template = constants.%Convert.bound]
@@ -632,8 +626,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Shape {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %Shape.elem = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -652,10 +644,10 @@ class B {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %Square = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Square [template = constants.%Square]
 // CHECK:STDOUT:     %self: %Square = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -977,8 +969,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_5.loc5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %impl.elem0.loc5: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc5: <bound method> = bound_method %int_5.loc5, %impl.elem0.loc5 [template = constants.%Convert.bound]
@@ -987,8 +977,6 @@ class B {
 // CHECK:STDOUT:   %.loc5_49.1: %i32 = value_of_initializer %int.convert_checked.loc5 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %.loc5_49.2: %i32 = converted %int_5.loc5, %.loc5_49.1 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = bind_name SOME_PROTECTED_CONSTANT, %.loc5_49.2
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_5.loc6: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %impl.elem0.loc6: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc6: <bound method> = bound_method %int_5.loc6, %impl.elem0.loc6 [template = constants.%Convert.bound]
@@ -1007,8 +995,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Internal {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_5, %impl.elem0 [template = constants.%Convert.bound]
@@ -1026,7 +1012,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %Internal.ref: type = name_ref Internal, file.%Internal.decl [template = constants.%Internal]
 // CHECK:STDOUT:   %.loc14: %B.elem = field_decl internal, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -1043,10 +1028,10 @@ class B {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self: %B = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -1117,8 +1102,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -1135,8 +1118,8 @@ class B {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self: %B = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.4]
@@ -1194,8 +1177,6 @@ class B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -1212,8 +1193,8 @@ class B {
 // CHECK:STDOUT:     %self.patt: %B = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %B = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self.param: %B = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [template = constants.%B]
 // CHECK:STDOUT:     %self: %B = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.4]

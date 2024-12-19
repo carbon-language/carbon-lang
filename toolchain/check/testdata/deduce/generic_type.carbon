@@ -119,13 +119,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: @F.%T.loc7_6.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc7_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %T.ref.loc7_21: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
-// CHECK:STDOUT:     %C.loc7_22.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc7_22.2 (constants.%C.1)]
 // CHECK:STDOUT:     %T.ref.loc7_28: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc7_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%C.loc7_22.2 (%C.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc7_22: type = splice_block %C.loc7_22.1 [symbolic = %C.loc7_22.2 (constants.%C.1)] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:       %T.ref.loc7_21: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:       %C.loc7_22.1: type = class_type @C, @C(constants.%T) [symbolic = %C.loc7_22.2 (constants.%C.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: @F.%C.loc7_22.2 (%C.1) = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc7_6.2 (%T) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc7_6.2 (%T) = return_slot %return.param
@@ -136,11 +138,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %D = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %D = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:     %D.ref.loc9_11: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%D) [template = constants.%C.2]
 // CHECK:STDOUT:     %D.ref.loc9_18: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %p.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc9_12: type = splice_block %C [template = constants.%C.2] {
+// CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:       %D.ref.loc9_11: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%D) [template = constants.%C.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %C.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
@@ -197,8 +201,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %C.2 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [template = constants.%F.specific_fn.2]
-// CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %D = call %F.specific_fn(%p.ref) to %.loc9
+// CHECK:STDOUT:   %.loc9_15: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %D = call %F.specific_fn(%p.ref) to %.loc9_15
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,13 +299,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I.generic]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
-// CHECK:STDOUT:     %I.loc7_22.1: type = class_type @I, @I(constants.%T) [symbolic = %I.loc7_22.2 (constants.%I.1)]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc7_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc7_6.2 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%I.loc7_22.2 (%I.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc7_22: type = splice_block %I.loc7_22.1 [symbolic = %I.loc7_22.2 (constants.%I.1)] {
+// CHECK:STDOUT:       %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I.generic]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc7_6.1 [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:       %I.loc7_22.1: type = class_type @I, @I(constants.%T) [symbolic = %I.loc7_22.2 (constants.%I.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: @F.%I.loc7_22.2 (%I.1) = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -312,11 +318,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I.generic]
-// CHECK:STDOUT:     %C.ref.loc9_11: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %I: type = class_type @I, @I(constants.%C) [template = constants.%I.2]
 // CHECK:STDOUT:     %C.ref.loc9_18: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %p.param: %I.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc9_12: type = splice_block %I [template = constants.%I.2] {
+// CHECK:STDOUT:       %I.ref: %I.type = name_ref I, file.%I.decl [template = constants.%I.generic]
+// CHECK:STDOUT:       %C.ref.loc9_11: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %I: type = class_type @I, @I(constants.%C) [template = constants.%I.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %I.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -360,8 +368,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%I.loc7_22.2 (%I.1) = name_ref p, %p
 // CHECK:STDOUT:     %F.specific_fn.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.1)]
-// CHECK:STDOUT:     %.loc7: ref %C = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init %C = call %F.specific_fn.loc7_39.1(%p.ref) to %.loc7
+// CHECK:STDOUT:     %.loc7_25: ref %C = splice_block %return {}
+// CHECK:STDOUT:     %F.call: init %C = call %F.specific_fn.loc7_39.1(%p.ref) to %.loc7_25
 // CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -371,8 +379,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %p.ref: %I.2 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn.2]
-// CHECK:STDOUT:   %.loc9: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref) to %.loc9
+// CHECK:STDOUT:   %.loc9_15: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref) to %.loc9_15
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -488,13 +496,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: @F.%tuple.type (%tuple.type.2) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%tuple.type (%tuple.type.2) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.generic]
-// CHECK:STDOUT:     %T.ref.loc13_35: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:     %Outer.loc13_36.1: type = class_type @Outer, @Outer(constants.%T) [symbolic = %Outer.loc13_36.2 (constants.%Outer.1)]
-// CHECK:STDOUT:     %.loc13_37: @F.%Inner.type (%Inner.type.1) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.1)]
-// CHECK:STDOUT:     %Inner.ref: @F.%Inner.type (%Inner.type.1) = name_ref Inner, %.loc13_37 [symbolic = %Inner.generic (constants.%Inner.generic.1)]
-// CHECK:STDOUT:     %U.ref.loc13_44: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
-// CHECK:STDOUT:     %Inner.loc13_45.1: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_45.2 (constants.%Inner.1)]
 // CHECK:STDOUT:     %T.ref.loc13_52: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc13_55: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %.loc13_56.1: %tuple.type.1 = tuple_literal (%T.ref.loc13_52, %U.ref.loc13_55)
@@ -504,6 +505,15 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc13_16.1: type = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc13_16.2 (constants.%U)]
 // CHECK:STDOUT:     %p.param: @F.%Inner.loc13_45.2 (%Inner.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc13_45: type = splice_block %Inner.loc13_45.1 [symbolic = %Inner.loc13_45.2 (constants.%Inner.1)] {
+// CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.generic]
+// CHECK:STDOUT:       %T.ref.loc13_35: type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:       %Outer.loc13_36.1: type = class_type @Outer, @Outer(constants.%T) [symbolic = %Outer.loc13_36.2 (constants.%Outer.1)]
+// CHECK:STDOUT:       %.loc13_37: @F.%Inner.type (%Inner.type.1) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.1)]
+// CHECK:STDOUT:       %Inner.ref: @F.%Inner.type (%Inner.type.1) = name_ref Inner, %.loc13_37 [symbolic = %Inner.generic (constants.%Inner.generic.1)]
+// CHECK:STDOUT:       %U.ref.loc13_44: type = name_ref U, %U.loc13_16.1 [symbolic = %U.loc13_16.2 (constants.%U)]
+// CHECK:STDOUT:       %Inner.loc13_45.1: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_45.2 (constants.%Inner.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: @F.%Inner.loc13_45.2 (%Inner.1) = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref @F.%tuple.type (%tuple.type.2) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%tuple.type (%tuple.type.2) = return_slot %return.param
@@ -514,18 +524,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %tuple.type.3 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %tuple.type.3 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.generic]
-// CHECK:STDOUT:     %C.ref.loc15_15: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %Outer: type = class_type @Outer, @Outer(constants.%C) [template = constants.%Outer.2]
-// CHECK:STDOUT:     %.loc15_17: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%C) [template = constants.%Inner.generic.2]
-// CHECK:STDOUT:     %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc15_17 [template = constants.%Inner.generic.2]
-// CHECK:STDOUT:     %D.ref.loc15_24: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:     %Inner: type = class_type @Inner, @Inner(constants.%C, constants.%D) [template = constants.%Inner.2]
 // CHECK:STDOUT:     %C.ref.loc15_32: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %D.ref.loc15_35: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %.loc15_36.1: %tuple.type.1 = tuple_literal (%C.ref.loc15_32, %D.ref.loc15_35)
 // CHECK:STDOUT:     %.loc15_36.2: type = converted %.loc15_36.1, constants.%tuple.type.3 [template = constants.%tuple.type.3]
 // CHECK:STDOUT:     %p.param: %Inner.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15_25: type = splice_block %Inner [template = constants.%Inner.2] {
+// CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [template = constants.%Outer.generic]
+// CHECK:STDOUT:       %C.ref.loc15_15: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %Outer: type = class_type @Outer, @Outer(constants.%C) [template = constants.%Outer.2]
+// CHECK:STDOUT:       %.loc15_17: %Inner.type.2 = specific_constant @Outer.%Inner.decl, @Outer(constants.%C) [template = constants.%Inner.generic.2]
+// CHECK:STDOUT:       %Inner.ref: %Inner.type.2 = name_ref Inner, %.loc15_17 [template = constants.%Inner.generic.2]
+// CHECK:STDOUT:       %D.ref.loc15_24: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:       %Inner: type = class_type @Inner, @Inner(constants.%C, constants.%D) [template = constants.%Inner.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %Inner.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.3 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.3 = return_slot %return.param
@@ -770,9 +782,11 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %N.patt.loc4_19.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_19.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_19.1, runtime_param<invalid> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc4: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_19.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -783,16 +797,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
-// CHECK:STDOUT:     %N.ref.loc6_30: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.2)]
-// CHECK:STDOUT:     %WithNontype.loc6_31.1: type = class_type @WithNontype, @WithNontype(constants.%N.2) [symbolic = %WithNontype.loc6_31.2 (constants.%WithNontype.1)]
 // CHECK:STDOUT:     %int_32.loc6_37: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc6_10: type = splice_block %i32.loc6_10 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_6.2 (constants.%N.2)]
 // CHECK:STDOUT:     %x.param: @F.%WithNontype.loc6_31.2 (%WithNontype.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_31: type = splice_block %WithNontype.loc6_31.1 [symbolic = %WithNontype.loc6_31.2 (constants.%WithNontype.1)] {
+// CHECK:STDOUT:       %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
+// CHECK:STDOUT:       %N.ref.loc6_30: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.2)]
+// CHECK:STDOUT:       %WithNontype.loc6_31.1: type = class_type @WithNontype, @WithNontype(constants.%N.2) [symbolic = %WithNontype.loc6_31.2 (constants.%WithNontype.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%WithNontype.loc6_31.2 (%WithNontype.1) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
