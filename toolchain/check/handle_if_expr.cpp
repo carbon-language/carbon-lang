@@ -65,8 +65,8 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
   if (context.return_scope_stack().empty()) {
     context.TODO(node_id,
-                 "IfExprElseId handler: Control flow expressions are currently "
-                 "only supported inside functions.");
+                 "Control flow expressions are currently only supported inside "
+                 "functions.");
   }
   // Alias node_id for if/then/else consistency.
   auto& else_node = node_id;

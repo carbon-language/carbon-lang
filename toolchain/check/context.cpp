@@ -805,8 +805,8 @@ auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
     -> void {
   if (region_stack_.empty()) {
     TODO(loc_id,
-         "AddToRegion: Control flow expressions are currently only supported "
-         "inside functions.");
+         "Control flow expressions are currently only supported inside "
+         "functions.");
     return;
   }
   if (block_id == SemIR::InstBlockId::Unreachable) {
@@ -869,8 +869,8 @@ auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
   }
   if (region_stack_.empty()) {
     TODO(loc_id,
-         "InsertHere: Control flow expressions are currently only supported "
-         "inside functions.");
+         "Control flow expressions are currently only supported inside "
+         "functions.");
     return SemIR::ErrorInst::SingletonInstId;
   }
   AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(

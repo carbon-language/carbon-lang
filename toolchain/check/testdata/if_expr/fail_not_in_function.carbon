@@ -8,42 +8,42 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/if_expr/fail_not_in_function.carbon
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:14: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+16]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `IfExprElseId handler: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:                      ^~~~~~
 // CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:8: error: semantics TODO: `IfExprElseId handler: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:8: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var y: if true then i32 else f64;
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var y: if true then i32 else f64;
 
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:9: error: semantics TODO: `IfExprElseId handler: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: fn F(a: if true then i32 else f64);
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:9: error: semantics TODO: `InsertHere: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:9: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: fn F(a: if true then i32 else f64);
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn F(a: if true then i32 else f64);
 
 class C {
-  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:10: error: semantics TODO: `IfExprElseId handler: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+3]]:10: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
   // CHECK:STDERR:   var n: if true then i32 else f64;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~
   var n: if true then i32 else f64;
