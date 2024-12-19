@@ -29,15 +29,9 @@ fn IsSafe(from: i32, to: i32, want_increase: bool) -> bool {
 
 class ReportState {
   fn Make(increasing: bool) -> ReportState {
-    // TODO: This is miscompiled.
-    // return {.lookbehind = (0, 0), .lookbehind_size = 0,
-    //         .increasing = increasing, .unsafe_so_far = 0};
-    returned var result: ReportState =
-           {.increasing = false, .bad_edges = 0,
+    return {.increasing = increasing, .bad_edges = 0,
             .removable_single_bad_edge = false,
             .removable_double_bad_edge = false};
-    result.increasing = increasing;
-    return var;
   }
 
   fn OnAdd[addr self: Self*](window: Window) {
