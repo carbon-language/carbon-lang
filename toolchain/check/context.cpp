@@ -744,7 +744,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
-  AddToRegion(new_block_id);
+  AddToRegion(new_block_id, node_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
@@ -764,7 +764,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
-  AddToRegion(new_block_id);
+  AddToRegion(new_block_id, node_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
@@ -801,8 +801,15 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 }
 
-auto Context::AddToRegion(SemIR::InstBlockId block_id) -> void {
-  if (region_stack_.empty() || block_id == SemIR::InstBlockId::Unreachable) {
+auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
+    -> void {
+  if (region_stack_.empty()) {
+    TODO(loc_id,
+         "AddToRegion: Control flow expressions are currently only supported "
+         "inside functions.");
+    return;
+  }
+  if (block_id == SemIR::InstBlockId::Unreachable) {
     return;
   }
 
@@ -859,23 +866,25 @@ auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
         loc_id, {.type_id = insts().Get(region.result_id).type_id(),
                  .block_id = region.block_ids.front(),
                  .result_id = region.result_id});
-  } else {
-    if (region_stack_.empty()) {
-      return SemIR::ErrorInst::SingletonInstId;
-    }
-    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
-        {.target_id = region.block_ids.front()}));
-    inst_block_stack_.Pop();
-    // TODO: this will cumulatively cost O(MN) running time for M blocks
-    // at the Nth level of the stack. Figure out how to do better.
-    region_stack_.AppendToTop(region.block_ids);
-    auto resume_with_block_id =
-        insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
-    CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
-    inst_block_stack_.Push(resume_with_block_id);
-    AddToRegion(resume_with_block_id);
-    return region.result_id;
   }
+  if (region_stack_.empty()) {
+    TODO(loc_id,
+         "InsertHere: Control flow expressions are currently only supported "
+         "inside functions.");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+      {.target_id = region.block_ids.front()}));
+  inst_block_stack_.Pop();
+  // TODO: this will cumulatively cost O(MN) running time for M blocks
+  // at the Nth level of the stack. Figure out how to do better.
+  region_stack_.AppendToTop(region.block_ids);
+  auto resume_with_block_id =
+      insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+  CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+  inst_block_stack_.Push(resume_with_block_id);
+  AddToRegion(resume_with_block_id, loc_id);
+  return region.result_id;
 }
 
 auto Context::is_current_position_reachable() -> bool {

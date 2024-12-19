@@ -18,20 +18,48 @@ fn F(b: bool) -> type {
 // CHECK:STDERR: var and_: F(true and true);
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:13: error: semantics TODO: `HandleShortCircuitOperator: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var and_: F(true and true);
 // CHECK:STDERR:             ^~~~~~~~~~~~~
 // CHECK:STDERR:
 var and_: F(true and true);
 
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+7]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+12]]:21: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var and_val: bool = true and true;
+// CHECK:STDERR:                     ^~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:21: error: semantics TODO: `HandleShortCircuitOperator: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var and_val: bool = true and true;
+// CHECK:STDERR:                     ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:21: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var and_val: bool = true and true;
+// CHECK:STDERR:                     ^~~~~~~~~~~~~
+// CHECK:STDERR:
+var and_val: bool = true and true;
+
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var or_: F(true or true);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+3]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:12: error: semantics TODO: `HandleShortCircuitOperator: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_: F(true or true);
 // CHECK:STDERR:            ^~~~~~~~~~~~
+// CHECK:STDERR:
 var or_: F(true or true);
+
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+11]]:20: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var or_val: bool = true or true;
+// CHECK:STDERR:                    ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+7]]:20: error: semantics TODO: `HandleShortCircuitOperator: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var or_val: bool = true or true;
+// CHECK:STDERR:                    ^~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+3]]:20: error: semantics TODO: `AddToRegion: Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: var or_val: bool = true or true;
+// CHECK:STDERR:                    ^~~~~~~~~~~~
+var or_val: bool = true or true;
 
 // CHECK:STDOUT: --- fail_and_or_not_in_function.carbon
 // CHECK:STDOUT:
@@ -45,6 +73,8 @@ var or_: F(true or true);
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -62,7 +92,9 @@ var or_: F(true or true);
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .and_ = %and_
+// CHECK:STDOUT:     .and_val = %and_val
 // CHECK:STDOUT:     .or_ = %or_
+// CHECK:STDOUT:     .or_val = %or_val
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
@@ -83,8 +115,12 @@ var or_: F(true or true);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %and_.var: ref <error> = var and_
 // CHECK:STDOUT:   %and_: ref <error> = bind_name and_, %and_.var
+// CHECK:STDOUT:   %and_val.var: ref bool = var and_val
+// CHECK:STDOUT:   %and_val: ref bool = bind_name and_val, %and_val.var
 // CHECK:STDOUT:   %or_.var: ref <error> = var or_
 // CHECK:STDOUT:   %or_: ref <error> = bind_name or_, %or_.var
+// CHECK:STDOUT:   %or_val.var: ref bool = var or_val
+// CHECK:STDOUT:   %or_val: ref bool = bind_name or_val, %or_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
@@ -107,5 +143,12 @@ var or_: F(true or true);
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc13_10: type = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc13_10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]
+// CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
+// CHECK:STDOUT:   if %true br !and.rhs else br !and.result(%false)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

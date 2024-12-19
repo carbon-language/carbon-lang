@@ -25,7 +25,7 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddToRegion(then_block_id);
+  context.AddToRegion(then_block_id, node_id);
 
   context.node_stack().Push(if_node, else_block_id);
   return true;
@@ -56,7 +56,7 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 
   // Start emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddToRegion(else_block_id);
+  context.AddToRegion(else_block_id, node_id);
 
   context.node_stack().Push(node_id, then_value_id);
   return true;
@@ -65,8 +65,8 @@ auto HandleParseNode(Context& context, Parse::IfExprThenId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::IfExprElseId node_id) -> bool {
   if (context.return_scope_stack().empty()) {
     context.TODO(node_id,
-                 "Control flow expressions are currently only supported inside "
-                 "functions.");
+                 "IfExprElseId handler: Control flow expressions are currently "
+                 "only supported inside functions.");
   }
   // Alias node_id for if/then/else consistency.
   auto& else_node = node_id;

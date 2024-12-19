@@ -286,7 +286,7 @@ class Context {
   // any block outside the region. To ensure the region's blocks are in lexical
   // order, this should be called when the first parse node associated with this
   // block is handled, or as close as possible.
-  auto AddToRegion(SemIR::InstBlockId block_id) -> void;
+  auto AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id) -> void;
 
   // Complete creation of the most recently pushed single-entry region, and
   // return a list of its blocks.

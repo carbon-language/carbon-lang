@@ -363,7 +363,7 @@ static auto HandleShortCircuitOperand(Context& context, Parse::NodeId node_id,
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(end_block_id);
   context.inst_block_stack().Push(rhs_block_id);
-  context.AddToRegion(rhs_block_id);
+  context.AddToRegion(rhs_block_id, node_id);
 
   // HandleShortCircuitOperator will follow, and doesn't need the operand on the
   // node stack.
@@ -386,8 +386,8 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
     -> bool {
   if (context.return_scope_stack().empty()) {
     context.TODO(node_id,
-                 "Control flow expressions are currently only supported inside "
-                 "functions.");
+                 "HandleShortCircuitOperator: Control flow expressions are "
+                 "currently only supported inside functions.");
   }
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto short_circuit_result_id = context.node_stack().PopExpr();
@@ -404,7 +404,7 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   context.AddInst<SemIR::BranchWithArg>(
       node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
-  context.AddToRegion(context.inst_block_stack().PeekOrAdd());
+  context.AddToRegion(context.inst_block_stack().PeekOrAdd(), node_id);
 
   // Collect the result from either the first or second operand.
   auto result_id = context.AddInst<SemIR::BlockArg>(
