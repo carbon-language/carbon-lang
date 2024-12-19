@@ -460,6 +460,22 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // result. Should we?
       return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
 
+    case IntEq:
+    case IntNeq:
+    case IntLess:
+    case IntLessEq:
+    case IntGreater:
+    case IntGreaterEq:
+      // Comparisons involving an integer literal operand are compile-time only.
+      // We don't have a value for an integer literal operand argument at
+      // runtime in general.
+      // TODO: We could allow these in the case where the operand has a
+      // compile-time value.
+      return sem_ir.types().Is<SemIR::IntLiteralType>(
+                 sem_ir.insts().Get(arg_ids[0]).type_id()) ||
+             sem_ir.types().Is<SemIR::IntLiteralType>(
+                 sem_ir.insts().Get(arg_ids[1]).type_id());
+
     default:
       // TODO: Should the sized MakeType functions be compile-time only? We
       // can't produce diagnostics for bad sizes at runtime.
