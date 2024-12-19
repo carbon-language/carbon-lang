@@ -9,7 +9,8 @@ import library "io_utils";
 
 class ReportState {
   fn Make() -> ReportState {
-    return {.levels_so_far = 0, .previous = 0, .increasing = false, .safe_so_far = true};
+    return {.levels_so_far = 0, .previous = 0,
+            .increasing = false, .safe_so_far = true};
   }
 
   fn Add[addr self: Self*](level: i32) {
