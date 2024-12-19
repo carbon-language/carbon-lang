@@ -29,12 +29,12 @@ fn F() {
 // CHECK:STDOUT:   %f.var = alloca double, align 8, !dbg !7
 // CHECK:STDOUT:   %b.var = alloca i1, align 1, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !7
-// CHECK:STDOUT:   store i32 0, ptr %i.var, align 4, !dbg !8
+// CHECK:STDOUT:   store i32 0, ptr %i.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %f.var), !dbg !7
-// CHECK:STDOUT:   store double 0.000000e+00, ptr %f.var, align 8, !dbg !9
+// CHECK:STDOUT:   store double 0.000000e+00, ptr %f.var, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   store i1 false, ptr %b.var, align 1, !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   store i1 false, ptr %b.var, align 1, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -55,8 +55,7 @@ fn F() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 1, scope: !4)

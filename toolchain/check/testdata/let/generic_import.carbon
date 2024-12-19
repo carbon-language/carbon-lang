@@ -50,16 +50,19 @@ var b: T = *a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .T = @__global_init.%T
+// CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T: type = bind_name T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %T: type = bind_name T, %i32
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,15 +86,28 @@ var b: T = *a;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a
+// CHECK:STDOUT:     %.loc8_1: <error> = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var a
-// CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
+// CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: <error> = bind_name a, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: <error> = binding_pattern b
+// CHECK:STDOUT:     %.loc12: <error> = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var b
-// CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
+// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref
+// CHECK:STDOUT:   %b: <error> = bind_name b, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a
 // CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return

@@ -40,7 +40,17 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %tuple.type.2 = binding_pattern x
+// CHECK:STDOUT:     %.loc17_1: %tuple.type.2 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.2 = var x
+// CHECK:STDOUT:   %.loc17_14.3: type = splice_block %.loc17_14.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc17_14.1: %tuple.type.1 = tuple_literal (%i32)
+// CHECK:STDOUT:     %.loc17_14.2: type = converted %.loc17_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %tuple.type.2 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

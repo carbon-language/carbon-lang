@@ -11,7 +11,7 @@
 fn Main() {
   // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   var x: {} = ();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~
   var x: {} = ();
 }
 
@@ -34,13 +34,21 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
+// CHECK:STDOUT:     %.loc15_3.1: %empty_struct_type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc15_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_16.2: %empty_tuple.type = converted %.loc15_16.1, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_17: %empty_struct_type = converted %.loc15_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_3.2: %empty_struct_type = converted %.loc15_16.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
+// CHECK:STDOUT:   %.loc15_11.3: type = splice_block %.loc15_11.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc15_11.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_11.2: type = converted %.loc15_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

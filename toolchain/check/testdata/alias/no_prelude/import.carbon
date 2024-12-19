@@ -82,9 +82,17 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c_alias: type = bind_alias c_alias, %C.decl [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %ptr = binding_pattern a
+// CHECK:STDOUT:     %.loc8_1: %ptr = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
+// CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [template = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,9 +130,17 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
+// CHECK:STDOUT:     %.loc8_1: %ptr = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
+// CHECK:STDOUT:   %.loc8_15: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %c_alias.ref.loc8: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -157,7 +173,15 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %ptr = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ptr = var c
+// CHECK:STDOUT:   %.loc6_21: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %c_alias_alias.ref: type = name_ref c_alias_alias, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %ptr = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -179,7 +203,15 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_alias = %a_alias
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
 // CHECK:STDOUT:   %a_alias: ref %empty_tuple.type = bind_alias a_alias, %a
@@ -189,8 +221,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_14.2: init %empty_tuple.type = tuple_init () to file.%a.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_15: init %empty_tuple.type = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%a.var, %.loc4_15
+// CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %.loc4_14.1, %.loc4_14.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,7 +248,15 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
 // CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%import_ref.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
+// CHECK:STDOUT:     %.loc8_1: %empty_tuple.type = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
+// CHECK:STDOUT:   %.loc8_9.3: type = splice_block %.loc8_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_9.2: type = converted %.loc8_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,8 +264,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
 // CHECK:STDOUT:   %.loc8_13: init %empty_tuple.type = tuple_init () to file.%b.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_20: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%b.var, %.loc8_20
+// CHECK:STDOUT:   %.loc8_1: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%b.var, %.loc8_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -248,7 +288,15 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %empty_tuple.type = binding_pattern c
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,8 +304,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.1 [template = <error>]
 // CHECK:STDOUT:   %.loc10_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%c.var, %.loc10_26
+// CHECK:STDOUT:   %.loc10_1: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%c.var, %.loc10_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

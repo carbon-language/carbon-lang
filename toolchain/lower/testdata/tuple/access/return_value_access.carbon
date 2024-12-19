@@ -35,8 +35,8 @@ fn Run() {
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc14_18.1.temp), !dbg !11
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc14_18.1.temp, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc14_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc14_19, ptr %t.var, align 4, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   store i32 %.loc14_19, ptr %t.var, align 4, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -61,7 +61,6 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 31, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 11, column: 24, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 7, scope: !9)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 16, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !9)
-// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 1, scope: !9)
+// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !9)

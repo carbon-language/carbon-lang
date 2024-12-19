@@ -54,9 +54,27 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %array_type = binding_pattern c
+// CHECK:STDOUT:     %.loc11_1: %array_type = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %array_type = var c
+// CHECK:STDOUT:   %.loc11_15: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:     %array_type: type = array_type %int_2, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %array_type = bind_name c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %i32 = binding_pattern d
+// CHECK:STDOUT:     %.loc15_1: %i32 = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var d
+// CHECK:STDOUT:   %.loc15_8: type = splice_block %i32.loc15 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %i32 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,8 +100,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.loc11_26.6: ref %i32 = array_index file.%c.var, %int_1
 // CHECK:STDOUT:   %.loc11_26.7: init %i32 = initialize_from %.loc11_26.5 to %.loc11_26.6 [template = constants.%int_42.2]
 // CHECK:STDOUT:   %.loc11_26.8: init %array_type = array_init (%.loc11_26.4, %.loc11_26.7) to file.%c.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc11_27: init %array_type = converted %.loc11_26.1, %.loc11_26.8 [template = constants.%array]
-// CHECK:STDOUT:   assign file.%c.var, %.loc11_27
+// CHECK:STDOUT:   %.loc11_1: init %array_type = converted %.loc11_26.1, %.loc11_26.8 [template = constants.%array]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]

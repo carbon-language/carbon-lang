@@ -88,14 +88,20 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
+// CHECK:STDOUT:     %.loc8: <error> = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var n
-// CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %n: <error> = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_empty.carbon
@@ -107,6 +113,7 @@ var n: {} = i32;
 // CHECK:STDOUT: --- fail_missing_prelude_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -121,8 +128,13 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var n
-// CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %n: <error> = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- prelude_fake_int.carbon
@@ -213,7 +225,15 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
+// CHECK:STDOUT:     %.loc6_1: %empty_struct_type = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %.loc6_9.3: type = splice_block %.loc6_9.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc6_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -291,7 +311,15 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %empty_tuple.type = binding_pattern n
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_tuple.type = var n
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_tuple.type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,7 +406,15 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
+// CHECK:STDOUT:     %.loc9_1: %empty_struct_type = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %.loc9_9.3: type = splice_block %.loc9_9.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc9_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,7 +482,15 @@ var n: {} = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.decl: type = class_decl @Core [template = constants.%Core] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %empty_struct_type = binding_pattern n
+// CHECK:STDOUT:     %.loc12_1: %empty_struct_type = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
+// CHECK:STDOUT:   %.loc12_9.3: type = splice_block %.loc12_9.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc12_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

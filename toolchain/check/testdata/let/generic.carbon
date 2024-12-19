@@ -19,9 +19,10 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,18 +45,34 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = constants.%T.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
+// CHECK:STDOUT:     %.loc13_3: %ptr = var_pattern %p.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var p
+// CHECK:STDOUT:   %.loc13_11: type = splice_block %ptr [symbolic = constants.%ptr] {
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %ptr: type = ptr_type %T [symbolic = constants.%ptr]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %T = binding_pattern a
+// CHECK:STDOUT:     %.loc14_3: %T = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %T = var a
-// CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
 // CHECK:STDOUT:   %.loc14_15: %ptr = bind_value %p.ref
 // CHECK:STDOUT:   %.loc14_14.1: ref %T = deref %.loc14_15
 // CHECK:STDOUT:   %.loc14_14.2: %T = bind_value %.loc14_14.1
 // CHECK:STDOUT:   assign %a.var, %.loc14_14.2
+// CHECK:STDOUT:   %T.ref.loc14: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

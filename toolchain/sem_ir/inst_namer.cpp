@@ -290,66 +290,68 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
 auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
                               AnyBranch branch) -> void {
   llvm::StringRef name;
-  switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
-    case Parse::NodeKind::IfExprIf:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "if.expr.then";
-          break;
-        case Branch::Kind:
-          name = "if.expr.else";
-          break;
-        case BranchWithArg::Kind:
-          name = "if.expr.result";
-          break;
-        default:
-          break;
-      }
-      break;
+  if (loc_id.node_id().is_valid()) {
+    switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
+      case Parse::NodeKind::IfExprIf:
+        switch (branch.kind) {
+          case BranchIf::Kind:
+            name = "if.expr.then";
+            break;
+          case Branch::Kind:
+            name = "if.expr.else";
+            break;
+          case BranchWithArg::Kind:
+            name = "if.expr.result";
+            break;
+          default:
+            break;
+        }
+        break;
 
-    case Parse::NodeKind::IfCondition:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "if.then";
-          break;
-        case Branch::Kind:
-          name = "if.else";
-          break;
-        default:
-          break;
-      }
-      break;
+      case Parse::NodeKind::IfCondition:
+        switch (branch.kind) {
+          case BranchIf::Kind:
+            name = "if.then";
+            break;
+          case Branch::Kind:
+            name = "if.else";
+            break;
+          default:
+            break;
+        }
+        break;
 
-    case Parse::NodeKind::IfStatement:
-      name = "if.done";
-      break;
+      case Parse::NodeKind::IfStatement:
+        name = "if.done";
+        break;
 
-    case Parse::NodeKind::ShortCircuitOperandAnd:
-      name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
-      break;
-    case Parse::NodeKind::ShortCircuitOperandOr:
-      name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
-      break;
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+        name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
+        break;
+      case Parse::NodeKind::ShortCircuitOperandOr:
+        name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
+        break;
 
-    case Parse::NodeKind::WhileConditionStart:
-      name = "while.cond";
-      break;
+      case Parse::NodeKind::WhileConditionStart:
+        name = "while.cond";
+        break;
 
-    case Parse::NodeKind::WhileCondition:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "while.body";
-          break;
-        case Branch::Kind:
-          name = "while.done";
-          break;
-        default:
-          break;
-      }
-      break;
+      case Parse::NodeKind::WhileCondition:
+        switch (branch.kind) {
+          case BranchIf::Kind:
+            name = "while.body";
+            break;
+          case Branch::Kind:
+            name = "while.done";
+            break;
+          default:
+            break;
+        }
+        break;
 
-    default:
-      break;
+      default:
+        break;
+    }
   }
 
   AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
@@ -680,6 +682,10 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         add_inst_name(std::move(name));
         continue;
       }
+      case CARBON_KIND(NameBindingDecl inst): {
+        CollectNamesInBlock(scope_id, inst.pattern_block_id);
+        continue;
+      }
       case CARBON_KIND(NameRef inst): {
         add_inst_name_id(inst.name_id, ".ref");
         continue;
@@ -821,7 +827,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(VarStorage inst): {
-        add_inst_name_id(inst.name_id, ".var");
+        add_inst_name_id(inst.pretty_name_id, ".var");
         continue;
       }
       default: {

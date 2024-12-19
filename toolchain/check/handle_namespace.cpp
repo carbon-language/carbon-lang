@@ -23,6 +23,7 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   // TODO: Disallow these in parse, instead of check, so we don't have to do
   // this.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 

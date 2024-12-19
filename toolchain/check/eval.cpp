@@ -1868,6 +1868,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::BranchIf::Kind:
     case SemIR::BranchWithArg::Kind:
     case SemIR::ImportDecl::Kind:
+    case SemIR::NameBindingDecl::Kind:
     case SemIR::OutParam::Kind:
     case SemIR::OutParamPattern::Kind:
     case SemIR::RequirementEquivalent::Kind:
@@ -1879,6 +1880,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::StructLiteral::Kind:
     case SemIR::TupleLiteral::Kind:
     case SemIR::ValueParam::Kind:
+    case SemIR::VarPattern::Kind:
     case SemIR::VarStorage::Kind:
       break;
 

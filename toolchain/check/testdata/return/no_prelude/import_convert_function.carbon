@@ -743,7 +743,15 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %.loc7_16: %D.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc7_11: %D.elem = var_pattern %.loc7_16
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc7_11: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %.loc7_28: %D.elem = field_decl m, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc7_23: %D.elem = var_pattern %.loc7_28
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc7_23: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.m.1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

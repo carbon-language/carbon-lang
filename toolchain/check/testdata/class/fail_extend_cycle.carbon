@@ -87,13 +87,17 @@ base class A {
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc27: %.elem = base_decl %A.ref, element0 [template]
-// CHECK:STDOUT:   %.loc31: <error> = field_decl c, element1 [template]
+// CHECK:STDOUT:   %.loc31_8: <error> = field_decl c, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc31_3: <error> = var_pattern %.loc31_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref <error> = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.1
 // CHECK:STDOUT:   .base = %.loc27
-// CHECK:STDOUT:   .c = %.loc31
+// CHECK:STDOUT:   .c = %.loc31_8
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

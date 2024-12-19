@@ -98,12 +98,17 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc22_3.1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc22_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc22_15.2: init %C = class_init (), %c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_16: init %C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc22_16
+// CHECK:STDOUT:   %.loc22_3.2: init %C = converted %.loc22_15.1, %.loc22_15.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc22_3.2
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.ref, %impl.elem0

@@ -36,21 +36,35 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = @__global_init.%n
-// CHECK:STDOUT:     .n2 = @__global_init.%n2
+// CHECK:STDOUT:     .n = %n
+// CHECK:STDOUT:     .n2 = %n2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15: type = splice_block %i32.loc15 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: %i32 = bind_name n, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n2.patt: %i32 = binding_pattern n2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: type = splice_block %i32.loc19 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n2: %i32 = bind_name n2, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc15: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc15: ref <error> = deref <error>
-// CHECK:STDOUT:   %n: %i32 = bind_name n, <error>
 // CHECK:STDOUT:   %undeclared.ref.loc19: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc19: ref <error> = deref <error>
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [template = <error>]
-// CHECK:STDOUT:   %n2: %i32 = bind_name n2, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

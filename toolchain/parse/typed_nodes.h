@@ -475,7 +475,7 @@ struct VariableDecl {
   VariableIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ReturnedModifierId> returned;
-  AnyPatternId pattern;
+  VariablePatternId pattern;
 
   struct Initializer {
     VariableInitializerId equals;
@@ -483,6 +483,15 @@ struct VariableDecl {
   };
   std::optional<Initializer> initializer;
   Lex::SemiTokenIndex token;
+};
+
+// A `var` pattern.
+struct VariablePattern {
+  static constexpr auto Kind = NodeKind::VariablePattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::VarTokenIndex token;
+  AnyPatternId inner;
 };
 
 // Statement nodes

@@ -34,7 +34,15 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_struct_type = binding_pattern x
+// CHECK:STDOUT:     %.loc14_1: %empty_struct_type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
+// CHECK:STDOUT:   %.loc14_9.3: type = splice_block %.loc14_9.2 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc14_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc14_9.2: type = converted %.loc14_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

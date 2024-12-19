@@ -549,7 +549,11 @@ class N.C {}
 // CHECK:STDOUT:     %x: %C1 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
-// CHECK:STDOUT:   %.loc18: %D.elem = field_decl C1, element0 [template]
+// CHECK:STDOUT:   %.loc18_9: %D.elem = field_decl C1, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc18_3: %D.elem = var_pattern %.loc18_9
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

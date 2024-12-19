@@ -66,6 +66,6 @@ fn Run() {
 // CHECK:STDOUT: !7 = !DILocation(line: 11, column: 31, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 11, column: 24, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 7, scope: !9)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 14, column: 21, scope: !9)
 // CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !9)

@@ -143,7 +143,17 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: f64 = binding_pattern x
+// CHECK:STDOUT:     %.loc8_1: f64 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref f64 = var x
+// CHECK:STDOUT:   %.loc8_8.3: type = splice_block %.loc8_8.2 [template = f64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
+// CHECK:STDOUT:     %.loc8_8.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc8_8.2: type = converted %float.make_type, %.loc8_8.1 [template = f64]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref f64 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

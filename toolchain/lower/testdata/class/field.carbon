@@ -67,7 +67,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 10, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 7, scope: !10)
+// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 23, column: 3, scope: !10)
 // CHECK:STDOUT: !14 = !DILocation(line: 24, column: 10, scope: !10)

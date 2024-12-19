@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/no_prelude/fail_assoc_const_not_constant.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: error: pattern in associated constant declaration must be a single `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+7]]:7: error: Pattern in associated constant declaration must be a single `:!` binding. [ExpectedSymbolicBindingInAssociatedConstant]
   // CHECK:STDERR:   let a: i32;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -40,8 +40,8 @@ alias UseOther = I.other;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %I.ref.loc23: type = name_ref I, %I.decl [template = constants.%I.type]
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
-// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <unexpected>.inst19.loc19_7
+// CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <unexpected>.inst19.loc19_7
 // CHECK:STDOUT:   %I.ref.loc26: type = name_ref I, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
 // CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
@@ -52,6 +52,7 @@ alias UseOther = I.other;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .a = <unexpected>.inst19.loc19_7
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }

@@ -17,7 +17,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.loc12_30 = internal constant { i32, i32 } { i32 12, i32 7 }
+// CHECK:STDOUT: @tuple.loc12_3.2 = internal constant { i32, i32 } { i32 12, i32 7 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -26,17 +26,17 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc12_30, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @tuple.loc12_3.2, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %y.var), !dbg !7
-// CHECK:STDOUT:   %tuple.elem0.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc13_23.1 = load i32, ptr %tuple.elem0.loc13_23.1.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem0.loc13_23.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc13_23.1, ptr %tuple.elem0.loc13_23.2.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem1.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   %.loc13_23.3 = load i32, ptr %tuple.elem1.loc13_23.1.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem1.loc13_23.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc13_23.3, ptr %tuple.elem1.loc13_23.2.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   ret i32 0, !dbg !11
+// CHECK:STDOUT:   %tuple.elem0.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc13_23.1 = load i32, ptr %tuple.elem0.loc13_23.1.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %tuple.elem0.loc13_23.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   store i32 %.loc13_23.1, ptr %tuple.elem0.loc13_23.2.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.loc13_23.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc13_23.3 = load i32, ptr %tuple.elem1.loc13_23.1.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   %tuple.elem1.loc13_23.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   store i32 %.loc13_23.3, ptr %tuple.elem1.loc13_23.2.tuple.elem, align 4, !dbg !9
+// CHECK:STDOUT:   ret i32 0, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -62,8 +62,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 12, column: 23, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 23, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 23, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)

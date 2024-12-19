@@ -38,6 +38,11 @@ struct DeclIntroducerState {
 
   // If there's an `extern library` in use, the library name.
   SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::Invalid;
+
+  // The node corresponding to the `returned` keyword (if any). We track this
+  // separately from the other modifiers because the parser ensures it cannot
+  // coexist with them.
+  Parse::NodeId returned_node_id = Parse::NodeId::Invalid;
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration

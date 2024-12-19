@@ -54,16 +54,24 @@ class Access {
 // CHECK:STDOUT: class @Access {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
-// CHECK:STDOUT:   %.loc17: %Access.elem = field_decl k, element0 [template]
-// CHECK:STDOUT:   %.loc19: %Access.elem = field_decl l, element1 [template]
+// CHECK:STDOUT:   %.loc17_16: %Access.elem = field_decl k, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc17_11: %Access.elem = var_pattern %.loc17_16
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc17: ref %Access.elem = var <invalid>
+// CHECK:STDOUT:   %.loc19_18: %Access.elem = field_decl l, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc19_13: %Access.elem = var_pattern %.loc19_18
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc19: ref %Access.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
 // CHECK:STDOUT:   .F [private] = %F.decl
 // CHECK:STDOUT:   .G [protected] = %G.decl
-// CHECK:STDOUT:   .k [private] = %.loc17
-// CHECK:STDOUT:   .l [protected] = %.loc19
+// CHECK:STDOUT:   .k [private] = %.loc17_16
+// CHECK:STDOUT:   .l [protected] = %.loc19_18
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

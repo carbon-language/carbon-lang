@@ -108,12 +108,15 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b.param_patt: %array_type) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %pb.patt: %ptr.2 = binding_pattern pb
+// CHECK:STDOUT:     %.loc19_3: %ptr.2 = var_pattern %pb.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pb.var: ref %ptr.2 = var pb
-// CHECK:STDOUT:   %pb: ref %ptr.2 = bind_name pb, %pb.var
 // CHECK:STDOUT:   %b.ref.loc19: %array_type = name_ref b, %b
 // CHECK:STDOUT:   %int_0.loc19: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc19_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc19_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0.loc19: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc19: <bound method> = bound_method %int_0.loc19, %impl.elem0.loc19 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc19: <specific function> = specific_function %Convert.bound.loc19, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
@@ -125,6 +128,12 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc19_22.3: %i32 = bind_value %.loc19_22.2
 // CHECK:STDOUT:   %addr.loc19: %ptr.2 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pb.var, %addr.loc19
+// CHECK:STDOUT:   %.loc19_14: type = splice_block %ptr.loc19 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc19_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %pb: ref %ptr.2 = bind_name pb, %pb.var
 // CHECK:STDOUT:   %b.ref.loc24: %array_type = name_ref b, %b
 // CHECK:STDOUT:   %int_0.loc24: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %int_32.loc24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
@@ -145,15 +154,18 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %int.convert_checked.loc24_8: init %i32 = call %Convert.specific_fn.loc24_8(%int_4.loc24) [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc24_8: init %i32 = converted %int_4.loc24, %int.convert_checked.loc24_8 [template = constants.%int_4.2]
 // CHECK:STDOUT:   assign %.loc24_6.3, %.loc24_8
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %pf.patt: %ptr.2 = binding_pattern pf
+// CHECK:STDOUT:     %.loc32_3: %ptr.2 = var_pattern %pf.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pf.var: ref %ptr.2 = var pf
-// CHECK:STDOUT:   %pf: ref %ptr.2 = bind_name pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc32: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc32_21.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call.loc32: init %array_type = call %F.ref.loc32() to %.loc32_21.1
 // CHECK:STDOUT:   %int_0.loc32: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %.loc32_21.2: ref %array_type = temporary %.loc32_21.1, %F.call.loc32
-// CHECK:STDOUT:   %int_32.loc32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc32_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc32_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0.loc32: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc32: <bound method> = bound_method %int_0.loc32, %impl.elem0.loc32 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc32: <specific function> = specific_function %Convert.bound.loc32, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
@@ -164,6 +176,12 @@ fn G(b: [i32; 3]) {
 // CHECK:STDOUT:   %.loc32_24.2: %i32 = bind_value %.loc32_24.1
 // CHECK:STDOUT:   %addr.loc32: %ptr.2 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %pf.var, %addr.loc32
+// CHECK:STDOUT:   %.loc32_14: type = splice_block %ptr.loc32 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc32_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc32_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc32: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %pf: ref %ptr.2 = bind_name pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %.loc36_5.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call.loc36: init %array_type = call %F.ref.loc36() to %.loc36_5.1

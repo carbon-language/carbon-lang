@@ -67,7 +67,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:     .n = @__global_init.%n
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
@@ -87,6 +87,14 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.4]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: %i32 = bind_name n, @__global_init.%.loc23_32.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %i32 as %As.type {
@@ -136,12 +144,16 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %.loc12: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12_8: %X.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %X.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %X.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .n = %.loc12
+// CHECK:STDOUT:   .n = %.loc12_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,7 +171,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: fn @Convert.3[%self.param_patt: %X]() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
-// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12 [template = @X.%.loc12]
+// CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc12_8 [template = @X.%.loc12_8]
 // CHECK:STDOUT:   %.loc20_45.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc20_45.2: %i32 = bind_value %.loc20_45.1
 // CHECK:STDOUT:   return %.loc20_45.2
@@ -191,7 +203,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Convert.call.loc23_32: init %i32 = call %Convert.bound.loc23_32(%.loc23_26.4)
 // CHECK:STDOUT:   %.loc23_32.1: %i32 = value_of_initializer %Convert.call.loc23_32
 // CHECK:STDOUT:   %.loc23_32.2: %i32 = converted %.loc23_26.2, %.loc23_32.1
-// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc23_32.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

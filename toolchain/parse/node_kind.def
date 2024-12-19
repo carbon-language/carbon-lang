@@ -167,6 +167,7 @@ CARBON_PARSE_NODE_KIND(VariableIntroducer)
 CARBON_PARSE_NODE_KIND(ReturnedModifier)
 CARBON_PARSE_NODE_KIND(VariableInitializer)
 CARBON_PARSE_NODE_KIND(VariableDecl)
+CARBON_PARSE_NODE_KIND(VariablePattern)
 
 CARBON_PARSE_NODE_KIND(ExprStatement)
 

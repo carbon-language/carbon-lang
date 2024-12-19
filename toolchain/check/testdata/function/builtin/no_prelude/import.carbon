@@ -165,7 +165,13 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
+// CHECK:STDOUT:   %AsIntLiteral.type: type = fn_type @AsIntLiteral [template]
+// CHECK:STDOUT:   %AsIntLiteral: %AsIntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %TestAdd.type: type = fn_type @TestAdd [template]
+// CHECK:STDOUT:   %TestAdd: %TestAdd.type = struct_value () [template]
 // CHECK:STDOUT:   %AsI32.type: type = fn_type @AsI32 [template]
 // CHECK:STDOUT:   %AsI32: %AsI32.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
@@ -188,6 +194,8 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:     .AsI32 = %import_ref.4
 // CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.2: %AsIntLiteral.type = import_ref Core//core, AsIntLiteral, loaded [template = constants.%AsIntLiteral]
+// CHECK:STDOUT:   %import_ref.3: %TestAdd.type = import_ref Core//core, TestAdd, loaded [template = constants.%TestAdd]
 // CHECK:STDOUT:   %import_ref.4: %AsI32.type = import_ref Core//core, AsI32, loaded [template = constants.%AsI32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,7 +205,40 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:     .arr = %arr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %arr.patt: %array_type = binding_pattern arr
+// CHECK:STDOUT:     %.loc4_1: %array_type = var_pattern %arr.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %.loc4_77: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [template = constants.%i32.builtin]
+// CHECK:STDOUT:     %Core.ref.loc4_16: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %AsIntLiteral.ref: %AsIntLiteral.type = name_ref AsIntLiteral, imports.%import_ref.2 [template = constants.%AsIntLiteral]
+// CHECK:STDOUT:     %Core.ref.loc4_34: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %TestAdd.ref: %TestAdd.type = name_ref TestAdd, imports.%import_ref.3 [template = constants.%TestAdd]
+// CHECK:STDOUT:     %Core.ref.loc4_47: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %AsI32.ref.loc4_51: %AsI32.type = name_ref AsI32, imports.%import_ref.4 [template = constants.%AsI32]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
+// CHECK:STDOUT:     %int.convert_checked.loc4_59: init %i32.builtin = call %AsI32.ref.loc4_51(%int_1) [template = constants.%int_1.2]
+// CHECK:STDOUT:     %Core.ref.loc4_62: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %AsI32.ref.loc4_66: %AsI32.type = name_ref AsI32, imports.%import_ref.4 [template = constants.%AsI32]
+// CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
+// CHECK:STDOUT:     %int.convert_checked.loc4_74: init %i32.builtin = call %AsI32.ref.loc4_66(%int_2) [template = constants.%int_2.2]
+// CHECK:STDOUT:     %.loc4_59.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_59 [template = constants.%int_1.2]
+// CHECK:STDOUT:     %.loc4_59.2: %i32.builtin = converted %int.convert_checked.loc4_59, %.loc4_59.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:     %.loc4_74.1: %i32.builtin = value_of_initializer %int.convert_checked.loc4_74 [template = constants.%int_2.2]
+// CHECK:STDOUT:     %.loc4_74.2: %i32.builtin = converted %int.convert_checked.loc4_74, %.loc4_74.1 [template = constants.%int_2.2]
+// CHECK:STDOUT:     %int.sadd: init %i32.builtin = call %TestAdd.ref(%.loc4_59.2, %.loc4_74.2) [template = constants.%int_3.1]
+// CHECK:STDOUT:     %.loc4_75.1: %i32.builtin = value_of_initializer %int.sadd [template = constants.%int_3.1]
+// CHECK:STDOUT:     %.loc4_75.2: %i32.builtin = converted %int.sadd, %.loc4_75.1 [template = constants.%int_3.1]
+// CHECK:STDOUT:     %int.convert_checked.loc4_76: init Core.IntLiteral = call %AsIntLiteral.ref(%.loc4_75.2) [template = constants.%int_3.2]
+// CHECK:STDOUT:     %.loc4_11.1: type = value_of_initializer %int.make_type_signed [template = constants.%i32.builtin]
+// CHECK:STDOUT:     %.loc4_11.2: type = converted %int.make_type_signed, %.loc4_11.1 [template = constants.%i32.builtin]
+// CHECK:STDOUT:     %.loc4_76.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_76 [template = constants.%int_3.2]
+// CHECK:STDOUT:     %.loc4_76.2: Core.IntLiteral = converted %int.convert_checked.loc4_76, %.loc4_76.1 [template = constants.%int_3.2]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc4_76.2, %i32.builtin [template = constants.%array_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,8 +275,8 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:   %.loc4_125.6: ref %i32.builtin = array_index file.%arr.var, %int_2.loc4_125
 // CHECK:STDOUT:   %.loc4_125.7: init %i32.builtin = initialize_from %int.convert_checked.loc4_124 to %.loc4_125.6 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %.loc4_125.8: init %array_type = array_init (%.loc4_125.3, %.loc4_125.5, %.loc4_125.7) to file.%arr.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc4_126: init %array_type = converted %.loc4_125.1, %.loc4_125.8 [template = constants.%array]
-// CHECK:STDOUT:   assign file.%arr.var, %.loc4_126
+// CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_125.1, %.loc4_125.8 [template = constants.%array]
+// CHECK:STDOUT:   assign file.%arr.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

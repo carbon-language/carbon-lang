@@ -21,15 +21,18 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
   // TODO: Disallow these in parse, instead of check, so we don't have to do
   // this.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 
-auto HandleParseNode(Context& /*context*/,
-                     Parse::AliasInitializerId /*node_id*/) -> bool {
+auto HandleParseNode(Context& context, Parse::AliasInitializerId /*node_id*/)
+    -> bool {
+  context.full_pattern_stack().StartPatternInitializer();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
+  context.full_pattern_stack().EndPatternInitializer();
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
   auto name_context = context.decl_name_stack().FinishName(

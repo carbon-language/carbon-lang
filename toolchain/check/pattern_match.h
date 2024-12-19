@@ -43,6 +43,11 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
                         SemIR::InstId return_slot_arg_id) -> SemIR::InstBlockId;
 
+// Emits the pattern-match IR for a local pattern matching operation with the
+// given pattern and scrutinee.
+auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
+                       SemIR::InstId scrutinee_id) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_MATCH_H_

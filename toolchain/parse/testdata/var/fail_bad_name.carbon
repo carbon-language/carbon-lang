@@ -17,9 +17,10 @@ var *;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: '*', has_error: yes},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '*', has_error: yes},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: '*', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: '*', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: '*', has_error: yes},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: '*', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

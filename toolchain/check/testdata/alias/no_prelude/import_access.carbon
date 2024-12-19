@@ -102,7 +102,12 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: %C = binding_pattern inst
+// CHECK:STDOUT:     %.loc4: %C = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,8 +121,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%inst.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc4_17: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%inst.var, %.loc4_17
+// CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%inst.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,8 +142,13 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   %inst: <error> = bind_name inst, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -166,8 +176,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = binding_pattern inst
+// CHECK:STDOUT:     %.loc9: <error> = var_pattern %inst.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
-// CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst: <error> = bind_name inst, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

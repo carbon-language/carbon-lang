@@ -70,6 +70,25 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %LeftShift.type.1: type = fn_type @LeftShift.1 [template]
 // CHECK:STDOUT:   %LeftShift: %LeftShift.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %int_5.1: Core.IntLiteral = int_value 5 [template]
+// CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_5.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_5.2: %i32 = int_value 5 [template]
+// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
+// CHECK:STDOUT:   %int_20.1: %i32 = int_value 20 [template]
+// CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.3, @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
+// CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Convert.11) [template]
+// CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_20.1, %Convert.11 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.3, @Convert.3(%int_32) [template]
 // CHECK:STDOUT:   %int_20.2: Core.IntLiteral = int_value 20 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_20.2, %i32 [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %array_type [template]
@@ -91,7 +110,7 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .LeftShift = %LeftShift.decl
 // CHECK:STDOUT:     .arr = %arr
-// CHECK:STDOUT:     .arr_p = @__global_init.%arr_p
+// CHECK:STDOUT:     .arr_p = %arr_p
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -120,8 +139,52 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %arr.patt: %array_type = binding_pattern arr
+// CHECK:STDOUT:     %.loc4_1: %array_type = var_pattern %arr.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var arr
+// CHECK:STDOUT:   %.loc4_31: type = splice_block %array_type.loc4 [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %LeftShift.ref: %LeftShift.type.1 = name_ref LeftShift, %LeftShift.decl [template = constants.%LeftShift]
+// CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
+// CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
+// CHECK:STDOUT:     %impl.elem0.loc4_26: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound.loc4_26: <bound method> = bound_method %int_5, %impl.elem0.loc4_26 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:     %Convert.specific_fn.loc4_26: <specific function> = specific_function %Convert.bound.loc4_26, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:     %int.convert_checked.loc4_26: init %i32 = call %Convert.specific_fn.loc4_26(%int_5) [template = constants.%int_5.2]
+// CHECK:STDOUT:     %.loc4_26.1: %i32 = value_of_initializer %int.convert_checked.loc4_26 [template = constants.%int_5.2]
+// CHECK:STDOUT:     %.loc4_26.2: %i32 = converted %int_5, %.loc4_26.1 [template = constants.%int_5.2]
+// CHECK:STDOUT:     %impl.elem0.loc4_29: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound.loc4_29: <bound method> = bound_method %int_2, %impl.elem0.loc4_29 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:     %Convert.specific_fn.loc4_29: <specific function> = specific_function %Convert.bound.loc4_29, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:     %int.convert_checked.loc4_29: init %i32 = call %Convert.specific_fn.loc4_29(%int_2) [template = constants.%int_2.2]
+// CHECK:STDOUT:     %.loc4_29.1: %i32 = value_of_initializer %int.convert_checked.loc4_29 [template = constants.%int_2.2]
+// CHECK:STDOUT:     %.loc4_29.2: %i32 = converted %int_2, %.loc4_29.1 [template = constants.%int_2.2]
+// CHECK:STDOUT:     %int.left_shift: init %i32 = call %LeftShift.ref(%.loc4_26.2, %.loc4_29.2) [template = constants.%int_20.1]
+// CHECK:STDOUT:     %impl.elem0.loc4_30: %Convert.type.5 = interface_witness_access constants.%interface.20, element0 [template = constants.%Convert.11]
+// CHECK:STDOUT:     %Convert.bound.loc4_30: <bound method> = bound_method %int.left_shift, %impl.elem0.loc4_30 [template = constants.%Convert.bound.3]
+// CHECK:STDOUT:     %Convert.specific_fn.loc4_30: <specific function> = specific_function %Convert.bound.loc4_30, @Convert.3(constants.%int_32) [template = constants.%Convert.specific_fn.3]
+// CHECK:STDOUT:     %.loc4_30.1: %i32 = value_of_initializer %int.left_shift [template = constants.%int_20.1]
+// CHECK:STDOUT:     %.loc4_30.2: %i32 = converted %int.left_shift, %.loc4_30.1 [template = constants.%int_20.1]
+// CHECK:STDOUT:     %int.convert_checked.loc4_30: init Core.IntLiteral = call %Convert.specific_fn.loc4_30(%.loc4_30.2) [template = constants.%int_20.2]
+// CHECK:STDOUT:     %.loc4_30.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc4_30 [template = constants.%int_20.2]
+// CHECK:STDOUT:     %.loc4_30.4: Core.IntLiteral = converted %int.left_shift, %.loc4_30.3 [template = constants.%int_20.2]
+// CHECK:STDOUT:     %array_type.loc4: type = array_type %.loc4_30.4, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %arr_p.patt: %ptr = binding_pattern arr_p
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc5: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %int_32.loc5: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_20: Core.IntLiteral = int_value 20 [template = constants.%int_20.2]
+// CHECK:STDOUT:     %array_type.loc5: type = array_type %int_20, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:     %ptr: type = ptr_type %array_type [template = constants.%ptr]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, @__global_init.%addr
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [template = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -166,7 +229,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: ref %array_type = name_ref arr, file.%arr
 // CHECK:STDOUT:   %addr: %ptr = addr_of %arr.ref
-// CHECK:STDOUT:   %arr_p: %ptr = bind_name arr_p, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,14 +286,14 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .LeftShift = %LeftShift.decl
 // CHECK:STDOUT:     .Negate = %Negate.decl
-// CHECK:STDOUT:     .size_1 = @__global_init.%size_1
-// CHECK:STDOUT:     .size_2 = @__global_init.%size_2
-// CHECK:STDOUT:     .size_3 = @__global_init.%size_3
-// CHECK:STDOUT:     .overflow_1 = @__global_init.%overflow_1
-// CHECK:STDOUT:     .overflow_2 = @__global_init.%overflow_2
-// CHECK:STDOUT:     .no_overflow_1 = @__global_init.%no_overflow_1
-// CHECK:STDOUT:     .no_overflow_2 = @__global_init.%no_overflow_2
-// CHECK:STDOUT:     .negative = @__global_init.%negative
+// CHECK:STDOUT:     .size_1 = %size_1
+// CHECK:STDOUT:     .size_2 = %size_2
+// CHECK:STDOUT:     .size_3 = %size_3
+// CHECK:STDOUT:     .overflow_1 = %overflow_1
+// CHECK:STDOUT:     .overflow_2 = %overflow_2
+// CHECK:STDOUT:     .no_overflow_1 = %no_overflow_1
+// CHECK:STDOUT:     .no_overflow_2 = %no_overflow_2
+// CHECK:STDOUT:     .negative = %negative
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %LeftShift.decl: %LeftShift.type.1 = fn_decl @LeftShift.1 [template = constants.%LeftShift] {
@@ -276,6 +338,86 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %size_1.patt: %i32 = binding_pattern size_1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %i32.loc8 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_34.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc8_34.2: ref %i32 = temporary %.loc8_34.1, @__global_init.%int.left_shift.loc8
+// CHECK:STDOUT:   %size_1: ref %i32 = bind_name size_1, %.loc8_34.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %size_2.patt: %i32 = binding_pattern size_2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13_13: type = splice_block %i32.loc13 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13_34.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc13_34.2: ref %i32 = temporary %.loc13_34.1, @__global_init.%int.left_shift.loc13
+// CHECK:STDOUT:   %size_2: ref %i32 = bind_name size_2, %.loc13_34.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %size_3.patt: %i32 = binding_pattern size_3
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18_13: type = splice_block %i32.loc18 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18_34.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc18_34.2: ref %i32 = temporary %.loc18_34.1, @__global_init.%int.left_shift.loc18
+// CHECK:STDOUT:   %size_3: ref %i32 = bind_name size_3, %.loc18_34.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %overflow_1.patt: %i32 = binding_pattern overflow_1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21_17: type = splice_block %i32.loc21 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc21_41.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc21_41.2: ref %i32 = temporary %.loc21_41.1, @__global_init.%int.left_shift.loc21
+// CHECK:STDOUT:   %overflow_1: ref %i32 = bind_name overflow_1, %.loc21_41.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %overflow_2.patt: %i32 = binding_pattern overflow_2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc26_17: type = splice_block %i32.loc26 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc26_41.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc26_41.2: ref %i32 = temporary %.loc26_41.1, @__global_init.%int.left_shift.loc26
+// CHECK:STDOUT:   %overflow_2: ref %i32 = bind_name overflow_2, %.loc26_41.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %no_overflow_1.patt: %i32 = binding_pattern no_overflow_1
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc29_20: type = splice_block %i32.loc29 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc29: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc29_41.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc29_41.2: ref %i32 = temporary %.loc29_41.1, @__global_init.%int.left_shift.loc29
+// CHECK:STDOUT:   %no_overflow_1: ref %i32 = bind_name no_overflow_1, %.loc29_41.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %no_overflow_2.patt: %i32 = binding_pattern no_overflow_2
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc34_20: type = splice_block %i32.loc34 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc34: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc34_41.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc34_41.2: ref %i32 = temporary %.loc34_41.1, @__global_init.%int.left_shift.loc34
+// CHECK:STDOUT:   %no_overflow_2: ref %i32 = bind_name no_overflow_2, %.loc34_41.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %negative.patt: %i32 = binding_pattern negative
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc40_15: type = splice_block %i32.loc40 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc40: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
+// CHECK:STDOUT:     %i32.loc40: type = class_type @Int, @Int(constants.%int_32.1) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc40_43.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc40_43.2: ref %i32 = temporary %.loc40_43.1, @__global_init.%int.left_shift.loc40
+// CHECK:STDOUT:   %negative: ref %i32 = bind_name negative, %.loc40_43.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LeftShift.1(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.left_shift";
@@ -300,9 +442,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc8_32.1: %i32 = value_of_initializer %int.convert_checked.loc8_32 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %.loc8_32.2: %i32 = converted %int_31.loc8, %.loc8_32.1 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %int.left_shift.loc8: init %i32 = call %LeftShift.ref.loc8(%.loc8_29.2, %.loc8_32.2) [template = constants.%int_-2147483648]
-// CHECK:STDOUT:   %.loc8_35.1: %i32 = value_of_initializer %int.left_shift.loc8 [template = constants.%int_-2147483648]
-// CHECK:STDOUT:   %.loc8_35.2: %i32 = converted %int.left_shift.loc8, %.loc8_35.1 [template = constants.%int_-2147483648]
-// CHECK:STDOUT:   %size_1: %i32 = bind_name size_1, %.loc8_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc13: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
@@ -319,9 +458,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc13_32.1: %i32 = value_of_initializer %int.convert_checked.loc13_32 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %.loc13_32.2: %i32 = converted %int_32.loc13, %.loc13_32.1 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %int.left_shift.loc13: init %i32 = call %LeftShift.ref.loc13(%.loc13_29.2, %.loc13_32.2) [template = <error>]
-// CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %int.left_shift.loc13 [template = <error>]
-// CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %int.left_shift.loc13, %.loc13_35.1 [template = <error>]
-// CHECK:STDOUT:   %size_2: %i32 = bind_name size_2, %.loc13_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc18: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_33: Core.IntLiteral = int_value 33 [template = constants.%int_33.1]
@@ -338,9 +474,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc18_32.1: %i32 = value_of_initializer %int.convert_checked.loc18_32 [template = constants.%int_33.2]
 // CHECK:STDOUT:   %.loc18_32.2: %i32 = converted %int_33, %.loc18_32.1 [template = constants.%int_33.2]
 // CHECK:STDOUT:   %int.left_shift.loc18: init %i32 = call %LeftShift.ref.loc18(%.loc18_29.2, %.loc18_32.2) [template = <error>]
-// CHECK:STDOUT:   %.loc18_35.1: %i32 = value_of_initializer %int.left_shift.loc18 [template = <error>]
-// CHECK:STDOUT:   %.loc18_35.2: %i32 = converted %int.left_shift.loc18, %.loc18_35.1 [template = <error>]
-// CHECK:STDOUT:   %size_3: %i32 = bind_name size_3, %.loc18_35.2
 // CHECK:STDOUT:   %LeftShift.ref.loc21: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_1000.loc21: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
 // CHECK:STDOUT:   %int_31.loc21: Core.IntLiteral = int_value 31 [template = constants.%int_31.1]
@@ -357,9 +490,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc21_39.1: %i32 = value_of_initializer %int.convert_checked.loc21_39 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %.loc21_39.2: %i32 = converted %int_31.loc21, %.loc21_39.1 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %int.left_shift.loc21: init %i32 = call %LeftShift.ref.loc21(%.loc21_33.2, %.loc21_39.2) [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc21_42.1: %i32 = value_of_initializer %int.left_shift.loc21 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc21_42.2: %i32 = converted %int.left_shift.loc21, %.loc21_42.1 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %overflow_1: %i32 = bind_name overflow_1, %.loc21_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc26: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_1000.loc26: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.1]
 // CHECK:STDOUT:   %int_32.loc26: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
@@ -376,9 +506,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc26_39.1: %i32 = value_of_initializer %int.convert_checked.loc26_39 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %.loc26_39.2: %i32 = converted %int_32.loc26, %.loc26_39.1 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %int.left_shift.loc26: init %i32 = call %LeftShift.ref.loc26(%.loc26_33.2, %.loc26_39.2) [template = <error>]
-// CHECK:STDOUT:   %.loc26_42.1: %i32 = value_of_initializer %int.left_shift.loc26 [template = <error>]
-// CHECK:STDOUT:   %.loc26_42.2: %i32 = converted %int.left_shift.loc26, %.loc26_42.1 [template = <error>]
-// CHECK:STDOUT:   %overflow_2: %i32 = bind_name overflow_2, %.loc26_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc29: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_0.loc29: Core.IntLiteral = int_value 0 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %int_31.loc29: Core.IntLiteral = int_value 31 [template = constants.%int_31.1]
@@ -395,9 +522,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc29_39.1: %i32 = value_of_initializer %int.convert_checked.loc29_39 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %.loc29_39.2: %i32 = converted %int_31.loc29, %.loc29_39.1 [template = constants.%int_31.2]
 // CHECK:STDOUT:   %int.left_shift.loc29: init %i32 = call %LeftShift.ref.loc29(%.loc29_36.2, %.loc29_39.2) [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc29_42.1: %i32 = value_of_initializer %int.left_shift.loc29 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %.loc29_42.2: %i32 = converted %int.left_shift.loc29, %.loc29_42.1 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %no_overflow_1: %i32 = bind_name no_overflow_1, %.loc29_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc34: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_0.loc34: Core.IntLiteral = int_value 0 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %int_32.loc34: Core.IntLiteral = int_value 32 [template = constants.%int_32.1]
@@ -414,9 +538,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc34_39.1: %i32 = value_of_initializer %int.convert_checked.loc34_39 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %.loc34_39.2: %i32 = converted %int_32.loc34, %.loc34_39.1 [template = constants.%int_32.2]
 // CHECK:STDOUT:   %int.left_shift.loc34: init %i32 = call %LeftShift.ref.loc34(%.loc34_36.2, %.loc34_39.2) [template = <error>]
-// CHECK:STDOUT:   %.loc34_42.1: %i32 = value_of_initializer %int.left_shift.loc34 [template = <error>]
-// CHECK:STDOUT:   %.loc34_42.2: %i32 = converted %int.left_shift.loc34, %.loc34_42.1 [template = <error>]
-// CHECK:STDOUT:   %no_overflow_2: %i32 = bind_name no_overflow_2, %.loc34_42.2
 // CHECK:STDOUT:   %LeftShift.ref.loc40: %LeftShift.type.1 = name_ref LeftShift, file.%LeftShift.decl [template = constants.%LeftShift]
 // CHECK:STDOUT:   %int_1.loc40_31: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %Negate.ref: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
@@ -437,9 +558,6 @@ let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDOUT:   %.loc40_42.1: %i32 = value_of_initializer %int.snegate [template = constants.%int_-1]
 // CHECK:STDOUT:   %.loc40_42.2: %i32 = converted %int.snegate, %.loc40_42.1 [template = constants.%int_-1]
 // CHECK:STDOUT:   %int.left_shift.loc40: init %i32 = call %LeftShift.ref.loc40(%.loc40_31.2, %.loc40_42.2) [template = <error>]
-// CHECK:STDOUT:   %.loc40_44.1: %i32 = value_of_initializer %int.left_shift.loc40 [template = <error>]
-// CHECK:STDOUT:   %.loc40_44.2: %i32 = converted %int.left_shift.loc40, %.loc40_44.1 [template = <error>]
-// CHECK:STDOUT:   %negative: %i32 = bind_name negative, %.loc40_44.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

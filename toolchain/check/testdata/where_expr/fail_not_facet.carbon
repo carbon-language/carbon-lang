@@ -148,6 +148,7 @@ var v: e where .x = 3;
 // CHECK:STDOUT: --- fail_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,7 +164,21 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
+// CHECK:STDOUT:     %.loc7_1: <error> = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc7_10.2: type = splice_block %.loc7_10.1 [template = <error>] {
+// CHECK:STDOUT:     %e.ref: <error> = name_ref e, <error> [template = <error>]
+// CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self [template = <error>]
+// CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
+// CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %.loc7_10.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       requirement_rewrite %x.ref, <error>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

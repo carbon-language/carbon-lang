@@ -219,7 +219,12 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %Def = binding_pattern c
+// CHECK:STDOUT:     %.loc4: %Def = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Def = var c
+// CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%import_ref.1 [template = constants.%Def]
 // CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,8 +238,8 @@ private class Redecl {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc4_15.2: init %Def = class_init (), file.%c.var [template = constants.%Def.val]
-// CHECK:STDOUT:   %.loc4_16: init %Def = converted %.loc4_15.1, %.loc4_15.2 [template = constants.%Def.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc4_16
+// CHECK:STDOUT:   %.loc4_1: init %Def = converted %.loc4_15.1, %.loc4_15.2 [template = constants.%Def.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,8 +254,13 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -278,8 +288,16 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -311,7 +329,12 @@ private class Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %ForwardWithDef = binding_pattern c
+// CHECK:STDOUT:     %.loc4: %ForwardWithDef = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var c
+// CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.1 [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,8 +348,8 @@ private class Redecl {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef = class_init (), file.%c.var [template = constants.%ForwardWithDef.val]
-// CHECK:STDOUT:   %.loc4_27: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [template = constants.%ForwardWithDef.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc4_27
+// CHECK:STDOUT:   %.loc4_1: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [template = constants.%ForwardWithDef.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -341,8 +364,13 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -370,8 +398,16 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc10: <error> = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

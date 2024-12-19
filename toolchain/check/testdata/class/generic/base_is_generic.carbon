@@ -168,23 +168,31 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness @Base.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc5_8: @Base.%Base.elem (%Base.elem.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc5_3: @Base.%Base.elem (%Base.elem.1) = var_pattern %.loc5_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Base.%Base.elem (%Base.elem.1) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.1
-// CHECK:STDOUT:     .x = %.loc5
+// CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
-// CHECK:STDOUT:   %.loc9: %Param.elem = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc9_8: %Param.elem = field_decl y, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc9_3: %Param.elem = var_pattern %.loc9_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Param.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .y = %.loc9
+// CHECK:STDOUT:   .y = %.loc9_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,11 +213,11 @@ fn H() {
 // CHECK:STDOUT: fn @DoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %Base.elem.2 = name_ref x, @Base.%.loc5 [template = @Base.%.loc5]
+// CHECK:STDOUT:   %x.ref: %Base.elem.2 = name_ref x, @Base.%.loc5_8 [template = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc17_11.1: ref %Base.2 = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base.2 = converted %d.ref, %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_11.3: ref %Param = class_element_access %.loc17_11.2, element0
-// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9 [template = @Param.%.loc9]
+// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, @Param.%.loc9_8 [template = @Param.%.loc9_8]
 // CHECK:STDOUT:   %.loc17_13.1: ref %i32 = class_element_access %.loc17_11.3, element0
 // CHECK:STDOUT:   %.loc17_13.2: %i32 = bind_value %.loc17_13.1
 // CHECK:STDOUT:   return %.loc17_13.2
@@ -272,13 +280,13 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [template = constants.%complete_type.2]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst45 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.10: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [template = %.1]
 // CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.3)]
 // CHECK:STDOUT:   %import_ref.12 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.13: @Base.%Base.elem (%Base.elem.1) = import_ref Main//extend_generic_base, loc5_8, loaded [template = %.2]
 // CHECK:STDOUT:   %import_ref.15: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [template = constants.%complete_type.4]
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//extend_generic_base, inst76 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.16 = import_ref Main//extend_generic_base, inst82 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.17 = import_ref Main//extend_generic_base, loc13_27, unloaded
 // CHECK:STDOUT:   %import_ref.18: type = import_ref Main//extend_generic_base, loc13_26, loaded [template = constants.%Base.2]
 // CHECK:STDOUT: }
@@ -629,17 +637,24 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %i32 = binding_pattern i
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc13_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc13_18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc13_22: %G.type.3 = specific_constant @X.%G.decl, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc13_22 [template = constants.%G.3]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%i32) [template = constants.%G.specific_fn.2]
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.specific_fn()
-// CHECK:STDOUT:   %.loc13_26.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc13_26.2: %i32 = converted %G.call, %.loc13_26.1
-// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc13_26.2
+// CHECK:STDOUT:   %.loc13_10: type = splice_block %i32.loc13_10 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13_25.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc13_25.2: ref %i32 = temporary %.loc13_25.1, %G.call
+// CHECK:STDOUT:   %i: ref %i32 = bind_name i, %.loc13_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -827,17 +842,24 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %j.patt: %i32 = binding_pattern j
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %int_32.loc7_18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc7_18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.2]
 // CHECK:STDOUT:   %.loc7_22: %G.type.3 = specific_constant imports.%import_ref.10, @X(constants.%i32) [template = constants.%G.3]
 // CHECK:STDOUT:   %G.ref: %G.type.3 = name_ref G, %.loc7_22 [template = constants.%G.3]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%i32) [template = constants.%G.specific_fn.2]
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.specific_fn()
-// CHECK:STDOUT:   %.loc7_26.1: %i32 = value_of_initializer %G.call
-// CHECK:STDOUT:   %.loc7_26.2: %i32 = converted %G.call, %.loc7_26.1
-// CHECK:STDOUT:   %j: %i32 = bind_name j, %.loc7_26.2
+// CHECK:STDOUT:   %.loc7_10: type = splice_block %i32.loc7_10 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc7_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc7_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7_25.1: ref %i32 = temporary_storage
+// CHECK:STDOUT:   %.loc7_25.2: ref %i32 = temporary %.loc7_25.1, %G.call
+// CHECK:STDOUT:   %j: ref %i32 = bind_name j, %.loc7_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

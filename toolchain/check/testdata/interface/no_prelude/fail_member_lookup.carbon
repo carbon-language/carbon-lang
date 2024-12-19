@@ -112,10 +112,19 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
+// CHECK:STDOUT:   %Interface.ref.loc22: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v
+// CHECK:STDOUT:     %.loc28_3: <error> = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [template = <error>] {
+// CHECK:STDOUT:     %Interface.ref.loc28: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
+// CHECK:STDOUT:     %T.ref: %assoc_type = name_ref T, @Interface.%assoc1 [template = constants.%assoc1]
+// CHECK:STDOUT:     %.loc28_19: type = converted %T.ref, <error> [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

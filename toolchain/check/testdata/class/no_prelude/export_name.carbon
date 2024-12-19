@@ -110,7 +110,12 @@ var c: C = {};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,8 +129,8 @@ var c: C = {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc6_13.2: init %C = class_init (), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_14: init %C = converted %.loc6_13.1, %.loc6_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_14
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_13.1, %.loc6_13.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

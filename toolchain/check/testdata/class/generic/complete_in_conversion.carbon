@@ -24,9 +24,9 @@ class A(N:! i32) {
 }
 
 fn F(a: A(0)*) {
-  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:15: note: in `A(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   let b: B* = a;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:               ^
   let b: B* = a;
 }
 
@@ -131,7 +131,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %a.param_patt: %ptr.2 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_13: type = splice_block %ptr [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %.loc15_13: type = splice_block %ptr.loc15 [template = constants.%ptr.2] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:       %impl.elem0: %Convert.type.10 = interface_witness_access constants.%interface.20, element0 [template = constants.%Convert.11]
@@ -141,7 +141,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc15_12.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
 // CHECK:STDOUT:       %.loc15_12.2: %i32 = converted %int_0, %.loc15_12.1 [template = constants.%int_0.2]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.2) [template = constants.%A.2]
-// CHECK:STDOUT:       %ptr: type = ptr_type %A.2 [template = constants.%ptr.2]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A.2 [template = constants.%ptr.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %ptr.2 = bind_name a, %a.param
 // CHECK:STDOUT:   }
@@ -174,13 +174,17 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:     %.loc7: @A.%A.elem.loc7 (%A.elem.1) = base_decl %B.ref, element0 [template]
-// CHECK:STDOUT:     %.loc12: @A.%A.elem.loc12 (%A.elem.2) = field_decl n, element1 [template]
+// CHECK:STDOUT:     %.loc12_8: @A.%A.elem.loc12 (%A.elem.2) = field_decl n, element1 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc12_3: @A.%A.elem.loc12 (%A.elem.2) = var_pattern %.loc12_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @A.%A.elem.loc12 (%A.elem.2) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.base.n [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.1
 // CHECK:STDOUT:     .base = %.loc7
-// CHECK:STDOUT:     .n = %.loc12
+// CHECK:STDOUT:     .n = %.loc12_8
 // CHECK:STDOUT:     extend %B.ref
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
 // CHECK:STDOUT:   }
@@ -190,12 +194,19 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %ptr.2) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %ptr.3 = binding_pattern b
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %ptr.2 = name_ref a, %a
-// CHECK:STDOUT:   %.loc19_16.1: ref %A.2 = deref %a.ref
-// CHECK:STDOUT:   %.loc19_16.2: ref %B = class_element_access %.loc19_16.1, element0
-// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc19_16.2
-// CHECK:STDOUT:   %.loc19_16.3: %ptr.3 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.3 = bind_name b, %.loc19_16.3
+// CHECK:STDOUT:   %.loc19_11: type = splice_block %ptr.loc19 [template = constants.%ptr.3] {
+// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
+// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %B [template = constants.%ptr.3]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19_15.1: ref %A.2 = deref %a.ref
+// CHECK:STDOUT:   %.loc19_15.2: ref %B = class_element_access %.loc19_15.1, element0
+// CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc19_15.2
+// CHECK:STDOUT:   %.loc19_15.3: %ptr.3 = converted %a.ref, %addr
+// CHECK:STDOUT:   %b: %ptr.3 = bind_name b, %.loc19_15.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

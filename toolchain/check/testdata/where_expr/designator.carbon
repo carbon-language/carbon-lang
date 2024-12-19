@@ -333,7 +333,15 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc5_3: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc5_11.3: type = splice_block %.loc5_11.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %.Self.ref: <error> = name_ref .Self, <error> [template = <error>]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]

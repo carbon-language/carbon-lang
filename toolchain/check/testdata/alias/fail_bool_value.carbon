@@ -18,6 +18,8 @@ let a_test: bool = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -32,17 +34,25 @@ let a_test: bool = a;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .a_test = @__global_init.%a_test
+// CHECK:STDOUT:     .a_test = %a_test
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %false: bool = bool_literal false [template = constants.%false]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a_test.patt: bool = binding_pattern a_test
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc15_13.3: type = splice_block %.loc15_13.2 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc15_13.2: type = converted %bool.make_type, %.loc15_13.1 [template = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [template = <error>]
-// CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

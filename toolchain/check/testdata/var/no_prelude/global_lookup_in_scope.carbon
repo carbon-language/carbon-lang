@@ -30,23 +30,41 @@ fn Main() {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.v = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %struct_type.v = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
+// CHECK:STDOUT:   %.loc11_15: type = splice_block %struct_type.v [template = constants.%struct_type.v] {
+// CHECK:STDOUT:     %.loc11_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %struct_type.v = binding_pattern y
+// CHECK:STDOUT:     %.loc14_3.1: %struct_type.v = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var y
-// CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc14_21.1: ref %empty_tuple.type = struct_access %x.ref, element0
 // CHECK:STDOUT:   %.loc14_21.2: ref %empty_tuple.type = struct_access %y.var, element0
 // CHECK:STDOUT:   %.loc14_21.3: init %empty_tuple.type = tuple_init () to %.loc14_21.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_21.4: init %empty_tuple.type = converted %.loc14_21.1, %.loc14_21.3 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_21.5: init %struct_type.v = struct_init (%.loc14_21.4) to %y.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc14_22: init %struct_type.v = converted %x.ref, %.loc14_21.5 [template = constants.%struct]
-// CHECK:STDOUT:   assign %y.var, %.loc14_22
+// CHECK:STDOUT:   %.loc14_3.2: init %struct_type.v = converted %x.ref, %.loc14_21.5 [template = constants.%struct]
+// CHECK:STDOUT:   assign %y.var, %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_17: type = splice_block %struct_type.v [template = constants.%struct_type.v] {
+// CHECK:STDOUT:     %.loc14_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc14_16.2: type = converted %.loc14_16.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,8 +76,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc11_26.2: init %empty_tuple.type = tuple_init () to %.loc11_27.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_27.3: init %empty_tuple.type = converted %.loc11_26.1, %.loc11_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_27.4: init %struct_type.v = struct_init (%.loc11_27.3) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_28: init %struct_type.v = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_28
+// CHECK:STDOUT:   %.loc11_1: init %struct_type.v = converted %.loc11_27.1, %.loc11_27.4 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

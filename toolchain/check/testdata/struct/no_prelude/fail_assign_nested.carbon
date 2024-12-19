@@ -25,7 +25,16 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a.1 = binding_pattern x
+// CHECK:STDOUT:     %.loc14_1: %struct_type.a.1 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.1 = var x
+// CHECK:STDOUT:   %.loc14_15: type = splice_block %struct_type.a [template = constants.%struct_type.a.1] {
+// CHECK:STDOUT:     %.loc14_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc14_14.2: type = converted %.loc14_14.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [template = constants.%struct_type.a.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.1 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

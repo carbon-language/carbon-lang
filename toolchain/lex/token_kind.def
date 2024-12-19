@@ -161,7 +161,8 @@ CARBON_DECL_INTRODUCER_TOKEN(Let,         "let")
 CARBON_DECL_INTRODUCER_TOKEN(Library,     "library")
 CARBON_DECL_INTRODUCER_TOKEN(Namespace,   "namespace")
 CARBON_DECL_INTRODUCER_TOKEN(Package,     "package")
-CARBON_DECL_INTRODUCER_TOKEN(Var,         "var")
+CARBON_TOKEN_WITH_VIRTUAL_NODE(
+  CARBON_DECL_INTRODUCER_TOKEN(Var,       "var"))
 
 CARBON_KEYWORD_TOKEN(Abstract,            "abstract")
 CARBON_KEYWORD_TOKEN(Addr,                "addr")

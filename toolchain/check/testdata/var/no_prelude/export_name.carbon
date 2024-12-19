@@ -53,7 +53,15 @@ var w: () = v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %empty_tuple.type = binding_pattern v
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %v.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +100,15 @@ var w: () = v;
 // CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %w.patt: %empty_tuple.type = binding_pattern w
+// CHECK:STDOUT:     %.loc11_1: %empty_tuple.type = var_pattern %w.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_tuple.type = var w
+// CHECK:STDOUT:   %.loc11_9.3: type = splice_block %.loc11_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc11_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc11_9.2: type = converted %.loc11_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_tuple.type = bind_name w, %w.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,8 +116,8 @@ var w: () = v;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%import_ref [template = <error>]
 // CHECK:STDOUT:   %.loc11_13: init %empty_tuple.type = tuple_init () to file.%w.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_14: init %empty_tuple.type = converted %v.ref, %.loc11_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%w.var, %.loc11_14
+// CHECK:STDOUT:   %.loc11_1: init %empty_tuple.type = converted %v.ref, %.loc11_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%w.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

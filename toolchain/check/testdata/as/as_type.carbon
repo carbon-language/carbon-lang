@@ -30,9 +30,13 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .t = @__global_init.%t
+// CHECK:STDOUT:     .t = %t
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: type = binding_pattern t
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %t: type = bind_name t, @__global_init.%.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -43,7 +47,6 @@ let t: type = (i32, i32) as type;
 // CHECK:STDOUT:   %i32.loc11_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc11_24: %tuple.type.1 = tuple_literal (%i32.loc11_16, %i32.loc11_21)
 // CHECK:STDOUT:   %.loc11_26: type = converted %.loc11_24, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %t: type = bind_name t, %.loc11_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

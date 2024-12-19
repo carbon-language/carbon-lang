@@ -112,7 +112,7 @@ class KeywordModifierSet {
   }
 
   // Returns the access kind from modifiers.
-  auto GetAccessKind() -> SemIR::AccessKind {
+  auto GetAccessKind() const -> SemIR::AccessKind {
     if (HasAnyOf(KeywordModifierSet::Protected)) {
       return SemIR::AccessKind::Protected;
     }

@@ -17,9 +17,10 @@ var x: i32 = {.7 = 8};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'IdentifierName', text: '7', has_error: yes},
@@ -27,6 +28,6 @@ var x: i32 = {.7 = 8};
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '8'},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '=', has_error: yes},
 // CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 13},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

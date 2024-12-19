@@ -220,12 +220,17 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b.param_patt: %D) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc38_3.1: %C = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc38_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc38_15.2: init %C = class_init (), %a.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc38_16: init %C = converted %.loc38_15.1, %.loc38_15.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc38_16
+// CHECK:STDOUT:   %.loc38_3.2: init %C = converted %.loc38_15.1, %.loc38_15.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc38_3.2
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %Op.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Op.3]

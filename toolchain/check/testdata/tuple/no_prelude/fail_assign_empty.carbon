@@ -24,7 +24,17 @@ var x: ((),) = ();
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc14_1: %tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type = var x
+// CHECK:STDOUT:   %.loc14_12.4: type = splice_block %.loc14_12.3 [template = constants.%tuple.type] {
+// CHECK:STDOUT:     %.loc14_10: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc14_12.1: %tuple.type = tuple_literal (%.loc14_10)
+// CHECK:STDOUT:     %.loc14_12.2: type = converted %.loc14_10, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc14_12.3: type = converted %.loc14_12.1, constants.%tuple.type [template = constants.%tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

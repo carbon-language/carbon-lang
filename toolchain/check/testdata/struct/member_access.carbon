@@ -15,6 +15,9 @@ var z: i32 = y;
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %struct_type.a.b.1: type = struct_type {.a: f64, .b: %i32} [template]
@@ -49,11 +52,40 @@ var z: i32 = y;
 // CHECK:STDOUT:     .z = %z
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a.b.1 = binding_pattern x
+// CHECK:STDOUT:     %.loc11_1: %struct_type.a.b.1 = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.b.1 = var x
+// CHECK:STDOUT:   %.loc11_25: type = splice_block %struct_type.a.b [template = constants.%struct_type.a.b.1] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
+// CHECK:STDOUT:     %.loc11_13.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc11_13.2: type = converted %float.make_type, %.loc11_13.1 [template = f64]
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: f64, .b: %i32} [template = constants.%struct_type.a.b.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.b.1 = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %i32 = binding_pattern y
+// CHECK:STDOUT:     %.loc12_1: %i32 = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
+// CHECK:STDOUT:   %.loc12_8: type = splice_block %i32.loc12 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %z.patt: %i32 = binding_pattern z
+// CHECK:STDOUT:     %.loc13_1: %i32 = var_pattern %z.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z.var: ref %i32 = var z
+// CHECK:STDOUT:   %.loc13_8: type = splice_block %i32.loc13 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: ref %i32 = bind_name z, %z.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,8 +104,8 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc11_46.5: ref %i32 = struct_access file.%x.var, element1
 // CHECK:STDOUT:   %.loc11_46.6: init %i32 = initialize_from %.loc11_46.4 to %.loc11_46.5 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc11_46.7: init %struct_type.a.b.1 = struct_init (%.loc11_46.3, %.loc11_46.6) to file.%x.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc11_47: init %struct_type.a.b.1 = converted %.loc11_46.1, %.loc11_46.7 [template = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc11_47
+// CHECK:STDOUT:   %.loc11_1: init %struct_type.a.b.1 = converted %.loc11_46.1, %.loc11_46.7 [template = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc11_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.1 = name_ref x, file.%x
 // CHECK:STDOUT:   %.loc12_15.1: ref %i32 = struct_access %x.ref, element1
 // CHECK:STDOUT:   %.loc12_15.2: %i32 = bind_value %.loc12_15.1

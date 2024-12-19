@@ -113,7 +113,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -141,12 +141,17 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b.param_patt: %C) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %C = binding_pattern a
+// CHECK:STDOUT:     %.loc32_3.1: %C = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var a
-// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc32_15.2: init %C = class_init (), %a.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_16: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc32_16
+// CHECK:STDOUT:   %.loc32_3.2: init %C = converted %.loc32_15.1, %.loc32_15.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc32_3.2
+// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %a: ref %C = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a

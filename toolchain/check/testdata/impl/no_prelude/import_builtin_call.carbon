@@ -1053,9 +1053,31 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %m.patt: %i64.builtin = binding_pattern m
+// CHECK:STDOUT:     %.loc6_1: %i64.builtin = var_pattern %m.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.var: ref %i64.builtin = var m
+// CHECK:STDOUT:   %.loc6_14.3: type = splice_block %.loc6_14.2 [template = constants.%i64.builtin] {
+// CHECK:STDOUT:     %Int.ref.loc6: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [template = constants.%int_64.1]
+// CHECK:STDOUT:     %int.make_type_signed.loc6: init type = call %Int.ref.loc6(%int_64.loc6) [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc6_14.1: type = value_of_initializer %int.make_type_signed.loc6 [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc6_14.2: type = converted %int.make_type_signed.loc6, %.loc6_14.1 [template = constants.%i64.builtin]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m: ref %i64.builtin = bind_name m, %m.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i64.builtin = binding_pattern n
+// CHECK:STDOUT:     %.loc7_1: %i64.builtin = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i64.builtin = var n
+// CHECK:STDOUT:   %.loc7_14.3: type = splice_block %.loc7_14.2 [template = constants.%i64.builtin] {
+// CHECK:STDOUT:     %Int.ref.loc7: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [template = constants.%int_64.1]
+// CHECK:STDOUT:     %int.make_type_signed.loc7: init type = call %Int.ref.loc7(%int_64.loc7) [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc7_14.1: type = value_of_initializer %int.make_type_signed.loc7 [template = constants.%i64.builtin]
+// CHECK:STDOUT:     %.loc7_14.2: type = converted %int.make_type_signed.loc7, %.loc7_14.1 [template = constants.%i64.builtin]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %i64.builtin = bind_name n, %n.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -107,14 +107,22 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem.1 = field_decl n, element0 [template]
-// CHECK:STDOUT:   %.loc13: %Class.elem.2 = field_decl next, element1 [template]
+// CHECK:STDOUT:   %.loc12_8: %Class.elem.1 = field_decl n, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Class.elem.1 = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc12: ref %Class.elem.1 = var <invalid>
+// CHECK:STDOUT:   %.loc13_11: %Class.elem.2 = field_decl next, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_3: %Class.elem.2 = var_pattern %.loc13_11
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc13: ref %Class.elem.2 = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .n = %.loc12
-// CHECK:STDOUT:   .next = %.loc13
+// CHECK:STDOUT:   .n = %.loc12_8
+// CHECK:STDOUT:   .next = %.loc13_11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

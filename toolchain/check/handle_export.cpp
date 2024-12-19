@@ -21,6 +21,7 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
   // The parser supports patterns after `export`, so we need a pattern block
   // to handle them.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 

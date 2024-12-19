@@ -76,6 +76,8 @@ var y2: bool = false or true;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -95,13 +97,47 @@ var y2: bool = false or true;
 // CHECK:STDOUT:     .y2 = %y2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
+// CHECK:STDOUT:     %.loc27_1: %empty_tuple.type = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %.loc27_9.3: type = splice_block %.loc27_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc27_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc27_9.2: type = converted %.loc27_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x2.patt: %empty_tuple.type = binding_pattern x2
+// CHECK:STDOUT:     %.loc45_1: %empty_tuple.type = var_pattern %x2.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x2.var: ref %empty_tuple.type = var x2
+// CHECK:STDOUT:   %.loc45_10.3: type = splice_block %.loc45_10.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc45_10.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc45_10.2: type = converted %.loc45_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x2: ref %empty_tuple.type = bind_name x2, %x2.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: bool = binding_pattern y
+// CHECK:STDOUT:     %.loc59_1: bool = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref bool = var y
+// CHECK:STDOUT:   %.loc59_8.3: type = splice_block %.loc59_8.2 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc59: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc59_8.1: type = value_of_initializer %bool.make_type.loc59 [template = bool]
+// CHECK:STDOUT:     %.loc59_8.2: type = converted %bool.make_type.loc59, %.loc59_8.1 [template = bool]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref bool = bind_name y, %y.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y2.patt: bool = binding_pattern y2
+// CHECK:STDOUT:     %.loc72_1: bool = var_pattern %y2.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y2.var: ref bool = var y2
+// CHECK:STDOUT:   %.loc72_9.3: type = splice_block %.loc72_9.2 [template = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc72: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc72_9.1: type = value_of_initializer %bool.make_type.loc72 [template = bool]
+// CHECK:STDOUT:     %.loc72_9.2: type = converted %bool.make_type.loc72, %.loc72_9.1 [template = bool]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y2: ref bool = bind_name y2, %y2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

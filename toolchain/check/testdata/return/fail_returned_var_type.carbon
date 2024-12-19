@@ -26,6 +26,9 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Mismatch.type: type = fn_type @Mismatch [template]
 // CHECK:STDOUT:   %Mismatch: %Mismatch.type = struct_value () [template]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -57,9 +60,21 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mismatch() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %v: f64 = bind_name v, <error>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: f64 = binding_pattern v
+// CHECK:STDOUT:     %.loc18_12: f64 = var_pattern %v.patt
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v.var: ref f64 = var v
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template = constants.%float]
-// CHECK:STDOUT:   assign <error>, <error>
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   assign %v.var, %float
+// CHECK:STDOUT:   %.loc18_19.3: type = splice_block %.loc18_19.2 [template = f64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
+// CHECK:STDOUT:     %.loc18_19.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc18_19.2: type = converted %float.make_type, %.loc18_19.1 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
+// CHECK:STDOUT:   %.loc18_16: f64 = bind_value %v
+// CHECK:STDOUT:   return %.loc18_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

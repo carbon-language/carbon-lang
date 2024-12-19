@@ -25,6 +25,8 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = <unexpected>.inst15
+// CHECK:STDOUT:   .T = <unexpected>.inst19.loc15_9
+// CHECK:STDOUT:   .U = <unexpected>.inst22.loc15_19
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

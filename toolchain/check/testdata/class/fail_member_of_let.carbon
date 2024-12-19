@@ -51,10 +51,14 @@ fn T.F() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .T = @__global_init.%T
+// CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %T.patt: type = binding_pattern T
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T: type = bind_name T, @__global_init.%Class.ref
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -86,7 +90,6 @@ fn T.F() {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %T: type = bind_name T, %Class.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -500,6 +500,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -520,8 +521,19 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
+// CHECK:STDOUT:     %.loc10_1: <error> = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var n
-// CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc10_13.3: type = splice_block %.loc10_13.2 [template = <error>] {
+// CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%int_0) [template = <error>]
+// CHECK:STDOUT:     %.loc10_13.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:     %.loc10_13.2: type = converted %int.make_type_signed, %.loc10_13.1 [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: <error> = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];
@@ -535,6 +547,22 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   %Negate: %Negate.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Int.type.2: type = fn_type @Int.1 [template]
 // CHECK:STDOUT:   %Int.2: %Int.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %int_-1.1: %i32 = int_value -1 [template]
+// CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.3, @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
+// CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Convert.11) [template]
+// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_-1.1, %Convert.11 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.3(%int_32) [template]
+// CHECK:STDOUT:   %int_-1.2: Core.IntLiteral = int_value -1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -575,8 +603,35 @@ var m: Int(1000000000);
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: <error> = binding_pattern n
+// CHECK:STDOUT:     %.loc12_1: <error> = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var n
-// CHECK:STDOUT:   %n: ref <error> = bind_name n, %n.var
+// CHECK:STDOUT:   %.loc12_21.3: type = splice_block %.loc12_21.2 [template = <error>] {
+// CHECK:STDOUT:     %Int.ref: %Int.type.2 = name_ref Int, imports.%import_ref.2 [template = constants.%Int.2]
+// CHECK:STDOUT:     %Negate.ref: %Negate.type.1 = name_ref Negate, %Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
+// CHECK:STDOUT:     %impl.elem0.loc12_19: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %Convert.bound.loc12_19: <bound method> = bound_method %int_1, %impl.elem0.loc12_19 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:     %Convert.specific_fn.loc12_19: <specific function> = specific_function %Convert.bound.loc12_19, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:     %int.convert_checked.loc12_19: init %i32 = call %Convert.specific_fn.loc12_19(%int_1) [template = constants.%int_1.2]
+// CHECK:STDOUT:     %.loc12_19.1: %i32 = value_of_initializer %int.convert_checked.loc12_19 [template = constants.%int_1.2]
+// CHECK:STDOUT:     %.loc12_19.2: %i32 = converted %int_1, %.loc12_19.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:     %int.snegate: init %i32 = call %Negate.ref(%.loc12_19.2) [template = constants.%int_-1.1]
+// CHECK:STDOUT:     %impl.elem0.loc12_20: %Convert.type.5 = interface_witness_access constants.%interface.20, element0 [template = constants.%Convert.11]
+// CHECK:STDOUT:     %Convert.bound.loc12_20: <bound method> = bound_method %int.snegate, %impl.elem0.loc12_20 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:     %Convert.specific_fn.loc12_20: <specific function> = specific_function %Convert.bound.loc12_20, @Convert.3(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:     %.loc12_20.1: %i32 = value_of_initializer %int.snegate [template = constants.%int_-1.1]
+// CHECK:STDOUT:     %.loc12_20.2: %i32 = converted %int.snegate, %.loc12_20.1 [template = constants.%int_-1.1]
+// CHECK:STDOUT:     %int.convert_checked.loc12_20: init Core.IntLiteral = call %Convert.specific_fn.loc12_20(%.loc12_20.2) [template = constants.%int_-1.2]
+// CHECK:STDOUT:     %.loc12_20.3: Core.IntLiteral = value_of_initializer %int.convert_checked.loc12_20 [template = constants.%int_-1.2]
+// CHECK:STDOUT:     %.loc12_20.4: Core.IntLiteral = converted %int.snegate, %.loc12_20.3 [template = constants.%int_-1.2]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%.loc12_20.4) [template = <error>]
+// CHECK:STDOUT:     %.loc12_21.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:     %.loc12_21.2: type = converted %int.make_type_signed, %.loc12_21.1 [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: <error> = bind_name n, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate.1(%n.param_patt: %i32) -> %i32 = "int.snegate";
@@ -588,6 +643,7 @@ var m: Int(1000000000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [template]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [template]
+// CHECK:STDOUT:   %int_1000000000: Core.IntLiteral = int_value 1000000000 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -608,8 +664,19 @@ var m: Int(1000000000);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %m.patt: <error> = binding_pattern m
+// CHECK:STDOUT:     %.loc9_1: <error> = var_pattern %m.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %m.var: ref <error> = var m
-// CHECK:STDOUT:   %m: ref <error> = bind_name m, %m.var
+// CHECK:STDOUT:   %.loc9_22.3: type = splice_block %.loc9_22.2 [template = <error>] {
+// CHECK:STDOUT:     %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int]
+// CHECK:STDOUT:     %int_1000000000: Core.IntLiteral = int_value 1000000000 [template = constants.%int_1000000000]
+// CHECK:STDOUT:     %int.make_type_signed: init type = call %Int.ref(%int_1000000000) [template = <error>]
+// CHECK:STDOUT:     %.loc9_22.1: type = value_of_initializer %int.make_type_signed [template = <error>]
+// CHECK:STDOUT:     %.loc9_22.2: type = converted %int.make_type_signed, %.loc9_22.1 [template = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %m: <error> = bind_name m, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "types.carbon"];

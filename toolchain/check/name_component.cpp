@@ -11,6 +11,7 @@ namespace Carbon::Check {
 
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     -> NameComponent {
+  context.full_pattern_stack().PopFullPattern();
   Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
   Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
 

@@ -57,18 +57,31 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [template = constants.%Cycle] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %struct_type.b = binding_pattern a
+// CHECK:STDOUT:     %.loc6_1: %struct_type.b = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var a
+// CHECK:STDOUT:   %.loc6_19: type = splice_block %struct_type.b [template = constants.%struct_type.b] {
+// CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [template = constants.%Cycle]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle [template = constants.%ptr]
+// CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [template = constants.%struct_type.b]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.b = bind_name a, %a.var
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [template = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [template]
+// CHECK:STDOUT:   %.loc10_8: %Cycle.elem = field_decl c, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc10_3: %Cycle.elem = var_pattern %.loc10_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Cycle.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
-// CHECK:STDOUT:   .c = %.loc10
+// CHECK:STDOUT:   .c = %.loc10_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

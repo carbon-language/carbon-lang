@@ -242,7 +242,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,7 +284,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,7 +327,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -348,7 +372,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,7 +414,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -417,7 +457,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,7 +502,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [template = constants.%Forward] {} {}
 // CHECK:STDOUT: }
@@ -492,7 +548,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +591,15 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %empty_tuple.type = binding_pattern f
+// CHECK:STDOUT:     %.loc9_1: %empty_tuple.type = var_pattern %f.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %.loc9_9.3: type = splice_block %.loc9_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc9_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

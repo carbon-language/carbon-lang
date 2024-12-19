@@ -22,13 +22,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %x.var), !dbg !7
-// CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4, !dbg !8
+// CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !7
-// CHECK:STDOUT:   %.loc13_22.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   %.loc13_22.2 = load i32, ptr %.loc13_22.1.a, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc13_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc13_22.2, 0, !dbg !9
-// CHECK:STDOUT:   store { i32 } %.loc13_22.3.struct.init, ptr %y.var, align 4, !dbg !10
-// CHECK:STDOUT:   ret i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc13_22.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc13_22.2 = load i32, ptr %.loc13_22.1.a, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc13_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc13_22.2, 0, !dbg !8
+// CHECK:STDOUT:   store { i32 } %.loc13_22.3.struct.init, ptr %y.var, align 4, !dbg !9
+// CHECK:STDOUT:   ret i32 0, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -49,8 +49,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 22, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 22, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)

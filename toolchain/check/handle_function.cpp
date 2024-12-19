@@ -38,6 +38,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   StartGenericDecl(context);
   // Start a new pattern block for the signature.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 

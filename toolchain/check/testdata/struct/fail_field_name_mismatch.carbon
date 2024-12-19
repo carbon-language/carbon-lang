@@ -45,9 +45,27 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %struct_type.a = binding_pattern x
+// CHECK:STDOUT:     %.loc15_1: %struct_type.a = var_pattern %x.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
+// CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [template = constants.%struct_type.a] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %struct_type.b.2 = binding_pattern y
+// CHECK:STDOUT:     %.loc20_1: %struct_type.b.2 = var_pattern %y.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.2 = var y
+// CHECK:STDOUT:   %.loc20_16: type = splice_block %struct_type.b [template = constants.%struct_type.b.2] {
+// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [template = constants.%struct_type.b.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.2 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

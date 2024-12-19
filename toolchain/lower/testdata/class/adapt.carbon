@@ -114,7 +114,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 12, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 5, scope: !12)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 7, scope: !15)
+// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 3, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 27, column: 25, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 28, column: 10, scope: !15)
 // CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !15)

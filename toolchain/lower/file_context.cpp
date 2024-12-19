@@ -607,7 +607,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
   // TODO: Mangle name.
   auto mangled_name =
-      *sem_ir().names().GetAsStringIfIdentifier(var_storage.name_id);
+      *sem_ir().names().GetAsStringIfIdentifier(var_storage.pretty_name_id);
   auto* type = GetType(var_storage.type_id);
   return new llvm::GlobalVariable(
       llvm_module(), type,

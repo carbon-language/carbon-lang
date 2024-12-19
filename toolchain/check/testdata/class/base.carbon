@@ -131,25 +131,33 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc4: %Base.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc4_8: %Base.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc4_3: %Base.elem = var_pattern %.loc4_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Base.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.1 [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .b = %.loc4
+// CHECK:STDOUT:   .b = %.loc4_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem.1 = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %.loc10: %Derived.elem.2 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc10_8: %Derived.elem.2 = field_decl d, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc10_3: %Derived.elem.2 = var_pattern %.loc10_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Derived.elem.2 = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .d = %.loc10
+// CHECK:STDOUT:   .d = %.loc10_8
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -185,14 +193,14 @@ class Derived {
 // CHECK:STDOUT: fn @Access(%d.param_patt: %Derived) -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref.loc18_11: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %d.ref.loc18_12: %Derived.elem.2 = name_ref d, @Derived.%.loc10 [template = @Derived.%.loc10]
+// CHECK:STDOUT:   %d.ref.loc18_12: %Derived.elem.2 = name_ref d, @Derived.%.loc10_8 [template = @Derived.%.loc10_8]
 // CHECK:STDOUT:   %.loc18_12.1: ref %i32 = class_element_access %d.ref.loc18_11, element1
 // CHECK:STDOUT:   %.loc18_12.2: %i32 = bind_value %.loc18_12.1
 // CHECK:STDOUT:   %d.ref.loc18_16: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.1 = name_ref base, @Derived.%.loc8 [template = @Derived.%.loc8]
 // CHECK:STDOUT:   %.loc18_17.1: ref %Base = class_element_access %d.ref.loc18_16, element0
 // CHECK:STDOUT:   %.loc18_17.2: %Base = bind_value %.loc18_17.1
-// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc4 [template = @Base.%.loc4]
+// CHECK:STDOUT:   %b.ref: %Base.elem = name_ref b, @Base.%.loc4_8 [template = @Base.%.loc4_8]
 // CHECK:STDOUT:   %.loc18_22.1: ref %i32 = class_element_access %.loc18_17.2, element0
 // CHECK:STDOUT:   %.loc18_22.2: %i32 = bind_value %.loc18_22.1
 // CHECK:STDOUT:   %.loc18_24.1: %tuple.type.2 = tuple_literal (%.loc18_12.2, %.loc18_22.2)
@@ -247,13 +255,17 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %.loc7: %Derived.elem = field_decl d, element0 [template]
+// CHECK:STDOUT:   %.loc7_8: %Derived.elem = field_decl d, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc7_3: %Derived.elem = var_pattern %.loc7_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %Derived.elem = var <invalid>
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .d = %.loc7
+// CHECK:STDOUT:   .d = %.loc7_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

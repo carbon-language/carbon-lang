@@ -82,6 +82,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %NotGenericButParams.val: %NotGenericButParams = struct_value () [template]
 // CHECK:STDOUT:   %GenericAndParams.3: type = class_type @GenericAndParams.1, @GenericAndParams.1(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.val.1: %GenericAndParams.3 = struct_value () [template]
+// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.type.3: type = generic_class_type @GenericAndParams.2, @C(%X) [template]
 // CHECK:STDOUT:   %GenericAndParams.generic.3: %GenericAndParams.type.3 = struct_value () [template]
 // CHECK:STDOUT:   %GenericNoParams.val: %GenericNoParams.1 = struct_value () [template]
@@ -119,15 +120,60 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc8_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %NotGenericNoParams = binding_pattern a
+// CHECK:STDOUT:     %.loc15: %NotGenericNoParams = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var a
+// CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [template = constants.%NotGenericNoParams]
 // CHECK:STDOUT:   %a: ref %NotGenericNoParams = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %NotGenericButParams = binding_pattern b
+// CHECK:STDOUT:     %.loc16_1: %NotGenericButParams = var_pattern %b.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var b
+// CHECK:STDOUT:   %.loc16_28: type = splice_block %NotGenericButParams [template = constants.%NotGenericButParams] {
+// CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type = name_ref NotGenericButParams, %NotGenericButParams.decl [template = constants.%NotGenericButParams.generic]
+// CHECK:STDOUT:     %NotGenericButParams: type = class_type @NotGenericButParams [template = constants.%NotGenericButParams]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %NotGenericButParams = bind_name b, %b.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %GenericAndParams.3 = binding_pattern c
+// CHECK:STDOUT:     %.loc17_1: %GenericAndParams.3 = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %GenericAndParams.3 = var c
+// CHECK:STDOUT:   %.loc17_26: type = splice_block %GenericAndParams.loc17 [template = constants.%GenericAndParams.3] {
+// CHECK:STDOUT:     %GenericAndParams.ref.loc17: %GenericAndParams.type.1 = name_ref GenericAndParams, %GenericAndParams.decl [template = constants.%GenericAndParams.generic.1]
+// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %GenericAndParams.loc17: type = class_type @GenericAndParams.1, @GenericAndParams.1(constants.%X) [template = constants.%GenericAndParams.3]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %GenericAndParams.3 = bind_name c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %GenericNoParams.1 = binding_pattern d
+// CHECK:STDOUT:     %.loc18_1: %GenericNoParams.1 = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %GenericNoParams.1 = var d
+// CHECK:STDOUT:   %.loc18_12: type = splice_block %GenericNoParams.ref [template = constants.%GenericNoParams.1] {
+// CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %X.ref.loc18: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %C.loc18: type = class_type @C, @C(constants.%X) [template = constants.%C.2]
+// CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%GenericNoParams.1]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %GenericNoParams.1 = bind_name d, %d.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %GenericAndParams.4 = binding_pattern e
+// CHECK:STDOUT:     %.loc19_1: %GenericAndParams.4 = var_pattern %e.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %GenericAndParams.4 = var e
+// CHECK:STDOUT:   %.loc19_31: type = splice_block %GenericAndParams.loc19 [template = constants.%GenericAndParams.4] {
+// CHECK:STDOUT:     %C.ref.loc19: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
+// CHECK:STDOUT:     %X.ref.loc19_10: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %C.loc19: type = class_type @C, @C(constants.%X) [template = constants.%C.2]
+// CHECK:STDOUT:     %.loc19_12: %GenericAndParams.type.3 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.generic.3]
+// CHECK:STDOUT:     %GenericAndParams.ref.loc19: %GenericAndParams.type.3 = name_ref GenericAndParams, %.loc19_12 [template = constants.%GenericAndParams.generic.3]
+// CHECK:STDOUT:     %X.ref.loc19_30: type = name_ref X, %X.decl [template = constants.%X]
+// CHECK:STDOUT:     %GenericAndParams.loc19: type = class_type @GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X) [template = constants.%GenericAndParams.4]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %GenericAndParams.4 = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,24 +274,24 @@ fn F(T:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_30.2: init %NotGenericNoParams = class_init (), file.%a.var [template = constants.%NotGenericNoParams.val]
-// CHECK:STDOUT:   %.loc15_31: init %NotGenericNoParams = converted %.loc15_30.1, %.loc15_30.2 [template = constants.%NotGenericNoParams.val]
-// CHECK:STDOUT:   assign file.%a.var, %.loc15_31
+// CHECK:STDOUT:   %.loc15_1: init %NotGenericNoParams = converted %.loc15_30.1, %.loc15_30.2 [template = constants.%NotGenericNoParams.val]
+// CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %.loc16_33.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_33.2: init %NotGenericButParams = class_init (), file.%b.var [template = constants.%NotGenericButParams.val]
-// CHECK:STDOUT:   %.loc16_34: init %NotGenericButParams = converted %.loc16_33.1, %.loc16_33.2 [template = constants.%NotGenericButParams.val]
-// CHECK:STDOUT:   assign file.%b.var, %.loc16_34
+// CHECK:STDOUT:   %.loc16_1: init %NotGenericButParams = converted %.loc16_33.1, %.loc16_33.2 [template = constants.%NotGenericButParams.val]
+// CHECK:STDOUT:   assign file.%b.var, %.loc16_1
 // CHECK:STDOUT:   %.loc17_31.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.3 = class_init (), file.%c.var [template = constants.%GenericAndParams.val.1]
-// CHECK:STDOUT:   %.loc17_32: init %GenericAndParams.3 = converted %.loc17_31.1, %.loc17_31.2 [template = constants.%GenericAndParams.val.1]
-// CHECK:STDOUT:   assign file.%c.var, %.loc17_32
+// CHECK:STDOUT:   %.loc17_1: init %GenericAndParams.3 = converted %.loc17_31.1, %.loc17_31.2 [template = constants.%GenericAndParams.val.1]
+// CHECK:STDOUT:   assign file.%c.var, %.loc17_1
 // CHECK:STDOUT:   %.loc18_32.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.1 = class_init (), file.%d.var [template = constants.%GenericNoParams.val]
-// CHECK:STDOUT:   %.loc18_33: init %GenericNoParams.1 = converted %.loc18_32.1, %.loc18_32.2 [template = constants.%GenericNoParams.val]
-// CHECK:STDOUT:   assign file.%d.var, %.loc18_33
+// CHECK:STDOUT:   %.loc18_1: init %GenericNoParams.1 = converted %.loc18_32.1, %.loc18_32.2 [template = constants.%GenericNoParams.val]
+// CHECK:STDOUT:   assign file.%d.var, %.loc18_1
 // CHECK:STDOUT:   %.loc19_36.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.4 = class_init (), file.%e.var [template = constants.%GenericAndParams.val.2]
-// CHECK:STDOUT:   %.loc19_37: init %GenericAndParams.4 = converted %.loc19_36.1, %.loc19_36.2 [template = constants.%GenericAndParams.val.2]
-// CHECK:STDOUT:   assign file.%e.var, %.loc19_37
+// CHECK:STDOUT:   %.loc19_1: init %GenericAndParams.4 = converted %.loc19_36.1, %.loc19_36.2 [template = constants.%GenericAndParams.val.2]
+// CHECK:STDOUT:   assign file.%e.var, %.loc19_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

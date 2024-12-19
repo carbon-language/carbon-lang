@@ -176,7 +176,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -220,8 +220,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type.2 = binding_pattern a
+// CHECK:STDOUT:     %.loc9_3.1: %array_type.2 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %empty_struct_type = struct_literal ()
@@ -239,8 +242,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.8: init %array_type.2 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc9_31: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc9_31
+// CHECK:STDOUT:   %.loc9_3.2: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3.2
+// CHECK:STDOUT:   %.loc9_15: type = splice_block %array_type [template = constants.%array_type.2] {
+// CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type: type = array_type %int_3, %C [template = constants.%array_type.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn]
@@ -351,7 +360,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -383,8 +392,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
+// CHECK:STDOUT:     %.loc13_3.1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc13_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %empty_struct_type = struct_literal ()
@@ -402,8 +414,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_29.2: init %C = class_init (), %.loc13_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_30.7: init %C = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_30.8: init %array_type = array_init (%.loc13_30.3, %.loc13_30.5, %.loc13_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc13_31: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc13_31
+// CHECK:STDOUT:   %.loc13_3.2: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc13_3.2
+// CHECK:STDOUT:   %.loc13_15: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type: type = array_type %int_3, %C [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return
@@ -507,7 +525,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -535,8 +553,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
+// CHECK:STDOUT:     %.loc13_3.1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc13_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %empty_struct_type = struct_literal ()
@@ -554,8 +575,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_29.2: init %C = class_init (), %.loc13_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_30.7: init %C = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc13_30.8: init %array_type = array_init (%.loc13_30.3, %.loc13_30.5, %.loc13_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc13_31: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc13_31
+// CHECK:STDOUT:   %.loc13_3.2: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc13_3.2
+// CHECK:STDOUT:   %.loc13_15: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %C.ref.loc13: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type: type = array_type %int_3, %C [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return
@@ -651,7 +678,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -695,8 +722,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type.2 = binding_pattern a
+// CHECK:STDOUT:     %.loc10_3.1: %array_type.2 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_29.1: %empty_struct_type = struct_literal ()
@@ -714,8 +744,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc10_29.2: init %C = class_init (), %.loc10_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_30.7: init %C = converted %.loc10_29.1, %.loc10_29.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_30.8: init %array_type.2 = array_init (%.loc10_30.3, %.loc10_30.5, %.loc10_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc10_31: init %array_type.2 = converted %.loc10_30.1, %.loc10_30.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc10_31
+// CHECK:STDOUT:   %.loc10_3.2: init %array_type.2 = converted %.loc10_30.1, %.loc10_30.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc10_3.2
+// CHECK:STDOUT:   %.loc10_15: type = splice_block %array_type [template = constants.%array_type.2] {
+// CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type: type = array_type %int_3, %C [template = constants.%array_type.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn]
@@ -869,8 +905,11 @@ fn G() -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %array_type = binding_pattern a
+// CHECK:STDOUT:     %.loc13_3.1: %array_type = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc13_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc13_29.1: %empty_struct_type = struct_literal ()
@@ -888,8 +927,14 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc13_29.2: init %D = class_init (), %.loc13_30.6 [template = constants.%D.val]
 // CHECK:STDOUT:   %.loc13_30.7: init %D = converted %.loc13_29.1, %.loc13_29.2 [template = constants.%D.val]
 // CHECK:STDOUT:   %.loc13_30.8: init %array_type = array_init (%.loc13_30.3, %.loc13_30.5, %.loc13_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc13_31: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc13_31
+// CHECK:STDOUT:   %.loc13_3.2: init %array_type = converted %.loc13_30.1, %.loc13_30.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc13_3.2
+// CHECK:STDOUT:   %.loc13_15: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
+// CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
+// CHECK:STDOUT:     %array_type: type = array_type %int_3, %D [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   return <error> to %return

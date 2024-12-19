@@ -68,8 +68,11 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc16: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %non_tuple.patt: %array_type = binding_pattern non_tuple
+// CHECK:STDOUT:     %.loc18_3.1: %array_type = var_pattern %non_tuple.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %non_tuple.var: ref %array_type = var non_tuple
-// CHECK:STDOUT:   %non_tuple: ref %array_type = bind_name non_tuple, %non_tuple.var
 // CHECK:STDOUT:   %int_5.loc18_30: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %int_5.loc18_33: Core.IntLiteral = int_value 5 [template = constants.%int_5.1]
 // CHECK:STDOUT:   %.loc18_34.1: %tuple.type = tuple_literal (%int_5.loc18_30, %int_5.loc18_33)
@@ -90,13 +93,28 @@ fn Main() {
 // CHECK:STDOUT:   %.loc18_34.6: ref %i32 = array_index %non_tuple.var, %int_1.loc18
 // CHECK:STDOUT:   %.loc18_34.7: init %i32 = initialize_from %.loc18_34.5 to %.loc18_34.6 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %.loc18_34.8: init %array_type = array_init (%.loc18_34.4, %.loc18_34.7) to %non_tuple.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc18_35: init %array_type = converted %.loc18_34.1, %.loc18_34.8 [template = constants.%array]
-// CHECK:STDOUT:   assign %non_tuple.var, %.loc18_35
+// CHECK:STDOUT:   %.loc18_3.2: init %array_type = converted %.loc18_34.1, %.loc18_34.8 [template = constants.%array]
+// CHECK:STDOUT:   assign %non_tuple.var, %.loc18_3.2
+// CHECK:STDOUT:   %.loc18_25: type = splice_block %array_type [template = constants.%array_type] {
+// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
+// CHECK:STDOUT:     %array_type: type = array_type %int_2, %i32 [template = constants.%array_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %non_tuple: ref %array_type = bind_name non_tuple, %non_tuple.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %first.patt: %i32 = binding_pattern first
+// CHECK:STDOUT:     %.loc22_3: %i32 = var_pattern %first.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
-// CHECK:STDOUT:   %first: ref %i32 = bind_name first, %first.var
 // CHECK:STDOUT:   %non_tuple.ref: ref %array_type = name_ref non_tuple, %non_tuple
 // CHECK:STDOUT:   %int_0.loc22: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   assign %first.var, <error>
+// CHECK:STDOUT:   %.loc22_14: type = splice_block %i32.loc22 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %first: ref %i32 = bind_name first, %first.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

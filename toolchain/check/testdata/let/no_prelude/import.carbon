@@ -41,16 +41,23 @@ let b: () = Other.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a = @__global_init.%a
+// CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc4_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_15: %empty_tuple.type = converted %.loc4_14, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc4_15
+// CHECK:STDOUT:   %.loc4: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,16 +74,23 @@ let b: () = Other.a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .a = imports.%import_ref
-// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%import_ref
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,16 +103,23 @@ let b: () = Other.a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a = @__global_init.%a
+// CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc4_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_15: %empty_tuple.type = converted %.loc4_14, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_name a, %.loc4_15
+// CHECK:STDOUT:   %.loc4: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,16 +140,23 @@ let b: () = Other.a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Other = imports.%Other
-// CHECK:STDOUT:     .b = @__global_init.%b
+// CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, imports.%import_ref
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, %a.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

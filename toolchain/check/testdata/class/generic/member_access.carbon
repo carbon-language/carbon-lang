@@ -193,7 +193,11 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness @Class.%struct_type.x (%struct_type.x.1) [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc3: @Class.%Class.elem (%Class.elem.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     %.loc3_8: @Class.%Class.elem (%Class.elem.1) = field_decl x, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc3_3: @Class.%Class.elem (%Class.elem.1) = var_pattern %.loc3_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem.1) = var <invalid>
 // CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.1) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.1)] {
 // CHECK:STDOUT:       %self.patt: @Get.%Class (%Class.1) = binding_pattern self
 // CHECK:STDOUT:       %self.param_patt: @Get.%Class (%Class.1) = value_param_pattern %self.patt, runtime_param0
@@ -233,7 +237,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class.1
-// CHECK:STDOUT:     .x = %.loc3
+// CHECK:STDOUT:     .x = %.loc3_8
 // CHECK:STDOUT:     .Get = %Get.decl
 // CHECK:STDOUT:     .GetAddr = %GetAddr.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
@@ -252,7 +256,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   fn[%self.param_patt: @Get.%Class (%Class.1)]() -> @Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Get.%Class (%Class.1) = name_ref self, %self
-// CHECK:STDOUT:     %x.ref: @Get.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:     %x.ref: @Get.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3_8 [template = @Class.%.loc3_8]
 // CHECK:STDOUT:     %.loc5_42.1: ref @Get.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc5_42.2: @Get.%T (%T) = bind_value %.loc5_42.1
 // CHECK:STDOUT:     return %.loc5_42.2
@@ -275,7 +279,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc7_29.1 (%ptr.1) = name_ref self, %self
 // CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.1) = deref %self.ref
-// CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elem (%Class.elem.1) = name_ref x, @Class.%.loc3_8 [template = @Class.%.loc3_8]
 // CHECK:STDOUT:     %.loc7_54.2: ref @GetAddr.%T (%T) = class_element_access %.loc7_54.1, element0
 // CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc7_38.1 (%ptr.2) = addr_of %.loc7_54.2
 // CHECK:STDOUT:     return %addr
@@ -285,7 +289,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: fn @DirectFieldAccess(%x.param_patt: %Class.2) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc11_10: %Class.2 = name_ref x, %x
-// CHECK:STDOUT:   %x.ref.loc11_11: %Class.elem.2 = name_ref x, @Class.%.loc3 [template = @Class.%.loc3]
+// CHECK:STDOUT:   %x.ref.loc11_11: %Class.elem.2 = name_ref x, @Class.%.loc3_8 [template = @Class.%.loc3_8]
 // CHECK:STDOUT:   %.loc11_11.1: ref %i32 = class_element_access %x.ref.loc11_10, element0
 // CHECK:STDOUT:   %.loc11_11.2: %i32 = bind_value %.loc11_11.1
 // CHECK:STDOUT:   return %.loc11_11.2

@@ -29,7 +29,7 @@ let d: c = {};
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:     .c = %c
-// CHECK:STDOUT:     .d = @__global_init.%d
+// CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
@@ -38,6 +38,15 @@ let d: c = {};
 // CHECK:STDOUT:   %b: type = bind_alias b, %a [template = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %C = binding_pattern d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
+// CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc15_13.2: init %C = class_init (), %.loc15_13.1 [template = constants.%C.val]
+// CHECK:STDOUT:   %.loc15_13.3: ref %C = temporary %.loc15_13.1, %.loc15_13.2
+// CHECK:STDOUT:   %.loc15_13.4: ref %C = converted @__global_init.%.loc15, %.loc15_13.3
+// CHECK:STDOUT:   %d: ref %C = bind_name d, %.loc15_13.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -50,13 +59,7 @@ let d: c = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc15_13.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc15_13.3: init %C = class_init (), %.loc15_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc15_13.4: ref %C = temporary %.loc15_13.2, %.loc15_13.3
-// CHECK:STDOUT:   %.loc15_14.1: ref %C = converted %.loc15_13.1, %.loc15_13.4
-// CHECK:STDOUT:   %.loc15_14.2: %C = bind_value %.loc15_14.1
-// CHECK:STDOUT:   %d: %C = bind_name d, %.loc15_14.2
+// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -76,7 +76,17 @@ var i: IntLiteral();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: Core.IntLiteral = binding_pattern i
+// CHECK:STDOUT:     %.loc6_1: Core.IntLiteral = var_pattern %i.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref Core.IntLiteral = var i
+// CHECK:STDOUT:   %.loc6_19.3: type = splice_block %.loc6_19.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc6_19.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc6_19.2: type = converted %int_literal.make_type, %.loc6_19.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref Core.IntLiteral = bind_name i, %i.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

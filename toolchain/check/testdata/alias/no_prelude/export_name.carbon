@@ -175,7 +175,12 @@ var d: D* = &c;
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %C = binding_pattern d
+// CHECK:STDOUT:     %.loc6: %C = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %C = var d
+// CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %d: ref %C = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,8 +194,8 @@ var d: D* = &c;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc6_13.2: init %C = class_init (), file.%d.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_14: init %C = converted %.loc6_13.1, %.loc6_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%d.var, %.loc6_14
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_13.1, %.loc6_13.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%d.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,8 +215,13 @@ var d: D* = &c;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
+// CHECK:STDOUT:     %.loc9: <error> = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var c
-// CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
+// CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [template = <error>]
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -246,9 +256,22 @@ var d: D* = &c;
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc7: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %ptr.2 = binding_pattern d
+// CHECK:STDOUT:     %.loc8_1: %ptr.2 = var_pattern %d.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %ptr.2 = var d
+// CHECK:STDOUT:   %.loc8_9: type = splice_block %ptr [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %ptr.2 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -262,8 +285,8 @@ var d: D* = &c;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_13.2: init %C = class_init (), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc7_14: init %C = converted %.loc7_13.1, %.loc7_13.2 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7_14
+// CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_13.1, %.loc7_13.2 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
 // CHECK:STDOUT:   %addr: %ptr.2 = addr_of %c.ref
 // CHECK:STDOUT:   assign file.%d.var, %addr

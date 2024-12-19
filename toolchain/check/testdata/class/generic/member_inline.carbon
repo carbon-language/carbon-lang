@@ -124,14 +124,18 @@ class C(T:! type) {
 // CHECK:STDOUT:       %return.param: ref @G.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @G.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc13: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
+// CHECK:STDOUT:     %.loc13_8: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc13_3: @Class.%Class.elem (%Class.elem) = var_pattern %.loc13_8
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .n = %.loc13
+// CHECK:STDOUT:     .n = %.loc13_8
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -161,7 +165,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   fn[%self.param_patt: @G.%Class (%Class)]() -> @G.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @G.%Class (%Class) = name_ref self, %self
-// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc13 [template = @Class.%.loc13]
+// CHECK:STDOUT:     %n.ref: @G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc13_8 [template = @Class.%.loc13_8]
 // CHECK:STDOUT:     %.loc10_16.1: ref @G.%T (%T) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc10_16.2: @G.%T (%T) = bind_value %.loc10_16.1
 // CHECK:STDOUT:     return %.loc10_16.2
@@ -247,13 +251,17 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {} {}
-// CHECK:STDOUT:     %.loc11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
+// CHECK:STDOUT:     %.loc11_11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
+// CHECK:STDOUT:     name_binding_decl {
+// CHECK:STDOUT:       %.loc11_3: @C.%C.elem (%C.elem) = var_pattern %.loc11_11
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .data = %.loc11
+// CHECK:STDOUT:     .data = %.loc11_11
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -266,7 +274,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11 [template = @C.%.loc11]
+// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11_11 [template = @C.%.loc11_11]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

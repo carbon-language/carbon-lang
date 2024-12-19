@@ -81,26 +81,42 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %.loc12: %Inner.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   %.loc12_8: %Inner.elem = field_decl a, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc12_3: %Inner.elem = var_pattern %.loc12_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc12: ref %Inner.elem = var <invalid>
+// CHECK:STDOUT:   %.loc13_8: %Inner.elem = field_decl b, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc13_3: %Inner.elem = var_pattern %.loc13_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc13: ref %Inner.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .b = %.loc13
+// CHECK:STDOUT:   .a = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc13_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %.loc19: %Outer.elem = field_decl c, element0 [template]
-// CHECK:STDOUT:   %.loc20: %Outer.elem = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc19_8: %Outer.elem = field_decl c, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc19_3: %Outer.elem = var_pattern %.loc19_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc19: ref %Outer.elem = var <invalid>
+// CHECK:STDOUT:   %.loc20_8: %Outer.elem = field_decl d, element1 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc20_3: %Outer.elem = var_pattern %.loc20_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var.loc20: ref %Outer.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.1 [template = constants.%complete_type.4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
-// CHECK:STDOUT:   .c = %.loc19
-// CHECK:STDOUT:   .d = %.loc20
+// CHECK:STDOUT:   .c = %.loc19_8
+// CHECK:STDOUT:   .d = %.loc20_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

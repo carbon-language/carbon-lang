@@ -44,6 +44,7 @@ fn F() {
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.1 = struct_value (%int_1.2, %int_2.2) [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int_1.2, %int_2.2) [template]
@@ -70,8 +71,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %struct_type.a.b.1 = binding_pattern s
+// CHECK:STDOUT:     %.loc12_3.1: %struct_type.a.b.1 = var_pattern %s.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %struct_type.a.b.1 = var s
-// CHECK:STDOUT:   %s: ref %struct_type.a.b.1 = bind_name s, %s.var
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2.loc12: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc12_46.1: %struct_type.a.b.2 = struct_literal (%int_1.loc12, %int_2.loc12)
@@ -90,27 +94,68 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_46.6: ref %i32 = struct_access %s.var, element1
 // CHECK:STDOUT:   %.loc12_46.7: init %i32 = initialize_from %.loc12_46.5 to %.loc12_46.6 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc12_46.8: init %struct_type.a.b.1 = struct_init (%.loc12_46.4, %.loc12_46.7) to %s.var [template = constants.%struct]
-// CHECK:STDOUT:   %.loc12_47: init %struct_type.a.b.1 = converted %.loc12_46.1, %.loc12_46.8 [template = constants.%struct]
-// CHECK:STDOUT:   assign %s.var, %.loc12_47
+// CHECK:STDOUT:   %.loc12_3.2: init %struct_type.a.b.1 = converted %.loc12_46.1, %.loc12_46.8 [template = constants.%struct]
+// CHECK:STDOUT:   assign %s.var, %.loc12_3.2
+// CHECK:STDOUT:   %.loc12_27: type = splice_block %struct_type.a.b.loc12 [template = constants.%struct_type.a.b.1] {
+// CHECK:STDOUT:     %int_32.loc12_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc12_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b.loc12: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: ref %struct_type.a.b.1 = bind_name s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
+// CHECK:STDOUT:     %.loc14_3: %ptr.1 = var_pattern %p.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.1 = var p
-// CHECK:STDOUT:   %p: ref %ptr.1 = bind_name p, %p.var
 // CHECK:STDOUT:   %s.ref.loc14: ref %struct_type.a.b.1 = name_ref s, %s
 // CHECK:STDOUT:   %addr.loc14: %ptr.1 = addr_of %s.ref.loc14
 // CHECK:STDOUT:   assign %p.var, %addr.loc14
+// CHECK:STDOUT:   %.loc14_28: type = splice_block %ptr.loc14 [template = constants.%ptr.1] {
+// CHECK:STDOUT:     %int_32.loc14_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc14_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b.loc14: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b.1]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %struct_type.a.b.1 [template = constants.%ptr.1]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %p: ref %ptr.1 = bind_name p, %p.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %q.patt: %ptr.2 = binding_pattern q
+// CHECK:STDOUT:     %.loc15_3: %ptr.2 = var_pattern %q.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q.var: ref %ptr.2 = var q
-// CHECK:STDOUT:   %q: ref %ptr.2 = bind_name q, %q.var
 // CHECK:STDOUT:   %s.ref.loc15: ref %struct_type.a.b.1 = name_ref s, %s
-// CHECK:STDOUT:   %.loc15: ref %i32 = struct_access %s.ref.loc15, element0
-// CHECK:STDOUT:   %addr.loc15: %ptr.2 = addr_of %.loc15
+// CHECK:STDOUT:   %.loc15_19: ref %i32 = struct_access %s.ref.loc15, element0
+// CHECK:STDOUT:   %addr.loc15: %ptr.2 = addr_of %.loc15_19
 // CHECK:STDOUT:   assign %q.var, %addr.loc15
+// CHECK:STDOUT:   %.loc15_13: type = splice_block %ptr.loc15 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc15: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %q: ref %ptr.2 = bind_name q, %q.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %r.patt: %ptr.2 = binding_pattern r
+// CHECK:STDOUT:     %.loc16_3: %ptr.2 = var_pattern %r.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r.var: ref %ptr.2 = var r
-// CHECK:STDOUT:   %r: ref %ptr.2 = bind_name r, %r.var
 // CHECK:STDOUT:   %s.ref.loc16: ref %struct_type.a.b.1 = name_ref s, %s
-// CHECK:STDOUT:   %.loc16: ref %i32 = struct_access %s.ref.loc16, element1
-// CHECK:STDOUT:   %addr.loc16: %ptr.2 = addr_of %.loc16
+// CHECK:STDOUT:   %.loc16_19: ref %i32 = struct_access %s.ref.loc16, element1
+// CHECK:STDOUT:   %addr.loc16: %ptr.2 = addr_of %.loc16_19
 // CHECK:STDOUT:   assign %r.var, %addr.loc16
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %ptr.loc16 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %r: ref %ptr.2 = bind_name r, %r.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t.patt: %tuple.type.2 = binding_pattern t
+// CHECK:STDOUT:     %.loc18_3.1: %tuple.type.2 = var_pattern %t.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %tuple.type.2 = var t
-// CHECK:STDOUT:   %t: ref %tuple.type.2 = bind_name t, %t.var
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_2.loc18: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc18_28.1: %tuple.type.3 = tuple_literal (%int_1.loc18, %int_2.loc18)
@@ -129,22 +174,49 @@ fn F() {
 // CHECK:STDOUT:   %tuple.elem1.loc18: ref %i32 = tuple_access %t.var, element1
 // CHECK:STDOUT:   %.loc18_28.5: init %i32 = initialize_from %.loc18_28.4 to %tuple.elem1.loc18 [template = constants.%int_2.2]
 // CHECK:STDOUT:   %.loc18_28.6: init %tuple.type.2 = tuple_init (%.loc18_28.3, %.loc18_28.5) to %t.var [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc18_29: init %tuple.type.2 = converted %.loc18_28.1, %.loc18_28.6 [template = constants.%tuple]
-// CHECK:STDOUT:   assign %t.var, %.loc18_29
+// CHECK:STDOUT:   %.loc18_3.2: init %tuple.type.2 = converted %.loc18_28.1, %.loc18_28.6 [template = constants.%tuple]
+// CHECK:STDOUT:   assign %t.var, %.loc18_3.2
+// CHECK:STDOUT:   %.loc18_19.3: type = splice_block %.loc18_19.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %int_32.loc18_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc18_19.1: %tuple.type.1 = tuple_literal (%i32.loc18_11, %i32.loc18_16)
+// CHECK:STDOUT:     %.loc18_19.2: type = converted %.loc18_19.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %t: ref %tuple.type.2 = bind_name t, %t.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t0.patt: %ptr.2 = binding_pattern t0
+// CHECK:STDOUT:     %.loc19_3: %ptr.2 = var_pattern %t0.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0.var: ref %ptr.2 = var t0
-// CHECK:STDOUT:   %t0: ref %ptr.2 = bind_name t0, %t0.var
 // CHECK:STDOUT:   %t.ref.loc19: ref %tuple.type.2 = name_ref t, %t
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0.loc19: ref %i32 = tuple_access %t.ref.loc19, element0
 // CHECK:STDOUT:   %addr.loc19: %ptr.2 = addr_of %tuple.elem0.loc19
 // CHECK:STDOUT:   assign %t0.var, %addr.loc19
+// CHECK:STDOUT:   %.loc19_14: type = splice_block %ptr.loc19 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %t0: ref %ptr.2 = bind_name t0, %t0.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %t1.patt: %ptr.2 = binding_pattern t1
+// CHECK:STDOUT:     %.loc20_3: %ptr.2 = var_pattern %t1.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1.var: ref %ptr.2 = var t1
-// CHECK:STDOUT:   %t1: ref %ptr.2 = bind_name t1, %t1.var
 // CHECK:STDOUT:   %t.ref.loc20: ref %tuple.type.2 = name_ref t, %t
 // CHECK:STDOUT:   %int_1.loc20: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %tuple.elem1.loc20: ref %i32 = tuple_access %t.ref.loc20, element1
 // CHECK:STDOUT:   %addr.loc20: %ptr.2 = addr_of %tuple.elem1.loc20
 // CHECK:STDOUT:   assign %t1.var, %addr.loc20
+// CHECK:STDOUT:   %.loc20_14: type = splice_block %ptr.loc20 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr.loc20: type = ptr_type %i32 [template = constants.%ptr.2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %t1: ref %ptr.2 = bind_name t1, %t1.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -179,6 +179,7 @@ auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
   // TODO: Instead use a separate parse node kind for an identifier that's
   // followed by a pattern, and push a pattern block when handling it.
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 

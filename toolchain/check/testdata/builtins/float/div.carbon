@@ -85,8 +85,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     .Div = %Div.decl
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:     .a = %a
-// CHECK:STDOUT:     .b = @__global_init.%b
-// CHECK:STDOUT:     .c = @__global_init.%c
+// CHECK:STDOUT:     .b = %b
+// CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Div.decl: %Div.type = fn_decl @Div [template = constants.%Div] {
@@ -151,8 +151,42 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:     %return.param: ref f64 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: f64 = binding_pattern a
+// CHECK:STDOUT:     %.loc8_1: f64 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref f64 = var a
+// CHECK:STDOUT:   %.loc8_8.3: type = splice_block %.loc8_8.2 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc8: init type = call constants.%Float(%int_64.loc8) [template = f64]
+// CHECK:STDOUT:     %.loc8_8.1: type = value_of_initializer %float.make_type.loc8 [template = f64]
+// CHECK:STDOUT:     %.loc8_8.2: type = converted %float.make_type.loc8, %.loc8_8.1 [template = f64]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref f64 = bind_name a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: f64 = binding_pattern b
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9_8.3: type = splice_block %.loc9_8.2 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc9: init type = call constants.%Float(%int_64.loc9) [template = f64]
+// CHECK:STDOUT:     %.loc9_8.1: type = value_of_initializer %float.make_type.loc9 [template = f64]
+// CHECK:STDOUT:     %.loc9_8.2: type = converted %float.make_type.loc9, %.loc9_8.1 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9_26.1: ref f64 = temporary_storage
+// CHECK:STDOUT:   %.loc9_26.2: ref f64 = temporary %.loc9_26.1, @__global_init.%float.div.loc9
+// CHECK:STDOUT:   %b: ref f64 = bind_name b, %.loc9_26.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: f64 = binding_pattern c
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10_8.3: type = splice_block %.loc10_8.2 [template = f64] {
+// CHECK:STDOUT:     %int_64.loc10: Core.IntLiteral = int_value 64 [template = constants.%int_64]
+// CHECK:STDOUT:     %float.make_type.loc10: init type = call constants.%Float(%int_64.loc10) [template = f64]
+// CHECK:STDOUT:     %.loc10_8.1: type = value_of_initializer %float.make_type.loc10 [template = f64]
+// CHECK:STDOUT:     %.loc10_8.2: type = converted %float.make_type.loc10, %.loc10_8.1 [template = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10_26.1: ref f64 = temporary_storage
+// CHECK:STDOUT:   %.loc10_26.2: ref f64 = temporary %.loc10_26.1, @__global_init.%float.div.loc10
+// CHECK:STDOUT:   %c: ref f64 = bind_name c, %.loc10_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Div(%a.param_patt: f64, %b.param_patt: f64) -> f64 = "float.div";
@@ -179,16 +213,10 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %float.loc9_18: f64 = float_literal 1 [template = constants.%float.4]
 // CHECK:STDOUT:   %float.loc9_23: f64 = float_literal 0 [template = constants.%float.5]
 // CHECK:STDOUT:   %float.div.loc9: init f64 = call %Div.ref.loc9(%float.loc9_18, %float.loc9_23) [template = constants.%float.6]
-// CHECK:STDOUT:   %.loc9_27.1: f64 = value_of_initializer %float.div.loc9 [template = constants.%float.6]
-// CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%float.6]
-// CHECK:STDOUT:   %b: f64 = bind_name b, %.loc9_27.2
 // CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %float.loc10_18: f64 = float_literal 0 [template = constants.%float.5]
 // CHECK:STDOUT:   %float.loc10_23: f64 = float_literal 0 [template = constants.%float.5]
 // CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%float.loc10_18, %float.loc10_23) [template = constants.%float.7]
-// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%float.7]
-// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%float.7]
-// CHECK:STDOUT:   %c: f64 = bind_name c, %.loc10_27.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

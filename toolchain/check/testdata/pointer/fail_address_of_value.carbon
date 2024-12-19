@@ -194,9 +194,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %param.param_patt: %i32 = value_param_pattern %param.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc95: type = splice_block %i32 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc95: type = splice_block %i32.loc95 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc95: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc95: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %i32 = bind_name param, %param.param
 // CHECK:STDOUT:   }
@@ -287,11 +287,20 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfParam(%param.param_patt: %i32) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %param_addr.patt: %ptr.7 = binding_pattern param_addr
+// CHECK:STDOUT:     %.loc99_3: %ptr.7 = var_pattern %param_addr.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.7 = var param_addr
-// CHECK:STDOUT:   %param_addr: ref %ptr.7 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param
 // CHECK:STDOUT:   %addr: %ptr.7 = addr_of <error> [template = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %addr
+// CHECK:STDOUT:   %.loc99_22: type = splice_block %ptr [template = constants.%ptr.7] {
+// CHECK:STDOUT:     %int_32.loc99: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc99: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr.7]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %param_addr: ref %ptr.7 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -209,12 +209,16 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %.loc5_3: %C.elem = var_pattern %.loc5_8
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5
+// CHECK:STDOUT:   .x = %.loc5_8
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -386,6 +390,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, loc5_8, unloaded
@@ -397,7 +402,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -416,8 +429,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -439,6 +452,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_import_copy
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, loc5_8, unloaded
@@ -450,7 +464,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc7_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc7_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,8 +491,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7_27
+// CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -492,6 +514,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_import
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//base, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//base, loc5_8, unloaded
@@ -503,7 +526,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -522,8 +553,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -543,6 +574,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst21 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst22 [indirect], unloaded
@@ -554,7 +586,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -573,8 +613,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -595,6 +635,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name
 // CHECK:STDOUT:     import Other//export_name_copy
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst21 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst22 [indirect], unloaded
@@ -606,7 +647,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc7_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc7_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -625,8 +674,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc7_27: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc7_27
+// CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,6 +695,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     .C = %import_ref.1
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name_indirect, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name_indirect, inst20 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name_indirect, inst21 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name_indirect, inst22 [indirect], unloaded
@@ -657,7 +707,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc6_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc6_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -676,8 +734,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc6_27: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc6_27
+// CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -703,6 +761,7 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//export_name_indirect
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: type = import_ref Other//export_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//export_name, inst20 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//export_name, inst21 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.4 = import_ref Other//export_name, inst22 [indirect], unloaded
@@ -714,7 +773,15 @@ alias C = Other.C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import = import Other
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %C = binding_pattern c
+// CHECK:STDOUT:     %.loc11_1: %C = var_pattern %c.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var c
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %C.ref [template = constants.%C] {
+// CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -733,8 +800,8 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () to %.loc11_26.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.3: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.4: init %C = class_init (%.loc11_26.3), file.%c.var [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc11_27: init %C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%C.val]
-// CHECK:STDOUT:   assign file.%c.var, %.loc11_27
+// CHECK:STDOUT:   %.loc11_1: init %C = converted %.loc11_26.1, %.loc11_26.4 [template = constants.%C.val]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

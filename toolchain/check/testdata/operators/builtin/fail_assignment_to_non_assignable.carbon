@@ -161,15 +161,23 @@ fn Main() {
 // CHECK:STDOUT:   assign %.loc28_8.1, %.loc28_10
 // CHECK:STDOUT:   %tuple.loc28: %tuple.type.1 = tuple_value (%int_1.loc28, %int_2.loc28) [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc28_8.2: %tuple.type.1 = converted %.loc28_8.1, %tuple.loc28 [template = constants.%tuple.2]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
+// CHECK:STDOUT:     %.loc29_3.1: %i32 = var_pattern %n.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var n
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %impl.elem0.loc29: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc29: <bound method> = bound_method %int_0, %impl.elem0.loc29 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc29: <specific function> = specific_function %Convert.bound.loc29, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc29: init %i32 = call %Convert.specific_fn.loc29(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:   %.loc29: init %i32 = converted %int_0, %int.convert_checked.loc29 [template = constants.%int_0.2]
-// CHECK:STDOUT:   assign %n.var, %.loc29
+// CHECK:STDOUT:   %.loc29_3.2: init %i32 = converted %int_0, %int.convert_checked.loc29 [template = constants.%int_0.2]
+// CHECK:STDOUT:   assign %n.var, %.loc29_3.2
+// CHECK:STDOUT:   %.loc29_10: type = splice_block %i32.loc29 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc29: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc29: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
 // CHECK:STDOUT:   %n.ref.loc34_4: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %n.ref.loc34_7: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc34_8.1: %tuple.type.2 = tuple_literal (%n.ref.loc34_4, %n.ref.loc34_7)
@@ -252,7 +260,15 @@ fn Main() {
 // CHECK:STDOUT:   %int.convert_checked.loc49_27: init %i32 = call %Convert.specific_fn.loc49_27(%int_3.loc49) [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc49_27: init %i32 = converted %int_3.loc49, %int.convert_checked.loc49_27 [template = constants.%int_3.2]
 // CHECK:STDOUT:   assign %.loc49_4, %.loc49_27
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %.loc52_3: %i32 = var_pattern %a.patt
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var a
+// CHECK:STDOUT:   %.loc52_10: type = splice_block %i32.loc52 [template = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc52: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc52: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
 // CHECK:STDOUT:   %true.loc56: bool = bool_literal true [template = constants.%true]
 // CHECK:STDOUT:   if %true.loc56 br !if.expr.then.loc56 else br !if.expr.else.loc56
