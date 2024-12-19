@@ -26,7 +26,7 @@ class Wordsearch {
   }
 
   fn At[self: Self](x: i32, y: i32) -> i32 {
-    return if x < 0 or x >= 140 or y < 0 or y >= 140 then -(1 as i32) else self.grid[x][y];
+    return if x < 0 or x >= 140 or y < 0 or y >= 140 then -1 else self.grid[x][y];
   }
 
   // TODO: Make this generic in the length of the search query.

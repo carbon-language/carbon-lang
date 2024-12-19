@@ -18,9 +18,9 @@ fn Run() {
     var x: i32 = 1;
     while (x < 139) {
       if ((search.Check3(mas, x - 1, y - 1, 1, 1) or
-           search.Check3(mas, x + 1, y + 1, -(1 as i32), -(1 as i32))) and
-          (search.Check3(mas, x - 1, y + 1, 1, -(1 as i32)) or
-           search.Check3(mas, x + 1, y - 1, -(1 as i32), 1))) {
+           search.Check3(mas, x + 1, y + 1, -1, -1)) and
+          (search.Check3(mas, x - 1, y + 1, 1, -1) or
+           search.Check3(mas, x + 1, y - 1, -1, 1))) {
         ++found;
       }
       ++x;

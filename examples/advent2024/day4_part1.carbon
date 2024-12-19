@@ -17,9 +17,9 @@ fn Run() {
   while (y < 140) {
     var x: i32 = 0;
     while (x < 140) {
-      var dy: i32 = -(1 as i32);
+      var dy: i32 = -1;
       while (dy <= 1) {
-        var dx: i32 = -(1 as i32);
+        var dx: i32 = -1;
         while (dx <= 1) {
           if (search.Check4(xmas, x, y, dx, dy)) {
             ++found;
