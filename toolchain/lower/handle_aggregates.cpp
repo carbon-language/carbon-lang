@@ -130,6 +130,12 @@ static auto EmitAggregateInitializer(FunctionContext& context,
       // Finish initialization of constant fields. We will have skipped this
       // when emitting the initializers because they have constant values.
       //
+      // TODO: This emits the initializers for constant fields after all
+      // initialization of non-constant fields. This may be observable in some
+      // ways such as under a debugger in a debug build. It would be preferable
+      // to initialize the constant portions of the aggregate first, but this
+      // will likely need a change to the SemIR representation.
+      //
       // TODO: If most of the bytes of the result have known constant values,
       // it'd be nice to emit a memcpy from a constant followed by the
       // non-constant initialization.
