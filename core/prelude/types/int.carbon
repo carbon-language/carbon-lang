@@ -111,13 +111,6 @@ impl i32 as AddAssign {
   }
 }
 
-// impl forall [N:! IntLiteral()] Int(N) as Inc {
-impl i32 as Inc {
-  fn Op[addr self: Self*]() {
-    *self += 1;
-  }
-}
-
 // impl forall [N:! IntLiteral()] Int(N) as BitAndAssign {
 impl i32 as BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
@@ -178,6 +171,15 @@ impl i32 as RightShiftAssign {
 impl i32 as SubAssign {
   fn Op[addr self: Self*](other: Self) {
     *self = *self - other;
+  }
+}
+
+// Increment and decrement.
+
+// impl forall [N:! IntLiteral()] Int(N) as Inc {
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self += 1;
   }
 }
 
