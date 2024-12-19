@@ -95,8 +95,6 @@ cc_library(
 cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
-    # Contains Dump methods without a forward declaration.
-    copts = ["-Wno-missing-prototypes"],
     deps = [
         ":context",
         "//common:check",

@@ -65,9 +65,6 @@ WarningsAsErrors: '*'
 # - '-google-readability-function-size'
 # # Suggests usernames on TODOs, which we don't want.
 # - '-google-readability-todo'
-# # Even with `IgnoreClassesWithAllMemberVariablesBeingPublic` to allow structs,
-# # we use `protected` members in too many tests.
-# - '-misc-non-private-member-variables-in-classes'
 # # Overlaps with `-Wno-missing-prototypes`.
 # - '-misc-use-internal-linkage'
 # # Suggests `std::array`, which we could migrate to, but conflicts with the
@@ -110,13 +107,17 @@ Checks:
   -bugprone-macro-parentheses, -bugprone-narrowing-conversions,
   -bugprone-switch-missing-default-case, -bugprone-unchecked-optional-access,
   -google-readability-function-size, -google-readability-todo,
-  -misc-non-private-member-variables-in-classes, -misc-use-internal-linkage,
-  -modernize-avoid-c-arrays, -modernize-use-designated-initializers,
-  -modernize-use-nodiscard, -performance-unnecessary-value-param,
-  -readability-enum-initial-value, -readability-function-cognitive-complexity,
-  -readability-magic-numbers, -readability-redundant-member-init,
-  -readability-suspicious-call-argument
+  -misc-use-internal-linkage, -modernize-avoid-c-arrays,
+  -modernize-use-designated-initializers, -modernize-use-nodiscard,
+  -performance-unnecessary-value-param, -readability-enum-initial-value,
+  -readability-function-cognitive-complexity, -readability-magic-numbers,
+  -readability-redundant-member-init, -readability-suspicious-call-argument
 CheckOptions:
+  # Don't warn on structs; done by ignoring when there are only public members.
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+
+  # CamelCase names.
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.ClassConstantCase
@@ -135,14 +136,20 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.UnionCase
     value: CamelCase
+
+  # lower_case names.
   - key: readability-identifier-naming.ClassMemberCase
     value: lower_case
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase
     value: lower_case
+
+  # TODO: This is for explorer's use of LLVM casting support, so we should be
+  # able to remove it once explorer is deleted.
   - key: readability-identifier-naming.MethodIgnoredRegexp
     value: '^classof$'
+
   # This erroneously fires in C++20 mode with LLVM 16 clang-tidy, due to:
   # https://github.com/llvm/llvm-project/issues/46097
   - key: readability-identifier-naming.TemplateParameterIgnoredRegexp

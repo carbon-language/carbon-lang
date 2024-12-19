@@ -6,31 +6,46 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-Currently only contains basic syntax highlighting.
+## Tool setup
 
-## Releases
+NodeJS is required to build the extension. You will also need to install `vsce`:
 
-This assumes NodeJS is installed, along with `vsce` (using
-`npm install -g vsce`).
+```
+npm install -g vsce
+```
 
-1.  `npm install && vsce publish`
+## Common operations
 
-## Local installation
+-   Build and install:
 
-This assumes NodeJS is installed, along with `vsce` (using
-`npm install -g vsce`).
+    -   Locally:
 
-1.  `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
-    -   This installs dependencies, builds the VSIX file, and prints the path
-        for installation.
-2.  Install the plugin:
-    -   If you're using VS Code locally, run
-        `npm install && vsce package -o carbon.vsix && code --install-extension carbon.vsix`
-    -   If you're using VS Code's remote mode:
-        1.  In vscode, open the
-            [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)
-            and select "Extensions: Install from VSIX...".
-        2.  Enter the path printed by the above command.
+        ```
+        npm install && vsce package -o carbon.vsix && code --install-extension carbon.vsix
+        ```
+
+    -   From a remote SSH host using VS Code Server:
+
+        ```
+        npm install && vsce package -o carbon.vsix && ~/.vscode-server/cli/servers/Stable-*/server/bin/code-server --install-extension carbon.vsix
+        ```
+
+    -   Using the UI:
+
+        1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
+            - This installs dependencies, builds the VSIX file, and prints the
+              path.
+        2. Open the
+           [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette)
+           and select "Extensions: Install from VSIX...".
+        3. Enter the path printed by the above command.
+
+-   Build and publish the release using the website:
+
+    1. `npm install && vsce package -o carbon.vsix && realpath carbon.vsix`
+    2. Go to https://marketplace.visualstudio.com/manage/publishers/carbon-lang
+    3. Next to the extension name, click the "..." and select "Update".
+    4. Select the `carbon.vsix` file.
 
 ## Development
 
