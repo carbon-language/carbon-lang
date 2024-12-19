@@ -339,7 +339,7 @@ class NodeStack {
   auto empty() const -> bool { return stack_.empty(); }
   auto size() const -> size_t { return stack_.size(); }
 
- protected:
+ private:
   // An ID that can be associated with a parse node.
   //
   // Each parse node kind has a corresponding Id::Kind indicating which kind of

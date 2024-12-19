@@ -33,6 +33,9 @@ auto DeclNameStack::NameContext::prev_inst_id() -> SemIR::InstId {
     case NameContext::State::Unresolved:
       return SemIR::InstId::Invalid;
 
+    case NameContext::State::Poisoned:
+      return SemIR::InstId::PoisonedName;
+
     case NameContext::State::Finished:
       CARBON_FATAL("Finished state should only be used internally");
   }
@@ -167,12 +170,15 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
   }
 }
 
-auto DeclNameStack::AddNameOrDiagnoseDuplicate(NameContext name_context,
-                                               SemIR::InstId target_id,
-                                               SemIR::AccessKind access_kind)
-    -> void {
+auto DeclNameStack::AddNameOrDiagnose(NameContext name_context,
+                                      SemIR::InstId target_id,
+                                      SemIR::AccessKind access_kind) -> void {
   if (auto id = name_context.prev_inst_id(); id.is_valid()) {
-    context_->DiagnoseDuplicateName(target_id, id);
+    if (id.is_poisoned()) {
+      context_->DiagnosePoisonedName(target_id);
+    } else {
+      context_->DiagnoseDuplicateName(target_id, id);
+    }
   } else {
     AddName(name_context, target_id, access_kind);
   }
@@ -260,6 +266,9 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
     // Invalid indicates an unresolved name. Store it and return.
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Unresolved;
+  } else if (resolved_inst_id.is_poisoned()) {
+    name_context.unresolved_name_id = name_id;
+    name_context.state = NameContext::State::Poisoned;
   } else {
     // Store the resolved instruction and continue for the target scope
     // update.
@@ -277,8 +286,14 @@ static auto CheckQualifierIsResolved(
       CARBON_FATAL("No qualifier to resolve");
 
     case DeclNameStack::NameContext::State::Resolved:
+      if (name_context.resolved_inst_id.is_poisoned()) {
+        context.DiagnoseNameNotFound(name_context.loc_id,
+                                     name_context.unresolved_name_id);
+        return false;
+      }
       return true;
 
+    case DeclNameStack::NameContext::State::Poisoned:
     case DeclNameStack::NameContext::State::Unresolved:
       // Because more qualifiers were found, we diagnose that the earlier
       // qualifier failed to resolve.
@@ -364,6 +379,10 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
       SemIR::NameScopeId::Invalid, SemIR::SpecificId::Invalid};
 
   if (!CheckQualifierIsResolved(*context_, name_context)) {
+    return InvalidResult;
+  }
+
+  if (name_context.resolved_inst_id.is_poisoned()) {
     return InvalidResult;
   }
 

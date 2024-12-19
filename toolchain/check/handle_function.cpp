@@ -123,6 +123,11 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
+  if (prev_id.is_poisoned()) {
+    context.DiagnosePoisonedName(function_info.latest_decl_id());
+    return;
+  }
+
   auto prev_function_id = SemIR::FunctionId::Invalid;
   auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {

@@ -21,7 +21,7 @@ fn F() {
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
+  // CHECK:STDERR: fail_base_misplaced.carbon:[[@LINE+3]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   extend base: B;
   // CHECK:STDERR:   ^~~~~~
   extend base: B;

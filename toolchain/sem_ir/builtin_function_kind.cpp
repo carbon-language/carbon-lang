@@ -372,6 +372,14 @@ constexpr BuiltinInfo FloatGreater = {
 constexpr BuiltinInfo FloatGreaterEq = {
     "float.greater_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
 
+// "bool.eq": bool equality comparison.
+constexpr BuiltinInfo BoolEq = {"bool.eq",
+                                ValidateSignature<auto(Bool, Bool)->Bool>};
+
+// "bool.neq": bool non-equality comparison.
+constexpr BuiltinInfo BoolNeq = {"bool.neq",
+                                 ValidateSignature<auto(Bool, Bool)->Bool>};
+
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {

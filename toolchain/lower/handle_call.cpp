@@ -18,8 +18,10 @@ static auto GetBuiltinICmpPredicate(SemIR::BuiltinFunctionKind builtin_kind,
     -> llvm::CmpInst::Predicate {
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntEq:
+    case SemIR::BuiltinFunctionKind::BoolEq:
       return llvm::CmpInst::ICMP_EQ;
     case SemIR::BuiltinFunctionKind::IntNeq:
+    case SemIR::BuiltinFunctionKind::BoolNeq:
       return llvm::CmpInst::ICMP_NE;
     case SemIR::BuiltinFunctionKind::IntLess:
       return is_signed ? llvm::CmpInst::ICMP_SLT : llvm::CmpInst::ICMP_ULT;
@@ -263,7 +265,9 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLess:
     case SemIR::BuiltinFunctionKind::IntLessEq:
     case SemIR::BuiltinFunctionKind::IntGreater:
-    case SemIR::BuiltinFunctionKind::IntGreaterEq: {
+    case SemIR::BuiltinFunctionKind::IntGreaterEq:
+    case SemIR::BuiltinFunctionKind::BoolEq:
+    case SemIR::BuiltinFunctionKind::BoolNeq: {
       context.SetLocal(
           inst_id,
           context.builder().CreateICmp(
