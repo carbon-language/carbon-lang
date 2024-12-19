@@ -176,16 +176,16 @@ impl i32 as SubAssign {
 
 // Increment and decrement.
 
-// impl forall [N:! IntLiteral()] Int(N) as Inc {
-impl i32 as Inc {
-  fn Op[addr self: Self*]() {
-    *self += 1;
-  }
-}
-
 // impl forall [N:! IntLiteral()] Int(N) as Dec {
 impl i32 as Dec {
   fn Op[addr self: Self*]() {
     *self -= 1;
+  }
+}
+
+// impl forall [N:! IntLiteral()] Int(N) as Inc {
+impl i32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self += 1;
   }
 }

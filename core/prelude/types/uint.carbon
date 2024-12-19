@@ -176,16 +176,16 @@ impl u32 as SubAssign {
 
 // Increment and decrement.
 
-// impl forall [N:! IntLiteral()] UInt(N) as Inc {
-impl u32 as Inc {
-  fn Op[addr self: Self*]() {
-    *self += 1;
-  }
-}
-
 // impl forall [N:! IntLiteral()] UInt(N) as Dec {
 impl u32 as Dec {
   fn Op[addr self: Self*]() {
     *self -= 1;
+  }
+}
+
+// impl forall [N:! IntLiteral()] UInt(N) as Inc {
+impl u32 as Inc {
+  fn Op[addr self: Self*]() {
+    *self += 1;
   }
 }
