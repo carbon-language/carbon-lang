@@ -137,9 +137,11 @@ class FormatterImpl {
 
   // Adds a new chunk to the output. Does not flush existing output, so should
   // only be called if there is no buffered output.
-  auto AddChunkNoFlush(bool include_in_output) -> size_t {
+  auto AddChunkNoFlush(bool /* FIXME include_in_output */) -> size_t {
     CARBON_CHECK(buffer_.empty());
-    output_chunks_.push_back({.include_in_output = include_in_output});
+    // FIXME    output_chunks_.push_back({.include_in_output =
+    // include_in_output});
+    output_chunks_.push_back({.include_in_output = true});
     return output_chunks_.size() - 1;
   }
 
