@@ -60,19 +60,22 @@ class NameScope : public Printable<NameScope> {
     return lookup.value();
   }
 
-  // Adds a new name known to not exist. Must not be poisoned.
+  // Adds a new name known to not exist. The new entry may not be poisoned. This
+  // is allowed even if the name has already been poisoned.
   auto AddRequired(Entry name_entry) -> void;
 
   // If the given name already exists, return true with the EntryId; the entry
   // might be poisoned. Otherwise, adds the name using inst_id and access_kind
   // and returns false with the new EntryId.
   //
-  // This cannot be used to add poisoned entries; use AddPoison instead.
+  // This cannot be used to add poisoned entries; use LookupOrPoison instead.
   auto LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
                    AccessKind access_kind) -> std::pair<bool, EntryId>;
 
-  // Adds a new poisoned name.
-  auto AddPoison(NameId name_id) -> void;
+  // Searches for the given name and returns an EntryId if found or nullopt if
+  // not. If the name is not found, it will be poisoned so it can't be declared
+  // later.
+  auto LookupOrPoison(NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {
     return extended_scopes_;

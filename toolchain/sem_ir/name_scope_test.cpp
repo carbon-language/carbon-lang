@@ -155,7 +155,7 @@ TEST(NameScope, Poison) {
   NameScope name_scope(scope_inst_id, scope_name_id, parent_scope_id);
 
   NameId poison1(++id);
-  name_scope.AddPoison(poison1);
+  EXPECT_EQ(name_scope.LookupOrPoison(poison1), std::nullopt);
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(
                   NameScope::Entry({.name_id = poison1,
@@ -163,7 +163,7 @@ TEST(NameScope, Poison) {
                                     .access_kind = AccessKind::Public}))));
 
   NameId poison2(++id);
-  name_scope.AddPoison(poison2);
+  EXPECT_EQ(name_scope.LookupOrPoison(poison2), std::nullopt);
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(NameScope::Entry(
                               {.name_id = poison1,

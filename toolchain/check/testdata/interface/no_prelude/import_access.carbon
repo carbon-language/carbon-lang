@@ -98,15 +98,20 @@ import Test library "forward_with_def";
 fn F(i: Test.ForwardWithDef) {}
 
 // --- fail_todo_forward.impl.carbon
+// CHECK:STDERR: fail_todo_forward.impl.carbon: error: name used before it was declared [NameUseBeforeDecl]
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
+fn F(i: Forward*) {}
+
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+8]]:1: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR: interface Forward {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE-6]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
-fn F(i: Forward*) {}
-
 interface Forward {}
 
 // --- fail_local_forward.carbon
@@ -406,14 +411,13 @@ private interface Redecl {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %Forward.type: type = facet_type <@Forward> [template]
-// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1> [template]
+// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .Forward = %Forward.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -422,17 +426,17 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc8: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %.loc5: type = splice_block %ptr [template = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [template = constants.%Forward.type] {} {}
+// CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @Forward {
-// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT: interface @.1 {
+// CHECK:STDOUT:   %Self: %.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
