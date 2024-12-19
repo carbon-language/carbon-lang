@@ -33,27 +33,29 @@ impl forall [N:! IntLiteral()] UInt(N) as As(IntLiteral()) {
 impl forall [N:! IntLiteral()] UInt(N) as Add {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
-impl forall [N:! IntLiteral()] UInt(N) as AddAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as AddAssign {
+impl u32 as AddAssign {
   fn Op[addr self: Self*](other: Self) {
-    // TODO: Once operator lookup works inside Core.
-    // *self = *self + other;
-    *self = self->(Add.Op)(other);
+    *self = *self + other;
   }
 }
-impl forall [N:! IntLiteral()] UInt(N) as Inc {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as Inc {
+impl u32 as Inc {
   fn Op[addr self: Self*]() {
-    // *self += 1;
-    self->(AddAssign.Op)(1);
+    *self += 1;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as BitAnd {
   fn Op[self: Self](other: Self) -> Self = "int.and";
 }
-impl forall [N:! IntLiteral()] UInt(N) as BitAndAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as BitAndAssign {
+impl u32 as BitAndAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self & other;
-    *self = self->(BitAnd.Op)(other);
+    *self = *self & other;
   }
 }
 
@@ -64,30 +66,33 @@ impl forall [N:! IntLiteral()] UInt(N) as BitComplement {
 impl forall [N:! IntLiteral()] UInt(N) as BitOr {
   fn Op[self: Self](other: Self) -> Self = "int.or";
 }
-impl forall [N:! IntLiteral()] UInt(N) as BitOrAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as BitOrAssign {
+impl u32 as BitOrAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self | other;
-    *self = self->(BitOr.Op)(other);
+    *self = *self | other;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as BitXor {
   fn Op[self: Self](other: Self) -> Self = "int.xor";
 }
-impl forall [N:! IntLiteral()] UInt(N) as BitXorAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as BitXorAssign {
+impl u32 as BitXorAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self ^ other;
-    *self = self->(BitXor.Op)(other);
+    *self = *self ^ other;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Div {
   fn Op[self: Self](other: Self) -> Self = "int.sdiv";
 }
-impl forall [N:! IntLiteral()] UInt(N) as DivAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as DivAssign {
+impl u32 as DivAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self / other;
-    *self = self->(Div.Op)(other);
+    *self = *self / other;
   }
 }
 
@@ -99,30 +104,33 @@ impl forall [N:! IntLiteral()] UInt(N) as Eq {
 impl forall [N:! IntLiteral()] UInt(N) as LeftShift {
   fn Op[self: Self](other: Self) -> Self = "int.left_shift";
 }
-impl forall [N:! IntLiteral()] UInt(N) as LeftShiftAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as LeftShiftAssign {
+impl u32 as LeftShiftAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self << other;
-    *self = self->(LeftShift.Op)(other);
+    *self = *self << other;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mod {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
-impl forall [N:! IntLiteral()] UInt(N) as ModAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as ModAssign {
+impl u32 as ModAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self % other;
-    *self = self->(Mod.Op)(other);
+    *self = *self % other;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mul {
   fn Op[self: Self](other: Self) -> Self = "int.smul";
 }
-impl forall [N:! IntLiteral()] UInt(N) as MulAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as MulAssign {
+impl u32 as MulAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self * other;
-    *self = self->(Mul.Op)(other);
+    *self = *self * other;
   }
 }
 
@@ -141,25 +149,28 @@ impl forall [N:! IntLiteral()] UInt(N) as Ordered {
 impl forall [N:! IntLiteral()] UInt(N) as RightShift {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
-impl forall [N:! IntLiteral()] UInt(N) as RightShiftAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as RightShiftAssign {
+impl u32 as RightShiftAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self >> other;
-    *self = self->(RightShift.Op)(other);
+    *self = *self >> other;
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Sub {
   fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
-impl forall [N:! IntLiteral()] UInt(N) as SubAssign {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as SubAssign {
+impl u32 as SubAssign {
   fn Op[addr self: Self*](other: Self) {
-    // *self = *self - other;
-    *self = self->(Sub.Op)(other);
+    *self = *self - other;
   }
 }
-impl forall [N:! IntLiteral()] UInt(N) as Dec {
+// TODO: Once we can lower specific functions, change this to:
+// impl forall [N:! IntLiteral()] UInt(N) as Dec {
+impl u32 as Dec {
   fn Op[addr self: Self*]() {
-    // *self -= 1;
-    self->(SubAssign.Op)(1);
+    *self -= 1;
   }
 }
