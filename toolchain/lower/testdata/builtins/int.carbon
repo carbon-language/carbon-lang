@@ -103,6 +103,32 @@ fn TestLeftShiftLargerUU(a: u16, b: u32) -> u16 { return LeftShiftLargerUU(a, b)
 fn RightShiftLargerUU(a: u16, b: u32) -> u16 = "int.right_shift";
 fn TestRightShiftLargerUU(a: u16, b: u32) -> u16 { return RightShiftLargerUU(a, b); }
 
+// --- mixed_compare.carbon
+
+fn Eq_u16_u32(a: u16, b: u32) -> bool = "int.eq";
+fn Eq_i16_u32(a: i16, b: u32) -> bool = "int.eq";
+fn Eq_u16_i32(a: u16, b: i32) -> bool = "int.eq";
+fn Eq_i16_i32(a: i16, b: i32) -> bool = "int.eq";
+fn Eq_i32_u32(a: i32, b: u32) -> bool = "int.eq";
+
+fn TestEq_u16_u32(a: u16, b: u32) -> bool { return Eq_u16_u32(a, b); }
+fn TestEq_i16_u32(a: i16, b: u32) -> bool { return Eq_i16_u32(a, b); }
+fn TestEq_u16_i32(a: u16, b: i32) -> bool { return Eq_u16_i32(a, b); }
+fn TestEq_i16_i32(a: i16, b: i32) -> bool { return Eq_i16_i32(a, b); }
+fn TestEq_i32_u32(a: i32, b: u32) -> bool { return Eq_i32_u32(a, b); }
+
+fn Less_u16_u32(a: u16, b: u32) -> bool = "int.less";
+fn Less_i16_u32(a: i16, b: u32) -> bool = "int.less";
+fn Less_u16_i32(a: u16, b: i32) -> bool = "int.less";
+fn Less_i16_i32(a: i16, b: i32) -> bool = "int.less";
+fn Less_i32_u32(a: i32, b: u32) -> bool = "int.less";
+
+fn TestLess_u16_u32(a: u16, b: u32) -> bool { return Less_u16_u32(a, b); }
+fn TestLess_i16_u32(a: i16, b: u32) -> bool { return Less_i16_u32(a, b); }
+fn TestLess_u16_i32(a: u16, b: i32) -> bool { return Less_u16_i32(a, b); }
+fn TestLess_i16_i32(a: i16, b: i32) -> bool { return Less_i16_i32(a, b); }
+fn TestLess_i32_u32(a: i32, b: u32) -> bool { return Less_i32_u32(a, b); }
+
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -398,3 +424,119 @@ fn TestRightShiftLargerUU(a: u16, b: u32) -> u16 { return RightShiftLargerUU(a, 
 // CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestRightShiftLargerUU", linkageName: "_CTestRightShiftLargerUU.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !34 = !DILocation(line: 32, column: 59, scope: !33)
 // CHECK:STDOUT: !35 = !DILocation(line: 32, column: 52, scope: !33)
+// CHECK:STDOUT: ; ModuleID = 'mixed_compare.carbon'
+// CHECK:STDOUT: source_filename = "mixed_compare.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_u16_u32.Main(i16 %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !7
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !7
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i16_u32.Main(i16 %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i33, !dbg !10
+// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !10
+// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !10
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_u16_i32.Main(i16 %a, i32 %b) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !13
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !13
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i16_i32.Main(i16 %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i32, !dbg !16
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !16
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i32_u32.Main(i32 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i32 %a to i33, !dbg !19
+// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !19
+// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !19
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_u16_u32.Main(i16 %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !22
+// CHECK:STDOUT:   %int.less = icmp ult i32 %int.less.lhs, %b, !dbg !22
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i16_u32.Main(i16 %a, i32 %b) !dbg !24 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i33, !dbg !25
+// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !25
+// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !25
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_u16_i32.Main(i16 %a, i32 %b) !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !28
+// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !28
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i16_i32.Main(i16 %a, i32 %b) !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i32, !dbg !31
+// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !31
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i32_u32.Main(i32 %a, i32 %b) !dbg !33 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i32 %a to i33, !dbg !34
+// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !34
+// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !34
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !35
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "mixed_compare.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 8, column: 52, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 45, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestEq_i16_u32", linkageName: "_CTestEq_i16_u32.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 52, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 9, column: 45, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestEq_u16_i32", linkageName: "_CTestEq_u16_i32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 52, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 45, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestEq_i16_i32", linkageName: "_CTestEq_i16_i32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 11, column: 52, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 45, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq_i32_u32", linkageName: "_CTestEq_i32_u32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 12, column: 52, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 12, column: 45, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLess_u16_u32", linkageName: "_CTestLess_u16_u32.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 54, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 47, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLess_i16_u32", linkageName: "_CTestLess_i16_u32.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 54, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 47, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestLess_u16_i32", linkageName: "_CTestLess_u16_i32.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 22, column: 54, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 22, column: 47, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLess_i16_i32", linkageName: "_CTestLess_i16_i32.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 54, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 23, column: 47, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestLess_i32_u32", linkageName: "_CTestLess_i32_u32.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 24, column: 54, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 24, column: 47, scope: !33)
