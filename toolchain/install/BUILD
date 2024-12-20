@@ -194,7 +194,9 @@ pkg_tar_and_test(
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
 )
 
-# Support `bazel run` on specific binaries.
+# Support `bazel run` on specific binaries. Note that this rule should only be
+# used with `bazel run`. The binary associated won't work as expected if run
+# directly out of Bazel's output tree.
 run_tool(
     name = "run_carbon",
     data = [":install_data"],
