@@ -36,10 +36,10 @@ class Context;
 
 // These are the signatures expected by `IncomingMessages` for handlers.
 using CallHandler = std::function<void(
-    Context& context, llvm::json::Value raw_param,
+    Context& context, llvm::json::Value raw_params,
     llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)>;
 using NotificationHandler =
-    std::function<void(Context& context, llvm::json::Value raw_param)>;
+    std::function<void(Context& context, llvm::json::Value raw_params)>;
 
 // We have a base registry entry which can produce the appropriate handler.
 template <typename HandlerT>
@@ -77,58 +77,58 @@ using RegisterNotificationHandler =
 
 namespace Internal {
 
-// Parses a JSON value into a specific parameter type.
-template <typename ParamT>
-inline auto Parse(const llvm::json::Value& raw_param,
-                  llvm::StringRef payload_name, llvm::StringRef payload_kind)
-    -> llvm::Expected<ParamT> {
-  ParamT result;
+// Parses a JSON value into a specific parameter type. The name of the method is
+// used when producing errors.
+template <typename ParamsT>
+inline auto Parse(llvm::StringRef name, const llvm::json::Value& raw_params)
+    -> llvm::Expected<ParamsT> {
+  ParamsT params;
   llvm::json::Path::Root root;
-  if (!clang::clangd::fromJSON(raw_param, result, root)) {
+  if (!clang::clangd::fromJSON(raw_params, params, root)) {
     return llvm::make_error<clang::clangd::LSPError>(
-        llvm::formatv("failed to decode {0} {1}: {2}", payload_name,
-                      payload_kind, llvm::fmt_consume(root.getError())),
+        llvm::formatv("in call to `{0}`, JSON parse failed: {1}", name,
+                      llvm::fmt_consume(root.getError())),
         clang::clangd::ErrorCode::InvalidParams);
   }
-  return std::move(result);
+  return std::move(params);
 }
 
 // Adapts a typed handler to `CallHandler` for `CallHandlerWrapper`.
-template <typename ParamT, typename ResultT>
+template <typename ParamsT, typename ResultT>
 inline auto ParseForCallHandler(
     llvm::StringRef name,
-    void (*handler)(Context&, const ParamT&,
+    void (*handler)(Context&, const ParamsT&,
                     llvm::function_ref<void(llvm::Expected<ResultT>)>))
     -> CallHandler {
   return
       [name, handler](
-          Context& context, llvm::json::Value raw_param,
+          Context& context, llvm::json::Value raw_params,
           llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)
           -> void {
-        auto param = Parse<ParamT>(raw_param, name, "request");
-        if (!param) {
-          on_done(param.takeError());
+        auto params = Parse<ParamsT>(name, raw_params);
+        if (!params) {
+          on_done(params.takeError());
           return;
         }
-        handler(context, *param, on_done);
+        handler(context, *params, on_done);
       };
 }
 
 // Adapts a typed handler to `NotificationHandler` for
 // `NotificationHandlerWrapper`.
-template <typename ParamT>
+template <typename ParamsT>
 inline auto ParseForNotificationHandler(llvm::StringRef name,
                                         void (*handler)(Context&,
-                                                        const ParamT&))
+                                                        const ParamsT&))
     -> NotificationHandler {
   return
-      [name, handler](Context& context, llvm::json::Value raw_param) -> void {
-        auto param = Parse<ParamT>(raw_param, name, "request");
-        if (!param) {
+      [name, handler](Context& context, llvm::json::Value raw_params) -> void {
+        auto params = Parse<ParamsT>(name, raw_params);
+        if (!params) {
           // TODO: Maybe we should do something more with this error?
-          llvm::consumeError(param.takeError());
+          llvm::consumeError(params.takeError());
         }
-        handler(context, *param);
+        handler(context, *params);
       };
 }
 

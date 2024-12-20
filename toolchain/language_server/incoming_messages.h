@@ -17,8 +17,8 @@ namespace Carbon::LanguageServer {
 // Handles LSP messages from the client (IDE extension) by forwarding them to
 // `handlers_`.
 //
-// Handlers can return false to indicate server shutdown. Currently we only
-// return true.
+// Handlers can return false to indicate server shutdown, although that's only
+// used for the `exit` notification.
 //
 // TODO: Consider adding multithreading support for calls.
 class IncomingMessages : public clang::clangd::Transport::MessageHandler {
@@ -26,13 +26,13 @@ class IncomingMessages : public clang::clangd::Transport::MessageHandler {
   explicit IncomingMessages(clang::clangd::Transport* transport,
                             Context* context);
 
-  // Calls the requested method.
-  auto onCall(llvm::StringRef method, llvm::json::Value params,
+  // Dispatches calls to the appropriate entry in `call_handlers_`.
+  auto onCall(llvm::StringRef name, llvm::json::Value params,
               llvm::json::Value id) -> bool override;
 
-  // Forwards notifications.
-  auto onNotify(llvm::StringRef method, llvm::json::Value value)
-      -> bool override;
+  // Dispatches notifications to the appropriate entry in
+  // `notification_handlers_`, except for `exit` which directly returns false.
+  auto onNotify(llvm::StringRef name, llvm::json::Value value) -> bool override;
 
   // Handles replies.
   // TODO: Implement when needed.

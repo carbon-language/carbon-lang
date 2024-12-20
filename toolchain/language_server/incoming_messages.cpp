@@ -28,31 +28,31 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
   BuildHandlerMap<NotificationHandlerRegistry>(notification_handlers_);
 }
 
-auto IncomingMessages::onCall(llvm::StringRef method, llvm::json::Value params,
+auto IncomingMessages::onCall(llvm::StringRef name, llvm::json::Value params,
                               llvm::json::Value id) -> bool {
-  if (auto result = call_handlers_.Lookup(method)) {
+  if (auto result = call_handlers_.Lookup(name)) {
     (result.value())(*context_, std::move(params),
                      [&](llvm::Expected<llvm::json::Value> reply) {
                        transport_->reply(id, std::move(reply));
                      });
   } else {
     transport_->reply(id, llvm::make_error<clang::clangd::LSPError>(
-                              llvm::formatv("call `{0}` not found", method),
+                              llvm::formatv("call `{0}` not found", name),
                               clang::clangd::ErrorCode::MethodNotFound));
   }
 
   return true;
 }
 
-auto IncomingMessages::onNotify(llvm::StringRef method, llvm::json::Value value)
+auto IncomingMessages::onNotify(llvm::StringRef name, llvm::json::Value value)
     -> bool {
-  if (method == "exit") {
+  if (name == "exit") {
     return false;
   }
-  if (auto result = notification_handlers_.Lookup(method)) {
+  if (auto result = notification_handlers_.Lookup(name)) {
     (result.value())(*context_, std::move(value));
   } else {
-    clang::clangd::log("notification `{0}` not found", method);
+    clang::clangd::log("notification `{0}` not found", name);
   }
 
   return true;
