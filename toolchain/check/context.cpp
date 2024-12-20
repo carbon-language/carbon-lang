@@ -222,6 +222,18 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
+auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
+  // TODO: Improve the diagnostic to replace NodeId::Invalid with the location
+  // where the name was poisoned. See discussion in
+  // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172
+  CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
+                    "name used before it was declared");
+  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  emitter_->Build(SemIR::LocId::Invalid, NameUseBeforeDecl)
+      .Note(loc, NameUseBeforeDeclNote)
+      .Emit();
+}
+
 auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "name `{0}` not found", SemIR::NameId);
@@ -354,6 +366,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
       scope_stack().LookupInLexicalScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
+  // Collect scopes to poison this name when it's found.
+  llvm::SmallVector<LookupScope> scopes_to_poison;
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
@@ -361,8 +375,17 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                 LookupScope{.name_scope_id = lookup_scope_id,
                                             .specific_id = specific_id},
                                 /*required=*/false);
-        non_lexical_result.inst_id.is_valid()) {
-      return non_lexical_result;
+        !non_lexical_result.inst_id.is_poisoned()) {
+      if (non_lexical_result.inst_id.is_valid()) {
+        // Poison the scopes for this name.
+        for (const auto [scope_id, specific_id] : scopes_to_poison) {
+          name_scopes().Get(scope_id).AddPoison(name_id);
+        }
+
+        return non_lexical_result;
+      }
+      scopes_to_poison.push_back(
+          {.name_scope_id = lookup_scope_id, .specific_id = specific_id});
     }
   }
 
@@ -616,7 +639,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     result.specific_id = specific_id;
   }
 
-  if (required && !result.inst_id.is_valid()) {
+  if (required &&
+      (!result.inst_id.is_valid() || result.inst_id.is_poisoned())) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
         DiagnoseMemberNameNotFound(loc_id, name_id, lookup_scopes);
@@ -744,6 +768,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id, node_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
@@ -763,6 +788,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id, node_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
@@ -799,30 +825,90 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 }
 
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
-  CARBON_CHECK(!inst_block_stack().empty(), "no current code block");
-
-  if (return_scope_stack().empty()) {
-    CARBON_CHECK(node_id.is_valid(),
-                 "No current function, but node_id not provided");
-    TODO(node_id,
+auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
+    -> void {
+  if (region_stack_.empty()) {
+    TODO(loc_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
     return;
   }
-
-  if (!inst_block_stack().is_current_block_reachable()) {
-    // Don't include unreachable blocks in the function.
+  if (block_id == SemIR::InstBlockId::Unreachable) {
     return;
   }
 
-  auto function_id =
-      insts()
-          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back().decl_id)
-          .function_id;
-  functions()
-      .Get(function_id)
-      .body_block_ids.push_back(inst_block_stack().PeekOrAdd());
+  region_stack_.AppendToTop(block_id);
+}
+
+auto Context::BeginSubpattern() -> void {
+  inst_block_stack().Push();
+  PushRegion(inst_block_stack().PeekOrAdd());
+}
+
+auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
+    -> SemIR::ExprRegionId {
+  if (region_stack_.PeekArray().size() > 1) {
+    // End the exit block with a branch to a successor block, whose contents
+    // will be determined later.
+    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+        {.target_id = inst_blocks().AddDefaultValue()}));
+  } else {
+    // This single-block region will be inserted as a SpliceBlock, so we don't
+    // need control flow out of it.
+  }
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+
+  // TODO: Is it possible to validate that this region is genuinely
+  // single-entry, single-exit?
+  return sem_ir().expr_regions().Add(
+      {.block_ids = PopRegion(), .result_id = result_id});
+}
+
+auto Context::EndSubpatternAsEmpty() -> void {
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region_stack_.PeekArray().front());
+  CARBON_CHECK(inst_blocks().Get(block_id).empty());
+  region_stack_.PopArray();
+}
+
+auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
+  auto region = sem_ir_->expr_regions().Get(region_id);
+  auto loc_id = insts().GetLocId(region.result_id);
+  auto exit_block = inst_blocks().Get(region.block_ids.back());
+  if (region.block_ids.size() == 1) {
+    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
+    // first two cases?
+    if (exit_block.empty()) {
+      return region.result_id;
+    }
+    if (exit_block.size() == 1) {
+      inst_block_stack_.AddInstId(exit_block.front());
+      return region.result_id;
+    }
+    return AddInst<SemIR::SpliceBlock>(
+        loc_id, {.type_id = insts().Get(region.result_id).type_id(),
+                 .block_id = region.block_ids.front(),
+                 .result_id = region.result_id});
+  }
+  if (region_stack_.empty()) {
+    TODO(loc_id,
+         "Control flow expressions are currently only supported inside "
+         "functions.");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+      {.target_id = region.block_ids.front()}));
+  inst_block_stack_.Pop();
+  // TODO: this will cumulatively cost O(MN) running time for M blocks
+  // at the Nth level of the stack. Figure out how to do better.
+  region_stack_.AppendToTop(region.block_ids);
+  auto resume_with_block_id =
+      insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+  CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+  inst_block_stack_.Push(resume_with_block_id);
+  AddToRegion(resume_with_block_id, loc_id);
+  return region.result_id;
 }
 
 auto Context::is_current_position_reachable() -> bool {

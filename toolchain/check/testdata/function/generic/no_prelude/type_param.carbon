@@ -43,19 +43,16 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr.loc12_11.2: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
-// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr.loc12_11.2 (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %ptr: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr (constants.%ptr)]
+// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.1)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%T.loc11_6.2 (%T) [symbolic = %require_complete.loc13 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc12: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %ptr.loc12_11.1: type = ptr_type %T [symbolic = %ptr.loc12_11.2 (constants.%ptr)]
-// CHECK:STDOUT:     %p.var: ref @F.%ptr.loc12_11.2 (%ptr) = var p
-// CHECK:STDOUT:     %p: ref @F.%ptr.loc12_11.2 (%ptr) = bind_name p, %p.var
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc12_11.2 (%ptr) = name_ref p, %p
-// CHECK:STDOUT:     %.loc13_15: @F.%ptr.loc12_11.2 (%ptr) = bind_value %p.ref
+// CHECK:STDOUT:     %p.var: ref @F.%ptr (%ptr) = var p
+// CHECK:STDOUT:     %p: ref @F.%ptr (%ptr) = bind_name p, %p.var
+// CHECK:STDOUT:     %p.ref: ref @F.%ptr (%ptr) = name_ref p, %p
+// CHECK:STDOUT:     %.loc13_15: @F.%ptr (%ptr) = bind_value %p.ref
 // CHECK:STDOUT:     %.loc13_14.1: ref @F.%T.loc11_6.2 (%T) = deref %.loc13_15
 // CHECK:STDOUT:     %.loc13_14.2: @F.%T.loc11_6.2 (%T) = bind_value %.loc13_14.1
 // CHECK:STDOUT:     %n: @F.%T.loc11_6.2 (%T) = bind_name n, %.loc13_14.2

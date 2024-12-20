@@ -102,6 +102,10 @@ extern library "extern_library_owner" fn F();
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: import library "extern_library_mismatch"
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 import library "extern_library_mismatch"
 
 // CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+4]]:1: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
@@ -294,19 +298,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_mismatch_owner.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_self_library.carbon
 // CHECK:STDOUT:

@@ -24,6 +24,10 @@
 #include "toolchain/sem_ir/stringify_type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
+// TODO: This contains a lot of recursion. Consider removing it in order to
+// prevent accidents.
+// NOLINTBEGIN(misc-no-recursion)
+
 namespace Carbon::Check {
 
 // Given an initializing expression, find its return slot argument. Returns
@@ -1257,3 +1261,5 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id)
 }
 
 }  // namespace Carbon::Check
+
+// NOLINTEND(misc-no-recursion)

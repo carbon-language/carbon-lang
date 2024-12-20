@@ -123,6 +123,11 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
+  if (prev_id.is_poisoned()) {
+    context.DiagnosePoisonedName(function_info.latest_decl_id());
+    return;
+  }
+
   auto prev_function_id = SemIR::FunctionId::Invalid;
   auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
@@ -373,9 +378,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
+  context.PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
-  context.AddCurrentCodeBlockToFunction();
 
   CheckFunctionDefinitionSignature(context, function);
 
@@ -436,8 +441,10 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
 
-  // If this is a generic function, collect information about the definition.
   auto& function = context.functions().Get(function_id);
+  function.body_block_ids = context.PopRegion();
+
+  // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
 
   return true;

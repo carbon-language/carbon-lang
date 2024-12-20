@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_non_interface.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+11]]:3: error: impl as non-facet-type [ImplAsNonFacetType]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+11]]:3: error: impl as non-facet type `i32` [ImplAsNonFacetType]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -17,7 +17,7 @@ class C {
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: impl declared but not defined [MissingImplDefinition]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   extend impl as i32;

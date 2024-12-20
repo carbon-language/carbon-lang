@@ -132,10 +132,52 @@ static auto CheckAssociatedFunctionImplementation(
   return impl_decl_id;
 }
 
-static auto BuildImplWitnessImpl(
-    Context& context, const SemIR::Impl& impl,
-    SemIR::FacetTypeInfo::ImplsConstraint interface_type) -> SemIR::InstId {
-  const auto& interface = context.interfaces().Get(interface_type.interface_id);
+// Builds an initial empty witness.
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId {
+  // FIXME: CARBON_CHECK(!impl.has_started_definition());
+  CARBON_CHECK(!impl.is_being_defined());
+  CARBON_CHECK(!impl.is_defined());
+  // FIXME
+
+  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
+                           impl.constraint_id);
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  const SemIR::FacetTypeInfo& facet_type_info =
+      context.facet_types().Get(facet_type->facet_type_id);
+
+  auto interface_type = facet_type_info.TryAsSingleInterface();
+  if (!interface_type) {
+    context.TODO(impl.latest_decl_id(), "impl as not 1 interface");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  const auto& interface =
+      context.interfaces().Get(interface_type->interface_id);
+
+  // TODO: This is going to try and define all the interfaces for this facet
+  // type, and so once we support impl of a facet type with more than one
+  // interface, it might give the wrong name in the diagnostic.
+  if (!context.RequireDefinedType(
+          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
+            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
+                              "implementation of undefined interface {0}",
+                              SemIR::NameId);
+            return context.emitter().Build(impl.latest_decl_id(),
+                                           ImplOfUndefinedInterface,
+                                           interface.name_id);
+          })) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
   llvm::SmallVector<SemIR::InstId> table;
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
@@ -145,12 +187,14 @@ static auto BuildImplWitnessImpl(
     LoadImportRef(context, decl_id);
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type.specific_id, decl_id));
+            context.sem_ir(), interface_type->specific_id, decl_id));
     CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
+          // FIXME: Make this entry in the table an error, instead of the whole
+          // table.
           return SemIR::ErrorInst::SingletonInstId;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
@@ -187,49 +231,6 @@ static auto BuildImplWitnessImpl(
        .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
 }
 
-auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId {
-  CARBON_CHECK(!impl.is_being_defined());
-  CARBON_CHECK(!impl.is_defined());
-
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
-  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
-  if (!facet_type) {
-    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
-    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType);
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-  const SemIR::FacetTypeInfo& facet_type_info =
-      context.facet_types().Get(facet_type->facet_type_id);
-
-  auto interface_type = facet_type_info.TryAsSingleInterface();
-  if (!interface_type) {
-    context.TODO(impl.latest_decl_id(), "impl as not 1 interface");
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
-  // TODO: This is going to try and define all the interfaces for this facet
-  // type, and so once we support impl of a facet type with more than one
-  // interface, it might give the wrong name in the diagnostic.
-  if (!context.RequireDefinedType(
-          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
-            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
-                              "implementation of undefined interface {0}",
-                              SemIR::NameId);
-            const auto& interface =
-                context.interfaces().Get(interface_type->interface_id);
-            return context.emitter().Build(impl.latest_decl_id(),
-                                           ImplOfUndefinedInterface,
-                                           interface.name_id);
-          })) {
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
-  return BuildImplWitnessImpl(context, impl, *interface_type);
-}
-
 auto ImplWitnessStartDefinition(Context& /*context*/, SemIR::Impl& impl)
     -> void {
   CARBON_CHECK(impl.is_being_defined());
@@ -240,17 +241,30 @@ auto ImplWitnessStartDefinition(Context& /*context*/, SemIR::Impl& impl)
 
 // Adds functions to the witness that the specified impl implements the given
 // interface.
-static auto FinishImplWitnessImpl(
-    Context& context, const SemIR::Impl& impl,
-    SemIR::FacetTypeInfo::ImplsConstraint interface_type,
-    llvm::SmallVectorImpl<SemIR::InstId>& used_decl_ids) -> void {
-  const auto& interface = context.interfaces().Get(interface_type.interface_id);
+auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
+  CARBON_CHECK(impl.is_being_defined());
+  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
+    return;
+  }
+
+  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
+  const SemIR::FacetTypeInfo& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+
+  auto interface_type = facet_type_info.TryAsSingleInterface();
+  CARBON_CHECK(interface_type.has_value());
+  const auto& interface =
+      context.interfaces().Get(interface_type->interface_id);
+
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_block = context.inst_blocks().GetMutable(witness.elements_id);
   auto& impl_scope = context.name_scopes().Get(impl.scope_id);
   auto self_type_id = context.GetTypeIdForTypeInst(impl.self_id);
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
+  llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   for (auto index : llvm::seq(assoc_entities.size())) {
     auto decl_id = assoc_entities[index];
@@ -258,7 +272,7 @@ static auto FinishImplWitnessImpl(
     LoadImportRef(context, decl_id);
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type.specific_id, decl_id));
+            context.sem_ir(), interface_type->specific_id, decl_id));
     CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
@@ -299,25 +313,6 @@ static auto FinishImplWitnessImpl(
         break;
     }
   }
-}
-
-auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
-  CARBON_CHECK(impl.is_being_defined());
-  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
-    return;
-  }
-
-  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
-  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::SingletonTypeId);
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
-  const SemIR::FacetTypeInfo& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-
-  auto interface = facet_type_info.TryAsSingleInterface();
-  CARBON_CHECK(interface.has_value());
-
-  llvm::SmallVector<SemIR::InstId> used_decl_ids;
-  FinishImplWitnessImpl(context, impl, *interface, used_decl_ids);
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }

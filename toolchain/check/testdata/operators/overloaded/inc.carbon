@@ -71,11 +71,13 @@ fn TestOp() {
 // CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {
 // CHECK:STDOUT:     %self.patt: %ptr.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.2 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc18: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc18_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr.2]
 // CHECK:STDOUT:     %self.param: %ptr.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18_21: type = splice_block %ptr [template = constants.%ptr.2] {
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C [template = constants.%ptr.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.2 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -96,7 +98,6 @@ fn TestOp() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %.loc22_15.1: %empty_struct_type = struct_literal ()

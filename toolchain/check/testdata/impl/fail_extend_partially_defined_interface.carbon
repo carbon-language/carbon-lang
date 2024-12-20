@@ -17,7 +17,7 @@ interface I {
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+3]]:5: error: no definition found for declaration of impl [MissingImplDefinition]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+3]]:5: error: impl declared but not defined [MissingImplDefinition]
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     extend impl as I;

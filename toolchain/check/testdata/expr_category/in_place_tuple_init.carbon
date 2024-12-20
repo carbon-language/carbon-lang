@@ -93,17 +93,11 @@ fn H() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %tuple.type.2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc14_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_19.1: %tuple.type.1 = tuple_literal (%i32.loc14_11, %i32.loc14_16)
-// CHECK:STDOUT:   %.loc14_19.2: type = converted %.loc14_19.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %v.var: ref %tuple.type.2 = var v
 // CHECK:STDOUT:   %v: ref %tuple.type.2 = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc14_7: ref %tuple.type.2 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call.loc14: init %tuple.type.2 = call %F.ref.loc14() to %.loc14_7
+// CHECK:STDOUT:   %.loc14: ref %tuple.type.2 = splice_block %v.var {}
+// CHECK:STDOUT:   %F.call.loc14: init %tuple.type.2 = call %F.ref.loc14() to %.loc14
 // CHECK:STDOUT:   assign %v.var, %F.call.loc14
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.2 = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc15: %F.type = name_ref F, file.%F.decl [template = constants.%F]

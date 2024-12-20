@@ -54,20 +54,17 @@ fn G(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc11_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc13_17.2: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type.loc13_17.2 (%array_type) [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %array: @G.%array_type.loc13_17.2 (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:   %array_type: type = array_type constants.%int_0, @G.%T.loc11_6.2 (%T) [symbolic = %array_type (constants.%array_type)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @G.%array_type (%array_type) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %array: @G.%array_type (%array_type) = tuple_value () [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_6.1 [symbolic = %T.loc11_6.2 (constants.%T)]
-// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:     %array_type.loc13_17.1: type = array_type %int_0, %T [symbolic = %array_type.loc13_17.2 (constants.%array_type)]
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc13_17.2 (%array_type) = var arr
-// CHECK:STDOUT:     %arr: ref @G.%array_type.loc13_17.2 (%array_type) = bind_name arr, %arr.var
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type (%array_type) = var arr
+// CHECK:STDOUT:     %arr: ref @G.%array_type (%array_type) = bind_name arr, %arr.var
 // CHECK:STDOUT:     %.loc13_22.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_22.2: init @G.%array_type.loc13_17.2 (%array_type) = array_init () to %arr.var [symbolic = %array (constants.%array)]
-// CHECK:STDOUT:     %.loc13_23: init @G.%array_type.loc13_17.2 (%array_type) = converted %.loc13_22.1, %.loc13_22.2 [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:     %.loc13_22.2: init @G.%array_type (%array_type) = array_init () to %arr.var [symbolic = %array (constants.%array)]
+// CHECK:STDOUT:     %.loc13_23: init @G.%array_type (%array_type) = converted %.loc13_22.1, %.loc13_22.2 [symbolic = %array (constants.%array)]
 // CHECK:STDOUT:     assign %arr.var, %.loc13_23
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

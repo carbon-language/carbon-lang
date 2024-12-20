@@ -18,7 +18,7 @@ class C {
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: impl declared but not defined [MissingImplDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -81,8 +81,8 @@ fn F(c: C) {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

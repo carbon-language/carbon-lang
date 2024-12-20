@@ -212,7 +212,13 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
-  // declaration.
+  // declaration when performing syntactic match.
+  // TODO: Following proposal #3763, we should exclude any `where` clause, and
+  // add `Self` before `as` if needed, see:
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
+  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
+               node_kind == Parse::NodeKind::ImplDecl);
   Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
 
   return {
@@ -333,7 +339,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
+    impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);

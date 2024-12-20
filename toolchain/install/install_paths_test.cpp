@@ -33,7 +33,7 @@ using ::testing::Optional;
 using ::testing::StartsWith;
 
 class InstallPathsTest : public ::testing::Test {
- protected:
+ public:
   InstallPathsTest() {
     std::string error;
     test_runfiles_.reset(Runfiles::Create(Testing::GetExePath().str(), &error));

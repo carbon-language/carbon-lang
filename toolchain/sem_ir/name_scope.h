@@ -42,6 +42,7 @@ class NameScope : public Printable<NameScope> {
   auto entries() const -> llvm::ArrayRef<Entry> { return names_; }
 
   // Get a specific Name entry based on an EntryId that return from a lookup.
+  //
   // The Entry could become invalidated if the scope object is invalidated or if
   // a name is added.
   auto GetEntry(EntryId entry_id) const -> const Entry& {
@@ -50,7 +51,7 @@ class NameScope : public Printable<NameScope> {
   auto GetEntry(EntryId entry_id) -> Entry& { return names_[entry_id.index]; }
 
   // Searches for the given name and returns an EntryId if found or nullopt if
-  // not.
+  // not. The returned entry may be poisoned.
   auto Lookup(NameId name_id) const -> std::optional<EntryId> {
     auto lookup = name_map_.Lookup(name_id);
     if (!lookup) {
@@ -59,14 +60,19 @@ class NameScope : public Printable<NameScope> {
     return lookup.value();
   }
 
-  // Adds a new name known to not exist.
+  // Adds a new name known to not exist. Must not be poisoned.
   auto AddRequired(Entry name_entry) -> void;
 
-  // If the given name already exists, return true and an EntryId.
-  // If not, adds the name using inst_id and access_kind and returns false and
-  // an EntryId.
+  // If the given name already exists, return true with the EntryId; the entry
+  // might be poisoned. Otherwise, adds the name using inst_id and access_kind
+  // and returns false with the new EntryId.
+  //
+  // This cannot be used to add poisoned entries; use AddPoison instead.
   auto LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
                    AccessKind access_kind) -> std::pair<bool, EntryId>;
+
+  // Adds a new poisoned name.
+  auto AddPoison(NameId name_id) -> void;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {
     return extended_scopes_;
@@ -111,7 +117,8 @@ class NameScope : public Printable<NameScope> {
   }
 
  private:
-  // Names in the scope.
+  // Names in the scope, including poisoned names.
+  //
   // Entries could become invalidated if the scope object is invalidated or if a
   // name is added.
   //
@@ -172,7 +179,7 @@ class NameScopeStore {
   }
 
   // Adds a name that is required to exist in a name scope, such as `Self`.
-  // These must never conflict.
+  // The name must never conflict. inst_id must not be poisoned.
   auto AddRequiredName(NameScopeId scope_id, NameId name_id, InstId inst_id)
       -> void {
     Get(scope_id).AddRequired({.name_id = name_id,

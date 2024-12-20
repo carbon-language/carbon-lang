@@ -105,20 +105,12 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
-// CHECK:STDOUT:   %.loc5_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_9.2: type = converted %.loc5_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
-// CHECK:STDOUT:   %.loc7_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_17.2: type = converted %.loc7_17.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %package_a.var: ref %empty_tuple.type = var package_a
 // CHECK:STDOUT:   %package_a: ref %empty_tuple.type = bind_name package_a, %package_a.var
-// CHECK:STDOUT:   %.loc8_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc8_17.2: type = converted %.loc8_17.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %package_b.var: ref %empty_tuple.type = var package_b
 // CHECK:STDOUT:   %package_b: ref %empty_tuple.type = bind_name package_b, %package_b.var
 // CHECK:STDOUT: }

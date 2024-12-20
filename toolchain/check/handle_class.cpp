@@ -113,6 +113,12 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
     return;
   }
 
+  if (prev_id.is_poisoned()) {
+    // This is a declaration of a poisoned name.
+    context.DiagnosePoisonedName(class_decl_id);
+    return;
+  }
+
   auto prev_class_id = SemIR::ClassId::Invalid;
   auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
   auto prev = context.insts().Get(prev_id);
@@ -546,7 +552,7 @@ auto HandleParseNode(Context& context, Parse::BaseDeclId node_id) -> bool {
   }
 
   // Bind the name `base` in the class to the base field.
-  context.decl_name_stack().AddNameOrDiagnoseDuplicate(
+  context.decl_name_stack().AddNameOrDiagnose(
       context.decl_name_stack().MakeUnqualifiedName(node_id,
                                                     SemIR::NameId::Base),
       class_info.base_id, introducer.modifier_set.GetAccessKind());

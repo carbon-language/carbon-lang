@@ -13,7 +13,7 @@
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: error: semantics TODO: `HandleInvalidParseStart` [SemanticsTodo]
+// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 a;

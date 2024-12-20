@@ -342,6 +342,14 @@ class ImportContext {
   }
 
  protected:
+  auto pending_generics() -> llvm::SmallVector<PendingGeneric>& {
+    return pending_generics_;
+  }
+  auto pending_specifics() -> llvm::SmallVector<PendingSpecific>& {
+    return pending_specifics_;
+  }
+
+ private:
   Context& context_;
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
@@ -1194,6 +1202,9 @@ static auto AddNameScopeImportRefs(ImportContext& context,
                                    const SemIR::NameScope& import_scope,
                                    SemIR::NameScope& new_scope) -> void {
   for (auto entry : import_scope.entries()) {
+    if (entry.inst_id.is_poisoned()) {
+      continue;
+    }
     auto ref_id = AddImportRef(context, entry.inst_id);
     new_scope.AddRequired({.name_id = GetLocalNameId(context, entry.name_id),
                            .inst_id = ref_id,
@@ -2530,6 +2541,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 // Invalid if more has been added to the stack. This is the same as
 // TryResolveInst, except that it may resolve symbolic constants as canonical
 // constants instead of as constants associated with a particular generic.
+//
+// TODO: Consider refactoring the body to a helper in order to eliminate
+// recursion.
+// NOLINTNEXTLINE(misc-no-recursion)
 static auto TryResolveInstCanonical(ImportRefResolver& resolver,
                                     SemIR::InstId inst_id,
                                     SemIR::ConstantId const_id)
@@ -2854,7 +2869,7 @@ static auto FinishPendingSpecific(ImportRefResolver& resolver,
 auto ImportRefResolver::PerformPendingWork() -> void {
   // Note that the individual Finish steps can add new pending work, so keep
   // going until we have no more work to do.
-  while (!pending_generics_.empty() || !pending_specifics_.empty()) {
+  while (!pending_generics().empty() || !pending_specifics().empty()) {
     // Process generics in the order that we added them because a later
     // generic might refer to an earlier one, and the calls to
     // RebuildGenericEvalBlock assume that the reachable SemIR is in a valid
@@ -2862,13 +2877,13 @@ auto ImportRefResolver::PerformPendingWork() -> void {
     // TODO: Import the generic eval block rather than calling
     // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
     // NOLINTNEXTLINE(modernize-loop-convert)
-    for (size_t i = 0; i != pending_generics_.size(); ++i) {
-      FinishPendingGeneric(*this, pending_generics_[i]);
+    for (size_t i = 0; i != pending_generics().size(); ++i) {
+      FinishPendingGeneric(*this, pending_generics()[i]);
     }
-    pending_generics_.clear();
+    pending_generics().clear();
 
-    while (!pending_specifics_.empty()) {
-      FinishPendingSpecific(*this, pending_specifics_.pop_back_val());
+    while (!pending_specifics().empty()) {
+      FinishPendingSpecific(*this, pending_specifics().pop_back_val());
     }
   }
 }
@@ -2914,6 +2929,9 @@ static auto GetInstForLoad(Context& context,
 }
 
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
+  if (inst_id.is_poisoned()) {
+    return;
+  }
   auto inst = context.insts().TryGetAs<SemIR::ImportRefUnloaded>(inst_id);
   if (!inst) {
     return;

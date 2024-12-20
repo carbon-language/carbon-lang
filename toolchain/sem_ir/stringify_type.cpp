@@ -27,17 +27,22 @@ static auto GetTypePrecedence(InstKind kind) -> int {
 }
 
 namespace {
+// Contains the stack of steps for `StringifyTypeExpr`.
 class StepStack {
  public:
-  enum Kind : uint8_t {
-    Inst,
-    FixedString,
-    ArrayBound,
-    Name,
-  };
+  // An individual step in the stack, which stringifies some component of a type
+  // name.
   struct Step {
     // The kind of step to perform.
+    enum Kind : uint8_t {
+      Inst,
+      FixedString,
+      ArrayBound,
+      Name,
+    };
+
     Kind kind;
+
     union {
       // The instruction to print, when kind is Inst.
       InstId inst_id;
@@ -50,27 +55,32 @@ class StepStack {
     };
   };
 
+  // Starts a new stack, which always contains the first instruction to
+  // stringify.
   explicit StepStack(const SemIR::File* file, InstId outer_inst_id)
-      : sem_ir(file) {
-    steps.push_back({.kind = Inst, .inst_id = outer_inst_id});
+      : sem_ir_(file) {
+    PushInstId(outer_inst_id);
   }
 
+  // These push basic entries onto the stack.
   auto PushInstId(InstId inst_id) -> void {
-    steps.push_back({.kind = Inst, .inst_id = inst_id});
+    steps_.push_back({.kind = Step::Inst, .inst_id = inst_id});
   }
   auto PushString(const char* string) -> void {
-    steps.push_back({.kind = FixedString, .fixed_string = string});
+    steps_.push_back({.kind = Step::FixedString, .fixed_string = string});
   }
   auto PushArrayBound(InstId bound_id) -> void {
-    steps.push_back({.kind = ArrayBound, .bound_id = bound_id});
+    steps_.push_back({.kind = Step::ArrayBound, .bound_id = bound_id});
   }
   auto PushNameId(NameId name_id) -> void {
-    steps.push_back({.kind = Name, .name_id = name_id});
+    steps_.push_back({.kind = Step::Name, .name_id = name_id});
   }
+
+  // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
     PushNameId(name_id);
     while (name_scope_id.is_valid() && name_scope_id != NameScopeId::Package) {
-      const auto& name_scope = sem_ir->name_scopes().Get(name_scope_id);
+      const auto& name_scope = sem_ir_->name_scopes().Get(name_scope_id);
       // TODO: Decide how to print unnamed scopes.
       if (name_scope.name_id().is_valid()) {
         PushString(".");
@@ -81,24 +91,38 @@ class StepStack {
       name_scope_id = name_scope.parent_scope_id();
     }
   }
+
+  // Pushes a specific's entity name onto the stack, such as `A.B(T)`.
   auto PushEntityName(const EntityWithParamsBase& entity,
                       SpecificId specific_id) -> void {
     PushSpecificId(entity, specific_id);
     PushQualifiedName(entity.parent_scope_id, entity.name_id);
   }
+
+  // Pushes a entity name onto the stack, such as `A.B`.
   auto PushEntityName(EntityNameId entity_name_id) -> void {
-    const auto& entity_name = sem_ir->entity_names().Get(entity_name_id);
+    const auto& entity_name = sem_ir_->entity_names().Get(entity_name_id);
     PushQualifiedName(entity_name.parent_scope_id, entity_name.name_id);
   }
+
+  // Pushes an instruction by its TypeId.
   auto PushTypeId(TypeId type_id) -> void {
-    PushInstId(sem_ir->types().GetInstId(type_id));
+    PushInstId(sem_ir_->types().GetInstId(type_id));
   }
+
+  auto empty() const -> bool { return steps_.empty(); }
+  auto Pop() -> Step { return steps_.pop_back_val(); }
+
+ private:
+  // Handles the generic portion of a specific entity name, such as `(T)` in
+  // `A.B(T)`.
   auto PushSpecificId(const EntityWithParamsBase& entity,
                       SpecificId specific_id) -> void {
     if (!entity.param_patterns_id.is_valid()) {
       return;
     }
-    int num_params = sem_ir->inst_blocks().Get(entity.param_patterns_id).size();
+    int num_params =
+        sem_ir_->inst_blocks().Get(entity.param_patterns_id).size();
     if (!num_params) {
       PushString("()");
       return;
@@ -109,9 +133,9 @@ class StepStack {
       // case?
       return;
     }
-    const auto& specific = sem_ir->specifics().Get(specific_id);
+    const auto& specific = sem_ir_->specifics().Get(specific_id);
     auto args =
-        sem_ir->inst_blocks().Get(specific.args_id).take_back(num_params);
+        sem_ir_->inst_blocks().Get(specific.args_id).take_back(num_params);
     bool last = true;
     for (auto arg : llvm::reverse(args)) {
       PushString(last ? ")" : ", ");
@@ -121,12 +145,9 @@ class StepStack {
     PushString("(");
   }
 
-  auto empty() const -> bool { return steps.empty(); }
-  auto Pop() -> Step { return steps.pop_back_val(); }
-
- private:
-  const SemIR::File* sem_ir;
-  llvm::SmallVector<Step> steps;
+  const SemIR::File* sem_ir_;
+  // Remaining steps to take.
+  llvm::SmallVector<Step> steps_;
 };
 }  // namespace
 
@@ -143,16 +164,16 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     auto step = step_stack.Pop();
 
     switch (step.kind) {
-      case StepStack::FixedString:
+      case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
-      case StepStack::ArrayBound:
+      case StepStack::Step::ArrayBound:
         out << sem_ir.GetArrayBoundValue(step.bound_id);
         continue;
-      case StepStack::Name:
+      case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
-      case StepStack::Inst:
+      case StepStack::Step::Inst:
         if (!step.inst_id.is_valid()) {
           out << "<invalid type>";
           continue;

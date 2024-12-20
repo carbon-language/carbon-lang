@@ -10,8 +10,11 @@
 
 namespace Carbon::Check {
 
-// Create the initial witness for `impl`.
-auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId;
+// Returns the initial witness value for a new impl declaration.
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId;
+
+// TODO: AddConstantsToImplWitnessFromConstraint()
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;

@@ -32,10 +32,7 @@ fn Run() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {
-// CHECK:STDOUT:     %.loc14_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc14_10.2: type = converted %.loc14_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [template = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
