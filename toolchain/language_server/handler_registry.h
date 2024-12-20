@@ -101,7 +101,7 @@ inline auto ParseForCallHandler(
                     llvm::function_ref<void(llvm::Expected<ResultT>)>))
     -> CallHandler {
   return
-      [handler, name](
+      [name, handler](
           Context& context, llvm::json::Value raw_param,
           llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)
           -> void {
@@ -122,7 +122,7 @@ inline auto ParseForNotificationHandler(llvm::StringRef name,
                                                         const ParamT&))
     -> NotificationHandler {
   return
-      [handler, name](Context& context, llvm::json::Value raw_param) -> void {
+      [name, handler](Context& context, llvm::json::Value raw_param) -> void {
         auto param = Parse<ParamT>(raw_param, name, "request");
         if (!param) {
           // TODO: Maybe we should do something more with this error?
