@@ -48,13 +48,74 @@ library "[[@TEST_NAME]]";
 fn AndLit(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
 
 fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
-  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+6]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+7]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:   return AndLit(5, a);
   // CHECK:STDERR:          ^~~~~~~~~~~~
   // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: fn AndLit(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return AndLit(5, a);
+}
+
+// --- fail_bad_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+// Heterogeneous "and" is not supported.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAnd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.and";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAnd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.and";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAnd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.and";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAnd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.and";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAnd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAnd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAnd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.and";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAnd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.and";
+
+// --- fail_runtime_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn And(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+
+fn Test(n: Core.IntLiteral()) {
+  // OK
+  And(1, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   And(n, 1);
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn And(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  And(n, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   And(1, n);
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn And(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  And(1, n);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+6]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   And(n, n);
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn And(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.and";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  And(n, n);
 }
 
 // CHECK:STDOUT: --- int_and.carbon
@@ -684,8 +745,273 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
 // CHECK:STDOUT:   %a.ref: Core.IntLiteral = name_ref a, %a
 // CHECK:STDOUT:   %int.and: init Core.IntLiteral = call %AndLit.ref(%int_5, %a.ref)
-// CHECK:STDOUT:   %.loc13_22.1: Core.IntLiteral = value_of_initializer %int.and
-// CHECK:STDOUT:   %.loc13_22.2: Core.IntLiteral = converted %int.and, %.loc13_22.1
-// CHECK:STDOUT:   return %.loc13_22.2
+// CHECK:STDOUT:   %.loc14_22.1: Core.IntLiteral = value_of_initializer %int.and
+// CHECK:STDOUT:   %.loc14_22.2: Core.IntLiteral = converted %int.and, %.loc14_22.1
+// CHECK:STDOUT:   return %.loc14_22.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_bad_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAnd1.type: type = fn_type @MixedAnd1 [template]
+// CHECK:STDOUT:   %MixedAnd1: %MixedAnd1.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAnd2.type: type = fn_type @MixedAnd2 [template]
+// CHECK:STDOUT:   %MixedAnd2: %MixedAnd2.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAnd3.type: type = fn_type @MixedAnd3 [template]
+// CHECK:STDOUT:   %MixedAnd3: %MixedAnd3.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAnd4.type: type = fn_type @MixedAnd4 [template]
+// CHECK:STDOUT:   %MixedAnd4: %MixedAnd4.type = struct_value () [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .IntLiteral = %import_ref.5
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.5: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .MixedAnd1 = %MixedAnd1.decl
+// CHECK:STDOUT:     .MixedAnd2 = %MixedAnd2.decl
+// CHECK:STDOUT:     .MixedAnd3 = %MixedAnd3.decl
+// CHECK:STDOUT:     .MixedAnd4 = %MixedAnd4.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %MixedAnd1.decl: %MixedAnd1.type = fn_decl @MixedAnd1 [template = constants.%MixedAnd1] {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int_32.loc9_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc9_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc9_17: type = splice_block %i32.loc9_17 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc9_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc9_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc9_41.3: type = splice_block %.loc9_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc9_41.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc9_41.2: type = converted %int_literal.make_type, %.loc9_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAnd2.decl: %MixedAnd2.type = fn_decl @MixedAnd2 [template = constants.%MixedAnd2] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int_32.loc14_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc14_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14_33.3: type = splice_block %.loc14_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc14_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc14_33.2: type = converted %int_literal.make_type, %.loc14_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc14_39: type = splice_block %i32.loc14_39 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc14_39: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc14_39: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAnd3.decl: %MixedAnd3.type = fn_decl @MixedAnd3 [template = constants.%MixedAnd3] {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref.loc19_47: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc19_51: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc19_63: init type = call %IntLiteral.ref.loc19_51() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc19_63.1: type = value_of_initializer %int_literal.make_type.loc19_63 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc19_63.2: type = converted %int_literal.make_type.loc19_63, %.loc19_63.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc19_17: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc19_41.3: type = splice_block %.loc19_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc19_25: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc19_29: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc19_41: init type = call %IntLiteral.ref.loc19_29() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc19_41.1: type = value_of_initializer %int_literal.make_type.loc19_41 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc19_41.2: type = converted %int_literal.make_type.loc19_41, %.loc19_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAnd4.decl: %MixedAnd4.type = fn_decl @MixedAnd4 [template = constants.%MixedAnd4] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref.loc24_47: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc24_51: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc24_63: init type = call %IntLiteral.ref.loc24_51() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc24_63.1: type = value_of_initializer %int_literal.make_type.loc24_63 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc24_63.2: type = converted %int_literal.make_type.loc24_63, %.loc24_63.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc24_33.3: type = splice_block %.loc24_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc24_17: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc24_21: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.5 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc24_33: init type = call %IntLiteral.ref.loc24_21() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc24_33.1: type = value_of_initializer %int_literal.make_type.loc24_33 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc24_33.2: type = converted %int_literal.make_type.loc24_33, %.loc24_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc24_39: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAnd1(%a.param_patt: %i32, %b.param_patt: Core.IntLiteral) -> %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAnd2(%a.param_patt: Core.IntLiteral, %b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAnd3(%a.param_patt: %i32, %b.param_patt: Core.IntLiteral) -> Core.IntLiteral;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAnd4(%a.param_patt: Core.IntLiteral, %b.param_patt: %i32) -> Core.IntLiteral;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_runtime_literal.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %And.type: type = fn_type @And [template]
+// CHECK:STDOUT:   %And: %And.type = struct_value () [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .IntLiteral = %import_ref
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .And = %And.decl
+// CHECK:STDOUT:     .Test = %Test.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [template = constants.%And] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref.loc4_55: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc4_59: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc4_71: init type = call %IntLiteral.ref.loc4_59() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_71.1: type = value_of_initializer %int_literal.make_type.loc4_71 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_71.2: type = converted %int_literal.make_type.loc4_71, %.loc4_71.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_27.3: type = splice_block %.loc4_27.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_11: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_15: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_27: init type = call %IntLiteral.ref.loc4_15() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.1: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.2: type = converted %int_literal.make_type.loc4_27, %.loc4_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_49.3: type = splice_block %.loc4_49.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_33: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_37: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_49: init type = call %IntLiteral.ref.loc4_37() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.1: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.2: type = converted %int_literal.make_type.loc4_49, %.loc4_49.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
+// CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_28.3: type = splice_block %.loc6_28.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.2: type = converted %int_literal.make_type, %.loc6_28.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @And(%a.param_patt: Core.IntLiteral, %b.param_patt: Core.IntLiteral) -> Core.IntLiteral = "int.and";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Test(%n.param_patt: Core.IntLiteral) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %And.ref.loc8: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_1.loc8_7: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc8_10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.and.loc8: init Core.IntLiteral = call %And.ref.loc8(%int_1.loc8_7, %int_1.loc8_10) [template = constants.%int_1]
+// CHECK:STDOUT:   %And.ref.loc16: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %n.ref.loc16: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.and.loc16: init Core.IntLiteral = call %And.ref.loc16(%n.ref.loc16, %int_1.loc16)
+// CHECK:STDOUT:   %And.ref.loc24: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %n.ref.loc24: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.and.loc24: init Core.IntLiteral = call %And.ref.loc24(%int_1.loc24, %n.ref.loc24)
+// CHECK:STDOUT:   %And.ref.loc31: %And.type = name_ref And, file.%And.decl [template = constants.%And]
+// CHECK:STDOUT:   %n.ref.loc31_7: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %n.ref.loc31_10: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.and.loc31: init Core.IntLiteral = call %And.ref.loc31(%n.ref.loc31_7, %n.ref.loc31_10)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

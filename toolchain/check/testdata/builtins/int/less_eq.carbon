@@ -66,6 +66,40 @@ fn F() {
   Test(LessEq(1, -1)) as Expect(false);
 }
 
+// --- fail_runtime_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn LessEq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.less_eq";
+
+fn Test(n: Core.IntLiteral()) {
+  // OK
+  LessEq(1, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(n, 1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  LessEq(n, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(1, n);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  LessEq(1, n);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+6]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(n, n);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  LessEq(n, n);
+}
+
 // CHECK:STDOUT: --- int_less_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1103,5 +1137,108 @@ fn F() {
 // CHECK:STDOUT:   %B.patt.loc6_14.2 => constants.%false
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_runtime_literal.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
+// CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [template]
+// CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .IntLiteral = %import_ref.1
+// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .LessEq = %LessEq.decl
+// CHECK:STDOUT:     .Test = %Test.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %LessEq.decl: %LessEq.type = fn_decl @LessEq [template = constants.%LessEq] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc4_58.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc4_58.2: type = converted %bool.make_type, %.loc4_58.1 [template = bool]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_30.3: type = splice_block %.loc4_30.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_14: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_18: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_30: init type = call %IntLiteral.ref.loc4_18() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_30.1: type = value_of_initializer %int_literal.make_type.loc4_30 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_30.2: type = converted %int_literal.make_type.loc4_30, %.loc4_30.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_52.3: type = splice_block %.loc4_52.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_36: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_40: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_52: init type = call %IntLiteral.ref.loc4_40() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_52.1: type = value_of_initializer %int_literal.make_type.loc4_52 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_52.2: type = converted %int_literal.make_type.loc4_52, %.loc4_52.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
+// CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_28.3: type = splice_block %.loc6_28.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.2: type = converted %int_literal.make_type, %.loc6_28.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @LessEq(%a.param_patt: Core.IntLiteral, %b.param_patt: Core.IntLiteral) -> bool = "int.less_eq";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Test(%n.param_patt: Core.IntLiteral) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %LessEq.ref.loc8: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
+// CHECK:STDOUT:   %int_1.loc8_10: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc8_13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.less_eq.loc8: init bool = call %LessEq.ref.loc8(%int_1.loc8_10, %int_1.loc8_13) [template = constants.%true]
+// CHECK:STDOUT:   %LessEq.ref.loc16: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
+// CHECK:STDOUT:   %n.ref.loc16: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.less_eq.loc16: init bool = call %LessEq.ref.loc16(%n.ref.loc16, %int_1.loc16)
+// CHECK:STDOUT:   %LessEq.ref.loc24: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
+// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %n.ref.loc24: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.less_eq.loc24: init bool = call %LessEq.ref.loc24(%int_1.loc24, %n.ref.loc24)
+// CHECK:STDOUT:   %LessEq.ref.loc31: %LessEq.type = name_ref LessEq, file.%LessEq.decl [template = constants.%LessEq]
+// CHECK:STDOUT:   %n.ref.loc31_10: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %n.ref.loc31_13: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.less_eq.loc31: init bool = call %LessEq.ref.loc31(%n.ref.loc31_10, %n.ref.loc31_13)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

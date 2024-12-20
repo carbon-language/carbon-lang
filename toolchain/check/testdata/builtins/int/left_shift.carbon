@@ -182,7 +182,7 @@ fn LeftShiftOfLit(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.left
 var a_lit: Core.IntLiteral() = 12;
 var an_i32: i32 = 34;
 
-// This can't be valid: we don't have a compile-time or runtime integer value for `n`.
+// This can't be valid: we don't have a compile-time or runtime integer value for `a_lit`.
 // CHECK:STDERR: fail_comp_time_only_shift.carbon:[[@LINE+7]]:17: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -70,6 +70,28 @@ fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
 fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
 fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 
+// Heterogeneous "add" is not supported.
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAdd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAdd1(a: i32, b: Core.IntLiteral()) -> i32 = "int.sadd";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAdd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAdd2(a: Core.IntLiteral(), b: i32) -> i32 = "int.sadd";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAdd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAdd3(a: i32, b: Core.IntLiteral()) -> Core.IntLiteral() = "int.sadd";
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn MixedAdd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.sadd";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn MixedAdd4(a: Core.IntLiteral(), b: i32) -> Core.IntLiteral() = "int.sadd";
+
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:20: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: var too_few: [i32; TooFew(1)];
 // CHECK:STDERR:                    ^~~~~~~~~
@@ -89,7 +111,7 @@ var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:21: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
 // CHECK:STDERR: var bad_call: [i32; JustRight(1, 2, 3)];
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-21]]:1: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE-43]]:1: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR: fn JustRight(a: i32, b: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -1003,6 +1025,16 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %BadReturnType: %BadReturnType.type = struct_value () [template]
 // CHECK:STDOUT:   %JustRight.type: type = fn_type @JustRight [template]
 // CHECK:STDOUT:   %JustRight: %JustRight.type = struct_value () [template]
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAdd1.type: type = fn_type @MixedAdd1 [template]
+// CHECK:STDOUT:   %MixedAdd1: %MixedAdd1.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAdd2.type: type = fn_type @MixedAdd2 [template]
+// CHECK:STDOUT:   %MixedAdd2: %MixedAdd2.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAdd3.type: type = fn_type @MixedAdd3 [template]
+// CHECK:STDOUT:   %MixedAdd3: %MixedAdd3.type = struct_value () [template]
+// CHECK:STDOUT:   %MixedAdd4.type: type = fn_type @MixedAdd4 [template]
+// CHECK:STDOUT:   %MixedAdd4: %MixedAdd4.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallTooFew.type: type = fn_type @RuntimeCallTooFew [template]
 // CHECK:STDOUT:   %RuntimeCallTooFew: %RuntimeCallTooFew.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallTooMany.type: type = fn_type @RuntimeCallTooMany [template]
@@ -1015,10 +1047,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .Bool = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
+// CHECK:STDOUT:     .IntLiteral = %import_ref.6
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.7
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.6: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1028,6 +1062,10 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     .TooMany = %TooMany.decl
 // CHECK:STDOUT:     .BadReturnType = %BadReturnType.decl
 // CHECK:STDOUT:     .JustRight = %JustRight.decl
+// CHECK:STDOUT:     .MixedAdd1 = %MixedAdd1.decl
+// CHECK:STDOUT:     .MixedAdd2 = %MixedAdd2.decl
+// CHECK:STDOUT:     .MixedAdd3 = %MixedAdd3.decl
+// CHECK:STDOUT:     .MixedAdd4 = %MixedAdd4.decl
 // CHECK:STDOUT:     .too_few = %too_few
 // CHECK:STDOUT:     .too_many = %too_many
 // CHECK:STDOUT:     .bad_return_type = %bad_return_type
@@ -1138,6 +1176,124 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAdd1.decl: %MixedAdd1.type = fn_decl @MixedAdd1 [template = constants.%MixedAdd1] {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int_32.loc26_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc26_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc26_17: type = splice_block %i32.loc26_17 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc26_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc26_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc26_41.3: type = splice_block %.loc26_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc26_41.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc26_41.2: type = converted %int_literal.make_type, %.loc26_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAdd2.decl: %MixedAdd2.type = fn_decl @MixedAdd2 [template = constants.%MixedAdd2] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int_32.loc31_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc31_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc31_33.3: type = splice_block %.loc31_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc31_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc31_33.2: type = converted %int_literal.make_type, %.loc31_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc31_39: type = splice_block %i32.loc31_39 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc31_39: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc31_39: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAdd3.decl: %MixedAdd3.type = fn_decl @MixedAdd3 [template = constants.%MixedAdd3] {
+// CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref.loc36_47: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc36_51: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc36_63: init type = call %IntLiteral.ref.loc36_51() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc36_63.1: type = value_of_initializer %int_literal.make_type.loc36_63 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc36_63.2: type = converted %int_literal.make_type.loc36_63, %.loc36_63.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc36_17: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc36_41.3: type = splice_block %.loc36_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc36_25: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc36_29: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc36_41: init type = call %IntLiteral.ref.loc36_29() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc36_41.1: type = value_of_initializer %int_literal.make_type.loc36_41 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc36_41.2: type = converted %int_literal.make_type.loc36_41, %.loc36_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MixedAdd4.decl: %MixedAdd4.type = fn_decl @MixedAdd4 [template = constants.%MixedAdd4] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: %i32 = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Core.ref.loc41_47: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:     %IntLiteral.ref.loc41_51: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %int_literal.make_type.loc41_63: init type = call %IntLiteral.ref.loc41_51() [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc41_63.1: type = value_of_initializer %int_literal.make_type.loc41_63 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc41_63.2: type = converted %int_literal.make_type.loc41_63, %.loc41_63.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc41_33.3: type = splice_block %.loc41_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc41_17: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc41_21: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc41_33: init type = call %IntLiteral.ref.loc41_21() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc41_33.1: type = value_of_initializer %int_literal.make_type.loc41_33 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc41_33.2: type = converted %int_literal.make_type.loc41_33, %.loc41_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
+// CHECK:STDOUT:     %.loc41_39: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %too_few.var: ref <error> = var too_few
 // CHECK:STDOUT:   %too_few: ref <error> = bind_name too_few, %too_few.var
 // CHECK:STDOUT:   %too_many.var: ref <error> = var too_many
@@ -1152,12 +1308,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc46_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc46_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc68_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc68_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc46: type = splice_block %i32.loc46_25 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc46_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc46_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc68: type = splice_block %i32.loc68_25 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc68_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc68_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
@@ -1173,24 +1329,24 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param3
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc50_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc50_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc72_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc72_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc50_26: type = splice_block %i32.loc50_26 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc50_26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc50_26: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc72_26: type = splice_block %i32.loc72_26 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc72_26: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc72_26: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc50_34: type = splice_block %i32.loc50_34 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc50_34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc50_34: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc72_34: type = splice_block %i32.loc72_34 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc72_34: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc72_34: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %c.param: %i32 = value_param runtime_param2
-// CHECK:STDOUT:     %.loc50_42: type = splice_block %i32.loc50_42 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc50_42: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc50_42: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc72_42: type = splice_block %i32.loc72_42 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc72_42: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc72_42: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %i32 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param3
@@ -1205,18 +1361,18 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc54_48.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc54_48.2: type = converted %bool.make_type, %.loc54_48.1 [template = bool]
+// CHECK:STDOUT:     %.loc76_48.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc76_48.2: type = converted %bool.make_type, %.loc76_48.1 [template = bool]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc54_32: type = splice_block %i32.loc54_32 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc54_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc54_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc76_32: type = splice_block %i32.loc76_32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc76_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc76_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc54_40: type = splice_block %i32.loc54_40 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc54_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc54_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc76_40: type = splice_block %i32.loc76_40 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc76_40: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc76_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
@@ -1232,14 +1388,22 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @JustRight(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAdd1(%a.param_patt: %i32, %b.param_patt: Core.IntLiteral) -> %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAdd2(%a.param_patt: Core.IntLiteral, %b.param_patt: %i32) -> %i32;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAdd3(%a.param_patt: %i32, %b.param_patt: Core.IntLiteral) -> Core.IntLiteral;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MixedAdd4(%a.param_patt: Core.IntLiteral, %b.param_patt: %i32) -> Core.IntLiteral;
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooFew(%a.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TooFew.ref: %TooFew.type = name_ref TooFew, file.%TooFew.decl [template = constants.%TooFew]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %TooFew.call: init %i32 = call %TooFew.ref(%a.ref)
-// CHECK:STDOUT:   %.loc47_19.1: %i32 = value_of_initializer %TooFew.call
-// CHECK:STDOUT:   %.loc47_19.2: %i32 = converted %TooFew.call, %.loc47_19.1
-// CHECK:STDOUT:   return %.loc47_19.2
+// CHECK:STDOUT:   %.loc69_19.1: %i32 = value_of_initializer %TooFew.call
+// CHECK:STDOUT:   %.loc69_19.2: %i32 = converted %TooFew.call, %.loc69_19.1
+// CHECK:STDOUT:   return %.loc69_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallTooMany(%a.param_patt: %i32, %b.param_patt: %i32, %c.param_patt: %i32) -> %i32 {
@@ -1249,9 +1413,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %c.ref: %i32 = name_ref c, %c
 // CHECK:STDOUT:   %TooMany.call: init %i32 = call %TooMany.ref(%a.ref, %b.ref, %c.ref)
-// CHECK:STDOUT:   %.loc51_26.1: %i32 = value_of_initializer %TooMany.call
-// CHECK:STDOUT:   %.loc51_26.2: %i32 = converted %TooMany.call, %.loc51_26.1
-// CHECK:STDOUT:   return %.loc51_26.2
+// CHECK:STDOUT:   %.loc73_26.1: %i32 = value_of_initializer %TooMany.call
+// CHECK:STDOUT:   %.loc73_26.2: %i32 = converted %TooMany.call, %.loc73_26.1
+// CHECK:STDOUT:   return %.loc73_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallBadReturnType(%a.param_patt: %i32, %b.param_patt: %i32) -> bool {
@@ -1260,9 +1424,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %BadReturnType.call: init bool = call %BadReturnType.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc55_29.1: bool = value_of_initializer %BadReturnType.call
-// CHECK:STDOUT:   %.loc55_29.2: bool = converted %BadReturnType.call, %.loc55_29.1
-// CHECK:STDOUT:   return %.loc55_29.2
+// CHECK:STDOUT:   %.loc77_29.1: bool = value_of_initializer %BadReturnType.call
+// CHECK:STDOUT:   %.loc77_29.2: bool = converted %BadReturnType.call, %.loc77_29.1
+// CHECK:STDOUT:   return %.loc77_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overflow.carbon

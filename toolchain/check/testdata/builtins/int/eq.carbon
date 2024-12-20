@@ -30,9 +30,10 @@ fn RuntimeCall(a: i32, b: i32) -> bool {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "int.eq" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.eq" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 
 // --- literal.carbon
@@ -65,6 +66,40 @@ fn F() {
   Test(Eq(5, 6)) as Expect(false);
   Test(Eq(-1, -1)) as Expect(true);
   Test(Eq(-1, 1)) as Expect(false);
+}
+
+// --- fail_runtime_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+
+fn Test(n: Core.IntLiteral()) {
+  // OK
+  Eq(1, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(n, 1);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Eq(n, 1);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(1, n);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Eq(1, n);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+6]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(n, n);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Eq(n, n);
 }
 
 // CHECK:STDOUT: --- int_eq.carbon
@@ -316,18 +351,18 @@ fn F() {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc7_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc7_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc8_35: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8_35: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %i32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc7_19: type = splice_block %i32.loc7_19 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc7_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc7_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_19: type = splice_block %i32.loc8_19 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc8_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc8_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc7_27: type = splice_block %i32.loc7_27 [template = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc7_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc7_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc8_27: type = splice_block %i32.loc8_27 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc8_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc8_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
@@ -950,5 +985,108 @@ fn F() {
 // CHECK:STDOUT:   %B.patt.loc6_14.2 => constants.%false
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_runtime_literal.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
+// CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
+// CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [template]
+// CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [template]
+// CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
+// CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %true: bool = bool_literal true [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .IntLiteral = %import_ref.1
+// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Eq = %Eq.decl
+// CHECK:STDOUT:     .Test = %Test.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Eq.decl: %Eq.type = fn_decl @Eq [template = constants.%Eq] {
+// CHECK:STDOUT:     %a.patt: Core.IntLiteral = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: Core.IntLiteral = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %b.patt: Core.IntLiteral = binding_pattern b
+// CHECK:STDOUT:     %b.param_patt: Core.IntLiteral = value_param_pattern %b.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: bool = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: bool = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:     %.loc4_54.1: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc4_54.2: type = converted %bool.make_type, %.loc4_54.1 [template = bool]
+// CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_26.3: type = splice_block %.loc4_26.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_26: init type = call %IntLiteral.ref.loc4_14() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_26.1: type = value_of_initializer %int_literal.make_type.loc4_26 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_26.2: type = converted %int_literal.make_type.loc4_26, %.loc4_26.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
+// CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
+// CHECK:STDOUT:     %.loc4_48.3: type = splice_block %.loc4_48.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_36: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type.loc4_48: init type = call %IntLiteral.ref.loc4_36() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_48.1: type = value_of_initializer %int_literal.make_type.loc4_48 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_48.2: type = converted %int_literal.make_type.loc4_48, %.loc4_48.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
+// CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {
+// CHECK:STDOUT:     %n.patt: Core.IntLiteral = binding_pattern n
+// CHECK:STDOUT:     %n.param_patt: Core.IntLiteral = value_param_pattern %n.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %n.param: Core.IntLiteral = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_28.3: type = splice_block %.loc6_28.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_28.2: type = converted %int_literal.make_type, %.loc6_28.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %n: Core.IntLiteral = bind_name n, %n.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Eq(%a.param_patt: Core.IntLiteral, %b.param_patt: Core.IntLiteral) -> bool = "int.eq";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Test(%n.param_patt: Core.IntLiteral) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Eq.ref.loc8: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %int_1.loc8_6: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc8_9: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.eq.loc8: init bool = call %Eq.ref.loc8(%int_1.loc8_6, %int_1.loc8_9) [template = constants.%true]
+// CHECK:STDOUT:   %Eq.ref.loc16: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %n.ref.loc16: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int.eq.loc16: init bool = call %Eq.ref.loc16(%n.ref.loc16, %int_1.loc16)
+// CHECK:STDOUT:   %Eq.ref.loc24: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %n.ref.loc24: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.eq.loc24: init bool = call %Eq.ref.loc24(%int_1.loc24, %n.ref.loc24)
+// CHECK:STDOUT:   %Eq.ref.loc31: %Eq.type = name_ref Eq, file.%Eq.decl [template = constants.%Eq]
+// CHECK:STDOUT:   %n.ref.loc31_6: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %n.ref.loc31_9: Core.IntLiteral = name_ref n, %n
+// CHECK:STDOUT:   %int.eq.loc31: init bool = call %Eq.ref.loc31(%n.ref.loc31_6, %n.ref.loc31_9)
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
