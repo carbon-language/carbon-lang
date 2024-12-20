@@ -178,11 +178,12 @@ class BitIndex
 // matching byte must be set. This is a stricter constraint than what `BitIndex`
 // alone would impose on any one of the matches.
 template <typename BitIndexT, BitIndexT::BitsT ByteEncodingMask = 0>
-  requires(BitIndexT::ByteEncoding || ByteEncodingMask == 0)
 class BitIndexRange
     : public Printable<BitIndexRange<BitIndexT, ByteEncodingMask>> {
  public:
   using BitsT = BitIndexT::BitsT;
+  static_assert(BitIndexT::ByteEncoding || ByteEncodingMask == 0,
+                "Non-byte encoding must not have a byte encoding mask.");
 
   class Iterator
       : public llvm::iterator_facade_base<Iterator, std::forward_iterator_tag,
@@ -274,7 +275,6 @@ class BitIndexRange
  private:
   template <typename FriendBitIndexT,
             FriendBitIndexT::BitsT FriendByteEncodingMask>
-    requires(FriendBitIndexT::ByteEncoding || FriendByteEncodingMask == 0)
   friend class BitIndexRange;
 
   BitsT bits_ = 0;
