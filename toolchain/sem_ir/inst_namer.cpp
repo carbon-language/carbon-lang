@@ -4,10 +4,9 @@
 
 #include "toolchain/sem_ir/inst_namer.h"
 
-#include <deque>
-
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/lex/tokenized_buffer.h"
@@ -367,34 +366,32 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
 
 auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
-  std::deque<std::pair<ScopeId, InstId>> insts;
+  llvm::SmallVector<std::pair<ScopeId, InstId>> insts;
 
-  // Appends a scope and instructions to walk. Avoids recursion while allowing
-  // the loop to below append more instructions during iteration.
-  auto append_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
-    if (block_id.is_valid()) {
-      for (auto inst_id : llvm::reverse(sem_ir_->inst_blocks().Get(block_id))) {
-        if (inst_id.is_valid()) {
-          insts.emplace_front(scope_id, inst_id);
-        }
-      }
-    }
-  };
-  auto append_block_insts = [&](ScopeId scope_id,
-                                llvm::ArrayRef<InstId> inst_ids) {
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are queued such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto queue_block_insts = [&](ScopeId scope_id,
+                               llvm::ArrayRef<InstId> inst_ids) {
     for (auto inst_id : llvm::reverse(inst_ids)) {
       if (inst_id.is_valid()) {
-        insts.emplace_front(scope_id, inst_id);
+        insts.push_back(std::make_pair(scope_id, inst_id));
       }
     }
   };
+  auto queue_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
+    if (block_id.is_valid()) {
+      queue_block_insts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+    }
+  };
 
-  append_block_insts(top_scope_id, block);
+  queue_block_insts(top_scope_id, block);
 
   // Use bound names where available. Otherwise, assign a backup name.
   while (!insts.empty()) {
-    auto [scope_id, inst_id] = insts.front();
-    insts.pop_front();
+    auto [scope_id, inst_id] = insts.pop_back_val();
 
     Scope& scope = GetScopeInfo(scope_id);
 
@@ -534,8 +531,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        append_block_id(class_scope_id, class_info.pattern_block_id);
-        append_block_id(class_scope_id, inst.decl_block_id);
+        queue_block_id(class_scope_id, class_info.pattern_block_id);
+        queue_block_id(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -619,8 +616,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        append_block_id(function_scope_id, function_info.pattern_block_id);
-        append_block_id(function_scope_id, inst.decl_block_id);
+        queue_block_id(function_scope_id, function_info.pattern_block_id);
+        queue_block_id(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -640,9 +637,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        append_block_id(impl_scope_id,
-                        sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
-        append_block_id(impl_scope_id, inst.decl_block_id);
+        queue_block_id(impl_scope_id,
+                       sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
+        queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -663,8 +660,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
-            append_block_insts(ScopeId::ImportRefs,
-                               llvm::ArrayRef(const_inst_id));
+            queue_block_insts(ScopeId::ImportRefs,
+                              llvm::ArrayRef(const_inst_id));
           }
         }
         continue;
@@ -674,8 +671,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        append_block_id(interface_scope_id, interface_info.pattern_block_id);
-        append_block_id(interface_scope_id, inst.decl_block_id);
+        queue_block_id(interface_scope_id, interface_info.pattern_block_id);
+        queue_block_id(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case InterfaceWitness::Kind: {
@@ -755,7 +752,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {
-        append_block_id(scope_id, inst.block_id);
+        queue_block_id(scope_id, inst.block_id);
         break;
       }
       case StringLiteral::Kind: {
