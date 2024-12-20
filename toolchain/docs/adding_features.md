@@ -467,7 +467,7 @@ example, with `toolchain/parse/testdata/basics/empty.carbon`:
     -   Executes an individual test.
 -   `bazel run //toolchain -- compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Explicitly runs `carbon` with the provided arguments.
--   `bazel-bin/toolchain/install/prefix_root/bin/carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
+-   `bazel-bin/toolchain/carbon compile --phase=parse --dump-parse-tree toolchain/parse/testdata/basics/empty.carbon`
     -   Similar to the previous command, but without using `bazel run`. This can
         be useful with a debugger or other tool that needs to directly run the
         binary.
