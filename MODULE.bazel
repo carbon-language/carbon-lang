@@ -65,16 +65,6 @@ git_override(
     remote = "https://github.com/google/tcmalloc.git",
 )
 
-# protobuf and tcmalloc rely on incompatible rules_fuzzing versions. Force the
-# protobuf version, even though it's just an indirect dependency of something.
-#
-# TODO: This is probably okay because of how we use tcmalloc, but it's
-# definitely undesirable and should be removed when possible.
-single_version_override(
-    module_name = "rules_fuzzing",
-    version = "0.5.2",
-)
-
 bazel_dep(name = "rules_bison", version = "0.3")
 bazel_dep(name = "rules_flex", version = "0.3")
 bazel_dep(name = "rules_m4", version = "0.2.4")
