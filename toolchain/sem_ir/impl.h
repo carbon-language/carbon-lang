@@ -45,12 +45,6 @@ struct Impl : public EntityWithParamsBase,
     out << "{self: " << self_id << ", constraint: " << constraint_id << "}";
   }
 
-  // Determines whether the definition of this impl has begun. This is false
-  // until we reach the `{` of the impl definition.
-  auto has_definition_started() const -> bool {
-    return definition_id.is_valid();
-  }
-
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
   auto is_defined() const -> bool { return defined; }
