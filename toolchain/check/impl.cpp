@@ -142,8 +142,10 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   }
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
   if (!facet_type) {
-    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet-type");
-    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType);
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
+                           impl.constraint_id);
     return SemIR::ErrorInst::SingletonInstId;
   }
   const SemIR::FacetTypeInfo& facet_type_info =
