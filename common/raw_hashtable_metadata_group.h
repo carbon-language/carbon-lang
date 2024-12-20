@@ -178,12 +178,11 @@ class BitIndex
 // matching byte must be set. This is a stricter constraint than what `BitIndex`
 // alone would impose on any one of the matches.
 template <typename BitIndexT, BitIndexT::BitsT ByteEncodingMask = 0>
+  requires(BitIndexT::ByteEncoding || ByteEncodingMask == 0)
 class BitIndexRange
     : public Printable<BitIndexRange<BitIndexT, ByteEncodingMask>> {
  public:
   using BitsT = BitIndexT::BitsT;
-  static_assert(BitIndexT::ByteEncoding || ByteEncodingMask == 0,
-                "Non-zero byte encoding mask only valid with a byte encoding.");
 
   class Iterator
       : public llvm::iterator_facade_base<Iterator, std::forward_iterator_tag,
@@ -275,6 +274,7 @@ class BitIndexRange
  private:
   template <typename FriendBitIndexT,
             FriendBitIndexT::BitsT FriendByteEncodingMask>
+    requires(FriendBitIndexT::ByteEncoding || FriendByteEncodingMask == 0)
   friend class BitIndexRange;
 
   BitsT bits_ = 0;
@@ -492,6 +492,17 @@ class MetadataGroup : public Printable<MetadataGroup> {
 
   using MatchBitsT = MatchIndex::BitsT;
 
+  // A helper function to allow deducing the return type from the selected arm
+  // of a `constexpr` ternary.
+  template <bool Condition, typename LeftT, typename RightT>
+  static auto ConstexprTernary(LeftT lhs, RightT rhs) {
+    if constexpr (Condition) {
+      return lhs;
+    } else {
+      return rhs;
+    }
+  }
+
   static auto CompareEqual(MetadataGroup lhs, MetadataGroup rhs) -> bool;
 
   // Functions for validating the returned matches agree with what is predicted
@@ -634,16 +645,8 @@ inline auto MetadataGroup::Match(uint8_t tag) const -> MatchRange {
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  // Return whichever result we're using. This uses an invoked lambda to deduce
-  // the type from only the selected return statement, allowing them to be
-  // different types.
-  return [&] {
-    if constexpr (UseSIMD) {
-      return simd_result;
-    } else {
-      return portable_result;
-    }
-  }();
+  // Return whichever result we're using.
+  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchPresent() const -> MatchPresentRange {
@@ -658,16 +661,8 @@ inline auto MetadataGroup::MatchPresent() const -> MatchPresentRange {
                   "SIMD result '{0}' doesn't match portable result '{1}'",
                   simd_result, portable_result);
   }
-  // Return whichever result we're using. This uses an invoked lambda to deduce
-  // the type from only the selected return statement, allowing them to be
-  // different types.
-  return [&] {
-    if constexpr (UseSIMD) {
-      return simd_result;
-    } else {
-      return portable_result;
-    }
-  }();
+  // Return whichever result we're using.
+  return ConstexprTernary<UseSIMD>(simd_result, portable_result);
 }
 
 inline auto MetadataGroup::MatchEmpty() const -> MatchIndex {
