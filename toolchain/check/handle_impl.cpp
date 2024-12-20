@@ -389,7 +389,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       BuildImplDecl(context, node_id, /*is_definition=*/true);
   auto& impl_info = context.impls().Get(impl_id);
 
-  if (impl_info.is_defined()) {
+  if (impl_info.has_definition_started()) {
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
                       "redefinition of `impl {0} as {1}`", InstIdAsRawType,
                       InstIdAsRawType);
