@@ -55,10 +55,10 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -66,8 +66,6 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:

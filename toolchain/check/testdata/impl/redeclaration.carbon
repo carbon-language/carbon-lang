@@ -10,16 +10,9 @@
 
 interface I {}
 
-// CHECK:STDERR: redeclaration.carbon:[[@LINE+4]]:1: error: no definition found for declaration of impl [MissingImplDefinition]
-// CHECK:STDERR: impl i32 as I;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl i32 as I;
 
 class X {
-  // CHECK:STDERR: redeclaration.carbon:[[@LINE+3]]:3: error: no definition found for declaration of impl [MissingImplDefinition]
-  // CHECK:STDERR:   impl i32 as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   impl i32 as I;
 }
 
@@ -54,16 +47,16 @@ impl i32 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
-// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc17: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc19: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,9 +68,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: %i32.loc17 as %I.ref.loc17;
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %i32 as %I.ref {
+// CHECK:STDOUT: impl @impl: %i32.loc13 as %I.ref.loc13 {
 // CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -85,10 +76,10 @@ impl i32 as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
-// CHECK:STDOUT:     %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %I.ref.loc23: type = name_ref I, file.%I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %I.ref.loc16: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.2]
 // CHECK:STDOUT:

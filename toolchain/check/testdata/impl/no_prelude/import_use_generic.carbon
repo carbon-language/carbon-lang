@@ -223,10 +223,6 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.generic]
-// CHECK:STDOUT:   %.loc6_11: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc6_12: type = converted %.loc6_11, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_struct_type) [template = constants.%C.2]
 // CHECK:STDOUT:   %c.var: ref %C.2 = var c
 // CHECK:STDOUT:   %c: ref %C.2 = bind_name c, %c.var
 // CHECK:STDOUT:   %F.decl: %F.type.4 = fn_decl @F.3 [template = constants.%F.4] {

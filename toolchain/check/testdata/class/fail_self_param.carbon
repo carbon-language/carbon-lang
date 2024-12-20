@@ -22,7 +22,6 @@ var v: C(0);
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -43,12 +42,10 @@ var v: C(0);
 // CHECK:STDOUT:     %x.patt.loc14_22.1: <error> = symbolic_binding_pattern x, 0 [symbolic = %x.patt.loc14_22.2 (constants.%x.patt)]
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt.loc14_22.1, runtime_param<invalid> [symbolic = %x.patt.loc14_22.2 (constants.%x.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [template = <error>]
 // CHECK:STDOUT:     %x.param: <error> = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %self.ref: <error> = name_ref self, <error> [template = <error>]
 // CHECK:STDOUT:     %x: <error> = bind_symbolic_name x, 0, %x.param [template = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, %C.decl [template = constants.%C.generic]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %v.var: ref <error> = var v
 // CHECK:STDOUT:   %v: ref <error> = bind_name v, %v.var
 // CHECK:STDOUT: }

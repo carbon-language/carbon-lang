@@ -27,7 +27,7 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_12.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_12.2: %i32 = int_value 12 [template]
@@ -53,14 +53,8 @@ var b: i32 = a[1];
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1, %i32 [template = constants.%array_type]
 // CHECK:STDOUT:   %a.var: ref %array_type = var a
 // CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %b.var: ref %i32 = var b
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -69,7 +63,7 @@ var b: i32 = a[1];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12.1]
 // CHECK:STDOUT:   %.loc11_23.1: %tuple.type = tuple_literal (%int_12)
-// CHECK:STDOUT:   %impl.elem0.loc11: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc11: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc11: <bound method> = bound_method %int_12, %impl.elem0.loc11 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc11: <specific function> = specific_function %Convert.bound.loc11, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc11: init %i32 = call %Convert.specific_fn.loc11(%int_12) [template = constants.%int_12.2]
@@ -84,7 +78,7 @@ var b: i32 = a[1];
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %int_1, %impl.elem0.loc15 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(%int_1) [template = constants.%int_1.2]

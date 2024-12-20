@@ -14,7 +14,7 @@
       "type": "by-gdb",
       "request": "launch",
       "name": "carbon compile (gdb)",
-      "program": "bazel-bin/toolchain/install/prefix_root/lib/carbon/carbon-busybox",
+      "program": "bazel-bin/toolchain/carbon",
       "programArgs": "compile --phase=lower --dump-sem-ir --stream-errors ${relativeFile}",
       "cwd": "${workspaceFolder}"
     }

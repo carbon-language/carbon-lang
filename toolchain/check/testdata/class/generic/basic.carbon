@@ -101,12 +101,14 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return.patt: @GetAddr.%ptr.loc12_38.1 (%ptr.2) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @GetAddr.%ptr.loc12_38.1 (%ptr.2) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc12_25: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc12_25 [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %ptr.loc12_29.2: type = ptr_type %Class [symbolic = %ptr.loc12_29.1 (constants.%ptr.1)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc12_38.2: type = ptr_type %T [symbolic = %ptr.loc12_38.1 (constants.%ptr.2)]
 // CHECK:STDOUT:       %self.param: @GetAddr.%ptr.loc12_29.1 (%ptr.1) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc12_29: type = splice_block %ptr.loc12_29.2 [symbolic = %ptr.loc12_29.1 (constants.%ptr.1)] {
+// CHECK:STDOUT:         %.loc12_25: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc12_25 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %ptr.loc12_29.2: type = ptr_type %Class [symbolic = %ptr.loc12_29.1 (constants.%ptr.1)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @GetAddr.%ptr.loc12_29.1 (%ptr.1) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @GetAddr.%ptr.loc12_38.1 (%ptr.2) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @GetAddr.%ptr.loc12_38.1 (%ptr.2) = return_slot %return.param
@@ -117,15 +119,16 @@ class Declaration(T:! type);
 // CHECK:STDOUT:       %return.patt: @GetValue.%T (%T) = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: @GetValue.%T (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc17: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc17 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @GetValue.%Class (%Class) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc17_21.2: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:         %.loc17_21.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc17_21.1 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @GetValue.%Class (%Class) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @GetValue.%T (%T) = out_param runtime_param1
 // CHECK:STDOUT:       %return: ref @GetValue.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc11_13.1 [symbolic = %T.loc11_13.2 (constants.%T)]
 // CHECK:STDOUT:     %.loc21: @Class.%Class.elem (%Class.elem) = field_decl k, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc22_1.1: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc22_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:

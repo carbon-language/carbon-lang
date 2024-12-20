@@ -100,16 +100,16 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Virtual.decl: %Virtual.type = fn_decl @Virtual [template = constants.%Virtual] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self.param: %FinalClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FinalClass [template = constants.%FinalClass]
 // CHECK:STDOUT:     %self: %FinalClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
@@ -126,16 +126,16 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Final.decl: %Final.type = fn_decl @Final [template = constants.%Final] {
 // CHECK:STDOUT:     %self.patt: %AbstractClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %AbstractClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self.param: %AbstractClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AbstractClass [template = constants.%AbstractClass]
 // CHECK:STDOUT:     %self: %AbstractClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
@@ -152,8 +152,8 @@ base class BaseClass {
 // CHECK:STDOUT:     %self.patt: %BaseClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %BaseClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT:     %self.param: %BaseClass = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%BaseClass [template = constants.%BaseClass]
 // CHECK:STDOUT:     %self: %BaseClass = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

@@ -243,9 +243,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.patt.loc4_9.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_9.1, runtime_param<invalid> [symbolic = %N.patt.loc4_9.2 (constants.%N.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc4: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_9.2 (constants.%N.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
@@ -254,10 +256,10 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %N.patt.loc12_19.1: @.1.%T.loc12_9.2 (%T) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.3)]
 // CHECK:STDOUT:     %N.param_patt: @.1.%T.loc12_9.2 (%T) = value_param_pattern %N.patt.loc12_19.1, runtime_param<invalid> [symbolic = %N.patt.loc12_19.2 (constants.%N.patt.3)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.1 [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %N.param: @.1.%T.loc12_9.2 (%T) = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.1 [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %N.loc12_19.1: @.1.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc12_19.2 (constants.%N.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -343,11 +345,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %U.patt.loc12_19.1: %i32 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %U.param_patt: %i32 = value_param_pattern %U.patt.loc12_19.1, runtime_param<invalid> [symbolic = %U.patt.loc12_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_9.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc12_19.1: %i32 = bind_symbolic_name U, 1, %U.param [symbolic = %U.loc12_19.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -431,9 +435,11 @@ class E(U:! type) {}
 // CHECK:STDOUT:     %T.patt.loc12_9.1: %i32 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:     %T.param_patt: %i32 = value_param_pattern %T.patt.loc12_9.1, runtime_param<invalid> [symbolic = %T.patt.loc12_9.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %T.param: %i32 = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc12_9.1: %i32 = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc12_9.2 (constants.%T.2)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

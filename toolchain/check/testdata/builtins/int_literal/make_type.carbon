@@ -76,10 +76,6 @@ var i: IntLiteral();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc6_19.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:   %.loc6_19.2: type = converted %int_literal.make_type, %.loc6_19.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:   %i.var: ref Core.IntLiteral = var i
 // CHECK:STDOUT:   %i: ref Core.IntLiteral = bind_name i, %i.var
 // CHECK:STDOUT: }

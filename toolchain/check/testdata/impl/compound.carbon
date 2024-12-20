@@ -96,38 +96,46 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc21: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [template = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc25: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [template = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %.loc29: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InstanceCallIndirect.decl: %InstanceCallIndirect.type = fn_decl @InstanceCallIndirect [template = constants.%InstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %ptr = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %ptr = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32 [template = constants.%ptr]
 // CHECK:STDOUT:     %p.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %.loc33: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %ptr: type = ptr_type %i32 [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -140,10 +148,12 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %self.patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.1) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.1) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:     %Self.as_type.loc13_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.1)]
-// CHECK:STDOUT:     %.loc13: type = converted %Self.ref, %Self.as_type.loc13_14.2 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.1)]
 // CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.1) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc13_14.2: type = splice_block %.loc13_14.1 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.1)] {
+// CHECK:STDOUT:       %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:       %Self.as_type.loc13_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:       %.loc13_14.1: type = converted %Self.ref, %Self.as_type.loc13_14.2 [symbolic = %Self.as_type.loc13_14.1 (constants.%Self.as_type.1)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc13_14.1 (%Self.as_type.1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, %G.decl [template = constants.%assoc1]
@@ -161,9 +171,11 @@ fn InstanceCallIndirect(p: i32*) {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc18: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %i32 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl, %G.decl) [template = constants.%interface.1]

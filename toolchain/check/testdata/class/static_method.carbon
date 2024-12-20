@@ -82,7 +82,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %c.var: ref %Class = var c
 // CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c

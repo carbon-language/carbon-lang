@@ -57,9 +57,11 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %ptr.patt: %ptr.1 = binding_pattern ptr
 // CHECK:STDOUT:     %ptr.param_patt: %ptr.1 = value_param_pattern %ptr.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %ptr.loc16_14: type = ptr_type %C [template = constants.%ptr.1]
 // CHECK:STDOUT:     %ptr.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16: type = splice_block %ptr.loc16_14 [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %ptr.loc16_14: type = ptr_type %C [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ptr.loc16_8: %ptr.1 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -69,12 +71,10 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %ptr: type = ptr_type %C [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc13: %C.elem = field_decl field, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [template = constants.%complete_type]
 // CHECK:STDOUT:

@@ -43,8 +43,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %y.var: ref %i32 = var y
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [template = package]

@@ -52,8 +52,5 @@ fn Foo.Baz() {
 // CHECK:STDOUT: fn @Baz() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
-// CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23:
-// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

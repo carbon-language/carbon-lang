@@ -59,10 +59,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc21: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc21: %Class = bind_name self, %self.param.loc21
 // CHECK:STDOUT:     %return.param.loc21: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return.loc21: ref %i32 = return_slot %return.param.loc21
@@ -76,10 +76,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc12: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Self.ref.loc12: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc12: %Class = bind_name self, %self.param.loc12
 // CHECK:STDOUT:     %return.param.loc12: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return.loc12: ref %i32 = return_slot %return.param.loc12
@@ -88,12 +88,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.patt: %Class = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %Class = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %return.param: ref %Class = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Class [template = constants.%ptr.1]
 // CHECK:STDOUT:   %.loc18: %Class.elem = field_decl p, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -123,7 +121,6 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %Class {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Self.ref.loc14: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return
 // CHECK:STDOUT:   %s.ref.loc15_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc15_16: ref %Class = name_ref s, %s

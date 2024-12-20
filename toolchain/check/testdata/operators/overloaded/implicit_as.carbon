@@ -112,17 +112,19 @@ fn Test() {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %n.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc25: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Sink_X.decl: %Sink_X.type = fn_decl @Sink_X [template = constants.%Sink_X] {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Source.decl: %Source.type = fn_decl @Source [template = constants.%Source] {
@@ -147,10 +149,12 @@ fn Test() {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %self.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16_20: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
@@ -169,10 +173,10 @@ fn Test() {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -185,8 +189,6 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12: %X.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:

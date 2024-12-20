@@ -289,16 +289,16 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C.2 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc8 [template = constants.%C.2]
 // CHECK:STDOUT:     %x.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc8 [template = constants.%C.2]
 // CHECK:STDOUT:     %x: %C.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F2.decl: %F2.type = fn_decl @F2 [template = constants.%F2] {
 // CHECK:STDOUT:     %x.patt: %C.2 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc8 [template = constants.%C.2]
 // CHECK:STDOUT:     %x.param: %C.2 = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc8 [template = constants.%C.2]
 // CHECK:STDOUT:     %x: %C.2 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -353,8 +353,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -393,8 +393,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
@@ -442,8 +442,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %I.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %I.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %x.param: %I.type = value_param runtime_param0
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     %x: %I.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: type = interface_decl @.1 [template = constants.%.type] {} {}
@@ -490,8 +490,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17: <namespace> = namespace [template] {}
@@ -544,12 +544,11 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C1 = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C1 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [template = constants.%C1]
 // CHECK:STDOUT:     %x.param: %C1 = value_param runtime_param0
+// CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [template = constants.%C1]
 // CHECK:STDOUT:     %x: %C1 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [template = constants.%C2] {} {}
-// CHECK:STDOUT:   %C2.ref: type = name_ref C2, %C2.decl [template = constants.%C2]
 // CHECK:STDOUT:   %.loc18: %D.elem = field_decl C1, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.C1 [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -595,8 +594,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {} {}
@@ -695,8 +694,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
@@ -704,8 +703,8 @@ class N.C {}
 // CHECK:STDOUT:     %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -831,8 +830,8 @@ class N.C {}
 // CHECK:STDOUT:       %x.patt: %C = binding_pattern x
 // CHECK:STDOUT:       %x.param_patt: %C = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:       %x.param: %C = value_param runtime_param0
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:       %x: %C = bind_name x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.decl: type = class_decl @.1 [template = constants.%.1] {} {}

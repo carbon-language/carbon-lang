@@ -41,12 +41,6 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:     .n = @__global_init.%n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc17_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_17.1: %tuple.type.1 = tuple_literal (%i32.loc17_9, %i32.loc17_14)
-// CHECK:STDOUT:   %.loc17_17.2: type = converted %.loc17_17.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

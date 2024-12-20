@@ -26,7 +26,7 @@ export function activate(context: ExtensionContext) {
     // fallback.
     command: settings.get(
       'carbonPath',
-      context.asAbsolutePath('./bazel-bin/toolchain/install/run_carbon')
+      context.asAbsolutePath('./bazel-bin/toolchain/carbon')
     ),
     args: ['language-server'],
   };

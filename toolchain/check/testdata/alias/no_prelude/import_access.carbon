@@ -102,7 +102,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
 // CHECK:STDOUT: }
@@ -138,7 +137,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
 // CHECK:STDOUT: }
@@ -168,8 +166,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
 // CHECK:STDOUT: }

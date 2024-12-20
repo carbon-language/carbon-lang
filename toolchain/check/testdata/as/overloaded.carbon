@@ -46,7 +46,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.type.13: type = fn_type @Convert.7, @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.13: %Convert.type.13 = struct_value () [template]
-// CHECK:STDOUT:   %interface.7: <witness> = interface_witness (%Convert.13) [template]
+// CHECK:STDOUT:   %interface.21: <witness> = interface_witness (%Convert.13) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_4.1, %Convert.13 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.1, @Convert.7(%int_32) [template]
 // CHECK:STDOUT:   %int_4.2: %i32 = int_value 4 [template]
@@ -87,8 +87,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %i32 as %As.type {
@@ -98,10 +96,12 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %X = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %self.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16_20: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %i32 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
@@ -120,10 +120,10 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %self.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %self: %X = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -136,8 +136,6 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc12: %X.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
 // CHECK:STDOUT:
@@ -172,7 +170,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
 // CHECK:STDOUT:   %int_32.loc23_21: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23_21: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = interface_witness_access constants.%interface.7, element0 [template = constants.%Convert.13]
+// CHECK:STDOUT:   %impl.elem0.loc23_18: %Convert.type.4 = interface_witness_access constants.%interface.21, element0 [template = constants.%Convert.13]
 // CHECK:STDOUT:   %Convert.bound.loc23_18: <bound method> = bound_method %int_4, %impl.elem0.loc23_18 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound.loc23_18, @Convert.7(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_4) [template = constants.%int_4.2]

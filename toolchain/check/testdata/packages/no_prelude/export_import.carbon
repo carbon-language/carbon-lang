@@ -188,14 +188,12 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5_8
+// CHECK:STDOUT:   .x = %.loc5
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,7 +292,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -348,7 +345,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -397,7 +393,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -446,7 +441,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -495,7 +489,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -544,7 +537,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -593,7 +585,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -642,7 +633,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -702,7 +692,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -753,7 +742,6 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:     .indirect_c = %indirect_c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %indirect_c.var: ref %C = var indirect_c
 // CHECK:STDOUT:   %indirect_c: ref %C = bind_name indirect_c, %indirect_c.var
 // CHECK:STDOUT: }

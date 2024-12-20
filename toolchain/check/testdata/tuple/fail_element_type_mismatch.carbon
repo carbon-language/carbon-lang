@@ -21,7 +21,6 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
 // CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template]
@@ -29,7 +28,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.5: <witness> = interface_witness (%Convert.10) [template]
+// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.2: %i32 = int_value 2 [template]
@@ -50,12 +49,6 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc17_9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc17_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc17_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_17.1: %tuple.type.1 = tuple_literal (%i32.loc17_9, %i32.loc17_14)
-// CHECK:STDOUT:   %.loc17_17.2: type = converted %.loc17_17.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:   %x.var: ref %tuple.type.2 = var x
 // CHECK:STDOUT:   %x: ref %tuple.type.2 = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -65,7 +58,7 @@ var x: (i32, i32) = (2, 65.89);
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %float: f64 = float_literal 65.890000000000001 [template = constants.%float]
 // CHECK:STDOUT:   %.loc17_30.1: %tuple.type.3 = tuple_literal (%int_2, %float)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.5, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.2]

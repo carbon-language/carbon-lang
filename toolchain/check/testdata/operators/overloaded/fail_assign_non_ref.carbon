@@ -98,8 +98,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [template = constants.%TestAddAssignNonRef] {
@@ -108,11 +108,11 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:     %b.patt: %C = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %C = value_param_pattern %b.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref.loc33_27: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %C.ref.loc33_33: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %b: %C = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -121,11 +121,13 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc16_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr.1]
 // CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16_21: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.decl) [template = constants.%interface.1]
@@ -139,16 +141,18 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %Op.decl: %Op.type.3 = fn_decl @Op.3 [template = constants.%Op.3] {
 // CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc19: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc19_9: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
 // CHECK:STDOUT:     %other.param_patt: %C = value_param_pattern %other.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %ptr: type = ptr_type %C [template = constants.%ptr.1]
-// CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc19_21: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:       %C.ref.loc19_20: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C [template = constants.%ptr.1]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param runtime_param1
+// CHECK:STDOUT:     %C.ref.loc19_31: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %other: %C = bind_name other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.decl) [template = constants.%interface.2]

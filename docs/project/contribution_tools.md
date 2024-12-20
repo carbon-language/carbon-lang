@@ -345,7 +345,7 @@ bazel build -c dbg //toolchain
 Then debugging works with LLDB:
 
 ```shell
-lldb bazel-bin/toolchain/install/prefix_root/lib/carbon/carbon-busybox
+lldb bazel-bin/toolchain/carbon
 ```
 
 Any installed version of LLDB at least as recent as the installed Clang used for
