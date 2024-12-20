@@ -46,6 +46,10 @@ build --disk_cache=~/.cache/carbon-lang-build-cache
 # future Bazel releases.
 build --experimental_guard_against_concurrent_changes
 
+# Used by clang_configuration.bzl.
+build --action_env=CC --host_action_env=CC
+build --action_env=CMAKE_SYSROOT --host_action_env=CMAKE_SYSROOT
+
 # Disable warnings for all external compilations. These involve code that isn't
 # developed as part of Carbon and may be difficult or impossible to patch, so
 # warnings aren't likely to be actionable.
@@ -132,3 +136,8 @@ build --allow_unresolved_symlinks=false
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
 try-import %workspace%/user.bazelrc
+
+# TODO: Enable as many incompatible flags as we can, per
+# https://bazel.build/release/backward-compatibility. To get the latest list,
+# using `bazelisk --migrate build //...` will help.
+build --incompatible_strict_action_env
