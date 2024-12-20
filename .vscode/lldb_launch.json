@@ -9,7 +9,7 @@
       "args": ["--file_tests=${relativeFile}"],
       "debuggerRoot": "${workspaceFolder}",
       "initCommands": [
-        "command script import external/_main~llvm_project~llvm-project/llvm/utils/lldbDataFormatters.py",
+        "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
         "settings set target.source-map \".\" \"${workspaceFolder}\""
       ],
       "env": { "TEST_TMPDIR": "/tmp" }
@@ -28,7 +28,7 @@
       ],
       "debuggerRoot": "${workspaceFolder}",
       "initCommands": [
-        "command script import external/_main~llvm_project~llvm-project/llvm/utils/lldbDataFormatters.py",
+        "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
         "settings set target.source-map \".\" \"${workspaceFolder}\""
       ]
     }
