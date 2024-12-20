@@ -182,6 +182,8 @@ class BitIndexRange
     : public Printable<BitIndexRange<BitIndexT, ByteEncodingMask>> {
  public:
   using BitsT = BitIndexT::BitsT;
+  static_assert(BitIndexT::ByteEncoding || ByteEncodingMask == 0,
+                "Non-zero byte encoding mask only valid with a byte encoding.");
 
   class Iterator
       : public llvm::iterator_facade_base<Iterator, std::forward_iterator_tag,
@@ -215,7 +217,6 @@ class BitIndexRange
       if constexpr (ByteEncodingMask != 0) {
         // Apply an increment mask to the bits first. This is used with the byte
         // encoding when the mask isn't needed until we begin incrementing.
-        static_assert(BitIndexT::ByteEncoding);
         bits_ &= ByteEncodingMask;
       }
 
