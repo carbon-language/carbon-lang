@@ -48,7 +48,6 @@ struct Impl : public EntityWithParamsBase,
 
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
-  // FIXME: inline at callers.
   auto is_defined() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.

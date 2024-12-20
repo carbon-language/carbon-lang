@@ -254,10 +254,8 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
 
   // Following #4672, disallowing defining non-extern declarations in another
   // file.
-  // FIXME: Testing witness_id works, but is there something else that would
-  // be more appropriate?
   if (auto import_ref =
-          context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.witness_id)) {
+          context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.self_id)) {
     // TODO: Handle extern.
     CARBON_DIAGNOSTIC(RedeclImportedImpl, Error,
                       "redeclaration of imported impl");

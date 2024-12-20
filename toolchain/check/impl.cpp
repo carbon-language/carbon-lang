@@ -133,24 +133,9 @@ static auto CheckAssociatedFunctionImplementation(
 }
 
 static auto BuildImplWitnessImpl(
-    Context& context, const SemIR::Impl& impl, SemIR::TypeId facet_type_id,
+    Context& context, const SemIR::Impl& impl,
     SemIR::FacetTypeInfo::ImplsConstraint interface_type) -> SemIR::InstId {
   const auto& interface = context.interfaces().Get(interface_type.interface_id);
-  // TODO: This is going to try and define all the interfaces for this facet
-  // type, and so once we support impl of a facet type with more than one
-  // interface, it might give the wrong name in the diagnostic.
-  if (!context.RequireDefinedType(
-          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
-            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
-                              "implementation of undefined interface {0}",
-                              SemIR::NameId);
-            return context.emitter().Build(impl.latest_decl_id(),
-                                           ImplOfUndefinedInterface,
-                                           interface.name_id);
-          })) {
-    return SemIR::ErrorInst::SingletonInstId;
-  }
-
   llvm::SmallVector<SemIR::InstId> table;
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
@@ -219,13 +204,30 @@ auto BuildImplWitness(Context& context, SemIR::Impl& impl) -> SemIR::InstId {
   const SemIR::FacetTypeInfo& facet_type_info =
       context.facet_types().Get(facet_type->facet_type_id);
 
-  auto interface = facet_type_info.TryAsSingleInterface();
-  if (!interface) {
+  auto interface_type = facet_type_info.TryAsSingleInterface();
+  if (!interface_type) {
     context.TODO(impl.latest_decl_id(), "impl as not 1 interface");
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  return BuildImplWitnessImpl(context, impl, facet_type_id, *interface);
+  // TODO: This is going to try and define all the interfaces for this facet
+  // type, and so once we support impl of a facet type with more than one
+  // interface, it might give the wrong name in the diagnostic.
+  if (!context.RequireDefinedType(
+          facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
+            CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
+                              "implementation of undefined interface {0}",
+                              SemIR::NameId);
+            const auto& interface =
+                context.interfaces().Get(interface_type->interface_id);
+            return context.emitter().Build(impl.latest_decl_id(),
+                                           ImplOfUndefinedInterface,
+                                           interface.name_id);
+          })) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+
+  return BuildImplWitnessImpl(context, impl, *interface_type);
 }
 
 auto ImplWitnessStartDefinition(Context& /*context*/, SemIR::Impl& impl)
@@ -269,8 +271,6 @@ static auto FinishImplWitnessImpl(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
-          // FIXME: need to get the generic, not the specific, version of the
-          // function here.
           witness_block[index] = CheckAssociatedFunctionImplementation(
               context, fn_type, impl_decl_id, self_type_id, impl.witness_id);
         } else {
