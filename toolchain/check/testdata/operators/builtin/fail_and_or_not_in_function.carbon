@@ -104,10 +104,10 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12_9.3: type = splice_block %.loc12_9.2 [template = bool] {
+// CHECK:STDOUT:     %.loc12_9.1: type = splice_block %.loc12_9.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc12_9.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc12_9.2: type = converted %bool.make_type, %.loc12_9.1 [template = bool]
+// CHECK:STDOUT:       %.loc12_9.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc12_9.3: type = converted %bool.make_type, %.loc12_9.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1

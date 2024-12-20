@@ -96,9 +96,9 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.param_patt: %empty_tuple.type = value_param_pattern %T.patt.loc38_27.1, runtime_param<invalid> [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %empty_tuple.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc38_32.3: type = splice_block %.loc38_32.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc38_32.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc38_32.2: type = converted %.loc38_32.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc38_32.1: type = splice_block %.loc38_32.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc38_32.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc38_32.3: type = converted %.loc38_32.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc38_27.1: %empty_tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc38_27.2 (constants.%T.2)]
 // CHECK:STDOUT:   }

@@ -95,17 +95,17 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %.loc4_28.1: type = value_of_initializer %bool.make_type.loc4_28 [template = bool]
 // CHECK:STDOUT:     %.loc4_28.2: type = converted %bool.make_type.loc4_28, %.loc4_28.1 [template = bool]
 // CHECK:STDOUT:     %a.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_10.3: type = splice_block %.loc4_10.2 [template = bool] {
+// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc4_10: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc4_10.1: type = value_of_initializer %bool.make_type.loc4_10 [template = bool]
-// CHECK:STDOUT:       %.loc4_10.2: type = converted %bool.make_type.loc4_10, %.loc4_10.1 [template = bool]
+// CHECK:STDOUT:       %.loc4_10.2: type = value_of_initializer %bool.make_type.loc4_10 [template = bool]
+// CHECK:STDOUT:       %.loc4_10.3: type = converted %bool.make_type.loc4_10, %.loc4_10.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: bool = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param1
-// CHECK:STDOUT:     %.loc4_19.3: type = splice_block %.loc4_19.2 [template = bool] {
+// CHECK:STDOUT:     %.loc4_19.1: type = splice_block %.loc4_19.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc4_19: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc4_19.1: type = value_of_initializer %bool.make_type.loc4_19 [template = bool]
-// CHECK:STDOUT:       %.loc4_19.2: type = converted %bool.make_type.loc4_19, %.loc4_19.1 [template = bool]
+// CHECK:STDOUT:       %.loc4_19.2: type = value_of_initializer %bool.make_type.loc4_19 [template = bool]
+// CHECK:STDOUT:       %.loc4_19.3: type = converted %bool.make_type.loc4_19, %.loc4_19.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
@@ -116,10 +116,10 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc6_9.1, runtime_param<invalid> [symbolic = %B.patt.loc6_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc6_13.3: type = splice_block %.loc6_13.2 [template = bool] {
+// CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]
+// CHECK:STDOUT:       %.loc6_13.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc6_13.3: type = converted %bool.make_type, %.loc6_13.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.loc6_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc6_9.2 (constants.%B)]
 // CHECK:STDOUT:   }
@@ -262,10 +262,10 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %B.param_patt: bool = value_param_pattern %B.patt.loc4_9.1, runtime_param<invalid> [symbolic = %B.patt.loc4_9.2 (constants.%B.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.param: bool = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc4_13.3: type = splice_block %.loc4_13.2 [template = bool] {
+// CHECK:STDOUT:     %.loc4_13.1: type = splice_block %.loc4_13.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc4_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc4_13.2: type = converted %bool.make_type, %.loc4_13.1 [template = bool]
+// CHECK:STDOUT:       %.loc4_13.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc4_13.3: type = converted %bool.make_type, %.loc4_13.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %B.loc4_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc4_9.2 (constants.%B)]
 // CHECK:STDOUT:   }

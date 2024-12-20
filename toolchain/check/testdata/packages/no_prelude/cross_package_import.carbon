@@ -258,9 +258,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_10.3: type = splice_block %.loc4_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc4_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc4_10.2: type = converted %.loc4_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }

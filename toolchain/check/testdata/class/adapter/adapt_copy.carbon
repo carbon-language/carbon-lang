@@ -158,12 +158,12 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
 // CHECK:STDOUT:     %.loc15_59.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_41, %i32.loc15_56)
 // CHECK:STDOUT:     %.loc15_59.2: type = converted %.loc15_59.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_34.3: type = splice_block %.loc15_34.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %.loc15_34.1: type = splice_block %.loc15_34.3 [template = constants.%tuple.type.2] {
 // CHECK:STDOUT:       %AdaptCopyable.ref.loc15_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [template = constants.%AdaptCopyable]
 // CHECK:STDOUT:       %int_32.loc15_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc15_34.1: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %i32.loc15_31)
-// CHECK:STDOUT:       %.loc15_34.2: type = converted %.loc15_34.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:       %.loc15_34.2: %tuple.type.1 = tuple_literal (%AdaptCopyable.ref.loc15_16, %i32.loc15_31)
+// CHECK:STDOUT:       %.loc15_34.3: type = converted %.loc15_34.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.2 = out_param runtime_param1

@@ -117,9 +117,9 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %n.param_patt: @F.%T (%T) = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @F.%Class (%Class) = value_param runtime_param0
-// CHECK:STDOUT:       %.loc13_14.2: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
-// CHECK:STDOUT:         %.loc13_14.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc13_14.1 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %.loc13_14.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:         %.loc13_14.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc13_14.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.%Class (%Class) = bind_name self, %self.param
 // CHECK:STDOUT:       %n.param: @F.%T (%T) = value_param runtime_param1

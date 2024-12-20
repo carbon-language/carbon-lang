@@ -820,12 +820,12 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @TupleParam.%tuple.type (%tuple.type.2) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_35.3: type = splice_block %.loc4_35.2 [symbolic = %tuple.type (constants.%tuple.type.2)] {
+// CHECK:STDOUT:     %.loc4_35.1: type = splice_block %.loc4_35.3 [symbolic = %tuple.type (constants.%tuple.type.2)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_15.1 [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc4_35.1: %tuple.type.1 = tuple_literal (%T.ref, %i32)
-// CHECK:STDOUT:       %.loc4_35.2: type = converted %.loc4_35.1, constants.%tuple.type.2 [symbolic = %tuple.type (constants.%tuple.type.2)]
+// CHECK:STDOUT:       %.loc4_35.2: %tuple.type.1 = tuple_literal (%T.ref, %i32)
+// CHECK:STDOUT:       %.loc4_35.3: type = converted %.loc4_35.2, constants.%tuple.type.2 [symbolic = %tuple.type (constants.%tuple.type.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @TupleParam.%tuple.type (%tuple.type.2) = bind_name x, %x.param
 // CHECK:STDOUT:   }

@@ -103,7 +103,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc18_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc18_28.2: type = splice_block %.loc18_28.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
+// CHECK:STDOUT:     %.loc18_28.1: type = splice_block %.loc18_28.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
 // CHECK:STDOUT:       %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
 // CHECK:STDOUT:       %T.ref.loc18_25: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:       %Empty.type.loc18_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc18_26.2 (constants.%Empty.type.3)]
@@ -115,7 +115,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %impl.elem0.loc18_34.1: type = interface_witness_access %.Self.as_wit.loc18_34.1, element0 [symbolic = %impl.elem0.loc18_34.2 (constants.%impl.elem0.1)]
 // CHECK:STDOUT:       %T.ref.loc18_39: type = name_ref T, %T.loc18_6.1 [symbolic = %T.loc18_6.2 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc18_40.1: type = ptr_type %T [symbolic = %ptr.loc18_40.2 (constants.%ptr.1)]
-// CHECK:STDOUT:       %.loc18_28.1: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
+// CHECK:STDOUT:       %.loc18_28.2: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.1)] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc18_34.1, %ptr.loc18_40.1
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -128,7 +128,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %U.param_patt: %Empty_where.type.2 = value_param_pattern %U.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %Empty_where.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc20_20.2: type = splice_block %.loc20_20.1 [template = constants.%Empty_where.type.2] {
+// CHECK:STDOUT:     %.loc20_20.1: type = splice_block %.loc20_20.2 [template = constants.%Empty_where.type.2] {
 // CHECK:STDOUT:       %Empty.ref: %Empty.type.1 = name_ref Empty, file.%Empty.decl [template = constants.%Empty.generic]
 // CHECK:STDOUT:       %int_32.loc20_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
@@ -142,7 +142,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %int_32.loc20_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %ptr: type = ptr_type %i32 [template = constants.%ptr.2]
-// CHECK:STDOUT:       %.loc20_20.1: type = where_expr %.Self [template = constants.%Empty_where.type.2] {
+// CHECK:STDOUT:       %.loc20_20.2: type = where_expr %.Self [template = constants.%Empty_where.type.2] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %ptr
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

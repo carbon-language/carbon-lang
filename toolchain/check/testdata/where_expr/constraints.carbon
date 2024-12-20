@@ -174,12 +174,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param_patt: %I_where.type = value_param_pattern %U.patt.loc11_15.1, runtime_param<invalid> [symbolic = %U.patt.loc11_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_21.2: type = splice_block %.loc11_21.1 [template = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc11_21.1: type = splice_block %.loc11_21.2 [template = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:       %.loc11_37: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc11_21.1: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc11_21.2: type = where_expr %.Self [template = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc11_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -190,14 +190,14 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %V.param_patt: %J_where.type = value_param_pattern %V.patt.loc13_10.1, runtime_param<invalid> [symbolic = %V.patt.loc13_10.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.param: %J_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc13_16.2: type = splice_block %.loc13_16.1 [template = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc13_16.1: type = splice_block %.loc13_16.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type.1]
 // CHECK:STDOUT:       %.loc13_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type.1]
-// CHECK:STDOUT:       %.loc13_16.1: type = where_expr %.Self [template = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc13_16.2: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_impls %.loc13_22, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -208,7 +208,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %W.param_patt: %I_where.type = value_param_pattern %W.patt.loc15_8.1, runtime_param<invalid> [symbolic = %W.patt.loc15_8.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.param: %I_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc15_14.2: type = splice_block %.loc15_14.1 [template = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc15_14.1: type = splice_block %.loc15_14.2 [template = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:       %.Self.ref.loc15_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.1]
@@ -220,7 +220,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc15_50: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc15_14.1: type = where_expr %.Self [template = constants.%I_where.type] {
+// CHECK:STDOUT:       %.loc15_14.2: type = where_expr %.Self [template = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_impls %.loc15_20, %J.ref
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc15_50
 // CHECK:STDOUT:       }
@@ -333,7 +333,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %W.param_patt: %K_where.type = value_param_pattern %W.patt.loc11_24.1, runtime_param<invalid> [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.param: %K_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_30.2: type = splice_block %.loc11_30.1 [template = constants.%K_where.type] {
+// CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [template = constants.%K_where.type] {
 // CHECK:STDOUT:       %K.ref: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:       %.Self: %K.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %K.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -343,7 +343,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [template = constants.%M.type]
 // CHECK:STDOUT:       %as_type: type = facet_access_type %impl.elem0 [symbolic = constants.%as_type]
 // CHECK:STDOUT:       %.loc11_36: type = converted %impl.elem0, %as_type [symbolic = constants.%as_type]
-// CHECK:STDOUT:       %.loc11_30.1: type = where_expr %.Self [template = constants.%K_where.type] {
+// CHECK:STDOUT:       %.loc11_30.2: type = where_expr %.Self [template = constants.%K_where.type] {
 // CHECK:STDOUT:         requirement_impls %.loc11_36, %M.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -421,11 +421,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_26.2: type = splice_block %.loc11_26.1 [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [template = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7]
 // CHECK:STDOUT:       %.loc11_32: type = converted %int_7, <error> [template = <error>]
-// CHECK:STDOUT:       %.loc11_26.1: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:       %.loc11_26.2: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:         requirement_impls <error>, type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -476,12 +476,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc11_17.1, runtime_param<invalid> [symbolic = %U.patt.loc11_17.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_26.2: type = splice_block %.loc11_26.1 [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [template = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %int_7: Core.IntLiteral = int_value 7 [template = constants.%int_7]
 // CHECK:STDOUT:       %.loc11_44: type = converted %int_7, <error> [template = <error>]
-// CHECK:STDOUT:       %.loc11_26.1: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:       %.loc11_26.2: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -533,12 +533,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param_patt: %type_where = value_param_pattern %U.patt.loc8_24.1, runtime_param<invalid> [symbolic = %U.patt.loc8_24.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %type_where = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_33.2: type = splice_block %.loc8_33.1 [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc8_33.1: type = splice_block %.loc8_33.2 [template = constants.%type_where] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_33.1: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:       %.loc8_33.2: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -622,12 +622,12 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %Y.param_patt: %J_where.type = value_param_pattern %Y.patt.loc26_16.1, runtime_param<invalid> [symbolic = %Y.patt.loc26_16.2 (constants.%Y.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Y.param: %J_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc26_22.2: type = splice_block %.loc26_22.1 [template = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc26_22.1: type = splice_block %.loc26_22.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%import_ref.1 [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.loc26_38: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc26_22.1: type = where_expr %.Self [template = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc26_22.2: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc26_38
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

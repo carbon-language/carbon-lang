@@ -131,13 +131,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %X.param_patt: %tuple.type.8 = value_param_pattern %X.patt.loc7_9.1, runtime_param<invalid> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.param: %tuple.type.8 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc7_22.3: type = splice_block %.loc7_22.2 [template = constants.%tuple.type.8] {
+// CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [template = constants.%tuple.type.8] {
 // CHECK:STDOUT:       %int_32.loc7_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc7_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %int_32.loc7_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc7_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc7_22.1: %tuple.type.5 = tuple_literal (%i32.loc7_14, %i32.loc7_19)
-// CHECK:STDOUT:       %.loc7_22.2: type = converted %.loc7_22.1, constants.%tuple.type.8 [template = constants.%tuple.type.8]
+// CHECK:STDOUT:       %.loc7_22.2: %tuple.type.5 = tuple_literal (%i32.loc7_14, %i32.loc7_19)
+// CHECK:STDOUT:       %.loc7_22.3: type = converted %.loc7_22.2, constants.%tuple.type.8 [template = constants.%tuple.type.8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.loc7_9.1: %tuple.type.8 = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }

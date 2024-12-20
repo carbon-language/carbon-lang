@@ -241,9 +241,9 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc20_49: type = name_ref U, %U.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %self.param.loc20: %C.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc20_24.2: type = splice_block %Self.ref.loc20 [symbolic = constants.%C.2] {
-// CHECK:STDOUT:       %.loc20_24.1: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
-// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24.1 [symbolic = constants.%C.2]
+// CHECK:STDOUT:     %.loc20_24.1: type = splice_block %Self.ref.loc20 [symbolic = constants.%C.2] {
+// CHECK:STDOUT:       %.loc20_24.2: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = constants.%C.2]
+// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24.2 [symbolic = constants.%C.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc20: %C.2 = bind_name self, %self.param.loc20
 // CHECK:STDOUT:     %U.param.loc20: type = value_param runtime_param<invalid>
@@ -285,9 +285,9 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref.loc14_41: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %self.param.loc14: @F.%C (%C.2) = value_param runtime_param0
-// CHECK:STDOUT:       %.loc14_16.2: type = splice_block %Self.ref.loc14 [symbolic = %C (constants.%C.2)] {
-// CHECK:STDOUT:         %.loc14_16.1: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = %C (constants.%C.2)]
-// CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.1 [symbolic = %C (constants.%C.2)]
+// CHECK:STDOUT:       %.loc14_16.1: type = splice_block %Self.ref.loc14 [symbolic = %C (constants.%C.2)] {
+// CHECK:STDOUT:         %.loc14_16.2: type = specific_constant constants.%C.2, @C(constants.%Self) [symbolic = %C (constants.%C.2)]
+// CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.2 [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self.loc14: @F.%C (%C.2) = bind_name self, %self.param.loc14
 // CHECK:STDOUT:       %U.param.loc14: type = value_param runtime_param<invalid>

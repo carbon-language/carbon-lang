@@ -80,10 +80,10 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %cond.param_patt: bool = value_param_pattern %cond.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc13_12.3: type = splice_block %.loc13_12.2 [template = bool] {
+// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc13_12.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc13_12.2: type = converted %bool.make_type, %.loc13_12.1 [template = bool]
+// CHECK:STDOUT:       %.loc13_12.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc13_12.3: type = converted %bool.make_type, %.loc13_12.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %cond: bool = bind_name cond, %cond.param
 // CHECK:STDOUT:   }

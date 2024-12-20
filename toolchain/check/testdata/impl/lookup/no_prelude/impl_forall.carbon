@@ -176,10 +176,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %.loc20_31.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc20_31.2: type = converted %.loc20_31.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %a.param: %A.4 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc20_24.2: type = splice_block %A [template = constants.%A.4] {
+// CHECK:STDOUT:     %.loc20_24.1: type = splice_block %A [template = constants.%A.4] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
 // CHECK:STDOUT:       %.loc20_23: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc20_24.1: type = converted %.loc20_23, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc20_24.2: type = converted %.loc20_23, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%empty_struct_type) [template = constants.%A.4]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %A.4 = bind_name a, %a.param
@@ -210,11 +210,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @I.%U.loc6_13.1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %self.param: @F.1.%Self.as_type.loc7_14.1 (%Self.as_type) = value_param runtime_param0
-// CHECK:STDOUT:       %.loc7_14.3: type = splice_block %.loc7_14.2 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc7_14.1: @F.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%U) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @F.1.%I.type (%I.type.2) = name_ref Self, %.loc7_14.1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %.loc7_14.1: type = splice_block %.loc7_14.3 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc7_14.2: @F.1.%I.type (%I.type.2) = specific_constant @I.%Self.1, @I(constants.%U) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @F.1.%I.type (%I.type.2) = name_ref Self, %.loc7_14.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.as_type.loc7_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc7_14.2: type = converted %Self.ref, %Self.as_type.loc7_14.2 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc7_14.3: type = converted %Self.ref, %Self.as_type.loc7_14.2 [symbolic = %Self.as_type.loc7_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.1.%Self.as_type.loc7_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.1.%U (%U) = out_param runtime_param1
