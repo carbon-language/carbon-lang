@@ -22,6 +22,7 @@ build --flag_alias=nightly_date=//bazel/version:nightly_date
 build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
 build:clang-tidy --output_groups=report
 build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+build:clang-tidy --action_env=PATH --host_action_env=PATH
 
 # This warning seems to incorrectly fire in this build configuration, despite
 # not firing in our normal builds.
