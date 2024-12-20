@@ -34,7 +34,6 @@ cc_library(
 cc_library(
     name = "handler_registry",
     srcs = [
-        # Registry instantiation needs to be one-per-file.
         "handler_registry_for_call.cpp",
         "handler_registry_for_notification.cpp",
     ],

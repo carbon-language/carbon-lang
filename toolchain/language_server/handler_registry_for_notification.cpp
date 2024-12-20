@@ -4,4 +4,5 @@
 
 #include "toolchain/language_server/handler_registry.h"
 
+// Registry instantiation needs to be one-per-file.
 LLVM_INSTANTIATE_REGISTRY(Carbon::LanguageServer::NotificationHandlerRegistry)
