@@ -57,17 +57,19 @@ fn G(p: const (const i32)**) -> i32** {
 // CHECK:STDOUT:     %return.patt: %ptr.4 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %ptr.4 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %const.loc15_16: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:     %const.loc15_9: type = const_type %const [template = constants.%const]
-// CHECK:STDOUT:     %ptr.loc15_26: type = ptr_type %const [template = constants.%ptr.1]
-// CHECK:STDOUT:     %ptr.loc15_27: type = ptr_type %ptr.1 [template = constants.%ptr.2]
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [template = constants.%ptr.3]
 // CHECK:STDOUT:     %ptr.loc15_37: type = ptr_type %ptr.3 [template = constants.%ptr.4]
 // CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_27 [template = constants.%ptr.2] {
+// CHECK:STDOUT:       %int_32.loc15_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:       %const.loc15_16: type = const_type %i32 [template = constants.%const]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %const [template = constants.%const]
+// CHECK:STDOUT:       %ptr.loc15_26: type = ptr_type %const [template = constants.%ptr.1]
+// CHECK:STDOUT:       %ptr.loc15_27: type = ptr_type %ptr.1 [template = constants.%ptr.2]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.4 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %ptr.4 = return_slot %return.param

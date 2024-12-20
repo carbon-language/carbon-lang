@@ -51,14 +51,12 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc5: %C.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc5_8
+// CHECK:STDOUT:   .n = %.loc5
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

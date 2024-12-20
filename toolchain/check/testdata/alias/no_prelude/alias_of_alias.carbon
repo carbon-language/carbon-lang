@@ -38,7 +38,6 @@ let d: c = {};
 // CHECK:STDOUT:   %b: type = bind_alias b, %a [template = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [template = constants.%C]
-// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

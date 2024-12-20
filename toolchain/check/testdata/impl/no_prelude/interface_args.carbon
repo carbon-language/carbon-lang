@@ -138,8 +138,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -314,8 +314,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -470,8 +470,8 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %a.patt: %A = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %A = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -784,9 +784,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %return.patt: %B = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %B = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%import_ref.3 [template = constants.%B]
 // CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %B = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
@@ -945,9 +945,9 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %C.ref.loc6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %a.param: %A = value_param runtime_param0
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%A]
 // CHECK:STDOUT:     %a: %A = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param

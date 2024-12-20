@@ -175,13 +175,6 @@ fn Run() {
 // CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//b, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Other//b, inst28 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.3 = import_ref Other//b, inst29 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.4: <namespace> = import_ref Other//b, NS1, loaded
-// CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.4, [template] {
-// CHECK:STDOUT:     .A = %import_ref.5
-// CHECK:STDOUT:     import Other//b
-// CHECK:STDOUT:     import Other//a
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Other//a, A, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -208,9 +201,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
 // CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
-// CHECK:STDOUT:   %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.5 [template = constants.%A]
 // CHECK:STDOUT:   %a.var: ref %A = var a
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %A = name_ref a, %a

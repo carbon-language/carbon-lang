@@ -69,16 +69,6 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc14_12: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_12: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc14_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc14_22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc14_25.1: %tuple.type.1 = tuple_literal (%i32.loc14_12, %i32.loc14_17, %i32.loc14_22)
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc14_25.2: type = converted %.loc14_25.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %array_type: type = array_type %int_2, %tuple.type.2 [template = constants.%array_type]
 // CHECK:STDOUT:   %v.var: ref %array_type = var v
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]

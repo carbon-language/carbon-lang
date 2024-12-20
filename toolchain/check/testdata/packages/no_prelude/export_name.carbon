@@ -227,26 +227,22 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [template]
+// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5_8
+// CHECK:STDOUT:   .x = %.loc5
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NSC {
-// CHECK:STDOUT:   %.loc10_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_11.2: type = converted %.loc10_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc10_8: %NSC.elem = field_decl y, element0 [template]
+// CHECK:STDOUT:   %.loc10: %NSC.elem = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NSC
-// CHECK:STDOUT:   .y = %.loc10_8
+// CHECK:STDOUT:   .y = %.loc10
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -397,7 +393,6 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, NSC, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//export, inst23 [indirect], loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst24 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst25 [indirect], unloaded
@@ -414,11 +409,8 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, imports.%import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
 // CHECK:STDOUT: }
@@ -479,7 +471,6 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, NSC, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//export_export, inst23 [indirect], loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst24 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst25 [indirect], unloaded
@@ -497,11 +488,8 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, imports.%import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
 // CHECK:STDOUT: }
@@ -562,7 +550,6 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export_export, NSC, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//export_export, inst23 [indirect], loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_export, inst24 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//export_export, inst25 [indirect], unloaded
@@ -579,11 +566,8 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, imports.%import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
 // CHECK:STDOUT: }
@@ -720,7 +704,6 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//base, NSC, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//base, loc5_8, unloaded
@@ -737,11 +720,8 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, imports.%import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
 // CHECK:STDOUT: }
@@ -802,7 +782,6 @@ private export C;
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.2, [template] {
 // CHECK:STDOUT:     .NSC = %import_ref.3
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, NSC, loaded [template = constants.%NSC]
 // CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//export, inst23 [indirect], loaded [template = constants.%complete_type.1]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//export, inst24 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst25 [indirect], unloaded
@@ -819,11 +798,8 @@ private export C;
 // CHECK:STDOUT:     .nsc = %nsc
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %NSC.ref: type = name_ref NSC, imports.%import_ref.3 [template = constants.%NSC]
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var nsc
 // CHECK:STDOUT:   %nsc: ref %NSC = bind_name nsc, %nsc.var
 // CHECK:STDOUT: }
@@ -938,7 +914,6 @@ private export C;
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c.var: ref %C = var c
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT: }

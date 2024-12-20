@@ -269,8 +269,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -317,8 +315,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -365,8 +361,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -417,8 +411,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }
@@ -477,8 +469,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc6_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT: }

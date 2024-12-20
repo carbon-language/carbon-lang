@@ -6,24 +6,24 @@ library "io_utils";
 
 import Core library "io";
 
-// TODO: Use Core.EOF() rather than 0 as a sentinel here.
-// At the moment, 0 is the only value we can initialize a global to,
-// so we store the value plus 1 here.
-var push_back: i32 = 0;
+// If non-zero, this is the most recently read character plus 2.
+// The +2 is necessary to distinguish the case of no unread character
+// from the case of unreading an EOF.
+var unread_char: i32 = 0;
 
 fn ReadChar() -> i32 {
-  var next: i32 = push_back - 1;
-  push_back = 0;
-  // TODO: assert(push_back == Core.EOF());
-  if (next == Core.EOF()) {
-    next = Core.ReadChar();
+  if (unread_char != 0) {
+    var result: i32 = unread_char - 2;
+    unread_char = 0;
+    return result;
   }
-  return next;
+
+  return Core.ReadChar();
 }
 
 fn UnreadChar(c: i32) {
-  // TODO: assert(push_back == Core.EOF());
-  push_back = c + 1;
+  // TODO: assert(unread_char == 0);
+  unread_char = c + 2;
 }
 
 fn ReadInt(p: i32*) -> bool {
@@ -44,30 +44,33 @@ fn ReadInt(p: i32*) -> bool {
   return read_any_digits;
 }
 
+fn PeekChar() -> i32 {
+  var next: i32 = ReadChar();
+  UnreadChar(next);
+  return next;
+}
+
+fn ConsumeChar(c: i32) -> bool {
+  var next: i32 = ReadChar();
+  if (next != c) {
+    UnreadChar(next);
+    return false;
+  }
+  return true;
+}
+
 fn SkipSpaces() -> bool {
   var skipped_any_spaces: bool = false;
-  while (true) {
-    var c: i32 = ReadChar();
-    if (c != 0x20) {
-      UnreadChar(c);
-      break;
-    }
+  while (ConsumeChar(0x20)) {
     skipped_any_spaces = true;
   }
   return skipped_any_spaces;
 }
 
 fn SkipNewline() -> bool {
-  var c: i32 = ReadChar();
   // Optional carriage return.
-  if (c == 0x0D) {
-    c = ReadChar();
-  }
+  ConsumeChar(0x0D);
   // Newline.
-  if (c == 0x0A) {
-    return true;
-  }
-  // TODO: Unread the CR?
-  UnreadChar(c);
-  return false;
+  // TODO: Unread the CR if it was present?
+  return ConsumeChar(0x0A);
 }

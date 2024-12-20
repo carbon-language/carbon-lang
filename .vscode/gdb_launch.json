@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "by-gdb",
+      "request": "launch",
+      "name": "file_test (gdb)",
+      "program": "bazel-bin/toolchain/testing/file_test",
+      "programArgs": "--file_tests=${relativeFile}",
+      "cwd": "${workspaceFolder}",
+      "env": { "TEST_TMPDIR": "/tmp" }
+    },
+    {
+      "type": "by-gdb",
+      "request": "launch",
+      "name": "carbon compile (gdb)",
+      "program": "bazel-bin/toolchain/carbon",
+      "programArgs": "compile --phase=lower --dump-sem-ir --stream-errors ${relativeFile}",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

@@ -84,8 +84,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %c.patt: %Class = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %Class = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Class.ref.loc18: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %c: %Class = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -96,8 +96,8 @@ fn F(c: Class) {
 // CHECK:STDOUT:     %self.patt: %Class = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Class = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
+// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

@@ -57,18 +57,22 @@ class Class {
 // CHECK:STDOUT:     %a.patt.loc16_13.2: %ptr = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_13.1 (constants.%a.patt)]
 // CHECK:STDOUT:     %a.param_patt: %ptr = value_param_pattern %a.patt.loc16_13.2, runtime_param<invalid> [symbolic = %a.patt.loc16_13.1 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr]
 // CHECK:STDOUT:     %a.param: %ptr = value_param runtime_param<invalid>
+// CHECK:STDOUT:     %.loc16: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc16_13.2: %ptr = bind_symbolic_name a, 0, %a.param [symbolic = %a.loc16_13.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %b.patt: %ptr = binding_pattern b
 // CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Class [template = constants.%ptr]
 // CHECK:STDOUT:     %b.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %ptr = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]

@@ -57,17 +57,17 @@ static auto DumpNoNewline(const Context& context, SemIR::LocId loc_id) -> void {
   }
 }
 
-LLVM_DUMP_METHOD auto Dump(const Context& context, Lex::TokenIndex token)
+LLVM_DUMP_METHOD static auto Dump(const Context& context, Lex::TokenIndex token)
     -> void {
   Parse::Dump(context.parse_tree(), token);
 }
 
-LLVM_DUMP_METHOD auto Dump(const Context& context, Parse::NodeId node_id)
+LLVM_DUMP_METHOD static auto Dump(const Context& context, Parse::NodeId node_id)
     -> void {
   Parse::Dump(context.parse_tree(), node_id);
 }
 
-LLVM_DUMP_METHOD auto Dump(const Context& context, SemIR::LocId loc_id)
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> void {
   DumpNoNewline(context, loc_id);
   llvm::errs() << '\n';

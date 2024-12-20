@@ -36,9 +36,6 @@ var x: {.a: i32} = {};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
 // CHECK:STDOUT: }

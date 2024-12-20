@@ -217,7 +217,15 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
-  Parse::NodeId last_param_node_id = end_of_decl_node_id;
+  // Subtracting 1 since we don't want to include the final `{` or `;` of the
+  // declaration when performing syntactic match.
+  // TODO: Following proposal #3763, we should exclude any `where` clause, and
+  // add `Self` before `as` if needed, see:
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
+  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
+               node_kind == Parse::NodeKind::ImplDecl);
+  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
