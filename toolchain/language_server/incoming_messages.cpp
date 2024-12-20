@@ -8,25 +8,24 @@
 
 namespace Carbon::LanguageServer {
 
+// Copies a registry's entries to the corresponding handler map.
+template <typename RegistryT, typename HandlerT>
+static auto BuildHandlerMap(Map<std::string, HandlerT>& handlers) -> void {
+  CARBON_CHECK(!RegistryT::entries().empty(),
+               "An empty registry may mean a linking error");
+  for (const auto& handler_entry : RegistryT::entries()) {
+    auto name = handler_entry.getName();
+    auto result =
+        handlers.Insert(name, handler_entry.instantiate()->GetHandler(name));
+    CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
+  }
+}
+
 IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
                                    Context* context)
     : transport_(transport), context_(context) {
-  CARBON_CHECK(!CallHandlerRegistry::entries().empty());
-  for (const auto& call_handler : CallHandlerRegistry::entries()) {
-    auto name = call_handler.getName();
-    auto result = call_handlers_.Insert(
-        name, call_handler.instantiate()->GetHandler(name));
-    CARBON_CHECK(result.is_inserted());
-  }
-
-  CARBON_CHECK(!NotificationHandlerRegistry::entries().empty());
-  for (const auto& notification_handler :
-       NotificationHandlerRegistry::entries()) {
-    auto name = notification_handler.getName();
-    auto result = notification_handlers_.Insert(
-        name, notification_handler.instantiate()->GetHandler(name));
-    CARBON_CHECK(result.is_inserted());
-  }
+  BuildHandlerMap<CallHandlerRegistry>(call_handlers_);
+  BuildHandlerMap<NotificationHandlerRegistry>(notification_handlers_);
 }
 
 auto IncomingMessages::onCall(llvm::StringRef method, llvm::json::Value params,
@@ -37,9 +36,9 @@ auto IncomingMessages::onCall(llvm::StringRef method, llvm::json::Value params,
                        transport_->reply(id, std::move(reply));
                      });
   } else {
-    transport_->reply(
-        id, llvm::make_error<clang::clangd::LSPError>(
-                "method not found", clang::clangd::ErrorCode::MethodNotFound));
+    transport_->reply(id, llvm::make_error<clang::clangd::LSPError>(
+                              llvm::formatv("call `{0}` not found", method),
+                              clang::clangd::ErrorCode::MethodNotFound));
   }
 
   return true;
@@ -53,7 +52,7 @@ auto IncomingMessages::onNotify(llvm::StringRef method, llvm::json::Value value)
   if (auto result = notification_handlers_.Lookup(method)) {
     (result.value())(*context_, std::move(value));
   } else {
-    clang::clangd::log("unhandled notification {0}", method);
+    clang::clangd::log("notification `{0}` not found", method);
   }
 
   return true;
