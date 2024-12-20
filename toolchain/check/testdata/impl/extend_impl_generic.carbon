@@ -394,7 +394,6 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%U) [symbolic = %F.type (constants.%F.type.3)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.3) = struct_value () [symbolic = %F (constants.%F.3)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%I.type.loc9_21.2 (%I.type.3) [symbolic = %require_complete (constants.%require_complete.1)]
 // CHECK:STDOUT:   %interface.loc9_23.2: <witness> = interface_witness (%F) [symbolic = %interface.loc9_23.2 (constants.%interface)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.type.loc9_21.1 {
@@ -522,7 +521,6 @@ class X(U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.3
 // CHECK:STDOUT:   %F => constants.%F.3
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.1
 // CHECK:STDOUT:   %interface.loc9_23.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

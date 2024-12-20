@@ -90,32 +90,32 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %i32.builtin, %i32.builtin [template]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%Op.2) [template]
 // CHECK:STDOUT:   %As.type.3: type = facet_type <@As, @As(%i32.builtin)> [template]
-// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.3 [template]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.1, @As(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.1, @As(%i32.builtin) [template]
-// CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.assoc_type.3: type = assoc_entity_type %As.type.3, %Convert.type.4 [template]
+// CHECK:STDOUT:   %Convert.assoc_type.3: type = assoc_entity_type %As.type.3, %Convert.type.3 [template]
 // CHECK:STDOUT:   %assoc0.4: %Convert.assoc_type.3 = assoc_entity element0, @As.%Convert.decl [template]
+// CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
+// CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %As.facet: %As.type.2 = facet_value Core.IntLiteral, Core.IntLiteral [symbolic]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Convert.3) [template]
+// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Convert.4) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32.builtin)> [template]
-// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.4 [template]
+// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.2, @ImplicitAs(%i32.builtin) [template]
 // CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.2, @ImplicitAs(%i32.builtin) [template]
-// CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.assoc_type.4: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.6 [template]
+// CHECK:STDOUT:   %Convert.assoc_type.4: type = assoc_entity_type %ImplicitAs.type.3, %Convert.type.5 [template]
 // CHECK:STDOUT:   %assoc0.5: %Convert.assoc_type.4 = assoc_entity element0, @ImplicitAs.%Convert.decl [template]
+// CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.4 [template]
+// CHECK:STDOUT:   %Convert.6: %Convert.type.6 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.1: %ImplicitAs.type.2 = facet_value Core.IntLiteral, Core.IntLiteral [symbolic]
-// CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%Convert.5) [template]
+// CHECK:STDOUT:   %interface.3: <witness> = interface_witness (%Convert.6) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [template]
-// CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.5 [template]
+// CHECK:STDOUT:   %Convert.type.7: type = fn_type @Convert.2, @ImplicitAs(Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.7: %Convert.type.7 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.2, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.assoc_type.5: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.8 [template]
+// CHECK:STDOUT:   %Convert.assoc_type.5: type = assoc_entity_type %ImplicitAs.type.4, %Convert.type.7 [template]
 // CHECK:STDOUT:   %assoc0.6: %Convert.assoc_type.5 = assoc_entity element0, @ImplicitAs.%Convert.decl [template]
+// CHECK:STDOUT:   %Convert.type.8: type = fn_type @Convert.5 [template]
+// CHECK:STDOUT:   %Convert.8: %Convert.type.8 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.facet.2: %ImplicitAs.type.2 = facet_value %i32.builtin, %i32.builtin [symbolic]
-// CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%Convert.7) [template]
+// CHECK:STDOUT:   %interface.4: <witness> = interface_witness (%Convert.8) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -357,7 +357,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc23_17.2 as %As.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.3 = fn_decl @Convert.3 [template = constants.%Convert.3] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
 // CHECK:STDOUT:     %self.patt: Core.IntLiteral = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: Core.IntLiteral = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32.builtin = return_slot_pattern
@@ -381,7 +381,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.3: %.loc27_17.2 as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.5 = fn_decl @Convert.4 [template = constants.%Convert.5] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.6 = fn_decl @Convert.4 [template = constants.%Convert.6] {
 // CHECK:STDOUT:     %self.patt: Core.IntLiteral = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: Core.IntLiteral = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32.builtin = return_slot_pattern
@@ -405,7 +405,7 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.4: %.loc31_6.2 as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.7 = fn_decl @Convert.5 [template = constants.%Convert.7] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.8 = fn_decl @Convert.5 [template = constants.%Convert.8] {
 // CHECK:STDOUT:     %self.patt: %i32.builtin = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %i32.builtin = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: Core.IntLiteral = return_slot_pattern
@@ -514,8 +514,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %As.type => constants.%As.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self.2
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.4
-// CHECK:STDOUT:   %Convert => constants.%Convert.4
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.3
+// CHECK:STDOUT:   %Convert => constants.%Convert.3
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.3
 // CHECK:STDOUT:   %assoc0.loc12_32.2 => constants.%assoc0.4
 // CHECK:STDOUT: }
@@ -534,8 +534,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3
 // CHECK:STDOUT:   %Self.2 => constants.%Self.3
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.6
-// CHECK:STDOUT:   %Convert => constants.%Convert.6
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.5
+// CHECK:STDOUT:   %Convert => constants.%Convert.5
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.4
 // CHECK:STDOUT:   %assoc0.loc16_32.2 => constants.%assoc0.5
 // CHECK:STDOUT: }
@@ -554,8 +554,8 @@ var arr: [i32; (1 as i32) + (2 as i32)] = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.4
 // CHECK:STDOUT:   %Self.2 => constants.%Self.3
-// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.8
-// CHECK:STDOUT:   %Convert => constants.%Convert.8
+// CHECK:STDOUT:   %Convert.type => constants.%Convert.type.7
+// CHECK:STDOUT:   %Convert => constants.%Convert.7
 // CHECK:STDOUT:   %Convert.assoc_type => constants.%Convert.assoc_type.5
 // CHECK:STDOUT:   %assoc0.loc16_32.2 => constants.%assoc0.6
 // CHECK:STDOUT: }

@@ -83,7 +83,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %C.1: type = class_type @C, @C(%S) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
@@ -170,7 +170,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.4]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.1
@@ -276,7 +276,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.195: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.196 = import_ref Implicit//default, inst945 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.196 = import_ref Implicit//default, inst940 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -396,7 +396,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst945 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst940 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -486,7 +486,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst945 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst940 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

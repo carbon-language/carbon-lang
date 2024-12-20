@@ -125,7 +125,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
-                       Parse::AnyImplDeclId node_id,
+                       Parse::AnyImplDeclId node_id, SemIR::ImplId impl_id,
                        Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node,
                        SemIR::InstId constraint_inst_id,
@@ -179,16 +179,10 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     parent_scope.set_has_error();
     return;
   }
-  if (!context.RequireDefinedType(constraint_id, node_id, [&] {
-        CARBON_DIAGNOSTIC(
-            ExtendUndefinedInterface, Error,
-            "`extend impl` requires a definition for facet type {0}",
-            InstIdAsType);
-        return context.emitter().Build(node_id, ExtendUndefinedInterface,
-                                       constraint_inst_id);
-      })) {
+  const auto& impl = context.impls().Get(impl_id);
+  if (impl.witness_id == SemIR::ErrorInst::SingletonInstId) {
     parent_scope.set_has_error();
-  };
+  }
 
   parent_scope.AddExtendedScope(constraint_inst_id);
 }
@@ -257,9 +251,28 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
+  return true;
+}
 
-  // TODO: CheckIsAllowedRedecl. We don't have a suitable NameId; decide if we
-  // need to treat the `T as I` as a kind of name.
+static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
+                              SemIR::ImplId prev_impl_id) -> bool {
+  auto& prev_impl = context.impls().Get(prev_impl_id);
+
+  // TODO: Following #3763, disallow redeclarations in different scopes.
+
+  // Following #4672, disallowing defining non-extern declarations in another
+  // file.
+  if (auto import_ref =
+          context.insts().TryGetAs<SemIR::AnyImportRef>(prev_impl.self_id)) {
+    // TODO: Handle extern.
+    CARBON_DIAGNOSTIC(RedeclImportedImpl, Error,
+                      "redeclaration of imported impl");
+    // TODO: Note imported declaration
+    context.emitter().Emit(new_impl.latest_decl_id(), RedeclImportedImpl);
+    return false;
+  }
+
+  // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
   // TODO: Merge information from the new declaration into the old one as
   // needed.
@@ -313,10 +326,14 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
   // Add the impl declaration.
+  bool valid_redeclaration = true;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
-      impl_decl.impl_id = prev_impl_id;
+      valid_redeclaration = IsValidImplRedecl(context, impl_info, prev_impl_id);
+      if (valid_redeclaration) {
+        impl_decl.impl_id = prev_impl_id;
+      }
       break;
     }
   }
@@ -324,6 +341,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -346,12 +364,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
            .specific_id =
                context.generics().GetSelfSpecific(impl_info.generic_id)});
     }
-    ExtendImpl(context, extend_node, node_id, self_type_node, self_type_id,
-               name.implicit_params_loc_id, constraint_inst_id,
+    ExtendImpl(context, extend_node, node_id, impl_decl.impl_id, self_type_node,
+               self_type_id, name.implicit_params_loc_id, constraint_inst_id,
                constraint_type_id);
   }
 
-  if (!is_definition && context.IsImplFile()) {
+  // Impl definitions are required in the same file as the declaration.
+  if (!is_definition && valid_redeclaration) {
     context.definitions_required().push_back(impl_decl_id);
   }
 
@@ -416,7 +435,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
 
   auto& impl_info = context.impls().Get(impl_id);
   if (!impl_info.is_defined()) {
-    impl_info.witness_id = BuildImplWitness(context, impl_id);
+    impl_info.witness_id = BuildImplWitness(context, impl_info);
+    impl_info.defined = true;
   }
 
   FinishGenericDefinition(context, impl_info.generic_id);
