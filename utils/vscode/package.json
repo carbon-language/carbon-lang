@@ -43,7 +43,7 @@
         "carbon.carbonPath": {
           "type": "string",
           "description": "The path to the 'carbon' binary.",
-          "default": "./bazel-bin/toolchain/install/run_carbon"
+          "default": "./bazel-bin/toolchain/carbon"
         }
       }
     }
