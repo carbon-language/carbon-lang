@@ -310,4 +310,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                        llvm::PointerType::get(context.llvm_context(), 0)));
 }
 
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::Vtable /*inst*/) -> void {}
+
 }  // namespace Carbon::Lower

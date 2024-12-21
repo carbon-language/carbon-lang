@@ -281,7 +281,11 @@ class FormatterImpl {
       FormatName(class_info.complete_type_witness_id);
       out_ << "\n";
 
-      FormatNameScope(class_info.scope_id, "!members:\n");
+      Indent();
+      out_ << "vtable_id = ";
+      FormatName(class_info.vtable_id);
+      out_ << "\n";
+
       CloseBrace();
     } else {
       Semicolon();

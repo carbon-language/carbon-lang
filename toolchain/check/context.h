@@ -601,6 +601,8 @@ class Context {
     return generic_region_stack_;
   }
 
+  auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
+
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
@@ -784,6 +786,8 @@ class Context {
 
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
+
+  InstBlockStack vtable_stack_;
 
   // Cache of reverse mapping from type constants to types.
   //
