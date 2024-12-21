@@ -281,12 +281,12 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%T: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @F.2(constants.%T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();

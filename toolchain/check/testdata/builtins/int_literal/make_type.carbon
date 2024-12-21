@@ -80,5 +80,5 @@ var i: IntLiteral();
 // CHECK:STDOUT:   %i: ref Core.IntLiteral = bind_name i, %i.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type" [from "types.carbon"];
+// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
 // CHECK:STDOUT:

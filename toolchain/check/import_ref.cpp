@@ -1727,8 +1727,10 @@ static auto MakeFunctionDecl(ImportContext& context,
       .function_id = SemIR::FunctionId::Invalid,
       .decl_block_id = SemIR::InstBlockId::Empty};
   auto function_decl_id = context.local_context().AddPlaceholderInstInNoBlock(
-      context.local_context().MakeImportedLocAndInst(
-          AddImportIRInst(context, import_function.first_decl_id()),
+      // FIXME: Better workaround for bug.
+      SemIR::LocIdAndInst::NoLoc(
+          // context.local_context().MakeImportedLocAndInst(
+          //    AddImportIRInst(context, import_function.first_decl_id()),
           function_decl));
 
   // Start with an incomplete function.

@@ -30,6 +30,9 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template]
+// CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -64,5 +67,17 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template = constants.%float]
 // CHECK:STDOUT:   %int_12.loc21_21: Core.IntLiteral = int_value 12 [template = constants.%int_12]
 // CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op(constants.%Self: %Add.type) {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.%Self.as_type (%Self.as_type)) -> @Op.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

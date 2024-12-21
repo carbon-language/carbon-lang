@@ -154,7 +154,7 @@ fn Call() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -294,14 +294,14 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get() -> %C [from "get.carbon"];
+// CHECK:STDOUT: fn @Get() -> %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() [from "c.carbon"];
+// CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:

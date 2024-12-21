@@ -358,7 +358,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self: %Action.type.2) [from "action.carbon"] {
+// CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self: %Action.type.2) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -376,7 +376,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.2() [from "action.carbon"];
+// CHECK:STDOUT: fn @Op.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Action(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -520,7 +520,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self: %Action.type.2) [from "action.carbon"] {
+// CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self: %Action.type.2) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -831,7 +831,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self: %Factory.type.2) [from "factory.carbon"] {
+// CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self: %Factory.type.2) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.1.%T (%T);
@@ -851,7 +851,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %B [from "factory.carbon"];
+// CHECK:STDOUT: fn @Make.2() -> %B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1000,7 +1000,7 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self: %Factory.type.2) [from "factory.carbon"] {
+// CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self: %Factory.type.2) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Make.%T (%T);

@@ -29,7 +29,7 @@ fn F() -> i32 {
   return C.F();
 }
 
-// TODO: This should be written `impl C.(Self as I)`..., once
+// TODO: This should be written `impl C.(Self as I)` or `impl C.(as I)`, once
 // that is supported.
 impl C as I {
   fn F() {}

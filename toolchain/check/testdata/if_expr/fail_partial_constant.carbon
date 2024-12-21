@@ -78,6 +78,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b.param_patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref <error> = var v

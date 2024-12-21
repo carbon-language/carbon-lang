@@ -275,12 +275,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %Basic.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @F.2(constants.%Self.3: %ForwardDeclared.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

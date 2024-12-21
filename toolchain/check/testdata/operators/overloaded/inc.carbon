@@ -30,12 +30,16 @@ fn TestOp() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [template]
+// CHECK:STDOUT:   %Self: %Inc.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %ptr.1: type = ptr_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl) [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
@@ -94,6 +98,14 @@ fn TestOp() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Inc.type) {
+// CHECK:STDOUT:   %Self: %Inc.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %ptr: type = ptr_type @Op.1.%Self.as_type (%Self.as_type) [symbolic = %ptr (constants.%ptr.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr <unexpected>.inst38: @Op.1.%ptr (%ptr.1)]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[addr %self.param_patt: %ptr.2]();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp() {
@@ -110,5 +122,17 @@ fn TestOp() {
 // CHECK:STDOUT:   %addr: %ptr.2 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
+// CHECK:STDOUT:   %ptr => constants.%ptr.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Inc.facet) {
+// CHECK:STDOUT:   %Self => constants.%Inc.facet
+// CHECK:STDOUT:   %Self.as_type => constants.%C
+// CHECK:STDOUT:   %ptr => constants.%ptr.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

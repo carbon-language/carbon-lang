@@ -402,7 +402,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %HasF.type) [from "package_a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.2: %HasF.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -512,12 +512,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self: %HasF.type) [from "package_a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self: %HasF.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() [from "package_a.carbon"];
+// CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {}
 // CHECK:STDOUT:
@@ -655,12 +655,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%Self.1: %HasF.type) [from "package_a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%Self.1: %HasF.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() [from "package_b.carbon"];
+// CHECK:STDOUT: fn @F.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
 // CHECK:STDOUT:
@@ -798,12 +798,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(constants.%Self.1: %HasG.type) [from "package_b.carbon"] {
+// CHECK:STDOUT: generic fn @G.1(constants.%Self.1: %HasG.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2() [from "package_b.carbon"];
+// CHECK:STDOUT: fn @G.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.1) {}
 // CHECK:STDOUT:
@@ -928,12 +928,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(constants.%Self.1: %HasG.type) [from "package_b.carbon"] {
+// CHECK:STDOUT: generic fn @G.1(constants.%Self.1: %HasG.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2() [from "package_b.carbon"];
+// CHECK:STDOUT: fn @G.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.1) {}
 // CHECK:STDOUT:
@@ -1061,12 +1061,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @H.1(constants.%Self: %Z.type) [from "associated_interface.carbon"] {
+// CHECK:STDOUT: generic fn @H.1(constants.%Self: %Z.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H.2() [from "associated_interface.carbon"];
+// CHECK:STDOUT: fn @H.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H.1(constants.%Self) {}
 // CHECK:STDOUT:
@@ -1278,7 +1278,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @K.1(constants.%Self.2: %Y.type) [from "has_param.carbon"] {
+// CHECK:STDOUT: generic fn @K.1(constants.%Self.2: %Y.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
@@ -1455,13 +1455,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @K.1(constants.%Self.2: %Y.type) [from "has_param.carbon"] {
+// CHECK:STDOUT: generic fn @K.1(constants.%Self.2: %Y.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @K.2() [from "has_generic_interface.carbon"];
+// CHECK:STDOUT: fn @K.2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -1855,7 +1855,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(constants.%Self.1: %I.type) [from "has_extra_interfaces.carbon"] {
+// CHECK:STDOUT: generic fn @F(constants.%Self.1: %I.type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

@@ -87,8 +87,6 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst",
-        # FIXME: DELETE
-        "//toolchain/sem_ir:stringify_type",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
     ],

@@ -49,11 +49,25 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [template]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [template]
+// CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [template]
+// CHECK:STDOUT:   %Self.1: %Negate.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %TestBinary.type: type = fn_type @TestBinary [template]
 // CHECK:STDOUT:   %TestBinary: %TestBinary.type = struct_value () [template]
+// CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
+// CHECK:STDOUT:   %Self.2: %Add.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %TestRef.type: type = fn_type @TestRef [template]
 // CHECK:STDOUT:   %TestRef: %TestRef.type = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
+// CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
+// CHECK:STDOUT:   %Self.3: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.3: type = facet_access_type %Self.3 [symbolic]
+// CHECK:STDOUT:   %ptr.2: type = ptr_type %Self.as_type.3 [symbolic]
+// CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [template]
+// CHECK:STDOUT:   %Self.4: %Inc.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.4: type = facet_access_type %Self.4 [symbolic]
+// CHECK:STDOUT:   %ptr.3: type = ptr_type %Self.as_type.4 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -132,11 +146,25 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %Negate.type) {
+// CHECK:STDOUT:   %Self: %Negate.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.1)]() -> @Op.1.%Self.as_type (%Self.as_type.1);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestBinary(%a.param_patt: %C, %b.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.2(constants.%Self.2: %Add.type) {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self.as_type (%Self.as_type.2)](%other.param_patt: @Op.2.%Self.as_type (%Self.as_type.2)) -> @Op.2.%Self.as_type (%Self.as_type.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRef(%b.param_patt: %C) {
@@ -151,5 +179,43 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.3(constants.%Self.3: %AddAssign.type) {
+// CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.3)]
+// CHECK:STDOUT:   %ptr: type = ptr_type @Op.3.%Self.as_type (%Self.as_type.3) [symbolic = %ptr (constants.%ptr.2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr <unexpected>.inst131: @Op.3.%ptr (%ptr.2)](%other.param_patt: @Op.3.%Self.as_type (%Self.as_type.3));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Op.4(constants.%Self.4: %Inc.type) {
+// CHECK:STDOUT:   %Self: %Inc.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.4)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.4)]
+// CHECK:STDOUT:   %ptr: type = ptr_type @Op.4.%Self.as_type (%Self.as_type.4) [symbolic = %ptr (constants.%ptr.3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[addr <unexpected>.inst155: @Op.4.%ptr (%ptr.3)]();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.1(constants.%Self.1) {
+// CHECK:STDOUT:   %Self => constants.%Self.1
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.2(constants.%Self.2) {
+// CHECK:STDOUT:   %Self => constants.%Self.2
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.3(constants.%Self.3) {
+// CHECK:STDOUT:   %Self => constants.%Self.3
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.3
+// CHECK:STDOUT:   %ptr => constants.%ptr.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Op.4(constants.%Self.4) {
+// CHECK:STDOUT:   %Self => constants.%Self.4
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.4
+// CHECK:STDOUT:   %ptr => constants.%ptr.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

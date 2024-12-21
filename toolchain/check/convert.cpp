@@ -20,8 +20,6 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
-// FIXME: DELETE
-#include "toolchain/sem_ir/stringify_type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 // TODO: This contains a lot of recursion. Consider removing it in order to
@@ -1023,16 +1021,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
         .interface_args_ref = interface_args,
         .op_name = "Convert",
     };
-    // FIXME: DELETE
-    llvm::errs()
-        << "From: "
-        << SemIR::StringifyTypeExpr(
-               context.sem_ir(),
-               context.types().GetInstId(sem_ir.insts().Get(expr_id).type_id()))
-        << " To: "
-        << SemIR::StringifyTypeExpr(context.sem_ir(),
-                                    context.types().GetInstId(target.type_id))
-        << "\n";
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
       CARBON_DIAGNOSTIC(ImplicitAsConversionFailure, Error,
                         "cannot implicitly convert from {0} to {1}",

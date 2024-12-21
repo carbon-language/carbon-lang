@@ -257,7 +257,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D() [from "d.carbon"];
+// CHECK:STDOUT: fn @D();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -313,7 +313,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
+// CHECK:STDOUT: fn @F() -> %C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon
 // CHECK:STDOUT:
@@ -358,5 +358,5 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C [from "b.carbon"];
+// CHECK:STDOUT: fn @F() -> %C;
 // CHECK:STDOUT:

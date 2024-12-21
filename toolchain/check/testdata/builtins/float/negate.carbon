@@ -155,6 +155,8 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a.param_patt: f64) -> f64 = "float.negate";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: f64, %b.param_patt: f64) -> f64 {
@@ -400,9 +402,13 @@ fn RuntimeCallBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooFew() -> f64;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TooMany(%a.param_patt: f64, %b.param_patt: f64) -> f64;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BadReturnType(%a.param_patt: f64) -> bool;
 // CHECK:STDOUT:

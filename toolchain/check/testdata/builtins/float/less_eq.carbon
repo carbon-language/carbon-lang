@@ -190,6 +190,10 @@ fn RuntimeCall(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @LessEq(%a.param_patt: f64, %b.param_patt: f64) -> bool = "float.less_eq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Negate(%a.param_patt: f64) -> f64 = "float.negate";

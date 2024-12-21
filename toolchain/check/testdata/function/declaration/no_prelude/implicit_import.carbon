@@ -30,13 +30,10 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+12]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+9]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn A();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE-5]]:6: in import [InImport]
-// CHECK:STDERR: extern_api.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn A();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_extern_api.impl.carbon: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+4]]:1: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
 // CHECK:STDERR: fn A();
@@ -54,13 +51,10 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+4]]:1: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn A();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE-5]]:6: in import [InImport]
-// CHECK:STDERR: extern_impl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_extern_impl.impl.carbon: note: previously declared here [RedeclPrevDecl]
 extern fn A();
 
 // CHECK:STDOUT: --- basic.carbon
@@ -98,7 +92,7 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "basic.carbon"] {
+// CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -138,7 +132,7 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @A() [from "extern_api.carbon"];
+// CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_impl.carbon
 // CHECK:STDOUT:
@@ -175,5 +169,5 @@ extern fn A();
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() [from "extern_impl.carbon"];
+// CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:

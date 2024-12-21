@@ -134,13 +134,10 @@ import library "main_other_ns";
 // CHECK:STDERR:
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+5]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
 // CHECK:STDERR: fn Other.F() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR: fail_main_namespace_conflict.carbon: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn Other.F() {}
 
@@ -320,7 +317,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_other_ns.carbon
 // CHECK:STDOUT:
@@ -374,9 +371,9 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F2() [from "other_fn2.carbon"];
+// CHECK:STDOUT: fn @F2();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
 // CHECK:STDOUT:
@@ -414,7 +411,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
 // CHECK:STDOUT:
@@ -468,7 +465,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"];
+// CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
 // CHECK:STDOUT:
@@ -494,7 +491,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() [from "other_fn.carbon"] {
+// CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

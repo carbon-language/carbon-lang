@@ -54,13 +54,10 @@ extern fn F();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+5]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn F() {}
 // CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE-5]]:6: in import [InImport]
-// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F() {}
 
@@ -193,7 +190,7 @@ extern fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F() [from "two_file.carbon"] {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -249,7 +246,7 @@ extern fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @F() [from "two_file_impl_mismatch.carbon"] {
+// CHECK:STDOUT: extern fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
