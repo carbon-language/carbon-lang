@@ -570,17 +570,13 @@ class BaseImpl {
   auto CopySlotsFrom(const BaseImpl& arg) -> void;
   auto MoveFrom(BaseImpl&& arg, Storage* small_storage) -> void;
 
-  template <typename LookupKeyT>
-  auto InsertIntoEmpty(LookupKeyT lookup_key, KeyContextT key_context)
-      -> EntryT*;
   auto InsertIntoEmpty(HashCode hash) -> EntryT*;
 
   static auto ComputeNextAllocSize(ssize_t old_alloc_size) -> ssize_t;
   static auto GrowthThresholdForAllocSize(ssize_t alloc_size) -> ssize_t;
 
   auto GrowToNextAllocSize(KeyContextT key_context) -> void;
-  template <typename LookupKeyT>
-  auto GrowAndInsert(LookupKeyT lookup_key, KeyContextT key_context) -> EntryT*;
+  auto GrowAndInsert(HashCode hash, KeyContextT key_context) -> EntryT*;
 
   ViewImplT view_impl_;
   int growth_budget_;
@@ -975,7 +971,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertImpl(
     // empty slot. Without the growth budget we'll have to completely rehash and
     // so we can just bail here.
     if (LLVM_UNLIKELY(growth_budget_ == 0)) {
-      return {GrowAndInsert(lookup_key, key_context), true};
+      return {GrowAndInsert(hash, key_context), true};
     }
 
     --growth_budget_;
@@ -1030,8 +1026,9 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSizeImpl(
     for (ssize_t byte_index : present_matched_range) {
       ++count;
       ssize_t index = group_index + byte_index;
-      EntryT* new_entry =
-          InsertIntoEmpty(old_entries[index].key(), key_context);
+      HashCode hash = key_context.HashKey(
+          old_entries[index].key(), ComputeSeed());
+      EntryT* new_entry = InsertIntoEmpty(hash);
       new_entry->MoveFrom(std::move(old_entries[index]));
     }
   }
@@ -1311,13 +1308,6 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertIntoEmpty(
     // Otherwise we continue probing.
   }
 }
-template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-template <typename LookupKeyT>
-[[clang::noinline]] auto
-BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::InsertIntoEmpty(
-    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
-  return InsertIntoEmpty(key_context.HashKey(lookup_key, ComputeSeed()));
-}
 
 // Apply our doubling growth strategy and (re-)check invariants around table
 // size.
@@ -1454,7 +1444,7 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
       ssize_t old_hash_index = hash.ExtractIndexAndTag<7>().first &
                                ComputeProbeMaskFromSize(old_size);
       if (LLVM_UNLIKELY(old_hash_index != group_index)) {
-        probed_indices.emplace_back(old_index, hash);
+        probed_indices.push_back({old_index, hash});
         if constexpr (MetadataGroup::FastByteClear) {
           low_g.ClearByte(byte_index);
           high_g.ClearByte(byte_index);
@@ -1542,16 +1532,15 @@ auto BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToNextAllocSize(
 // that this function can be directly called and the result returned from
 // `InsertImpl`.
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
-template <typename LookupKeyT>
 [[clang::noinline]] auto
 BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowAndInsert(
-    LookupKeyT lookup_key, KeyContextT key_context) -> EntryT* {
+    HashCode hash, KeyContextT key_context) -> EntryT* {
   GrowToNextAllocSize(key_context);
 
   // And insert the lookup_key into an index in the newly grown map and return
   // that index for use.
   --growth_budget_;
-  return InsertIntoEmpty(lookup_key, key_context);
+  return InsertIntoEmpty(hash);
 }
 
 template <typename InputBaseT, ssize_t SmallSize>
