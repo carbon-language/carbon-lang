@@ -9,114 +9,14 @@ utils = [
     "sort.carbon",
 ]
 
-carbon_binary(
-    name = "day1_part1",
-    srcs = [
-        "day1_common.carbon",
-        "day1_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day1_part2",
-    srcs = [
-        "day1_common.carbon",
-        "day1_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day2_part1",
-    srcs = [
-        "day2_common.carbon",
-        "day2_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day2_part2",
-    srcs = [
-        "day2_common.carbon",
-        "day2_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day3_part1",
-    srcs = [
-        "day3_common.carbon",
-        "day3_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day3_part2",
-    srcs = [
-        "day3_common.carbon",
-        "day3_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day4_part1",
-    srcs = [
-        "day4_common.carbon",
-        "day4_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day4_part2",
-    srcs = [
-        "day4_common.carbon",
-        "day4_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day5_part1",
-    srcs = [
-        "day5_common.carbon",
-        "day5_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day5_part2",
-    srcs = [
-        "day5_common.carbon",
-        "day5_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day6_part1",
-    srcs = [
-        "day6_common.carbon",
-        "day6_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day6_part2",
-    srcs = [
-        "day6_common.carbon",
-        "day6_part2.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day7_part1",
-    srcs = [
-        "day7_common.carbon",
-        "day7_part1.carbon",
-    ] + utils,
-)
-
-carbon_binary(
-    name = "day7_part2",
-    srcs = [
-        "day7_common.carbon",
-        "day7_part2.carbon",
-    ] + utils,
-)
+[
+    carbon_binary(
+        name = "day%d_part%d" % (day, part),
+        srcs = [
+            "day%d_common.carbon" % day,
+            "day%d_part%d.carbon" % (day, part),
+        ] + utils,
+    )
+    for day in range(1, 9)
+    for part in range(1, 3)
+]
