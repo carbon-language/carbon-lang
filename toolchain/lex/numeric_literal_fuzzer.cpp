@@ -14,7 +14,7 @@ namespace Carbon::Testing {
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   auto token = Lex::NumericLiteral::Lex(
-      llvm::StringRef(reinterpret_cast<const char*>(data), size));
+      llvm::StringRef(reinterpret_cast<const char*>(data), size), true);
   if (!token) {
     // Lexically not a numeric literal.
     return 0;

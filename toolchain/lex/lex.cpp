@@ -157,6 +157,11 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexComment(llvm::StringRef source_text, ssize_t& position) -> void;
 
+  // Determines whether a real literal can be formed at the current location.
+  // This is the case unless the preceding token is `.` or `->` and there is no
+  // intervening whitespace.
+  auto CanFormRealLiteral() -> bool;
+
   auto LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
@@ -998,10 +1003,20 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   current_line_info()->indent = position - line_start;
 }
 
+auto Lexer::CanFormRealLiteral() -> bool {
+  // When a numeric literal immediately follows a `.` or `->` token, with no
+  // intervening whitespace, a real literal is never formed.
+  if (has_leading_space_) {
+    return true;
+  }
+  auto kind = buffer_.GetKind(buffer_.tokens().end()[-1]);
+  return kind != TokenKind::Period && kind != TokenKind::MinusGreater;
+}
+
 auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   std::optional<NumericLiteral> literal =
-      NumericLiteral::Lex(source_text.substr(position));
+      NumericLiteral::Lex(source_text.substr(position), CanFormRealLiteral());
   if (!literal) {
     return LexError(source_text, position);
   }
