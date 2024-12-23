@@ -52,7 +52,7 @@ struct Impl : public EntityWithParamsBase,
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
+    return has_definition_started() && !is_defined();
   }
 };
 

@@ -277,7 +277,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
-  if (class_info.definition_id.is_valid()) {
+  if (class_info.has_definition_started()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "class is incomplete within its definition");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);

@@ -51,6 +51,12 @@ struct EntityWithParamsBase {
     definition_id = definition.definition_id;
   }
 
+  // Determines whether the definition of this entity has begun. This is false
+  // until we reach the `{` of the definition.
+  auto has_definition_started() const -> bool {
+    return definition_id.is_valid();
+  }
+
   // Returns the instruction for the first declaration.
   auto first_decl_id() const -> SemIR::InstId {
     if (non_owning_decl_id.is_valid()) {
@@ -62,7 +68,7 @@ struct EntityWithParamsBase {
 
   // Returns the instruction for the latest declaration.
   auto latest_decl_id() const -> SemIR::InstId {
-    if (definition_id.is_valid()) {
+    if (has_definition_started()) {
       return definition_id;
     }
     if (first_owning_decl_id.is_valid()) {
