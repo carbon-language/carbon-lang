@@ -1433,7 +1433,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
     case SemIR::ImplWitness::Kind:
-      // We don't replace the `elements_id` field here intentionally. We want to
+      // We intentionally don't replace the `elements_id` field here. We want to
       // track that specific InstBlock in particular, not coalesce blocks with
       // the same members. That block may get updated, and we want to pick up
       // those changes.

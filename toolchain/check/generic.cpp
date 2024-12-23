@@ -354,7 +354,7 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   return generic_id;
 }
 
-auto FinishGenericDecl(Context& context, SemIR::InstId decl_id,
+auto FinishGenericDecl(Context& context, SemIRLoc loc,
                        SemIR::GenericId generic_id) -> void {
   if (!generic_id.is_valid()) {
     return;
@@ -364,7 +364,7 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id,
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
-  ResolveSpecificDeclaration(context, decl_id,
+  ResolveSpecificDeclaration(context, loc,
                              context.generics().GetSelfSpecific(generic_id));
 }
 

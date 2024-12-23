@@ -27,11 +27,11 @@ auto DiscardGenericDecl(Context& context) -> void;
 auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId;
 
 // Builds eval block for the declaration.
-// FIXME: use SemIRLoc instead for decl_id
-auto FinishGenericDecl(Context& context, SemIR::InstId decl_id,
+auto FinishGenericDecl(Context& context, SemIRLoc loc,
                        SemIR::GenericId generic_id) -> void;
 
-// FIXME: BuildGeneric + FinishGenericDecl
+// BuildGeneric() and FinishGenericDecl() combined. Normally you would call this
+// function unless the caller has work to do between the two steps.
 auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
     -> SemIR::GenericId;
 
