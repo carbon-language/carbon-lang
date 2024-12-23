@@ -804,10 +804,10 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // there is one.
     //
     // Implementation note: We do the conversion through a call to
-    // PerformBuiltinConversion() call than a Convert() call to avoid extraneous
-    // `converted` semir instructions on the adapted types, and as a shortcut to
-    // doing the explicit calls to walk the parts of the tuple/struct which
-    // happens inside PerformBuiltinConversion().
+    // PerformBuiltinConversion() call rather than a Convert() call to avoid
+    // extraneous `converted` semir instructions on the adapted types, and as a
+    // shortcut to doing the explicit calls to walk the parts of the
+    // tuple/struct which happens inside PerformBuiltinConversion().
     if (auto foundation_type_id =
             GetFoundationType(context, value_type_id);
         foundation_type_id != value_type_id &&
