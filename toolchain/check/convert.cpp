@@ -12,6 +12,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -823,16 +824,28 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
             {.type_id = foundation_type_id, .source_id = target.init_id});
       }
 
-      foundation_value_id =
-          PerformBuiltinConversion(context, loc_id, foundation_value_id,
-                                   {
-                                       .kind = target.kind,
-                                       .type_id = foundation_type_id,
-                                       .init_id = foundation_init_id,
-                                       .init_block = target.init_block,
-                                   });
-      if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
-        return SemIR::ErrorInst::SingletonInstId;
+      {
+        // While the types are the same, the conversion can still fail if it
+        // performs a copy while converting the value to another category, and
+        // the type (or some part of it) is not copyable.
+        DiagnosticAnnotationScope annotate_diagnostics(
+            &context.emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(InCopy, Note, "in copy of `{0}`",
+                                TypeOfInstId);
+              builder.Note(value_id, InCopy, value_id);
+            });
+
+        foundation_value_id =
+            PerformBuiltinConversion(context, loc_id, foundation_value_id,
+                                     {
+                                         .kind = target.kind,
+                                         .type_id = foundation_type_id,
+                                         .init_id = foundation_init_id,
+                                         .init_block = target.init_block,
+                                     });
+        if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
+          return SemIR::ErrorInst::SingletonInstId;
+        }
       }
 
       return context.AddInst<SemIR::AsCompatible>(

@@ -54,9 +54,12 @@ fn F(a: A) {
   // a copy to perform initialization. It's not clear whether that is the right
   // behavior.
 
-  // CHECK:STDERR: fail_init_tuple.carbon:[[@LINE+4]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_init_tuple.carbon:[[@LINE+7]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR:   var a_init: A = (a as (i32, Noncopyable)) as A;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init_tuple.carbon:[[@LINE+4]]:19: note: in copy of ``A`` [InCopy]
+  // CHECK:STDERR:   var a_init: A = (a as (i32, Noncopyable)) as A;
+  // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var a_init: A = (a as (i32, Noncopyable)) as A;
 }
@@ -297,23 +300,23 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %a_value: %A = bind_name a_value, %.loc13_46.2
 // CHECK:STDOUT:   %a_init.var: ref %A = var a_init
 // CHECK:STDOUT:   %a_init: ref %A = bind_name a_init, %a_init.var
-// CHECK:STDOUT:   %a.ref.loc24: %A = name_ref a, %a
-// CHECK:STDOUT:   %int_32.loc24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %Noncopyable.ref.loc24: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
-// CHECK:STDOUT:   %.loc24_42.1: %tuple.type.1 = tuple_literal (%i32.loc24, %Noncopyable.ref.loc24)
-// CHECK:STDOUT:   %.loc24_42.2: type = converted %.loc24_42.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc24_22.1: %tuple.type.2 = as_compatible %a.ref.loc24
-// CHECK:STDOUT:   %.loc24_22.2: %tuple.type.2 = converted %a.ref.loc24, %.loc24_22.1
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc24_45.1: %A = as_compatible %.loc24_22.2
-// CHECK:STDOUT:   %.loc24_45.2: %A = converted %.loc24_22.2, %.loc24_45.1
-// CHECK:STDOUT:   %.loc24_49.1: %tuple.type.2 = as_compatible %.loc24_45.2
-// CHECK:STDOUT:   %tuple.elem0.loc24_49.1: %i32 = tuple_access %.loc24_49.1, element0
-// CHECK:STDOUT:   %.loc24_49.2: ref %tuple.type.2 = as_compatible %a_init.var
-// CHECK:STDOUT:   %tuple.elem0.loc24_49.2: ref %i32 = tuple_access %.loc24_49.2, element0
-// CHECK:STDOUT:   %.loc24_49.3: init %i32 = initialize_from %tuple.elem0.loc24_49.1 to %tuple.elem0.loc24_49.2
-// CHECK:STDOUT:   %tuple.elem1: %Noncopyable = tuple_access %.loc24_49.1, element1
+// CHECK:STDOUT:   %a.ref.loc27: %A = name_ref a, %a
+// CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %Noncopyable.ref.loc27: type = name_ref Noncopyable, file.%Noncopyable.decl [template = constants.%Noncopyable]
+// CHECK:STDOUT:   %.loc27_42.1: %tuple.type.1 = tuple_literal (%i32.loc27, %Noncopyable.ref.loc27)
+// CHECK:STDOUT:   %.loc27_42.2: type = converted %.loc27_42.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc27_22.1: %tuple.type.2 = as_compatible %a.ref.loc27
+// CHECK:STDOUT:   %.loc27_22.2: %tuple.type.2 = converted %a.ref.loc27, %.loc27_22.1
+// CHECK:STDOUT:   %A.ref.loc27: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %.loc27_45.1: %A = as_compatible %.loc27_22.2
+// CHECK:STDOUT:   %.loc27_45.2: %A = converted %.loc27_22.2, %.loc27_45.1
+// CHECK:STDOUT:   %.loc27_49.1: %tuple.type.2 = as_compatible %.loc27_45.2
+// CHECK:STDOUT:   %tuple.elem0.loc27_49.1: %i32 = tuple_access %.loc27_49.1, element0
+// CHECK:STDOUT:   %.loc27_49.2: ref %tuple.type.2 = as_compatible %a_init.var
+// CHECK:STDOUT:   %tuple.elem0.loc27_49.2: ref %i32 = tuple_access %.loc27_49.2, element0
+// CHECK:STDOUT:   %.loc27_49.3: init %i32 = initialize_from %tuple.elem0.loc27_49.1 to %tuple.elem0.loc27_49.2
+// CHECK:STDOUT:   %tuple.elem1: %Noncopyable = tuple_access %.loc27_49.1, element1
 // CHECK:STDOUT:   assign %a_init.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
