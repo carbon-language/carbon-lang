@@ -408,7 +408,7 @@ class Hasher {
   //  | sed -e "s/.\{4\}/&'/g" \
   //  | sed -e "s/\(.\{4\}'.\{4\}'.\{4\}'.\{4\}\)'/0x\1,\n/g"
   // ```
-  static constexpr std::array<uint64_t, 8> StaticRandomData = {
+  alignas(64) static constexpr std::array<uint64_t, 8> StaticRandomData = {
       0x243f'6a88'85a3'08d3, 0x1319'8a2e'0370'7344, 0xa409'3822'299f'31d0,
       0x082e'fa98'ec4e'6c89, 0x4528'21e6'38d0'1377, 0xbe54'66cf'34e9'0c6c,
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
