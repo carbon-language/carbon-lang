@@ -6,19 +6,20 @@
 #define CARBON_COMMON_HASHING_H_
 
 #include <concepts>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
-#include "common/check.h"
-#include "common/ostream.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/FormatVariadic.h"
+#include "third_party/carbon/lang/common/check.h"
+#include "third_party/carbon/lang/common/ostream.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/APFloat.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/APInt.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/ArrayRef.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/SmallVector.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/StringRef.h"
+#include "third_party/llvm/llvm-project/llvm/include/llvm/Support/FormatVariadic.h"
 
 #ifdef __ARM_ACLE
 #include <arm_acle.h>
@@ -387,6 +388,13 @@ class Hasher {
     return data;
   }
 
+  // As above, but for small offsets, we can use aligned loads, which are
+  // faster. The offset must be in the range [0, 8).
+  static auto SampleAlignedRandomData(ssize_t offset) -> uint64_t {
+    CARBON_DCHECK(offset < sizeof(StaticRandomData) / sizeof(uint64_t));
+    return StaticRandomData[offset];
+  }
+
   // Random data taken from the hexadecimal digits of Pi's fractional component,
   // written in lexical order for convenience of reading. The resulting
   // byte-stream will be different due to little-endian integers. These can be
@@ -408,7 +416,7 @@ class Hasher {
   //  | sed -e "s/.\{4\}/&'/g" \
   //  | sed -e "s/\(.\{4\}'.\{4\}'.\{4\}'.\{4\}\)'/0x\1,\n/g"
   // ```
-  alignas(64) static constexpr std::array<uint64_t, 8> StaticRandomData = {
+  static constexpr std::array<uint64_t, 8> StaticRandomData = {
       0x243f'6a88'85a3'08d3, 0x1319'8a2e'0370'7344, 0xa409'3822'299f'31d0,
       0x082e'fa98'ec4e'6c89, 0x4528'21e6'38d0'1377, 0xbe54'66cf'34e9'0c6c,
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
@@ -950,7 +958,7 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
       // Note that we don't drop to the `WeakMix` routine here because we want
       // to use sampled random data to encode the size, which may not be as
       // effective without the full 128-bit folded result.
-      buffer = Mix(data ^ buffer, SampleRandomData(size));
+      buffer = Mix(data ^ buffer, SampleAlignedRandomData(size - 1));
       CARBON_MCA_END("dynamic-8b");
       return;
     }
