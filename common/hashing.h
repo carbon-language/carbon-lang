@@ -387,6 +387,14 @@ class Hasher {
     return data;
   }
 
+  // As above, but for small offsets, we can use aligned loads, which are
+  // faster. The offset must be in the range [0, 8).
+  static auto SampleAlignedRandomData(ssize_t offset) -> uint64_t {
+    CARBON_DCHECK(static_cast<size_t>(offset) <
+                  sizeof(StaticRandomData) / sizeof(uint64_t));
+    return StaticRandomData[offset];
+  }
+
   // Random data taken from the hexadecimal digits of Pi's fractional component,
   // written in lexical order for convenience of reading. The resulting
   // byte-stream will be different due to little-endian integers. These can be
@@ -950,7 +958,7 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
       // Note that we don't drop to the `WeakMix` routine here because we want
       // to use sampled random data to encode the size, which may not be as
       // effective without the full 128-bit folded result.
-      buffer = Mix(data ^ buffer, SampleRandomData(size));
+      buffer = Mix(data ^ buffer, SampleAlignedRandomData(size - 1));
       CARBON_MCA_END("dynamic-8b");
       return;
     }
