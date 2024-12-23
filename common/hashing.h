@@ -12,14 +12,14 @@
 #include <type_traits>
 #include <utility>
 
-#include "third_party/carbon/lang/common/check.h"
-#include "third_party/carbon/lang/common/ostream.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/APFloat.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/APInt.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/ArrayRef.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/SmallVector.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/ADT/StringRef.h"
-#include "third_party/llvm/llvm-project/llvm/include/llvm/Support/FormatVariadic.h"
+#include "common/check.h"
+#include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FormatVariadic.h"
 
 #ifdef __ARM_ACLE
 #include <arm_acle.h>
