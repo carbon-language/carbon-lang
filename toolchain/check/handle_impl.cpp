@@ -326,13 +326,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
   // Add the impl declaration.
-  bool valid_redeclaration = true;
+  bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
-      valid_redeclaration = IsValidImplRedecl(context, impl_info, prev_impl_id);
-      if (valid_redeclaration) {
+      if (IsValidImplRedecl(context, impl_info, prev_impl_id)) {
         impl_decl.impl_id = prev_impl_id;
+      } else {
+        // IsValidImplRedecl() has issued a diagnostic, avoid generating more
+        // diagnostics for this declaration.
+        invalid_redeclaration = true;
       }
       break;
     }
@@ -369,8 +372,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                constraint_type_id);
   }
 
-  // Impl definitions are required in the same file as the declaration.
-  if (!is_definition && valid_redeclaration) {
+  // Impl definitions are required in the same file as the declaration. We skip
+  // this requirement if we've already issued an invalid redeclaration error.
+  if (!is_definition && !invalid_redeclaration) {
     context.definitions_required().push_back(impl_decl_id);
   }
 
