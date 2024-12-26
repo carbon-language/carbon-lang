@@ -66,7 +66,7 @@ impl forall [N:! IntLiteral()] UInt(N) as Mul {
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Negate {
-  fn Op[self: Self]() -> Self = "int.snegate";
+  fn Op[self: Self]() -> Self = "int.unegate";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Sub {

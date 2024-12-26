@@ -783,7 +783,7 @@ static auto PerformBuiltinUnaryIntOp(Context& context, SemIRLoc loc,
 
   switch (builtin_kind) {
     case SemIR::BuiltinFunctionKind::IntSNegate:
-      if (is_signed && op_val.isMinSignedValue()) {
+      if (op_val.isMinSignedValue()) {
         CARBON_DIAGNOSTIC(CompileTimeIntegerNegateOverflow, Error,
                           "integer overflow in negation of {0}", TypedInt);
         context.emitter().Emit(loc, CompileTimeIntegerNegateOverflow,

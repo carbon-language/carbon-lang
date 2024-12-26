@@ -93,8 +93,8 @@ fn div_u16(a: u16, b: u16) -> u16 { return a / b; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_Cneg_u32.Main(i32 %a) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.snegate = sub i32 0, %a, !dbg !34
-// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !35
+// CHECK:STDOUT:   %int.unegate = sub i32 0, %a, !dbg !34
+// CHECK:STDOUT:   ret i32 %int.unegate, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_Csub_i32.Main(i32 %a, i32 %b) !dbg !36 {
