@@ -104,27 +104,19 @@ fn RuntimeCallBadReturnType(a: u32, b: u32) -> bool {
 package Overflow;
 
 fn Negate(a: u32) -> u32 = "int.unegate";
-fn Sub(a: u32, b: u32) -> u32 = "int.usub";
-
-// -(-INT_MAX) is INT_MAX.
-let a: u32 = Negate(Negate(0x7FFFFFFF));
-
-// -(-INT_MAX - 1) wraps around to INT_MIN.
-let b: u32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
-
-// --- overflow_operators.carbon
-
-library "[[@TEST_NAME]]";
-
-fn Negate(a: u32) -> u32 = "int.unegate";
 
 class Expect(N:! u32) {}
 fn Test(N:! u32) -> Expect(N) { return {}; }
 
 fn F() {
+  // -(-INT_MAX) is INT_MAX.
+  Test(Negate(Negate(0x7FFF_FFFF))) as Expect(0x7FFF_FFFF);
   Test(-(Negate(0x7FFF_FFFF))) as Expect(0x7FFF_FFFF);
+  // -(-(INT_MAX + 1)) is `INT_MAX + 1`.
+  Test(Negate(Negate(0x8000_0000))) as Expect(0x8000_0000);
   Test(-(Negate(0x8000_0000))) as Expect(0x8000_0000);
 }
+
 
 // CHECK:STDOUT: --- int_negate.carbon
 // CHECK:STDOUT:
@@ -489,145 +481,6 @@ fn F() {
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [template]
 // CHECK:STDOUT:   %Negate.type.1: type = fn_type @Negate.1 [template]
 // CHECK:STDOUT:   %Negate: %Negate.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Sub.type.1: type = fn_type @Sub.1 [template]
-// CHECK:STDOUT:   %Sub: %Sub.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %int_2147483647.1: Core.IntLiteral = int_value 2147483647 [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%u32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_2147483647.1, %Convert.10 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_2147483647.2: %u32 = int_value 2147483647 [template]
-// CHECK:STDOUT:   %int_2147483649: %u32 = int_value 2147483649 [template]
-// CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_1.1, %Convert.10 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.2: %u32 = int_value 1 [template]
-// CHECK:STDOUT:   %int_2147483648: %u32 = int_value 2147483648 [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .UInt = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Negate = %Negate.decl
-// CHECK:STDOUT:     .Sub = %Sub.decl
-// CHECK:STDOUT:     .a = @__global_init.%a
-// CHECK:STDOUT:     .b = @__global_init.%b
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Negate.decl: %Negate.type.1 = fn_decl @Negate.1 [template = constants.%Negate] {
-// CHECK:STDOUT:     %a.patt: %u32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %u32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, runtime_param1
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc4_22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc4_22: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4: type = splice_block %u32.loc4_14 [template = constants.%u32] {
-// CHECK:STDOUT:       %int_32.loc4_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc4_14: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: ref %u32 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Sub.decl: %Sub.type.1 = fn_decl @Sub.1 [template = constants.%Sub] {
-// CHECK:STDOUT:     %a.patt: %u32 = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: %u32 = value_param_pattern %a.patt, runtime_param0
-// CHECK:STDOUT:     %b.patt: %u32 = binding_pattern b
-// CHECK:STDOUT:     %b.param_patt: %u32 = value_param_pattern %b.patt, runtime_param1
-// CHECK:STDOUT:     %return.patt: %u32 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %u32 = out_param_pattern %return.patt, runtime_param2
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc5_27: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:     %u32.loc5_27: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     %a.param: %u32 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc5_11: type = splice_block %u32.loc5_11 [template = constants.%u32] {
-// CHECK:STDOUT:       %int_32.loc5_11: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc5_11: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %u32 = value_param runtime_param1
-// CHECK:STDOUT:     %.loc5_19: type = splice_block %u32.loc5_19 [template = constants.%u32] {
-// CHECK:STDOUT:       %int_32.loc5_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:       %u32.loc5_19: type = class_type @UInt, @UInt(constants.%int_32) [template = constants.%u32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %u32 = bind_name b, %b.param
-// CHECK:STDOUT:     %return.param: ref %u32 = out_param runtime_param2
-// CHECK:STDOUT:     %return: ref %u32 = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Negate.1(%a.param_patt: %u32) -> %u32 = "int.unegate";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Sub.1(%a.param_patt: %u32, %b.param_patt: %u32) -> %u32 = "int.usub";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Negate.ref.loc8_14: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %Negate.ref.loc8_21: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_2147483647.loc8: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc8: <bound method> = bound_method %int_2147483647.loc8, %impl.elem0.loc8 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc8: <specific function> = specific_function %Convert.bound.loc8, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc8: init %u32 = call %Convert.specific_fn.loc8(%int_2147483647.loc8) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc8_28.1: %u32 = value_of_initializer %int.convert_checked.loc8 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc8_28.2: %u32 = converted %int_2147483647.loc8, %.loc8_28.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %int.unegate.loc8_38: init %u32 = call %Negate.ref.loc8_21(%.loc8_28.2) [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %.loc8_38.1: %u32 = value_of_initializer %int.unegate.loc8_38 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %.loc8_38.2: %u32 = converted %int.unegate.loc8_38, %.loc8_38.1 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %int.unegate.loc8_39: init %u32 = call %Negate.ref.loc8_14(%.loc8_38.2) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc8_40.1: %u32 = value_of_initializer %int.unegate.loc8_39 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc8_40.2: %u32 = converted %int.unegate.loc8_39, %.loc8_40.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %a: %u32 = bind_name a, %.loc8_40.2
-// CHECK:STDOUT:   %Negate.ref.loc11_14: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %Sub.ref: %Sub.type.1 = name_ref Sub, file.%Sub.decl [template = constants.%Sub]
-// CHECK:STDOUT:   %Negate.ref.loc11_25: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_2147483647.loc11: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_32: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc11_32: <bound method> = bound_method %int_2147483647.loc11, %impl.elem0.loc11_32 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_32: <specific function> = specific_function %Convert.bound.loc11_32, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc11_32: init %u32 = call %Convert.specific_fn.loc11_32(%int_2147483647.loc11) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc11_32.1: %u32 = value_of_initializer %int.convert_checked.loc11_32 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc11_32.2: %u32 = converted %int_2147483647.loc11, %.loc11_32.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %int.unegate.loc11_42: init %u32 = call %Negate.ref.loc11_25(%.loc11_32.2) [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
-// CHECK:STDOUT:   %.loc11_42.1: %u32 = value_of_initializer %int.unegate.loc11_42 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %.loc11_42.2: %u32 = converted %int.unegate.loc11_42, %.loc11_42.1 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %impl.elem0.loc11_45: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc11_45: <bound method> = bound_method %int_1, %impl.elem0.loc11_45 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_45: <specific function> = specific_function %Convert.bound.loc11_45, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc11_45: init %u32 = call %Convert.specific_fn.loc11_45(%int_1) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_45.1: %u32 = value_of_initializer %int.convert_checked.loc11_45 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc11_45.2: %u32 = converted %int_1, %.loc11_45.1 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %int.usub: init %u32 = call %Sub.ref(%.loc11_42.2, %.loc11_45.2) [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %.loc11_46.1: %u32 = value_of_initializer %int.usub [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %.loc11_46.2: %u32 = converted %int.usub, %.loc11_46.1 [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %int.unegate.loc11_47: init %u32 = call %Negate.ref.loc11_14(%.loc11_46.2) [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %.loc11_48.1: %u32 = value_of_initializer %int.unegate.loc11_47 [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %.loc11_48.2: %u32 = converted %int.unegate.loc11_47, %.loc11_48.1 [template = constants.%int_2147483648]
-// CHECK:STDOUT:   %b: %u32 = bind_name b, %.loc11_48.2
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- overflow_operators.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [template]
-// CHECK:STDOUT:   %Negate.type.1: type = fn_type @Negate.1 [template]
-// CHECK:STDOUT:   %Negate: %Negate.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %N.2: %u32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt.2: %u32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %Expect.type: type = generic_class_type @Expect [template]
@@ -650,22 +503,22 @@ fn F() {
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2147483647.2: %u32 = int_value 2147483647 [template]
 // CHECK:STDOUT:   %int_2147483649: %u32 = int_value 2147483649 [template]
+// CHECK:STDOUT:   %Expect.2: type = class_type @Expect, @Expect(%int_2147483647.2) [template]
+// CHECK:STDOUT:   %Test.specific_fn.1: <specific function> = specific_function %Test, @Test(%int_2147483647.2) [template]
 // CHECK:STDOUT:   %Op.type.13: type = fn_type @Op.13 [template]
 // CHECK:STDOUT:   %Op.type.14: type = fn_type @Op.5, @impl.11(%int_32) [template]
 // CHECK:STDOUT:   %Op.14: %Op.type.14 = struct_value () [template]
 // CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Op.14) [template]
 // CHECK:STDOUT:   %Op.bound.1: <bound method> = bound_method %int_2147483649, %Op.14 [template]
 // CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function %Op.bound.1, @Op.5(%int_32) [template]
-// CHECK:STDOUT:   %Expect.2: type = class_type @Expect, @Expect(%int_2147483647.2) [template]
-// CHECK:STDOUT:   %Test.specific_fn.1: <specific function> = specific_function %Test, @Test(%int_2147483647.2) [template]
 // CHECK:STDOUT:   %int_2147483648.1: Core.IntLiteral = int_value 2147483648 [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_2147483648.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2147483648.2: %u32 = int_value 2147483648 [template]
-// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_2147483648.2, %Op.14 [template]
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function %Op.bound.2, @Op.5(%int_32) [template]
 // CHECK:STDOUT:   %Expect.3: type = class_type @Expect, @Expect(%int_2147483648.2) [template]
 // CHECK:STDOUT:   %Test.specific_fn.2: <specific function> = specific_function %Test, @Test(%int_2147483648.2) [template]
+// CHECK:STDOUT:   %Op.bound.2: <bound method> = bound_method %int_2147483648.2, %Op.14 [template]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function %Op.bound.2, @Op.5(%int_32) [template]
 // CHECK:STDOUT:   %Expect.val.2: %Expect.2 = struct_value () [template]
 // CHECK:STDOUT:   %Expect.val.3: %Expect.3 = struct_value () [template]
 // CHECK:STDOUT: }
@@ -775,68 +628,126 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Test.ref.loc10: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
-// CHECK:STDOUT:   %Negate.ref.loc10: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_2147483647.loc10_17: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_17: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc10_17: <bound method> = bound_method %int_2147483647.loc10_17, %impl.elem0.loc10_17 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc10_17: <specific function> = specific_function %Convert.bound.loc10_17, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc10_17: init %u32 = call %Convert.specific_fn.loc10_17(%int_2147483647.loc10_17) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_17.1: %u32 = value_of_initializer %int.convert_checked.loc10_17 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_17.2: %u32 = converted %int_2147483647.loc10_17, %.loc10_17.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %int.unegate.loc10_28: init %u32 = call %Negate.ref.loc10(%.loc10_17.2) [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %impl.elem0.loc10_8: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
-// CHECK:STDOUT:   %Op.bound.loc10: <bound method> = bound_method %int.unegate.loc10_28, %impl.elem0.loc10_8 [template = constants.%Op.bound.1]
-// CHECK:STDOUT:   %Op.specific_fn.loc10: <specific function> = specific_function %Op.bound.loc10, @Op.5(constants.%int_32) [template = constants.%Op.specific_fn.1]
-// CHECK:STDOUT:   %.loc10_28.1: %u32 = value_of_initializer %int.unegate.loc10_28 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %.loc10_28.2: %u32 = converted %int.unegate.loc10_28, %.loc10_28.1 [template = constants.%int_2147483649]
-// CHECK:STDOUT:   %int.unegate.loc10_8: init %u32 = call %Op.specific_fn.loc10(%.loc10_28.2) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_30.1: %u32 = value_of_initializer %int.unegate.loc10_8 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_30.2: %u32 = converted %int.unegate.loc10_8, %.loc10_30.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %Test.specific_fn.loc10: <specific function> = specific_function %Test.ref.loc10, @Test(constants.%int_2147483647.2) [template = constants.%Test.specific_fn.1]
-// CHECK:STDOUT:   %.loc10_30.3: ref %Expect.2 = temporary_storage
-// CHECK:STDOUT:   %Test.call.loc10: init %Expect.2 = call %Test.specific_fn.loc10() to %.loc10_30.3
-// CHECK:STDOUT:   %Expect.ref.loc10: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
-// CHECK:STDOUT:   %int_2147483647.loc10_42: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
-// CHECK:STDOUT:   %impl.elem0.loc10_53: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc10_53: <bound method> = bound_method %int_2147483647.loc10_42, %impl.elem0.loc10_53 [template = constants.%Convert.bound.1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc10_53: <specific function> = specific_function %Convert.bound.loc10_53, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
-// CHECK:STDOUT:   %int.convert_checked.loc10_53: init %u32 = call %Convert.specific_fn.loc10_53(%int_2147483647.loc10_42) [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_53.1: %u32 = value_of_initializer %int.convert_checked.loc10_53 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %.loc10_53.2: %u32 = converted %int_2147483647.loc10_42, %.loc10_53.1 [template = constants.%int_2147483647.2]
-// CHECK:STDOUT:   %Expect.loc10: type = class_type @Expect, @Expect(constants.%int_2147483647.2) [template = constants.%Expect.2]
-// CHECK:STDOUT:   %.loc10_30.4: ref %Expect.2 = temporary %.loc10_30.3, %Test.call.loc10
 // CHECK:STDOUT:   %Test.ref.loc11: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
-// CHECK:STDOUT:   %Negate.ref.loc11: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %int_2147483648.loc11_17: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_17: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc11_17: <bound method> = bound_method %int_2147483648.loc11_17, %impl.elem0.loc11_17 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_17: <specific function> = specific_function %Convert.bound.loc11_17, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc11_17: init %u32 = call %Convert.specific_fn.loc11_17(%int_2147483648.loc11_17) [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_17.1: %u32 = value_of_initializer %int.convert_checked.loc11_17 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_17.2: %u32 = converted %int_2147483648.loc11_17, %.loc11_17.1 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %int.unegate.loc11_28: init %u32 = call %Negate.ref.loc11(%.loc11_17.2) [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %impl.elem0.loc11_8: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
-// CHECK:STDOUT:   %Op.bound.loc11: <bound method> = bound_method %int.unegate.loc11_28, %impl.elem0.loc11_8 [template = constants.%Op.bound.2]
-// CHECK:STDOUT:   %Op.specific_fn.loc11: <specific function> = specific_function %Op.bound.loc11, @Op.5(constants.%int_32) [template = constants.%Op.specific_fn.2]
-// CHECK:STDOUT:   %.loc11_28.1: %u32 = value_of_initializer %int.unegate.loc11_28 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_28.2: %u32 = converted %int.unegate.loc11_28, %.loc11_28.1 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %int.unegate.loc11_8: init %u32 = call %Op.specific_fn.loc11(%.loc11_28.2) [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_30.1: %u32 = value_of_initializer %int.unegate.loc11_8 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_30.2: %u32 = converted %int.unegate.loc11_8, %.loc11_30.1 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %Test.specific_fn.loc11: <specific function> = specific_function %Test.ref.loc11, @Test(constants.%int_2147483648.2) [template = constants.%Test.specific_fn.2]
-// CHECK:STDOUT:   %.loc11_30.3: ref %Expect.3 = temporary_storage
-// CHECK:STDOUT:   %Test.call.loc11: init %Expect.3 = call %Test.specific_fn.loc11() to %.loc11_30.3
+// CHECK:STDOUT:   %Negate.ref.loc11_8: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc11_15: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %int_2147483647.loc11_22: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
+// CHECK:STDOUT:   %impl.elem0.loc11_22: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc11_22: <bound method> = bound_method %int_2147483647.loc11_22, %impl.elem0.loc11_22 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_22: <specific function> = specific_function %Convert.bound.loc11_22, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc11_22: init %u32 = call %Convert.specific_fn.loc11_22(%int_2147483647.loc11_22) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_22.1: %u32 = value_of_initializer %int.convert_checked.loc11_22 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_22.2: %u32 = converted %int_2147483647.loc11_22, %.loc11_22.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %int.unegate.loc11_33: init %u32 = call %Negate.ref.loc11_15(%.loc11_22.2) [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %.loc11_33.1: %u32 = value_of_initializer %int.unegate.loc11_33 [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %.loc11_33.2: %u32 = converted %int.unegate.loc11_33, %.loc11_33.1 [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %int.unegate.loc11_34: init %u32 = call %Negate.ref.loc11_8(%.loc11_33.2) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_35.1: %u32 = value_of_initializer %int.unegate.loc11_34 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_35.2: %u32 = converted %int.unegate.loc11_34, %.loc11_35.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %Test.specific_fn.loc11: <specific function> = specific_function %Test.ref.loc11, @Test(constants.%int_2147483647.2) [template = constants.%Test.specific_fn.1]
+// CHECK:STDOUT:   %.loc11_35.3: ref %Expect.2 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc11: init %Expect.2 = call %Test.specific_fn.loc11() to %.loc11_35.3
 // CHECK:STDOUT:   %Expect.ref.loc11: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
-// CHECK:STDOUT:   %int_2147483648.loc11_42: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
-// CHECK:STDOUT:   %impl.elem0.loc11_53: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound.loc11_53: <bound method> = bound_method %int_2147483648.loc11_42, %impl.elem0.loc11_53 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn.loc11_53: <specific function> = specific_function %Convert.bound.loc11_53, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked.loc11_53: init %u32 = call %Convert.specific_fn.loc11_53(%int_2147483648.loc11_42) [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_53.1: %u32 = value_of_initializer %int.convert_checked.loc11_53 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %.loc11_53.2: %u32 = converted %int_2147483648.loc11_42, %.loc11_53.1 [template = constants.%int_2147483648.2]
-// CHECK:STDOUT:   %Expect.loc11: type = class_type @Expect, @Expect(constants.%int_2147483648.2) [template = constants.%Expect.3]
-// CHECK:STDOUT:   %.loc11_30.4: ref %Expect.3 = temporary %.loc11_30.3, %Test.call.loc11
+// CHECK:STDOUT:   %int_2147483647.loc11_47: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
+// CHECK:STDOUT:   %impl.elem0.loc11_58: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc11_58: <bound method> = bound_method %int_2147483647.loc11_47, %impl.elem0.loc11_58 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc11_58: <specific function> = specific_function %Convert.bound.loc11_58, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc11_58: init %u32 = call %Convert.specific_fn.loc11_58(%int_2147483647.loc11_47) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_58.1: %u32 = value_of_initializer %int.convert_checked.loc11_58 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc11_58.2: %u32 = converted %int_2147483647.loc11_47, %.loc11_58.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %Expect.loc11: type = class_type @Expect, @Expect(constants.%int_2147483647.2) [template = constants.%Expect.2]
+// CHECK:STDOUT:   %.loc11_35.4: ref %Expect.2 = temporary %.loc11_35.3, %Test.call.loc11
+// CHECK:STDOUT:   %Test.ref.loc12: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %int_2147483647.loc12_17: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
+// CHECK:STDOUT:   %impl.elem0.loc12_17: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc12_17: <bound method> = bound_method %int_2147483647.loc12_17, %impl.elem0.loc12_17 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_17: <specific function> = specific_function %Convert.bound.loc12_17, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_17: init %u32 = call %Convert.specific_fn.loc12_17(%int_2147483647.loc12_17) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_17.1: %u32 = value_of_initializer %int.convert_checked.loc12_17 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_17.2: %u32 = converted %int_2147483647.loc12_17, %.loc12_17.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %int.unegate.loc12_28: init %u32 = call %Negate.ref.loc12(%.loc12_17.2) [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %impl.elem0.loc12_8: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
+// CHECK:STDOUT:   %Op.bound.loc12: <bound method> = bound_method %int.unegate.loc12_28, %impl.elem0.loc12_8 [template = constants.%Op.bound.1]
+// CHECK:STDOUT:   %Op.specific_fn.loc12: <specific function> = specific_function %Op.bound.loc12, @Op.5(constants.%int_32) [template = constants.%Op.specific_fn.1]
+// CHECK:STDOUT:   %.loc12_28.1: %u32 = value_of_initializer %int.unegate.loc12_28 [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %.loc12_28.2: %u32 = converted %int.unegate.loc12_28, %.loc12_28.1 [template = constants.%int_2147483649]
+// CHECK:STDOUT:   %int.unegate.loc12_8: init %u32 = call %Op.specific_fn.loc12(%.loc12_28.2) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_30.1: %u32 = value_of_initializer %int.unegate.loc12_8 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_30.2: %u32 = converted %int.unegate.loc12_8, %.loc12_30.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %Test.specific_fn.loc12: <specific function> = specific_function %Test.ref.loc12, @Test(constants.%int_2147483647.2) [template = constants.%Test.specific_fn.1]
+// CHECK:STDOUT:   %.loc12_30.3: ref %Expect.2 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc12: init %Expect.2 = call %Test.specific_fn.loc12() to %.loc12_30.3
+// CHECK:STDOUT:   %Expect.ref.loc12: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_2147483647.loc12_42: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.1]
+// CHECK:STDOUT:   %impl.elem0.loc12_53: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc12_53: <bound method> = bound_method %int_2147483647.loc12_42, %impl.elem0.loc12_53 [template = constants.%Convert.bound.1]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12_53: <specific function> = specific_function %Convert.bound.loc12_53, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %int.convert_checked.loc12_53: init %u32 = call %Convert.specific_fn.loc12_53(%int_2147483647.loc12_42) [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_53.1: %u32 = value_of_initializer %int.convert_checked.loc12_53 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %.loc12_53.2: %u32 = converted %int_2147483647.loc12_42, %.loc12_53.1 [template = constants.%int_2147483647.2]
+// CHECK:STDOUT:   %Expect.loc12: type = class_type @Expect, @Expect(constants.%int_2147483647.2) [template = constants.%Expect.2]
+// CHECK:STDOUT:   %.loc12_30.4: ref %Expect.2 = temporary %.loc12_30.3, %Test.call.loc12
+// CHECK:STDOUT:   %Test.ref.loc14: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %Negate.ref.loc14_8: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %Negate.ref.loc14_15: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %int_2147483648.loc14_22: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
+// CHECK:STDOUT:   %impl.elem0.loc14_22: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc14_22: <bound method> = bound_method %int_2147483648.loc14_22, %impl.elem0.loc14_22 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_22: <specific function> = specific_function %Convert.bound.loc14_22, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc14_22: init %u32 = call %Convert.specific_fn.loc14_22(%int_2147483648.loc14_22) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_22.1: %u32 = value_of_initializer %int.convert_checked.loc14_22 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_22.2: %u32 = converted %int_2147483648.loc14_22, %.loc14_22.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %int.unegate.loc14_33: init %u32 = call %Negate.ref.loc14_15(%.loc14_22.2) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_33.1: %u32 = value_of_initializer %int.unegate.loc14_33 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_33.2: %u32 = converted %int.unegate.loc14_33, %.loc14_33.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %int.unegate.loc14_34: init %u32 = call %Negate.ref.loc14_8(%.loc14_33.2) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_35.1: %u32 = value_of_initializer %int.unegate.loc14_34 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_35.2: %u32 = converted %int.unegate.loc14_34, %.loc14_35.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %Test.specific_fn.loc14: <specific function> = specific_function %Test.ref.loc14, @Test(constants.%int_2147483648.2) [template = constants.%Test.specific_fn.2]
+// CHECK:STDOUT:   %.loc14_35.3: ref %Expect.3 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc14: init %Expect.3 = call %Test.specific_fn.loc14() to %.loc14_35.3
+// CHECK:STDOUT:   %Expect.ref.loc14: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_2147483648.loc14_47: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
+// CHECK:STDOUT:   %impl.elem0.loc14_58: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc14_58: <bound method> = bound_method %int_2147483648.loc14_47, %impl.elem0.loc14_58 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc14_58: <specific function> = specific_function %Convert.bound.loc14_58, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc14_58: init %u32 = call %Convert.specific_fn.loc14_58(%int_2147483648.loc14_47) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_58.1: %u32 = value_of_initializer %int.convert_checked.loc14_58 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc14_58.2: %u32 = converted %int_2147483648.loc14_47, %.loc14_58.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %Expect.loc14: type = class_type @Expect, @Expect(constants.%int_2147483648.2) [template = constants.%Expect.3]
+// CHECK:STDOUT:   %.loc14_35.4: ref %Expect.3 = temporary %.loc14_35.3, %Test.call.loc14
+// CHECK:STDOUT:   %Test.ref.loc15: %Test.type = name_ref Test, file.%Test.decl [template = constants.%Test]
+// CHECK:STDOUT:   %Negate.ref.loc15: %Negate.type.1 = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
+// CHECK:STDOUT:   %int_2147483648.loc15_17: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
+// CHECK:STDOUT:   %impl.elem0.loc15_17: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc15_17: <bound method> = bound_method %int_2147483648.loc15_17, %impl.elem0.loc15_17 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc15_17: <specific function> = specific_function %Convert.bound.loc15_17, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc15_17: init %u32 = call %Convert.specific_fn.loc15_17(%int_2147483648.loc15_17) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_17.1: %u32 = value_of_initializer %int.convert_checked.loc15_17 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_17.2: %u32 = converted %int_2147483648.loc15_17, %.loc15_17.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %int.unegate.loc15_28: init %u32 = call %Negate.ref.loc15(%.loc15_17.2) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %impl.elem0.loc15_8: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
+// CHECK:STDOUT:   %Op.bound.loc15: <bound method> = bound_method %int.unegate.loc15_28, %impl.elem0.loc15_8 [template = constants.%Op.bound.2]
+// CHECK:STDOUT:   %Op.specific_fn.loc15: <specific function> = specific_function %Op.bound.loc15, @Op.5(constants.%int_32) [template = constants.%Op.specific_fn.2]
+// CHECK:STDOUT:   %.loc15_28.1: %u32 = value_of_initializer %int.unegate.loc15_28 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_28.2: %u32 = converted %int.unegate.loc15_28, %.loc15_28.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %int.unegate.loc15_8: init %u32 = call %Op.specific_fn.loc15(%.loc15_28.2) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_30.1: %u32 = value_of_initializer %int.unegate.loc15_8 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_30.2: %u32 = converted %int.unegate.loc15_8, %.loc15_30.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %Test.specific_fn.loc15: <specific function> = specific_function %Test.ref.loc15, @Test(constants.%int_2147483648.2) [template = constants.%Test.specific_fn.2]
+// CHECK:STDOUT:   %.loc15_30.3: ref %Expect.3 = temporary_storage
+// CHECK:STDOUT:   %Test.call.loc15: init %Expect.3 = call %Test.specific_fn.loc15() to %.loc15_30.3
+// CHECK:STDOUT:   %Expect.ref.loc15: %Expect.type = name_ref Expect, file.%Expect.decl [template = constants.%Expect.generic]
+// CHECK:STDOUT:   %int_2147483648.loc15_42: Core.IntLiteral = int_value 2147483648 [template = constants.%int_2147483648.1]
+// CHECK:STDOUT:   %impl.elem0.loc15_53: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound.loc15_53: <bound method> = bound_method %int_2147483648.loc15_42, %impl.elem0.loc15_53 [template = constants.%Convert.bound.2]
+// CHECK:STDOUT:   %Convert.specific_fn.loc15_53: <specific function> = specific_function %Convert.bound.loc15_53, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
+// CHECK:STDOUT:   %int.convert_checked.loc15_53: init %u32 = call %Convert.specific_fn.loc15_53(%int_2147483648.loc15_42) [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_53.1: %u32 = value_of_initializer %int.convert_checked.loc15_53 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %.loc15_53.2: %u32 = converted %int_2147483648.loc15_42, %.loc15_53.1 [template = constants.%int_2147483648.2]
+// CHECK:STDOUT:   %Expect.loc15: type = class_type @Expect, @Expect(constants.%int_2147483648.2) [template = constants.%Expect.3]
+// CHECK:STDOUT:   %.loc15_30.4: ref %Expect.3 = temporary %.loc15_30.3, %Test.call.loc15
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
