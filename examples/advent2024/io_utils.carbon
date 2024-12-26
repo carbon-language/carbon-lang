@@ -81,7 +81,7 @@ fn ReadInt64(p: i64*) -> bool {
   return read_any_digits;
 }
 
-fn PrintInt64(n_val: i64) {
+fn PrintInt64NoNewline(n_val: i64) {
   var pow10: i64 = 1;
   var n: i64 = n_val;
   while (n / 10 >= pow10) {
@@ -103,6 +103,10 @@ fn PrintInt64(n_val: i64) {
     n = n % pow10;
     pow10 = pow10 / 10;
   }
+}
+
+fn PrintInt64(n_val: i64) {
+  PrintInt64NoNewline(n_val);
   Core.PrintChar(0xA);
 }
 

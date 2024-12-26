@@ -17,6 +17,6 @@ utils = [
             "day%d_part%d.carbon" % (day, part),
         ] + utils,
     )
-    for day in range(1, 11)
+    for day in range(1, 12)
     for part in range(1, 3)
 ]
