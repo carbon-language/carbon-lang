@@ -10,9 +10,6 @@
 //
 // - lldb: `expr Dump(tokens, id)`
 // - gdb: `call Dump(tokens, id)`
-//
-// The `DumpNoNewline` functions are helpers that exclude a trailing newline.
-// They're intended to be composed by `Dump` function implementations.
 
 #ifndef CARBON_TOOLCHAIN_SEM_IR_DUMP_H_
 #define CARBON_TOOLCHAIN_SEM_IR_DUMP_H_
@@ -23,13 +20,21 @@
 
 namespace Carbon::SemIR {
 
-// Just the instruction itself
-auto DumpNoNewline(const File& file, InstId inst_id) -> void;
-
+auto Dump(const File& file, ClassId class_id) -> void;
 auto Dump(const File& file, ConstantId const_id) -> void;
-// The instruction, its type, and its constant value (if any).
+auto Dump(const File& file, EntityNameId entity_name_id) -> void;
+auto Dump(const File& file, FacetTypeId facet_type_id) -> void;
+auto Dump(const File& file, FunctionId function_id) -> void;
+auto Dump(const File& file, GenericId generic_id) -> void;
+auto Dump(const File& file, ImplId impl_id) -> void;
+auto Dump(const File& file, InstBlockId inst_block_id) -> void;
 auto Dump(const File& file, InstId inst_id) -> void;
+auto Dump(const File& file, InterfaceId interface_id) -> void;
 auto Dump(const File& file, NameId name_id) -> void;
+auto Dump(const File& file, NameScopeId name_scope_id) -> void;
+auto Dump(const File& file, SpecificId specific_id) -> void;
+auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id) -> void;
+auto Dump(const File& file, TypeBlockId type_block_id) -> void;
 auto Dump(const File& file, TypeId type_id) -> void;
 
 }  // namespace Carbon::SemIR
