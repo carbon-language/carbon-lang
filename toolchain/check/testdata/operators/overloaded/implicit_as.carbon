@@ -46,15 +46,15 @@ fn Test() {
 // CHECK:STDOUT:   %ImplicitAs.type.1: type = generic_interface_type @ImplicitAs [template]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2 [template]
-// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.1, @ImplicitAs(%X) [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%Convert.2) [template]
+// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%X) [template]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2 [template]
+// CHECK:STDOUT:   %Convert.3: %Convert.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%Convert.3) [template]
 // CHECK:STDOUT:   %ImplicitAs.type.4: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
-// CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.3 [template]
-// CHECK:STDOUT:   %Convert.4: %Convert.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Convert.4) [template]
+// CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %Convert.type.5: type = fn_type @Convert.3 [template]
+// CHECK:STDOUT:   %Convert.5: %Convert.type.5 = struct_value () [template]
+// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%Convert.5) [template]
 // CHECK:STDOUT:   %Sink_i32.type: type = fn_type @Sink_i32 [template]
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [template]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [template]
@@ -143,7 +143,7 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %i32 as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.2 = fn_decl @Convert.2 [template = constants.%Convert.2] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.3 = fn_decl @Convert.2 [template = constants.%Convert.3] {
 // CHECK:STDOUT:     %self.patt: %i32 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %i32 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
@@ -167,7 +167,7 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %X.ref as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.4 = fn_decl @Convert.3 [template = constants.%Convert.4] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.5 = fn_decl @Convert.3 [template = constants.%Convert.5] {
 // CHECK:STDOUT:     %self.patt: %X = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %X = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -250,7 +250,7 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%Source.specific_fn.2]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
-// CHECK:STDOUT:   %impl.elem0.loc30: %Convert.type.5 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.4]
+// CHECK:STDOUT:   %impl.elem0.loc30: %Convert.type.4 = interface_witness_access constants.%interface.2, element0 [template = constants.%Convert.5]
 // CHECK:STDOUT:   %Convert.bound.loc30: <bound method> = bound_method %Source.call.loc30, %impl.elem0.loc30
 // CHECK:STDOUT:   %.loc30_20.2: ref %X = temporary %.loc30_20.1, %Source.call.loc30
 // CHECK:STDOUT:   %.loc30_20.3: %X = bind_value %.loc30_20.2
@@ -264,7 +264,7 @@ fn Test() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %Source.specific_fn.loc31: <specific function> = specific_function %Source.ref.loc31, @Source(constants.%i32) [template = constants.%Source.specific_fn.3]
 // CHECK:STDOUT:   %Source.call.loc31: init %i32 = call %Source.specific_fn.loc31()
-// CHECK:STDOUT:   %impl.elem0.loc31: %Convert.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.2]
+// CHECK:STDOUT:   %impl.elem0.loc31: %Convert.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%Convert.3]
 // CHECK:STDOUT:   %Convert.bound.loc31: <bound method> = bound_method %Source.call.loc31, %impl.elem0.loc31
 // CHECK:STDOUT:   %.loc31_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc31_20.2: %i32 = value_of_initializer %Source.call.loc31

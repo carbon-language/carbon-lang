@@ -41,9 +41,9 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_20.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %.loc11_20.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11_13.3: type = splice_block %.loc11_13.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc11_13.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc11_13.2: type = converted %.loc11_13.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc11_13.1: type = splice_block %.loc11_13.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc11_13.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc11_13.3: type = converted %.loc11_13.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %empty_struct_type = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param1

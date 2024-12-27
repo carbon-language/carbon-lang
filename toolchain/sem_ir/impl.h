@@ -33,6 +33,7 @@ struct ImplFields {
 
   // The witness for the impl. This can be `BuiltinErrorInst`.
   InstId witness_id = InstId::Invalid;
+  bool defined = false;
 };
 
 // An implementation of a constraint. See EntityWithParamsBase regarding the
@@ -46,11 +47,11 @@ struct Impl : public EntityWithParamsBase,
 
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return witness_id.is_valid(); }
+  auto is_defined() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
+    return has_definition_started() && !is_defined();
   }
 };
 

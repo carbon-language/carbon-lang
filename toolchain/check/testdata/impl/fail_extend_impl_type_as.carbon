@@ -19,12 +19,16 @@ class C {
 }
 
 class D {
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+7]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+11]]:3: error: cannot `extend` an `impl` with an explicit self type [ExtendImplSelfAs]
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+8]]:15: note: remove the explicit `Self` type here [ExtendImplSelfAsDefault]
   // CHECK:STDERR:   extend impl D as I;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_impl_type_as.carbon:[[@LINE+4]]:3: error: impl declared but not defined [MissingImplDefinition]
+  // CHECK:STDERR:   extend impl D as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl D as I;
 }

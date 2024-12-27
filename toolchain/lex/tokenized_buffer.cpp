@@ -70,7 +70,8 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
   if (token_info.kind() == TokenKind::IntLiteral ||
       token_info.kind() == TokenKind::RealLiteral) {
     std::optional<NumericLiteral> relexed_token =
-        NumericLiteral::Lex(source_->text().substr(token_info.byte_offset()));
+        NumericLiteral::Lex(source_->text().substr(token_info.byte_offset()),
+                            token_info.kind() == TokenKind::RealLiteral);
     CARBON_CHECK(relexed_token, "Could not reform numeric literal token.");
     return relexed_token->text();
   }

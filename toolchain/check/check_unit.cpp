@@ -395,8 +395,11 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         break;
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        if (!context_.impls().Get(impl_decl.impl_id).is_defined()) {
-          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        auto& impl = context_.impls().Get(impl_decl.impl_id);
+        if (!impl.is_defined()) {
+          CARBON_DIAGNOSTIC(MissingImplDefinition, Error,
+                            "impl declared but not defined");
+          emitter_.Emit(decl_inst_id, MissingImplDefinition);
         }
         break;
       }

@@ -69,13 +69,13 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<invalid> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_14.2: type = splice_block %.loc8_14.1 [template = <error>] {
+// CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [template = <error>] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:       %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc8_14.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       %.loc8_14.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -122,12 +122,12 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<invalid> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_23.2: type = splice_block %.loc8_23.1 [template = <error>] {
+// CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [template = <error>] {
 // CHECK:STDOUT:       %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [template = <error>]
 // CHECK:STDOUT:       %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:       %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc8_23.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       %.loc8_23.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

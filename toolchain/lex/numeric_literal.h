@@ -42,7 +42,8 @@ class NumericLiteral {
   // Extract a numeric literal from the given text, if it has a suitable form.
   //
   // The supplied `source_text` must outlive the return value.
-  static auto Lex(llvm::StringRef source_text) -> std::optional<NumericLiteral>;
+  static auto Lex(llvm::StringRef source_text, bool can_form_real_literal)
+      -> std::optional<NumericLiteral>;
 
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.

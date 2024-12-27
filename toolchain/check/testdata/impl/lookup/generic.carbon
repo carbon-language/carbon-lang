@@ -175,9 +175,9 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc12_10.1: type = splice_block %.loc12_10.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.3: type = converted %.loc12_10.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -330,9 +330,9 @@ fn G(x: A) {
 // CHECK:STDOUT:     %.loc12_17.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc12_10.1: type = splice_block %.loc12_10.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.3: type = converted %.loc12_10.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param runtime_param1
@@ -352,10 +352,10 @@ fn G(x: A) {
 // CHECK:STDOUT:     %Self.as_type.loc5_25: type = facet_access_type %Self.ref.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc5_25: type = converted %Self.ref.loc5_25, %Self.as_type.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %self.param: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc5_14.2: type = splice_block %.loc5_14.1 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref.loc5_14 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_14.1: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref @F.1.%Self.as_type.loc5_14.1 (%Self.as_type) = out_param runtime_param1
@@ -548,10 +548,10 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.param_patt: %C.2 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %C.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14_13.2: type = splice_block %C [template = constants.%C.2] {
+// CHECK:STDOUT:     %.loc14_13.1: type = splice_block %C [template = constants.%C.2] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %.loc14_12: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc14_13.1: type = converted %.loc14_12, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc14_13.2: type = converted %.loc14_12, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%empty_struct_type) [template = constants.%C.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %C.2 = bind_name x, %x.param
@@ -694,7 +694,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HasF.type.2 [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %empty_struct_type, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -706,7 +705,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.2, @impl(%empty_struct_type) [template]
 // CHECK:STDOUT:   %F.4: %F.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %HasF.type.3 [template]
 // CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.4) [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.4, @F.2(%empty_struct_type) [template]
 // CHECK:STDOUT: }
@@ -749,9 +747,9 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc12_10.3: type = splice_block %.loc12_10.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc12_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc12_10.2: type = converted %.loc12_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc12_10.1: type = splice_block %.loc12_10.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc12_10.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc12_10.3: type = converted %.loc12_10.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -789,7 +787,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%HasF.type.loc8_36.2 (%HasF.type.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %interface.loc8_38.2: <witness> = interface_witness (%F) [symbolic = %interface.loc8_38.2 (constants.%interface.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc8_25.2 as %HasF.type.loc8_36.1 {
@@ -858,7 +855,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %interface.loc8_38.2 => constants.%interface.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -889,7 +885,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.4
 // CHECK:STDOUT:   %F => constants.%F.4
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %interface.loc8_38.2 => constants.%interface.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -952,9 +947,9 @@ fn G(x: A) {
 // CHECK:STDOUT:     %x.param_patt: %empty_struct_type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_struct_type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc13_10.3: type = splice_block %.loc13_10.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc13_10.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc13_10.2: type = converted %.loc13_10.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_10.1: type = splice_block %.loc13_10.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc13_10.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc13_10.3: type = converted %.loc13_10.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_struct_type = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -1049,7 +1044,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @HasF.%F.decl [symbolic]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HasF.type.2 [symbolic]
 // CHECK:STDOUT:   %HasF.facet: %HasF.type.2 = facet_value %T, %T [symbolic]
 // CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
@@ -1143,7 +1137,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%T.loc8_14.2) [symbolic = %F.type (constants.%F.type.2)]
 // CHECK:STDOUT:   %F: @impl.%F.type (%F.type.2) = struct_value () [symbolic = %F (constants.%F.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%HasF.type.loc8_35.2 (%HasF.type.2) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %interface.loc8_37.2: <witness> = interface_witness (%F) [symbolic = %interface.loc8_37.2 (constants.%interface)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref.loc8_24 as %HasF.type.loc8_35.1 {
@@ -1224,7 +1217,6 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.2
 // CHECK:STDOUT:   %F => constants.%F.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %interface.loc8_37.2 => constants.%interface
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

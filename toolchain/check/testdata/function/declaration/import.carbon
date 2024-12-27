@@ -321,11 +321,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %i32.loc6_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_14.3: type = splice_block %.loc6_14.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [template = constants.%tuple.type.2] {
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc6_14.1: %tuple.type.1 = tuple_literal (%i32.loc6_10)
-// CHECK:STDOUT:       %.loc6_14.2: type = converted %.loc6_14.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:       %.loc6_14.2: %tuple.type.1 = tuple_literal (%i32.loc6_10)
+// CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
@@ -414,11 +414,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %i32.loc6_60: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_49.3: type = splice_block %.loc6_49.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %.loc6_49.1: type = splice_block %.loc6_49.3 [template = constants.%tuple.type.2] {
 // CHECK:STDOUT:       %int_32.loc6_45: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_45: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc6_49.1: %tuple.type.1 = tuple_literal (%i32.loc6_45)
-// CHECK:STDOUT:       %.loc6_49.2: type = converted %.loc6_49.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:       %.loc6_49.2: %tuple.type.1 = tuple_literal (%i32.loc6_45)
+// CHECK:STDOUT:       %.loc6_49.3: type = converted %.loc6_49.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
@@ -643,11 +643,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %i32.loc32_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc32_21.3: type = splice_block %.loc32_21.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %.loc32_21.1: type = splice_block %.loc32_21.3 [template = constants.%tuple.type.2] {
 // CHECK:STDOUT:       %int_32.loc32_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc32_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc32_21.1: %tuple.type.1 = tuple_literal (%i32.loc32_17)
-// CHECK:STDOUT:       %.loc32_21.2: type = converted %.loc32_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:       %.loc32_21.2: %tuple.type.1 = tuple_literal (%i32.loc32_17)
+// CHECK:STDOUT:       %.loc32_21.3: type = converted %.loc32_21.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
@@ -793,11 +793,11 @@ import library "extern_api";
 // CHECK:STDOUT:     %i32.loc8_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
 // CHECK:STDOUT:     %c.param: %tuple.type.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc8_21.3: type = splice_block %.loc8_21.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.3 [template = constants.%tuple.type.2] {
 // CHECK:STDOUT:       %int_32.loc8_17: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc8_17: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_21.1: %tuple.type.1 = tuple_literal (%i32.loc8_17)
-// CHECK:STDOUT:       %.loc8_21.2: type = converted %.loc8_21.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:       %.loc8_21.2: %tuple.type.1 = tuple_literal (%i32.loc8_17)
+// CHECK:STDOUT:       %.loc8_21.3: type = converted %.loc8_21.2, constants.%tuple.type.2 [template = constants.%tuple.type.2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.2 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1

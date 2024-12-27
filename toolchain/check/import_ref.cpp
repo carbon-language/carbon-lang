@@ -1898,8 +1898,8 @@ static auto AddImplDefinition(ImportContext& context,
                               SemIR::Impl& new_impl, SemIR::InstId witness_id)
     -> void {
   new_impl.definition_id = new_impl.first_owning_decl_id;
-
   new_impl.witness_id = witness_id;
+  new_impl.defined = true;
 
   if (import_impl.scope_id.is_valid()) {
     new_impl.scope_id = context.local_name_scopes().Add(

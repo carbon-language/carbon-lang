@@ -25,7 +25,7 @@ impl i32 as false {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_impl_as_type.carbon:[[@LINE+4]]:1: error: impl as non-facet-type [ImplAsNonFacetType]
+// CHECK:STDERR: fail_impl_as_type.carbon:[[@LINE+4]]:1: error: impl as non-facet type `type` [ImplAsNonFacetType]
 // CHECK:STDERR: impl bool as type {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

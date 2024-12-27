@@ -72,17 +72,17 @@ fn G() {
 // CHECK:STDOUT:   %v.var: ref %array_type = var v
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
 // CHECK:STDOUT:   %F.ref.loc14_34: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc14_42.2: ref %tuple.type.2 = splice_block %.loc14_42.1 {
+// CHECK:STDOUT:   %.loc14_42.1: ref %tuple.type.2 = splice_block %.loc14_42.2 {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
-// CHECK:STDOUT:     %.loc14_42.1: ref %tuple.type.2 = array_index %v.var, %int_0
+// CHECK:STDOUT:     %.loc14_42.2: ref %tuple.type.2 = array_index %v.var, %int_0
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc14_36: init %tuple.type.2 = call %F.ref.loc14_34() to %.loc14_42.2
+// CHECK:STDOUT:   %F.call.loc14_36: init %tuple.type.2 = call %F.ref.loc14_34() to %.loc14_42.1
 // CHECK:STDOUT:   %F.ref.loc14_39: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %.loc14_42.4: ref %tuple.type.2 = splice_block %.loc14_42.3 {
+// CHECK:STDOUT:   %.loc14_42.3: ref %tuple.type.2 = splice_block %.loc14_42.4 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:     %.loc14_42.3: ref %tuple.type.2 = array_index %v.var, %int_1
+// CHECK:STDOUT:     %.loc14_42.4: ref %tuple.type.2 = array_index %v.var, %int_1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc14_41: init %tuple.type.2 = call %F.ref.loc14_39() to %.loc14_42.4
+// CHECK:STDOUT:   %F.call.loc14_41: init %tuple.type.2 = call %F.ref.loc14_39() to %.loc14_42.3
 // CHECK:STDOUT:   %.loc14_42.5: %tuple.type.3 = tuple_literal (%F.call.loc14_36, %F.call.loc14_41)
 // CHECK:STDOUT:   %.loc14_42.6: init %array_type = array_init (%F.call.loc14_36, %F.call.loc14_41) to %v.var
 // CHECK:STDOUT:   %.loc14_43: init %array_type = converted %.loc14_42.5, %.loc14_42.6

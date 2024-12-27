@@ -87,10 +87,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1)> [template]
-// CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
-// CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%At.2) [template]
+// CHECK:STDOUT:   %At.type.2: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.2 [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%At.3) [template]
 // CHECK:STDOUT:   %ElementType.val: %ElementType.1 = struct_value () [template]
 // CHECK:STDOUT:   %SubscriptType.val: %SubscriptType.1 = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
@@ -130,7 +130,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
-// CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
+// CHECK:STDOUT:   %At.decl: %At.type.3 = fn_decl @At.2 [template = constants.%At.3] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.1 = binding_pattern subscript
@@ -205,7 +205,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %c: %C = bind_name c, %.loc15_14.2
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %s.ref: %SubscriptType.1 = name_ref s, %s
-// CHECK:STDOUT:   %impl.elem0: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %impl.elem0: %At.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%At.3]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc16_25.1: ref %ElementType.1 = temporary_storage
 // CHECK:STDOUT:   %At.call: init %ElementType.1 = call %At.bound(%c.ref, %s.ref) to %.loc16_25.1
@@ -225,10 +225,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <@IndexWith, @IndexWith(%i32, %i32)> [template]
-// CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
-// CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%i32, %i32) [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%At.2) [template]
+// CHECK:STDOUT:   %At.type.2: type = fn_type @At.1, @IndexWith(%i32, %i32) [template]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.2 [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%At.3) [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_5.1: Core.IntLiteral = int_value 5 [template]
@@ -285,7 +285,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %.loc4_15.2 as %IndexWith.type {
-// CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
+// CHECK:STDOUT:   %At.decl: %At.type.3 = fn_decl @At.2 [template = constants.%At.3] {
 // CHECK:STDOUT:     %self.patt: %tuple.type.2 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %tuple.type.2 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %i32 = binding_pattern subscript
@@ -350,7 +350,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %int.convert_checked.loc11: init %i32 = call %Convert.specific_fn.loc11(%int_0) [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc11_17.1: %i32 = value_of_initializer %int.convert_checked.loc11 [template = constants.%int_0.2]
 // CHECK:STDOUT:   %.loc11_17.2: %i32 = converted %int_0, %.loc11_17.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:   %impl.elem0.loc11_17.2: %At.type.3 = interface_witness_access constants.%interface.1, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %impl.elem0.loc11_17.2: %At.type.2 = interface_witness_access constants.%interface.1, element0 [template = constants.%At.3]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %s.ref, %impl.elem0.loc11_17.2
 // CHECK:STDOUT:   %At.call: init %i32 = call %At.bound(%s.ref, %.loc11_17.2)
 // CHECK:STDOUT:   %.loc11_18.1: %i32 = value_of_initializer %At.call
@@ -370,10 +370,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.type.1: type = generic_interface_type @IndexWith [template]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %IndexWith.type.3: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.1, %ElementType.1)> [template]
-// CHECK:STDOUT:   %At.type.2: type = fn_type @At.2 [template]
-// CHECK:STDOUT:   %At.2: %At.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %At.type.3: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%At.2) [template]
+// CHECK:STDOUT:   %At.type.2: type = fn_type @At.1, @IndexWith(%SubscriptType.1, %ElementType.1) [template]
+// CHECK:STDOUT:   %At.type.3: type = fn_type @At.2 [template]
+// CHECK:STDOUT:   %At.3: %At.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %interface: <witness> = interface_witness (%At.3) [template]
 // CHECK:STDOUT:   %ElementType.val: %ElementType.1 = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
@@ -413,7 +413,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
-// CHECK:STDOUT:   %At.decl: %At.type.2 = fn_decl @At.2 [template = constants.%At.2] {
+// CHECK:STDOUT:   %At.decl: %At.type.3 = fn_decl @At.2 [template = constants.%At.3] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %subscript.patt: %SubscriptType.1 = binding_pattern subscript
@@ -482,7 +482,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc22_25.1: %SubscriptType.1 = converted %int_0, <error> [template = <error>]
-// CHECK:STDOUT:   %impl.elem0: %At.type.3 = interface_witness_access constants.%interface, element0 [template = constants.%At.2]
+// CHECK:STDOUT:   %impl.elem0: %At.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%At.3]
 // CHECK:STDOUT:   %At.bound: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc22_25.2: ref %ElementType.1 = temporary_storage
 // CHECK:STDOUT:   %At.call: init %ElementType.1 = call %At.bound(%c.ref, <error>) to %.loc22_25.2
