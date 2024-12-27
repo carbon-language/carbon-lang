@@ -50,27 +50,27 @@ impl forall [N:! IntLiteral()] UInt(N) as Ordered {
 // Arithmetic.
 
 impl forall [N:! IntLiteral()] UInt(N) as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+  fn Op[self: Self](other: Self) -> Self = "int.uadd";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Div {
-  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+  fn Op[self: Self](other: Self) -> Self = "int.udiv";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mod {
-  fn Op[self: Self](other: Self) -> Self = "int.smod";
+  fn Op[self: Self](other: Self) -> Self = "int.umod";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mul {
-  fn Op[self: Self](other: Self) -> Self = "int.smul";
+  fn Op[self: Self](other: Self) -> Self = "int.umul";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Negate {
-  fn Op[self: Self]() -> Self = "int.snegate";
+  fn Op[self: Self]() -> Self = "int.unegate";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Sub {
-  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+  fn Op[self: Self](other: Self) -> Self = "int.usub";
 }
 
 // Bitwise operators.
