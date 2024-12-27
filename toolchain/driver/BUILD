@@ -129,6 +129,7 @@ cc_library(
         "//toolchain/lower",
         "//toolchain/parse",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst_namer",

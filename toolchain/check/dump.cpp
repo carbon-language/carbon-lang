@@ -24,6 +24,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/dump.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
@@ -67,10 +68,30 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, Parse::NodeId node_id)
   Parse::Dump(context.parse_tree(), node_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ConstantId const_id) -> void {
+  SemIR::Dump(context.sem_ir(), const_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), inst_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> void {
   DumpNoNewline(context, loc_id);
   llvm::errs() << '\n';
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::NameId name_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), name_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), type_id);
 }
 
 }  // namespace Carbon::Check
