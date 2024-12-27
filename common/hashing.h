@@ -703,7 +703,7 @@ inline auto Hasher::Read1To3(const std::byte* data, ssize_t size) -> uint64_t {
   uint64_t byte0 = static_cast<uint8_t>(data[0]);
   uint64_t byte1 = static_cast<uint8_t>(data[size - 1]);
   uint64_t byte2 = static_cast<uint8_t>(data[size >> 1]);
-  return byte0 | (byte1 << 16) | (byte2 << 8);
+  return (byte0 << 8) | (byte1 << 16) | byte2;
 }
 
 inline auto Hasher::Read4To8(const std::byte* data, ssize_t size) -> uint64_t {
@@ -711,7 +711,7 @@ inline auto Hasher::Read4To8(const std::byte* data, ssize_t size) -> uint64_t {
   std::memcpy(&low, data, sizeof(low));
   uint32_t high;
   std::memcpy(&high, data + size - sizeof(high), sizeof(high));
-  return low | (static_cast<uint64_t>(high) << 32);
+  return (static_cast<uint64_t>(low) << 32) | high;
 }
 
 inline auto Hasher::Read8To16(const std::byte* data, ssize_t size)
