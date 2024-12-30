@@ -140,3 +140,14 @@ fn SkipNewline() -> bool {
   // TODO: Unread the CR if it was present?
   return ConsumeChar(0x0A);
 }
+
+fn SkipNChars(n: i32) -> bool {
+  var i: i32 = 0;
+  while (i < n) {
+    if (ReadChar() == Core.EOF()) {
+      return false;
+    }
+    ++i;
+  }
+  return true;
+}
