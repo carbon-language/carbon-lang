@@ -83,9 +83,12 @@ static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
 
   // Weirdly, LLVM requires the operands of bit shift operators to be of the
   // same type. We can always use the width of the LHS, because if the RHS
-  // doesn't fit in that then the cast is out of range anyway.
+  // doesn't fit in that then the cast is out of range anyway. Zero-extending is
+  // always fine because it's an error for the RHS to be negative.
   //
-  // TODO: In a development build we should trap in that case.
+  // TODO: In a development build we should trap if the RHS is signed and
+  // negative or greater than or equal to the number of bits in the left-hand
+  // type.
   rhs = context.builder().CreateZExtOrTrunc(rhs, lhs->getType(), "rhs");
 
   context.SetLocal(inst_id, context.builder().CreateBinOp(bin_op, lhs, rhs));

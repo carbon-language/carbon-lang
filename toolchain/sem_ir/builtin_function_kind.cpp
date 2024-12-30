@@ -448,8 +448,10 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case IntRightShift:
       // Shifts by an integer literal amount are compile-time only. We don't
       // have a value for the shift amount at runtime in general.
-      // TODO: We could allow these in the case where the shift amount has a
-      // compile-time value.
+      // TODO: Decide how shifting a non-literal by a literal amount should
+      // work. We could support these with a builtin in the case where the shift
+      // amount has a compile-time value, or we could perform a conversion in
+      // the prelude.
       if (sem_ir.types().Is<SemIR::IntLiteralType>(
               sem_ir.insts().Get(arg_ids[1]).type_id())) {
         return true;
@@ -469,8 +471,10 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // Comparisons involving an integer literal operand are compile-time only.
       // We don't have a value for an integer literal operand argument at
       // runtime in general.
-      // TODO: We could allow these in the case where the operand has a
-      // compile-time value.
+      // TODO: Figure out how mixed literal / non-literal comparisons should
+      // work. We could support these with builtins in the case where the
+      // operand has a compile-time value, or we could perform a conversion in
+      // the prelude.
       return sem_ir.types().Is<SemIR::IntLiteralType>(
                  sem_ir.insts().Get(arg_ids[0]).type_id()) ||
              sem_ir.types().Is<SemIR::IntLiteralType>(

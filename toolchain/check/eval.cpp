@@ -1055,7 +1055,16 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
 
   if (result.overflow && !bit_width_id.is_valid()) {
     // Retry with a larger bit width. Most operations can only overflow by one
-    // bit, but signed n-bit multiplication can overflow to 2n-1 bits.
+    // bit, but signed n-bit multiplication can overflow to 2n-1 bits. We don't
+    // need to handle unsigned multiplication here because it's not permitted
+    // for unsized integers.
+    //
+    // Note that we speculatively first perform the calculation in the width of
+    // the wider operand: smaller operations are faster and overflow to a wider
+    // integer is unlikely to be needed, especially given that the width will
+    // have been rounded up to a multiple of 64 bits by the int store.
+    CARBON_CHECK(builtin_kind != SemIR::BuiltinFunctionKind::IntUMul,
+                 "Unsigned arithmetic requires a fixed bitwidth");
     int new_width =
         builtin_kind == SemIR::BuiltinFunctionKind::IntSMul
             ? lhs_val.getBitWidth() * 2
@@ -1068,6 +1077,7 @@ static auto PerformBuiltinBinaryIntOp(Context& context, SemIRLoc loc,
     // `MaxIntWidth`. In that case we fall through to the signed overflow
     // diagnostic below.
     result = ComputeBinaryIntOpResult(builtin_kind, lhs_val, rhs_val);
+    CARBON_CHECK(!result.overflow || new_width == IntStore::MaxIntWidth);
   }
 
   if (result.overflow) {
