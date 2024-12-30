@@ -2,15 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir
+// ARGS: compile --no-prelude-import --phase=check --dump-sem-ir %s
 //
-// Check that textual IR dumping works as expected.
+// Check that the command-line flag to dump textual IR works.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/textual_ir.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/textual_ir.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/textual_ir.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/textual_ir.carbon
 
 fn Foo(n: ()) -> ((), ()) {
   return (n, ());
