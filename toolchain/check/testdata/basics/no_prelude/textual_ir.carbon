@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --no-prelude-import --phase=check --dump-sem-ir %s
+// EXTRA-ARGS: --dump-sem-ir
 //
-// Check that the command-line flag to dump textual IR works.
+// Check that textual IR dumping works as expected.
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

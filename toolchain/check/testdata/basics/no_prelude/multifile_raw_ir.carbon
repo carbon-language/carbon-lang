@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --no-prelude-import  --phase=check --dump-raw-sem-ir %s
+// EXTRA-ARGS: --no-dump-sem-ir --dump-raw-sem-ir
 //
 // Check that raw IR dumping works as expected.
 //
