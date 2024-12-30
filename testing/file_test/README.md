@@ -153,6 +153,15 @@ Supported comment markers are:
     is responsible for providing default arguments.
 
 -   ```
+    // EXTRA-ARGS: <arguments>
+    ```
+
+    `EXTRA-ARGS` specifies additional arguments that are appended after the
+    default argument list. It has the same substitution behavior as `ARGS`.
+    `EXTRA-ARGS` can be specified at most once, and a test cannot specify both
+    `ARGS` and `EXTRA-ARGS`.
+
+-   ```
     // SET-CAPTURE-CONSOLE-OUTPUT
     ```
 
