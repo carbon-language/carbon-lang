@@ -222,7 +222,6 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeBlockId type_block_id)
     for (auto type_id : type_block) {
       llvm::errs() << "  - ";
       Dump(file, type_id);
-      llvm::errs() << '\n';
     }
   } else {
     llvm::errs() << '\n';
