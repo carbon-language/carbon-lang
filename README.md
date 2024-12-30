@@ -291,7 +291,7 @@ wget https://github.com/carbon-language/carbon-lang/releases/download/v${VERSION
 tar -xvf carbon_toolchain-${VERSION}.tar.gz
 
 # Create a simple Carbon source file:
-echo "fn Run() { Core.Print(42); }" > forty_two.carbon
+echo "import Core library \"io\"; fn Run() { Core.Print(42); }" > forty_two.carbon
 
 # Compile to an object file:
 ./carbon_toolchain-${VERSION}/bin/carbon compile \

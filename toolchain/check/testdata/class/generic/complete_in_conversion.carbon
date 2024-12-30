@@ -54,7 +54,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.3(%int_32) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn.1(%N.2) [symbolic]
 // CHECK:STDOUT:   %iN.builtin.2: type = int_type signed, %int.convert_checked [symbolic]
-// CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %iN.builtin.2 [symbolic]
+// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %iN.builtin.2 [symbolic]
 // CHECK:STDOUT:   %A.elem.2: type = unbound_element_type %A.1, %iN.builtin.2 [symbolic]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: %iN.builtin.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base.n [symbolic]
@@ -103,12 +103,12 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc2_27.3: type = splice_block %.loc2_27.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc2_27.1: type = splice_block %.loc2_27.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc2_27.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc2_27.2: type = converted %int_literal.make_type, %.loc2_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc2_27.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc2_27.3: type = converted %int_literal.make_type, %.loc2_27.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
@@ -166,7 +166,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn.1)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.loc6_9.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %iN.builtin: type = int_type signed, %int.convert_checked [symbolic = %iN.builtin (constants.%iN.builtin.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.2) [symbolic = %require_complete (constants.%require_complete.5)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%iN.builtin (%iN.builtin.2) [symbolic = %require_complete (constants.%require_complete.3)]
 // CHECK:STDOUT:   %A.elem.loc12: type = unbound_element_type @A.%A (%A.1), @A.%iN.builtin (%iN.builtin.2) [symbolic = %A.elem.loc12 (constants.%A.elem.2)]
 // CHECK:STDOUT:   %struct_type.base.n: type = struct_type {.base: %B, .n: @A.%iN.builtin (%iN.builtin.2)} [symbolic = %struct_type.base.n (constants.%struct_type.base.n)]
 // CHECK:STDOUT:   %complete_type.loc13_1.2: <witness> = complete_type_witness @A.%struct_type.base.n (%struct_type.base.n) [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4)]

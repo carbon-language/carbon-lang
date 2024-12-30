@@ -101,10 +101,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %x.param_patt: bool = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc25_23.3: type = splice_block %.loc25_23.2 [template = bool] {
+// CHECK:STDOUT:     %.loc25_23.1: type = splice_block %.loc25_23.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc25_23.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:       %.loc25_23.2: type = converted %bool.make_type, %.loc25_23.1 [template = bool]
+// CHECK:STDOUT:       %.loc25_23.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:       %.loc25_23.3: type = converted %bool.make_type, %.loc25_23.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }

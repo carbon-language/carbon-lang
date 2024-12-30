@@ -277,7 +277,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
-  if (class_info.definition_id.is_valid()) {
+  if (class_info.has_definition_started()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "class is incomplete within its definition");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
@@ -879,7 +879,7 @@ auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
   if (region.block_ids.size() == 1) {
     // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
     // first two cases?
-    if (exit_block.size() == 0) {
+    if (exit_block.empty()) {
       return region.result_id;
     }
     if (exit_block.size() == 1) {

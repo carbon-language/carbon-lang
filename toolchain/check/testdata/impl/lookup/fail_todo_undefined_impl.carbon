@@ -13,6 +13,10 @@ interface I {
 }
 
 class C {
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: impl declared but not defined [MissingImplDefinition]
+  // CHECK:STDERR:   extend impl as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend impl as I;
 }
 

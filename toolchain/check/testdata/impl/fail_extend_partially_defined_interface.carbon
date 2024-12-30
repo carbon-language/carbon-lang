@@ -10,12 +10,16 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+6]]:5: error: `extend impl` requires a definition for facet type `I` [ExtendUndefinedInterface]
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+10]]:5: error: implementation of undefined interface I [ImplOfUndefinedInterface]
     // CHECK:STDERR:     extend impl as I;
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
     // CHECK:STDERR: interface I {
     // CHECK:STDERR: ^~~~~~~~~~~~~
+    // CHECK:STDERR:
+    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+3]]:5: error: impl declared but not defined [MissingImplDefinition]
+    // CHECK:STDERR:     extend impl as I;
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
     extend impl as I;
   }
 }
@@ -72,12 +76,12 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.2 [symbolic = %C (constants.%C.2)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc19: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
+// CHECK:STDOUT:     %.loc23: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.2
-// CHECK:STDOUT:     extend %.loc19
+// CHECK:STDOUT:     extend %.loc23
 // CHECK:STDOUT:     has_error
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }

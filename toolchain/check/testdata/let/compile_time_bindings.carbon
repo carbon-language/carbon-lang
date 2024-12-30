@@ -326,11 +326,11 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %b.param_patt: %tuple.type.1 = value_param_pattern %b.patt.loc10_8.2, runtime_param<invalid> [symbolic = %b.patt.loc10_8.1 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %tuple.type.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc10_16.4: type = splice_block %.loc10_16.3 [template = constants.%tuple.type.1] {
+// CHECK:STDOUT:     %.loc10_16.1: type = splice_block %.loc10_16.4 [template = constants.%tuple.type.1] {
 // CHECK:STDOUT:       %.loc10_14: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc10_16.1: %tuple.type.1 = tuple_literal (%.loc10_14)
-// CHECK:STDOUT:       %.loc10_16.2: type = converted %.loc10_14, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc10_16.3: type = converted %.loc10_16.1, constants.%tuple.type.1 [template = constants.%tuple.type.1]
+// CHECK:STDOUT:       %.loc10_16.2: %tuple.type.1 = tuple_literal (%.loc10_14)
+// CHECK:STDOUT:       %.loc10_16.3: type = converted %.loc10_14, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:       %.loc10_16.4: type = converted %.loc10_16.2, constants.%tuple.type.1 [template = constants.%tuple.type.1]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc10_8.2: %tuple.type.1 = bind_symbolic_name b, 0, %b.param [symbolic = %b.loc10_8.1 (constants.%b)]
 // CHECK:STDOUT:   }

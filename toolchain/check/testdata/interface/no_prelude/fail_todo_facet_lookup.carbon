@@ -71,10 +71,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21_32.2: type = splice_block %.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:     %.loc21_32.1: type = splice_block %.loc21_32.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc21_32.1: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc21_32.2: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = bind_name x, %x.param
 // CHECK:STDOUT:   }

@@ -619,21 +619,21 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %.loc4_71.1: type = value_of_initializer %int_literal.make_type.loc4_71 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_71.2: type = converted %int_literal.make_type.loc4_71, %.loc4_71.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_27.3: type = splice_block %.loc4_27.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_27.1: type = splice_block %.loc4_27.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_11: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_15: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc4_27: init type = call %IntLiteral.ref.loc4_15() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_27.1: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_27.2: type = converted %int_literal.make_type.loc4_27, %.loc4_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.2: type = value_of_initializer %int_literal.make_type.loc4_27 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_27.3: type = converted %int_literal.make_type.loc4_27, %.loc4_27.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
-// CHECK:STDOUT:     %.loc4_49.3: type = splice_block %.loc4_49.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_49.1: type = splice_block %.loc4_49.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_33: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_37: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc4_49: init type = call %IntLiteral.ref.loc4_37() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_49.1: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_49.2: type = converted %int_literal.make_type.loc4_49, %.loc4_49.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.2: type = value_of_initializer %int_literal.make_type.loc4_49 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_49.3: type = converted %int_literal.make_type.loc4_49, %.loc4_49.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
@@ -644,12 +644,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_14.1, runtime_param<invalid> [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc6_34.3: type = splice_block %.loc6_34.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc6_34.1: type = splice_block %.loc6_34.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_34.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_34.2: type = converted %int_literal.make_type, %.loc6_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.3: type = converted %int_literal.make_type, %.loc6_34.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_14.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_14.2 (constants.%N)]
 // CHECK:STDOUT:   }
@@ -663,12 +663,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc7_9.1 [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %Expect.loc7_43.1: type = class_type @Expect, @Expect(constants.%N) [symbolic = %Expect.loc7_43.2 (constants.%Expect.1)]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc7_29.3: type = splice_block %.loc7_29.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc7_29.1: type = splice_block %.loc7_29.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc7_29.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc7_29.2: type = converted %int_literal.make_type, %.loc7_29.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.3: type = converted %int_literal.make_type, %.loc7_29.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc7_9.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref @Test.%Expect.loc7_43.2 (%Expect.1) = out_param runtime_param0
@@ -1193,12 +1193,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
-// CHECK:STDOUT:     %.loc26_41.3: type = splice_block %.loc26_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc26_41.1: type = splice_block %.loc26_41.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc26_41.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc26_41.2: type = converted %int_literal.make_type, %.loc26_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc26_41.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc26_41.3: type = converted %int_literal.make_type, %.loc26_41.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param2
@@ -1215,12 +1215,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %int_32.loc31_47: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc31_47: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc31_33.3: type = splice_block %.loc31_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc31_33.1: type = splice_block %.loc31_33.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc31_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc31_33.2: type = converted %int_literal.make_type, %.loc31_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc31_33.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc31_33.3: type = converted %int_literal.make_type, %.loc31_33.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1
@@ -1252,12 +1252,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: Core.IntLiteral = value_param runtime_param1
-// CHECK:STDOUT:     %.loc36_41.3: type = splice_block %.loc36_41.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc36_41.1: type = splice_block %.loc36_41.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc36_25: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc36_29: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc36_41: init type = call %IntLiteral.ref.loc36_29() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc36_41.1: type = value_of_initializer %int_literal.make_type.loc36_41 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc36_41.2: type = converted %int_literal.make_type.loc36_41, %.loc36_41.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc36_41.2: type = value_of_initializer %int_literal.make_type.loc36_41 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc36_41.3: type = converted %int_literal.make_type.loc36_41, %.loc36_41.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: Core.IntLiteral = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param2
@@ -1277,12 +1277,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:     %.loc41_63.1: type = value_of_initializer %int_literal.make_type.loc41_63 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc41_63.2: type = converted %int_literal.make_type.loc41_63, %.loc41_63.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc41_33.3: type = splice_block %.loc41_33.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc41_33.1: type = splice_block %.loc41_33.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc41_17: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc41_21: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.6 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc41_33: init type = call %IntLiteral.ref.loc41_21() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc41_33.1: type = value_of_initializer %int_literal.make_type.loc41_33 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc41_33.2: type = converted %int_literal.make_type.loc41_33, %.loc41_33.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc41_33.2: type = value_of_initializer %int_literal.make_type.loc41_33 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc41_33.3: type = converted %int_literal.make_type.loc41_33, %.loc41_33.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param runtime_param1

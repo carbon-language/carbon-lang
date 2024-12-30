@@ -256,7 +256,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %T.param_patt: %N_where.type = value_param_pattern %T.patt.loc8_10.1, runtime_param<invalid> [symbolic = %T.patt.loc8_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: %N_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_16.2: type = splice_block %.loc8_16.1 [template = constants.%N_where.type] {
+// CHECK:STDOUT:     %.loc8_16.1: type = splice_block %.loc8_16.2 [template = constants.%N_where.type] {
 // CHECK:STDOUT:       %N.ref: type = name_ref N, file.%N.decl [template = constants.%N.type]
 // CHECK:STDOUT:       %.Self: %N.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %N.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -265,7 +265,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc8_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc8_28.2: type = converted %.loc8_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc8_16.1: type = where_expr %.Self [template = constants.%N_where.type] {
+// CHECK:STDOUT:       %.loc8_16.2: type = where_expr %.Self [template = constants.%N_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc8_28.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -342,7 +342,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.param_patt: %A_where.type.2 = value_param_pattern %D.patt.loc9_18.1, runtime_param<invalid> [symbolic = %D.patt.loc9_18.2 (constants.%D.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.param: %A_where.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc9_42.2: type = splice_block %.loc9_42.1 [template = constants.%A_where.type.2] {
+// CHECK:STDOUT:     %.loc9_42.1: type = splice_block %.loc9_42.2 [template = constants.%A_where.type.2] {
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:       %.Self.1: %A.type = bind_symbolic_name .Self [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:       %.Self.ref.loc9_31: %A.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
@@ -362,7 +362,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit.loc9_48, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc9_54.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_54.2: type = converted %.loc9_54.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc9_42.1: type = where_expr %.Self.2 [template = constants.%A_where.type.2] {
+// CHECK:STDOUT:       %.loc9_42.2: type = where_expr %.Self.2 [template = constants.%A_where.type.2] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc9_54.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -450,7 +450,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %G.param_patt: %E_where.type = value_param_pattern %G.patt.loc8_15.1, runtime_param<invalid> [symbolic = %G.patt.loc8_15.2 (constants.%G.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %G.param: %E_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_21.2: type = splice_block %.loc8_21.1 [template = constants.%E_where.type] {
+// CHECK:STDOUT:     %.loc8_21.1: type = splice_block %.loc8_21.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -459,7 +459,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_21.1: type = where_expr %.Self [template = constants.%E_where.type] {
+// CHECK:STDOUT:       %.loc8_21.2: type = where_expr %.Self [template = constants.%E_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -470,7 +470,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %H.param_patt: %E_where.type = value_param_pattern %H.patt.loc10_20.1, runtime_param<invalid> [symbolic = %H.patt.loc10_20.2 (constants.%H.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %H.param: %E_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc10_26.2: type = splice_block %.loc10_26.1 [template = constants.%E_where.type] {
+// CHECK:STDOUT:     %.loc10_26.1: type = splice_block %.loc10_26.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc10_32: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -485,7 +485,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0.loc10_45: type = interface_witness_access %.Self.as_wit.loc10_45, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32.loc10_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc10_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc10_26.1: type = where_expr %.Self [template = constants.%E_where.type] {
+// CHECK:STDOUT:       %.loc10_26.2: type = where_expr %.Self [template = constants.%E_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc10_32, %i32.loc10_37
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc10_45, %i32.loc10_50
 // CHECK:STDOUT:       }
@@ -497,7 +497,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %I.param_patt: %E_where.type = value_param_pattern %I.patt.loc14_20.1, runtime_param<invalid> [symbolic = %I.patt.loc14_20.2 (constants.%I.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %I.param: %E_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc14_26.2: type = splice_block %.loc14_26.1 [template = constants.%E_where.type] {
+// CHECK:STDOUT:     %.loc14_26.1: type = splice_block %.loc14_26.2 [template = constants.%E_where.type] {
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [template = constants.%E.type]
 // CHECK:STDOUT:       %.Self: %E.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -506,7 +506,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc14_26.1: type = where_expr %.Self [template = constants.%E_where.type] {
+// CHECK:STDOUT:       %.loc14_26.2: type = where_expr %.Self [template = constants.%E_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -659,7 +659,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %M.param_patt: %J_where.type = value_param_pattern %M.patt.loc9_17.1, runtime_param<invalid> [symbolic = %M.patt.loc9_17.2 (constants.%M.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %M.param: %J_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc9_23.2: type = splice_block %.loc9_23.1 [template = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc9_29: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -675,7 +675,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc9_46.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc9_46.2: type = converted %bool.make_type, %.loc9_46.1 [template = bool]
-// CHECK:STDOUT:       %.loc9_23.1: type = where_expr %.Self [template = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc9_23.2: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_35.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc9_46.2
 // CHECK:STDOUT:       }
@@ -687,7 +687,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %N.param_patt: %J_where.type = value_param_pattern %N.patt.loc11_13.1, runtime_param<invalid> [symbolic = %N.patt.loc11_13.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: %J_where.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_19.2: type = splice_block %.loc11_19.1 [template = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc11_19.1: type = splice_block %.loc11_19.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref.loc11_25: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -703,7 +703,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit.loc11_39, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_45.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_45.2: type = converted %.loc11_45.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc11_19.1: type = where_expr %.Self [template = constants.%J_where.type] {
+// CHECK:STDOUT:       %.loc11_19.2: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc11_30.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc11_45.2
 // CHECK:STDOUT:       }
@@ -824,7 +824,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %Q.param_patt: %O_where.type.1 = value_param_pattern %Q.patt.loc8_16.1, runtime_param<invalid> [symbolic = %Q.patt.loc8_16.2 (constants.%Q.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Q.param: %O_where.type.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_22.2: type = splice_block %.loc8_22.1 [template = constants.%O_where.type.1] {
+// CHECK:STDOUT:     %.loc8_22.1: type = splice_block %.loc8_22.2 [template = constants.%O_where.type.1] {
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -833,7 +833,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc8_22.1: type = where_expr %.Self [template = constants.%O_where.type.1] {
+// CHECK:STDOUT:       %.loc8_22.2: type = where_expr %.Self [template = constants.%O_where.type.1] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -844,7 +844,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %R.param_patt: %O_where.type.2 = value_param_pattern %R.patt.loc10_13.1, runtime_param<invalid> [symbolic = %R.patt.loc10_13.2 (constants.%R.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %R.param: %O_where.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc10_19.2: type = splice_block %.loc10_19.1 [template = constants.%O_where.type.2] {
+// CHECK:STDOUT:     %.loc10_19.1: type = splice_block %.loc10_19.2 [template = constants.%O_where.type.2] {
 // CHECK:STDOUT:       %O.ref: type = name_ref O, file.%O.decl [template = constants.%O.type]
 // CHECK:STDOUT:       %.Self: %O.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -854,7 +854,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc10_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc10_30.2: type = converted %bool.make_type, %.loc10_30.1 [template = bool]
-// CHECK:STDOUT:       %.loc10_19.1: type = where_expr %.Self [template = constants.%O_where.type.2] {
+// CHECK:STDOUT:       %.loc10_19.2: type = where_expr %.Self [template = constants.%O_where.type.2] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_30.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -957,7 +957,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %V.param_patt: %S_where.type.1 = value_param_pattern %V.patt.loc9_10.1, runtime_param<invalid> [symbolic = %V.patt.loc9_10.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.param: %S_where.type.1 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc9_16.2: type = splice_block %.loc9_16.1 [template = constants.%S_where.type.1] {
+// CHECK:STDOUT:     %.loc9_16.1: type = splice_block %.loc9_16.2 [template = constants.%S_where.type.1] {
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -966,7 +966,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc9_28.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_28.2: type = converted %.loc9_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc9_16.1: type = where_expr %.Self [template = constants.%S_where.type.1] {
+// CHECK:STDOUT:       %.loc9_16.2: type = where_expr %.Self [template = constants.%S_where.type.1] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_28.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -977,7 +977,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %W.param_patt: %S_where.type.2 = value_param_pattern %W.patt.loc11_10.1, runtime_param<invalid> [symbolic = %W.patt.loc11_10.2 (constants.%W.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.param: %S_where.type.2 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc11_16.2: type = splice_block %.loc11_16.1 [template = constants.%S_where.type.2] {
+// CHECK:STDOUT:     %.loc11_16.1: type = splice_block %.loc11_16.2 [template = constants.%S_where.type.2] {
 // CHECK:STDOUT:       %S.ref: type = name_ref S, file.%S.decl [template = constants.%S.type]
 // CHECK:STDOUT:       %.Self: %S.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -986,7 +986,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc11_28.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_28.2: type = converted %.loc11_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc11_16.1: type = where_expr %.Self [template = constants.%S_where.type.2] {
+// CHECK:STDOUT:       %.loc11_16.2: type = where_expr %.Self [template = constants.%S_where.type.2] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc11_28.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -1204,7 +1204,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %X.param_patt: <error> = value_param_pattern %X.patt.loc16_24.1, runtime_param<invalid> [symbolic = %X.patt.loc16_24.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc16_30.2: type = splice_block %.loc16_30.1 [template = <error>] {
+// CHECK:STDOUT:     %.loc16_30.1: type = splice_block %.loc16_30.2 [template = <error>] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
@@ -1213,7 +1213,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:       %.loc16_46: type = converted %int_2, <error> [template = <error>]
-// CHECK:STDOUT:       %.loc16_30.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       %.loc16_30.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

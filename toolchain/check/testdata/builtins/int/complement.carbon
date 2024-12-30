@@ -272,12 +272,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_56.1: type = value_of_initializer %int_literal.make_type.loc4_56 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_56.2: type = converted %int_literal.make_type.loc4_56, %.loc4_56.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_34.3: type = splice_block %.loc4_34.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_34.1: type = splice_block %.loc4_34.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_18: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_22: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc4_34: init type = call %IntLiteral.ref.loc4_22() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_34.1: type = value_of_initializer %int_literal.make_type.loc4_34 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_34.2: type = converted %int_literal.make_type.loc4_34, %.loc4_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_34.2: type = value_of_initializer %int_literal.make_type.loc4_34 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_34.3: type = converted %int_literal.make_type.loc4_34, %.loc4_34.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
@@ -288,12 +288,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_14.1, runtime_param<invalid> [symbolic = %N.patt.loc6_14.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc6_34.3: type = splice_block %.loc6_34.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc6_34.1: type = splice_block %.loc6_34.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_34.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_34.2: type = converted %int_literal.make_type, %.loc6_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_34.3: type = converted %int_literal.make_type, %.loc6_34.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_14.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_14.2 (constants.%N)]
 // CHECK:STDOUT:   }
@@ -307,12 +307,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %N.ref: Core.IntLiteral = name_ref N, %N.loc7_9.1 [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %Expect.loc7_43.1: type = class_type @Expect, @Expect(constants.%N) [symbolic = %Expect.loc7_43.2 (constants.%Expect.1)]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc7_29.3: type = splice_block %.loc7_29.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc7_29.1: type = splice_block %.loc7_29.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc7_29.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc7_29.2: type = converted %int_literal.make_type, %.loc7_29.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc7_29.3: type = converted %int_literal.make_type, %.loc7_29.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc7_9.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_9.2 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref @Test.%Expect.loc7_43.2 (%Expect.1) = out_param runtime_param0
@@ -660,12 +660,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_56.1: type = value_of_initializer %int_literal.make_type.loc4_56 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_56.2: type = converted %int_literal.make_type.loc4_56, %.loc4_56.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_34.3: type = splice_block %.loc4_34.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_34.1: type = splice_block %.loc4_34.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_18: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_22: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc4_34: init type = call %IntLiteral.ref.loc4_22() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_34.1: type = value_of_initializer %int_literal.make_type.loc4_34 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_34.2: type = converted %int_literal.make_type.loc4_34, %.loc4_34.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_34.2: type = value_of_initializer %int_literal.make_type.loc4_34 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_34.3: type = converted %int_literal.make_type.loc4_34, %.loc4_34.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
@@ -683,12 +683,12 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc6_47.1: type = value_of_initializer %int_literal.make_type.loc6_47 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc6_47.2: type = converted %int_literal.make_type.loc6_47, %.loc6_47.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %a.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_25.3: type = splice_block %.loc6_25.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc6_25.1: type = splice_block %.loc6_25.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc6_9: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc6_13: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc6_25: init type = call %IntLiteral.ref.loc6_13() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_25.1: type = value_of_initializer %int_literal.make_type.loc6_25 [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc6_25.2: type = converted %int_literal.make_type.loc6_25, %.loc6_25.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_25.2: type = value_of_initializer %int_literal.make_type.loc6_25 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc6_25.3: type = converted %int_literal.make_type.loc6_25, %.loc6_25.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: Core.IntLiteral = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param runtime_param1
