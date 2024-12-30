@@ -12,6 +12,10 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 var arr: [i32; Add(1, 2)];
 
+fn RuntimeCall(a: i32, b: i32) -> i32 {
+  return Add(a, b);
+}
+
 // CHECK:STDOUT: --- call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
