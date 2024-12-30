@@ -156,8 +156,9 @@ Supported comment markers are:
     // EXTRA-ARGS: <arguments>
     ```
 
-    `EXTRA-ARGS` specifies additional arguments that are appended after the
-    default argument list. It has the same substitution behavior as `ARGS`.
+    Same as `ARGS`, including substitution behavior, but appends to the default
+    argument list instead of replacing it.
+
     `EXTRA-ARGS` can be specified at most once, and a test cannot specify both
     `ARGS` and `EXTRA-ARGS`.
 
