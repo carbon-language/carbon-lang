@@ -30,4 +30,3 @@ fn Sub(a: i32, b: i32) -> i32 = "int.usub";
 let a: i32 = Sub(0, 0x7FFFFFFF);
 let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
 let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
-

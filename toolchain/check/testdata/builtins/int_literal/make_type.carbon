@@ -23,4 +23,3 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 var i: IntLiteral();
-

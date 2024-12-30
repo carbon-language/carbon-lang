@@ -65,4 +65,3 @@ let size_3: i32 = RightShift(1, 33);
 // CHECK:STDERR: let negative: i32 = RightShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~
 let negative: i32 = RightShift(1, Negate(1));
-

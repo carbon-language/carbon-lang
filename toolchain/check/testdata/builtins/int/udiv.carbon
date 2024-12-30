@@ -54,4 +54,3 @@ let a: i32 = Div(1, 0);
 // CHECK:STDERR: let b: i32 = Div(0, 0);
 // CHECK:STDERR:              ^~~~~~~~~
 let b: i32 = Div(0, 0);
-

@@ -64,4 +64,3 @@ let no_overflow_2: i32 = LeftShift(0, 32);
 // CHECK:STDERR: let negative: i32 = LeftShift(1, Negate(1));
 // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~
 let negative: i32 = LeftShift(1, Negate(1));
-

@@ -87,4 +87,3 @@ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 // Overflow is OK.
 let a: i32 = Add(0x7FFFFFFF, 0);
 let b: i32 = Add(0x7FFFFFFF, 1);
-

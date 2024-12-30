@@ -34,4 +34,3 @@ package FailBadDecl;
 // CHECK:STDERR: fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
-

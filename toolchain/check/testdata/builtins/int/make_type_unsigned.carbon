@@ -71,4 +71,3 @@ import library "types";
 // CHECK:STDERR: var m: UInt(1000000000);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~
 var m: UInt(1000000000);
-

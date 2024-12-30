@@ -33,4 +33,3 @@ let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
 // CHECK:STDERR: let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~
 let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
-

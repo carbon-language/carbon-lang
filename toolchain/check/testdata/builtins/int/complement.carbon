@@ -21,4 +21,3 @@ let arr_p: [i32; 0xEDCBA9]* = &arr;
 fn RuntimeCall(a: i32) -> i32 {
   return Complement(a);
 }
-

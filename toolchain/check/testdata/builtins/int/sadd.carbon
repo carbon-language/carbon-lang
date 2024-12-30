@@ -90,4 +90,3 @@ let a: i32 = Add(0x7FFFFFFF, 0);
 // CHECK:STDERR: let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
 let b: i32 = Add(0x7FFFFFFF, 1);
-

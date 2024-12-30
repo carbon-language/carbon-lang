@@ -29,4 +29,3 @@ fn Mul(a: i32, b: i32) -> i32 = "int.umul";
 
 let a: i32 = Mul(0x7FFF, 0x10000);
 let b: i32 = Mul(0x8000, 0x10000);
-

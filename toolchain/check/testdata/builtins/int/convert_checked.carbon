@@ -249,4 +249,3 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
-

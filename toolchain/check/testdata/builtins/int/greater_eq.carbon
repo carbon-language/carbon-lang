@@ -29,4 +29,3 @@ fn F(true_: True, false_: False) {
 fn RuntimeCall(a: i32, b: i32) -> bool {
   return GreaterEq(a, b);
 }
-

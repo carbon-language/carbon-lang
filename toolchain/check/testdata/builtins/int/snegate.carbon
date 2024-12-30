@@ -117,4 +117,3 @@ let a: i32 = Negate(Negate(0x7FFFFFFF));
 // CHECK:STDERR: let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 let b: i32 = Negate(Sub(Negate(0x7FFFFFFF), 1));
-

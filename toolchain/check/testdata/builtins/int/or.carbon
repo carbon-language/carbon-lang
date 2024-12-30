@@ -20,4 +20,3 @@ let arr_p: [i32; 14]* = &arr;
 fn RuntimeCall(a: i32, b: i32) -> i32 {
   return Or(a, b);
 }
-

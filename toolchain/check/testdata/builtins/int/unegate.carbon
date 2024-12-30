@@ -118,5 +118,3 @@ fn F() {
   Test(Negate(Negate(0x8000_0000))) as Expect(0x8000_0000);
   Test(-(Negate(0x8000_0000))) as Expect(0x8000_0000);
 }
-
-

@@ -90,4 +90,3 @@ import library "types";
 // CHECK:STDERR: var m: Int(1000000000);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
 var m: Int(1000000000);
-
