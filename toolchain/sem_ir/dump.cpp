@@ -11,7 +11,7 @@
 
 namespace Carbon::SemIR {
 
-static auto DumpIfValid(const File& file, NameId name_id) -> void {
+static auto DumpNameIfValid(const File& file, NameId name_id) -> void {
   if (name_id.is_valid()) {
     llvm::errs() << " `" << file.names().GetFormatted(name_id) << "`";
   }
@@ -41,7 +41,7 @@ static auto DumpNoNewline(const File& file, InterfaceId interface_id) -> void {
   if (interface_id.is_valid()) {
     auto interface = file.interfaces().Get(interface_id);
     llvm::errs() << ": " << interface;
-    DumpIfValid(file, interface.name_id);
+    DumpNameIfValid(file, interface.name_id);
   }
 }
 
@@ -57,7 +57,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> void {
   if (class_id.is_valid()) {
     auto class_obj = file.classes().Get(class_id);
     llvm::errs() << ": " << class_obj;
-    DumpIfValid(file, class_obj.name_id);
+    DumpNameIfValid(file, class_obj.name_id);
   }
   llvm::errs() << '\n';
 }
@@ -73,7 +73,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
   if (entity_name_id.is_valid()) {
     auto entity_name = file.entity_names().Get(entity_name_id);
     llvm::errs() << ": " << entity_name;
-    DumpIfValid(file, entity_name.name_id);
+    DumpNameIfValid(file, entity_name.name_id);
   }
   llvm::errs() << '\n';
 }
@@ -107,7 +107,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FunctionId function_id) -> void {
   if (function_id.is_valid()) {
     auto function = file.functions().Get(function_id);
     llvm::errs() << ": " << function;
-    DumpIfValid(file, function.name_id);
+    DumpNameIfValid(file, function.name_id);
   }
   llvm::errs() << '\n';
 }
@@ -171,7 +171,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id) -> void {
 
 LLVM_DUMP_METHOD auto Dump(const File& file, NameId name_id) -> void {
   llvm::errs() << name_id;
-  DumpIfValid(file, name_id);
+  DumpNameIfValid(file, name_id);
   llvm::errs() << '\n';
 }
 
@@ -184,7 +184,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
     if (name_scope.inst_id().is_valid()) {
       llvm::errs() << " " << file.insts().Get(name_scope.inst_id());
     }
-    DumpIfValid(file, name_scope.name_id());
+    DumpNameIfValid(file, name_scope.name_id());
   }
   llvm::errs() << '\n';
 }
@@ -202,7 +202,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     auto block = file.struct_type_fields().Get(struct_type_fields_id);
     for (auto field : block) {
       llvm::errs() << "\n  - " << field;
-      DumpIfValid(file, field.name_id);
+      DumpNameIfValid(file, field.name_id);
       if (field.type_id.is_valid()) {
         InstId inst_id =
             file.constant_values().GetInstId(field.type_id.AsConstantId());
