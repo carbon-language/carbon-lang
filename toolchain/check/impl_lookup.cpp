@@ -14,8 +14,7 @@ namespace Carbon::Check {
 
 static auto FindAssociatedImportIRs(Context& context,
                                     SemIR::ConstantId type_const_id,
-                                    SemIR::ConstantId interface_const_id,
-                                    bool* any_errors)
+                                    SemIR::ConstantId interface_const_id)
     -> llvm::SmallVector<SemIR::ImportIRId> {
   llvm::SmallVector<SemIR::ImportIRId> result;
 
@@ -53,10 +52,6 @@ static auto FindAssociatedImportIRs(Context& context,
 
   while (!worklist.empty()) {
     auto inst_id = worklist.pop_back_val();
-    if (inst_id == SemIR::ErrorInst::SingletonInstId) {
-      *any_errors = true;
-      return result;
-    }
 
     // Visit the operands of the constant.
     auto inst = context.insts().Get(inst_id);
@@ -119,12 +114,12 @@ auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId type_const_id,
                             SemIR::ConstantId interface_const_id)
     -> SemIR::InstId {
-  bool any_errors = false;
-  auto import_irs = FindAssociatedImportIRs(context, type_const_id,
-                                            interface_const_id, &any_errors);
-  if (any_errors) {
+  if (type_const_id == SemIR::ErrorInst::SingletonConstantId ||
+      interface_const_id == SemIR::ErrorInst::SingletonConstantId) {
     return SemIR::ErrorInst::SingletonInstId;
   }
+  auto import_irs =
+      FindAssociatedImportIRs(context, type_const_id, interface_const_id);
   for (auto import_ir : import_irs) {
     // TODO: Instead of importing all impls, only import ones that are in some
     // way connected to this query.
