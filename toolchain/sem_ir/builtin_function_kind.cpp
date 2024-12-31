@@ -424,6 +424,18 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
 auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
+  // Some builtin functions are unconditionally compile-time-only, or
+  // unconditionally usable at runtime. However, we need to take extra care for
+  // builtins operating on an arbitrary integer type, because `Core.IntLiteral`
+  // has an empty runtime representation and a value of that type isn't
+  // necessarily a compile-time constant. For example, given:
+  //
+  // var n: Core.IntLiteral() = 123;
+  //
+  // we would be unable to lower a runtime operation such as `(1 as i32) << n`
+  // because the runtime representation of `n` doesn't track its value at all.
+  // So we treat operations involving `Core.IntLiteral` as being
+  // compile-time-only.
   switch (*this) {
     case IntConvertChecked:
       // Checked integer conversions are compile-time only.
