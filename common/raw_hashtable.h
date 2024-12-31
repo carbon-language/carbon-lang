@@ -1026,8 +1026,8 @@ BaseImpl<InputKeyT, InputValueT, InputKeyContextT>::GrowToAllocSizeImpl(
     for (ssize_t byte_index : present_matched_range) {
       ++count;
       ssize_t index = group_index + byte_index;
-      HashCode hash = key_context.HashKey(
-          old_entries[index].key(), ComputeSeed());
+      HashCode hash =
+          key_context.HashKey(old_entries[index].key(), ComputeSeed());
       EntryT* new_entry = InsertIntoEmpty(hash);
       new_entry->MoveFrom(std::move(old_entries[index]));
     }
