@@ -22,7 +22,7 @@ fn F(true_: True, false_: False) {
   false_ as (if Eq(1, 2) then True else False);
 }
 
-fn RuntimeCall(a: i32, b: i32) -> bool {
+fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
   return Eq(a, b);
 }
 

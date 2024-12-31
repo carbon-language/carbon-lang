@@ -19,7 +19,7 @@ let arr_p: [i32; 123]* = &arr;
 
 let n: i32 = Negate(1);
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Negate(a);
 }
 
@@ -69,7 +69,7 @@ var bad_return_type: [i32; BadReturnType(1)];
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2)];
 
-fn RuntimeCallTooFew(a: i32) -> i32 {
+fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return TooFew(a);
   // CHECK:STDERR:          ^~~~~~~~~
@@ -80,7 +80,7 @@ fn RuntimeCallTooFew(a: i32) -> i32 {
   return TooFew(a);
 }
 
-fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
+fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return TooMany(a, b, c);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
@@ -91,7 +91,7 @@ fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
   return TooMany(a, b, c);
 }
 
-fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
+fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
   // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+7]]:10: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
   // CHECK:STDERR:   return BadReturnType(a, b);
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~

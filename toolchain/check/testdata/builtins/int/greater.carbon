@@ -26,6 +26,6 @@ fn F(true_: True, false_: False) {
   true_ as (if Greater(0, Negate(1)) then True else False);
 }
 
-fn RuntimeCall(a: i32, b: i32) -> bool {
+fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
   return Greater(a, b);
 }

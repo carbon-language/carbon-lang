@@ -17,6 +17,6 @@ fn And(a: i32, b: i32) -> i32 = "int.and";
 var arr: [i32; And(12, 10)];
 let arr_p: [i32; 8]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return And(a, b);
 }

@@ -18,6 +18,6 @@ fn And(a: i32, b: i32) -> i32 = "int.and";
 var arr: [i32; And(Complement(0x123456), 0xFFFFFF)];
 let arr_p: [i32; 0xEDCBA9]* = &arr;
 
-fn RuntimeCall(a: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32) -> i32 {
   return Complement(a);
 }

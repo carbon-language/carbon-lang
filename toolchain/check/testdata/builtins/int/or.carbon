@@ -17,6 +17,6 @@ fn Or(a: i32, b: i32) -> i32 = "int.or";
 var arr: [i32; Or(12, 10)];
 let arr_p: [i32; 14]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Or(a, b);
 }

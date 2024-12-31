@@ -17,7 +17,7 @@ fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 var arr: [i32; LeftShift(5, 2)];
 let arr_p: [i32; 20]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return LeftShift(a, b);
 }
 

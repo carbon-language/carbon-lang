@@ -17,7 +17,7 @@ fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
 var arr: [i32; RightShift(22, 2)];
 let arr_p: [i32; 5]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return RightShift(a, b);
 }
 

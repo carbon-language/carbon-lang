@@ -17,7 +17,7 @@ fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 var arr: [i32; Add(1, 2)];
 let arr_p: [i32; 3]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Add(a, b);
 }
 
@@ -67,15 +67,15 @@ var bad_return_type: [i32; BadReturnType(1, 2)];
 // CHECK:STDERR:
 var bad_call: [i32; JustRight(1, 2, 3)];
 
-fn RuntimeCallTooFew(a: i32) -> i32 {
+fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
   return TooFew(a);
 }
 
-fn RuntimeCallTooMany(a: i32, b: i32, c: i32) -> i32 {
+fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
   return TooMany(a, b, c);
 }
 
-fn RuntimeCallBadReturnType(a: i32, b: i32) -> bool {
+fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
   return BadReturnType(a, b);
 }
 

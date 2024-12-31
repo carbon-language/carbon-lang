@@ -17,7 +17,7 @@ fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 var arr: [i32; Sub(3, 2)];
 let arr_p: [i32; 1]* = &arr;
 
-fn RuntimeCall(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   return Sub(a, b);
 }
 
