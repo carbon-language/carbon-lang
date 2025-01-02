@@ -227,7 +227,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @N.%P [template]
 // CHECK:STDOUT:   %.Self: %N.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0 = %empty_struct_type> [template]
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
@@ -262,7 +262,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %N.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @N.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc8_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc8_28.2: type = converted %.loc8_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:       %.loc8_16.2: type = where_expr %.Self [template = constants.%N_where.type] {
@@ -307,13 +307,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.1: %A.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_wit.1: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit.1, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.1, element0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %A_where.type.1: type = facet_type <@A where %impl.elem0 = bool> [template]
 // CHECK:STDOUT:   %.Self.2: %A_where.type.1 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.2: <witness> = facet_access_witness %.Self.2 [symbolic]
-// CHECK:STDOUT:   %impl.elem1: type = interface_witness_access %.Self.as_wit.2, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit.2, element1 [symbolic]
 // CHECK:STDOUT:   %A_where.type.2: type = facet_type <@A where %impl.elem1 = %empty_tuple.type and %impl.elem0 = bool> [template]
 // CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic]
@@ -348,7 +348,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref.loc9_31: %A.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self.1]
 // CHECK:STDOUT:       %B.ref: %assoc_type = name_ref B, @A.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_31: <witness> = facet_access_witness %.Self.ref.loc9_31 [symbolic = constants.%.Self.as_wit.1]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit.loc9_31, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit.loc9_31, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc9_36.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc9_36.2: type = converted %bool.make_type, %.loc9_36.1 [template = bool]
@@ -359,7 +359,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref.loc9_48: %A_where.type.1 = name_ref .Self, %.Self.2 [symbolic = constants.%.Self.2]
 // CHECK:STDOUT:       %C.ref: %assoc_type = name_ref C, @A.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_48: <witness> = facet_access_witness %.Self.ref.loc9_48 [symbolic = constants.%.Self.as_wit.2]
-// CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit.loc9_48, element1 [symbolic = constants.%impl.elem1]
+// CHECK:STDOUT:       %impl.elem1: type = impl_witness_access %.Self.as_wit.loc9_48, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc9_54.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_54.2: type = converted %.loc9_54.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc9_42.2: type = where_expr %.Self.2 [template = constants.%A_where.type.2] {
@@ -406,7 +406,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self: %E.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0 = %i32> [template]
@@ -456,7 +456,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %F.ref: %assoc_type = name_ref F, @E.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.loc8_21.2: type = where_expr %.Self [template = constants.%E_where.type] {
@@ -476,13 +476,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref.loc10_32: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %F.ref.loc10_32: %assoc_type = name_ref F, @E.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit.loc10_32: <witness> = facet_access_witness %.Self.ref.loc10_32 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0.loc10_32: type = interface_witness_access %.Self.as_wit.loc10_32, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0.loc10_32: type = impl_witness_access %.Self.as_wit.loc10_32, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32.loc10_37: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc10_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.Self.ref.loc10_45: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %F.ref.loc10_45: %assoc_type = name_ref F, @E.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit.loc10_45: <witness> = facet_access_witness %.Self.ref.loc10_45 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0.loc10_45: type = interface_witness_access %.Self.as_wit.loc10_45, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0.loc10_45: type = impl_witness_access %.Self.as_wit.loc10_45, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32.loc10_50: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc10_50: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.loc10_26.2: type = where_expr %.Self [template = constants.%E_where.type] {
@@ -503,7 +503,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %E.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %F.ref: %assoc_type = name_ref F, @E.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.loc14_26.2: type = where_expr %.Self [template = constants.%E_where.type] {
@@ -621,8 +621,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
-// CHECK:STDOUT:   %impl.elem1: type = interface_witness_access %.Self.as_wit, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit, element1 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where %impl.elem1 = bool and %impl.elem0 = %empty_tuple.type> [template]
@@ -665,13 +665,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref.loc9_29: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %K.ref: %assoc_type = name_ref K, @J.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_29: <witness> = facet_access_witness %.Self.ref.loc9_29 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit.loc9_29, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit.loc9_29, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc9_35.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_35.2: type = converted %.loc9_35.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.Self.ref.loc9_41: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %L.ref: %assoc_type = name_ref L, @J.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_wit.loc9_41: <witness> = facet_access_witness %.Self.ref.loc9_41 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit.loc9_41, element1 [symbolic = constants.%impl.elem1]
+// CHECK:STDOUT:       %impl.elem1: type = impl_witness_access %.Self.as_wit.loc9_41, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc9_46.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc9_46.2: type = converted %bool.make_type, %.loc9_46.1 [template = bool]
@@ -693,14 +693,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref.loc11_25: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %L.ref: %assoc_type = name_ref L, @J.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_wit.loc11_25: <witness> = facet_access_witness %.Self.ref.loc11_25 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit.loc11_25, element1 [symbolic = constants.%impl.elem1]
+// CHECK:STDOUT:       %impl.elem1: type = impl_witness_access %.Self.as_wit.loc11_25, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc11_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc11_30.2: type = converted %bool.make_type, %.loc11_30.1 [template = bool]
 // CHECK:STDOUT:       %.Self.ref.loc11_39: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %K.ref: %assoc_type = name_ref K, @J.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit.loc11_39: <witness> = facet_access_witness %.Self.ref.loc11_39 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit.loc11_39, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit.loc11_39, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_45.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_45.2: type = converted %.loc11_45.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc11_19.2: type = where_expr %.Self [template = constants.%J_where.type] {
@@ -783,7 +783,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %assoc0.1: %assoc_type = assoc_entity element0, @O.%P [template]
 // CHECK:STDOUT:   %.Self: %O.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %O_where.type.1: type = facet_type <@O where %impl.elem0 = %i32> [template]
@@ -830,7 +830,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @O.%assoc0 [template = constants.%assoc0.1]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.loc8_22.2: type = where_expr %.Self [template = constants.%O_where.type.1] {
@@ -850,7 +850,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %O.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %P.ref: %assoc_type = name_ref P, @O.%assoc0 [template = constants.%assoc0.1]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:       %.loc10_30.1: type = value_of_initializer %bool.make_type [template = bool]
 // CHECK:STDOUT:       %.loc10_30.2: type = converted %bool.make_type, %.loc10_30.1 [template = bool]
@@ -921,13 +921,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self: %S.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %S_where.type.1: type = facet_type <@S where %impl.elem0 = %empty_tuple.type> [template]
 // CHECK:STDOUT:   %V: %S_where.type.1 = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %S_where.type.1 = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %WithT.type: type = fn_type @WithT [template]
 // CHECK:STDOUT:   %WithT: %WithT.type = struct_value () [template]
-// CHECK:STDOUT:   %impl.elem1: type = interface_witness_access %.Self.as_wit, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit, element1 [symbolic]
 // CHECK:STDOUT:   %S_where.type.2: type = facet_type <@S where %impl.elem1 = %empty_tuple.type> [template]
 // CHECK:STDOUT:   %W: %S_where.type.2 = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %S_where.type.2 = symbolic_binding_pattern W, 0 [symbolic]
@@ -963,7 +963,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: %assoc_type = name_ref T, @S.%assoc0 [template = constants.%assoc0.1]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc9_28.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_28.2: type = converted %.loc9_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc9_16.2: type = where_expr %.Self [template = constants.%S_where.type.1] {
@@ -983,7 +983,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %S.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %U.ref: %assoc_type = name_ref U, @S.%assoc1 [template = constants.%assoc1]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem1: type = interface_witness_access %.Self.as_wit, element1 [symbolic = constants.%impl.elem1]
+// CHECK:STDOUT:       %impl.elem1: type = impl_witness_access %.Self.as_wit, element1 [symbolic = constants.%impl.elem1]
 // CHECK:STDOUT:       %.loc11_28.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_28.2: type = converted %.loc11_28.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc11_16.2: type = where_expr %.Self [template = constants.%S_where.type.2] {
@@ -1057,7 +1057,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [template]
 // CHECK:STDOUT:   %.Self.1: %N.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.1: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.1: type = interface_witness_access %.Self.as_wit.1, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.1: type = impl_witness_access %.Self.as_wit.1, element0 [symbolic]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0.1 = %empty_struct_type> [template]
 // CHECK:STDOUT:   %T: %N_where.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: %N_where.type = symbolic_binding_pattern T, 0 [symbolic]
@@ -1068,11 +1068,11 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [template]
 // CHECK:STDOUT:   %.Self.2: %A.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.2: <witness> = facet_access_witness %.Self.2 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.2: type = interface_witness_access %.Self.as_wit.2, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.2: type = impl_witness_access %.Self.as_wit.2, element0 [symbolic]
 // CHECK:STDOUT:   %A_where.type.1: type = facet_type <@A where %impl.elem0.2 = bool> [template]
 // CHECK:STDOUT:   %.Self.3: %A_where.type.1 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.3: <witness> = facet_access_witness %.Self.3 [symbolic]
-// CHECK:STDOUT:   %impl.elem1: type = interface_witness_access %.Self.as_wit.3, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %.Self.as_wit.3, element1 [symbolic]
 // CHECK:STDOUT:   %A_where.type.2: type = facet_type <@A where %impl.elem1 = %empty_tuple.type and %impl.elem0.2 = bool> [template]
 // CHECK:STDOUT:   %D: %A_where.type.2 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %D.patt: %A_where.type.2 = symbolic_binding_pattern D, 0 [symbolic]
@@ -1176,7 +1176,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %assoc0.1: %assoc_type = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %X.patt: <error> = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %RewriteTypeMismatch.type: type = fn_type @RewriteTypeMismatch [template]
@@ -1210,7 +1210,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %Member.ref: %assoc_type = name_ref Member, @I.%assoc0 [template = constants.%assoc0.1]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:       %impl.elem0: type = interface_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:       %.loc16_46: type = converted %int_2, <error> [template = <error>]
 // CHECK:STDOUT:       %.loc16_30.2: type = where_expr %.Self [template = <error>] {
@@ -1250,7 +1250,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1276,6 +1276,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
@@ -1287,10 +1288,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %D.ref as %A.ref {
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -1320,10 +1319,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %.Self.1: %E.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %.Self.as_wit.1: <witness> = facet_access_witness %.Self.1 [symbolic]
-// CHECK:STDOUT:   %impl.elem0: type = interface_witness_access %.Self.as_wit.1, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit.1, element0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %impl.elem1.1: type = interface_witness_access %.Self.as_wit.1, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1.1: type = impl_witness_access %.Self.as_wit.1, element1 [symbolic]
 // CHECK:STDOUT:   %E_where.type.1: type = facet_type <@E where %impl.elem1.1 = %empty_tuple.type and %impl.elem0 = bool> [template]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
@@ -1332,7 +1331,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E_where.type.2: type = facet_type <@E where %impl.elem0 = %empty_struct_type> [template]
 // CHECK:STDOUT:   %.Self.2: %E_where.type.2 = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit.2: <witness> = facet_access_witness %.Self.2 [symbolic]
-// CHECK:STDOUT:   %impl.elem1.2: type = interface_witness_access %.Self.as_wit.2, element1 [symbolic]
+// CHECK:STDOUT:   %impl.elem1.2: type = impl_witness_access %.Self.as_wit.2, element1 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %E_where.type.3: type = facet_type <@E where %impl.elem1.2 = %i32 and %impl.elem0 = %empty_struct_type> [template]

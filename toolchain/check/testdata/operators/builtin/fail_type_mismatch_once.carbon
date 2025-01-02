@@ -61,7 +61,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc17: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %float: f64 = float_literal 3.4000000000000004 [template = constants.%float]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %impl.elem0: %Op.type = interface_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %impl.elem0: %Op.type = impl_witness_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method <error>, %impl.elem0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

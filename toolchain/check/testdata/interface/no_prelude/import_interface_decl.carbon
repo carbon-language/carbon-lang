@@ -61,6 +61,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [template]
 // CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,6 +74,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -94,9 +96,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1 = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//b, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -109,9 +111,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.3 as imports.%import_ref.4 [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_b.carbon"];
 // CHECK:STDOUT:

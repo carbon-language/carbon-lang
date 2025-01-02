@@ -13,10 +13,9 @@ namespace Carbon::Check {
 // Looks up the witness to use for a particular type and interface. Returns the
 // witness, or `InstId::Invalid` if the type is not known to implement the
 // interface.
-auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
-                            SemIR::ConstantId type_const_id,
-                            SemIR::ConstantId interface_const_id)
-    -> SemIR::InstId;
+auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
+                       SemIR::ConstantId type_const_id,
+                       SemIR::ConstantId interface_const_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

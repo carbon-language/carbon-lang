@@ -642,6 +642,20 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
+      case ImplWitness::Kind: {
+        // TODO: Include name of interface (is this available from the
+        // specific?).
+        add_inst_name("impl_witness");
+        continue;
+      }
+      case CARBON_KIND(ImplWitnessAccess inst): {
+        // TODO: Include information about the impl?
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "impl.elem" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
       case CARBON_KIND(ImportDecl inst): {
         if (inst.package_id.is_valid()) {
           add_inst_name_id(inst.package_id, ".import");
@@ -673,18 +687,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         auto interface_scope_id = GetScopeFor(inst.interface_id);
         queue_block_id(interface_scope_id, interface_info.pattern_block_id);
         queue_block_id(interface_scope_id, inst.decl_block_id);
-        continue;
-      }
-      case InterfaceWitness::Kind: {
-        // TODO: Include name of interface.
-        add_inst_name("interface");
-        continue;
-      }
-      case CARBON_KIND(InterfaceWitnessAccess inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
-        out << "impl.elem" << inst.index.index;
-        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(IntType inst): {

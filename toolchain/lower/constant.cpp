@@ -22,23 +22,25 @@ class ConstantContext {
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
-  // constant value that has already been lowered.
+  // constant value that has already been lowered. Returns nullptr if it
+  // hasn't been, in which case it should not be needed.
   auto GetConstant(SemIR::InstId inst_id) const -> llvm::Constant* {
     return GetConstant(file_context_->sem_ir().constant_values().Get(inst_id));
   }
 
   // Gets the lowered constant value for a constant that has already been
-  // lowered.
+  // lowered. Returns nullptr if it hasn't been, in which case it should not be
+  // needed.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
     CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
                  const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
-    CARBON_CHECK(
-        inst_id.index >= 0 && inst_id.index <= last_lowered_constant_index_,
-        "Queried constant {0} with instruction {1} that has not been lowered "
-        "yet",
-        const_id, inst_id);
+    if (inst_id.index > last_lowered_constant_index_) {
+      // This constant hasn't been lowered.
+      return nullptr;
+    }
+    CARBON_CHECK(inst_id.index >= 0);
     return constants_[inst_id.index];
   }
 
@@ -280,6 +282,6 @@ auto LowerConstants(FileContext& file_context,
     constants[inst_id.index] = value;
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
-}  // namespace Carbon::Lower
+}
 
 }  // namespace Carbon::Lower

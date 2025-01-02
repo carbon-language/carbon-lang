@@ -1284,7 +1284,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                          SemIR::InterfaceWitnessAccess>())
+                                          SemIR::ImplWitnessAccess>())
   auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // For symbolic types, we arbitrarily pick a copy representation.

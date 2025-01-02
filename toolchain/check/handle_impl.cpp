@@ -241,8 +241,6 @@ static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
                             SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
 
-  // TODO: Following #3763, disallow redeclarations in different scopes.
-
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
   if (!CheckRedeclParamsMatch(context, DeclParams(new_impl),
@@ -343,8 +341,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
-    impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -416,6 +415,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
 
+  if (!impl_info.is_defined()) {
+    ImplWitnessStartDefinition(context, impl_info);
+  }
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -439,7 +441,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
 
   auto& impl_info = context.impls().Get(impl_id);
   if (!impl_info.is_defined()) {
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
+    FinishImplWitness(context, impl_info);
     impl_info.defined = true;
   }
 

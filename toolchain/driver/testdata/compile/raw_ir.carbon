@@ -33,7 +33,7 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic0:        {decl: inst36, bindings: inst_block12}
 // CHECK:STDOUT:   specifics:
-// CHECK:STDOUT:     specific0:       {generic: generic0, args: inst_block14}
+// CHECK:STDOUT:     specific0:       {generic: generic0, args: inst_block13}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields0: {}
 // CHECK:STDOUT:   types:
@@ -197,11 +197,11 @@ fn Foo[T:! type](n: T) -> (T, ()) {
 // CHECK:STDOUT:     inst_block12:
 // CHECK:STDOUT:       0:               inst13
 // CHECK:STDOUT:     inst_block13:
+// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:     inst_block14:
 // CHECK:STDOUT:       0:               inst37
 // CHECK:STDOUT:       1:               inst38
 // CHECK:STDOUT:       2:               inst39
-// CHECK:STDOUT:     inst_block14:
-// CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:     inst_block15:
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:       1:               inst14
