@@ -190,9 +190,8 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
-          // FIXME: Make this entry in the table an error, instead of the whole
-          // table.
-          return SemIR::ErrorInst::SingletonInstId;
+          table.push_back(SemIR::ErrorInst::SingletonInstId);
+          break;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
@@ -265,8 +264,6 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
 
   for (auto index : llvm::seq(assoc_entities.size())) {
     auto decl_id = assoc_entities[index];
-    // FIXME: delete since already done in Build...()?
-    LoadImportRef(context, decl_id);
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_type->specific_id, decl_id));
@@ -274,7 +271,9 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
     auto decl = context.insts().Get(decl_id);
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
-        CARBON_CHECK(struct_value.type_id != SemIR::ErrorInst::SingletonTypeId);
+        if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
+          break;
+        }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.As<SemIR::FunctionType>();
         auto& fn = context.functions().Get(fn_type.function_id);
