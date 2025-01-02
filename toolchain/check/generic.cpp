@@ -407,7 +407,7 @@ static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.is_valid()) {
-    // Put a placeholder value in the decl block so we won't attempt to
+    // Set a placeholder value as the decl block ID so we won't attempt to
     // recursively resolve the same specific.
     context.specifics().Get(specific_id).decl_block_id =
         SemIR::InstBlockId::Empty;
