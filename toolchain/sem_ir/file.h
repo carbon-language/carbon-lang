@@ -79,8 +79,12 @@ class File : public Printable<File> {
       -> void;
 
   // Returns array bound value from the bound instruction.
-  auto GetArrayBoundValue(InstId bound_id) const -> uint64_t {
-    return ints().Get(insts().GetAs<IntValue>(bound_id).int_id).getZExtValue();
+  auto GetArrayBoundValue(InstId bound_id) const -> std::optional<uint64_t> {
+    if (auto bound = insts().TryGetAs<IntValue>(
+            constant_values().GetConstantInstId(bound_id))) {
+      return ints().Get(bound->int_id).getZExtValue();
+    }
+    return std::nullopt;
   }
 
   // Gets the pointee type of the given type, which must be a pointer type.

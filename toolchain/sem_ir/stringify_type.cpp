@@ -37,7 +37,6 @@ class StepStack {
     enum Kind : uint8_t {
       Inst,
       FixedString,
-      ArrayBound,
       Name,
     };
 
@@ -48,8 +47,6 @@ class StepStack {
       InstId inst_id;
       // The fixed string to print, when kind is FixedString.
       const char* fixed_string;
-      // The array bound to print, when kind is ArrayBound.
-      InstId bound_id;
       // The name to print, when kind is Name.
       NameId name_id;
     };
@@ -68,9 +65,6 @@ class StepStack {
   }
   auto PushString(const char* string) -> void {
     steps_.push_back({.kind = Step::FixedString, .fixed_string = string});
-  }
-  auto PushArrayBound(InstId bound_id) -> void {
-    steps_.push_back({.kind = Step::ArrayBound, .bound_id = bound_id});
   }
   auto PushNameId(NameId name_id) -> void {
     steps_.push_back({.kind = Step::Name, .name_id = name_id});
@@ -167,9 +161,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
-      case StepStack::Step::ArrayBound:
-        out << sem_ir.GetArrayBoundValue(step.bound_id);
-        continue;
       case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
@@ -202,7 +193,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(ArrayType inst): {
         out << "[";
         step_stack.PushString("]");
-        step_stack.PushArrayBound(inst.bound_id);
+        step_stack.PushInstId(inst.bound_id);
         step_stack.PushString("; ");
         step_stack.PushTypeId(inst.element_type_id);
         break;
