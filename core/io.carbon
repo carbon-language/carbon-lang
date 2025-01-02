@@ -15,5 +15,4 @@ fn PrintChar(x: i32) -> i32 = "print.char";
 fn ReadChar() -> i32 = "read.char";
 
 // TODO: Change this to a global constant once they are fully supported.
-// TODO: Use simply -1 once we support negate on an IntLiteral.
-fn EOF() -> i32 { return -(1 as i32); }
+fn EOF() -> i32 { return -1; }

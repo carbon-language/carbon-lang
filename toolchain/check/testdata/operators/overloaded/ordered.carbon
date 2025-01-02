@@ -81,9 +81,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Ordered.type: type = facet_type <@Ordered> [template]
-// CHECK:STDOUT:   %Self.1: %Ordered.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Less.type.1: type = fn_type @Less.1 [template]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %LessOrEquivalent.type.1: type = fn_type @LessOrEquivalent.1 [template]
 // CHECK:STDOUT:   %Greater.type.1: type = fn_type @Greater.1 [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.1: type = fn_type @GreaterOrEquivalent.1 [template]
@@ -98,7 +96,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Greater.2: %Greater.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.type.2: type = fn_type @GreaterOrEquivalent.2 [template]
 // CHECK:STDOUT:   %GreaterOrEquivalent.2: %GreaterOrEquivalent.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Ordered.facet: %Ordered.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [template]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [template]
@@ -316,36 +313,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Less.1(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Less.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Less.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @LessOrEquivalent.1(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.1.%Self.as_type (%Self.as_type)](%other.param_patt: @LessOrEquivalent.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Greater.1(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Greater.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Greater.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @GreaterOrEquivalent.1(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.1.%Self.as_type (%Self.as_type)](%other.param_patt: @GreaterOrEquivalent.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Less.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @LessOrEquivalent.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
@@ -402,46 +369,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %.loc26_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Less.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @LessOrEquivalent.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Greater.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GreaterOrEquivalent.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Less.1(constants.%Ordered.facet) {
-// CHECK:STDOUT:   %Self => constants.%Ordered.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @LessOrEquivalent.1(constants.%Ordered.facet) {
-// CHECK:STDOUT:   %Self => constants.%Ordered.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Greater.1(constants.%Ordered.facet) {
-// CHECK:STDOUT:   %Self => constants.%Ordered.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GreaterOrEquivalent.1(constants.%Ordered.facet) {
-// CHECK:STDOUT:   %Self => constants.%Ordered.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -452,9 +379,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [template]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [template]
-// CHECK:STDOUT:   %Ordered.type: type = facet_type <@Ordered> [template]
-// CHECK:STDOUT:   %Self.1: %Ordered.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [template]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [template]
@@ -573,20 +497,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Less(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Less.%Self.as_type (%Self.as_type)](%other.param_patt: @Less.%Self.as_type (%Self.as_type)) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
@@ -596,13 +511,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @LessOrEquivalent(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @LessOrEquivalent.%Self.as_type (%Self.as_type)](%other.param_patt: @LessOrEquivalent.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
@@ -610,44 +518,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Greater(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Greater.%Self.as_type (%Self.as_type)](%other.param_patt: @Greater.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @GreaterOrEquivalent(constants.%Self.1: %Ordered.type) {
-// CHECK:STDOUT:   %Self: %Ordered.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @GreaterOrEquivalent.%Self.as_type (%Self.as_type)](%other.param_patt: @GreaterOrEquivalent.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Less(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @LessOrEquivalent(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Greater(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @GreaterOrEquivalent(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

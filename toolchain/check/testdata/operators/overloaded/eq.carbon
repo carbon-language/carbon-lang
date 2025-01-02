@@ -89,9 +89,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
@@ -100,7 +98,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Equal.2: %Equal.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.type.2: type = fn_type @NotEqual.2 [template]
 // CHECK:STDOUT:   %NotEqual.2: %NotEqual.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
@@ -230,22 +227,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal.1(constants.%Self: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Equal.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Equal.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NotEqual.1(constants.%Self: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type)](%other.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Equal.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEqual.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
@@ -274,26 +255,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return %.loc16_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual.1(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%Eq.facet) {
-// CHECK:STDOUT:   %Self => constants.%Eq.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual.1(constants.%Eq.facet) {
-// CHECK:STDOUT:   %Self => constants.%Eq.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -304,9 +265,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
 // CHECK:STDOUT:   %TestNotEqual: %TestNotEqual.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -379,8 +337,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
@@ -388,35 +344,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(constants.%Self: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Equal.%Self.as_type (%Self.as_type)](%other.param_patt: @Equal.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestNotEqual(%a.param_patt: %D, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NotEqual(constants.%Self: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.%Self.as_type (%Self.as_type)](%other.param_patt: @NotEqual.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl_for_args.carbon
@@ -427,9 +359,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Self.1: %Eq.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
@@ -437,13 +367,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Equal.2: %Equal.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.type.2: type = fn_type @NotEqual.2 [template]
 // CHECK:STDOUT:   %NotEqual.2: %NotEqual.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Eq.facet: %Eq.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.2: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.2 [symbolic]
 // CHECK:STDOUT:   %TestLhsBad.type: type = fn_type @TestLhsBad [template]
 // CHECK:STDOUT:   %TestLhsBad: %TestLhsBad.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -452,7 +377,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Eq = %import_ref.1
 // CHECK:STDOUT:     .Bool = %import_ref.7
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.27
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -582,22 +507,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal.1(constants.%Self.1: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Equal.1.%Self.as_type (%Self.as_type.1)](%other.param_patt: @Equal.1.%Self.as_type (%Self.as_type.1)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NotEqual.1(constants.%Self.1: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type.1)](%other.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type.1)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Equal.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NotEqual.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
@@ -615,46 +524,10 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return %.loc23_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.2: %ImplicitAs.type.2) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.2)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type.2)]() -> @Convert.%Dest (%Dest);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLhsBad(%a.param_patt: %D, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   return <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Equal.1(constants.%Eq.facet) {
-// CHECK:STDOUT:   %Self => constants.%Eq.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual.1(constants.%Eq.facet) {
-// CHECK:STDOUT:   %Self => constants.%Eq.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.2) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -92,7 +92,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS();
+// CHECK:STDOUT: fn @NS() [from "fn.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();
 // CHECK:STDOUT:

@@ -38,25 +38,18 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %BitOr.type: type = facet_type <@BitOr> [template]
-// CHECK:STDOUT:   %Self.1: %BitOr.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (@impl.1.%Op.decl) [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %BitOr.facet: %BitOr.type = facet_value %C, %impl_witness.1 [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %BitOrAssign.type: type = facet_type <@BitOrAssign> [template]
-// CHECK:STDOUT:   %Self.2: %BitOrAssign.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.2 [symbolic]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %Self.as_type.2 [symbolic]
 // CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.2.%Op.decl) [template]
 // CHECK:STDOUT:   %ptr.3: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %BitOrAssign.facet: %BitOrAssign.type = facet_value %C, %impl_witness.2 [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
@@ -188,27 +181,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %BitOr.type) {
-// CHECK:STDOUT:   %Self: %BitOr.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.1)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type.1)) -> @Op.1.%Self.as_type (%Self.as_type.1);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self.param_patt: %C](%other.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_13.2: init %C = class_init (), %return [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc19_14: init %C = converted %.loc19_13.1, %.loc19_13.2 [template = constants.%C.val]
 // CHECK:STDOUT:   return %.loc19_14 to %return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.3(constants.%Self.2: %BitOrAssign.type) {
-// CHECK:STDOUT:   %Self: %BitOrAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.2)]
-// CHECK:STDOUT:   %ptr: type = ptr_type @Op.3.%Self.as_type (%Self.as_type.2) [symbolic = %ptr (constants.%ptr.2)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst88: @Op.3.%ptr (%ptr.2)](%other.param_patt: @Op.3.%Self.as_type (%Self.as_type.2));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.4[addr %self.param_patt: %ptr.3](%other.param_patt: %C) {
@@ -237,27 +215,5 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %addr: %ptr.3 = addr_of %.loc31
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%BitOr.facet) {
-// CHECK:STDOUT:   %Self => constants.%BitOr.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.3(constants.%Self.2) {
-// CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
-// CHECK:STDOUT:   %ptr => constants.%ptr.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.3(constants.%BitOrAssign.facet) {
-// CHECK:STDOUT:   %Self => constants.%BitOrAssign.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %ptr => constants.%ptr.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

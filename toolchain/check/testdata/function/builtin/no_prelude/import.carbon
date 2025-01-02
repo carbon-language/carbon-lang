@@ -201,13 +201,13 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%N.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AsIntLiteral(%a.param_patt: %i32.builtin) -> Core.IntLiteral = "int.convert_checked";
+// CHECK:STDOUT: fn @AsIntLiteral(%a.param_patt: %i32.builtin) -> Core.IntLiteral = "int.convert_checked" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestAdd(%a.param_patt: %i32.builtin, %b.param_patt: %i32.builtin) -> %i32.builtin = "int.sadd";
+// CHECK:STDOUT: fn @TestAdd(%a.param_patt: %i32.builtin, %b.param_patt: %i32.builtin) -> %i32.builtin = "int.sadd" [from "core.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AsI32(%a.param_patt: Core.IntLiteral) -> %i32.builtin = "int.convert_checked";
+// CHECK:STDOUT: fn @AsI32(%a.param_patt: Core.IntLiteral) -> %i32.builtin = "int.convert_checked" [from "core.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

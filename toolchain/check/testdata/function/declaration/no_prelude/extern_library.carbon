@@ -28,10 +28,13 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_nonowner.carbon:[[@LINE+5]]:1: error: declaration in library "extern_library_nonowner" doesn't match `extern library` declaration [ExternLibraryIncorrect]
+// CHECK:STDERR: fail_extern_library_nonowner.carbon:[[@LINE+8]]:1: error: declaration in library "extern_library_nonowner" doesn't match `extern library` declaration [ExternLibraryIncorrect]
 // CHECK:STDERR: extern fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_library_nonowner.carbon: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: fail_extern_library_nonowner.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: extern library "extern_library_owner" fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 extern fn F();
 
@@ -41,10 +44,13 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_nonextern.carbon:[[@LINE+5]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_library_nonextern.carbon:[[@LINE+8]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fn F();
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_extern_library_nonextern.carbon: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fail_extern_library_nonextern.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: extern library "extern_library_owner" fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F();
 
@@ -54,10 +60,13 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+5]]:1: error: declaration in library "extern_library_redecl" doesn't match `extern library` declaration [ExternLibraryIncorrect]
+// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+8]]:1: error: declaration in library "extern_library_redecl" doesn't match `extern library` declaration [ExternLibraryIncorrect]
 // CHECK:STDERR: extern library "extern_library_owner" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_library_redecl.carbon: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: extern_library.carbon:4:1: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR: extern library "extern_library_owner" fn F();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 extern library "extern_library_owner" fn F();
 
@@ -127,10 +136,13 @@ library "[[@TEST_NAME]]";
 
 import library "extern_of_import";
 
-// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE+5]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern library "extern_of_import" fn F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_of_import_redecl.carbon: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR: extern_of_import.carbon:4:1: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR: fn F();
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 extern library "extern_of_import" fn F();
 
@@ -338,7 +350,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F();
+// CHECK:STDOUT: fn @F() [from "extern_of_import.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extern_library_on_definition.carbon
 // CHECK:STDOUT:

@@ -107,7 +107,7 @@ fn D();
 // CHECK:STDOUT:   %A.decl.loc6: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() {
+// CHECK:STDOUT: fn @A() [from "decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -197,7 +197,7 @@ fn D();
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C();
+// CHECK:STDOUT: fn @C() [from "decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- decl_only_in_impl.carbon
 // CHECK:STDOUT:

@@ -78,5 +78,3 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReadChar.2() -> %i32 = "read.char";
-// CHECK:STDOUT:

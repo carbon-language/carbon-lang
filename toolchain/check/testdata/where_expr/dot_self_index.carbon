@@ -210,8 +210,6 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Empty(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_17.2 => constants.%W
 // CHECK:STDOUT:   %W.patt.loc11_17.2 => constants.%W

@@ -125,5 +125,5 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   return %.loc5_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %array_type;
+// CHECK:STDOUT: fn @F() -> %array_type [from "library.carbon"];
 // CHECK:STDOUT:

@@ -180,7 +180,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.2) {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.2) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

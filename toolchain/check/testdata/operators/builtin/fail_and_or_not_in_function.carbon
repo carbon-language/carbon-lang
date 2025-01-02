@@ -123,8 +123,6 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:   %or_val: ref bool = bind_name or_val, %or_val.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param_patt: bool) -> type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
@@ -146,8 +144,6 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:   %.loc13_10: type = block_arg !if.expr.result
 // CHECK:STDOUT:   return %.loc13_10
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Float(%size.param_patt: Core.IntLiteral) -> type = "float.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

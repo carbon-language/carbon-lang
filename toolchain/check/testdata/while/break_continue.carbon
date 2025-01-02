@@ -160,8 +160,6 @@ fn While() {
 // CHECK:STDOUT:   %While.decl: %While.type = fn_decl @While [template = constants.%While] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> bool;

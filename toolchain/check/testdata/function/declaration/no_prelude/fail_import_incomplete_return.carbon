@@ -248,11 +248,11 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUnused() -> %C;
+// CHECK:STDOUT: fn @ReturnCUnused() -> %C [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUsed() -> %C;
+// CHECK:STDOUT: fn @ReturnCUsed() -> %C [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUnused() -> %D;
+// CHECK:STDOUT: fn @ReturnDUnused() -> %D [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUsed() -> %D;
+// CHECK:STDOUT: fn @ReturnDUsed() -> %D [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:

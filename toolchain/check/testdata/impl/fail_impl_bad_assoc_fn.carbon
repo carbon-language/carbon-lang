@@ -1021,8 +1021,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @PossiblyF();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%b.param_patt: bool);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3[%self.param_patt: %FExtraImplicitParam]();

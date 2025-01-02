@@ -80,8 +80,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @PartialConstant(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref <error> = var a
@@ -127,8 +125,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @KnownValueButNonConstantCondition(%x.param_patt: bool) {
 // CHECK:STDOUT: !entry:

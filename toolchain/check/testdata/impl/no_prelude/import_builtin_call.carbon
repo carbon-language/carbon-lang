@@ -563,14 +563,14 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   return %.loc9_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Add.type) {
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Add.type) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%N: Core.IntLiteral) {
+// CHECK:STDOUT: generic fn @Op.2(constants.%N: Core.IntLiteral) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.1)]
 // CHECK:STDOUT:
@@ -590,7 +590,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   return %.loc13_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Double(constants.%N: Core.IntLiteral) {
+// CHECK:STDOUT: generic fn @Double(constants.%N: Core.IntLiteral) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.1)]
@@ -1068,9 +1068,9 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%n.param_patt: Core.IntLiteral) -> type = "int.make_type_signed" [from "convert_symbolic.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(constants.%N.1: %i32.builtin) {
+// CHECK:STDOUT: generic fn @Make(constants.%N.1: %i32.builtin) [from "convert_symbolic.carbon"] {
 // CHECK:STDOUT:   %N: %i32.builtin = bind_symbolic_name N, 0 [symbolic = %N (constants.%N.1)]
 // CHECK:STDOUT:   %N.patt: %i32.builtin = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt.1)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call constants.%ToLiteral.1(%N) [symbolic = %int.convert_checked (constants.%int.convert_checked.1)]
@@ -1083,11 +1083,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   fn(%N.param_patt: %i32.builtin) -> @Make.%iN.builtin (%iN.builtin.1);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ToLiteral.1(%n.param_patt: %i32.builtin) -> Core.IntLiteral = "int.convert_checked";
+// CHECK:STDOUT: fn @ToLiteral.1(%n.param_patt: %i32.builtin) -> Core.IntLiteral = "int.convert_checked" [from "convert_symbolic.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @FromLiteral(%n.param_patt: Core.IntLiteral) -> %i32.builtin = "int.convert_checked";
+// CHECK:STDOUT: fn @FromLiteral(%n.param_patt: Core.IntLiteral) -> %i32.builtin = "int.convert_checked" [from "convert_symbolic.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @MakeFromClass(constants.%N.2: %OtherInt) {
+// CHECK:STDOUT: generic fn @MakeFromClass(constants.%N.2: %OtherInt) [from "convert_symbolic.carbon"] {
 // CHECK:STDOUT:   %N: %OtherInt = bind_symbolic_name N, 0 [symbolic = %N (constants.%N.2)]
 // CHECK:STDOUT:   %N.patt: %OtherInt = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt.2)]
 // CHECK:STDOUT:   %ToLiteral.bound: <bound method> = bound_method %N, constants.%ToLiteral.2 [symbolic = %ToLiteral.bound (constants.%ToLiteral.bound.1)]
@@ -1101,7 +1101,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   fn(%N.param_patt: %OtherInt) -> @MakeFromClass.%iN.builtin (%iN.builtin.2);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ToLiteral.2[%self.param_patt: %OtherInt]() -> Core.IntLiteral = "int.convert_checked";
+// CHECK:STDOUT: fn @ToLiteral.2[%self.param_patt: %OtherInt]() -> Core.IntLiteral = "int.convert_checked" [from "convert_symbolic.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

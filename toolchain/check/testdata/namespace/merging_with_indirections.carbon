@@ -212,5 +212,5 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %A;
+// CHECK:STDOUT: fn @F() -> %A [from "b.carbon"];
 // CHECK:STDOUT:

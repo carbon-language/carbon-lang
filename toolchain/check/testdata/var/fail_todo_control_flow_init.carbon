@@ -105,8 +105,6 @@ var y2: bool = false or true;
 // CHECK:STDOUT:   %y2: ref bool = bind_name y2, %y2.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [template = constants.%true]

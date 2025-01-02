@@ -83,8 +83,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T: <error>) {
 // CHECK:STDOUT:   %T.patt.loc8_6.2: <error> = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
@@ -136,8 +134,6 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %U: <error> = bind_symbolic_name U, 0, %U.param [template = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%U: <error>) {
 // CHECK:STDOUT:   %U.patt.loc8_6.2: <error> = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]

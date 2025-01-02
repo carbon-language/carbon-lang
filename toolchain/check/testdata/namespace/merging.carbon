@@ -194,9 +194,9 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B1();
+// CHECK:STDOUT: fn @B1() [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B2();
+// CHECK:STDOUT: fn @B2() [from "b.carbon"];
 // CHECK:STDOUT:

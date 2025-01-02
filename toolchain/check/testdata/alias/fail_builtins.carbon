@@ -51,5 +51,3 @@ alias b = bool;
 // CHECK:STDOUT:   %b: <error> = bind_alias b, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:

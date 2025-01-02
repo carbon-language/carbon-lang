@@ -89,6 +89,11 @@ class FunctionContext {
     return file_context_->GetTypeAsValue();
   }
 
+  // Returns a lowered value to use for a value of int literal type.
+  auto GetIntLiteralAsValue() -> llvm::Constant* {
+    return file_context_->GetIntLiteralAsValue();
+  }
+
   // Returns the instruction immediately after all the existing static allocas.
   // This is the insert point for future static allocas.
   auto GetInstructionAfterAllocas() const -> llvm::Instruction* {

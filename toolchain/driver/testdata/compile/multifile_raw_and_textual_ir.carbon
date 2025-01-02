@@ -8,9 +8,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/no_prelude/multifile_raw_and_textual_ir.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/multifile_raw_and_textual_ir.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/no_prelude/multifile_raw_and_textual_ir.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/multifile_raw_and_textual_ir.carbon
 
 // --- a.carbon
 package A;
@@ -105,6 +105,7 @@ fn B() {
 // CHECK:STDOUT:     ir1:             {decl_id: inst13, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: ir1, inst_id: inst13}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: ir1, inst_id: inst13}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst12, parent_scope: name_scope<invalid>, has_error: false, extended_scopes: [], names: {name1: inst14, name0: inst15}}
 // CHECK:STDOUT:     name_scope1:     {inst: inst14, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst20}}
@@ -212,5 +213,5 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A();
+// CHECK:STDOUT: fn @A() [from "a.carbon"];
 // CHECK:STDOUT:

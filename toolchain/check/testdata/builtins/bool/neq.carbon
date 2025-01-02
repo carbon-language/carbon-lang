@@ -168,8 +168,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Neq(%a.param_patt: bool, %b.param_patt: bool) -> bool = "bool.neq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @True() -> %C.2;
@@ -236,9 +234,6 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
-// CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -319,20 +314,9 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Bool() -> type = "bool.make_type";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @True() -> %C.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @False() -> %C.3;
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NotEqual.1(constants.%Self: %Eq.type) {
-// CHECK:STDOUT:   %Self: %Eq.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type)](%other.param_patt: @NotEqual.1.%Self.as_type (%Self.as_type)) -> bool;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.2[%self.param_patt: bool](%other.param_patt: bool) -> bool = "bool.neq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -372,10 +356,5 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %B.patt.loc4_9.2 => constants.%false
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @NotEqual.1(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

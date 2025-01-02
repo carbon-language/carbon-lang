@@ -56,30 +56,19 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [template]
-// CHECK:STDOUT:   %Self.1: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
-// CHECK:STDOUT:   %Self.as_type.1: type = facet_access_type %Self.1 [symbolic]
 // CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (@impl.1.%Op.decl) [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %C, %impl_witness.1 [template]
 // CHECK:STDOUT:   %AddAssign.type: type = facet_type <@AddAssign> [template]
-// CHECK:STDOUT:   %Self.2: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.3 [template]
-// CHECK:STDOUT:   %Self.as_type.2: type = facet_access_type %Self.2 [symbolic]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Self.as_type.2 [symbolic]
 // CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.2.%Op.decl) [template]
 // CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
 // CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.4 [template]
 // CHECK:STDOUT:   %Op.4: %Op.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %AddAssign.facet: %AddAssign.type = facet_value %C, %impl_witness.2 [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.3: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.3: type = facet_access_type %Self.3 [symbolic]
 // CHECK:STDOUT:   %TestAssign.type: type = fn_type @TestAssign [template]
 // CHECK:STDOUT:   %TestAssign: %TestAssign.type = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
@@ -89,7 +78,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Add = %import_ref.1
 // CHECK:STDOUT:     .AddAssign = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.10
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.43
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -213,22 +202,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.1(constants.%Self.1: %Add.type) {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.1)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type.1)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type.1)) -> @Op.1.%Self.as_type (%Self.as_type.1);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.2[%self.param_patt: %C](%other.param_patt: %C) -> %C;
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.3(constants.%Self.2: %AddAssign.type) {
-// CHECK:STDOUT:   %Self: %AddAssign.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.2)]
-// CHECK:STDOUT:   %ptr: type = ptr_type @Op.3.%Self.as_type (%Self.as_type.2) [symbolic = %ptr (constants.%ptr.1)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[addr <unexpected>.inst85: @Op.3.%ptr (%ptr.1)](%other.param_patt: @Op.3.%Self.as_type (%Self.as_type.2));
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Op.4[addr %self.param_patt: %ptr.2](%other.param_patt: %C);
 // CHECK:STDOUT:
@@ -242,15 +216,6 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc34: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref, <error>) to %.loc23
 // CHECK:STDOUT:   return %Op.call to %return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Convert(constants.%Dest: type, constants.%Self.3: %ImplicitAs.type.2) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2)]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.3)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.3)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Convert.%Self.as_type (%Self.as_type.3)]() -> @Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%b.param_patt: %D) {
@@ -269,34 +234,5 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %.loc48: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, <error>)
 // CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%Self.1) {
-// CHECK:STDOUT:   %Self => constants.%Self.1
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.1(constants.%Add.facet) {
-// CHECK:STDOUT:   %Self => constants.%Add.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.3(constants.%Self.2) {
-// CHECK:STDOUT:   %Self => constants.%Self.2
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.2
-// CHECK:STDOUT:   %ptr => constants.%ptr.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.3(constants.%AddAssign.facet) {
-// CHECK:STDOUT:   %Self => constants.%AddAssign.facet
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %ptr => constants.%ptr.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Convert(constants.%Dest, constants.%Self.3) {
-// CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2
-// CHECK:STDOUT:   %Self => constants.%Self.3
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

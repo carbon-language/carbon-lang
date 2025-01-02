@@ -4,6 +4,8 @@
 
 package Core library "prelude/operators/arithmetic";
 
+import library "prelude/types/int_literal";
+
 // Addition: `a + b`.
 interface Add {
   fn Op[self: Self](other: Self) -> Self;
@@ -67,4 +69,31 @@ interface Mod {
 // Modulo with assignment: `a %= b`.
 interface ModAssign {
   fn Op[addr self: Self*](other: Self);
+}
+
+
+// Operations for IntLiteral. These need to be here because IntLiteral has no
+// associated library of its own.
+impl IntLiteral() as Add {
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+}
+
+impl IntLiteral() as Div {
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+}
+
+impl IntLiteral() as Mod {
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
+}
+
+impl IntLiteral() as Mul {
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
+}
+
+impl IntLiteral() as Negate {
+  fn Op[self: Self]() -> Self = "int.snegate";
+}
+
+impl IntLiteral() as Sub {
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
