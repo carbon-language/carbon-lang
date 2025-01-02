@@ -460,6 +460,7 @@ auto MakeSelfSpecific(Context& context, SemIRLoc loc,
 
 auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool {
+  // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.is_valid(), "Specific with no generic ID");
