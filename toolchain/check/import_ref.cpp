@@ -187,6 +187,8 @@ class ImportRefResolver;
 struct ResolveResult {
   // The new constant value, if known.
   SemIR::ConstantId const_id;
+  // Newly created declaration whose value is being resolved, if any.
+  SemIR::InstId decl_id = SemIR::InstId::Invalid;
   // Whether resolution has been attempted once and needs to be retried.
   bool retry = false;
 
@@ -194,15 +196,18 @@ struct ResolveResult {
   // `const_id` is specified, then this is the end of the second phase, and the
   // constant value will be passed to the next resolution attempt. Otherwise,
   // this is the end of the first phase.
-  static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid)
+  static auto Retry(SemIR::ConstantId const_id = SemIR::ConstantId::Invalid,
+                    SemIR::InstId decl_id = SemIR::InstId::Invalid)
       -> ResolveResult {
-    return {.const_id = const_id, .retry = true};
+    return {.const_id = const_id, .decl_id = decl_id, .retry = true};
   }
 
   // Produces a resolve result that provides the given constant value. Requires
   // that there is no new work.
-  static auto Done(SemIR::ConstantId const_id) -> ResolveResult {
-    return {.const_id = const_id};
+  static auto Done(SemIR::ConstantId const_id,
+                   SemIR::InstId decl_id = SemIR::InstId::Invalid)
+      -> ResolveResult {
+    return {.const_id = const_id, .decl_id = decl_id};
   }
 };
 }  // namespace
@@ -455,7 +460,7 @@ class ImportRefResolver : public ImportContext {
 
       // Step 2: resolve the instruction.
       initial_work_ = work_stack_.size();
-      auto [new_const_id, retry] =
+      auto [new_const_id, _, retry] =
           TryResolveInst(*this, work.inst_id, existing.const_id);
       CARBON_CHECK(!HasNewWork() || retry);
 
@@ -1794,13 +1799,14 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                               import_function.implicit_param_patterns_id);
   LoadLocalPatternConstantIds(resolver, import_function.param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
+  auto& new_function = resolver.local_functions().Get(function_id);
 
   if (resolver.HasNewWork()) {
-    return ResolveResult::Retry(function_const_id);
+    return ResolveResult::Retry(function_const_id,
+                                new_function.first_decl_id());
   }
 
   // Add the function declaration.
-  auto& new_function = resolver.local_functions().Get(function_id);
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id = GetLocalParamPatternsId(
       resolver, import_function.implicit_param_patterns_id);
@@ -1815,7 +1821,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     new_function.definition_id = new_function.first_owning_decl_id;
   }
 
-  return ResolveResult::Done(function_const_id);
+  return ResolveResult::Done(function_const_id, new_function.first_decl_id());
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2740,6 +2746,11 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
                resolver.local_constant_values().GetInstId(result.const_id),
            .generic_id = GetLocalGenericId(resolver, generic_const_id),
            .index = symbolic_const.index});
+      if (result.decl_id.is_valid()) {
+        // Overwrite the abstract symbolic constant given initially to the
+        // declaration with its final concrete symbolic value.
+        resolver.local_constant_values().Set(result.decl_id, result.const_id);
+      }
     }
   } else {
     // Third phase: perform a consistency check and produce the constant we
