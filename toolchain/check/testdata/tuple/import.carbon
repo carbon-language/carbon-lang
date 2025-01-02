@@ -19,16 +19,16 @@ class C(X:! (i32, i32)) {}
 
 fn F() -> C((1, 2));
 
-// --- implicit.impl.carbon
+// --- fail_todo_implicit.impl.carbon
 
 impl package Implicit;
 
 var a: (i32,) = a_ref;
 var b: (((i32,), i32), (i32, i32)) = b_ref;
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C((1, 2))` to `C((<cannot stringify inst1025 kind Call>, <cannot stringify inst1034 kind Call>))` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_implicit.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C((1, 2))` to `C((<cannot stringify inst1025 kind Call>, <cannot stringify inst1034 kind Call>))` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var c: C((1, 2)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+4]]:1: note: type `C((1, 2))` does not implement interface `Core.ImplicitAs(C((<cannot stringify inst1025 kind Call>, <cannot stringify inst1034 kind Call>)))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_implicit.impl.carbon:[[@LINE+4]]:1: note: type `C((1, 2))` does not implement interface `Core.ImplicitAs(C((<cannot stringify inst1025 kind Call>, <cannot stringify inst1034 kind Call>)))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var c: C((1, 2)) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -265,7 +265,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X.patt.loc7_9.2 => constants.%tuple.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- fail_todo_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]

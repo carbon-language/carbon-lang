@@ -19,16 +19,16 @@ var b_ref: {.a: {.b: i32, .c: (i32,)}, .d: i32} =
 class C(S:! {.a: i32, .b: i32}) {}
 fn F() -> C({.a = 1, .b = 2});
 
-// --- implicit.impl.carbon
+// --- fail_todo_implicit.impl.carbon
 
 impl package Implicit;
 
 var a: {.a: i32} = a_ref;
 var b: {.a: {.b: i32, .c: (i32,)}, .d: i32} = b_ref;
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C({.a = 1, .b = 2})` to `C({.a = <cannot stringify inst1008 kind Call>, .b = <cannot stringify inst1017 kind Call>})` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_todo_implicit.impl.carbon:[[@LINE+7]]:1: error: cannot implicitly convert from `C({.a = 1, .b = 2})` to `C({.a = <cannot stringify inst1008 kind Call>, .b = <cannot stringify inst1017 kind Call>})` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var c: C({.a = 1, .b = 2}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: implicit.impl.carbon:[[@LINE+4]]:1: note: type `C({.a = 1, .b = 2})` does not implement interface `Core.ImplicitAs(C({.a = <cannot stringify inst1008 kind Call>, .b = <cannot stringify inst1017 kind Call>}))` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_todo_implicit.impl.carbon:[[@LINE+4]]:1: note: type `C({.a = 1, .b = 2})` does not implement interface `Core.ImplicitAs(C({.a = <cannot stringify inst1008 kind Call>, .b = <cannot stringify inst1017 kind Call>}))` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var c: C({.a = 1, .b = 2}) = F();
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -247,7 +247,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S.patt.loc8_9.2 => constants.%struct.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- fail_todo_implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
