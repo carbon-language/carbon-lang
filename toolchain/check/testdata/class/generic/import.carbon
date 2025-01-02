@@ -242,10 +242,6 @@ class Class(U:! type) {
 // CHECK:STDOUT: --- foo.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.2, @impl.1(%N) [symbolic]
-// CHECK:STDOUT:   %Convert.2: %Convert.type.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -271,14 +267,16 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.elem.2: type = unbound_element_type %CompleteClass.2, %i32 [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.1, @CompleteClass(%i32) [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.n.2: type = struct_type {.n: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
 // CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %Convert.2 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%N) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.val: %CompleteClass.2 = struct_value (%int.convert_checked) [symbolic]
+// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %CompleteClass.val: %CompleteClass.2 = struct_value (%int_1.2) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -374,17 +372,17 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param_patt: %CompleteClass.2 [from "foo.carbon"] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.2 = struct_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.9 = impl_witness_access constants.%impl_witness.19, element0 [symbolic = constants.%Convert.2]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [symbolic = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%N) [symbolic = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %Int = call %Convert.specific_fn(%int_1) [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc9_17.2: init %i32 = converted %int_1, %int.convert_checked [symbolic = constants.%int.convert_checked]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.9 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc9_17.2: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc9_17.3: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc9_17.4: init %i32 = initialize_from %.loc9_17.2 to %.loc9_17.3 [symbolic = constants.%int.convert_checked]
-// CHECK:STDOUT:   %.loc9_17.5: init %CompleteClass.2 = class_init (%.loc9_17.4), %return [symbolic = constants.%CompleteClass.val]
-// CHECK:STDOUT:   %.loc9_18: init %CompleteClass.2 = converted %.loc9_17.1, %.loc9_17.5 [symbolic = constants.%CompleteClass.val]
+// CHECK:STDOUT:   %.loc9_17.4: init %i32 = initialize_from %.loc9_17.2 to %.loc9_17.3 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %.loc9_17.5: init %CompleteClass.2 = class_init (%.loc9_17.4), %return [template = constants.%CompleteClass.val]
+// CHECK:STDOUT:   %.loc9_18: init %CompleteClass.2 = converted %.loc9_17.1, %.loc9_17.5 [template = constants.%CompleteClass.val]
 // CHECK:STDOUT:   return %.loc9_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
