@@ -270,13 +270,13 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.194
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.197
+// CHECK:STDOUT:     .Int = %import_ref.230
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.233
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.195: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.196 = import_ref Implicit//default, inst940 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.231: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.232 = import_ref Implicit//default, inst988 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -309,8 +309,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.196
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.195
+// CHECK:STDOUT:     .Self = imports.%import_ref.232
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.231
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,8 +395,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst940 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.230: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.231 = import_ref Implicit//default, inst988 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -423,8 +423,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.195
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.194
+// CHECK:STDOUT:     .Self = imports.%import_ref.231
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.230
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -481,12 +481,12 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.196
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.232
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst940 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.230: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.231 = import_ref Implicit//default, inst988 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -513,8 +513,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.195
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.194
+// CHECK:STDOUT:     .Self = imports.%import_ref.231
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.230
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

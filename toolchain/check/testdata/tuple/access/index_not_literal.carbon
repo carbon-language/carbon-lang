@@ -61,7 +61,7 @@ var d: i32 = a.({.index = 1 as i32}.index);
 // CHECK:STDOUT:     .Bool = %import_ref.1
 // CHECK:STDOUT:     .Int = %import_ref.2
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.6
-// CHECK:STDOUT:     .As = %import_ref.194
+// CHECK:STDOUT:     .As = %import_ref.230
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

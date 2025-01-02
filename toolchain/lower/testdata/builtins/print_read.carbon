@@ -16,7 +16,7 @@ fn ReadChar() -> i32 = "read.char";
 fn Main() {
   Core.Print(1);
 
-  let EOF: i32 = -(1 as i32);
+  let EOF: i32 = -1;
   while (ReadChar() != EOF) {
     // "Hi"
     if (PrintChar(0x48) != EOF) {

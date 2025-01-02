@@ -42,7 +42,7 @@ var arr: [i32; (1 as i32).(I.F)(2)];
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .As = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.193
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

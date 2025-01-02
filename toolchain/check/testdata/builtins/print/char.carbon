@@ -46,12 +46,12 @@ fn Main() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .PrintChar = %import_ref.193
+// CHECK:STDOUT:     .PrintChar = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//io
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.193: %PrintChar.type.2 = import_ref Core//io, PrintChar, loaded [template = constants.%PrintChar.2]
+// CHECK:STDOUT:   %import_ref.229: %PrintChar.type.2 = import_ref Core//io, PrintChar, loaded [template = constants.%PrintChar.2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,7 +95,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc16_13.2: %i32 = converted %int_1, %.loc16_13.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %print.char.loc16: init %i32 = call %PrintChar.ref.loc16(%.loc16_13.2)
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %PrintChar.ref.loc17: %PrintChar.type.2 = name_ref PrintChar, imports.%import_ref.193 [template = constants.%PrintChar.2]
+// CHECK:STDOUT:   %PrintChar.ref.loc17: %PrintChar.type.2 = name_ref PrintChar, imports.%import_ref.229 [template = constants.%PrintChar.2]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %impl.elem0.loc17: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc17: <bound method> = bound_method %int_2, %impl.elem0.loc17 [template = constants.%Convert.bound.2]

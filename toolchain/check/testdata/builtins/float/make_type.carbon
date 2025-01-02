@@ -102,7 +102,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Int = %import_ref.193
+// CHECK:STDOUT:     .Int = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -176,7 +176,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Int = %import_ref.193
+// CHECK:STDOUT:     .Int = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

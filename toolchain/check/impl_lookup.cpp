@@ -8,6 +8,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -113,6 +114,10 @@ auto LookupInterfaceWitness(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId type_const_id,
                             SemIR::ConstantId interface_const_id)
     -> SemIR::InstId {
+  if (type_const_id == SemIR::ErrorInst::SingletonConstantId ||
+      interface_const_id == SemIR::ErrorInst::SingletonConstantId) {
+    return SemIR::ErrorInst::SingletonInstId;
+  }
   auto import_irs =
       FindAssociatedImportIRs(context, type_const_id, interface_const_id);
   for (auto import_ir : import_irs) {

@@ -60,7 +60,7 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Float = %import_ref.193
+// CHECK:STDOUT:     .Float = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

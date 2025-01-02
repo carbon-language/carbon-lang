@@ -79,15 +79,21 @@ struct NoReturn {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<BoolType::SingletonInstId>;
 
+// Constraint that requires the type to be a sized integer type.
+struct AnySizedInt {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return sem_ir.types().Is<IntType>(type_id);
+  }
+};
+
 // Constraint that requires the type to be an integer type.
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<IntLiteralType::SingletonInstId>::Check(sem_ir, state,
-                                                            type_id)) {
-      return true;
-    }
-    return sem_ir.types().Is<IntType>(type_id);
+    return AnySizedInt::Check(sem_ir, state, type_id) ||
+           BuiltinType<IntLiteralType::SingletonInstId>::Check(sem_ir, state,
+                                                               type_id);
   }
 };
 
@@ -189,6 +195,10 @@ using IntT = TypeParam<0, AnyInt>;
 using IntU = TypeParam<1, AnyInt>;
 
 // Convenience name used in the builtin type signatures below for a first
+// generic type parameter that is constrained to be a sized integer type.
+using SizedIntT = TypeParam<0, AnySizedInt>;
+
+// Convenience name used in the builtin type signatures below for a first
 // generic type parameter that is constrained to be an float type.
 using FloatT = TypeParam<0, AnyFloat>;
 
@@ -196,16 +206,16 @@ using FloatT = TypeParam<0, AnyFloat>;
 constexpr BuiltinInfo None = {"", nullptr};
 
 // Prints a single character.
-constexpr BuiltinInfo PrintChar = {"print.char",
-                                   ValidateSignature<auto(AnyInt)->AnyInt>};
+constexpr BuiltinInfo PrintChar = {
+    "print.char", ValidateSignature<auto(AnySizedInt)->AnySizedInt>};
 
 // Prints an integer.
-constexpr BuiltinInfo PrintInt = {"print.int",
-                                  ValidateSignature<auto(AnyInt)->NoReturn>};
+constexpr BuiltinInfo PrintInt = {
+    "print.int", ValidateSignature<auto(AnySizedInt)->NoReturn>};
 
 // Reads a single character from stdin.
 constexpr BuiltinInfo ReadChar = {"read.char",
-                                  ValidateSignature<auto()->AnyInt>};
+                                  ValidateSignature<auto()->AnySizedInt>};
 
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
@@ -257,28 +267,28 @@ constexpr BuiltinInfo IntSMod = {"int.smod",
                                  ValidateSignature<auto(IntT, IntT)->IntT>};
 
 // "int.unegate": unsigned integer negation.
-constexpr BuiltinInfo IntUNegate = {"int.unegate",
-                                    ValidateSignature<auto(IntT)->IntT>};
+constexpr BuiltinInfo IntUNegate = {
+    "int.unegate", ValidateSignature<auto(SizedIntT)->SizedIntT>};
 
 // "int.uadd": unsigned integer addition.
-constexpr BuiltinInfo IntUAdd = {"int.uadd",
-                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUAdd = {
+    "int.uadd", ValidateSignature<auto(SizedIntT, SizedIntT)->SizedIntT>};
 
 // "int.usub": unsigned integer subtraction.
-constexpr BuiltinInfo IntUSub = {"int.usub",
-                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUSub = {
+    "int.usub", ValidateSignature<auto(SizedIntT, SizedIntT)->SizedIntT>};
 
 // "int.umul": unsigned integer multiplication.
-constexpr BuiltinInfo IntUMul = {"int.umul",
-                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUMul = {
+    "int.umul", ValidateSignature<auto(SizedIntT, SizedIntT)->SizedIntT>};
 
 // "int.udiv": unsigned integer division.
-constexpr BuiltinInfo IntUDiv = {"int.udiv",
-                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUDiv = {
+    "int.udiv", ValidateSignature<auto(SizedIntT, SizedIntT)->SizedIntT>};
 
 // "int.mod": integer modulo.
-constexpr BuiltinInfo IntUMod = {"int.umod",
-                                 ValidateSignature<auto(IntT, IntT)->IntT>};
+constexpr BuiltinInfo IntUMod = {
+    "int.umod", ValidateSignature<auto(SizedIntT, SizedIntT)->SizedIntT>};
 
 // "int.complement": integer bitwise complement.
 constexpr BuiltinInfo IntComplement = {"int.complement",
@@ -306,27 +316,27 @@ constexpr BuiltinInfo IntRightShift = {
 
 // "int.eq": integer equality comparison.
 constexpr BuiltinInfo IntEq = {"int.eq",
-                               ValidateSignature<auto(IntT, IntT)->Bool>};
+                               ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "int.neq": integer non-equality comparison.
 constexpr BuiltinInfo IntNeq = {"int.neq",
-                                ValidateSignature<auto(IntT, IntT)->Bool>};
+                                ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "int.less": integer less than comparison.
 constexpr BuiltinInfo IntLess = {"int.less",
-                                 ValidateSignature<auto(IntT, IntT)->Bool>};
+                                 ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "int.less_eq": integer less than or equal comparison.
 constexpr BuiltinInfo IntLessEq = {"int.less_eq",
-                                   ValidateSignature<auto(IntT, IntT)->Bool>};
+                                   ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "int.greater": integer greater than comparison.
 constexpr BuiltinInfo IntGreater = {"int.greater",
-                                    ValidateSignature<auto(IntT, IntT)->Bool>};
+                                    ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "int.greater_eq": integer greater than or equal comparison.
 constexpr BuiltinInfo IntGreaterEq = {
-    "int.greater_eq", ValidateSignature<auto(IntT, IntT)->Bool>};
+    "int.greater_eq", ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "float.negate": float negation.
 constexpr BuiltinInfo FloatNegate = {"float.negate",
@@ -411,8 +421,82 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
   return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
 }
 
-auto BuiltinFunctionKind::IsCompTimeOnly() const -> bool {
-  return *this == BuiltinFunctionKind::IntConvertChecked;
+auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
+                                         llvm::ArrayRef<InstId> arg_ids,
+                                         TypeId return_type_id) const -> bool {
+  // Some builtin functions are unconditionally compile-time-only, or
+  // unconditionally usable at runtime. However, we need to take extra care for
+  // builtins operating on an arbitrary integer type, because `Core.IntLiteral`
+  // has an empty runtime representation and a value of that type isn't
+  // necessarily a compile-time constant. For example, given:
+  //
+  // var n: Core.IntLiteral() = 123;
+  //
+  // we would be unable to lower a runtime operation such as `(1 as i32) << n`
+  // because the runtime representation of `n` doesn't track its value at all.
+  // So we treat operations involving `Core.IntLiteral` as being
+  // compile-time-only.
+  switch (*this) {
+    case IntConvertChecked:
+      // Checked integer conversions are compile-time only.
+      return true;
+
+    case IntSNegate:
+    case IntComplement:
+    case IntSAdd:
+    case IntSSub:
+    case IntSMul:
+    case IntSDiv:
+    case IntSMod:
+    case IntAnd:
+    case IntOr:
+    case IntXor:
+      // Integer builtins producing an IntLiteral are compile-time only.
+      // TODO: We could allow these at runtime and just produce an empty struct
+      // result. Should we?
+      return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
+
+    case IntLeftShift:
+    case IntRightShift:
+      // Shifts by an integer literal amount are compile-time only. We don't
+      // have a value for the shift amount at runtime in general.
+      // TODO: Decide how shifting a non-literal by a literal amount should
+      // work. We could support these with a builtin in the case where the shift
+      // amount has a compile-time value, or we could perform a conversion in
+      // the prelude.
+      if (sem_ir.types().Is<SemIR::IntLiteralType>(
+              sem_ir.insts().Get(arg_ids[1]).type_id())) {
+        return true;
+      }
+
+      // Integer builtins producing an IntLiteral are compile-time only.
+      // TODO: We could allow these at runtime and just produce an empty struct
+      // result. Should we?
+      return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
+
+    case IntEq:
+    case IntNeq:
+    case IntLess:
+    case IntLessEq:
+    case IntGreater:
+    case IntGreaterEq:
+      // Comparisons involving an integer literal operand are compile-time only.
+      // We don't have a value for an integer literal operand argument at
+      // runtime in general.
+      // TODO: Figure out how mixed literal / non-literal comparisons should
+      // work. We could support these with builtins in the case where the
+      // operand has a compile-time value, or we could perform a conversion in
+      // the prelude.
+      return sem_ir.types().Is<SemIR::IntLiteralType>(
+                 sem_ir.insts().Get(arg_ids[0]).type_id()) ||
+             sem_ir.types().Is<SemIR::IntLiteralType>(
+                 sem_ir.insts().Get(arg_ids[1]).type_id());
+
+    default:
+      // TODO: Should the sized MakeType functions be compile-time only? We
+      // can't produce diagnostics for bad sizes at runtime.
+      return false;
+  }
 }
 
 }  // namespace Carbon::SemIR

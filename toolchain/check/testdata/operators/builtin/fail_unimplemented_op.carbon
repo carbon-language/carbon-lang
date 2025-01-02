@@ -9,10 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Add` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return 12 + 34;
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Add` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   return {} + 34;
   // CHECK:STDERR:          ^~~~~~~
-  return 12 + 34;
+  return {} + 34;
 }
 
 // CHECK:STDOUT: --- fail_unimplemented_op.carbon
@@ -22,7 +22,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %int_34: Core.IntLiteral = int_value 34 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -54,7 +54,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
+// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %int_34: Core.IntLiteral = int_value 34 [template = constants.%int_34]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

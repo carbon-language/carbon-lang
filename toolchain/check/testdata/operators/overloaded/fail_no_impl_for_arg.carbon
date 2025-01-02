@@ -78,7 +78,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Add = %import_ref.1
 // CHECK:STDOUT:     .AddAssign = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.10
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.43
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

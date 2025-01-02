@@ -9,9 +9,9 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_negative_indexing.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:17: error: cannot access member of interface `Core.Negate` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+3]]:14: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var b: i32 = a.(-10);
-// CHECK:STDERR:                 ^~~
+// CHECK:STDERR:              ^~~~~~~
 var b: i32 = a.(-10);
 
 // CHECK:STDOUT: --- fail_negative_indexing.carbon
@@ -35,13 +35,19 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %int_6.2: %i32 = int_value 6 [template]
 // CHECK:STDOUT:   %tuple: %tuple.type.2 = tuple_value (%int_12.2, %int_6.2) [template]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template]
+// CHECK:STDOUT:   %Op.type.13: type = fn_type @Op.13 [template]
+// CHECK:STDOUT:   %Op.type.14: type = fn_type @Op.14 [template]
+// CHECK:STDOUT:   %Op.14: %Op.type.14 = struct_value () [template]
+// CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Op.14) [template]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.14 [template]
+// CHECK:STDOUT:   %int_-10: Core.IntLiteral = int_value -10 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Negate = %import_ref.193
+// CHECK:STDOUT:     .Negate = %import_ref.229
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -84,6 +90,11 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.2 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
+// CHECK:STDOUT:   %impl.elem0.loc15: %Op.type.13 = interface_witness_access constants.%interface.20, element0 [template = constants.%Op.14]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc15 [template = constants.%Op.bound]
+// CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound(%int_10) [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc15_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc15_17.2: Core.IntLiteral = converted %int.snegate, %.loc15_17.1 [template = constants.%int_-10]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
