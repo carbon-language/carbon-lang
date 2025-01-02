@@ -135,10 +135,7 @@ static auto CheckAssociatedFunctionImplementation(
 // Builds an initial empty witness.
 auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     -> SemIR::InstId {
-  // FIXME: CARBON_CHECK(!impl.has_started_definition());
-  CARBON_CHECK(!impl.is_being_defined());
-  CARBON_CHECK(!impl.is_defined());
-  // FIXME
+  CARBON_CHECK(!impl.has_definition_started());
 
   auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
   if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
