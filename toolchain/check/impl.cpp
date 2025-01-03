@@ -202,14 +202,11 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
         break;
       }
       case CARBON_KIND(SemIR::AssociatedConstantDecl associated): {
-        // TODO: Allow these using:
-        // table.push_back(SemIR::InstId::Invalid);
-        // break;
-        context.TODO(
-            impl.latest_decl_id(),
-            "impl of interface with associated constant " +
-                context.names().GetFormatted(associated.name_id).str());
-        return SemIR::ErrorInst::SingletonInstId;
+        llvm::errs() << "associated: " << associated << " name: "
+                     << context.names().GetFormatted(associated.name_id).str()
+                     << "\n";
+        table.push_back(SemIR::InstId::Invalid);
+        break;
       }
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::SingletonInstId,
