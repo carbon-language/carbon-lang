@@ -182,6 +182,20 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":file",
+        ":stringify_type",
+        "//common:ostream",
+    ],
+    # Always link dump methods so they are callable from a debugger
+    # even though they are never called.
+    alwayslink = 1,
+)
+
 cc_test(
     name = "name_scope_test",
     size = "small",
