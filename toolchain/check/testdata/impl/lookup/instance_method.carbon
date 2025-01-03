@@ -37,10 +37,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.1 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %C [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.2) [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.3 [template]
@@ -125,11 +125,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @C.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -137,6 +136,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -158,7 +158,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %F.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %impl.elem0: %F.type.1 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.2]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: %i32 = value_of_initializer %F.call

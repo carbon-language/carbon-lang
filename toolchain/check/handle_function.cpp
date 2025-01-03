@@ -261,7 +261,7 @@ static auto BuildFunctionDecl(Context& context,
     if (function_info.is_extern && context.IsImplFile()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
-    function_info.generic_id = FinishGenericDecl(context, decl_id);
+    function_info.generic_id = BuildGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
     FinishGenericRedecl(context, decl_id, function_info.generic_id);

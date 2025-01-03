@@ -288,12 +288,12 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.loc5 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@G.%T.loc6) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.loc6 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@G.%T.loc6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(%T.loc4_13.2) {}
 // CHECK:STDOUT:
@@ -456,13 +456,13 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B(@F.%T.loc6, @F.%N.loc6) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T.loc6 => constants.%T
 // CHECK:STDOUT:   %N.loc6 => constants.%N
 // CHECK:STDOUT:   %B => constants.%B
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(@F.%T.loc6, @F.%N.loc6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(%T, %N.loc5_11.2) {}
 // CHECK:STDOUT:

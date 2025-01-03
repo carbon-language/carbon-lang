@@ -206,8 +206,6 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %complete_type.loc22_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
@@ -215,12 +213,14 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %ptr.loc12_38.1 => constants.%ptr.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetValue.%T) {}
+// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetValue(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@GetValue.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:

@@ -141,12 +141,12 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@F.%T.loc13) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc13 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@F.%T.loc13) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:

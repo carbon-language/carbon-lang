@@ -89,15 +89,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
+// CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %Equal.1: %Equal.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
-// CHECK:STDOUT:   %NotEqual.1: %NotEqual.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.2: type = fn_type @Equal.2 [template]
+// CHECK:STDOUT:   %Equal.2: %Equal.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %NotEqual.type.2: type = fn_type @NotEqual.2 [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Equal.1, %NotEqual.1) [template]
+// CHECK:STDOUT:   %NotEqual.2: %NotEqual.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
@@ -128,6 +128,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.1 [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -171,7 +172,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Eq.ref {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.2 = fn_decl @Equal.2 [template = constants.%Equal.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -191,7 +192,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.2 = fn_decl @NotEqual.2 [template = constants.%NotEqual.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -211,12 +212,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Equal = %Equal.decl
 // CHECK:STDOUT:   .NotEqual = %NotEqual.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -227,15 +227,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestEqual(%a.param_patt: %C, %b.param_patt: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.1 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.2]
 // CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
@@ -247,7 +247,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %NotEqual.type.2 = interface_witness_access constants.%interface, element1 [template = constants.%NotEqual.1]
+// CHECK:STDOUT:   %impl.elem1: %NotEqual.type.1 = impl_witness_access constants.%impl_witness, element1 [template = constants.%NotEqual.2]
 // CHECK:STDOUT:   %NotEqual.bound: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %NotEqual.call: init bool = call %NotEqual.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
@@ -359,14 +359,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
+// CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type.1: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %Equal.1: %Equal.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %NotEqual.type.1: type = fn_type @NotEqual.1 [template]
-// CHECK:STDOUT:   %NotEqual.1: %NotEqual.type.1 = struct_value () [template]
 // CHECK:STDOUT:   %Equal.type.2: type = fn_type @Equal.2 [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Equal.1, %NotEqual.1) [template]
+// CHECK:STDOUT:   %Equal.2: %Equal.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %NotEqual.type.2: type = fn_type @NotEqual.2 [template]
+// CHECK:STDOUT:   %NotEqual.2: %NotEqual.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLhsBad.type: type = fn_type @TestLhsBad [template]
@@ -400,6 +400,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.1 [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [template = constants.%TestRhsBad] {
 // CHECK:STDOUT:     %a.patt: %C = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %C = value_param_pattern %a.patt, runtime_param0
@@ -443,7 +444,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Eq.ref {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.1 = fn_decl @Equal.1 [template = constants.%Equal.1] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.2 = fn_decl @Equal.2 [template = constants.%Equal.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -463,7 +464,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.1 = fn_decl @NotEqual.1 [template = constants.%NotEqual.1] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.2 = fn_decl @NotEqual.2 [template = constants.%NotEqual.2] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -483,12 +484,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Equal.decl, %NotEqual.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Equal = %Equal.decl
 // CHECK:STDOUT:   .NotEqual = %NotEqual.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -507,15 +507,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.1[%self.param_patt: %C](%other.param_patt: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.2[%self.param_patt: %C](%other.param_patt: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRhsBad(%a.param_patt: %C, %b.param_patt: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %Equal.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Equal.1]
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.1 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.2]
 // CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23_15: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, <error>)

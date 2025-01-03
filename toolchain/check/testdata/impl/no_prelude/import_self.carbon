@@ -107,15 +107,15 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.1: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %Op.1: %Op.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl) [template]
 // CHECK:STDOUT:   %Op.type.2: type = fn_type @Op.2 [template]
 // CHECK:STDOUT:   %Op.2: %Op.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %empty_tuple.type, %empty_tuple.type [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.1) [template]
+// CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %empty_tuple.type, %impl_witness [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.2 [template]
+// CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.1 [template]
 // CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,7 +123,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Add, loaded [template = constants.%Add.type]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.3: %Op.assoc_type = import_ref Main//a, loc5_41, loaded [template = constants.%assoc0]
-// CHECK:STDOUT:   %import_ref.4: %Op.type.2 = import_ref Main//a, Op, loaded [template = constants.%Op.2]
+// CHECK:STDOUT:   %import_ref.4: %Op.type.1 = import_ref Main//a, Op, loaded [template = constants.%Op.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -137,6 +137,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%Add.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Op.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
@@ -172,7 +173,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc6_7.2 as %Add.ref {
-// CHECK:STDOUT:   %Op.decl: %Op.type.1 = fn_decl @Op.1 [template = constants.%Op.1] {
+// CHECK:STDOUT:   %Op.decl: %Op.type.2 = fn_decl @Op.2 [template = constants.%Op.2] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %empty_tuple.type = binding_pattern other
@@ -190,14 +191,20 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%Op.decl) [template = constants.%interface]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Op.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Op.1[%self.param_patt: %empty_tuple.type](%other.param_patt: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: generic fn @Op.1(constants.%Self: %Add.type) [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn[%self.param_patt: @Op.1.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.1.%Self.as_type (%Self.as_type)) -> @Op.1.%Self.as_type (%Self.as_type);
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Op.2[%self.param_patt: %empty_tuple.type](%other.param_patt: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_52: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
@@ -205,19 +212,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc7_53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Op.2(constants.%Self: %Add.type) [from "a.carbon"] {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: @Op.2.%Self.as_type (%Self.as_type)](%other.param_patt: @Op.2.%Self.as_type (%Self.as_type)) -> @Op.2.%Self.as_type (%Self.as_type);
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param_patt: %empty_tuple.type, %y.param_patt: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Op.assoc_type = name_ref Op, imports.%import_ref.3 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %Op.type.2 = interface_witness_access constants.%interface, element0 [template = constants.%Op.1]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.1 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.2]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%x.ref, %y.ref)
@@ -228,12 +228,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   return %.loc11_23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(constants.%Self) {
+// CHECK:STDOUT: specific @Op.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Op.2(constants.%Add.facet) {
+// CHECK:STDOUT: specific @Op.1(constants.%Add.facet) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%empty_tuple.type
 // CHECK:STDOUT: }

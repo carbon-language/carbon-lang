@@ -81,16 +81,16 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, @WithAssocFn.%F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %Simple.type.3: type = facet_type <@Simple, @Simple(%C)> [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness () [template]
+// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness () [template]
 // CHECK:STDOUT:   %WithAssocFn.type.3: type = facet_type <@WithAssocFn, @WithAssocFn(%C)> [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @WithAssocFn(%C) [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %WithAssocFn.type.3, %F.type.2 [template]
 // CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, @WithAssocFn.%F.decl [template]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.2.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.2 = facet_value %C, %C [symbolic]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%F.3) [template]
+// CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.2 = facet_value %C, %impl_witness.2 [symbolic]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [template]
 // CHECK:STDOUT:   %N: %T.1 = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T.1 = symbolic_binding_pattern N, 1 [symbolic]
@@ -227,10 +227,8 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %Simple.type {
-// CHECK:STDOUT:   %interface: <witness> = interface_witness () [template = constants.%interface.1]
-// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @C.%impl_witness.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %WithAssocFn.type {
@@ -242,11 +240,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %return.param: ref %X = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl) [template = constants.%interface.2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @C.%impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -264,12 +261,14 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [template = constants.%Simple.type.3]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [template = constants.%impl_witness.1]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type.1 = name_ref WithAssocFn, file.%WithAssocFn.decl [template = constants.%WithAssocFn.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(constants.%C)> [template = constants.%WithAssocFn.type.3]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.2.%F.decl) [template = constants.%impl_witness.2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
