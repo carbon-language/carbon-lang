@@ -404,6 +404,8 @@ static auto CheckRedeclParamSyntax(Context& context,
   // some difference inside the range because the range includes parameter
   // brackets. As a consequence, we don't explicitly handle different range
   // sizes here.
+  // TODO: This argument doesn't apply to `impl` declarations which don't have
+  // parameter brackets.
   for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
       if (!diagnose) {

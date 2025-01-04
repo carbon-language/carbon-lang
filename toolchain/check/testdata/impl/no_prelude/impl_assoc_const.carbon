@@ -36,6 +36,9 @@ library "[[@TEST_NAME]]";
 
 interface J { let U:! type; }
 
+// TODO: These two impl declarations are not matching due to a not-yet-done
+// TODO to exclude `where` clauses from `impl` declaration syntactic match.
+
 // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
 // CHECK:STDERR: impl () as J where .U = {};
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
