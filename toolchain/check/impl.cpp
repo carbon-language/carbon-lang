@@ -261,8 +261,20 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     auto& rewrite_value = rewrite_values[access.index.index];
     if (rewrite_value.is_valid()) {
       if (rewrite_value != rewrite.rhs_const_id) {
-        // FIXME: Diagnostic: constraint assigns two different values to
-        // associated constant
+        // TODO: Instead do this checking as part of facet type resolution.
+
+        // TODO: Figure out how to print the two different values
+        // `rewrite_value` & `rewrite.rhs_const_id` in the diagnostic message.
+        CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
+                          "associated constant {0} given two different values",
+                          SemIR::NameId);
+        auto decl_id = assoc_entities[access.index.index];
+        CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
+        auto decl =
+            context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
+        context.emitter().Emit(impl.constraint_id,
+                               AssociatedConstantWithDifferentValues,
+                               decl.name_id);
       }
     } else {
       rewrite_value = rewrite.rhs_const_id;
@@ -344,11 +356,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
       auto& witness_value = witness_block[index];
       if (!witness_value.is_valid()) {
-        llvm::errs() << "no value assigned to associated: " << *decl
-                     << " name: "
-                     << context.names().GetFormatted(decl->name_id).str()
-                     << "\n";
-        // FIXME: Diagnostic: no value assigned to associated constant.
+        CARBON_DIAGNOSTIC(AssociatedConstantNeedsValue, Error,
+                          "associated constant {0} not given a value",
+                          SemIR::NameId);
+        // FIXME: Note declaration of associated constant in interface
+        context.emitter().Emit(impl.constraint_id, AssociatedConstantNeedsValue,
+                               decl->name_id);
         witness_value = SemIR::ErrorInst::SingletonInstId;
       }
     }

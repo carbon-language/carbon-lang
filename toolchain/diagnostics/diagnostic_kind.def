@@ -248,6 +248,7 @@ CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 
 // Impl checking.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantNeedsValue)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAs)
@@ -402,6 +403,7 @@ CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // Where operator and its requirements.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 

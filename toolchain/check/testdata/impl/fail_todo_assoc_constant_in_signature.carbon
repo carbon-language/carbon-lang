@@ -4,23 +4,23 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_todo_assoc_constant_as_param_type.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_todo_assoc_constant_in_signature.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_todo_assoc_constant_as_param_type.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_todo_assoc_constant_in_signature.carbon
 
 interface J {
   let U:! type;
-  // CHECK:STDERR: fail_todo_assoc_constant_as_param_type.carbon:[[@LINE+14]]:23: error: cannot implicitly convert from `<associated type in J>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_assoc_constant_in_signature.carbon:[[@LINE+14]]:23: error: cannot implicitly convert from `<associated type in J>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                       ^
-  // CHECK:STDERR: fail_todo_assoc_constant_as_param_type.carbon:[[@LINE+11]]:23: note: type `<associated type in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_assoc_constant_in_signature.carbon:[[@LINE+11]]:23: note: type `<associated type in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_assoc_constant_as_param_type.carbon:[[@LINE+7]]:29: error: cannot implicitly convert from `<associated type in J>` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_assoc_constant_in_signature.carbon:[[@LINE+7]]:29: error: cannot implicitly convert from `<associated type in J>` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                             ^
-  // CHECK:STDERR: fail_todo_assoc_constant_as_param_type.carbon:[[@LINE+4]]:29: note: type `<associated type in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_assoc_constant_in_signature.carbon:[[@LINE+4]]:29: note: type `<associated type in J>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self](u: U) -> U;
   // CHECK:STDERR:                             ^
   // CHECK:STDERR:
@@ -34,13 +34,13 @@ impl () as J where .U = {} {
 class C {}
 
 impl C as J where .U = C {
-  // CHECK:STDERR: fail_todo_assoc_constant_as_param_type.carbon:[[@LINE+3]]:40: error: cannot copy value of type `C` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_todo_assoc_constant_in_signature.carbon:[[@LINE+3]]:40: error: cannot copy value of type `C` [CopyOfUncopyableType]
   // CHECK:STDERR:   fn F[self: Self](u: C) -> C { return self; }
   // CHECK:STDERR:                                        ^~~~
   fn F[self: Self](u: C) -> C { return self; }
 }
 
-// CHECK:STDOUT: --- fail_todo_assoc_constant_as_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_assoc_constant_in_signature.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]

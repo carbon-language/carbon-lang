@@ -296,6 +296,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
+  // TODO: Determine `interface_id` and `specific_id` once instead of in
+  // multiple functions called below.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -325,6 +327,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Add the impl declaration.
   bool invalid_redeclaration = false;
+  // FIXME: What should this do this if `self_id` or `constraint_id` are bogus?
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
