@@ -15,6 +15,22 @@ interface I { let T:! type; }
 
 impl () as I where .T = {} {}
 
+// --- redecl.carbon
+library "[[@TEST_NAME]]";
+
+interface I2 { let T2:! type; }
+
+impl () as I2 where .T2 = {};
+impl () as I2 where .T2 = {} {}
+
+// --- redecl_adds_rewrites.carbon
+library "[[@TEST_NAME]]";
+
+interface I3 { let T3:! type; }
+
+impl () as I3;
+impl () as I3 where .T3 = {} {}
+
 // --- fail_mismatch.carbon
 library "[[@TEST_NAME]]";
 
@@ -33,6 +49,10 @@ library "[[@TEST_NAME]]";
 interface K { let V:! type; }
 
 impl () as K where .V = {};
+// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+4]]:1: error: associated constant V given value in declaration but not redeclaration [AssociatedConstantMissingInRedecl]
+// CHECK:STDERR: impl () as K {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as K {}
 
 // --- fail_two_different.carbon
@@ -130,6 +150,136 @@ impl () as M where .Z = {.b = {}} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- redecl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I2.type: type = facet_type <@I2> [template]
+// CHECK:STDOUT:   %Self: %I2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I2.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I2.%T2 [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %.Self: %I2.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %I2_where.type: type = facet_type <@I2 where %impl.elem0 = %empty_struct_type> [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_struct_type) [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .I2 = %I2.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I2.decl: type = interface_decl @I2 [template = constants.%I2.type] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc5_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_7.2: type = converted %.loc5_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I2.ref.loc5: type = name_ref I2, file.%I2.decl [template = constants.%I2.type]
+// CHECK:STDOUT:     %.Self.1: %I2.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc5: %I2.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T2.ref.loc5: %assoc_type = name_ref T2, @I2.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc5: <witness> = facet_access_witness %.Self.ref.loc5 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access %.Self.as_wit.loc5, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc5_28.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_28.2: type = converted %.loc5_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc5_15: type = where_expr %.Self.1 [template = constants.%I2_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc5, %.loc5_28.2
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I2.ref.loc6: type = name_ref I2, file.%I2.decl [template = constants.%I2.type]
+// CHECK:STDOUT:     %.Self.2: %I2.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc6: %I2.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T2.ref.loc6: %assoc_type = name_ref T2, @I2.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc6: <witness> = facet_access_witness %.Self.ref.loc6 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc6: type = impl_witness_access %.Self.as_wit.loc6, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc6_28.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_28.2: type = converted %.loc6_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc6_15: type = where_expr %.Self.2 [template = constants.%I2_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6, %.loc6_28.2
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @I2 {
+// CHECK:STDOUT:   %Self: %I2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %T2: type = assoc_const_decl T2 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T2 [template = constants.%assoc0]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .T2 = %assoc0
+// CHECK:STDOUT:   witness = (%T2)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_15 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- redecl_adds_rewrites.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I3.type: type = facet_type <@I3> [template]
+// CHECK:STDOUT:   %Self: %I3.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I3.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I3.%T3 [template]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_struct_type) [template]
+// CHECK:STDOUT:   %.Self: %I3.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %I3_where.type: type = facet_type <@I3 where %impl.elem0 = %empty_struct_type> [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .I3 = %I3.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I3.decl: type = interface_decl @I3 [template = constants.%I3.type] {} {}
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc5_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_7.2: type = converted %.loc5_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I3.ref.loc5: type = name_ref I3, file.%I3.decl [template = constants.%I3.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
+// CHECK:STDOUT:   impl_decl @impl [template] {} {
+// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %I3.ref.loc6: type = name_ref I3, file.%I3.decl [template = constants.%I3.type]
+// CHECK:STDOUT:     %.Self: %I3.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref: %I3.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %T3.ref: %assoc_type = name_ref T3, @I3.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc6_28.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_28.2: type = converted %.loc6_28.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc6_15: type = where_expr %.Self [template = constants.%I3_where.type] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc6_28.2
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @I3 {
+// CHECK:STDOUT:   %Self: %I3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %T3: type = assoc_const_decl T3 [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T3 [template = constants.%assoc0]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .T3 = %assoc0
+// CHECK:STDOUT:   witness = (%T3)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl: %.loc5_7.2 as %I3.ref.loc5 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
@@ -247,9 +397,9 @@ impl () as M where .Z = {.b = {}} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %K.ref.loc6: type = name_ref K, file.%K.decl [template = constants.%K.type]
+// CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %K.ref.loc10: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

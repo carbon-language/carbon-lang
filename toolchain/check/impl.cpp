@@ -297,20 +297,28 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
       auto rewrite_value = rewrite_values[index];
       if (witness_value.is_valid()) {
         if (!rewrite_value.is_valid()) {
-          // FIXME: Diagnostic: associated constant given value in declaration
-          // but not redeclaration.
-          llvm::errs() << "not redeclared associated: " << *decl << " name: "
-                       << context.names().GetFormatted(decl->name_id).str()
-                       << "\n";
+          CARBON_DIAGNOSTIC(AssociatedConstantMissingInRedecl, Error,
+                            "associated constant {0} given value in "
+                            "declaration but not redeclaration",
+                            SemIR::NameId);
+          // FIXME: Add note pointing to previous declaration.
+          context.emitter().Emit(impl.latest_decl_id(),
+                                 AssociatedConstantMissingInRedecl,
+                                 decl->name_id);
           continue;
         }
         auto witness_const_id = context.constant_values().Get(witness_value);
         if (witness_const_id != rewrite_value) {
-          // FIXME: Diagnostic: redeclaration with different value for
-          // associated constant
-          llvm::errs() << "different associated: " << *decl << " name: "
-                       << context.names().GetFormatted(decl->name_id).str()
-                       << "\n";
+          // TODO: Figure out how to print the two different values
+          // FIXME: Add note pointing to previous declaration.
+          CARBON_DIAGNOSTIC(
+              AssociatedConstantDifferentInRedecl, Error,
+              "redeclaration with different value for associated constant",
+              SemIR::NameId);
+          // TODO: Add note pointing to previous declaration.
+          context.emitter().Emit(impl.latest_decl_id(),
+                                 AssociatedConstantDifferentInRedecl,
+                                 decl->name_id);
           continue;
         }
       } else if (rewrite_value.is_valid()) {

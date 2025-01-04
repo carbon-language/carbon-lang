@@ -297,7 +297,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
   // TODO: Determine `interface_id` and `specific_id` once instead of in
-  // multiple functions called below.
+  // multiple functions called below. Potentially skip work below if
+  // `interface_id` is invalid.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
