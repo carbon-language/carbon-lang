@@ -228,6 +228,10 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     do {
       node_kind = context.parse_tree().node_kind(*last_param_iter);
       if (node_kind == Parse::NodeKind::WhereExpr) {
+        // If we have a nested `where`, we need to see another `WhereOperand`
+        // before we find the one that matches our original `WhereExpr` node.
+
+        // FIXME: Add test for this case.
         ++where_operands_to_skip;
       } else if (node_kind == Parse::NodeKind::WhereOperand) {
         --where_operands_to_skip;
@@ -241,6 +245,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   CARBON_CHECK(node_kind == Parse::NodeKind::ImplIntroducer);
   ++first_param_iter;
   // Skip `Self as` or `as` at the beginning, so they match each other.
+  // FIXME: How do we handle the `impl forall ...` case?
   node_kind = context.parse_tree().node_kind(*first_param_iter);
   if (node_kind == Parse::NodeKind::SelfTypeNameExpr) {
     // Skip `Self`.
