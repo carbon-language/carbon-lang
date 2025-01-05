@@ -218,7 +218,8 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
                node_kind == Parse::NodeKind::ImplDecl);
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
   --last_param_iter;
-  // Following proposal #3763, exclude a final `where` clause, if present.
+  // Following proposal #3763, exclude a final `where` clause, if present. See:
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
   node_kind = context.parse_tree().node_kind(*last_param_iter);
   if (node_kind == Parse::NodeKind::WhereExpr) {
     int where_operands_to_skip = 1;
@@ -235,8 +236,27 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       CARBON_CHECK(last_param_iter > first_param_iter);
     } while (where_operands_to_skip > 0);
   }
-  // TODO: also add `Self` before `as` if needed, see:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+  // Skip `impl` at the beginning, so we can inspect what follows.
+  node_kind = context.parse_tree().node_kind(*first_param_iter);
+  CARBON_CHECK(node_kind == Parse::NodeKind::ImplIntroducer);
+  ++first_param_iter;
+  // Skip `Self as` or `as` at the beginning, so they match each other.
+  node_kind = context.parse_tree().node_kind(*first_param_iter);
+  if (node_kind == Parse::NodeKind::SelfTypeNameExpr) {
+    // Skip `Self`.
+    ++first_param_iter;
+    node_kind = context.parse_tree().node_kind(*first_param_iter);
+    if (node_kind == Parse::NodeKind::TypeImplAs) {
+      // Skip `as`.
+      ++first_param_iter;
+    } else {
+      // Undo skipping initial `Self` if it isn't followed by `as`
+      --first_param_iter;
+    }
+  } else if (node_kind == Parse::NodeKind::DefaultSelfImplAs) {
+    // Skip `as` with no type before it.
+    ++first_param_iter;
+  }
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
