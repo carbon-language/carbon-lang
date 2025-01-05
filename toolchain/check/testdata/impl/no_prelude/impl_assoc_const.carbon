@@ -36,9 +36,6 @@ library "[[@TEST_NAME]]";
 
 interface J { let U:! type; }
 
-// TODO: These two impl declarations are not matching due to a not-yet-done
-// TODO to exclude `where` clauses from `impl` declaration syntactic match.
-
 impl () as J where .U = {};
 // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+4]]:1: error: redeclaration with different value for associated constant U [AssociatedConstantDifferentInRedecl]
 // CHECK:STDERR: impl () as J where .U = () {}
@@ -310,34 +307,34 @@ impl () as M where .Z = {.b = {}} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [template = constants.%J.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %J.ref.loc8: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:     %.loc5_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_7.2: type = converted %.loc5_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %J.ref.loc5: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self.1: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc8: %J.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %U.ref.loc8: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit.loc8: <witness> = facet_access_witness %.Self.ref.loc8 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc8: type = impl_witness_access %.Self.as_wit.loc8, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc8_26.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc8_26.2: type = converted %.loc8_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc8_14: type = where_expr %.Self.1 [template = constants.%J_where.type.1] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc8, %.loc8_26.2
+// CHECK:STDOUT:     %.Self.ref.loc5: %J.type = name_ref .Self, %.Self.1 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %U.ref.loc5: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc5: <witness> = facet_access_witness %.Self.ref.loc5 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access %.Self.as_wit.loc5, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_26.2: type = converted %.loc5_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self.1 [template = constants.%J_where.type.1] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc5, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %J.ref.loc13: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %J.ref.loc10: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self.2: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc13: %J.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %U.ref.loc13: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit.loc13: <witness> = facet_access_witness %.Self.ref.loc13 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc13: type = impl_witness_access %.Self.as_wit.loc13, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc13_26.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_26.2: type = converted %.loc13_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self.2 [template = constants.%J_where.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13, %.loc13_26.2
+// CHECK:STDOUT:     %.Self.ref.loc10: %J.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %U.ref.loc10: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc10: <witness> = facet_access_witness %.Self.ref.loc10 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc10: type = impl_witness_access %.Self.as_wit.loc10, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc10_26.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self.2 [template = constants.%J_where.type.2] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10, %.loc10_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -353,7 +350,7 @@ impl () as M where .Z = {.b = {}} {
 // CHECK:STDOUT:   witness = (%U)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc8_7.2 as %.loc8_14 {
+// CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
