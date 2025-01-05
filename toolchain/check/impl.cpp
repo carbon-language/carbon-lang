@@ -313,7 +313,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
           // FIXME: Add note pointing to previous declaration.
           CARBON_DIAGNOSTIC(
               AssociatedConstantDifferentInRedecl, Error,
-              "redeclaration with different value for associated constant",
+              "redeclaration with different value for associated constant {0}",
               SemIR::NameId);
           // TODO: Add note pointing to previous declaration.
           context.emitter().Emit(impl.latest_decl_id(),

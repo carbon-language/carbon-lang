@@ -209,23 +209,40 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
                               }));
   }
 
-  Parse::NodeId first_param_node_id =
-      context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
+  Parse::Tree::PostorderIterator first_param_iter(
+      context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>());
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  // TODO: Following proposal #3763, we should exclude any `where` clause, and
-  // add `Self` before `as` if needed, see:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
   auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
   CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
                node_kind == Parse::NodeKind::ImplDecl);
-  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
+  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  --last_param_iter;
+  // Following proposal #3763, exclude a final `where` clause, if present.
+  node_kind = context.parse_tree().node_kind(*last_param_iter);
+  if (node_kind == Parse::NodeKind::WhereExpr) {
+    int where_operands_to_skip = 1;
+    --last_param_iter;
+    CARBON_CHECK(last_param_iter > first_param_iter);
+    do {
+      node_kind = context.parse_tree().node_kind(*last_param_iter);
+      if (node_kind == Parse::NodeKind::WhereExpr) {
+        ++where_operands_to_skip;
+      } else if (node_kind == Parse::NodeKind::WhereOperand) {
+        --where_operands_to_skip;
+      }
+      --last_param_iter;
+      CARBON_CHECK(last_param_iter > first_param_iter);
+    } while (where_operands_to_skip > 0);
+  }
+  // TODO: also add `Self` before `as` if needed, see:
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
-      .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
+      .first_param_node_id = *first_param_iter,
+      .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
