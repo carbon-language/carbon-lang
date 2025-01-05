@@ -224,7 +224,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   if (node_kind == Parse::NodeKind::WhereExpr) {
     int where_operands_to_skip = 1;
     --last_param_iter;
-    CARBON_CHECK(last_param_iter > first_param_iter);
+    CARBON_CHECK(first_param_iter < last_param_iter);
     do {
       node_kind = context.parse_tree().node_kind(*last_param_iter);
       if (node_kind == Parse::NodeKind::WhereExpr) {
@@ -233,7 +233,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         --where_operands_to_skip;
       }
       --last_param_iter;
-      CARBON_CHECK(last_param_iter > first_param_iter);
+      CARBON_CHECK(first_param_iter < last_param_iter);
     } while (where_operands_to_skip > 0);
   }
   // Skip `impl` at the beginning, so we can inspect what follows.
@@ -257,6 +257,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     // Skip `as` with no type before it.
     ++first_param_iter;
   }
+  CARBON_CHECK(first_param_iter <= last_param_iter);
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
