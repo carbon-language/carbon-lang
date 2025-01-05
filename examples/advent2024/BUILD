@@ -23,7 +23,7 @@ excluded = []
             "day{0}_part{1}.carbon".format(day, part),
         ] + utils,
     )
-    for day in range(1, 14)
+    for day in range(1, 26)
     for part in range(1, 3)
     if (day, part) not in excluded
 ]
