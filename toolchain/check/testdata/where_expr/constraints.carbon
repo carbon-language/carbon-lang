@@ -120,29 +120,29 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
-// CHECK:STDOUT:   %Self.64c94b.1: %J.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.b: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %Self.64c94b.2: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %assoc_type.6: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type.6 = assoc_entity element0, @I.%Member [template]
+// CHECK:STDOUT:   %Self.3: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %assoc_type.9: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %assoc0: %assoc_type.9 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %assoc_type.c: type = assoc_entity_type %I.type, %J.type [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type.c = assoc_entity element1, @I.%Second [template]
-// CHECK:STDOUT:   %.Self.6436c3.1: %I.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %assoc_type.e: type = assoc_entity_type %I.type, %J.type [template]
+// CHECK:STDOUT:   %assoc1: %assoc_type.e = assoc_entity element1, @I.%Second [template]
+// CHECK:STDOUT:   %.Self.3: %I.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [template]
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %I_where.type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %EqualEqual.type: type = fn_type @EqualEqual [template]
 // CHECK:STDOUT:   %EqualEqual: %EqualEqual.type = struct_value () [template]
-// CHECK:STDOUT:   %.Self.6436c3.2: %J.type = bind_symbolic_name .Self [symbolic]
-// CHECK:STDOUT:   %.Self.as_type.7c4a23.1: type = facet_access_type %.Self.6436c3.2 [symbolic]
+// CHECK:STDOUT:   %.Self.c: %J.type = bind_symbolic_name .Self [symbolic]
+// CHECK:STDOUT:   %.Self.as_type.d: type = facet_access_type %.Self.c [symbolic]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where TODO> [template]
 // CHECK:STDOUT:   %V: %J_where.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %V.patt: %J_where.type = symbolic_binding_pattern V, 0 [symbolic]
 // CHECK:STDOUT:   %Impls.type: type = fn_type @Impls [template]
 // CHECK:STDOUT:   %Impls: %Impls.type = struct_value () [template]
-// CHECK:STDOUT:   %.Self.as_type.7c4a23.2: type = facet_access_type %.Self.6436c3.1 [symbolic]
-// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self.6436c3.1 [symbolic]
+// CHECK:STDOUT:   %.Self.as_type.e: type = facet_access_type %.Self.3 [symbolic]
+// CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self.3 [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %W: %I_where.type = bind_symbolic_name W, 0 [symbolic]
 // CHECK:STDOUT:   %W.patt: %I_where.type = symbolic_binding_pattern W, 0 [symbolic]
@@ -176,8 +176,8 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc11_21.1: type = splice_block %.loc11_21.2 [template = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.6436c3.1]
-// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.6436c3.1]
+// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.3]
+// CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.3]
 // CHECK:STDOUT:       %.loc11_37: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_21.2: type = where_expr %.Self [template = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc11_37
@@ -192,11 +192,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %V.param: %J_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc13_16.1: type = splice_block %.loc13_16.2 [template = constants.%J_where.type] {
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self.6436c3.2]
-// CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self.6436c3.2]
+// CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self.c]
+// CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self.c]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type.7c4a23.1]
-// CHECK:STDOUT:       %.loc13_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type.7c4a23.1]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = constants.%.Self.as_type.d]
+// CHECK:STDOUT:       %.loc13_22: type = converted %.Self.ref, %.Self.as_type [symbolic = constants.%.Self.as_type.d]
 // CHECK:STDOUT:       %.loc13_16.2: type = where_expr %.Self [template = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_impls %.loc13_22, %I.ref
 // CHECK:STDOUT:       }
@@ -210,13 +210,13 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:     %W.param: %I_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc15_14.1: type = splice_block %.loc15_14.2 [template = constants.%I_where.type] {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
-// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.6436c3.1]
-// CHECK:STDOUT:       %.Self.ref.loc15_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.6436c3.1]
+// CHECK:STDOUT:       %.Self: %I.type = bind_symbolic_name .Self [symbolic = constants.%.Self.3]
+// CHECK:STDOUT:       %.Self.ref.loc15_20: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.3]
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref.loc15_20 [symbolic = constants.%.Self.as_type.7c4a23.2]
-// CHECK:STDOUT:       %.loc15_20: type = converted %.Self.ref.loc15_20, %.Self.as_type [symbolic = constants.%.Self.as_type.7c4a23.2]
-// CHECK:STDOUT:       %.Self.ref.loc15_38: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.6436c3.1]
-// CHECK:STDOUT:       %Member.ref: %assoc_type.6 = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref.loc15_20 [symbolic = constants.%.Self.as_type.e]
+// CHECK:STDOUT:       %.loc15_20: type = converted %.Self.ref.loc15_20, %.Self.as_type [symbolic = constants.%.Self.as_type.e]
+// CHECK:STDOUT:       %.Self.ref.loc15_38: %I.type = name_ref .Self, %.Self [symbolic = constants.%.Self.3]
+// CHECK:STDOUT:       %Member.ref: %assoc_type.9 = name_ref Member, @I.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_wit: <witness> = facet_access_witness %.Self.ref.loc15_38 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc15_50: %empty_tuple.type = tuple_literal ()
@@ -230,7 +230,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
-// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.1]
+// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -238,11 +238,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.2]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.3]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
-// CHECK:STDOUT:   %assoc0: %assoc_type.6 = assoc_entity element0, %Member [template = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %assoc_type.9 = assoc_entity element0, %Member [template = constants.%assoc0]
 // CHECK:STDOUT:   %Second: %J.type = assoc_const_decl Second [template]
-// CHECK:STDOUT:   %assoc1: %assoc_type.c = assoc_entity element1, %Second [template = constants.%assoc1]
+// CHECK:STDOUT:   %assoc1: %assoc_type.e = assoc_entity element1, %Second [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -291,11 +291,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [template]
-// CHECK:STDOUT:   %Self.64c94b.1: %L.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.5: %L.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [template]
-// CHECK:STDOUT:   %Self.64c94b.2: %M.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.39: %M.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [template]
-// CHECK:STDOUT:   %Self.64c94b.3: %K.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.37: %K.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %K.type, %L.type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @K.%Associated [template]
 // CHECK:STDOUT:   %.Self: %K.type = bind_symbolic_name .Self [symbolic]
@@ -352,7 +352,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L {
-// CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.1]
+// CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -360,7 +360,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @M {
-// CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.2]
+// CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.39]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -368,7 +368,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
-// CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.3]
+// CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.37]
 // CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl Associated [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Associated [template = constants.%assoc0]
 // CHECK:STDOUT:

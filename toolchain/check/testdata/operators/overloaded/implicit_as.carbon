@@ -43,16 +43,16 @@ fn Test() {
 // CHECK:STDOUT:   %X.elem: type = unbound_element_type %X, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
 // CHECK:STDOUT:   %complete_type.f4: <witness> = complete_type_witness %struct_type.n [template]
-// CHECK:STDOUT:   %ImplicitAs.type.b2: type = generic_interface_type @ImplicitAs [template]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.b2 = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.type.bd32e5.2: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [template]
+// CHECK:STDOUT:   %ImplicitAs.type.b: type = generic_interface_type @ImplicitAs [template]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.b = struct_value () [template]
+// CHECK:STDOUT:   %ImplicitAs.type.8: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [template]
 // CHECK:STDOUT:   %Convert.type.2d: type = fn_type @Convert.1, @ImplicitAs(%X) [template]
 // CHECK:STDOUT:   %impl_witness.c: <witness> = impl_witness (@impl.1.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.a33e4b.1: type = fn_type @Convert.2 [template]
 // CHECK:STDOUT:   %Convert.5baf2f.1: %Convert.type.a33e4b.1 = struct_value () [template]
-// CHECK:STDOUT:   %ImplicitAs.type.bd32e5.3: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
+// CHECK:STDOUT:   %ImplicitAs.type.9: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.250: <witness> = impl_witness (@impl.2.%Convert.decl) [template]
+// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (@impl.2.%Convert.decl) [template]
 // CHECK:STDOUT:   %Convert.type.a33e4b.2: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.5baf2f.2: %Convert.type.a33e4b.2 = struct_value () [template]
 // CHECK:STDOUT:   %Sink_i32.type: type = fn_type @Sink_i32 [template]
@@ -63,7 +63,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [template]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.d: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.db: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Source.specific_fn.2: <specific function> = specific_function %Source, @Source(%T) [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
@@ -78,7 +78,7 @@ fn Test() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %ImplicitAs.type.b2 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %import_ref.5: %ImplicitAs.type.b = import_ref Core//prelude/operators/as, ImplicitAs, loaded [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -96,20 +96,20 @@ fn Test() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.b2 = name_ref ImplicitAs, imports.%import_ref.5 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.b = name_ref ImplicitAs, imports.%import_ref.5 [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%X)> [template = constants.%ImplicitAs.type.bd32e5.2]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%X)> [template = constants.%ImplicitAs.type.8]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc15: <witness> = impl_witness (@impl.1.%Convert.decl) [template = constants.%impl_witness.c]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.b2 = name_ref ImplicitAs, imports.%import_ref.5 [template = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.b = name_ref ImplicitAs, imports.%import_ref.5 [template = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [template = constants.%ImplicitAs.type.bd32e5.3]
+// CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%i32)> [template = constants.%ImplicitAs.type.9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.2.%Convert.decl) [template = constants.%impl_witness.250]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness (@impl.2.%Convert.decl) [template = constants.%impl_witness.2]
 // CHECK:STDOUT:   %Sink_i32.decl: %Sink_i32.type = fn_decl @Sink_i32 [template = constants.%Sink_i32] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
@@ -227,7 +227,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_11.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.d)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Source.%T.loc27_11.2 (%T) [symbolic = %require_complete (constants.%require_complete.db)]
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc27_11.2) [symbolic = %Source.specific_fn.loc27_35.2 (constants.%Source.specific_fn.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> @Source.%T.loc27_11.2 (%T) {
@@ -250,7 +250,7 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.loc30: <specific function> = specific_function %Source.ref.loc30, @Source(constants.%X) [template = constants.%Source.specific_fn.1]
 // CHECK:STDOUT:   %.loc30_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %Source.call.loc30: init %X = call %Source.specific_fn.loc30() to %.loc30_20.1
-// CHECK:STDOUT:   %impl.elem0.loc30: %Convert.type.c3 = impl_witness_access constants.%impl_witness.250, element0 [template = constants.%Convert.5baf2f.2]
+// CHECK:STDOUT:   %impl.elem0.loc30: %Convert.type.c3 = impl_witness_access constants.%impl_witness.2, element0 [template = constants.%Convert.5baf2f.2]
 // CHECK:STDOUT:   %Convert.bound.loc30: <bound method> = bound_method %Source.call.loc30, %impl.elem0.loc30
 // CHECK:STDOUT:   %.loc30_20.2: ref %X = temporary %.loc30_20.1, %Source.call.loc30
 // CHECK:STDOUT:   %.loc30_20.3: %X = bind_value %.loc30_20.2
@@ -282,7 +282,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.patt.loc27_11.2 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.d
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.db
 // CHECK:STDOUT:   %Source.specific_fn.loc27_35.2 => constants.%Source.specific_fn.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

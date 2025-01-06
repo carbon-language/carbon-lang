@@ -8,6 +8,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
+#include "toolchain/base/value_ids.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -22,24 +25,42 @@ struct Worklist {
   // contains an invalid ID.
   auto AddInvalid() -> void { contents.push_back(-1); }
 
-  // Add a typed argument to the contents of the current instruction. If we
-  // don't yet have a fingerprint for the argument, adds that argument to the
-  // worklist instead.
+  // Add a string to the contents.
+  auto AddString(llvm::StringRef string) {
+    contents.push_back(llvm::stable_hash_name(string));
+  }
+
+  // Each of the following `Add` functions adds a typed argument to the contents
+  // of the current instruction. If we don't yet have a fingerprint for the
+  // argument, it instead adds that argument to the worklist instead.
+
   auto Add(InstKind kind) -> void {
-    // TODO: Precompute or cache this.
-    contents.push_back(llvm::stable_hash_name(kind.ir_name()));
+    // TODO: Precompute or cache the hash of instruction IR names, or pick a
+    // scheme that doesn't change when IR names change.
+    AddString(kind.ir_name());
   }
+
+  auto Add(IdentifierId ident_id) -> void {
+    AddString(ident_id.is_valid() ? sem_ir->identifiers().Get(ident_id) : "");
+  }
+
+  auto Add(StringLiteralValueId lit_id) -> void {
+    AddString(sem_ir->string_literal_values().Get(lit_id));
+  }
+
   auto Add(NameId name_id) -> void {
-    contents.push_back(
-        llvm::stable_hash_name(sem_ir->names().GetIRBaseName(name_id)));
+    AddString(sem_ir->names().GetIRBaseName(name_id));
   }
+
   auto Add(EntityNameId entity_name_id) -> void {
     if (!entity_name_id.is_valid()) {
       AddInvalid();
       return;
     }
     Add(sem_ir->entity_names().Get(entity_name_id).name_id);
+    // TODO: Should we include the other parts of the entity name?
   }
+
   auto Add(InstId inner_id) -> void {
     if (!inner_id.is_valid()) {
       AddInvalid();
@@ -51,6 +72,7 @@ struct Worklist {
       todo.push_back(inner_id);
     }
   }
+
   auto Add(ConstantId constant_id) -> void {
     if (!constant_id.is_valid()) {
       AddInvalid();
@@ -58,6 +80,7 @@ struct Worklist {
     }
     Add(sem_ir->constant_values().GetInstId(constant_id));
   }
+
   auto Add(TypeId type_id) -> void {
     if (!type_id.is_valid()) {
       AddInvalid();
@@ -65,6 +88,7 @@ struct Worklist {
     }
     Add(sem_ir->types().GetInstId(type_id));
   }
+
   auto Add(InstBlockId inst_block_id) -> void {
     if (!inst_block_id.is_valid()) {
       AddInvalid();
@@ -76,6 +100,7 @@ struct Worklist {
       Add(inner_id);
     }
   }
+
   auto Add(TypeBlockId type_block_id) -> void {
     if (!type_block_id.is_valid()) {
       AddInvalid();
@@ -87,6 +112,7 @@ struct Worklist {
       Add(inner_id);
     }
   }
+
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
     if (!struct_type_fields_id.is_valid()) {
       AddInvalid();
@@ -99,6 +125,7 @@ struct Worklist {
       Add(field.type_id);
     }
   }
+
   auto Add(NameScopeId name_scope_id) -> void {
     if (!name_scope_id.is_valid()) {
       AddInvalid();
@@ -112,16 +139,44 @@ struct Worklist {
           sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
     }
   }
-  auto Add(const EntityWithParamsBase& entity) -> void {
+
+  auto AddEntity(const EntityWithParamsBase& entity) -> void {
     Add(entity.name_id);
     Add(entity.parent_scope_id);
   }
+
+  auto Add(FunctionId function_id) -> void {
+    AddEntity(sem_ir->functions().Get(function_id));
+  }
+
+  auto Add(ClassId class_id) -> void {
+    AddEntity(sem_ir->classes().Get(class_id));
+  }
+
+  auto Add(InterfaceId interface_id) -> void {
+    AddEntity(sem_ir->interfaces().Get(interface_id));
+  }
+
   auto Add(ImplId impl_id) -> void {
     const auto& impl = sem_ir->impls().Get(impl_id);
     Add(impl.self_id);
     Add(impl.constraint_id);
     Add(impl.parent_scope_id);
   }
+
+  auto Add(FacetTypeId facet_type_id) -> void {
+    const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
+    for (auto [interface_id, specific_id] : facet_type.impls_constraints) {
+      Add(interface_id);
+      Add(specific_id);
+    }
+    for (auto [lhs_id, rhs_id] : facet_type.rewrite_constraints) {
+      Add(lhs_id);
+      Add(rhs_id);
+    }
+    contents.push_back(facet_type.other_requirements);
+  }
+
   auto Add(GenericId generic_id) -> void {
     if (!generic_id.is_valid()) {
       AddInvalid();
@@ -129,6 +184,7 @@ struct Worklist {
     }
     Add(sem_ir->generics().Get(generic_id).decl_id);
   }
+
   auto Add(SpecificId specific_id) -> void {
     if (!specific_id.is_valid()) {
       AddInvalid();
@@ -138,6 +194,7 @@ struct Worklist {
     Add(specific.generic_id);
     Add(specific.args_id);
   }
+
   auto Add(const llvm::APInt& value) -> void {
     contents.push_back(value.getBitWidth());
     for (auto word : llvm::seq((value.getBitWidth() + 63) / 64)) {
@@ -145,9 +202,36 @@ struct Worklist {
       contents.push_back(value.extractBitsAsZExtValue(64, 64 * word));
     }
   }
+
   auto Add(IntId int_id) -> void { Add(sem_ir->ints().Get(int_id)); }
+
   auto Add(FloatId float_id) -> void {
     Add(sem_ir->floats().Get(float_id).bitcastToAPInt());
+  }
+
+  auto Add(LibraryNameId lib_name_id) -> void {
+    if (lib_name_id == LibraryNameId::Default) {
+      AddString("");
+    } else if (lib_name_id == LibraryNameId::Error) {
+      AddString("<error>");
+    } else if (lib_name_id.is_valid()) {
+      Add(lib_name_id.AsStringLiteralValueId());
+    } else {
+      AddInvalid();
+    }
+  }
+
+  auto Add(ImportIRId ir_id) -> void {
+    auto* ir = sem_ir->import_irs().Get(ir_id).sem_ir;
+    Add(ir->package_id());
+    Add(ir->library_id());
+  }
+
+  auto Add(ImportIRInstId ir_inst_id) -> void {
+    auto ir_inst = sem_ir->import_ir_insts().Get(ir_inst_id);
+    Add(ir_inst.ir_id);
+    // TODO: Consider computing a fingerprint for the instruction in the import
+    // IR.
   }
 
   // Add an instruction argument to the contents of the current instruction.
@@ -186,22 +270,40 @@ struct Worklist {
         Add(NameScopeId(arg));
         break;
       case IdKind::For<FunctionId>:
-        Add(sem_ir->functions().Get(FunctionId(arg)));
+        Add(FunctionId(arg));
         break;
       case IdKind::For<ClassId>:
-        Add(sem_ir->classes().Get(ClassId(arg)));
+        Add(ClassId(arg));
         break;
       case IdKind::For<InterfaceId>:
-        Add(sem_ir->interfaces().Get(InterfaceId(arg)));
+        Add(InterfaceId(arg));
         break;
       case IdKind::For<ImplId>:
         Add(ImplId(arg));
+        break;
+      case IdKind::For<FacetTypeId>:
+        Add(FacetTypeId(arg));
         break;
       case IdKind::For<GenericId>:
         Add(GenericId(arg));
         break;
       case IdKind::For<SpecificId>:
         Add(SpecificId(arg));
+        break;
+      case IdKind::For<IntId>:
+        Add(IntId::MakeRaw(arg));
+        break;
+      case IdKind::For<FloatId>:
+        Add(FloatId(arg));
+        break;
+      case IdKind::For<StringLiteralValueId>:
+        Add(StringLiteralValueId(arg));
+        break;
+      case IdKind::For<ImportIRId>:
+        Add(ImportIRId(arg));
+        break;
+      case IdKind::For<ImportIRInstId>:
+        Add(ImportIRInstId(arg));
         break;
       case IdKind::For<BoolValue>:
       case IdKind::For<CompileTimeBindIndex>:
@@ -212,26 +314,11 @@ struct Worklist {
         // Index-like ID: just include the value directly.
         contents.push_back(arg);
         break;
-      case IdKind::For<IntId>:
-        Add(IntId::MakeRaw(arg));
-        break;
-      case IdKind::For<FloatId>:
-        Add(FloatId(arg));
-        break;
-      case IdKind::For<StringLiteralValueId>:
-        contents.push_back(llvm::stable_hash_name(
-            sem_ir->string_literal_values().Get(StringLiteralValueId(arg))));
-        break;
-      case IdKind::For<RealId>:
-      case IdKind::For<FacetTypeId>:
-      case IdKind::For<ImportIRId>:
-      case IdKind::For<ImportIRInstId>:
+      case IdKind::For<AnyRawId>:
       case IdKind::For<ExprRegionId>:
       case IdKind::For<LibraryNameId>:
-        // TODO: Fingerprint more things.
-        break;
-      case IdKind::For<AnyRawId>:
       case IdKind::For<LocId>:
+      case IdKind::For<RealId>:
       case IdKind::Invalid:
         CARBON_FATAL("Unexpected instruction operand kind");
     }

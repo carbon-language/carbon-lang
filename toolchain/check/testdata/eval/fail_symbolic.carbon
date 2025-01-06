@@ -25,9 +25,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %N.patt.4: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.3, @impl.2(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.2, %Convert.3 [symbolic]
+// CHECK:STDOUT:   %Convert.type.e: type = fn_type @Convert.3, @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.7: %Convert.type.e = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.2, %Convert.7 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(%int_32) [symbolic]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.2) [symbolic]
 // CHECK:STDOUT: }
@@ -65,7 +65,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %N.patt.loc12_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc12_6.2 (constants.%N.patt.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc12_6.2, constants.%Convert.3 [symbolic = %Convert.bound (constants.%Convert.bound)]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc12_6.2, constants.%Convert.7 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.loc12_6.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:

@@ -411,8 +411,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [template]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%T) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.bd32e5.2: type = facet_type <@ImplicitAs, @ImplicitAs(%Class)> [symbolic]
-// CHECK:STDOUT:   %require_complete.4: <witness> = require_complete_type %ImplicitAs.type.bd32e5.2 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.3: type = facet_type <@ImplicitAs, @ImplicitAs(%Class)> [symbolic]
+// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %ImplicitAs.type.3 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -508,8 +508,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.2) [symbolic = %Make.type (constants.%Make.type)]
 // CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
 // CHECK:STDOUT:   %Make.specific_fn.loc15_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.2) [symbolic = %Make.specific_fn.loc15_18.2 (constants.%Make.specific_fn)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Class.loc8_49.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.bd32e5.2)]
-// CHECK:STDOUT:   %require_complete.loc15_25: <witness> = require_complete_type @StaticMemberFunctionCall.%ImplicitAs.type (%ImplicitAs.type.bd32e5.2) [symbolic = %require_complete.loc15_25 (constants.%require_complete.4)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Class.loc8_49.2)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3)]
+// CHECK:STDOUT:   %require_complete.loc15_25: <witness> = require_complete_type @StaticMemberFunctionCall.%ImplicitAs.type (%ImplicitAs.type.3) [symbolic = %require_complete.loc15_25 (constants.%require_complete.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) -> %return.param_patt: @StaticMemberFunctionCall.%Class.loc8_49.2 (%Class) {
 // CHECK:STDOUT:   !entry:

@@ -57,7 +57,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Defined.type: type = fn_type @Defined [template]
 // CHECK:STDOUT:   %Defined: %Defined.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.d: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.db: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %CallDefined.type: type = fn_type @CallDefined [template]
@@ -66,10 +66,10 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %complete_type.f: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.5, @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.3 [template]
+// CHECK:STDOUT:   %impl_witness.0: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.4: type = fn_type @Convert.5, @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.63: %Convert.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.63 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(%int_32) [template]
 // CHECK:STDOUT:   %int_0.d: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Defined.specific_fn: <specific function> = specific_function %Defined, @Defined(%i32) [template]
@@ -124,7 +124,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4_12.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.d)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.db)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: @Defined.%T.loc4_12.2 (%T)) -> @Defined.%T.loc4_12.2 (%T) {
 // CHECK:STDOUT:   !entry:
@@ -139,7 +139,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5]
 // CHECK:STDOUT:   %int_32.loc9: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.b = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.b = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.63]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.d]
@@ -179,15 +179,15 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [template]
 // CHECK:STDOUT:   %complete_type.f: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.5, @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.3 [template]
+// CHECK:STDOUT:   %Convert.type.b2: type = fn_type @Convert.1, @As(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.d: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.b1: type = fn_type @Convert.5, @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.c: %Convert.type.b1 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.c [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(%int_32) [template]
 // CHECK:STDOUT:   %int_0.d: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Defined.specific_fn: <specific function> = specific_function %Defined, @Defined(%i32) [template]
-// CHECK:STDOUT:   %require_complete.d: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.db: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -256,7 +256,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc4: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.d)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Defined.%T.loc4_12.2 (%T) [symbolic = %require_complete (constants.%require_complete.db)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%T.param_patt: type](%x.param_patt: %T) -> %T {
 // CHECK:STDOUT:   !entry:
@@ -271,7 +271,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5]
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.b = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.b2 = impl_witness_access constants.%impl_witness.d, element0 [template = constants.%Convert.c]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.d]
@@ -310,10 +310,10 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %CallUndefined: %CallUndefined.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.5, @impl.3(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.3 [template]
+// CHECK:STDOUT:   %impl_witness.0: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.8d: type = fn_type @Convert.5, @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %Convert.60: %Convert.type.8d = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.60 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(%int_32) [template]
 // CHECK:STDOUT:   %int_0.d: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %Undefined.specific_fn: <specific function> = specific_function %Undefined, @Undefined(%i32) [template]
@@ -376,7 +376,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5]
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.b = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.b = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.60]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.5(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.d]

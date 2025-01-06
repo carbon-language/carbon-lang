@@ -38,7 +38,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %C.b: type = class_type @C, @C(%I.type, %Self) [symbolic]
+// CHECK:STDOUT:   %C.d: type = class_type @C, @C(%I.type, %Self) [symbolic]
 // CHECK:STDOUT:   %F.type.5e5c88.1: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.4a89a9.1: %F.type.5e5c88.1 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.5e5c88.1 [template]
@@ -50,7 +50,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %F.type.5e5c88.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4a89a9.2: %F.type.5e5c88.2 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %impl_witness [template]
-// CHECK:STDOUT:   %C.8: type = class_type @C, @C(%I.type, %I.facet) [template]
+// CHECK:STDOUT:   %C.6: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -92,16 +92,16 @@ impl i32 as I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type.5e5c88.1 = fn_decl @F.1 [template = constants.%F.4a89a9.1] {
-// CHECK:STDOUT:     %c.patt: @F.1.%C.loc14_17.1 (%C.b) = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: @F.1.%C.loc14_17.1 (%C.b) = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: @F.1.%C.loc14_17.1 (%C.d) = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: @F.1.%C.loc14_17.1 (%C.d) = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: @F.1.%C.loc14_17.1 (%C.b) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc14: type = splice_block %C.loc14_17.2 [symbolic = %C.loc14_17.1 (constants.%C.b)] {
+// CHECK:STDOUT:     %c.param: @F.1.%C.loc14_17.1 (%C.d) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc14: type = splice_block %C.loc14_17.2 [symbolic = %C.loc14_17.1 (constants.%C.d)] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %C.loc14_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_17.1 (constants.%C.b)]
+// CHECK:STDOUT:       %C.loc14_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self) [symbolic = %C.loc14_17.1 (constants.%C.d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.b) = bind_name c, %c.param
+// CHECK:STDOUT:     %c: @F.1.%C.loc14_17.1 (%C.d) = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
@@ -150,9 +150,9 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %C.loc14_17.1: type = class_type @C, @C(constants.%I.type, %Self) [symbolic = %C.loc14_17.1 (constants.%C.b)]
+// CHECK:STDOUT:   %C.loc14_17.1: type = class_type @C, @C(constants.%I.type, %Self) [symbolic = %C.loc14_17.1 (constants.%C.d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param_patt: @F.1.%C.loc14_17.1 (%C.b));
+// CHECK:STDOUT:   fn(%c.param_patt: @F.1.%C.loc14_17.1 (%C.d));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%c.param_patt: %C.3);
@@ -173,7 +173,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.b
+// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {}
@@ -187,7 +187,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.8
+// CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%I.type, constants.%I.facet) {

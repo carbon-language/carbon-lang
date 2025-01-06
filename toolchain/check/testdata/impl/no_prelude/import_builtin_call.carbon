@@ -425,14 +425,14 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %Op.assoc_type: type = assoc_entity_type %Add.type, %Op.type.9 [template]
 // CHECK:STDOUT:   %assoc0: %Op.assoc_type = assoc_entity element0, imports.%import_ref.12 [template]
-// CHECK:STDOUT:   %impl_witness.c: <witness> = impl_witness (imports.%import_ref.16), @impl(%N) [symbolic]
-// CHECK:STDOUT:   %Op.type.f: type = fn_type @Op.2, @impl(%N) [symbolic]
-// CHECK:STDOUT:   %Op.c: %Op.type.f = struct_value () [symbolic]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.16), @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.type.3: type = fn_type @Op.2, @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.9: %Op.type.3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.f: <witness> = require_complete_type %MyInt.e [symbolic]
-// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.16), @impl(%int_64) [template]
-// CHECK:STDOUT:   %impl_witness.1: <witness> = impl_witness (imports.%import_ref.17), @impl(%N) [symbolic]
-// CHECK:STDOUT:   %Op.type.c: type = fn_type @Op.2, @impl(%int_64) [template]
-// CHECK:STDOUT:   %Op.9: %Op.type.c = struct_value () [template]
+// CHECK:STDOUT:   %impl_witness.d: <witness> = impl_witness (imports.%import_ref.16), @impl(%int_64) [template]
+// CHECK:STDOUT:   %impl_witness.9: <witness> = impl_witness (imports.%import_ref.17), @impl(%N) [symbolic]
+// CHECK:STDOUT:   %Op.type.6: type = fn_type @Op.2, @impl(%int_64) [template]
+// CHECK:STDOUT:   %Op.3: %Op.type.6 = struct_value () [template]
 // CHECK:STDOUT:   %CallImportedDouble.type: type = fn_type @CallImportedDouble [template]
 // CHECK:STDOUT:   %CallImportedDouble: %CallImportedDouble.type = struct_value () [template]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [template]
@@ -451,10 +451,10 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %import_ref.9 = import_ref Main//generic_impl, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.10: %Op.assoc_type = import_ref Main//generic_impl, loc5_41, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %import_ref.11 = import_ref Main//generic_impl, Op, unloaded
-// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.1)]
+// CHECK:STDOUT:   %import_ref.13: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @impl.%impl_witness (constants.%impl_witness.9)]
 // CHECK:STDOUT:   %import_ref.14: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @impl.%MyInt (constants.%MyInt.e)]
 // CHECK:STDOUT:   %import_ref.15: type = import_ref Main//generic_impl, loc15_44, loaded [template = constants.%Add.type]
-// CHECK:STDOUT:   %import_ref.16: @impl.%Op.type (%Op.type.f) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @impl.%Op (constants.%Op.c)]
+// CHECK:STDOUT:   %import_ref.16: @impl.%Op.type (%Op.type.3) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @impl.%Op (constants.%Op.9)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -519,11 +519,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt)]
 // CHECK:STDOUT:   %MyInt: type = class_type @MyInt, @MyInt(%N) [symbolic = %MyInt (constants.%MyInt.e)]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.16), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.c)]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (imports.%import_ref.16), @impl(%N) [symbolic = %impl_witness (constants.%impl_witness.5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.f)]
-// CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.f) = struct_value () [symbolic = %Op (constants.%Op.c)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.3)]
+// CHECK:STDOUT:   %Op: @impl.%Op.type (%Op.type.3) = struct_value () [symbolic = %Op (constants.%Op.9)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @impl.%MyInt (%MyInt.e) [symbolic = %require_complete (constants.%require_complete.f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%import_ref.14 as imports.%import_ref.15 {
@@ -553,7 +553,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %x.ref.loc9_10: %MyInt.8 = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%import_ref.1 [template = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Op.assoc_type = name_ref Op, imports.%import_ref.10 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %Op.type.9 = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Op.9]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.9 = impl_witness_access constants.%impl_witness.d, element0 [template = constants.%Op.3]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.ref.loc9_10, %impl.elem0
 // CHECK:STDOUT:   %x.ref.loc9_21: %MyInt.8 = name_ref x, %x
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.bound, @Op.2(constants.%int_64)
@@ -597,8 +597,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @Double.%MyInt (%MyInt.e) [symbolic = %require_complete (constants.%require_complete.f)]
-// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.f)]
-// CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.f) = struct_value () [symbolic = %Op (constants.%Op.c)]
+// CHECK:STDOUT:   %Op.type: type = fn_type @Op.2, @impl(%N) [symbolic = %Op.type (constants.%Op.type.3)]
+// CHECK:STDOUT:   %Op: @Double.%Op.type (%Op.type.3) = struct_value () [symbolic = %Op (constants.%Op.9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%x.param_patt: @Double.%MyInt (%MyInt.e)) -> @Double.%MyInt (%MyInt.e);
 // CHECK:STDOUT: }
@@ -632,11 +632,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %N.patt => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.e
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.c
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.5
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Op.type => constants.%Op.type.f
-// CHECK:STDOUT:   %Op => constants.%Op.c
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.3
+// CHECK:STDOUT:   %Op => constants.%Op.9
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -657,11 +657,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N => constants.%int_64
 // CHECK:STDOUT:   %N.patt => constants.%int_64
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.8
-// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.5
+// CHECK:STDOUT:   %impl_witness => constants.%impl_witness.d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Op.type => constants.%Op.type.c
-// CHECK:STDOUT:   %Op => constants.%Op.9
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.6
+// CHECK:STDOUT:   %Op => constants.%Op.3
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -689,8 +689,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.4
-// CHECK:STDOUT:   %Op.type => constants.%Op.type.c
-// CHECK:STDOUT:   %Op => constants.%Op.9
+// CHECK:STDOUT:   %Op.type => constants.%Op.type.6
+// CHECK:STDOUT:   %Op => constants.%Op.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- convert_symbolic.carbon

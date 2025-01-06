@@ -39,7 +39,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
-// CHECK:STDOUT:   %Self.64c94b.1: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.a: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.5: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.4: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type.5 [template]
@@ -49,7 +49,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.type.0: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [template]
-// CHECK:STDOUT:   %Self.64c94b.2: %Different.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.b: %Different.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %U: %Different.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %U.patt: %Different.type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -84,7 +84,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.1]
+// CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.a]
 // CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.1 [template = constants.%F.4] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
@@ -98,7 +98,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Different {
-// CHECK:STDOUT:   %Self: %Different.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.64c94b.2]
+// CHECK:STDOUT:   %Self: %Different.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -126,7 +126,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   fn(%U.param_patt: %Different.type) -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self.64c94b.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%Self.a) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.loc36_6.2 => constants.%U

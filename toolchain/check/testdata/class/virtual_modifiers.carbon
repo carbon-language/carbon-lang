@@ -503,26 +503,26 @@ class Derived {
 // CHECK:STDOUT:   %F.4: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %ptr.4: type = ptr_type <vtable> [template]
 // CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.4, .m1: %i32, .m2: %i32} [template]
-// CHECK:STDOUT:   %complete_type.0: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template]
+// CHECK:STDOUT:   %complete_type.01: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template]
 // CHECK:STDOUT:   %F.type.0: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound.0: <bound method> = bound_method %int_3.1, %Convert.3 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.9: <specific function> = specific_function %Convert.bound.0, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.0: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.a: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.46: %Convert.type.a = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.d: <bound method> = bound_method %int_3.1, %Convert.46 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.f: <specific function> = specific_function %Convert.bound.d, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_3.b: %i32 = int_value 3 [template]
 // CHECK:STDOUT:   %struct_type.m2.m1.d: type = struct_type {.m2: %i32, .m1: %i32} [template]
 // CHECK:STDOUT:   %int_5.64: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %struct_type.m2.m1.5: type = struct_type {.m2: Core.IntLiteral, .m1: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %Convert.bound.8: <bound method> = bound_method %int_5.64, %Convert.3 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.5: <specific function> = specific_function %Convert.bound.8, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.bound.5: <bound method> = bound_method %int_5.64, %Convert.46 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.7: <specific function> = specific_function %Convert.bound.5, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_5.6b: %i32 = int_value 5 [template]
 // CHECK:STDOUT:   %int_4.0: Core.IntLiteral = int_value 4 [template]
-// CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_4.0, %Convert.3 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.d: <specific function> = specific_function %Convert.bound.3, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.bound.7: <bound method> = bound_method %int_4.0, %Convert.46 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.5: <specific function> = specific_function %Convert.bound.7, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_4.2: %i32 = int_value 4 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -550,7 +550,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc5: %Base.elem = field_decl m1, element1 [template]
 // CHECK:STDOUT:   %.loc6: %Base.elem = field_decl m2, element2 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.1 [template = constants.%F.4] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type.0]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type.01]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -567,9 +567,9 @@ class Derived {
 // CHECK:STDOUT:   %i.var: ref %i32 = var i
 // CHECK:STDOUT:   %i: ref %i32 = bind_name i, %i.var
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
-// CHECK:STDOUT:   %impl.elem0.loc12: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [template = constants.%Convert.bound.0]
-// CHECK:STDOUT:   %Convert.specific_fn.loc12: <specific function> = specific_function %Convert.bound.loc12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.9]
+// CHECK:STDOUT:   %impl.elem0.loc12: %Convert.type.c3 = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.46]
+// CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [template = constants.%Convert.bound.d]
+// CHECK:STDOUT:   %Convert.specific_fn.loc12: <specific function> = specific_function %Convert.bound.loc12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.f]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %Convert.specific_fn.loc12(%int_3.loc12) [template = constants.%int_3.b]
 // CHECK:STDOUT:   %.loc12: init %i32 = converted %int_3.loc12, %int.convert_checked.loc12 [template = constants.%int_3.b]
 // CHECK:STDOUT:   assign %i.var, %.loc12
@@ -598,16 +598,16 @@ class Derived {
 // CHECK:STDOUT:   %.loc15_35.2: ref %ptr.4 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc15_35.3: ref %ptr.4 = vtable_ptr
 // CHECK:STDOUT:   %.loc15_35.4: init %ptr.4 = initialize_from %.loc15_35.3 to %.loc15_35.2
-// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [template = constants.%Convert.bound.8]
-// CHECK:STDOUT:   %Convert.specific_fn.loc15_35.1: <specific function> = specific_function %Convert.bound.loc15_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.c3 = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.46]
+// CHECK:STDOUT:   %Convert.bound.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [template = constants.%Convert.bound.5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc15_35.1: <specific function> = specific_function %Convert.bound.loc15_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.7]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %Convert.specific_fn.loc15_35.1(%int_5) [template = constants.%int_5.6b]
 // CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [template = constants.%int_5.6b]
 // CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
 // CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%int_5.6b]
-// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc15_35.2: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [template = constants.%Convert.bound.0]
-// CHECK:STDOUT:   %Convert.specific_fn.loc15_35.2: <specific function> = specific_function %Convert.bound.loc15_35.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.9]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %Convert.type.c3 = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.46]
+// CHECK:STDOUT:   %Convert.bound.loc15_35.2: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [template = constants.%Convert.bound.d]
+// CHECK:STDOUT:   %Convert.specific_fn.loc15_35.2: <specific function> = specific_function %Convert.bound.loc15_35.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.f]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.2: init %i32 = call %Convert.specific_fn.loc15_35.2(%int_3.loc15) [template = constants.%int_3.b]
 // CHECK:STDOUT:   %.loc15_35.8: init %i32 = converted %int_3.loc15, %int.convert_checked.loc15_35.2 [template = constants.%int_3.b]
 // CHECK:STDOUT:   %.loc15_35.9: ref %i32 = class_element_access %b2.var, element1
@@ -619,9 +619,9 @@ class Derived {
 // CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6 [template = @Base.%.loc6]
 // CHECK:STDOUT:   %.loc18_5: ref %i32 = class_element_access %b1.ref, element2
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.0]
-// CHECK:STDOUT:   %impl.elem0.loc18: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_4, %impl.elem0.loc18 [template = constants.%Convert.bound.3]
-// CHECK:STDOUT:   %Convert.specific_fn.loc18: <specific function> = specific_function %Convert.bound.loc18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.d]
+// CHECK:STDOUT:   %impl.elem0.loc18: %Convert.type.c3 = impl_witness_access constants.%impl_witness.0, element0 [template = constants.%Convert.46]
+// CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_4, %impl.elem0.loc18 [template = constants.%Convert.bound.7]
+// CHECK:STDOUT:   %Convert.specific_fn.loc18: <specific function> = specific_function %Convert.bound.loc18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.5]
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %Convert.specific_fn.loc18(%int_4) [template = constants.%int_4.2]
 // CHECK:STDOUT:   %.loc18_9: init %i32 = converted %int_4, %int.convert_checked.loc18 [template = constants.%int_4.2]
 // CHECK:STDOUT:   assign %.loc18_5, %.loc18_9

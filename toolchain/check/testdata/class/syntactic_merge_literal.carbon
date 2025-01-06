@@ -44,10 +44,10 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1000.f: Core.IntLiteral = int_value 1000 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.f, %Convert.3 [template]
+// CHECK:STDOUT:   %impl_witness.6: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.f: %Convert.type.b = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.f, %Convert.f [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1000.9: %i32 = int_value 1000 [template]
 // CHECK:STDOUT:   %C.e: type = class_type @C, @C(%int_1000.9) [template]
@@ -93,7 +93,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %.loc5_20.1: type = splice_block %C.loc5 [template = constants.%C.e] {
 // CHECK:STDOUT:       %C.ref.loc5: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc5: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.f]
-// CHECK:STDOUT:       %impl.elem0.loc5: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:       %impl.elem0.loc5: %Convert.type.c3 = impl_witness_access constants.%impl_witness.6, element0 [template = constants.%Convert.f]
 // CHECK:STDOUT:       %Convert.bound.loc5: <bound method> = bound_method %int_1000.loc5, %impl.elem0.loc5 [template = constants.%Convert.bound]
 // CHECK:STDOUT:       %Convert.specific_fn.loc5: <specific function> = specific_function %Convert.bound.loc5, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:       %int.convert_checked.loc5: init %i32 = call %Convert.specific_fn.loc5(%int_1000.loc5) [template = constants.%int_1000.9]
@@ -111,7 +111,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %.loc6_20.1: type = splice_block %C.loc6 [template = constants.%C.e] {
 // CHECK:STDOUT:       %C.ref.loc6: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000.loc6: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.f]
-// CHECK:STDOUT:       %impl.elem0.loc6: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:       %impl.elem0.loc6: %Convert.type.c3 = impl_witness_access constants.%impl_witness.6, element0 [template = constants.%Convert.f]
 // CHECK:STDOUT:       %Convert.bound.loc6: <bound method> = bound_method %int_1000.loc6, %impl.elem0.loc6 [template = constants.%Convert.bound]
 // CHECK:STDOUT:       %Convert.specific_fn.loc6: <specific function> = specific_function %Convert.bound.loc6, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:       %int.convert_checked.loc6: init %i32 = call %Convert.specific_fn.loc6(%int_1000.loc6) [template = constants.%int_1000.9]
@@ -182,10 +182,10 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1000.f: Core.IntLiteral = int_value 1000 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.f, %Convert.3 [template]
+// CHECK:STDOUT:   %impl_witness.7: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.9: %Convert.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1000.f, %Convert.9 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1000.9: %i32 = int_value 1000 [template]
 // CHECK:STDOUT:   %C.e: type = class_type @C, @C(%int_1000.9) [template]
@@ -195,7 +195,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.2: type = class_type @.1, @.1(%b) [symbolic]
+// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -233,7 +233,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %.loc5_19.1: type = splice_block %C [template = constants.%C.e] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.f]
-// CHECK:STDOUT:       %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:       %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.7, element0 [template = constants.%Convert.9]
 // CHECK:STDOUT:       %Convert.bound: <bound method> = bound_method %int_1000, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:       %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:       %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.9]
@@ -251,7 +251,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %.loc12_20.1: type = splice_block %C [template = constants.%C.e] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_1000: Core.IntLiteral = int_value 1000 [template = constants.%int_1000.f]
-// CHECK:STDOUT:       %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
+// CHECK:STDOUT:       %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.7, element0 [template = constants.%Convert.9]
 // CHECK:STDOUT:       %Convert.bound: <bound method> = bound_method %int_1000, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:       %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:       %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1000) [template = constants.%int_1000.9]
@@ -295,7 +295,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.2
+// CHECK:STDOUT:     .Self = constants.%.1
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

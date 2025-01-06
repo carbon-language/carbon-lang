@@ -40,17 +40,17 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.20: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.3: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound.a: <bound method> = bound_method %int_1.5, %Convert.3 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.e: <specific function> = specific_function %Convert.bound.a, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.22: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.3: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.85: %Convert.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.34: <bound method> = bound_method %int_1.5, %Convert.85 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.c: <specific function> = specific_function %Convert.bound.34, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_2.e: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %Convert.bound.4: <bound method> = bound_method %int_2.e, %Convert.3 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.4, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.bound.37: <bound method> = bound_method %int_2.e, %Convert.85 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.3: <specific function> = specific_function %Convert.bound.37, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_2.3: %i32 = int_value 2 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
@@ -148,9 +148,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @A() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.a]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.e]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.22, element0 [template = constants.%Convert.85]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.34]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc11_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc11_25.2: %i32 = converted %int_1, %.loc11_25.1 [template = constants.%int_1.2]
@@ -160,9 +160,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.e]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound.4]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.22, element0 [template = constants.%Convert.85]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_2, %impl.elem0 [template = constants.%Convert.bound.37]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_2) [template = constants.%int_2.3]
 // CHECK:STDOUT:   %.loc12_25.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_2.3]
 // CHECK:STDOUT:   %.loc12_25.2: %i32 = converted %int_2, %.loc12_25.1 [template = constants.%int_2.3]
@@ -222,9 +222,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.a]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.e]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.22, element0 [template = constants.%Convert.85]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.34]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc23: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   assign %v.var, %.loc23
@@ -245,9 +245,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %v.var: ref %i32 = var v
 // CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.20, element0 [template = constants.%Convert.3]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.a]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.e]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.22, element0 [template = constants.%Convert.85]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound.34]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.c]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc29: init %i32 = converted %int_1, %int.convert_checked [template = constants.%int_1.2]
 // CHECK:STDOUT:   assign %v.var, %.loc29

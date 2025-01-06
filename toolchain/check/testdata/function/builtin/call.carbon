@@ -21,8 +21,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Add.type.5: type = fn_type @Add.1 [template]
-// CHECK:STDOUT:   %Add: %Add.type.5 = struct_value () [template]
+// CHECK:STDOUT:   %Add.type.53: type = fn_type @Add.1 [template]
+// CHECK:STDOUT:   %Add: %Add.type.53 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1, %i32 [template]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [template]
@@ -46,7 +46,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     .RuntimeCall = %RuntimeCall.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Add.decl: %Add.type.5 = fn_decl @Add.1 [template = constants.%Add] {
+// CHECK:STDOUT:   %Add.decl: %Add.type.53 = fn_decl @Add.1 [template = constants.%Add] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
@@ -104,7 +104,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Add.ref: %Add.type.5 = name_ref Add, file.%Add.decl [template = constants.%Add]
+// CHECK:STDOUT:   %Add.ref: %Add.type.53 = name_ref Add, file.%Add.decl [template = constants.%Add]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.sadd: init %i32 = call %Add.ref(%a.ref, %b.ref)
