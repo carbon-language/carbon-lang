@@ -374,9 +374,10 @@ static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
 }
 
 // Returns false if redeclaration parameter syntax doesn't match.
-static auto CheckRedeclParamSyntax(Context& context,
+static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
                                    Parse::NodeId new_first_param_node_id,
                                    Parse::NodeId new_last_param_node_id,
+                                   SemIRLoc prev_decl_loc,
                                    Parse::NodeId prev_first_param_node_id,
                                    Parse::NodeId prev_last_param_node_id,
                                    bool diagnose) -> bool {
@@ -394,33 +395,53 @@ static auto CheckRedeclParamSyntax(Context& context,
   CARBON_CHECK(prev_last_param_node_id.is_valid(),
                "prev_last_param_node_id.is_valid should match "
                "prev_first_param_node_id.is_valid");
+  Parse::Tree::PostorderIterator new_iter(new_first_param_node_id);
+  Parse::Tree::PostorderIterator new_end(
+      Parse::NodeId(new_last_param_node_id.index + 1));
+  Parse::Tree::PostorderIterator prev_iter(prev_first_param_node_id);
+  Parse::Tree::PostorderIterator prev_end(
+      Parse::NodeId(prev_last_param_node_id.index + 1));
 
-  auto new_range = Parse::Tree::PostorderIterator::MakeRange(
-      new_first_param_node_id, new_last_param_node_id);
-  auto prev_range = Parse::Tree::PostorderIterator::MakeRange(
-      prev_first_param_node_id, prev_last_param_node_id);
-
-  // zip is using the shortest range. If they differ in length, there should be
-  // some difference inside the range because the range includes parameter
-  // brackets. As a consequence, we don't explicitly handle different range
-  // sizes here.
-  // TODO: This doesn't work for `impl` declarations since they don't have
-  // parameter brackets.
-  for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
+  // Compare up to the shortest length.
+  CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
+                    "redeclaration syntax differs here");
+  CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
+                    "comparing with previous declaration here");
+  for (; new_iter != new_end && prev_iter != prev_end;
+       ++new_iter, ++prev_iter) {
+    auto new_node_id = *new_iter;
+    auto prev_node_id = *prev_iter;
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // FIXME: skip difference if it is `Self as` vs. `as`
       if (!diagnose) {
         return false;
       }
-      CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
-                        "redeclaration syntax differs here");
-      CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
-                        "comparing with previous declaration here");
       context.emitter()
           .Build(new_node_id, RedeclParamSyntaxDiffers)
           .Note(prev_node_id, RedeclParamSyntaxPrevious)
           .Emit();
       return false;
     }
+  }
+  // The prefixes are the same, but the lengths may still be different.
+  // This is particularly relevant for `impl` declarations where the final
+  // bracketing node is not included in the range of nodes being compared.
+  if (new_iter != new_end) {
+    if (!diagnose) {
+      return false;
+    }
+    context.emitter()
+        .Build(*new_iter, RedeclParamSyntaxDiffers)
+        .Note(prev_decl_loc, RedeclParamSyntaxPrevious)
+        .Emit();
+    return false;
+  } else if (prev_iter != prev_end) {
+    if (!diagnose) {
+      return false;
+    }
+    // FIXME: new diagnostics for this case.
+    context.TODO(new_decl_loc, "previous impl declaration longer");
+    return false;
   }
 
   return true;
@@ -447,8 +468,9 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
     return false;
   }
   if (check_syntax &&
-      !CheckRedeclParamSyntax(context, new_entity.first_param_node_id,
-                              new_entity.last_param_node_id,
+      !CheckRedeclParamSyntax(context, new_entity.loc,
+                              new_entity.first_param_node_id,
+                              new_entity.last_param_node_id, prev_entity.loc,
                               prev_entity.first_param_node_id,
                               prev_entity.last_param_node_id, diagnose)) {
     return false;
