@@ -384,10 +384,9 @@ struct BoolLiteral {
   BoolValue value;
 };
 
-// A bound method, that combines a function with the value to use for its `self`
-// parameter, such as `object.MethodName`. It is a callable thing like the
-// `FunctionType` it refers to through the type of the `function_id`
-// instruction, rather than a call to the method itself like `Call`.
+// For member access such as `object.MethodName`, combines a member function
+// with the value to use for `self`. This is a callable structure; `Call` will
+// handle the argument assignment.
 struct BoundMethod {
   static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeId>(
       {.ir_name = "bound_method",
