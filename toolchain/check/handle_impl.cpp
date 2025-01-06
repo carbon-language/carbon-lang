@@ -240,29 +240,6 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       CARBON_CHECK(first_param_iter < last_param_iter);
     } while (where_operands_to_skip > 0);
   }
-  // Skip `impl` at the beginning, so we can inspect what follows.
-  node_kind = context.parse_tree().node_kind(*first_param_iter);
-  CARBON_CHECK(node_kind == Parse::NodeKind::ImplIntroducer);
-  ++first_param_iter;
-  // Skip `Self as` or `as` at the beginning, so they match each other.
-  // FIXME: How do we handle the `impl forall ...` case?
-  node_kind = context.parse_tree().node_kind(*first_param_iter);
-  if (node_kind == Parse::NodeKind::SelfTypeNameExpr) {
-    // Skip `Self`.
-    ++first_param_iter;
-    node_kind = context.parse_tree().node_kind(*first_param_iter);
-    if (node_kind == Parse::NodeKind::TypeImplAs) {
-      // Skip `as`.
-      ++first_param_iter;
-    } else {
-      // Undo skipping initial `Self` if it isn't followed by `as`
-      --first_param_iter;
-    }
-  } else if (node_kind == Parse::NodeKind::DefaultSelfImplAs) {
-    // Skip `as` with no type before it.
-    ++first_param_iter;
-  }
-  CARBON_CHECK(first_param_iter <= last_param_iter);
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,

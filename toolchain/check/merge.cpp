@@ -412,7 +412,24 @@ static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
     auto new_node_id = *new_iter;
     auto prev_node_id = *prev_iter;
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
-      // FIXME: skip difference if it is `Self as` vs. `as`
+      // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
+      // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+      auto new_node_kind = context.parse_tree().node_kind(new_node_id);
+      auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
+      if (new_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(prev_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++prev_iter;
+        continue;
+      }
+      if (prev_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(new_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++new_iter;
+        continue;
+      }
       if (!diagnose) {
         return false;
       }
