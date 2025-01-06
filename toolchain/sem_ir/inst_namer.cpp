@@ -7,11 +7,14 @@
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -20,7 +23,8 @@
 
 namespace Carbon::SemIR {
 
-InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
+InstNamer::InstNamer(const File* sem_ir)
+    : sem_ir_(sem_ir), fingerprinter_(*sem_ir) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
@@ -207,9 +211,10 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   return value->first();
 }
 
-auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
-                                        SemIR::LocId loc_id, std::string name)
-    -> Name {
+auto InstNamer::Namespace::AllocateName(
+    const InstNamer& inst_namer,
+    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
+    std::string name) -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
@@ -245,16 +250,28 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
 
   // Append location information to try to disambiguate.
   // TODO: Consider handling inst_id cases.
-  if (loc_id.is_node_id()) {
-    const auto& tree = inst_namer.sem_ir_->parse_tree();
-    auto token = tree.node_token(loc_id.node_id());
-    llvm::raw_string_ostream(name)
-        << ".loc" << tree.tokens().GetLineNumber(token);
-    add_name();
+  if (LocId* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
+    if (loc_id->is_node_id()) {
+      const auto& tree = inst_namer.sem_ir_->parse_tree();
+      auto token = tree.node_token(loc_id->node_id());
+      llvm::raw_string_ostream(name)
+          << ".loc" << tree.tokens().GetLineNumber(token);
+      add_name();
 
-    llvm::raw_string_ostream(name)
-        << "_" << tree.tokens().GetColumnNumber(token);
-    add_name();
+      llvm::raw_string_ostream(name)
+          << "_" << tree.tokens().GetColumnNumber(token);
+      add_name();
+    }
+  } else {
+    uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
+    llvm::raw_string_ostream out(name);
+    out << ".";
+    // Include names with 1-6 characters from the fingerprint. Then fall back to
+    // sequential numbering.
+    for (int n : llvm::seq(1, 7)) {
+      out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
+      add_name();
+    }
   }
 
   // Append numbers until we find an available name.
@@ -399,9 +416,17 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     auto add_inst_name = [&](std::string name) {
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
+        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
+            SemIR::LocId::Invalid;
+          loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
+        if (scope_id == ScopeId::Constants) {
+          loc_id_or_fingerprint = fingerprinter_.GetOrCompute(inst_id);
+        } else {
+          loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
+        }
         insts_[inst_id.index] = {
-            scope_id, scope.insts.AllocateName(
-                          *this, sem_ir_->insts().GetLocId(inst_id), name)};
+            scope_id,
+            scope.insts.AllocateName(*this, loc_id_or_fingerprint, name)};
       } else {
         CARBON_CHECK(old_scope_id == scope_id,
                      "Attempting to name inst in multiple scopes");

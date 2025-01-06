@@ -32,13 +32,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.1: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.type.2: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.7: type = generic_interface_type @AddWith [template]
+// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.7 = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.type.b: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %AddWith.type.b = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %AddWith.type.2, %F.type [symbolic]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %AddWith.type.b, %F.type [symbolic]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @AddWith.%F.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,7 +46,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .AddWith = %AddWith.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddWith.decl: %AddWith.type.1 = interface_decl @AddWith [template = constants.%AddWith.generic] {
+// CHECK:STDOUT:   %AddWith.decl: %AddWith.type.7 = interface_decl @AddWith [template = constants.%AddWith.generic] {
 // CHECK:STDOUT:     %T.patt.loc4_19.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc4_19.1, runtime_param<invalid> [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
@@ -60,15 +60,15 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt.loc4_19.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_19.2)> [symbolic = %AddWith.type (constants.%AddWith.type.2)]
-// CHECK:STDOUT:   %Self.2: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_19.2)> [symbolic = %AddWith.type (constants.%AddWith.type.b)]
+// CHECK:STDOUT:   %Self.2: %AddWith.type.b = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T.loc4_19.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type) [symbolic = %F.assoc_type (constants.%F.assoc_type)]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.b), @AddWith.%F.type (%F.type) [symbolic = %F.assoc_type (constants.%F.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc5_9.2: @AddWith.%F.assoc_type (%F.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.2) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.b) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = @AddWith.%F (constants.%F)] {} {}
 // CHECK:STDOUT:     %assoc0.loc5_9.1: @AddWith.%F.assoc_type (%F.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -79,7 +79,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@AddWith.%T.loc4_19.1: type, @AddWith.%Self.1: @AddWith.%AddWith.type (%AddWith.type.2)) {
+// CHECK:STDOUT: generic fn @F(@AddWith.%T.loc4_19.1: type, @AddWith.%Self.1: @AddWith.%AddWith.type (%AddWith.type.b)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -99,32 +99,32 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %AddWith.type.1: type = generic_interface_type @AddWith [template]
-// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.type.7: type = generic_interface_type @AddWith [template]
+// CHECK:STDOUT:   %AddWith.generic: %AddWith.type.7 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.2: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.bd32e5.1: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %AddWith.type.bd32e5.1 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.assoc_type.1: type = assoc_entity_type %AddWith.type.2, %F.type.1 [symbolic]
-// CHECK:STDOUT:   %assoc0.1: %F.assoc_type.1 = assoc_entity element0, imports.%import_ref.5 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.3: type = facet_type <@AddWith, @AddWith(%C)> [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.1, @AddWith(%C) [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %AddWith.type.3, %F.type.2 [template]
-// CHECK:STDOUT:   %assoc0.2: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %F.type.4: type = fn_type @F.1, @AddWith(%T) [symbolic]
+// CHECK:STDOUT:   %F.a4: %F.type.4 = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.assoc_type.4: type = assoc_entity_type %AddWith.type.bd32e5.1, %F.type.4 [symbolic]
+// CHECK:STDOUT:   %assoc0.fe: %F.assoc_type.4 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.bd32e5.2: type = facet_type <@AddWith, @AddWith(%C)> [template]
+// CHECK:STDOUT:   %F.type.5a: type = fn_type @F.1, @AddWith(%C) [template]
+// CHECK:STDOUT:   %F.aa: %F.type.5a = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type.2: type = assoc_entity_type %AddWith.type.bd32e5.2, %F.type.5a [template]
+// CHECK:STDOUT:   %assoc0.f0: %F.assoc_type.2 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.3: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.3: %F.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.2 = facet_value %C, %impl_witness [symbolic]
+// CHECK:STDOUT:   %F.type.5e: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.4: %F.type.5e = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.bd32e5.1 = facet_value %C, %impl_witness [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %AddWith.type.1 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
+// CHECK:STDOUT:   %import_ref.1: %AddWith.type.7 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
 // CHECK:STDOUT:   %import_ref.2 = import_ref Main//a, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, loc5_9, unloaded
-// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.1) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.1)]
+// CHECK:STDOUT:   %import_ref.4: @AddWith.%F.type (%F.type.4) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.a4)]
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,9 +137,9 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.1 = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith.generic]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.7 = name_ref AddWith, imports.%import_ref.1 [template = constants.%AddWith.generic]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.3]
+// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.bd32e5.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
@@ -149,12 +149,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.2)]
-// CHECK:STDOUT:   %Self: %AddWith.type.2 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.1)]
-// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.1) = struct_value () [symbolic = %F (constants.%F.1)]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.2), @AddWith.%F.type (%F.type.1) [symbolic = %F.assoc_type (constants.%F.assoc_type.1)]
-// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.1) = assoc_entity element0, imports.%import_ref.5 [symbolic = %assoc0 (constants.%assoc0.1)]
+// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.bd32e5.1)]
+// CHECK:STDOUT:   %Self: %AddWith.type.bd32e5.1 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.4)]
+// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.4) = struct_value () [symbolic = %F (constants.%F.a4)]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.bd32e5.1), @AddWith.%F.type (%F.type.4) [symbolic = %F.assoc_type (constants.%F.assoc_type.4)]
+// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.4) = assoc_entity element0, imports.%import_ref.5 [symbolic = %assoc0 (constants.%assoc0.fe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -165,7 +165,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
-// CHECK:STDOUT:   %F.decl: %F.type.3 = fn_decl @F.2 [template = constants.%F.3] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.5e = fn_decl @F.2 [template = constants.%F.4] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -180,7 +180,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.2) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.bd32e5.1) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -204,12 +204,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.3
+// CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.bd32e5.2
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.2
-// CHECK:STDOUT:   %F => constants.%F.2
+// CHECK:STDOUT:   %F.type => constants.%F.type.5a
+// CHECK:STDOUT:   %F => constants.%F.aa
 // CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.2
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.2
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.f0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%C, constants.%AddWith.facet) {}

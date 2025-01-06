@@ -31,7 +31,7 @@ fn F() {
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @array.1.loc19_4 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
-// CHECK:STDOUT: @array.2.loc27_4 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
+// CHECK:STDOUT: @array.a.loc27_4 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -50,7 +50,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc27_3.8.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 3, !dbg !10
 // CHECK:STDOUT:   %.loc27_3.10.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 4, !dbg !10
 // CHECK:STDOUT:   %.loc27_3.12.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 5, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @array.2.loc27_4, i64 48, i1 false), !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @array.a.loc27_4, i64 48, i1 false), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

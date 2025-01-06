@@ -68,10 +68,10 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.2: %.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.118c85.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.cccaa5.1: %.type.118c85.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.118c85.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.cccaa5.2: %.type.118c85.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -91,9 +91,9 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc18: %.type.1 = fn_decl @.1 [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl.loc18: %.type.118c85.1 = fn_decl @.1 [template = constants.%.cccaa5.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.2 = fn_decl @.2 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.118c85.2 = fn_decl @.2 [template = constants.%.cccaa5.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

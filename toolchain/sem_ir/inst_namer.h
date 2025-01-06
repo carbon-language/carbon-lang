@@ -10,6 +10,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_fingerprinter.h"
 
 namespace Carbon::SemIR {
 
@@ -129,8 +130,10 @@ class InstNamer {
       return Name(allocated.insert({name, NameResult()}).first);
     }
 
-    auto AllocateName(const InstNamer& inst_namer, SemIR::LocId loc_id,
-                      std::string name) -> Name;
+    auto AllocateName(
+        const InstNamer& inst_namer,
+        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
+        std::string name) -> Name;
   };
 
   // A named scope that contains named entities.
@@ -165,6 +168,7 @@ class InstNamer {
   auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
 
   const File* sem_ir_;
+  InstFingerprinter fingerprinter_;
 
   // The namespace for entity names. Names within this namespace are prefixed
   // with `@` in formatted SemIR.

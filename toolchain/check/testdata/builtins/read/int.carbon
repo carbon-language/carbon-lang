@@ -22,12 +22,12 @@ fn Main() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %ReadChar.type.1: type = fn_type @ReadChar.1 [template]
-// CHECK:STDOUT:   %ReadChar.1: %ReadChar.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %ReadChar.type.4: type = fn_type @ReadChar.1 [template]
+// CHECK:STDOUT:   %ReadChar.0: %ReadChar.type.4 = struct_value () [template]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [template]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [template]
-// CHECK:STDOUT:   %ReadChar.type.2: type = fn_type @ReadChar.2 [template]
-// CHECK:STDOUT:   %ReadChar.2: %ReadChar.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %ReadChar.type.7: type = fn_type @ReadChar.2 [template]
+// CHECK:STDOUT:   %ReadChar.f: %ReadChar.type.7 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -38,7 +38,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//io
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %ReadChar.type.2 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.2]
+// CHECK:STDOUT:   %import_ref.5: %ReadChar.type.7 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,7 +48,7 @@ fn Main() {
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %ReadChar.decl: %ReadChar.type.1 = fn_decl @ReadChar.1 [template = constants.%ReadChar.1] {
+// CHECK:STDOUT:   %ReadChar.decl: %ReadChar.type.4 = fn_decl @ReadChar.1 [template = constants.%ReadChar.0] {
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -64,13 +64,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ReadChar.ref.loc16: %ReadChar.type.1 = name_ref ReadChar, file.%ReadChar.decl [template = constants.%ReadChar.1]
+// CHECK:STDOUT:   %ReadChar.ref.loc16: %ReadChar.type.4 = name_ref ReadChar, file.%ReadChar.decl [template = constants.%ReadChar.0]
 // CHECK:STDOUT:   %read.char.loc16: init %i32 = call %ReadChar.ref.loc16()
 // CHECK:STDOUT:   %.loc16_26.1: %i32 = value_of_initializer %read.char.loc16
 // CHECK:STDOUT:   %.loc16_26.2: %i32 = converted %read.char.loc16, %.loc16_26.1
 // CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc16_26.2
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.2 = name_ref ReadChar, imports.%import_ref.5 [template = constants.%ReadChar.2]
+// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.7 = name_ref ReadChar, imports.%import_ref.5 [template = constants.%ReadChar.f]
 // CHECK:STDOUT:   %read.char.loc17: init %i32 = call %ReadChar.ref.loc17()
 // CHECK:STDOUT:   %.loc17_31.1: %i32 = value_of_initializer %read.char.loc17
 // CHECK:STDOUT:   %.loc17_31.2: %i32 = converted %read.char.loc17, %.loc17_31.1

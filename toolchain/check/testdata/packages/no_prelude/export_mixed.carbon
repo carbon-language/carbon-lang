@@ -120,11 +120,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type.9b: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %empty_tuple.type [template]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.y [template]
+// CHECK:STDOUT:   %complete_type.9f: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -138,7 +138,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.9b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -148,7 +148,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %.loc9: %D.elem = field_decl y, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.9f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -477,22 +477,22 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.x [template]
+// CHECK:STDOUT:   %complete_type.9b: <witness> = complete_type_witness %struct_type.x [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.y [template]
+// CHECK:STDOUT:   %complete_type.9f: <witness> = complete_type_witness %struct_type.y [template]
 // CHECK:STDOUT:   %D.val: %D = struct_value (%empty_tuple) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.1: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.2: type = import_ref Main//base, D, loaded [template = constants.%D]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type.9b]
 // CHECK:STDOUT:   %import_ref.4 = import_ref Main//export_import_then_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.5 = import_ref Main//export_import_then_name, inst23 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//base, loc10_1, loaded [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//base, loc10_1, loaded [template = constants.%complete_type.9f]
 // CHECK:STDOUT:   %import_ref.7 = import_ref Main//base, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.8 = import_ref Main//base, loc9_8, unloaded
 // CHECK:STDOUT: }

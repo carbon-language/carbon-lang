@@ -21,13 +21,13 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %const.1: type = const_type %i32 [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %const.1 [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %ptr.1 [template]
+// CHECK:STDOUT:   %const.f: type = const_type %i32 [template]
+// CHECK:STDOUT:   %ptr.8: type = ptr_type %const.f [template]
+// CHECK:STDOUT:   %ptr.c: type = ptr_type %ptr.8 [template]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.3: type = ptr_type %i32 [template]
-// CHECK:STDOUT:   %const.2: type = const_type %ptr.3 [template]
+// CHECK:STDOUT:   %ptr.b: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %const.6: type = const_type %ptr.b [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -48,60 +48,60 @@ fn B(p: const (i32*)) -> const (i32*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {
-// CHECK:STDOUT:     %p.patt: %ptr.2 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.2 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.c = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.c = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.c = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.c = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc11_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %const.loc11_25: type = const_type %i32 [template = constants.%const.1]
-// CHECK:STDOUT:     %ptr.loc11_34: type = ptr_type %const.1 [template = constants.%ptr.1]
-// CHECK:STDOUT:     %ptr.loc11_35: type = ptr_type %ptr.1 [template = constants.%ptr.2]
-// CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_19 [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %const.loc11_25: type = const_type %i32 [template = constants.%const.f]
+// CHECK:STDOUT:     %ptr.loc11_34: type = ptr_type %const.f [template = constants.%ptr.8]
+// CHECK:STDOUT:     %ptr.loc11_35: type = ptr_type %ptr.8 [template = constants.%ptr.c]
+// CHECK:STDOUT:     %p.param: %ptr.c = value_param runtime_param0
+// CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_19 [template = constants.%ptr.c] {
 // CHECK:STDOUT:       %int_32.loc11_15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc11_15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %const.loc11_9: type = const_type %i32 [template = constants.%const.1]
-// CHECK:STDOUT:       %ptr.loc11_18: type = ptr_type %const.1 [template = constants.%ptr.1]
-// CHECK:STDOUT:       %ptr.loc11_19: type = ptr_type %ptr.1 [template = constants.%ptr.2]
+// CHECK:STDOUT:       %const.loc11_9: type = const_type %i32 [template = constants.%const.f]
+// CHECK:STDOUT:       %ptr.loc11_18: type = ptr_type %const.f [template = constants.%ptr.8]
+// CHECK:STDOUT:       %ptr.loc11_19: type = ptr_type %ptr.8 [template = constants.%ptr.c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.2 = return_slot %return.param
+// CHECK:STDOUT:     %p: %ptr.c = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.c = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.c = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [template = constants.%B] {
-// CHECK:STDOUT:     %p.patt: %const.2 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %const.2 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %const.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %const.2 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %const.6 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %const.6 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %const.6 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %const.6 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15_33: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_33: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [template = constants.%ptr.3]
-// CHECK:STDOUT:     %const.loc15_26: type = const_type %ptr.3 [template = constants.%const.2]
-// CHECK:STDOUT:     %p.param: %const.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %const.loc15_9 [template = constants.%const.2] {
+// CHECK:STDOUT:     %ptr.loc15_36: type = ptr_type %i32 [template = constants.%ptr.b]
+// CHECK:STDOUT:     %const.loc15_26: type = const_type %ptr.b [template = constants.%const.6]
+// CHECK:STDOUT:     %p.param: %const.6 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15: type = splice_block %const.loc15_9 [template = constants.%const.6] {
 // CHECK:STDOUT:       %int_32.loc15_16: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_16: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %ptr.loc15_19: type = ptr_type %i32 [template = constants.%ptr.3]
-// CHECK:STDOUT:       %const.loc15_9: type = const_type %ptr.3 [template = constants.%const.2]
+// CHECK:STDOUT:       %ptr.loc15_19: type = ptr_type %i32 [template = constants.%ptr.b]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %ptr.b [template = constants.%const.6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.2 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %const.2 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %const.2 = return_slot %return.param
+// CHECK:STDOUT:     %p: %const.6 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %const.6 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %const.6 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%p.param_patt: %ptr.2) -> %ptr.2 {
+// CHECK:STDOUT: fn @A(%p.param_patt: %ptr.c) -> %ptr.c {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.c = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%p.param_patt: %const.2) -> %const.2 {
+// CHECK:STDOUT: fn @B(%p.param_patt: %const.6) -> %const.6 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %const.2 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %const.6 = name_ref p, %p
 // CHECK:STDOUT:   return %p.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

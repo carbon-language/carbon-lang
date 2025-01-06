@@ -680,7 +680,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %b.patt: %C = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%b) [symbolic]
+// CHECK:STDOUT:   %.f: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -735,7 +735,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     .Self = constants.%.f
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -762,7 +762,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -817,7 +817,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     .Self = constants.%.5
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -844,7 +844,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.generic: %Foo.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1, @.1(%a) [symbolic]
+// CHECK:STDOUT:   %.5: type = class_type @.1, @.1(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -899,7 +899,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.1
+// CHECK:STDOUT:     .Self = constants.%.5
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1120,13 +1120,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Base [template]
+// CHECK:STDOUT:   %ptr.7: type = ptr_type %Base [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.f: %.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1135,33 +1135,33 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
-// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.f] {
+// CHECK:STDOUT:     %self.patt: %ptr.7 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.7 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc16_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc16_26: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:     %self.param: %ptr.7 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16_26: type = splice_block %ptr [template = constants.%ptr.7] {
 // CHECK:STDOUT:       %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.1]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.7]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.7 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc5: %Base.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: %ptr.7 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.7 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc7_8: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.1 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc7_23: type = splice_block %ptr [template = constants.%ptr.1] {
+// CHECK:STDOUT:     %self.param: %ptr.7 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc7_23: type = splice_block %ptr [template = constants.%ptr.7] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%Base [template = constants.%Base]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.1]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.7]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.1 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.7 = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type]
 // CHECK:STDOUT:
@@ -1172,11 +1172,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.1]();
+// CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.7]();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1[addr %self.param_patt: %ptr.1]() {
+// CHECK:STDOUT: fn @.1[addr %self.param_patt: %ptr.7]() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %ptr.1 = name_ref self, %self
+// CHECK:STDOUT:   %self.ref: %ptr.7 = name_ref self, %self
 // CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5 [template = @Base.%.loc5]
 // CHECK:STDOUT:   %.loc17_10: ref %empty_tuple.type = class_element_access %.loc17_4, element0

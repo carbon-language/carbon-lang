@@ -139,7 +139,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -166,8 +166,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
 // CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
-// CHECK:STDOUT:   %b_ptr.var: ref %ptr.2 = var b_ptr
-// CHECK:STDOUT:   %b_ptr: ref %ptr.2 = bind_name b_ptr, %b_ptr.var
+// CHECK:STDOUT:   %b_ptr.var: ref %ptr.cc = var b_ptr
+// CHECK:STDOUT:   %b_ptr: ref %ptr.cc = bind_name b_ptr, %b_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -183,7 +183,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_18
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %b_val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %b_val.ref
 // CHECK:STDOUT:   assign file.%b_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -195,7 +195,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -222,8 +222,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %E: type = bind_alias E, imports.%import_ref.1 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
 // CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
-// CHECK:STDOUT:   %c_ptr.var: ref %ptr.2 = var c_ptr
-// CHECK:STDOUT:   %c_ptr: ref %ptr.2 = bind_name c_ptr, %c_ptr.var
+// CHECK:STDOUT:   %c_ptr.var: ref %ptr.cc = var c_ptr
+// CHECK:STDOUT:   %c_ptr: ref %ptr.cc = bind_name c_ptr, %c_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -239,7 +239,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc8_18: init %C = converted %.loc8_17.1, %.loc8_17.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_18
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %c_val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %c_val.ref
 // CHECK:STDOUT:   assign file.%c_ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -251,7 +251,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -281,8 +281,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.var: ref %ptr.cc = var ptr
+// CHECK:STDOUT:   %ptr: ref %ptr.cc = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -298,7 +298,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -310,7 +310,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -340,8 +340,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.var: ref %ptr.cc = var ptr
+// CHECK:STDOUT:   %ptr: ref %ptr.cc = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -357,7 +357,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -369,7 +369,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -403,8 +403,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.var: ref %ptr.cc = var ptr
+// CHECK:STDOUT:   %ptr: ref %ptr.cc = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -420,7 +420,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -432,7 +432,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.cc: type = ptr_type %C [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -466,8 +466,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %val.var: ref %C = var val
 // CHECK:STDOUT:   %val: ref %C = bind_name val, %val.var
-// CHECK:STDOUT:   %ptr.var: ref %ptr.2 = var ptr
-// CHECK:STDOUT:   %ptr: ref %ptr.2 = bind_name ptr, %ptr.var
+// CHECK:STDOUT:   %ptr.var: ref %ptr.cc = var ptr
+// CHECK:STDOUT:   %ptr: ref %ptr.cc = bind_name ptr, %ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -483,7 +483,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %.loc7_16: init %C = converted %.loc7_15.1, %.loc7_15.2 [template = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_16
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %val.ref
+// CHECK:STDOUT:   %addr: %ptr.cc = addr_of %val.ref
 // CHECK:STDOUT:   assign file.%ptr.var, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -21,8 +21,8 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
+// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.5: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -50,11 +50,11 @@ let n: (i32, i32) = 1 as (i32, i32);
 // CHECK:STDOUT:   %i32.loc17_27: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc17_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc17_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_35.1: %tuple.type.1 = tuple_literal (%i32.loc17_27, %i32.loc17_32)
-// CHECK:STDOUT:   %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
-// CHECK:STDOUT:   %.loc17_23: %tuple.type.2 = converted %int_1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc17_35.1: %tuple.type.2 = tuple_literal (%i32.loc17_27, %i32.loc17_32)
+// CHECK:STDOUT:   %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.5 [template = constants.%tuple.type.5]
+// CHECK:STDOUT:   %.loc17_23: %tuple.type.5 = converted %int_1, <error> [template = <error>]
 // CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access %.loc17_23, element0 [template = <error>]
-// CHECK:STDOUT:   %n: %tuple.type.2 = bind_name n, <error>
+// CHECK:STDOUT:   %n: %tuple.type.5 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

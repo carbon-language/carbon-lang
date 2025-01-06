@@ -60,9 +60,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 2.2000000000000002 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2.3000000000000003 [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 4.5 [template]
+// CHECK:STDOUT:   %float.9f: f64 = float_literal 2.2000000000000002 [template]
+// CHECK:STDOUT:   %float.93: f64 = float_literal 2.3000000000000003 [template]
+// CHECK:STDOUT:   %float.7: f64 = float_literal 4.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,9 +163,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2.2000000000000002 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 2.3000000000000003 [template = constants.%float.2]
-// CHECK:STDOUT:   %float.add: init f64 = call %Add.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2.2000000000000002 [template = constants.%float.9f]
+// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 2.3000000000000003 [template = constants.%float.93]
+// CHECK:STDOUT:   %float.add: init f64 = call %Add.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.7]
 // CHECK:STDOUT:   assign file.%x.var, %float.add
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

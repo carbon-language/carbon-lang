@@ -78,8 +78,8 @@ fn Run() {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [template]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [template]
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Cycle [template]
-// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr.1} [template]
+// CHECK:STDOUT:   %ptr.e: type = ptr_type %Cycle [template]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr.e} [template]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template]
 // CHECK:STDOUT:   %Cycle.elem: type = unbound_element_type %Cycle, %struct_type.b [template]
@@ -119,15 +119,15 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref.loc7_3: ref %struct_type.b = name_ref a, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc7_4: ref %ptr.1 = struct_access %a.ref.loc7_3, element0
+// CHECK:STDOUT:   %.loc7_4: ref %ptr.e = struct_access %a.ref.loc7_3, element0
 // CHECK:STDOUT:   %a.ref.loc7_11: ref %struct_type.b = name_ref a, imports.%import_ref.2
-// CHECK:STDOUT:   %.loc7_12.1: ref %ptr.1 = struct_access %a.ref.loc7_11, element0
-// CHECK:STDOUT:   %.loc7_12.2: %ptr.1 = bind_value %.loc7_12.1
+// CHECK:STDOUT:   %.loc7_12.1: ref %ptr.e = struct_access %a.ref.loc7_11, element0
+// CHECK:STDOUT:   %.loc7_12.2: %ptr.e = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
 // CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%import_ref.5 [template = imports.%.1]
 // CHECK:STDOUT:   %.loc7_15: ref %struct_type.b = class_element_access %.loc7_10, element0
-// CHECK:STDOUT:   %.loc7_17.1: ref %ptr.1 = struct_access %.loc7_15, element0
-// CHECK:STDOUT:   %.loc7_17.2: %ptr.1 = bind_value %.loc7_17.1
+// CHECK:STDOUT:   %.loc7_17.1: ref %ptr.e = struct_access %.loc7_15, element0
+// CHECK:STDOUT:   %.loc7_17.2: %ptr.e = bind_value %.loc7_17.1
 // CHECK:STDOUT:   assign %.loc7_4, %.loc7_17.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

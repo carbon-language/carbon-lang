@@ -49,8 +49,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %float.f: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.b: f64 = float_literal 2 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
@@ -175,8 +175,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Neq.ref.loc8: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
-// CHECK:STDOUT:   %float.loc8_20: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc8_25: f64 = float_literal 2 [template = constants.%float.2]
+// CHECK:STDOUT:   %float.loc8_20: f64 = float_literal 1 [template = constants.%float.f]
+// CHECK:STDOUT:   %float.loc8_25: f64 = float_literal 2 [template = constants.%float.b]
 // CHECK:STDOUT:   %float.neq.loc8: init bool = call %Neq.ref.loc8(%float.loc8_20, %float.loc8_25) [template = constants.%true]
 // CHECK:STDOUT:   %.loc8_13.1: bool = value_of_initializer %float.neq.loc8 [template = constants.%true]
 // CHECK:STDOUT:   %.loc8_13.2: bool = converted %float.neq.loc8, %.loc8_13.1 [template = constants.%true]
@@ -194,8 +194,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %.loc8_13.3: type = block_arg !if.expr.result.loc8 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Neq.ref.loc9: %Neq.type = name_ref Neq, file.%Neq.decl [template = constants.%Neq]
-// CHECK:STDOUT:   %float.loc9_21: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc9_26: f64 = float_literal 1 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc9_21: f64 = float_literal 1 [template = constants.%float.f]
+// CHECK:STDOUT:   %float.loc9_26: f64 = float_literal 1 [template = constants.%float.f]
 // CHECK:STDOUT:   %float.neq.loc9: init bool = call %Neq.ref.loc9(%float.loc9_21, %float.loc9_26) [template = constants.%false]
 // CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.neq.loc9 [template = constants.%false]
 // CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.neq.loc9, %.loc9_14.1 [template = constants.%false]

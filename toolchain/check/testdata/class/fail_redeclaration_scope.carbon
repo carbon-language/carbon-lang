@@ -28,15 +28,15 @@ class Y {
 // CHECK:STDOUT: --- fail_redeclaration_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.1: type = class_type @A.1 [template]
+// CHECK:STDOUT:   %A.fe: type = class_type @A.1 [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
-// CHECK:STDOUT:   %A.2: type = class_type @A.2 [template]
-// CHECK:STDOUT:   %B.1: type = class_type @B.1 [template]
+// CHECK:STDOUT:   %A.fb: type = class_type @A.2 [template]
+// CHECK:STDOUT:   %B.c: type = class_type @B.1 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %B.2: type = class_type @B.2 [template]
+// CHECK:STDOUT:   %B.8: type = class_type @B.2 [template]
 // CHECK:STDOUT:   %Y: type = class_type @Y [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.c: type = class_type @.1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,25 +54,25 @@ class Y {
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [template = constants.%A.1] {} {}
+// CHECK:STDOUT:   %A.decl.loc11: type = class_decl @A.1 [template = constants.%A.fe] {} {}
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [template = constants.%X] {} {}
-// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [template = constants.%A.1] {} {}
+// CHECK:STDOUT:   %A.decl.loc19: type = class_decl @A.1 [template = constants.%A.fe] {} {}
 // CHECK:STDOUT:   %Y.decl: type = class_decl @Y [template = constants.%Y] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.1 {
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [template = constants.%B.2] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.2 [template = constants.%B.8] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A.1
+// CHECK:STDOUT:   .Self = constants.%A.fe
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.2] {} {}
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {} {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A.2 [template = constants.%A.fb] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.c] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -82,11 +82,11 @@ class Y {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A.2 {
-// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.1] {} {}
+// CHECK:STDOUT:   %B.decl: type = class_decl @B.1 [template = constants.%B.c] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A.2
+// CHECK:STDOUT:   .Self = constants.%A.fb
 // CHECK:STDOUT:   .B = %B.decl
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -95,14 +95,14 @@ class Y {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B.1
+// CHECK:STDOUT:   .Self = constants.%B.c
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B.2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.c] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -114,7 +114,7 @@ class Y {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.1
+// CHECK:STDOUT:   .Self = constants.%.c
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

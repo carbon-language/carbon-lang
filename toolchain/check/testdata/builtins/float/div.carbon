@@ -62,13 +62,13 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Div: %Div.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 10 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2.5 [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 4 [template]
-// CHECK:STDOUT:   %float.4: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.9: f64 = float_literal 10 [template]
+// CHECK:STDOUT:   %float.3: f64 = float_literal 2.5 [template]
+// CHECK:STDOUT:   %float.a: f64 = float_literal 4 [template]
+// CHECK:STDOUT:   %float.f: f64 = float_literal 1 [template]
 // CHECK:STDOUT:   %float.5: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %float.6: f64 = float_literal +Inf [template]
-// CHECK:STDOUT:   %float.7: f64 = float_literal NaN [template]
+// CHECK:STDOUT:   %float.b: f64 = float_literal +Inf [template]
+// CHECK:STDOUT:   %float.8: f64 = float_literal NaN [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -171,23 +171,23 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Div.ref.loc8: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 10 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc8_24: f64 = float_literal 2.5 [template = constants.%float.2]
-// CHECK:STDOUT:   %float.div.loc8: init f64 = call %Div.ref.loc8(%float.loc8_18, %float.loc8_24) [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 10 [template = constants.%float.9]
+// CHECK:STDOUT:   %float.loc8_24: f64 = float_literal 2.5 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.div.loc8: init f64 = call %Div.ref.loc8(%float.loc8_18, %float.loc8_24) [template = constants.%float.a]
 // CHECK:STDOUT:   assign file.%a.var, %float.div.loc8
 // CHECK:STDOUT:   %Div.ref.loc9: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
-// CHECK:STDOUT:   %float.loc9_18: f64 = float_literal 1 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc9_18: f64 = float_literal 1 [template = constants.%float.f]
 // CHECK:STDOUT:   %float.loc9_23: f64 = float_literal 0 [template = constants.%float.5]
-// CHECK:STDOUT:   %float.div.loc9: init f64 = call %Div.ref.loc9(%float.loc9_18, %float.loc9_23) [template = constants.%float.6]
-// CHECK:STDOUT:   %.loc9_27.1: f64 = value_of_initializer %float.div.loc9 [template = constants.%float.6]
-// CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%float.6]
+// CHECK:STDOUT:   %float.div.loc9: init f64 = call %Div.ref.loc9(%float.loc9_18, %float.loc9_23) [template = constants.%float.b]
+// CHECK:STDOUT:   %.loc9_27.1: f64 = value_of_initializer %float.div.loc9 [template = constants.%float.b]
+// CHECK:STDOUT:   %.loc9_27.2: f64 = converted %float.div.loc9, %.loc9_27.1 [template = constants.%float.b]
 // CHECK:STDOUT:   %b: f64 = bind_name b, %.loc9_27.2
 // CHECK:STDOUT:   %Div.ref.loc10: %Div.type = name_ref Div, file.%Div.decl [template = constants.%Div]
 // CHECK:STDOUT:   %float.loc10_18: f64 = float_literal 0 [template = constants.%float.5]
 // CHECK:STDOUT:   %float.loc10_23: f64 = float_literal 0 [template = constants.%float.5]
-// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%float.loc10_18, %float.loc10_23) [template = constants.%float.7]
-// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%float.7]
-// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%float.7]
+// CHECK:STDOUT:   %float.div.loc10: init f64 = call %Div.ref.loc10(%float.loc10_18, %float.loc10_23) [template = constants.%float.8]
+// CHECK:STDOUT:   %.loc10_27.1: f64 = value_of_initializer %float.div.loc10 [template = constants.%float.8]
+// CHECK:STDOUT:   %.loc10_27.2: f64 = converted %float.div.loc10, %.loc10_27.1 [template = constants.%float.8]
 // CHECK:STDOUT:   %c: f64 = bind_name c, %.loc10_27.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

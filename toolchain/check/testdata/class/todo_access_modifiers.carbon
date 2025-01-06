@@ -31,7 +31,7 @@ class Access {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Access.elem: type = unbound_element_type %Access, %i32 [template]
 // CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.k.l [template]
+// CHECK:STDOUT:   %complete_type.d: <witness> = complete_type_witness %struct_type.k.l [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,7 +56,7 @@ class Access {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %.loc17: %Access.elem = field_decl k, element0 [template]
 // CHECK:STDOUT:   %.loc19: %Access.elem = field_decl l, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [template = constants.%complete_type.d]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
