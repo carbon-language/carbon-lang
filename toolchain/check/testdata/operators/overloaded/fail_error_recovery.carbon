@@ -32,14 +32,14 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %Op.type.d: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.dd: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.2: <witness> = impl_witness (imports.%import_ref.98), @impl.13(%int_32) [template]
-// CHECK:STDOUT:   %Op.type.e: type = fn_type @Op.2, @impl.13(%int_32) [template]
-// CHECK:STDOUT:   %Op.0: %Op.type.e = struct_value () [template]
+// CHECK:STDOUT:   %impl_witness.95: <witness> = impl_witness (imports.%import_ref.98), @impl.13(%int_32) [template]
+// CHECK:STDOUT:   %Op.type.b: type = fn_type @Op.2, @impl.13(%int_32) [template]
+// CHECK:STDOUT:   %Op.fa: %Op.type.b = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,7 +76,7 @@ fn G(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %impl.elem0: %Op.type.d = impl_witness_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.dd = impl_witness_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %undeclared.ref, %impl.elem0 [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -85,7 +85,7 @@ fn G(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [template = <error>]
-// CHECK:STDOUT:   %impl.elem0: %Op.type.d = impl_witness_access constants.%impl_witness.2, element0 [template = constants.%Op.0]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.dd = impl_witness_access constants.%impl_witness.95, element0 [template = constants.%Op.fa]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

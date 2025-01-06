@@ -14,18 +14,13 @@ namespace Carbon::SemIR {
 // stable across compilations and across minor changes to the compiler.
 class InstFingerprinter {
  public:
-  explicit InstFingerprinter(const File& sem_ir);
-
   // Gets or computes a fingerprint for the given instruction.
-  auto GetOrCompute(InstId inst_id) -> uint64_t;
+  auto GetOrCompute(const File& file, InstId inst_id) -> uint64_t;
 
  private:
-  const File* sem_ir_;
-
-  // The fingerprint for each instruction, indexed by the InstId's index. Zero
-  // is used for fingerprints that haven't been computed yet; the fingerprint of
-  // an instruction is never zero.
-  std::vector<uint64_t> fingerprints_;
+  // The fingerprint for each instruction that has had its fingerprint computed,
+  // indexed by the InstId's index.
+  Map<std::pair<const File*, InstId>, uint64_t> fingerprints_;
 };
 
 }  // namespace Carbon::SemIR

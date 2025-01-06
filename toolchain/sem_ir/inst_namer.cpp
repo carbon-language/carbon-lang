@@ -24,7 +24,7 @@
 namespace Carbon::SemIR {
 
 InstNamer::InstNamer(const File* sem_ir)
-    : sem_ir_(sem_ir), fingerprinter_(*sem_ir) {
+    : sem_ir_(sem_ir) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));
@@ -420,7 +420,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
             SemIR::LocId::Invalid;
           loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
         if (scope_id == ScopeId::Constants) {
-          loc_id_or_fingerprint = fingerprinter_.GetOrCompute(inst_id);
+          loc_id_or_fingerprint =
+              fingerprinter_.GetOrCompute(*sem_ir_, inst_id);
         } else {
           loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
         }

@@ -108,12 +108,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type.4: type = fn_type @F.1, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F.a4: %F.type.4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %F.assoc_type.1: type = assoc_entity_type %AddWith.type.5, %F.type.4 [symbolic]
-// CHECK:STDOUT:   %assoc0.a: %F.assoc_type.1 = assoc_entity element0, imports.%import_ref.5 [symbolic]
+// CHECK:STDOUT:   %assoc0.f: %F.assoc_type.1 = assoc_entity element0, imports.%import_ref.5 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.f: type = facet_type <@AddWith, @AddWith(%C)> [template]
 // CHECK:STDOUT:   %F.type.5a: type = fn_type @F.1, @AddWith(%C) [template]
 // CHECK:STDOUT:   %F.aa: %F.type.5a = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type.9: type = assoc_entity_type %AddWith.type.f, %F.type.5a [template]
-// CHECK:STDOUT:   %assoc0.4: %F.assoc_type.9 = assoc_entity element0, imports.%import_ref.5 [template]
+// CHECK:STDOUT:   %assoc0.8: %F.assoc_type.9 = assoc_entity element0, imports.%import_ref.5 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
 // CHECK:STDOUT:   %F.type.5e: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.4: %F.type.5e = struct_value () [template]
@@ -154,7 +154,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.4)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.4) = struct_value () [symbolic = %F (constants.%F.a4)]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.5), @AddWith.%F.type (%F.type.4) [symbolic = %F.assoc_type (constants.%F.assoc_type.1)]
-// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.1) = assoc_entity element0, imports.%import_ref.5 [symbolic = %assoc0 (constants.%assoc0.a)]
+// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.1) = assoc_entity element0, imports.%import_ref.5 [symbolic = %assoc0 (constants.%assoc0.f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
@@ -209,7 +209,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %F.type => constants.%F.type.5a
 // CHECK:STDOUT:   %F => constants.%F.aa
 // CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.9
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.4
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%C, constants.%AddWith.facet) {}

@@ -16,10 +16,16 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
+  // The file containing the instruction we're currently processing.
   const File* sem_ir;
-  llvm::MutableArrayRef<uint64_t> fingerprints;
-  llvm::SmallVector<InstId> todo;
+  // The instructions we need to compute fingerprints for.
+  llvm::SmallVector<std::pair<const File*, InstId>> todo;
+  // The contents of the current instruction as accumulated so far. This is used
+  // to build a Merkle tree containing a fingerprint for the current
+  // instruction.
   llvm::SmallVector<llvm::stable_hash> contents = {};
+  // Known cached instruction fingerprints.
+  Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
 
   // Add an invalid marker to the contents. This is used when the entity
   // contains an invalid ID.
@@ -61,16 +67,20 @@ struct Worklist {
     // TODO: Should we include the other parts of the entity name?
   }
 
-  auto Add(InstId inner_id) -> void {
+  auto AddInFile(const File* file, InstId inner_id) -> void {
     if (!inner_id.is_valid()) {
       AddInvalid();
       return;
     }
-    if (fingerprints[inner_id.index]) {
-      contents.push_back(fingerprints[inner_id.index]);
+    if (auto lookup = fingerprints->Lookup(std::pair(file, inner_id))) {
+      contents.push_back(lookup.value());
     } else {
-      todo.push_back(inner_id);
+      todo.push_back({file, inner_id});
     }
+  }
+
+  auto Add(InstId inner_id) -> void {
+    AddInFile(sem_ir, inner_id);
   }
 
   auto Add(ConstantId constant_id) -> void {
@@ -229,9 +239,7 @@ struct Worklist {
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
     auto ir_inst = sem_ir->import_ir_insts().Get(ir_inst_id);
-    Add(ir_inst.ir_id);
-    // TODO: Consider computing a fingerprint for the instruction in the import
-    // IR.
+    AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id).sem_ir, ir_inst.inst_id);
   }
 
   template<typename T>
@@ -280,55 +288,55 @@ struct Worklist {
 
     table[kind.ToIndex()](*this, arg);
   }
+
+  // Ensure all the instructions on the todo list have fingerprints.
+  auto Run() -> void {
+    while (!todo.empty()) {
+      auto [next_sem_ir, next_inst_id] = todo.back();
+      if (fingerprints->Contains(std::pair(next_sem_ir, next_inst_id))) {
+        todo.pop_back();
+        continue;
+      }
+
+      size_t init_size = todo.size();
+      auto inst = next_sem_ir->insts().Get(next_inst_id);
+      auto [arg0_kind, arg1_kind] = inst.ArgKinds();
+
+      // Prepare to fingerprint this instruction.
+      sem_ir = next_sem_ir;
+      contents.clear();
+
+      Add(inst.kind());
+
+      // Don't include the type if it's `type` or `<error>`, because those types
+      // are self-referential.
+      if (inst.type_id() != TypeType::SingletonTypeId &&
+          inst.type_id() != ErrorInst::SingletonTypeId) {
+        Add(inst.type_id());
+      }
+
+      for (auto [arg, kind] : {std::pair(inst.arg0(), arg0_kind),
+                               std::pair(inst.arg1(), arg1_kind)}) {
+        AddWithKind(arg, kind);
+      }
+
+      // If we didn't add any work, we have a fingerprint for this instruction.
+      if (todo.size() == init_size) {
+        auto fingerprint = llvm::stable_hash_combine(contents);
+        fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
+        todo.pop_back();
+      }
+    }
+  }
 };
 }
 
-InstFingerprinter::InstFingerprinter(const File& sem_ir) : sem_ir_(&sem_ir) {
-  fingerprints_.resize(sem_ir.insts().size(), 0);
-}
-
-auto InstFingerprinter::GetOrCompute(InstId inst_id) -> uint64_t {
-  Worklist worklist = {
-      .sem_ir = sem_ir_, .fingerprints = fingerprints_, .todo = {inst_id}};
-
-  while (!worklist.todo.empty()) {
-    if (worklist.fingerprints[worklist.todo.back().index]) {
-      worklist.todo.pop_back();
-      continue;
-    }
-
-    size_t init_size = worklist.todo.size();
-    auto inst = sem_ir_->insts().Get(worklist.todo.back());
-    auto [arg0_kind, arg1_kind] = inst.ArgKinds();
-
-    worklist.contents.clear();
-    worklist.Add(inst.kind());
-
-    // Don't include the type if it's `type` or `<error>`, because those types
-    // are self-referential.
-    if (inst.type_id() != TypeType::SingletonTypeId &&
-        inst.type_id() != ErrorInst::SingletonTypeId) {
-      worklist.Add(inst.type_id());
-    }
-
-    for (auto [arg, kind] : {std::pair(inst.arg0(), arg0_kind),
-                             std::pair(inst.arg1(), arg1_kind)}) {
-      worklist.AddWithKind(arg, kind);
-    }
-
-    // If we didn't add any work, we have a fingerprint for this instruction.
-    if (worklist.todo.size() == init_size) {
-      auto fingerprint = llvm::stable_hash_combine(worklist.contents);
-      // We use 0 to indicate we've not computed the fingerprint yet. In the
-      // unlikely event we calculate a hash of 0, use a different hash.
-      if (fingerprint == 0) {
-        fingerprint = 1;
-      }
-      fingerprints_[worklist.todo.back().index] = fingerprint;
-      worklist.todo.pop_back();
-    }
-  }
-  return fingerprints_[inst_id.index];
+auto InstFingerprinter::GetOrCompute(const File& file, InstId inst_id) -> uint64_t {
+  Worklist worklist = {.sem_ir = nullptr,
+                       .todo = {{&file, inst_id}},
+                       .fingerprints = &fingerprints_};
+  worklist.Run();
+  return fingerprints_.Lookup(std::pair(&file, inst_id)).value();
 }
 
 }  // namespace Carbon::SemIR
