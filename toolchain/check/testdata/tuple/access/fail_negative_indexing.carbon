@@ -24,7 +24,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %int_6.4: Core.IntLiteral = int_value 6 [template]
 // CHECK:STDOUT:   %tuple.type.f: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.0a: <bound method> = bound_method %int_12.6, %Convert.54 [template]
@@ -36,7 +36,7 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   %tuple: %tuple.type.5 = tuple_value (%int_12.5, %int_6.0) [template]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template]
 // CHECK:STDOUT:   %Op.type.dd8875.1: type = fn_type @Op.13 [template]
-// CHECK:STDOUT:   %impl_witness.e3: <witness> = impl_witness (imports.%import_ref.254) [template]
+// CHECK:STDOUT:   %impl_witness.e3: <witness> = impl_witness (imports.%import_ref.811) [template]
 // CHECK:STDOUT:   %Op.type.dd8875.2: type = fn_type @Op.14 [template]
 // CHECK:STDOUT:   %Op.9f2095.2: %Op.type.dd8875.2 = struct_value () [template]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %Op.9f2095.2 [template]
@@ -45,9 +45,9 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Negate = %import_ref.252
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
+// CHECK:STDOUT:     .Negate = %import_ref.09
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

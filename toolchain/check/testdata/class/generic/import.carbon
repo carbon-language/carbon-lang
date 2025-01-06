@@ -103,7 +103,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.f4: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.54 [template]
@@ -116,8 +116,8 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -270,7 +270,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %int_1.5: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.n.4: type = struct_type {.n: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.c: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.a: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.a: <witness> = impl_witness (imports.%import_ref.c3), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.8b: %Convert.type.b = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5, %Convert.8b [template]
@@ -280,23 +280,23 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.7f: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.255
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.256
+// CHECK:STDOUT:     .Int = %import_ref.30a2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.251: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
-// CHECK:STDOUT:   %import_ref.252 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.253 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.254 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %import_ref.f5: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
+// CHECK:STDOUT:   %import_ref.bae = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.75 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.d40 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.7f
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
@@ -314,7 +314,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %return.patt: %CompleteClass.5 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %CompleteClass.5 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.2 [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%import_ref.7f [template = constants.%CompleteClass.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [template = constants.%CompleteClass.5]
@@ -357,10 +357,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.252
-// CHECK:STDOUT:     .n = imports.%import_ref.253
-// CHECK:STDOUT:     .F = imports.%import_ref.254
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.251
+// CHECK:STDOUT:     .Self = imports.%import_ref.bae
+// CHECK:STDOUT:     .n = imports.%import_ref.75
+// CHECK:STDOUT:     .F = imports.%import_ref.d40
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.f5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,25 +448,25 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, Class, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
-// CHECK:STDOUT:   %import_ref.3: %F.type.08 = import_ref Main//foo, F, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.d = import_ref Main//foo, Class, unloaded
+// CHECK:STDOUT:   %import_ref.7f: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.72: %F.type.08 = import_ref Main//foo, F, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.4
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.10: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.d) = import_ref Main//foo, loc7_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.11: @CompleteClass.%F.type (%F.type.0b) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.e)]
+// CHECK:STDOUT:   %import_ref.f: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
+// CHECK:STDOUT:   %import_ref.b = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.d) = import_ref Main//foo, loc7_8, loaded [template = %.c]
+// CHECK:STDOUT:   %import_ref.1: @CompleteClass.%F.type (%F.type.0b) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Class = imports.%import_ref.d
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.7f
+// CHECK:STDOUT:     .F = imports.%import_ref.72
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .UseMethod = %UseMethod.decl
 // CHECK:STDOUT:     .UseField = %UseField.decl
@@ -505,10 +505,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.9
-// CHECK:STDOUT:     .n = imports.%import_ref.10
-// CHECK:STDOUT:     .F = imports.%import_ref.11
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8
+// CHECK:STDOUT:     .Self = imports.%import_ref.b
+// CHECK:STDOUT:     .n = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.1
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -516,12 +516,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.5 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.5 = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref.loc6: %F.type.08 = name_ref F, imports.%import_ref.3 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref.loc6: %F.type.08 = name_ref F, imports.%import_ref.72 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc6: ref %CompleteClass.5 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call.loc6: init %CompleteClass.5 = call %F.ref.loc6() to %.loc6
 // CHECK:STDOUT:   assign %v.var, %F.call.loc6
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.5 = name_ref v, %v
-// CHECK:STDOUT:   %.loc7_11: %F.type.3 = specific_constant imports.%import_ref.11, @CompleteClass(constants.%i32) [template = constants.%F.d]
+// CHECK:STDOUT:   %.loc7_11: %F.type.3 = specific_constant imports.%import_ref.1, @CompleteClass(constants.%i32) [template = constants.%F.d]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type.3 = name_ref F, %.loc7_11 [template = constants.%F.d]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref.loc7, @F.1(constants.%i32) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call.loc7: init %i32 = call %F.specific_fn()
@@ -542,12 +542,12 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.5 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.5 = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref: %F.type.08 = name_ref F, imports.%import_ref.3 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref: %F.type.08 = name_ref F, imports.%import_ref.72 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc11: ref %CompleteClass.5 = splice_block %v.var {}
 // CHECK:STDOUT:   %F.call: init %CompleteClass.5 = call %F.ref() to %.loc11
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.5 = name_ref v, %v
-// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.8 = name_ref n, imports.%import_ref.10 [template = imports.%.1]
+// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.8 = name_ref n, imports.%import_ref.2 [template = imports.%.c]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc12_11.2: %i32 = bind_value %.loc12_11.1
 // CHECK:STDOUT:   return %.loc12_11.2
@@ -614,26 +614,26 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//foo, Class, unloaded
-// CHECK:STDOUT:   %import_ref.2: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
-// CHECK:STDOUT:   %import_ref.3: %F.type.08 = import_ref Main//foo, F, loaded [template = constants.%F.2]
+// CHECK:STDOUT:   %import_ref.d3 = import_ref Main//foo, Class, unloaded
+// CHECK:STDOUT:   %import_ref.7f: %CompleteClass.type = import_ref Main//foo, CompleteClass, loaded [template = constants.%CompleteClass.generic]
+// CHECK:STDOUT:   %import_ref.72: %F.type.08 = import_ref Main//foo, F, loaded [template = constants.%F.2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.11
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.12
+// CHECK:STDOUT:     .Int = %import_ref.30a2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.10 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %import_ref.f5: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.f4]
+// CHECK:STDOUT:   %import_ref.ba = import_ref Main//foo, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.75 = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %import_ref.d40 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Class = imports.%import_ref.d3
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.7f
+// CHECK:STDOUT:     .F = imports.%import_ref.72
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Use = %Use.decl
 // CHECK:STDOUT:   }
@@ -654,10 +654,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.8
-// CHECK:STDOUT:     .n = imports.%import_ref.9
-// CHECK:STDOUT:     .F = imports.%import_ref.10
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.7
+// CHECK:STDOUT:     .Self = imports.%import_ref.ba
+// CHECK:STDOUT:     .n = imports.%import_ref.75
+// CHECK:STDOUT:     .F = imports.%import_ref.d40
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.f5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -665,7 +665,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.6 = var v
 // CHECK:STDOUT:   %v: ref %CompleteClass.6 = bind_name v, %v.var
-// CHECK:STDOUT:   %F.ref: %F.type.08 = name_ref F, imports.%import_ref.3 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref: %F.type.08 = name_ref F, imports.%import_ref.72 [template = constants.%F.2]
 // CHECK:STDOUT:   %.loc14_34: ref %CompleteClass.5 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %CompleteClass.5 = call %F.ref() to %.loc14_34
 // CHECK:STDOUT:   %.loc14_35: %CompleteClass.6 = converted %F.call, <error> [template = <error>]
@@ -733,9 +733,9 @@ class Class(U:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Class.type = import_ref Main//foo, Class, loaded [template = constants.%Class.generic]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//foo, CompleteClass, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//foo, F, unloaded
+// CHECK:STDOUT:   %import_ref.ee9: %Class.type = import_ref Main//foo, Class, loaded [template = constants.%Class.generic]
+// CHECK:STDOUT:   %import_ref.c4 = import_ref Main//foo, CompleteClass, unloaded
+// CHECK:STDOUT:   %import_ref.b1 = import_ref Main//foo, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -744,9 +744,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Class = imports.%import_ref.1
-// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .Class = imports.%import_ref.ee9
+// CHECK:STDOUT:     .CompleteClass = imports.%import_ref.c4
+// CHECK:STDOUT:     .F = imports.%import_ref.b1
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>

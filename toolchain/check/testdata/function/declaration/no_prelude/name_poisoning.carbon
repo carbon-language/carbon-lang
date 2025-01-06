@@ -943,17 +943,17 @@ class N.C {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.3
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %import_ref.a: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a, [template] {
+// CHECK:STDOUT:     .F1 = %import_ref.9
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .C = imports.%import_ref.8
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -977,17 +977,17 @@ class N.C {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//poison, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Main//poison, N, loaded
-// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.2, [template] {
-// CHECK:STDOUT:     .F1 = %import_ref.3
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//poison, C, unloaded
+// CHECK:STDOUT:   %import_ref.a: <namespace> = import_ref Main//poison, N, loaded
+// CHECK:STDOUT:   %N: <namespace> = namespace %import_ref.a, [template] {
+// CHECK:STDOUT:     .F1 = %import_ref.9
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .C = imports.%import_ref.8
 // CHECK:STDOUT:     .N = imports.%N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>

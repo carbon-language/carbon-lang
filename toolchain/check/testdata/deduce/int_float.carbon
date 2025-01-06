@@ -61,12 +61,12 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Int = %import_ref.2
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types/int, Int, loaded [template = constants.%Int.generic]
+// CHECK:STDOUT:   %import_ref.3: %Int.type = import_ref Core//prelude/types/int, Int, loaded [template = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -101,7 +101,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %n.param: @F.%Int.loc4_42.2 (%Int) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc4_42: type = splice_block %Int.loc4_42.1 [symbolic = %Int.loc4_42.2 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int.generic]
+// CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%import_ref.3 [template = constants.%Int.generic]
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc4_42.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.2 (constants.%Int)]
 // CHECK:STDOUT:     }
@@ -191,12 +191,12 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Float = %import_ref.2
+// CHECK:STDOUT:     .Float = %import_ref.5
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, Float, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.5: %Float.type = import_ref Core//prelude/types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -231,7 +231,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %n.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [template = <error>] {
 // CHECK:STDOUT:       %Core.ref.loc8_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%import_ref.2 [template = constants.%Float]
+// CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%import_ref.5 [template = constants.%Float]
 // CHECK:STDOUT:       %N.ref.loc8: Core.IntLiteral = name_ref N, %N.loc8_6.1 [symbolic = %N.loc8_6.2 (constants.%N)]
 // CHECK:STDOUT:       %float.make_type: init type = call %Float.ref(%N.ref.loc8)
 // CHECK:STDOUT:       %.loc8_44.1: type = value_of_initializer %float.make_type

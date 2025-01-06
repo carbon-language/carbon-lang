@@ -238,8 +238,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.1
-// CHECK:STDOUT:     .Eq = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.05
+// CHECK:STDOUT:     .Eq = %import_ref.bf
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

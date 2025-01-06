@@ -130,7 +130,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -247,7 +247,7 @@ fn D() {}
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.18), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5, %Convert.54 [template]
@@ -262,13 +262,13 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %A.type = import_ref Main//fns, A, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.2: %B.type = import_ref Main//fns, B, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Main//fns, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, D, unloaded
+// CHECK:STDOUT:   %import_ref.f0: %A.type = import_ref Main//fns, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.83: %B.type = import_ref Main//fns, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.8d2: %C.type = import_ref Main//fns, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.f542 = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.9
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -276,10 +276,10 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.1
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
+// CHECK:STDOUT:     .A = imports.%import_ref.f0
+// CHECK:STDOUT:     .B = imports.%import_ref.83
+// CHECK:STDOUT:     .C = imports.%import_ref.8d2
+// CHECK:STDOUT:     .D = imports.%import_ref.f542
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -303,10 +303,10 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.1 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.f0 [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.2 [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.83 [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc7: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
 // CHECK:STDOUT:   %impl.elem0.loc7: %Convert.type.c3 = impl_witness_access constants.%impl_witness.bd, element0 [template = constants.%Convert.54]
 // CHECK:STDOUT:   %Convert.bound.loc7: <bound method> = bound_method %int_1.loc7, %impl.elem0.loc7 [template = constants.%Convert.bound]
@@ -316,7 +316,7 @@ fn D() {}
 // CHECK:STDOUT:   %.loc7_16.2: %i32 = converted %int_1.loc7, %.loc7_16.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc7_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.3 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.8d2 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
 // CHECK:STDOUT:   %.loc8_25.1: %tuple.type.9 = tuple_literal (%int_1.loc8)
 // CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.c3 = impl_witness_access constants.%impl_witness.bd, element0 [template = constants.%Convert.54]
@@ -344,10 +344,10 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, C, unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, D, unloaded
+// CHECK:STDOUT:   %import_ref.cfc = import_ref Main//fns, C, unloaded
+// CHECK:STDOUT:   %import_ref.f5 = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -357,8 +357,8 @@ fn D() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .D = imports.%import_ref.4
+// CHECK:STDOUT:     .C = imports.%import_ref.cfc
+// CHECK:STDOUT:     .D = imports.%import_ref.f5
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -423,9 +423,9 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//fns, A, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//fns, B, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//fns, C, unloaded
+// CHECK:STDOUT:   %import_ref.a = import_ref Main//fns, A, unloaded
+// CHECK:STDOUT:   %import_ref.7 = import_ref Main//fns, B, unloaded
+// CHECK:STDOUT:   %import_ref.c = import_ref Main//fns, C, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -434,9 +434,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.1
-// CHECK:STDOUT:     .B = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
+// CHECK:STDOUT:     .A = imports.%import_ref.a
+// CHECK:STDOUT:     .B = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.c
 // CHECK:STDOUT:     .D = %D.decl.loc13
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }

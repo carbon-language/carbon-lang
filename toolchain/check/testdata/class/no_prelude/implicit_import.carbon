@@ -155,8 +155,8 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redecl_after_def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redecl_after_def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//redecl_after_def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.b = import_ref Main//redecl_after_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -170,8 +170,8 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redef_after_def.carbon
@@ -207,14 +207,14 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//redef_after_def, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//redef_after_def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//redef_after_def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//redef_after_def, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//redef_after_def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.b = import_ref Main//redef_after_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
+// CHECK:STDOUT:     .C = imports.%import_ref.7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -223,8 +223,8 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "redef_after_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
@@ -263,14 +263,14 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//def_alias, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//def_alias, B, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.82 = import_ref Main//def_alias, C, unloaded
+// CHECK:STDOUT:   %import_ref.8b: type = import_ref Main//def_alias, B, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .B = imports.%import_ref.2
+// CHECK:STDOUT:     .C = imports.%import_ref.82
+// CHECK:STDOUT:     .B = imports.%import_ref.8b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>

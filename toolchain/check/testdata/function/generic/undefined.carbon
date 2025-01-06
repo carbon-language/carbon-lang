@@ -66,7 +66,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %complete_type.f: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.3e), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.0: type = fn_type @Convert.5, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.1 [template]
@@ -77,8 +77,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .As = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30
+// CHECK:STDOUT:     .As = %import_ref.977
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -180,7 +180,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %complete_type.f: <witness> = complete_type_witness %i32.builtin [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.3e), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.0: type = fn_type @Convert.5, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.1 [template]
@@ -192,8 +192,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .As = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30
+// CHECK:STDOUT:     .As = %import_ref.977
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -310,7 +310,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:   %CallUndefined: %CallUndefined.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.b: type = fn_type @Convert.1, @As(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.27), @impl.3(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.3e), @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.0: type = fn_type @Convert.5, @impl.3(%int_32) [template]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.1 [template]
@@ -321,8 +321,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .As = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30
+// CHECK:STDOUT:     .As = %import_ref.977
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

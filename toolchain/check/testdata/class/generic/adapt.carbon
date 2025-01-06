@@ -147,7 +147,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -280,26 +280,26 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C.type = import_ref Main//adapt_specific_type, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//adapt_specific_type, Adapter, loaded [template = constants.%Adapter]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//adapt_specific_type, Access, unloaded
+// CHECK:STDOUT:   %import_ref.4: %C.type = import_ref Main//adapt_specific_type, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.61: type = import_ref Main//adapt_specific_type, Adapter, loaded [template = constants.%Adapter]
+// CHECK:STDOUT:   %import_ref.a8 = import_ref Main//adapt_specific_type, Access, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.13
+// CHECK:STDOUT:     .Int = %import_ref.30
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.7: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.6)]
-// CHECK:STDOUT:   %import_ref.8 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.9: @C.%C.elem (%C.elem.2) = import_ref Main//adapt_specific_type, loc5_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [template = constants.%complete_type.b]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//adapt_specific_type, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.3e: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.6)]
+// CHECK:STDOUT:   %import_ref.0 = import_ref Main//adapt_specific_type, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.1: @C.%C.elem (%C.elem.2) = import_ref Main//adapt_specific_type, loc5_8, loaded [template = %.8]
+// CHECK:STDOUT:   %import_ref.9: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [template = constants.%complete_type.b]
+// CHECK:STDOUT:   %import_ref.f = import_ref Main//adapt_specific_type, inst42 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .Adapter = imports.%import_ref.2
-// CHECK:STDOUT:     .Access = imports.%import_ref.3
+// CHECK:STDOUT:     .C = imports.%import_ref.4
+// CHECK:STDOUT:     .Adapter = imports.%import_ref.61
+// CHECK:STDOUT:     .Access = imports.%import_ref.a8
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .ImportedAccess = %ImportedAccess.decl
 // CHECK:STDOUT:   }
@@ -314,7 +314,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.61 [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -323,8 +323,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter [from "adapt_specific_type.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.12
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.11
+// CHECK:STDOUT:   .Self = imports.%import_ref.f
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%T: type) [from "adapt_specific_type.carbon"] {
@@ -340,22 +340,22 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.8
-// CHECK:STDOUT:     .x = imports.%import_ref.9
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.7
+// CHECK:STDOUT:     .Self = imports.%import_ref.0
+// CHECK:STDOUT:     .x = imports.%import_ref.1
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.3e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.1 [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.4 [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.9]
 // CHECK:STDOUT:   %.loc7_13.1: %C.9 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc7_13.2: %C.9 = converted %a.ref, %.loc7_13.1
-// CHECK:STDOUT:   %x.ref: %C.elem.c = name_ref x, imports.%import_ref.9 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %C.elem.c = name_ref x, imports.%import_ref.1 [template = imports.%.8]
 // CHECK:STDOUT:   %.loc7_23.1: ref %i32 = class_element_access %.loc7_13.2, element0
 // CHECK:STDOUT:   %.loc7_23.2: %i32 = bind_value %.loc7_23.1
 // CHECK:STDOUT:   return %.loc7_23.2
@@ -407,8 +407,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -535,7 +535,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -637,26 +637,26 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_adapt_specific_type_library, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//extend_adapt_specific_type_library, Adapter, loaded [template = constants.%Adapter]
+// CHECK:STDOUT:   %import_ref.cf7 = import_ref Main//extend_adapt_specific_type_library, C, unloaded
+// CHECK:STDOUT:   %import_ref.61: type = import_ref Main//extend_adapt_specific_type_library, Adapter, loaded [template = constants.%Adapter]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.13
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.14
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.6: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.6)]
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.8: @C.%C.elem (%C.elem.2) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.10: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [template = constants.%complete_type.b]
-// CHECK:STDOUT:   %import_ref.11 = import_ref Main//extend_adapt_specific_type_library, inst42 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.12: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [template = constants.%C.9]
+// CHECK:STDOUT:   %import_ref.3e: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.6)]
+// CHECK:STDOUT:   %import_ref.03 = import_ref Main//extend_adapt_specific_type_library, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.17f: @C.%C.elem (%C.elem.2) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [template = %.8]
+// CHECK:STDOUT:   %import_ref.9b: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [template = constants.%complete_type.b]
+// CHECK:STDOUT:   %import_ref.fce = import_ref Main//extend_adapt_specific_type_library, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.a2fd26.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [template = constants.%C.9]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .Adapter = imports.%import_ref.2
+// CHECK:STDOUT:     .C = imports.%import_ref.cf7
+// CHECK:STDOUT:     .Adapter = imports.%import_ref.61
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .ImportedAccess = %ImportedAccess.decl
 // CHECK:STDOUT:   }
@@ -671,7 +671,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param runtime_param0
-// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.2 [template = constants.%Adapter]
+// CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%import_ref.61 [template = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -680,9 +680,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.11
-// CHECK:STDOUT:   extend imports.%import_ref.12
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.10
+// CHECK:STDOUT:   .Self = imports.%import_ref.fce
+// CHECK:STDOUT:   extend imports.%import_ref.a2fd26.2
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(constants.%T: type) [from "extend_adapt_specific_type_library.carbon"] {
@@ -698,16 +698,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.7
-// CHECK:STDOUT:     .x = imports.%import_ref.8
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.6
+// CHECK:STDOUT:     .Self = imports.%import_ref.03
+// CHECK:STDOUT:     .x = imports.%import_ref.17f
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.3e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedAccess(%a.param_patt: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %C.elem.c = name_ref x, imports.%import_ref.8 [template = imports.%.1]
+// CHECK:STDOUT:   %x.ref: %C.elem.c = name_ref x, imports.%import_ref.17f [template = imports.%.8]
 // CHECK:STDOUT:   %.loc14_11.1: %C.9 = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
@@ -754,7 +754,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -866,21 +866,21 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Adapter.type = import_ref Main//adapt_generic_type, Adapter, loaded [template = constants.%Adapter.generic]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//adapt_generic_type, Convert, unloaded
+// CHECK:STDOUT:   %import_ref.d3: %Adapter.type = import_ref Main//adapt_generic_type, Adapter, loaded [template = constants.%Adapter.generic]
+// CHECK:STDOUT:   %import_ref.d1 = import_ref Main//adapt_generic_type, Convert, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.6
+// CHECK:STDOUT:     .Int = %import_ref.30
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.2)]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//adapt_generic_type, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.115: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.2)]
+// CHECK:STDOUT:   %import_ref.3d = import_ref Main//adapt_generic_type, inst27 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Adapter = imports.%import_ref.1
-// CHECK:STDOUT:     .Convert = imports.%import_ref.2
+// CHECK:STDOUT:     .Adapter = imports.%import_ref.d3
+// CHECK:STDOUT:     .Convert = imports.%import_ref.d1
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .ImportedConvert = %ImportedConvert.decl
 // CHECK:STDOUT:     .C = %C.decl
@@ -898,7 +898,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32.loc6_40: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter.d = value_param runtime_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %Adapter [template = constants.%Adapter.d] {
-// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
+// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.d3 [template = constants.%Adapter.generic]
 // CHECK:STDOUT:       %int_32.loc6_31: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_31: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [template = constants.%Adapter.d]
@@ -918,7 +918,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter.8 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc14: type = splice_block %Adapter [template = constants.%Adapter.8] {
-// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.1 [template = constants.%Adapter.generic]
+// CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%import_ref.d3 [template = constants.%Adapter.generic]
 // CHECK:STDOUT:       %C.ref.loc14: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [template = constants.%Adapter.8]
 // CHECK:STDOUT:     }
@@ -938,8 +938,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.5
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.4
+// CHECK:STDOUT:     .Self = imports.%import_ref.3d
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.115
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

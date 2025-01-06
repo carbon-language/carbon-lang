@@ -58,13 +58,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Sub = %import_ref.1
-// CHECK:STDOUT:     .SubAssign = %import_ref.5
+// CHECK:STDOUT:     .Sub = %import_ref.14
+// CHECK:STDOUT:     .SubAssign = %import_ref.05
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/arithmetic, Sub, loaded [template = constants.%Sub.type]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Core//prelude/operators/arithmetic, SubAssign, loaded [template = constants.%SubAssign.type]
+// CHECK:STDOUT:   %import_ref.14: type = import_ref Core//prelude/operators/arithmetic, Sub, loaded [template = constants.%Sub.type]
+// CHECK:STDOUT:   %import_ref.05: type = import_ref Core//prelude/operators/arithmetic, SubAssign, loaded [template = constants.%SubAssign.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,13 +79,13 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Sub.ref: type = name_ref Sub, imports.%import_ref.1 [template = constants.%Sub.type]
+// CHECK:STDOUT:     %Sub.ref: type = name_ref Sub, imports.%import_ref.14 [template = constants.%Sub.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness.2]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %SubAssign.ref: type = name_ref SubAssign, imports.%import_ref.5 [template = constants.%SubAssign.type]
+// CHECK:STDOUT:     %SubAssign.ref: type = name_ref SubAssign, imports.%import_ref.05 [template = constants.%SubAssign.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (@impl.2.%Op.decl) [template = constants.%impl_witness.c]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {

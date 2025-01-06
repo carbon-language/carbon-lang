@@ -429,7 +429,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -802,9 +802,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.5
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .Bool = %import_ref.0
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -937,7 +937,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1081,33 +1081,33 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//equal_constraint, N, unloaded
-// CHECK:STDOUT:   %import_ref.2: %Equal.type = import_ref Main//equal_constraint, Equal, loaded [template = constants.%Equal]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//nested_rewrites, A, unloaded
-// CHECK:STDOUT:   %import_ref.4: %NestedRewrite.type = import_ref Main//nested_rewrites, NestedRewrite, loaded [template = constants.%NestedRewrite]
+// CHECK:STDOUT:   %import_ref.ef = import_ref Main//equal_constraint, N, unloaded
+// CHECK:STDOUT:   %import_ref.9: %Equal.type = import_ref Main//equal_constraint, Equal, loaded [template = constants.%Equal]
+// CHECK:STDOUT:   %import_ref.10 = import_ref Main//nested_rewrites, A, unloaded
+// CHECK:STDOUT:   %import_ref.11: %NestedRewrite.type = import_ref Main//nested_rewrites, NestedRewrite, loaded [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.8
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.9
-// CHECK:STDOUT:     .Int = %import_ref.20
+// CHECK:STDOUT:     .Bool = %import_ref.0
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
+// CHECK:STDOUT:     .Int = %import_ref.30a
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.6 = import_ref Main//equal_constraint, loc5_15, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//equal_constraint, P, unloaded
-// CHECK:STDOUT:   %import_ref.15 = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//nested_rewrites, loc5_15, unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//nested_rewrites, loc6_15, unloaded
-// CHECK:STDOUT:   %import_ref.18 = import_ref Main//nested_rewrites, B, unloaded
-// CHECK:STDOUT:   %import_ref.19 = import_ref Main//nested_rewrites, C, unloaded
+// CHECK:STDOUT:   %import_ref.e4 = import_ref Main//equal_constraint, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.df = import_ref Main//equal_constraint, loc5_15, unloaded
+// CHECK:STDOUT:   %import_ref.77 = import_ref Main//equal_constraint, P, unloaded
+// CHECK:STDOUT:   %import_ref.b = import_ref Main//nested_rewrites, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.d5 = import_ref Main//nested_rewrites, loc5_15, unloaded
+// CHECK:STDOUT:   %import_ref.8 = import_ref Main//nested_rewrites, loc6_15, unloaded
+// CHECK:STDOUT:   %import_ref.75 = import_ref Main//nested_rewrites, B, unloaded
+// CHECK:STDOUT:   %import_ref.a = import_ref Main//nested_rewrites, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .N = imports.%import_ref.1
-// CHECK:STDOUT:     .Equal = imports.%import_ref.2
-// CHECK:STDOUT:     .A = imports.%import_ref.3
-// CHECK:STDOUT:     .NestedRewrite = imports.%import_ref.4
+// CHECK:STDOUT:     .N = imports.%import_ref.ef
+// CHECK:STDOUT:     .Equal = imports.%import_ref.9
+// CHECK:STDOUT:     .A = imports.%import_ref.10
+// CHECK:STDOUT:     .NestedRewrite = imports.%import_ref.11
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Calls = %Calls.decl
 // CHECK:STDOUT:   }
@@ -1118,25 +1118,25 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @N [from "equal_constraint.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
-// CHECK:STDOUT:   .P = imports.%import_ref.6
-// CHECK:STDOUT:   witness = (imports.%import_ref.7)
+// CHECK:STDOUT:   .Self = imports.%import_ref.e4
+// CHECK:STDOUT:   .P = imports.%import_ref.df
+// CHECK:STDOUT:   witness = (imports.%import_ref.77)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "nested_rewrites.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.15
-// CHECK:STDOUT:   .B = imports.%import_ref.16
-// CHECK:STDOUT:   .C = imports.%import_ref.17
-// CHECK:STDOUT:   witness = (imports.%import_ref.18, imports.%import_ref.19)
+// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .B = imports.%import_ref.d5
+// CHECK:STDOUT:   .C = imports.%import_ref.8
+// CHECK:STDOUT:   witness = (imports.%import_ref.75, imports.%import_ref.a)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Calls() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%import_ref.2 [template = constants.%Equal]
+// CHECK:STDOUT:   %Equal.ref: %Equal.type = name_ref Equal, imports.%import_ref.9 [template = constants.%Equal]
 // CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc19: %N_where.type = converted %bool.make_type, <error> [template = <error>]
-// CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.4 [template = constants.%NestedRewrite]
+// CHECK:STDOUT:   %NestedRewrite.ref: %NestedRewrite.type = name_ref NestedRewrite, imports.%import_ref.11 [template = constants.%NestedRewrite]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %.loc32: %A_where.type.7 = converted %i32, <error> [template = <error>]
@@ -1185,7 +1185,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1256,7 +1256,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1340,10 +1340,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.1
-// CHECK:STDOUT:     .Float = %import_ref.2
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.3
-// CHECK:STDOUT:     .Int = %import_ref.9
+// CHECK:STDOUT:     .Bool = %import_ref.0
+// CHECK:STDOUT:     .Float = %import_ref.5
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.4
+// CHECK:STDOUT:     .Int = %import_ref.30a
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

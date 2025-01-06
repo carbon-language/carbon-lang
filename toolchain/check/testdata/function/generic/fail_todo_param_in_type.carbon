@@ -21,7 +21,7 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:   %N.2: %i32 = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %N.patt.4: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %Convert.type.c: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %impl_witness.ea: <witness> = impl_witness (imports.%import_ref.18), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.ea: <witness> = impl_witness (imports.%import_ref.102), @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.6: type = fn_type @Convert.3, @impl.2(%int_32) [template]
 // CHECK:STDOUT:   %Convert.e: %Convert.type.6 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.2, %Convert.e [symbolic]
@@ -33,8 +33,8 @@ fn F(N:! i32, a: [i32; N]*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

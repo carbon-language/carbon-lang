@@ -108,12 +108,12 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Ordered = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.11
+// CHECK:STDOUT:     .Ordered = %import_ref.46
+// CHECK:STDOUT:     .Bool = %import_ref.05
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Core//prelude/operators/comparison, Ordered, loaded [template = constants.%Ordered.type]
+// CHECK:STDOUT:   %import_ref.46: type = import_ref Core//prelude/operators/comparison, Ordered, loaded [template = constants.%Ordered.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -130,7 +130,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%import_ref.1 [template = constants.%Ordered.type]
+// CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%import_ref.46 [template = constants.%Ordered.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Less.decl, @impl.1.%LessOrEquivalent.decl, @impl.1.%Greater.decl, @impl.1.%GreaterOrEquivalent.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [template = constants.%TestLess] {
@@ -389,8 +389,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.1
-// CHECK:STDOUT:     .Ordered = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.0
+// CHECK:STDOUT:     .Ordered = %import_ref.46
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

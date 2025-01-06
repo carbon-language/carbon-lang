@@ -62,7 +62,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.9: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.d: <bound method> = bound_method %int_0.5, %Convert.54 [template]
@@ -106,8 +106,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -282,26 +282,26 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref %tuple.type.59 = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %import_ref.2: ref %tuple.type.88 = import_ref Implicit//default, b_ref, loaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.c97: ref %tuple.type.59 = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %import_ref.65b: ref %tuple.type.88 = import_ref Implicit//default, b_ref, loaded
+// CHECK:STDOUT:   %import_ref.ece: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.6d5: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.252
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.255
+// CHECK:STDOUT:     .Int = %import_ref.30a2
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.253: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.254 = import_ref Implicit//default, inst1052 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8f: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.9e = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.1
-// CHECK:STDOUT:     .b_ref = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .F = imports.%import_ref.4
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.c97
+// CHECK:STDOUT:     .b_ref = imports.%import_ref.65b
+// CHECK:STDOUT:     .C = imports.%import_ref.ece
+// CHECK:STDOUT:     .F = imports.%import_ref.6d5
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -326,8 +326,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.254
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.253
+// CHECK:STDOUT:     .Self = imports.%import_ref.9e
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,13 +335,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %tuple.type.59 = name_ref a_ref, imports.%import_ref.1
+// CHECK:STDOUT:   %a_ref.ref: ref %tuple.type.59 = name_ref a_ref, imports.%import_ref.c97
 // CHECK:STDOUT:   %tuple.elem0.loc4: ref %i32 = tuple_access %a_ref.ref, element0
 // CHECK:STDOUT:   %.loc4_17.1: %i32 = bind_value %tuple.elem0.loc4
 // CHECK:STDOUT:   %.loc4_17.2: init %tuple.type.59 = tuple_init (%.loc4_17.1) to file.%a.var
 // CHECK:STDOUT:   %.loc4_22: init %tuple.type.59 = converted %a_ref.ref, %.loc4_17.2
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_22
-// CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.88 = name_ref b_ref, imports.%import_ref.2
+// CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.88 = name_ref b_ref, imports.%import_ref.65b
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.1: ref %tuple.type.a = tuple_access %b_ref.ref, element0
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.2: ref %tuple.type.59 = tuple_access %tuple.elem0.loc5_38.1, element0
 // CHECK:STDOUT:   %tuple.elem0.loc5_38.3: ref %i32 = tuple_access %tuple.elem0.loc5_38.2, element0
@@ -372,7 +372,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_38.15: init %tuple.type.88 = tuple_init (%.loc5_38.8, %.loc5_38.14) to file.%b.var
 // CHECK:STDOUT:   %.loc5_43: init %tuple.type.88 = converted %b_ref.ref, %.loc5_38.15
 // CHECK:STDOUT:   assign file.%b.var, %.loc5_43
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.6d5 [template = constants.%F]
 // CHECK:STDOUT:   %.loc6: ref %C.d = splice_block file.%c.var {}
 // CHECK:STDOUT:   %F.call: init %C.d = call %F.ref() to %.loc6
 // CHECK:STDOUT:   assign file.%c.var, %F.call
@@ -412,24 +412,24 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, a_ref, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, b_ref, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.99 = import_ref Implicit//default, a_ref, unloaded
+// CHECK:STDOUT:   %import_ref.9f = import_ref Implicit//default, b_ref, unloaded
+// CHECK:STDOUT:   %import_ref.ece: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.6d5: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.252: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.253 = import_ref Implicit//default, inst1052 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8f: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.9e = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.1
-// CHECK:STDOUT:     .b_ref = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .F = imports.%import_ref.4
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.99
+// CHECK:STDOUT:     .b_ref = imports.%import_ref.9f
+// CHECK:STDOUT:     .C = imports.%import_ref.ece
+// CHECK:STDOUT:     .F = imports.%import_ref.6d5
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
@@ -448,8 +448,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.253
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.252
+// CHECK:STDOUT:     .Self = imports.%import_ref.9e
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -457,7 +457,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.6d5 [template = constants.%F]
 // CHECK:STDOUT:   %.loc12: ref %C.d = temporary_storage
 // CHECK:STDOUT:   %F.call: init %C.d = call %F.ref() to %.loc12
 // CHECK:STDOUT:   assign file.%c_bad.var, <error>
@@ -501,25 +501,25 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, a_ref, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Implicit//default, b_ref, unloaded
-// CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.99 = import_ref Implicit//default, a_ref, unloaded
+// CHECK:STDOUT:   %import_ref.9f = import_ref Implicit//default, b_ref, unloaded
+// CHECK:STDOUT:   %import_ref.ece: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.6d5: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.254
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.252: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.253 = import_ref Implicit//default, inst1052 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8f: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.9e = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.1
-// CHECK:STDOUT:     .b_ref = imports.%import_ref.2
-// CHECK:STDOUT:     .C = imports.%import_ref.3
-// CHECK:STDOUT:     .F = imports.%import_ref.4
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.99
+// CHECK:STDOUT:     .b_ref = imports.%import_ref.9f
+// CHECK:STDOUT:     .C = imports.%import_ref.ece
+// CHECK:STDOUT:     .F = imports.%import_ref.6d5
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .c_bad = %c_bad
 // CHECK:STDOUT:   }
@@ -538,8 +538,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.253
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.252
+// CHECK:STDOUT:     .Self = imports.%import_ref.9e
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -547,7 +547,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.4 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.6d5 [template = constants.%F]
 // CHECK:STDOUT:   %.loc10_26: ref %C.d = temporary_storage
 // CHECK:STDOUT:   %F.call: init %C.d = call %F.ref() to %.loc10_26
 // CHECK:STDOUT:   %.loc10_27: %C.be = converted %F.call, <error> [template = <error>]

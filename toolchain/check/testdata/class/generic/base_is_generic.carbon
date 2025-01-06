@@ -116,7 +116,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -262,33 +262,33 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, Base, unloaded
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_base, Param, unloaded
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//extend_generic_base, Derived, loaded [template = constants.%Derived]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//extend_generic_base, DoubleFieldAccess, unloaded
+// CHECK:STDOUT:   %import_ref.2b = import_ref Main//extend_generic_base, Base, unloaded
+// CHECK:STDOUT:   %import_ref.c = import_ref Main//extend_generic_base, Param, unloaded
+// CHECK:STDOUT:   %import_ref.0e: type = import_ref Main//extend_generic_base, Derived, loaded [template = constants.%Derived]
+// CHECK:STDOUT:   %import_ref.5e4 = import_ref Main//extend_generic_base, DoubleFieldAccess, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.19
+// CHECK:STDOUT:     .Int = %import_ref.30
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [template = constants.%complete_type.b]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_base, inst42 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.10: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [template = %.1]
-// CHECK:STDOUT:   %import_ref.11: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.6)]
-// CHECK:STDOUT:   %import_ref.12 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.13: @Base.%Base.elem (%Base.elem.7) = import_ref Main//extend_generic_base, loc5_8, loaded [template = %.2]
-// CHECK:STDOUT:   %import_ref.15: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [template = constants.%complete_type.7]
-// CHECK:STDOUT:   %import_ref.16 = import_ref Main//extend_generic_base, inst76 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.17 = import_ref Main//extend_generic_base, loc13_27, unloaded
-// CHECK:STDOUT:   %import_ref.18: type = import_ref Main//extend_generic_base, loc13_26, loaded [template = constants.%Base.d]
+// CHECK:STDOUT:   %import_ref.99: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [template = constants.%complete_type.b]
+// CHECK:STDOUT:   %import_ref.8a = import_ref Main//extend_generic_base, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.f: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [template = %.4]
+// CHECK:STDOUT:   %import_ref.3e: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.6)]
+// CHECK:STDOUT:   %import_ref.23 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5ef: @Base.%Base.elem (%Base.elem.7) = import_ref Main//extend_generic_base, loc5_8, loaded [template = %.7]
+// CHECK:STDOUT:   %import_ref.07: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [template = constants.%complete_type.7]
+// CHECK:STDOUT:   %import_ref.82 = import_ref Main//extend_generic_base, inst76 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_base, loc13_27, unloaded
+// CHECK:STDOUT:   %import_ref.9e63c7.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [template = constants.%Base.d]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Base = imports.%import_ref.1
-// CHECK:STDOUT:     .Param = imports.%import_ref.2
-// CHECK:STDOUT:     .Derived = imports.%import_ref.3
-// CHECK:STDOUT:     .DoubleFieldAccess = imports.%import_ref.4
+// CHECK:STDOUT:     .Base = imports.%import_ref.2b
+// CHECK:STDOUT:     .Param = imports.%import_ref.c
+// CHECK:STDOUT:     .Derived = imports.%import_ref.0e
+// CHECK:STDOUT:     .DoubleFieldAccess = imports.%import_ref.5e4
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .ImportedDoubleFieldAccess = %ImportedDoubleFieldAccess.decl
 // CHECK:STDOUT:   }
@@ -303,7 +303,7 @@ fn H() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param runtime_param0
-// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%import_ref.3 [template = constants.%Derived]
+// CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%import_ref.0e [template = constants.%Derived]
 // CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -312,17 +312,17 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.16
-// CHECK:STDOUT:   .base = imports.%import_ref.17
-// CHECK:STDOUT:   extend imports.%import_ref.18
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.15
+// CHECK:STDOUT:   .Self = imports.%import_ref.82
+// CHECK:STDOUT:   .base = imports.%import_ref.1
+// CHECK:STDOUT:   extend imports.%import_ref.9e63c7.2
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.07
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.9
-// CHECK:STDOUT:   .y = imports.%import_ref.10
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
+// CHECK:STDOUT:   .Self = imports.%import_ref.8a
+// CHECK:STDOUT:   .y = imports.%import_ref.f
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.99
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Base(constants.%T: type) [from "extend_generic_base.carbon"] {
@@ -338,20 +338,20 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.12
-// CHECK:STDOUT:     .x = imports.%import_ref.13
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.11
+// CHECK:STDOUT:     .Self = imports.%import_ref.23
+// CHECK:STDOUT:     .x = imports.%import_ref.5ef
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.3e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedDoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %x.ref: %Base.elem.3 = name_ref x, imports.%import_ref.13 [template = imports.%.2]
+// CHECK:STDOUT:   %x.ref: %Base.elem.3 = name_ref x, imports.%import_ref.5ef [template = imports.%.7]
 // CHECK:STDOUT:   %.loc7_11.1: ref %Base.d = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc7_11.2: ref %Base.d = converted %d.ref, %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.3: ref %Param = class_element_access %.loc7_11.2, element0
-// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%import_ref.10 [template = imports.%.1]
+// CHECK:STDOUT:   %y.ref: %Param.elem = name_ref y, imports.%import_ref.f [template = imports.%.4]
 // CHECK:STDOUT:   %.loc7_13.1: ref %i32 = class_element_access %.loc7_11.3, element0
 // CHECK:STDOUT:   %.loc7_13.2: %i32 = bind_value %.loc7_13.1
 // CHECK:STDOUT:   return %.loc7_13.2
@@ -522,7 +522,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -758,28 +758,28 @@ fn H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//extend_generic_symbolic_base, X, unloaded
-// CHECK:STDOUT:   %import_ref.2: %C.type = import_ref Main//extend_generic_symbolic_base, C, loaded [template = constants.%C.generic]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//extend_generic_symbolic_base, F, unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//extend_generic_symbolic_base, X, unloaded
+// CHECK:STDOUT:   %import_ref.4: %C.type = import_ref Main//extend_generic_symbolic_base, C, loaded [template = constants.%C.generic]
+// CHECK:STDOUT:   %import_ref.cb = import_ref Main//extend_generic_symbolic_base, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.4
+// CHECK:STDOUT:     .Int = %import_ref.3
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//extend_generic_symbolic_base, loc6_1, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//extend_generic_symbolic_base, inst27 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.10: @X.%G.type (%G.type.c) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%G (constants.%G.e)]
-// CHECK:STDOUT:   %import_ref.12: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.4)]
-// CHECK:STDOUT:   %import_ref.13 = import_ref Main//extend_generic_symbolic_base, inst68 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.14 = import_ref Main//extend_generic_symbolic_base, loc9_20, unloaded
-// CHECK:STDOUT:   %import_ref.15: type = import_ref Main//extend_generic_symbolic_base, loc9_19, loaded [symbolic = @C.%X (constants.%X.a)]
+// CHECK:STDOUT:   %import_ref.d = import_ref Main//extend_generic_symbolic_base, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.52: @X.%G.type (%G.type.c) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%G (constants.%G.e)]
+// CHECK:STDOUT:   %import_ref.b: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.4)]
+// CHECK:STDOUT:   %import_ref.0 = import_ref Main//extend_generic_symbolic_base, inst68 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.59 = import_ref Main//extend_generic_symbolic_base, loc9_20, unloaded
+// CHECK:STDOUT:   %import_ref.c4fa86.2: type = import_ref Main//extend_generic_symbolic_base, loc9_19, loaded [symbolic = @C.%X (constants.%X.a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .X = imports.%import_ref.1
-// CHECK:STDOUT:     .C = imports.%import_ref.2
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .X = imports.%import_ref.2
+// CHECK:STDOUT:     .C = imports.%import_ref.4
+// CHECK:STDOUT:     .F = imports.%import_ref.cb
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
@@ -802,10 +802,10 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.13
-// CHECK:STDOUT:     .base = imports.%import_ref.14
-// CHECK:STDOUT:     extend imports.%import_ref.15
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.12
+// CHECK:STDOUT:     .Self = imports.%import_ref.0
+// CHECK:STDOUT:     .base = imports.%import_ref.59
+// CHECK:STDOUT:     extend imports.%import_ref.c4fa86.2
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -819,19 +819,19 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.9
-// CHECK:STDOUT:     .G = imports.%import_ref.10
+// CHECK:STDOUT:     .Self = imports.%import_ref.d
+// CHECK:STDOUT:     .G = imports.%import_ref.52
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.2 [template = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.4 [template = constants.%C.generic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [template = constants.%C.9]
-// CHECK:STDOUT:   %.loc7_22: %G.type.b = specific_constant imports.%import_ref.10, @X(constants.%i32) [template = constants.%G.6]
+// CHECK:STDOUT:   %.loc7_22: %G.type.b = specific_constant imports.%import_ref.52, @X(constants.%i32) [template = constants.%G.6]
 // CHECK:STDOUT:   %G.ref: %G.type.b = name_ref G, %.loc7_22 [template = constants.%G.6]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%i32) [template = constants.%G.specific_fn.f]
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.specific_fn()

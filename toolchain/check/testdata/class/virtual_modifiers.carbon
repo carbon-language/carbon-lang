@@ -201,13 +201,13 @@ class Derived {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers: <namespace> = namespace file.%Modifiers.import, [template] {
-// CHECK:STDOUT:     .Base = %import_ref.1
+// CHECK:STDOUT:     .Base = %import_ref.c
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type.5]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
+// CHECK:STDOUT:   %import_ref.c: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.0: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type.5]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -224,7 +224,7 @@ class Derived {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [template = imports.%Modifiers]
-// CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.1 [template = constants.%Base]
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.c [template = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
 // CHECK:STDOUT:
@@ -238,9 +238,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .H = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .H = imports.%import_ref.1
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();
@@ -263,12 +263,12 @@ class Derived {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers: <namespace> = namespace file.%Modifiers.import, [template] {
-// CHECK:STDOUT:     .Base = %import_ref.1
+// CHECK:STDOUT:     .Base = %import_ref.c
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Modifiers//default, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Modifiers//default, loc5_17, unloaded
+// CHECK:STDOUT:   %import_ref.0: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2 = import_ref Modifiers//default, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.1 = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -284,9 +284,9 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .H = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .H = imports.%import_ref.1
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -508,7 +508,7 @@ class Derived {
 // CHECK:STDOUT:   %F.2: %F.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.90: <bound method> = bound_method %int_3.1, %Convert.54 [template]
@@ -528,8 +528,8 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30a
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

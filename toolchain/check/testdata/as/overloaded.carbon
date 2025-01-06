@@ -44,7 +44,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   %Convert.type.a33e4b.2: type = fn_type @Convert.3 [template]
 // CHECK:STDOUT:   %Convert.5baf2f.2: %Convert.type.a33e4b.2 = struct_value () [template]
 // CHECK:STDOUT:   %int_4.0: Core.IntLiteral = int_value 4 [template]
-// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.27), @impl.5(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.51: <witness> = impl_witness (imports.%import_ref.3e), @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.0: type = fn_type @Convert.7, @impl.5(%int_32) [template]
 // CHECK:STDOUT:   %Convert.1: %Convert.type.0 = struct_value () [template]
 // CHECK:STDOUT:   %Convert.bound.f: <bound method> = bound_method %int_4.0, %Convert.1 [template]
@@ -55,12 +55,12 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .As = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.30
+// CHECK:STDOUT:     .As = %import_ref.977
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5: %As.type.9 = import_ref Core//prelude/operators/as, As, loaded [template = constants.%As.generic]
+// CHECK:STDOUT:   %import_ref.977: %As.type.9 = import_ref Core//prelude/operators/as, As, loaded [template = constants.%As.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,7 +75,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref: %As.type.9 = name_ref As, imports.%import_ref.5 [template = constants.%As.generic]
+// CHECK:STDOUT:     %As.ref: %As.type.9 = name_ref As, imports.%import_ref.977 [template = constants.%As.generic]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%X)> [template = constants.%As.type.a]
 // CHECK:STDOUT:   }
@@ -83,7 +83,7 @@ let n: i32 = ((4 as i32) as X) as i32;
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %As.ref: %As.type.9 = name_ref As, imports.%import_ref.5 [template = constants.%As.generic]
+// CHECK:STDOUT:     %As.ref: %As.type.9 = name_ref As, imports.%import_ref.977 [template = constants.%As.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %As.type: type = facet_type <@As, @As(constants.%i32)> [template = constants.%As.type.3]

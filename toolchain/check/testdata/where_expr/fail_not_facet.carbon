@@ -51,8 +51,8 @@ var v: e where .x = 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Bool = %import_ref.0
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
