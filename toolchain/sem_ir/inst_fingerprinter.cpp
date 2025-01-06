@@ -234,94 +234,51 @@ struct Worklist {
     // IR.
   }
 
+  template<typename T>
+    requires (std::same_as<T, BoolValue> ||
+              std::same_as<T, CompileTimeBindIndex> ||
+              std::same_as<T, ElementIndex> ||
+              std::same_as<T, FloatKind> ||
+              std::same_as<T, IntKind> ||
+              std::same_as<T, RuntimeParamIndex>)
+  auto Add(T arg) {
+    // Index-like ID: just include the value directly.
+    contents.push_back(arg.index);
+  }
+
+  template<typename T>
+    requires (std::same_as<T, AnyRawId> ||
+              std::same_as<T, ExprRegionId> ||
+              std::same_as<T, LocId> ||
+              std::same_as<T, RealId>)
+  auto Add(T /*arg*/) {
+    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+  }
+
   // Add an instruction argument to the contents of the current instruction.
-  auto AddWithKind(uint64_t arg, IdKind kind) -> void {
-    // TODO: Generate this.
-    switch (kind) {
-      case IdKind::None:
-        break;
-      case IdKind::For<InstId>:
-      case IdKind::For<AbsoluteInstId>:
-        Add(InstId(arg));
-        break;
-      case IdKind::For<ConstantId>:
-        Add(ConstantId(arg));
-        break;
-      case IdKind::For<TypeId>:
-        Add(TypeId(arg));
-        break;
-      case IdKind::For<InstBlockId>:
-      case IdKind::For<AbsoluteInstBlockId>:
-        Add(InstBlockId(arg));
-        break;
-      case IdKind::For<TypeBlockId>:
-        Add(TypeBlockId(arg));
-        break;
-      case IdKind::For<StructTypeFieldsId>:
-        Add(StructTypeFieldsId(arg));
-        break;
-      case IdKind::For<NameId>:
-        Add(NameId(arg));
-        break;
-      case IdKind::For<EntityNameId>:
-        Add(EntityNameId(arg));
-        break;
-      case IdKind::For<NameScopeId>:
-        Add(NameScopeId(arg));
-        break;
-      case IdKind::For<FunctionId>:
-        Add(FunctionId(arg));
-        break;
-      case IdKind::For<ClassId>:
-        Add(ClassId(arg));
-        break;
-      case IdKind::For<InterfaceId>:
-        Add(InterfaceId(arg));
-        break;
-      case IdKind::For<ImplId>:
-        Add(ImplId(arg));
-        break;
-      case IdKind::For<FacetTypeId>:
-        Add(FacetTypeId(arg));
-        break;
-      case IdKind::For<GenericId>:
-        Add(GenericId(arg));
-        break;
-      case IdKind::For<SpecificId>:
-        Add(SpecificId(arg));
-        break;
-      case IdKind::For<IntId>:
-        Add(IntId::MakeRaw(arg));
-        break;
-      case IdKind::For<FloatId>:
-        Add(FloatId(arg));
-        break;
-      case IdKind::For<StringLiteralValueId>:
-        Add(StringLiteralValueId(arg));
-        break;
-      case IdKind::For<ImportIRId>:
-        Add(ImportIRId(arg));
-        break;
-      case IdKind::For<ImportIRInstId>:
-        Add(ImportIRInstId(arg));
-        break;
-      case IdKind::For<BoolValue>:
-      case IdKind::For<CompileTimeBindIndex>:
-      case IdKind::For<ElementIndex>:
-      case IdKind::For<FloatKind>:
-      case IdKind::For<IntKind>:
-      case IdKind::For<RuntimeParamIndex>:
-        // Index-like ID: just include the value directly.
-        contents.push_back(arg);
-        break;
-      case IdKind::For<AnyRawId>:
-      case IdKind::For<ExprRegionId>:
-      case IdKind::For<LibraryNameId>:
-      case IdKind::For<LocId>:
-      case IdKind::For<RealId>:
-      case IdKind::Invalid:
-        CARBON_FATAL("Unexpected instruction operand kind");
-    }
+  template<typename ...Types>
+  auto AddWithKind(uint64_t arg, TypeEnum<Types...> kind) -> void {
+    using AddFunction = void(*)(Worklist& worklist, uint64_t arg);
+    using Kind = decltype(kind);
+
+    // Build a lookup table to add an argument of the given kind.
+    static constexpr std::array<AddFunction, Kind::NumTypes + 2> table = [] {
+      std::array<AddFunction, Kind::NumTypes + 2> table;
+      table[Kind::None.ToIndex()] = [](Worklist& /*worklist*/,
+                                       uint64_t /*arg*/) {};
+      table[Kind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
+                                          uint64_t /*arg*/) {
+        CARBON_FATAL("Unexpected invalid argument kind");
+      };
+      ((table[Kind::template For<Types>.ToIndex()] =
+            [](Worklist& worklist, uint64_t arg) {
+              return worklist.Add(Inst::FromRaw<Types>(arg));
+            }),
+       ...);
+      return table;
+    }();
+
+    table[kind.ToIndex()](*this, arg);
   }
 };
 }
