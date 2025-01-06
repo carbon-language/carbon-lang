@@ -249,6 +249,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   CARBON_CHECK(witness_block.size() == assoc_entities.size());
 
   // Scan through rewrites, produce map from element index to constant value.
+  // TODO: Perhaps move this into facet type resolution?
   llvm::SmallVector<SemIR::ConstantId> rewrite_values(
       assoc_entities.size(), SemIR::ConstantId::Invalid);
   for (auto rewrite : facet_type_info.rewrite_constraints) {
@@ -261,7 +262,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     auto& rewrite_value = rewrite_values[access.index.index];
     if (rewrite_value.is_valid()) {
       if (rewrite_value != rewrite.rhs_const_id) {
-        // TODO: Instead do this checking as part of facet type resolution.
+        // TODO: Do at least this checking as part of facet type resolution
+        // instead.
 
         // TODO: Figure out how to print the two different values
         // `rewrite_value` & `rewrite.rhs_const_id` in the diagnostic message.
