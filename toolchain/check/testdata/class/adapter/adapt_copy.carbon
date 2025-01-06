@@ -87,7 +87,7 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
   // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+7]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR:   var b: AdaptNoncopyableIndirect = a;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:37: note: in copy of ``AdaptNoncopyableIndirect`` [InCopy]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:37: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
   // CHECK:STDERR:   var b: AdaptNoncopyableIndirect = a;
   // CHECK:STDERR:                                     ^
   // CHECK:STDERR:
@@ -95,7 +95,7 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
   // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+6]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR:   return b;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:10: note: in copy of ``AdaptNoncopyableIndirect`` [InCopy]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:10: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
   // CHECK:STDERR:   return b;
   // CHECK:STDERR:          ^
   return b;
