@@ -226,11 +226,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               name_node,
               {.type_id = cast_type_id, .entity_name_id = entity_name_id});
         }
-        bool inserted =
-            context.bind_name_map()
-                .Insert(pattern_inst_id, {.bind_name_id = bind_id,
-                                          .type_expr_id = type_expr_region_id})
-                .is_inserted();
+        bool inserted = context.bind_name_map()
+                            .Insert(pattern_inst_id, {.bind_name_id = bind_id,
+                                                      .type_expr_region_id =
+                                                          type_expr_region_id})
+                            .is_inserted();
         CARBON_CHECK(inserted);
         param_pattern_id = context.AddPatternInst<SemIR::ValueParamPattern>(
             node_id,
