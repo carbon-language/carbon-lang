@@ -157,7 +157,6 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     context.TODO(impl.latest_decl_id(), "impl as not 1 interface");
     return SemIR::ErrorInst::SingletonInstId;
   }
-  // TODO: Save `interface_id` and `specific_id` in `impl` for quicker access.
   const auto& interface =
       context.interfaces().Get(interface_type->interface_id);
 
