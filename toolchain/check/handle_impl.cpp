@@ -231,8 +231,6 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
       if (node_kind == Parse::NodeKind::WhereExpr) {
         // If we have a nested `where`, we need to see another `WhereOperand`
         // before we find the one that matches our original `WhereExpr` node.
-
-        // FIXME: Add test for this case.
         ++where_operands_to_skip;
       } else if (node_kind == Parse::NodeKind::WhereOperand) {
         --where_operands_to_skip;
@@ -320,7 +318,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Do facet type resolution here.
   // TODO: Determine `interface_id` and `specific_id` once and save it in the
   // resolved facet type, instead of in multiple functions called below.
-  // Potentially skip work below if `interface_id` is invalid.
+  // TODO: Skip work below if facet type resolution fails, so we don't have a
+  // valid/non-error `interface_id` at all.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -350,7 +349,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Add the impl declaration.
   bool invalid_redeclaration = false;
-  // FIXME: What should this do this if `self_id` or `constraint_id` are bogus?
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
   for (auto prev_impl_id : lookup_bucket_ref) {
     if (MergeImplRedecl(context, impl_info, prev_impl_id)) {
