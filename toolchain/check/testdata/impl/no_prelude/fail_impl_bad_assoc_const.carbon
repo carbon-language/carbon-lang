@@ -10,9 +10,9 @@
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:12: error: associated constant T not given a value [AssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant T` [SemanticsTodo]
 // CHECK:STDERR: impl () as I {}
-// CHECK:STDERR:            ^
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 impl () as I {}
 
 // CHECK:STDOUT: --- fail_impl_bad_assoc_const.carbon
@@ -23,7 +23,6 @@ impl () as I {}
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I.%T [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -36,7 +35,6 @@ impl () as I {}
 // CHECK:STDOUT:     %.loc16_7.2: type = converted %.loc16_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -52,6 +50,6 @@ impl () as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc16_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
