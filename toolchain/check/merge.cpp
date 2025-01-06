@@ -374,10 +374,9 @@ static auto IsNodeSyntaxEqual(Context& context, Parse::NodeId new_node_id,
 }
 
 // Returns false if redeclaration parameter syntax doesn't match.
-static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
+static auto CheckRedeclParamSyntax(Context& context,
                                    Parse::NodeId new_first_param_node_id,
                                    Parse::NodeId new_last_param_node_id,
-                                   SemIRLoc prev_decl_loc,
                                    Parse::NodeId prev_first_param_node_id,
                                    Parse::NodeId prev_last_param_node_id,
                                    bool diagnose) -> bool {
@@ -403,10 +402,6 @@ static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
       Parse::NodeId(prev_last_param_node_id.index + 1));
 
   // Compare up to the shortest length.
-  CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
-                    "redeclaration syntax differs here");
-  CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
-                    "comparing with previous declaration here");
   for (; new_iter != new_end && prev_iter != prev_end;
        ++new_iter, ++prev_iter) {
     auto new_node_id = *new_iter;
@@ -433,6 +428,10 @@ static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
       if (!diagnose) {
         return false;
       }
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
+                        "redeclaration syntax differs here");
+      CARBON_DIAGNOSTIC(RedeclParamSyntaxPrevious, Note,
+                        "comparing with previous declaration here");
       context.emitter()
           .Build(new_node_id, RedeclParamSyntaxDiffers)
           .Note(prev_node_id, RedeclParamSyntaxPrevious)
@@ -441,23 +440,14 @@ static auto CheckRedeclParamSyntax(Context& context, SemIRLoc new_decl_loc,
     }
   }
   // The prefixes are the same, but the lengths may still be different.
-  // This is particularly relevant for `impl` declarations where the final
-  // bracketing node is not included in the range of nodes being compared.
+  // This only relevant for `impl` declarations where the final
+  // bracketing node is not included in the range of nodes being compared, and
+  // in those cases `diagnose` is false.
   if (new_iter != new_end) {
-    if (!diagnose) {
-      return false;
-    }
-    context.emitter()
-        .Build(*new_iter, RedeclParamSyntaxDiffers)
-        .Note(prev_decl_loc, RedeclParamSyntaxPrevious)
-        .Emit();
+    CARBON_CHECK(!diagnose);
     return false;
   } else if (prev_iter != prev_end) {
-    if (!diagnose) {
-      return false;
-    }
-    // FIXME: new diagnostics for this case.
-    context.TODO(new_decl_loc, "previous impl declaration longer");
+    CARBON_CHECK(!diagnose);
     return false;
   }
 
@@ -485,9 +475,8 @@ auto CheckRedeclParamsMatch(Context& context, const DeclParams& new_entity,
     return false;
   }
   if (check_syntax &&
-      !CheckRedeclParamSyntax(context, new_entity.loc,
-                              new_entity.first_param_node_id,
-                              new_entity.last_param_node_id, prev_entity.loc,
+      !CheckRedeclParamSyntax(context, new_entity.first_param_node_id,
+                              new_entity.last_param_node_id,
                               prev_entity.first_param_node_id,
                               prev_entity.last_param_node_id, diagnose)) {
     return false;
