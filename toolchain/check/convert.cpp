@@ -12,6 +12,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -722,7 +723,7 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
 }
 
 // Returns the non-adapter type that is compatible with the specified type.
-static auto GetCompatibleBaseType(Context& context, SemIR::TypeId type_id)
+static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // If the type is an adapter, its object representation type is its compatible
   // non-adapter type.
@@ -792,14 +793,73 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
       return context.AddInst<SemIR::ValueOfInitializer>(
           loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
+
+    // PerformBuiltinConversion converts each part of a tuple or struct, even
+    // when the types are the same. This is not done for classes since they have
+    // to define their conversions as part of their api.
+    //
+    // If a class adapts a tuple or struct, we convert each of its parts when
+    // there's no other conversion going on (the source and target types are the
+    // same). To do so, we have to insert a conversion of the value up to the
+    // foundation and back down, and a conversion of the initializing object if
+    // there is one.
+    //
+    // Implementation note: We do the conversion through a call to
+    // PerformBuiltinConversion() call rather than a Convert() call to avoid
+    // extraneous `converted` semir instructions on the adapted types, and as a
+    // shortcut to doing the explicit calls to walk the parts of the
+    // tuple/struct which happens inside PerformBuiltinConversion().
+    if (auto foundation_type_id =
+            GetTransitiveAdaptedType(context, value_type_id);
+        foundation_type_id != value_type_id &&
+        (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
+         context.types().Is<SemIR::StructType>(foundation_type_id))) {
+      auto foundation_value_id = context.AddInst<SemIR::AsCompatible>(
+          loc_id, {.type_id = foundation_type_id, .source_id = value_id});
+
+      auto foundation_init_id = target.init_id;
+      if (foundation_init_id != SemIR::InstId::Invalid) {
+        foundation_init_id = target.init_block->AddInst<SemIR::AsCompatible>(
+            loc_id,
+            {.type_id = foundation_type_id, .source_id = target.init_id});
+      }
+
+      {
+        // While the types are the same, the conversion can still fail if it
+        // performs a copy while converting the value to another category, and
+        // the type (or some part of it) is not copyable.
+        DiagnosticAnnotationScope annotate_diagnostics(
+            &context.emitter(), [&](auto& builder) {
+              CARBON_DIAGNOSTIC(InCopy, Note, "in copy of {0}", TypeOfInstId);
+              builder.Note(value_id, InCopy, value_id);
+            });
+
+        foundation_value_id =
+            PerformBuiltinConversion(context, loc_id, foundation_value_id,
+                                     {
+                                         .kind = target.kind,
+                                         .type_id = foundation_type_id,
+                                         .init_id = foundation_init_id,
+                                         .init_block = target.init_block,
+                                     });
+        if (foundation_value_id == SemIR::ErrorInst::SingletonInstId) {
+          return SemIR::ErrorInst::SingletonInstId;
+        }
+      }
+
+      return context.AddInst<SemIR::AsCompatible>(
+          loc_id,
+          {.type_id = target.type_id, .source_id = foundation_value_id});
+    }
   }
 
   // T explicitly converts to U if T is compatible with U.
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
-    auto target_base_id = GetCompatibleBaseType(context, target.type_id);
-    auto value_base_id = GetCompatibleBaseType(context, value_type_id);
-    if (target_base_id == value_base_id) {
+    auto target_foundation_id =
+        GetTransitiveAdaptedType(context, target.type_id);
+    auto value_foundation_id = GetTransitiveAdaptedType(context, value_type_id);
+    if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.
       if (SemIR::GetExprCategory(context.sem_ir(), value_id) ==
