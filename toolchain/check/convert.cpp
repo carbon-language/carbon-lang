@@ -829,7 +829,7 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // the type (or some part of it) is not copyable.
         DiagnosticAnnotationScope annotate_diagnostics(
             &context.emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(InCopy, Note, "in copy of `{0}`", TypeOfInstId);
+              CARBON_DIAGNOSTIC(InCopy, Note, "in copy of {0}", TypeOfInstId);
               builder.Note(value_id, InCopy, value_id);
             });
 
