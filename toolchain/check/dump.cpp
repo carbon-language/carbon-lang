@@ -113,11 +113,6 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
   SemIR::Dump(context.sem_ir(), inst_id);
 }
 
-LLVM_DUMP_METHOD static auto DumpInstId(const Context& context, int inst_id)
-    -> void {
-  Dump(context, SemIR::InstId(inst_id));
-}
-
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::InterfaceId interface_id) -> void {
   SemIR::Dump(context.sem_ir(), interface_id);
