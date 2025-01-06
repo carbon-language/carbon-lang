@@ -723,7 +723,7 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
 }
 
 // Returns the non-adapter type that is compatible with the specified type.
-static auto GetFoundationType(Context& context, SemIR::TypeId type_id)
+static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
     -> SemIR::TypeId {
   // If the type is an adapter, its object representation type is its compatible
   // non-adapter type.
@@ -809,7 +809,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
     // extraneous `converted` semir instructions on the adapted types, and as a
     // shortcut to doing the explicit calls to walk the parts of the
     // tuple/struct which happens inside PerformBuiltinConversion().
-    if (auto foundation_type_id = GetFoundationType(context, value_type_id);
+    if (auto foundation_type_id =
+            GetTransitiveAdaptedType(context, value_type_id);
         foundation_type_id != value_type_id &&
         (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
          context.types().Is<SemIR::StructType>(foundation_type_id))) {
@@ -855,8 +856,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   // T explicitly converts to U if T is compatible with U.
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
-    auto target_foundation_id = GetFoundationType(context, target.type_id);
-    auto value_foundation_id = GetFoundationType(context, value_type_id);
+    auto target_foundation_id =
+        GetTransitiveAdaptedType(context, target.type_id);
+    auto value_foundation_id = GetTransitiveAdaptedType(context, value_type_id);
     if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.
