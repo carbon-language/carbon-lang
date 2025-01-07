@@ -238,6 +238,50 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> void {
   llvm::errs() << '\n';
 }
 
+// Functions that can be used instead of the corresponding constructor, which is
+// unavailable during debugging.
+LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
+  return ClassId(id);
+}
+LLVM_DUMP_METHOD static auto MakeConstantId(int id) -> ConstantId {
+  return ConstantId(id);
+}
+LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
+  return EntityNameId(id);
+}
+LLVM_DUMP_METHOD static auto MakeFacetTypeId(int id) -> FacetTypeId {
+  return FacetTypeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeFunctionId(int id) -> FunctionId {
+  return FunctionId(id);
+}
+LLVM_DUMP_METHOD static auto MakeGenericId(int id) -> GenericId {
+  return GenericId(id);
+}
+LLVM_DUMP_METHOD static auto MakeImplId(int id) -> ImplId { return ImplId(id); }
+LLVM_DUMP_METHOD static auto MakeInstBlockId(int id) -> InstBlockId {
+  return InstBlockId(id);
+}
+LLVM_DUMP_METHOD static auto MakeInstId(int id) -> InstId { return InstId(id); }
+LLVM_DUMP_METHOD static auto MakeInterfaceId(int id) -> InterfaceId {
+  return InterfaceId(id);
+}
+LLVM_DUMP_METHOD static auto MakeNameId(int id) -> NameId { return NameId(id); }
+LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
+  return NameScopeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
+  return SpecificId(id);
+}
+LLVM_DUMP_METHOD static auto MakeStructTypeFieldsId(int id)
+    -> StructTypeFieldsId {
+  return StructTypeFieldsId(id);
+}
+LLVM_DUMP_METHOD static auto MakeTypeBlockId(int id) -> TypeBlockId {
+  return TypeBlockId(id);
+}
+LLVM_DUMP_METHOD static auto MakeTypeId(int id) -> TypeId { return TypeId(id); }
+
 }  // namespace Carbon::SemIR
 
 #endif  // NDEBUG
