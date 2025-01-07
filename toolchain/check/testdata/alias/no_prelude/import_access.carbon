@@ -88,16 +88,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Test//def, C, unloaded
-// CHECK:STDOUT:   %import_ref.7c2: type = import_ref Test//def, A, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.85dd = import_ref Test//def, C, unloaded
+// CHECK:STDOUT:   %import_ref.7c27: type = import_ref Test//def, A, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8f24: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c47 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
-// CHECK:STDOUT:     .A [private] = imports.%import_ref.7c2
+// CHECK:STDOUT:     .C = imports.%import_ref.85dd
+// CHECK:STDOUT:     .A [private] = imports.%import_ref.7c27
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -108,8 +108,8 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c47
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

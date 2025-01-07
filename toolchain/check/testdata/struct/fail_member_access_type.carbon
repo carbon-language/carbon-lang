@@ -26,8 +26,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.20b
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Float = %import_ref.20bd
+// CHECK:STDOUT:     .Int = %import_ref.187e
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

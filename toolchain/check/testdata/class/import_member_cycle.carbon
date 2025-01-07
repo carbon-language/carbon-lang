@@ -74,19 +74,19 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.a2c: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.a2c8: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3a6 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.72d9: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3a6c = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4e0d = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = imports.%import_ref.a2c
+// CHECK:STDOUT:     .Cycle = imports.%import_ref.a2c8
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
@@ -97,9 +97,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3a6
-// CHECK:STDOUT:   .a = imports.%import_ref.4e0
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.72d
+// CHECK:STDOUT:   .Self = imports.%import_ref.3a6c
+// CHECK:STDOUT:   .a = imports.%import_ref.4e0d
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.72d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
