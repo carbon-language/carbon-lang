@@ -23,8 +23,7 @@
 
 namespace Carbon::SemIR {
 
-InstNamer::InstNamer(const File* sem_ir)
-    : sem_ir_(sem_ir) {
+InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(static_cast<size_t>(GetScopeFor(NumberOfScopesTag())));

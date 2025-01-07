@@ -79,9 +79,7 @@ struct Worklist {
     }
   }
 
-  auto Add(InstId inner_id) -> void {
-    AddInFile(sem_ir, inner_id);
-  }
+  auto Add(InstId inner_id) -> void { AddInFile(sem_ir, inner_id); }
 
   auto Add(ConstantId constant_id) -> void {
     if (!constant_id.is_valid()) {
@@ -99,7 +97,7 @@ struct Worklist {
     Add(sem_ir->types().GetInstId(type_id));
   }
 
-  template<typename T>
+  template <typename T>
   auto AddBlock(llvm::ArrayRef<T> block) -> void {
     contents.push_back(block.size());
     for (auto inner_id : block) {
@@ -145,8 +143,7 @@ struct Worklist {
     Add(scope.name_id());
     if (!sem_ir->name_scopes().IsPackage(name_scope_id) &&
         scope.parent_scope_id().is_valid()) {
-      Add(
-          sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
+      Add(sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
     }
   }
 
@@ -244,31 +241,27 @@ struct Worklist {
     AddInFile(sem_ir->import_irs().Get(ir_inst.ir_id).sem_ir, ir_inst.inst_id);
   }
 
-  template<typename T>
-    requires (std::same_as<T, BoolValue> ||
-              std::same_as<T, CompileTimeBindIndex> ||
-              std::same_as<T, ElementIndex> ||
-              std::same_as<T, FloatKind> ||
-              std::same_as<T, IntKind> ||
-              std::same_as<T, RuntimeParamIndex>)
+  template <typename T>
+    requires(std::same_as<T, BoolValue> ||
+             std::same_as<T, CompileTimeBindIndex> ||
+             std::same_as<T, ElementIndex> || std::same_as<T, FloatKind> ||
+             std::same_as<T, IntKind> || std::same_as<T, RuntimeParamIndex>)
   auto Add(T arg) {
     // Index-like ID: just include the value directly.
     contents.push_back(arg.index);
   }
 
-  template<typename T>
-    requires (std::same_as<T, AnyRawId> ||
-              std::same_as<T, ExprRegionId> ||
-              std::same_as<T, LocId> ||
-              std::same_as<T, RealId>)
+  template <typename T>
+    requires(std::same_as<T, AnyRawId> || std::same_as<T, ExprRegionId> ||
+             std::same_as<T, LocId> || std::same_as<T, RealId>)
   auto Add(T /*arg*/) {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }
 
   // Add an instruction argument to the contents of the current instruction.
-  template<typename ...Types>
+  template <typename... Types>
   auto AddWithKind(uint64_t arg, TypeEnum<Types...> kind) -> void {
-    using AddFunction = void(*)(Worklist& worklist, uint64_t arg);
+    using AddFunction = void (*)(Worklist& worklist, uint64_t arg);
     using Kind = decltype(kind);
 
     // Build a lookup table to add an argument of the given kind.
@@ -331,9 +324,10 @@ struct Worklist {
     }
   }
 };
-}
+}  // namespace
 
-auto InstFingerprinter::GetOrCompute(const File& file, InstId inst_id) -> uint64_t {
+auto InstFingerprinter::GetOrCompute(const File& file, InstId inst_id)
+    -> uint64_t {
   Worklist worklist = {.sem_ir = nullptr,
                        .todo = {{&file, inst_id}},
                        .fingerprints = &fingerprints_};
