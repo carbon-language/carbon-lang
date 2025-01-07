@@ -29,7 +29,8 @@ struct Worklist {
   Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
 
   // Add an invalid marker to the contents. This is used when the entity
-  // contains an invalid ID.
+  // contains an invalid ID. This uses an arbitrary fixed value that is assumed
+  // to be unlikely to collide with a valid value.
   auto AddInvalid() -> void { contents.push_back(-1); }
 
   // Add a string to the contents.
@@ -48,7 +49,7 @@ struct Worklist {
   }
 
   auto Add(IdentifierId ident_id) -> void {
-    AddString(ident_id.is_valid() ? sem_ir->identifiers().Get(ident_id) : "");
+    AddString(sem_ir->identifiers().Get(ident_id));
   }
 
   auto Add(StringLiteralValueId lit_id) -> void {
