@@ -109,8 +109,9 @@ static auto AddNamespace(Context& context, SemIR::TypeId namespace_type_id,
       // This InstId is temporary and would be overridden if used.
       SemIR::InstId::Invalid, SemIR::AccessKind::Public);
   if (!inserted) {
-    auto prev_inst_id = parent_scope->GetEntry(entry_id).inst_id;
-    CARBON_CHECK(!prev_inst_id.is_poisoned());
+    const auto& prev_entry = parent_scope->GetEntry(entry_id);
+    CARBON_CHECK(!prev_entry.is_poisoned);
+    auto prev_inst_id = prev_entry.inst_id;
     if (auto namespace_inst =
             context.insts().TryGetAs<SemIR::Namespace>(prev_inst_id)) {
       if (diagnose_duplicate_namespace) {
@@ -334,7 +335,7 @@ static auto ImportScopeFromApiFile(Context& context,
   auto& impl_scope = context.name_scopes().Get(impl_scope_id);
 
   for (const auto& api_entry : api_scope.entries()) {
-    if (api_entry.inst_id.is_poisoned()) {
+    if (api_entry.is_poisoned) {
       continue;
     }
     auto impl_name_id =

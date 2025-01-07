@@ -44,7 +44,11 @@ struct LookupResult {
   // was not found in a specific.
   SemIR::SpecificId specific_id;
   // The declaration that was found by name lookup.
+  // Invalid for poisoned items.
+  // TODO: Make this point to the poisoning declaration.
   SemIR::InstId inst_id;
+  // Whether the lookup found a poisoned name.
+  bool is_poisoned = false;
 };
 
 // Information about an access.
@@ -208,22 +212,32 @@ class Context {
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration, returning the referenced instruction. If scope_id is invalid,
-  // uses the current contextual scope.
+  // declaration. If found, returns the referenced instruction and false. If
+  // poisoned, returns invalid instructions and true. poisoned. If scope_id is
+  // invalid, uses the current contextual scope.
+  // TODO: For poisoned names, return the poisoning instruction.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id) -> SemIR::InstId;
+                        SemIR::NameScopeId scope_id)
+      -> std::pair<SemIR::InstId, bool>;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                              bool required = true) -> LookupResult;
 
+  struct LookupNameInExactScopeResult {
+    SemIR::InstId inst_id;
+    SemIR::AccessKind access_kind;
+    bool is_poisoned = false;
+  };
+
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
-  // instruction if the name is not found.
+  // instruction if the name is not found or poisoned.
+  // TODO: Return the poisoning instruction if poisoned.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               const SemIR::NameScope& scope)
-      -> std::pair<SemIR::InstId, SemIR::AccessKind>;
+      -> LookupNameInExactScopeResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but

@@ -630,8 +630,8 @@ class FormatterImpl {
       out_ << label;
     }
 
-    for (auto [name_id, inst_id, access_kind] : scope.entries()) {
-      if (inst_id.is_poisoned()) {
+    for (auto [name_id, inst_id, access_kind, is_poisoned] : scope.entries()) {
+      if (is_poisoned) {
         // TODO: Add poisoned names.
         continue;
       }
