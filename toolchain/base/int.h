@@ -6,7 +6,6 @@
 #define CARBON_TOOLCHAIN_BASE_INT_H_
 
 #include "common/check.h"
-#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/index_base.h"

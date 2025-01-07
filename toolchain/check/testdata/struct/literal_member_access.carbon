@@ -26,12 +26,12 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %struct_type.a.b.c.1: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.a.b.c.611: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -78,7 +78,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_26.1: ref %struct_type.x.y.z = temporary_storage
 // CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref() to %.loc14_26.1
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:   %.loc14_35.1: %struct_type.a.b.c.1 = struct_literal (%int_1, %G.call, %int_3)
+// CHECK:STDOUT:   %.loc14_35.1: %struct_type.a.b.c.611 = struct_literal (%int_1, %G.call, %int_3)
 // CHECK:STDOUT:   %.loc14_26.2: ref %struct_type.x.y.z = temporary %.loc14_26.1, %G.call
 // CHECK:STDOUT:   %.loc14_26.3: ref %i32 = struct_access %.loc14_26.2, element0
 // CHECK:STDOUT:   %.loc14_26.4: %i32 = bind_value %.loc14_26.3
@@ -88,8 +88,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc14_26.8: %i32 = bind_value %.loc14_26.7
 // CHECK:STDOUT:   %struct.loc14_26: %struct_type.x.y.z = struct_value (%.loc14_26.4, %.loc14_26.6, %.loc14_26.8)
 // CHECK:STDOUT:   %.loc14_35.2: %struct_type.x.y.z = converted %G.call, %struct.loc14_26
-// CHECK:STDOUT:   %struct.loc14_35: %struct_type.a.b.c.1 = struct_value (%int_1, %.loc14_35.2, %int_3)
-// CHECK:STDOUT:   %.loc14_35.3: %struct_type.a.b.c.1 = converted %.loc14_35.1, %struct.loc14_35
+// CHECK:STDOUT:   %struct.loc14_35: %struct_type.a.b.c.611 = struct_value (%int_1, %.loc14_35.2, %int_3)
+// CHECK:STDOUT:   %.loc14_35.3: %struct_type.a.b.c.611 = converted %.loc14_35.1, %struct.loc14_35
 // CHECK:STDOUT:   %.loc14_36: %struct_type.x.y.z = struct_access %.loc14_35.3, element1
 // CHECK:STDOUT:   %.loc14_38: %i32 = struct_access %.loc14_36, element1
 // CHECK:STDOUT:   return %.loc14_38

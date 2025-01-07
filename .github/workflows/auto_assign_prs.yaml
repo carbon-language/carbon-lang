@@ -58,7 +58,7 @@ jobs:
         if: steps.filter.outputs.toolchain == 'true'
         uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
-          reviewers: chandlerc, geoffromer, jonmeow, josh11b, zygoloid
+          reviewers: chandlerc, danakj, geoffromer, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1
 
       - id: assign-fallback
@@ -68,5 +68,5 @@ jobs:
           steps.filter.outputs.toolchain != 'true'
         uses: hkusu/review-assign-action@5bee595fdb9765d4a0bd35724b6302fa15569158 # v1.4.0
         with:
-          reviewers: chandlerc, jonmeow, josh11b, zygoloid
+          reviewers: chandlerc, danakj, jonmeow, josh11b, zygoloid
           max-num-of-reviewers: 1

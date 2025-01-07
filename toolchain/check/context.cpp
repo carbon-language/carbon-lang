@@ -867,7 +867,8 @@ auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
 
 auto Context::EndSubpatternAsEmpty() -> void {
   auto block_id = inst_block_stack().Pop();
-  CARBON_CHECK(block_id == region_stack_.PeekArray().front());
+  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+  CARBON_CHECK(region_stack_.PeekArray().size() == 1);
   CARBON_CHECK(inst_blocks().Get(block_id).empty());
   region_stack_.PopArray();
 }

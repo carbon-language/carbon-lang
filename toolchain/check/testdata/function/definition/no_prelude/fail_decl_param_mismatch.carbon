@@ -70,30 +70,30 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: %.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.2: %.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.3: type = fn_type @.3 [template]
-// CHECK:STDOUT:   %.3: %.type.3 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.3: type = fn_type @.3 [template]
+// CHECK:STDOUT:   %.d852be.3: %.type.b6a92a.3 = struct_value () [template]
 // CHECK:STDOUT:   %I.type: type = fn_type @I [template]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.4: type = fn_type @.4 [template]
-// CHECK:STDOUT:   %.4: %.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.4: type = fn_type @.4 [template]
+// CHECK:STDOUT:   %.d852be.4: %.type.b6a92a.4 = struct_value () [template]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template]
 // CHECK:STDOUT:   %J.type: type = fn_type @J [template]
 // CHECK:STDOUT:   %J: %J.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.5: type = fn_type @.5 [template]
-// CHECK:STDOUT:   %.5: %.type.5 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.5: type = fn_type @.5 [template]
+// CHECK:STDOUT:   %.d852be.5: %.type.b6a92a.5 = struct_value () [template]
 // CHECK:STDOUT:   %K.type: type = fn_type @K [template]
 // CHECK:STDOUT:   %K: %K.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %.type.6: type = fn_type @.6 [template]
-// CHECK:STDOUT:   %.6: %.type.6 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.6: type = fn_type @.6 [template]
+// CHECK:STDOUT:   %.d852be.6: %.type.b6a92a.6 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +107,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     .K = %K.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.decl.loc19: %.type.1 = fn_decl @.1 [template = constants.%.1] {
+// CHECK:STDOUT:   %.decl.loc19: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -129,7 +129,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc29: %.type.2 = fn_decl @.2 [template = constants.%.2] {} {}
+// CHECK:STDOUT:   %.decl.loc29: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
@@ -141,7 +141,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc36: %.type.3 = fn_decl @.3 [template = constants.%.3] {
+// CHECK:STDOUT:   %.decl.loc36: %.type.b6a92a.3 = fn_decl @.3 [template = constants.%.d852be.3] {
 // CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -149,7 +149,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [template = constants.%I] {} {}
-// CHECK:STDOUT:   %.decl.loc46: %.type.4 = fn_decl @.4 [template = constants.%.4] {
+// CHECK:STDOUT:   %.decl.loc46: %.type.b6a92a.4 = fn_decl @.4 [template = constants.%.d852be.4] {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -167,7 +167,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc56: %.type.5 = fn_decl @.5 [template = constants.%.5] {} {}
+// CHECK:STDOUT:   %.decl.loc56: %.type.b6a92a.5 = fn_decl @.5 [template = constants.%.d852be.5] {} {}
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {
 // CHECK:STDOUT:     %return.patt: %empty_tuple.type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_tuple.type = out_param_pattern %return.patt, runtime_param0
@@ -177,7 +177,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc65: %.type.6 = fn_decl @.6 [template = constants.%.6] {
+// CHECK:STDOUT:   %.decl.loc65: %.type.b6a92a.6 = fn_decl @.6 [template = constants.%.d852be.6] {
 // CHECK:STDOUT:     %return.patt: %empty_struct_type = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %empty_struct_type = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {

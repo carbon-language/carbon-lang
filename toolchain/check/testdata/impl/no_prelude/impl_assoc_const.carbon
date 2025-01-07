@@ -284,9 +284,9 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %J_where.type.1: type = facet_type <@J where %impl.elem0 = %empty_struct_type> [template]
+// CHECK:STDOUT:   %J_where.type.800: type = facet_type <@J where %impl.elem0 = %empty_struct_type> [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%empty_struct_type) [template]
-// CHECK:STDOUT:   %J_where.type.2: type = facet_type <@J where %impl.elem0 = %empty_tuple.type> [template]
+// CHECK:STDOUT:   %J_where.type.25a: type = facet_type <@J where %impl.elem0 = %empty_tuple.type> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -305,7 +305,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:     %impl.elem0.loc5: type = impl_witness_access %.Self.as_wit.loc5, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc5_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_26.2: type = converted %.loc5_26.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self.1 [template = constants.%J_where.type.1] {
+// CHECK:STDOUT:     %.loc5_14: type = where_expr %.Self.1 [template = constants.%J_where.type.800] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc5, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -321,7 +321,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:     %impl.elem0.loc13: type = impl_witness_access %.Self.as_wit.loc13, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc13_26.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_26.2: type = converted %.loc13_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self.2 [template = constants.%J_where.type.2] {
+// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self.2 [template = constants.%J_where.type.25a] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13, %.loc13_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -533,15 +533,15 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [template]
 // CHECK:STDOUT:   %Self: %N.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %empty_struct_type} [template]
+// CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %N.type, %struct_type.a.1 [template]
+// CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %N.type, %struct_type.a.225 [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @N.%Y [template]
 // CHECK:STDOUT:   %.Self: %N.type = bind_symbolic_name .Self [symbolic]
 // CHECK:STDOUT:   %.Self.as_wit: <witness> = facet_access_witness %.Self [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %struct_type.a.1 = impl_witness_access %.Self.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %struct_type.a.225 = impl_witness_access %.Self.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [template]
-// CHECK:STDOUT:   %struct: %struct_type.a.1 = struct_value (%empty_struct) [template]
+// CHECK:STDOUT:   %struct: %struct_type.a.225 = struct_value (%empty_struct) [template]
 // CHECK:STDOUT:   %N_where.type: type = facet_type <@N where %impl.elem0 = %struct> [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (%struct) [template]
 // CHECK:STDOUT: }
@@ -559,13 +559,13 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:     %.Self.ref: %N.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %Y.ref: %assoc_type = name_ref Y, @N.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0: %struct_type.a.1 = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0: %struct_type.a.225 = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc7_32: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc7_33.1: %struct_type.a.1 = struct_literal (%.loc7_32)
+// CHECK:STDOUT:     %.loc7_33.1: %struct_type.a.225 = struct_literal (%.loc7_32)
 // CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [template = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc7_33.2: %empty_struct_type = converted %.loc7_32, %empty_struct [template = constants.%empty_struct]
-// CHECK:STDOUT:     %struct: %struct_type.a.1 = struct_value (%.loc7_33.2) [template = constants.%struct]
-// CHECK:STDOUT:     %.loc7_33.3: %struct_type.a.1 = converted %.loc7_33.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:     %struct: %struct_type.a.225 = struct_value (%.loc7_33.2) [template = constants.%struct]
+// CHECK:STDOUT:     %.loc7_33.3: %struct_type.a.225 = converted %.loc7_33.1, %struct [template = constants.%struct]
 // CHECK:STDOUT:     %.loc7_14: type = where_expr %.Self [template = constants.%N_where.type] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc7_33.3
 // CHECK:STDOUT:     }
@@ -575,7 +575,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @N {
 // CHECK:STDOUT:   %Self: %N.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Y: %struct_type.a.1 = assoc_const_decl Y [template]
+// CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl Y [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Y [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

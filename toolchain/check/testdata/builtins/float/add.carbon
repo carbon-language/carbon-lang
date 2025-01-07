@@ -60,9 +60,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 2.2000000000000002 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2.3000000000000003 [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 4.5 [template]
+// CHECK:STDOUT:   %float.9f7: f64 = float_literal 2.2000000000000002 [template]
+// CHECK:STDOUT:   %float.930: f64 = float_literal 2.3000000000000003 [template]
+// CHECK:STDOUT:   %float.750: f64 = float_literal 4.5 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,9 +163,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [template = constants.%Add]
-// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2.2000000000000002 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 2.3000000000000003 [template = constants.%float.2]
-// CHECK:STDOUT:   %float.add: init f64 = call %Add.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2.2000000000000002 [template = constants.%float.9f7]
+// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 2.3000000000000003 [template = constants.%float.930]
+// CHECK:STDOUT:   %float.add: init f64 = call %Add.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.750]
 // CHECK:STDOUT:   assign file.%x.var, %float.add
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -196,8 +196,8 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     .Float = %import_ref.20b
+// CHECK:STDOUT:     .Bool = %import_ref.f7c
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

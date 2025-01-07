@@ -23,37 +23,37 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %Self.1: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.fb7: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type [template]
-// CHECK:STDOUT:   %assoc0.1: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
+// CHECK:STDOUT:   %assoc0.389: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %I.type, %G.type [template]
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, @I.%G.decl [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %i32) [template]
-// CHECK:STDOUT:   %assoc_type.1: type = assoc_entity_type %I.type, type [template]
-// CHECK:STDOUT:   %assoc2: %assoc_type.1 = assoc_entity element2, @I.%T [template]
-// CHECK:STDOUT:   %int_42.1: Core.IntLiteral = int_value 42 [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42.1, %Convert.10 [template]
+// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.471: type = tuple_type (%i32, %i32) [template]
+// CHECK:STDOUT:   %assoc_type.579: type = assoc_entity_type %I.type, type [template]
+// CHECK:STDOUT:   %assoc2: %assoc_type.579 = assoc_entity element2, @I.%T [template]
+// CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [template]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42.20e, %Convert.925 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_42.2: %i32 = int_value 42 [template]
-// CHECK:STDOUT:   %assoc_type.2: type = assoc_entity_type %I.type, %i32 [template]
-// CHECK:STDOUT:   %assoc3: %assoc_type.2 = assoc_entity element3, @I.%N [template]
+// CHECK:STDOUT:   %int_42.b93: %i32 = int_value 42 [template]
+// CHECK:STDOUT:   %assoc_type.b2b: type = assoc_entity_type %I.type, %i32 [template]
+// CHECK:STDOUT:   %assoc3: %assoc_type.b2b = assoc_entity element3, @I.%N [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -69,9 +69,9 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.fb7]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.1]
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.389]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
@@ -102,19 +102,19 @@ interface I {
 // CHECK:STDOUT:   %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc18_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_27: %tuple.type.1 = tuple_literal (%i32.loc18_19, %i32.loc18_24)
-// CHECK:STDOUT:   %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:   %.loc18_27: %tuple.type.24b = tuple_literal (%i32.loc18_19, %i32.loc18_24)
+// CHECK:STDOUT:   %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.471 [template = constants.%tuple.type.471]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
-// CHECK:STDOUT:   %assoc2: %assoc_type.1 = assoc_entity element2, %T [template = constants.%assoc2]
-// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.1]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %assoc2: %assoc_type.579 = assoc_entity element2, %T [template = constants.%assoc2]
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.20e]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.2]
-// CHECK:STDOUT:   %.loc19_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.2]
-// CHECK:STDOUT:   %.loc19_19.2: %i32 = converted %int_42, %.loc19_19.1 [template = constants.%int_42.2]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.b93]
+// CHECK:STDOUT:   %.loc19_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.b93]
+// CHECK:STDOUT:   %.loc19_19.2: %i32 = converted %int_42, %.loc19_19.1 [template = constants.%int_42.b93]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
-// CHECK:STDOUT:   %assoc3: %assoc_type.2 = assoc_entity element3, %N [template = constants.%assoc3]
+// CHECK:STDOUT:   %assoc3: %assoc_type.b2b = assoc_entity element3, %N [template = constants.%assoc3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT:   fn(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%Self.1) {}
+// CHECK:STDOUT: specific @F(constants.%Self.fb7) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G(constants.%Self.1) {}
+// CHECK:STDOUT: specific @G(constants.%Self.fb7) {}
 // CHECK:STDOUT:
