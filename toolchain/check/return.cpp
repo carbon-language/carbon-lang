@@ -10,7 +10,7 @@
 namespace Carbon::Check {
 
 // Gets the function that lexically encloses the current location.
-auto GetCurrentFunction(Context& context) -> SemIR::Function& {
+auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
   CARBON_CHECK(!context.return_scope_stack().empty(),
                "Handling return but not in a function");
   auto function_id = context.insts()
@@ -71,7 +71,7 @@ static auto NoteReturnedVar(Context::DiagnosticBuilder& diag,
 auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
                          SemIR::InstId bind_id) -> void {
-  auto& function = GetCurrentFunction(context);
+  auto& function = GetCurrentFunctionForReturn(context);
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
   if (!return_info.is_valid()) {
@@ -115,7 +115,7 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
 
 auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
     -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   if (return_type_id.is_valid()) {
@@ -131,7 +131,7 @@ auto BuildReturnWithNoExpr(Context& context, Parse::ReturnStatementId node_id)
 
 auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
                          SemIR::InstId expr_id) -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::Invalid;
   auto return_info =
@@ -173,7 +173,7 @@ auto BuildReturnWithExpr(Context& context, Parse::ReturnStatementId node_id,
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     -> void {
-  const auto& function = GetCurrentFunction(context);
+  const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 
   if (!returned_var_id.is_valid()) {

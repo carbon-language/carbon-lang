@@ -684,7 +684,9 @@ class Context {
     return var_storage_map_;
   }
 
-  auto full_pattern_stack() -> FullPatternStack& { return full_pattern_stack_; }
+  auto full_pattern_stack() -> FullPatternStack& {
+    return scope_stack_.full_pattern_stack();
+  }
 
  private:
   // A FoldingSet node for a type.
@@ -806,9 +808,6 @@ class Context {
 
   // Stack of single-entry regions being built.
   ArrayStack<SemIR::InstBlockId> region_stack_;
-
-  // Stack of full-patterns currently being checked.
-  FullPatternStack full_pattern_stack_;
 };
 
 }  // namespace Carbon::Check

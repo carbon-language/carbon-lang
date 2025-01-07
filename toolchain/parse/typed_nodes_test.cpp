@@ -128,7 +128,9 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_header.has_value());
   auto for_var = tree.Extract(for_header->var);
   ASSERT_TRUE(for_var.has_value());
-  auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var->pattern);
+  auto for_var_pattern = tree.ExtractAs<VariablePattern>(for_var->pattern);
+  ASSERT_TRUE(for_var_pattern.has_value());
+  auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var_pattern->inner);
   ASSERT_TRUE(for_var_binding.has_value());
   auto for_var_name = tree.ExtractAs<IdentifierName>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());

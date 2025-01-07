@@ -44,6 +44,10 @@ struct InstId : public IdBase<InstId> {
   // qualifications.
   static const InstId PoisonedName;
 
+  // Represents the result of a name lookup that is temporarily disallowed
+  // because the name is currently being initialized.
+  static const InstId InitTombstone;
+
   using IdBase::IdBase;
 
   constexpr auto is_poisoned() const -> bool { return *this == PoisonedName; }
@@ -53,6 +57,7 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::Invalid = InstId(InvalidIndex);
 constexpr InstId InstId::PoisonedName = InstId(InvalidIndex - 1);
+constexpr InstId InstId::InitTombstone = InstId(InvalidIndex - 2);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction

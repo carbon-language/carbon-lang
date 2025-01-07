@@ -86,7 +86,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context.decl_name_stack().MakeUnqualifiedName(node_id, name_id);
     context.decl_name_stack().AddNameOrDiagnose(
         name_context, bind_id, introducer.modifier_set.GetAccessKind());
-    context.full_pattern_stack().AddBindName(bind_id);
+    context.full_pattern_stack().AddBindName(name_id);
 
     bool inserted =
         context.bind_name_map()
@@ -211,15 +211,16 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           });
 
       auto binding_pattern_id = make_binding_pattern();
-      if (introducer.returned_node_id.is_valid()) {
+      if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
         // TODO: Should we check this for the `var` as a whole, rather than for
         // the name binding?
         auto bind_id = context.bind_name_map()
                            .Lookup(binding_pattern_id)
                            .value()
                            .bind_name_id;
-        RegisterReturnedVar(context, introducer.returned_node_id, type_node,
-                            cast_type_id, bind_id);
+        RegisterReturnedVar(context,
+                            introducer.modifier_node_id(ModifierOrder::Decl),
+                            type_node, cast_type_id, bind_id);
       }
       context.node_stack().Push(node_id, binding_pattern_id);
       break;

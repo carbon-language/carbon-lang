@@ -289,69 +289,71 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, InstBlockId block_id,
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, SemIR::LocId loc_id,
                               AnyBranch branch) -> void {
+  if (!loc_id.node_id().is_valid()) {
+    AddBlockLabel(scope_id, branch.target_id, "", loc_id);
+    return;
+  }
   llvm::StringRef name;
-  if (loc_id.node_id().is_valid()) {
-    switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
-      case Parse::NodeKind::IfExprIf:
-        switch (branch.kind) {
-          case BranchIf::Kind:
-            name = "if.expr.then";
-            break;
-          case Branch::Kind:
-            name = "if.expr.else";
-            break;
-          case BranchWithArg::Kind:
-            name = "if.expr.result";
-            break;
-          default:
-            break;
-        }
-        break;
+  switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
+    case Parse::NodeKind::IfExprIf:
+      switch (branch.kind) {
+        case BranchIf::Kind:
+          name = "if.expr.then";
+          break;
+        case Branch::Kind:
+          name = "if.expr.else";
+          break;
+        case BranchWithArg::Kind:
+          name = "if.expr.result";
+          break;
+        default:
+          break;
+      }
+      break;
 
-      case Parse::NodeKind::IfCondition:
-        switch (branch.kind) {
-          case BranchIf::Kind:
-            name = "if.then";
-            break;
-          case Branch::Kind:
-            name = "if.else";
-            break;
-          default:
-            break;
-        }
-        break;
+    case Parse::NodeKind::IfCondition:
+      switch (branch.kind) {
+        case BranchIf::Kind:
+          name = "if.then";
+          break;
+        case Branch::Kind:
+          name = "if.else";
+          break;
+        default:
+          break;
+      }
+      break;
 
-      case Parse::NodeKind::IfStatement:
-        name = "if.done";
-        break;
+    case Parse::NodeKind::IfStatement:
+      name = "if.done";
+      break;
 
-      case Parse::NodeKind::ShortCircuitOperandAnd:
-        name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
-        break;
-      case Parse::NodeKind::ShortCircuitOperandOr:
-        name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
-        break;
+    case Parse::NodeKind::ShortCircuitOperandAnd:
+      name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
+      break;
+    case Parse::NodeKind::ShortCircuitOperandOr:
+      name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
+      break;
 
-      case Parse::NodeKind::WhileConditionStart:
-        name = "while.cond";
-        break;
+    case Parse::NodeKind::WhileConditionStart:
+      name = "while.cond";
+      break;
 
-      case Parse::NodeKind::WhileCondition:
-        switch (branch.kind) {
-          case BranchIf::Kind:
-            name = "while.body";
-            break;
-          case Branch::Kind:
-            name = "while.done";
-            break;
-          default:
-            break;
-        }
-        break;
+    case Parse::NodeKind::WhileCondition:
+      switch (branch.kind) {
+        case BranchIf::Kind:
+          name = "while.body";
+          break;
+        case Branch::Kind:
+          name = "while.done";
+          break;
+        default:
+          break;
+      }
+      break;
 
-      default:
-        break;
-    }
+    default:
+      break;
   }
 
   AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);

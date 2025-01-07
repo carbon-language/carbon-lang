@@ -96,6 +96,8 @@ auto HandleVarFinishAsDecl(Context& context) -> void {
 auto HandleVarFinishAsFor(Context& context) -> void {
   auto state = context.PopState();
 
+  context.AddNode(NodeKind::VariablePattern, state.token, state.has_error);
+
   auto end_token = state.token;
   if (context.PositionIs(Lex::TokenKind::In)) {
     end_token = context.Consume();

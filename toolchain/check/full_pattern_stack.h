@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "common/check.h"
 #include "common/set.h"
+#include "toolchain/check/lexical_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -20,9 +21,11 @@ namespace Carbon::Check {
 // contains an initializer, or a pattern in a lambda in an expression pattern.
 //
 // TODO: Unify this with Context::pattern_block_stack, or differentiate them
-// more clearly.
+// more clearly (and consider unifying this with ScopeStack instead).
 class FullPatternStack {
  public:
+  explicit FullPatternStack(LexicalLookup* lookup) : lookup_(lookup) {}
+
   // Marks the possible start of a new full-pattern (i.e. a pattern which occurs
   // in a non-pattern context).
   auto PushFullPattern() -> void { bind_name_stack_.PushArray(); }
@@ -30,16 +33,24 @@ class FullPatternStack {
   // Marks the start of the initializer for the full-pattern at the top of the
   // stack.
   auto StartPatternInitializer() -> void {
-    for (SemIR::InstId bind_name_id : bind_name_stack_.PeekArray()) {
-      CARBON_CHECK(unusable_bind_names_.Insert(bind_name_id).is_inserted());
+    for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
+      CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
+      auto& lookup_result = lookup_->Get(name_id);
+      if (!lookup_result.empty()) {
+        std::swap(lookup_result.back().inst_id, inst_id);
+      }
     }
   }
 
   // Marks the end of the initializer for the full-pattern at the top of the
   // stack.
   auto EndPatternInitializer() -> void {
-    for (SemIR::InstId bind_name_id : bind_name_stack_.PeekArray()) {
-      CARBON_CHECK(unusable_bind_names_.Erase(bind_name_id));
+    for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
+      auto& lookup_result = lookup_->Get(name_id);
+      if (!lookup_result.empty()) {
+        std::swap(lookup_result.back().inst_id, inst_id);
+      }
+      CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
     }
   }
 
@@ -50,18 +61,18 @@ class FullPatternStack {
 
   // Records that `bind_inst_id` was introduced by the full-pattern at the
   // top of the stack.
-  auto AddBindName(SemIR::InstId bind_inst_id) -> void {
-    bind_name_stack_.AppendToTop(bind_inst_id);
-  }
-
-  // Returns false if the pattern that introduced `bind_inst_id` is currently
-  // being initialized.
-  auto IsBindNameUsable(SemIR::InstId bind_inst_id) const -> bool {
-    return !unusable_bind_names_.Contains(bind_inst_id);
+  auto AddBindName(SemIR::NameId name_id) -> void {
+    bind_name_stack_.AppendToTop(
+        {.name_id = name_id, .inst_id = SemIR::InstId::InitTombstone});
   }
 
  private:
-  ArrayStack<SemIR::InstId> bind_name_stack_;
+  LexicalLookup* lookup_;
+  struct LookupEntry {
+    SemIR::NameId name_id;
+    SemIR::InstId inst_id;
+  };
+  ArrayStack<LookupEntry> bind_name_stack_;
   Set<SemIR::InstId> unusable_bind_names_;
 };
 

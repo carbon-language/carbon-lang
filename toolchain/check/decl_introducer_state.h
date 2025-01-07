@@ -15,7 +15,7 @@ namespace Carbon::Check {
 // declaration and the keyword modifiers that apply to that declaration
 // introducer.
 struct DeclIntroducerState {
-  auto modifier_node_id(ModifierOrder order) -> Parse::NodeId {
+  auto modifier_node_id(ModifierOrder order) const -> Parse::NodeId {
     return ordered_modifier_node_ids[static_cast<int8_t>(order)];
   }
   auto set_modifier_node_id(ModifierOrder order, Parse::NodeId node_id)
@@ -38,11 +38,6 @@ struct DeclIntroducerState {
 
   // If there's an `extern library` in use, the library name.
   SemIR::LibraryNameId extern_library = SemIR::LibraryNameId::Invalid;
-
-  // The node corresponding to the `returned` keyword (if any). We track this
-  // separately from the other modifiers because the parser ensures it cannot
-  // coexist with them.
-  Parse::NodeId returned_node_id = Parse::NodeId::Invalid;
 };
 
 // Stack of `DeclIntroducerState` values, representing all the declaration

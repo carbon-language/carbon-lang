@@ -389,14 +389,15 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
     }
   }
 
+  if (lexical_result == SemIR::InstId::InitTombstone) {
+    CARBON_DIAGNOSTIC(ReadDuringInitialization, Error,
+                      "`{0}` read before initialization", SemIR::NameId);
+    emitter_->Emit(node_id, ReadDuringInitialization, name_id);
+    return {.specific_id = SemIR::SpecificId::Invalid,
+            .inst_id = SemIR::ErrorInst::SingletonInstId};
+  }
+
   if (lexical_result.is_valid()) {
-    if (!full_pattern_stack_.IsBindNameUsable(lexical_result)) {
-      CARBON_DIAGNOSTIC(ReadDuringInitialization, Error,
-                        "`{0}` read before initialization", SemIR::NameId);
-      emitter_->Emit(node_id, ReadDuringInitialization, name_id);
-      return {.specific_id = SemIR::SpecificId::Invalid,
-              .inst_id = SemIR::ErrorInst::SingletonInstId};
-    }
     // A lexical scope never needs an associated specific. If there's a
     // lexically enclosing generic, then it also encloses the point of use of
     // the name.

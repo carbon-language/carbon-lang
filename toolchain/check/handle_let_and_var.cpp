@@ -38,20 +38,14 @@ auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
   return HandleIntroducer<Lex::TokenKind::Var>(context, node_id);
 }
 
-auto HandleParseNode(Context& context, Parse::ReturnedModifierId node_id)
-    -> bool {
-  context.decl_introducer_state_stack().innermost().returned_node_id = node_id;
-  return true;
-}
-
-// Adds and returns a VarStorage inst for the given pattern. If the pattern
-// is the body of a returned var, the return slot is used instead.
-static auto GetStorage(Context& context, SemIR::InstId pattern_id)
+// Returns a VarStorage inst for the given pattern. If the pattern
+// is the body of a returned var, this reuses the return slot, and otherwise it
+// adds a new inst.
+static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
     -> SemIR::InstId {
-  if (context.decl_introducer_state_stack()
-          .innermost()
-          .returned_node_id.is_valid()) {
-    auto& function = GetCurrentFunction(context);
+  if (context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
+          KeywordModifierSet::Returned)) {
+    auto& function = GetCurrentFunctionForReturn(context);
     auto return_info =
         SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
     if (return_info.has_return_slot()) {
@@ -113,9 +107,11 @@ static auto EndFullPattern(Context& context) -> void {
   // arguments for the initializer. However, we can't emit them when we emit
   // the corresponding `VarPattern`s because they're part of the pattern match,
   // not part of the pattern.
+  // TODO: find a way to do this without walking the whole pattern block.
   for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
     if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
-      context.var_storage_map().Insert(inst_id, GetStorage(context, inst_id));
+      context.var_storage_map().Insert(inst_id,
+                                       GetOrAddStorage(context, inst_id));
     }
   }
 }
@@ -203,6 +199,32 @@ static auto HandleDecl(Context& context, NodeT node_id)
   return decl_info;
 }
 
+static auto HandleAssociatedConstantDecl(Context& context,
+                                         Parse::LetDeclId node_id,
+                                         DeclInfo decl_info,
+                                         SemIR::InterfaceDecl interface_scope)
+    -> void {
+  auto pattern = context.insts().GetWithLocId(decl_info.pattern_id);
+
+  if (decl_info.init_id) {
+    // Convert the value to match the type of the pattern.
+    ConvertToValueOfType(context, node_id, *decl_info.init_id,
+                         pattern.inst.type_id());
+  }
+
+  if (auto decl = pattern.inst.TryAs<SemIR::AssociatedConstantDecl>();
+      !decl.has_value()) {
+    CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
+                      "pattern in associated constant declaration must be a "
+                      "single `:!` binding");
+    context.emitter().Emit(pattern.loc_id,
+                           ExpectedSymbolicBindingInAssociatedConstant);
+    context.name_scopes()
+        .Get(context.interfaces().Get(interface_scope.interface_id).scope_id)
+        .set_has_error();
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
@@ -223,29 +245,12 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
                  "interface modifier");
   }
 
-  auto pattern = context.insts().GetWithLocId(decl_info->pattern_id);
-
   // At interface scope, we are forming an associated constant, which has
   // different rules.
   if (auto interface_scope = context.GetCurrentScopeAs<SemIR::InterfaceDecl>();
       interface_scope) {
-    if (decl_info->init_id) {
-      // Convert the value to match the type of the pattern.
-      ConvertToValueOfType(context, node_id, *decl_info->init_id,
-                           pattern.inst.type_id());
-    }
-
-    if (auto decl = pattern.inst.TryAs<SemIR::AssociatedConstantDecl>();
-        !decl.has_value()) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "pattern in associated constant declaration must be a "
-                        "single `:!` binding");
-      context.emitter().Emit(pattern.loc_id,
-                             ExpectedSymbolicBindingInAssociatedConstant);
-      context.name_scopes()
-          .Get(context.interfaces().Get(interface_scope->interface_id).scope_id)
-          .set_has_error();
-    }
+    HandleAssociatedConstantDecl(context, node_id, *decl_info,
+                                 *interface_scope);
     return true;
   }
 
@@ -269,8 +274,9 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
     return false;
   }
 
-  LimitModifiersOnDecl(context, decl_info->introducer,
-                       KeywordModifierSet::Access);
+  LimitModifiersOnDecl(
+      context, decl_info->introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Returned);
 
   if (context.GetCurrentScopeAs<SemIR::ClassDecl>()) {
     if (decl_info->init_id) {

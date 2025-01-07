@@ -47,7 +47,6 @@ cc_library(
         "deduce.h",
         "diagnostic_helpers.h",
         "eval.h",
-        "full_pattern_stack.h",
         "function.h",
         "generic.h",
         "global_init.h",
@@ -251,6 +250,7 @@ cc_library(
     name = "scope_stack",
     srcs = ["scope_stack.cpp"],
     hdrs = [
+        "full_pattern_stack.h",
         "lexical_lookup.h",
         "scope_index.h",
         "scope_stack.h",
