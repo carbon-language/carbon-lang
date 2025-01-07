@@ -102,6 +102,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::ErrorInst::SingletonTypeId;
+    return false;
   }
 
   // Build the implicit access to the enclosing `Self`.

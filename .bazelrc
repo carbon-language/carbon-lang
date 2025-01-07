@@ -128,7 +128,18 @@ build --allow_unresolved_symlinks=false
 # RC file here if present.
 try-import %workspace%/user.bazelrc
 
+# TODO: WORKSPACE will be removed in bazel 9, should finish moving off.
+common --enable_workspace
+
+# The version of treesitter rules we're using depends on empty globs.
+# TODO: Look at the different rules in the registry.
+common --incompatible_disallow_empty_glob=false
+
 # TODO: Enable as many incompatible flags as we can, per
 # https://bazel.build/release/backward-compatibility. To get the latest list,
 # using `bazelisk --migrate build //...` will help.
-build --incompatible_strict_action_env
+common --incompatible_strict_action_env
+
+# This excludes things like rules_android to reduce warnings.
+# TODO: Disable this completely.
+common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_shell

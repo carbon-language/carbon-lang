@@ -232,7 +232,6 @@ auto ImplWitnessStartDefinition(Context& /*context*/, SemIR::Impl& impl)
   CARBON_CHECK(impl.is_being_defined());
   // TODO: Check we have a value for all non-function associated constants in
   // the constraint, and fill the witness with them.
-  return;
 }
 
 // Adds functions to the witness that the specified impl implements the given

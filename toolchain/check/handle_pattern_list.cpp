@@ -32,17 +32,12 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
   return true;
 }
 
-static auto HandleTuplePatternStart(Context& context, Parse::NodeId node_id)
+auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
     -> bool {
   context.node_stack().Push(node_id);
   context.param_and_arg_refs_stack().Push();
   context.BeginSubpattern();
   return true;
-}
-
-auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
-    -> bool {
-  return HandleTuplePatternStart(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)

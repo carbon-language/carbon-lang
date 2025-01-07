@@ -314,12 +314,10 @@ enum class ExprCategory : int8_t {
   // object that outlives the current full expression context.
   DurableRef,
   // This instruction represents an ephemeral reference expression, that denotes
-  // an
-  // object that does not outlive the current full expression context.
+  // an object that does not outlive the current full expression context.
   EphemeralRef,
   // This instruction represents an initializing expression, that describes how
-  // to
-  // initialize an object.
+  // to initialize an object.
   Initializing,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
