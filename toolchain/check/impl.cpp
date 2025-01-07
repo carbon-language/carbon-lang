@@ -222,6 +222,22 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
        .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
 }
 
+// Returns `true` if the `FacetAccessWitness` of `witness_id` matches
+// `interface_id`.
+static auto WitnessAccessMatchesInterface(Context& context,
+                                          SemIR::InstId witness_id,
+                                          SemIR::InterfaceId interface_id)
+    -> bool {
+  auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
+  auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+  auto facet_info = context.facet_types().Get(facet_type.facet_type_id);
+  if (auto impls = facet_info.TryAsSingleInterface()) {
+    return impls->interface_id == interface_id;
+  }
+  return false;
+}
+
 auto AddConstantsToImplWitnessFromConstraint(Context& context,
                                              const SemIR::Impl& impl,
                                              SemIR::InstId witness_id) -> void {
@@ -254,7 +270,9 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
     auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
-    // FIXME: validate access.witness_id matches interface_type
+    // TODO: Need to handle this case when more is supported.
+    CARBON_CHECK(WitnessAccessMatchesInterface(context, access.witness_id,
+                                               interface_type->interface_id));
     CARBON_CHECK(access.index.index >= 0);
     CARBON_CHECK(access.index.index <
                  static_cast<int32_t>(rewrite_values.size()));
