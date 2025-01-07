@@ -395,11 +395,12 @@ static auto CheckRedeclParamSyntax(Context& context,
                "prev_last_param_node_id.is_valid should match "
                "prev_first_param_node_id.is_valid");
   Parse::Tree::PostorderIterator new_iter(new_first_param_node_id);
-  Parse::Tree::PostorderIterator new_end(
-      Parse::NodeId(new_last_param_node_id.index + 1));
+  Parse::Tree::PostorderIterator new_end(new_last_param_node_id);
   Parse::Tree::PostorderIterator prev_iter(prev_first_param_node_id);
-  Parse::Tree::PostorderIterator prev_end(
-      Parse::NodeId(prev_last_param_node_id.index + 1));
+  Parse::Tree::PostorderIterator prev_end(prev_last_param_node_id);
+  // Done when one past the last node to check.
+  ++new_end;
+  ++prev_end;
 
   // Compare up to the shortest length.
   for (; new_iter != new_end && prev_iter != prev_end;
@@ -439,10 +440,10 @@ static auto CheckRedeclParamSyntax(Context& context,
       return false;
     }
   }
-  // The prefixes are the same, but the lengths may still be different.
-  // This only relevant for `impl` declarations where the final
-  // bracketing node is not included in the range of nodes being compared, and
-  // in those cases `diagnose` is false.
+  // The prefixes are the same, but the lengths may still be different. This is
+  // only relevant for `impl` declarations where the final bracketing node is
+  // not included in the range of nodes being compared, and in those cases
+  // `diagnose` is false.
   if (new_iter != new_end) {
     CARBON_CHECK(!diagnose);
     return false;
