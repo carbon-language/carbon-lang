@@ -59,8 +59,8 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.5
-// CHECK:STDOUT:     .Bool = %import_ref.0
+// CHECK:STDOUT:     .Float = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

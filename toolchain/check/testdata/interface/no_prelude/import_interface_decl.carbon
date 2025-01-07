@@ -96,9 +96,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.d = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %import_ref.c = import_ref Main//b, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.a = import_ref Main//b, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.6: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.c: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -111,9 +111,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.c
+// CHECK:STDOUT:   .Self = imports.%import_ref.a
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.e as imports.%import_ref.6 [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.e as imports.%import_ref.c [from "fail_b.carbon"];
 // CHECK:STDOUT:

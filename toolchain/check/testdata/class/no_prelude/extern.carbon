@@ -354,7 +354,7 @@ extern class C;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -362,7 +362,7 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
@@ -605,7 +605,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -618,7 +618,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -632,7 +632,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -645,7 +645,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

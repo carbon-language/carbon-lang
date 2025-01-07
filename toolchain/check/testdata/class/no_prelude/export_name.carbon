@@ -70,9 +70,9 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//base, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -80,12 +80,12 @@ var c: C = {};
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.7 [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.0 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,14 +99,14 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.3: type = import_ref Main//export, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//export, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//export, inst19 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//export, inst20 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.3
+// CHECK:STDOUT:     .C = imports.%import_ref.4
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>

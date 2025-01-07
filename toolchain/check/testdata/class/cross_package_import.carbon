@@ -198,11 +198,11 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.7
+// CHECK:STDOUT:     .C = %import_ref.0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Other//other_define, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -219,7 +219,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,12 +285,12 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.76
+// CHECK:STDOUT:     .C = %import_ref.0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Other//other_define, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -307,7 +307,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,12 +335,12 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.7
+// CHECK:STDOUT:     .C = %import_ref.0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_conflict
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Other//other_define, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Other//other_define, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -357,7 +357,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

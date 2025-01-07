@@ -31,31 +31,31 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%F.2) [symbolic]
-// CHECK:STDOUT:   %Inner.3: type = class_type @Inner [template]
-// CHECK:STDOUT:   %Inner.5: type = class_type @Inner, @Inner(%F.2) [symbolic]
+// CHECK:STDOUT:   %Inner.e: type = class_type @Inner [template]
+// CHECK:STDOUT:   %Inner.2: type = class_type @Inner, @Inner(%F.2) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.2) [symbolic]
-// CHECK:STDOUT:   %F.8: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.e: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Inner(%F.2) [symbolic]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_0.5: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.54 [template]
+// CHECK:STDOUT:   %Convert.type.cd: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.46: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.9: %Convert.type.46 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5, %Convert.9 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.d: %i32 = int_value 0 [template]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.8, @F(%F.2) [symbolic]
+// CHECK:STDOUT:   %int_0.f: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.e, @F(%F.2) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.30a
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -94,7 +94,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [template = constants.%Inner.3] {} {}
+// CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [template = constants.%Inner.e] {} {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -108,12 +108,12 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.loc8_19.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc8_19.1 (constants.%F.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc8_19.1) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F.loc8_19.2: @Inner.%F.type (%F.type) = struct_value () [symbolic = %F.loc8_19.2 (constants.%F.8)]
+// CHECK:STDOUT:   %F.loc8_19.2: @Inner.%F.type (%F.type) = struct_value () [symbolic = %F.loc8_19.2 (constants.%F.e)]
 // CHECK:STDOUT:   %G.type: type = fn_type @G, @Inner(%F.loc8_19.1) [symbolic = %G.type (constants.%G.type)]
 // CHECK:STDOUT:   %G: @Inner.%G.type (%G.type) = struct_value () [symbolic = %G (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc8_19.2 (constants.%F.8)] {
+// CHECK:STDOUT:     %F.decl: @Inner.%F.type (%F.type) = fn_decl @F [symbolic = @Inner.%F.loc8_19.2 (constants.%F.e)] {
 // CHECK:STDOUT:       %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:       %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:     } {
@@ -134,7 +134,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.3]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Inner.5
+// CHECK:STDOUT:     .Self = constants.%Inner.2
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -147,12 +147,12 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.c3 = impl_witness_access constants.%impl_witness.bd, element0 [template = constants.%Convert.54]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.cd = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.9]
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.d]
-// CHECK:STDOUT:     %.loc8_29.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.d]
-// CHECK:STDOUT:     %.loc8_29.2: %i32 = converted %int_0, %.loc8_29.1 [template = constants.%int_0.d]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.f]
+// CHECK:STDOUT:     %.loc8_29.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.f]
+// CHECK:STDOUT:     %.loc8_29.2: %i32 = converted %int_0, %.loc8_29.1 [template = constants.%int_0.f]
 // CHECK:STDOUT:     return %.loc8_29.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -161,13 +161,13 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.loc13_46.1: type = bind_symbolic_name F, 0 [symbolic = %F.loc13_46.1 (constants.%F.2)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @Inner(%F.loc13_46.1) [symbolic = %F.type (constants.%F.type)]
-// CHECK:STDOUT:   %F.loc13_46.2: @G.%F.type (%F.type) = struct_value () [symbolic = %F.loc13_46.2 (constants.%F.8)]
+// CHECK:STDOUT:   %F.loc13_46.2: @G.%F.type (%F.type) = struct_value () [symbolic = %F.loc13_46.2 (constants.%F.e)]
 // CHECK:STDOUT:   %F.specific_fn.loc13_46.2: <specific function> = specific_function %F.loc13_46.2, @F(%F.loc13_46.1) [symbolic = %F.specific_fn.loc13_46.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc13_46: @G.%F.type (%F.type) = specific_constant @Inner.%F.decl, @Inner(constants.%F.2) [symbolic = %F.loc13_46.2 (constants.%F.8)]
-// CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type) = name_ref F, %.loc13_46 [symbolic = %F.loc13_46.2 (constants.%F.8)]
+// CHECK:STDOUT:     %.loc13_46: @G.%F.type (%F.type) = specific_constant @Inner.%F.decl, @Inner(constants.%F.2) [symbolic = %F.loc13_46.2 (constants.%F.e)]
+// CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type) = name_ref F, %.loc13_46 [symbolic = %F.loc13_46.2 (constants.%F.e)]
 // CHECK:STDOUT:     %F.specific_fn.loc13_46.1: <specific function> = specific_function %F.ref, @F(constants.%F.2) [symbolic = %F.specific_fn.loc13_46.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %i32 = call %F.specific_fn.loc13_46.1()
 // CHECK:STDOUT:     %.loc13_49.1: %i32 = value_of_initializer %F.call
@@ -187,7 +187,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.loc8_19.1 => constants.%F.2
 // CHECK:STDOUT:   %F.type => constants.%F.type
-// CHECK:STDOUT:   %F.loc8_19.2 => constants.%F.8
+// CHECK:STDOUT:   %F.loc8_19.2 => constants.%F.e
 // CHECK:STDOUT:   %G.type => constants.%G.type
 // CHECK:STDOUT:   %G => constants.%G
 // CHECK:STDOUT: }

@@ -280,15 +280,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -298,8 +298,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -332,15 +332,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.5c: type = import_ref Main//export_export, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.56: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.d: type = import_ref Main//export_export, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.5c
+// CHECK:STDOUT:     .C = imports.%import_ref.d
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
@@ -351,9 +351,9 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -381,15 +381,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -399,8 +399,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,15 +429,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -447,8 +447,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,15 +477,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -495,8 +495,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -525,15 +525,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -543,8 +543,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -573,15 +573,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -591,8 +591,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -621,15 +621,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -639,8 +639,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -680,15 +680,15 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -698,8 +698,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -728,17 +728,17 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.9 = import_ref Main//use_non_export_then_base, c, unloaded
-// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3 = import_ref Main//use_non_export_then_base, c, unloaded
+// CHECK:STDOUT:   %import_ref.0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.5: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//base, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.2c = import_ref Main//base, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.27 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .c = imports.%import_ref.9
-// CHECK:STDOUT:     .C = imports.%import_ref.7
+// CHECK:STDOUT:     .c = imports.%import_ref.3
+// CHECK:STDOUT:     .C = imports.%import_ref.0
 // CHECK:STDOUT:     .indirect_c = %indirect_c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -748,8 +748,8 @@ var indirect_c: C = {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   .x = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c
+// CHECK:STDOUT:   .x = imports.%import_ref.27
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -54,7 +54,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -154,7 +154,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc9 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc9 (constants.%require_complete.7)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @G.%Class (%Class), @G.%T (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type @G.%T (%T) [symbolic = %require_complete.loc10 (constants.%require_complete.d)]
 // CHECK:STDOUT:

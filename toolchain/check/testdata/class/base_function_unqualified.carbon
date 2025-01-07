@@ -39,7 +39,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
-// CHECK:STDOUT:   %complete_type.6: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,7 +76,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %.loc16: %Derived.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived

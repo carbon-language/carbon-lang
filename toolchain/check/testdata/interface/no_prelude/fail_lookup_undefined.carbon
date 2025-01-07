@@ -53,8 +53,8 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [template]
-// CHECK:STDOUT:   %.type.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.d: %.type.b6 = struct_value () [template]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [template]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [template]
 // CHECK:STDOUT:   %BeingDefined.type: type = facet_type <@BeingDefined> [template]
@@ -63,8 +63,8 @@ interface BeingDefined {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %H.assoc_type: type = assoc_entity_type %BeingDefined.type, %H.type [template]
 // CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, @BeingDefined.%H.decl [template]
-// CHECK:STDOUT:   %.type.4: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.f: %.type.4 = struct_value () [template]
+// CHECK:STDOUT:   %.type.be: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.b: %.type.be = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -74,7 +74,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     .BeingDefined = %BeingDefined.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Undefined.decl: type = interface_decl @Undefined [template = constants.%Undefined.type] {} {}
-// CHECK:STDOUT:   %.decl: %.type.1 = fn_decl @.1 [template = constants.%.c] {} {}
+// CHECK:STDOUT:   %.decl: %.type.b6 = fn_decl @.1 [template = constants.%.d] {} {}
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [template = constants.%Test] {} {}
 // CHECK:STDOUT:   %BeingDefined.decl: type = interface_decl @BeingDefined [template = constants.%BeingDefined.type] {} {}
 // CHECK:STDOUT: }
@@ -93,7 +93,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, %H.decl [template = constants.%assoc0]
-// CHECK:STDOUT:   %.decl: %.type.4 = fn_decl @.2 [template = constants.%.f] {} {}
+// CHECK:STDOUT:   %.decl: %.type.be = fn_decl @.2 [template = constants.%.b] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

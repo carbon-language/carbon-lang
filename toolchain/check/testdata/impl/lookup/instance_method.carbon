@@ -33,23 +33,23 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %F.type.5: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.4: %F.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.5 [template]
+// CHECK:STDOUT:   %F.type.9: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.4: %F.type.9 = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.9 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.7: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.26: %F.type.7 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.5: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.1: %F.type.5 = struct_value () [template]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %F.type.0: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %F.2b: %F.type.0 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.b: type = fn_type @F.3 [template]
+// CHECK:STDOUT:   %F.c: %F.type.b = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -66,7 +66,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %C.decl.loc11: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl.loc17: type = class_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.0 = fn_decl @F.3 [template = constants.%F.2b] {
+// CHECK:STDOUT:   %F.decl: %F.type.b = fn_decl @F.3 [template = constants.%F.c] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -84,7 +84,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.1 [template = constants.%F.4] {
+// CHECK:STDOUT:   %F.decl: %F.type.9 = fn_decl @F.1 [template = constants.%F.4] {
 // CHECK:STDOUT:     %self.patt: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: @F.1.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -111,7 +111,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %I.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.7 = fn_decl @F.2 [template = constants.%F.26] {
+// CHECK:STDOUT:   %F.decl: %F.type.5 = fn_decl @F.2 [template = constants.%F.1] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -158,7 +158,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, @I.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %F.type.5 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.26]
+// CHECK:STDOUT:   %impl.elem0: %F.type.9 = impl_witness_access constants.%impl_witness, element0 [template = constants.%F.1]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%c.ref)
 // CHECK:STDOUT:   %.loc24_15.1: %i32 = value_of_initializer %F.call

@@ -88,7 +88,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -140,7 +140,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -192,15 +192,15 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields: type = class_type @AdaptWithBaseAndFields [template]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.3: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.7: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.c: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.1: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -227,8 +227,8 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.3 = base_decl %Base.ref, element<invalid> [template]
-// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.c = field_decl n, element<invalid> [template]
+// CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.7 = base_decl %Base.ref, element<invalid> [template]
+// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.1 = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc15_11 [template]

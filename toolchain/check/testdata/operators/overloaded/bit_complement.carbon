@@ -31,10 +31,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [template]
-// CHECK:STDOUT:   %Op.type.d: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.4: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template]
-// CHECK:STDOUT:   %Op.type.9: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.0: %Op.type.9 = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.f: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Op.e: %Op.type.f = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
@@ -42,11 +42,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .BitComplement = %import_ref.c5
+// CHECK:STDOUT:     .BitComplement = %import_ref.7f
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.c5: type = import_ref Core//prelude/operators/bitwise, BitComplement, loaded [template = constants.%BitComplement.type]
+// CHECK:STDOUT:   %import_ref.7f: type = import_ref Core//prelude/operators/bitwise, BitComplement, loaded [template = constants.%BitComplement.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,7 +60,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%import_ref.c5 [template = constants.%BitComplement.type]
+// CHECK:STDOUT:     %BitComplement.ref: type = name_ref BitComplement, imports.%import_ref.7f [template = constants.%BitComplement.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
@@ -79,7 +79,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %BitComplement.ref {
-// CHECK:STDOUT:   %Op.decl: %Op.type.9 = fn_decl @Op.2 [template = constants.%Op.0] {
+// CHECK:STDOUT:   %Op.decl: %Op.type.f = fn_decl @Op.2 [template = constants.%Op.e] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
@@ -117,7 +117,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %Op.type.d = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.0]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.4 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.e]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23

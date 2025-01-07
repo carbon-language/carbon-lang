@@ -29,7 +29,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -118,7 +118,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc13) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type @F.%Class (%Class) [symbolic = %require_complete.loc16_26 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type @F.%Class (%Class) [symbolic = %require_complete.loc16_26 (constants.%require_complete.7)]
 // CHECK:STDOUT:   %require_complete.loc16_35: <witness> = require_complete_type @F.%T.loc13 (%T) [symbolic = %require_complete.loc16_35 (constants.%require_complete.d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %Class](%n.param_patt: %T) {

@@ -106,31 +106,31 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.82 = import_ref Main//class1, C, unloaded
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class1, a, unloaded
+// CHECK:STDOUT:   %import_ref.85 = import_ref Main//class1, C, unloaded
+// CHECK:STDOUT:   %import_ref.8a: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6 = import_ref Main//class1, a, unloaded
 // CHECK:STDOUT:   %import_ref.8f: <witness> = import_ref Main//class1, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Main//class1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.2 = import_ref Main//class1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.82
-// CHECK:STDOUT:     .c_alias = imports.%import_ref.1
-// CHECK:STDOUT:     .a = imports.%import_ref.3
+// CHECK:STDOUT:     .C = imports.%import_ref.85
+// CHECK:STDOUT:     .c_alias = imports.%import_ref.8a
+// CHECK:STDOUT:     .a = imports.%import_ref.6
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.1 [template = constants.%C]
-// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.1 [template = constants.%C]
+// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.8a [template = constants.%C]
+// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.8a [template = constants.%C]
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class1.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
+// CHECK:STDOUT:   .Self = imports.%import_ref.2
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,16 +144,16 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.d = import_ref Main//class2, b, unloaded
+// CHECK:STDOUT:   %import_ref.7: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.b = import_ref Main//class2, b, unloaded
 // CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Main//class2, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6 = import_ref Main//class2, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.f
-// CHECK:STDOUT:     .b = imports.%import_ref.d
+// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.7
+// CHECK:STDOUT:     .b = imports.%import_ref.b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>

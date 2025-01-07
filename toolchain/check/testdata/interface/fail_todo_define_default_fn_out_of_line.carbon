@@ -78,15 +78,15 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Interface.type, %G.type [template]
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, @Interface.%G.decl [template]
-// CHECK:STDOUT:   %.type.4a852c.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.f10c91.1: %.type.4a852c.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.4a852c.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.f10c91.2: %.type.4a852c.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.067ccc.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.c3ab6d.1: %.type.067ccc.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.067ccc.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.c3ab6d.2: %.type.067ccc.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -99,8 +99,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %.decl.loc23: %.type.4a852c.1 = fn_decl @.1 [template = constants.%.f10c91.1] {} {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.4a852c.2 = fn_decl @.2 [template = constants.%.f10c91.2] {
+// CHECK:STDOUT:   %.decl.loc23: %.type.067ccc.1 = fn_decl @.1 [template = constants.%.c3ab6d.1] {} {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.067ccc.2 = fn_decl @.2 [template = constants.%.c3ab6d.2] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
@@ -203,7 +203,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %C.2: type = class_type @C [template]
+// CHECK:STDOUT:   %C.5: type = class_type @C [template]
 // CHECK:STDOUT:   %C.f: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
@@ -212,7 +212,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %require_complete.4: <witness> = require_complete_type %U [symbolic]
-// CHECK:STDOUT:   %require_complete.a: <witness> = require_complete_type %C.f [symbolic]
+// CHECK:STDOUT:   %require_complete.b: <witness> = require_complete_type %C.f [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -258,7 +258,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.5] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -315,7 +315,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.4)]
-// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.f) [symbolic = %require_complete.loc20_22 (constants.%require_complete.a)]
+// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.f) [symbolic = %require_complete.loc20_22 (constants.%require_complete.b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: %C.f](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:

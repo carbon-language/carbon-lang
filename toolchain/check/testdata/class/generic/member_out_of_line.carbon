@@ -121,7 +121,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.7: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -254,7 +254,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc6) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc14 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @G.%Class (%Class) [symbolic = %require_complete.loc14 (constants.%require_complete.7)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type @G.%Class (%Class), @G.%T.loc6 (%T) [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @G.%T.loc6 (%T) [symbolic = %require_complete.loc15 (constants.%require_complete.d)]
 // CHECK:STDOUT:
@@ -479,7 +479,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -496,7 +496,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NotGeneric.decl: type = class_decl @NotGeneric [template = constants.%NotGeneric] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c] {} {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc15_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
@@ -544,7 +544,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -567,7 +567,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Generic(%T.loc4_15.1: type) {
@@ -623,7 +623,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -646,7 +646,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c] {} {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc15_12.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_12.2 (constants.%T)]
 // CHECK:STDOUT:     %U.param: type = value_param runtime_param<invalid>
@@ -724,7 +724,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.b: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.e: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -747,7 +747,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc4_15.2 (constants.%T.6)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c] {} {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {
 // CHECK:STDOUT:     %T.param: %empty_tuple.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.3 [template = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc14_17.2: %empty_tuple.type = tuple_literal ()

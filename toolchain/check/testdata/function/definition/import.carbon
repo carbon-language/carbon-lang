@@ -119,7 +119,7 @@ fn D() {}
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.8: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %tuple.type.5: type = tuple_type (%i32) [template]
+// CHECK:STDOUT:   %tuple.type.0: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
@@ -130,7 +130,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -164,22 +164,22 @@ fn D() {}
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {
-// CHECK:STDOUT:     %c.patt: %tuple.type.5 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %tuple.type.5 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %c.patt: %tuple.type.0 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %tuple.type.0 = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %struct_type.c = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %struct_type.c = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6_25: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6_25: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [template = constants.%struct_type.c]
-// CHECK:STDOUT:     %c.param: %tuple.type.5 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [template = constants.%tuple.type.5] {
+// CHECK:STDOUT:     %c.param: %tuple.type.0 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [template = constants.%tuple.type.0] {
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.loc6_14.2: %tuple.type.8 = tuple_literal (%i32.loc6_10)
-// CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.5 [template = constants.%tuple.type.5]
+// CHECK:STDOUT:       %.loc6_14.3: type = converted %.loc6_14.2, constants.%tuple.type.0 [template = constants.%tuple.type.0]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %tuple.type.5 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %tuple.type.0 = bind_name c, %c.param
 // CHECK:STDOUT:     %return.param: ref %struct_type.c = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %struct_type.c = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -197,9 +197,9 @@ fn D() {}
 // CHECK:STDOUT:   return %b.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.5) -> %struct_type.c {
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.0) -> %struct_type.c {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %tuple.type.5 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %tuple.type.0 = name_ref c, %c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0: %i32 = tuple_access %c.ref, element0
 // CHECK:STDOUT:   %.loc6_48: %struct_type.c = struct_literal (%tuple.elem0)
@@ -246,29 +246,29 @@ fn D() {}
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %Convert.type.c3: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.bd: <witness> = impl_witness (imports.%import_ref.05), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.2c: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.54: %Convert.type.2c = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5, %Convert.54 [template]
+// CHECK:STDOUT:   %Convert.type.cd: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.46: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.9: %Convert.type.46 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5, %Convert.9 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %int_1.c: %i32 = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %tuple.type.5: type = tuple_type (%i32) [template]
+// CHECK:STDOUT:   %tuple.type.0: type = tuple_type (%i32) [template]
 // CHECK:STDOUT:   %tuple.type.9: type = tuple_type (Core.IntLiteral) [template]
-// CHECK:STDOUT:   %tuple: %tuple.type.5 = tuple_value (%int_1.2) [template]
+// CHECK:STDOUT:   %tuple: %tuple.type.0 = tuple_value (%int_1.c) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f0: %A.type = import_ref Main//fns, A, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.83: %B.type = import_ref Main//fns, B, loaded [template = constants.%B]
-// CHECK:STDOUT:   %import_ref.8d2: %C.type = import_ref Main//fns, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.f542 = import_ref Main//fns, D, unloaded
+// CHECK:STDOUT:   %import_ref.29: %A.type = import_ref Main//fns, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.9e: %B.type = import_ref Main//fns, B, loaded [template = constants.%B]
+// CHECK:STDOUT:   %import_ref.fb4: %C.type = import_ref Main//fns, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.a9 = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.30a
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.41f
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -276,10 +276,10 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.f0
-// CHECK:STDOUT:     .B = imports.%import_ref.83
-// CHECK:STDOUT:     .C = imports.%import_ref.8d2
-// CHECK:STDOUT:     .D = imports.%import_ref.f542
+// CHECK:STDOUT:     .A = imports.%import_ref.29
+// CHECK:STDOUT:     .B = imports.%import_ref.9e
+// CHECK:STDOUT:     .C = imports.%import_ref.fb4
+// CHECK:STDOUT:     .D = imports.%import_ref.a9
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -299,34 +299,34 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%b.param_patt: %i32) -> %i32 [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.5) -> %struct_type.c [from "fns.carbon"];
+// CHECK:STDOUT: fn @C(%c.param_patt: %tuple.type.0) -> %struct_type.c [from "fns.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.f0 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.29 [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
-// CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.83 [template = constants.%B]
+// CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.9e [template = constants.%B]
 // CHECK:STDOUT:   %int_1.loc7: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
-// CHECK:STDOUT:   %impl.elem0.loc7: %Convert.type.c3 = impl_witness_access constants.%impl_witness.bd, element0 [template = constants.%Convert.54]
+// CHECK:STDOUT:   %impl.elem0.loc7: %Convert.type.cd = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.9]
 // CHECK:STDOUT:   %Convert.bound.loc7: <bound method> = bound_method %int_1.loc7, %impl.elem0.loc7 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc7: <specific function> = specific_function %Convert.bound.loc7, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc7: init %i32 = call %Convert.specific_fn.loc7(%int_1.loc7) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc7_16.1: %i32 = value_of_initializer %int.convert_checked.loc7 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc7_16.2: %i32 = converted %int_1.loc7, %.loc7_16.1 [template = constants.%int_1.2]
+// CHECK:STDOUT:   %int.convert_checked.loc7: init %i32 = call %Convert.specific_fn.loc7(%int_1.loc7) [template = constants.%int_1.c]
+// CHECK:STDOUT:   %.loc7_16.1: %i32 = value_of_initializer %int.convert_checked.loc7 [template = constants.%int_1.c]
+// CHECK:STDOUT:   %.loc7_16.2: %i32 = converted %int_1.loc7, %.loc7_16.1 [template = constants.%int_1.c]
 // CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc7_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.8d2 [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.fb4 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [template = constants.%int_1.5]
 // CHECK:STDOUT:   %.loc8_25.1: %tuple.type.9 = tuple_literal (%int_1.loc8)
-// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.c3 = impl_witness_access constants.%impl_witness.bd, element0 [template = constants.%Convert.54]
+// CHECK:STDOUT:   %impl.elem0.loc8: %Convert.type.cd = impl_witness_access constants.%impl_witness.5, element0 [template = constants.%Convert.9]
 // CHECK:STDOUT:   %Convert.bound.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc8: <specific function> = specific_function %Convert.bound.loc8, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc8: init %i32 = call %Convert.specific_fn.loc8(%int_1.loc8) [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc8_25.2: %i32 = value_of_initializer %int.convert_checked.loc8 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %.loc8_25.3: %i32 = converted %int_1.loc8, %.loc8_25.2 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %tuple: %tuple.type.5 = tuple_value (%.loc8_25.3) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_25.4: %tuple.type.5 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %int.convert_checked.loc8: init %i32 = call %Convert.specific_fn.loc8(%int_1.loc8) [template = constants.%int_1.c]
+// CHECK:STDOUT:   %.loc8_25.2: %i32 = value_of_initializer %int.convert_checked.loc8 [template = constants.%int_1.c]
+// CHECK:STDOUT:   %.loc8_25.3: %i32 = converted %int_1.loc8, %.loc8_25.2 [template = constants.%int_1.c]
+// CHECK:STDOUT:   %tuple: %tuple.type.0 = tuple_value (%.loc8_25.3) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc8_25.4: %tuple.type.0 = converted %.loc8_25.1, %tuple [template = constants.%tuple]
 // CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc8_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   return
@@ -344,10 +344,10 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.cfc = import_ref Main//fns, C, unloaded
-// CHECK:STDOUT:   %import_ref.f5 = import_ref Main//fns, D, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, C, unloaded
+// CHECK:STDOUT:   %import_ref.a = import_ref Main//fns, D, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.3
+// CHECK:STDOUT:     .Int = %import_ref.1
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -357,8 +357,8 @@ fn D() {}
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .C = imports.%import_ref.cfc
-// CHECK:STDOUT:     .D = imports.%import_ref.f5
+// CHECK:STDOUT:     .C = imports.%import_ref.4
+// CHECK:STDOUT:     .D = imports.%import_ref.a
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -423,9 +423,9 @@ fn D() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.a = import_ref Main//fns, A, unloaded
-// CHECK:STDOUT:   %import_ref.7 = import_ref Main//fns, B, unloaded
-// CHECK:STDOUT:   %import_ref.c = import_ref Main//fns, C, unloaded
+// CHECK:STDOUT:   %import_ref.f = import_ref Main//fns, A, unloaded
+// CHECK:STDOUT:   %import_ref.9 = import_ref Main//fns, B, unloaded
+// CHECK:STDOUT:   %import_ref.4 = import_ref Main//fns, C, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -434,9 +434,9 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.a
-// CHECK:STDOUT:     .B = imports.%import_ref.7
-// CHECK:STDOUT:     .C = imports.%import_ref.c
+// CHECK:STDOUT:     .A = imports.%import_ref.f
+// CHECK:STDOUT:     .B = imports.%import_ref.9
+// CHECK:STDOUT:     .C = imports.%import_ref.4
 // CHECK:STDOUT:     .D = %D.decl.loc13
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }

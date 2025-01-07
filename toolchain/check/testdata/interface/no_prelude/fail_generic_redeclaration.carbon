@@ -43,23 +43,23 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %NotGeneric.type: type = facet_type <@NotGeneric> [template]
 // CHECK:STDOUT:   %T.6: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.d: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.type.87cdab.1: type = generic_interface_type @.1 [template]
+// CHECK:STDOUT:   %.type.abf52e.1: type = generic_interface_type @.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %.generic.dd3c8d.1: %.type.87cdab.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.c: type = facet_type <@.1, @.1(%T.6)> [symbolic]
-// CHECK:STDOUT:   %Self.1: %.type.c = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %.generic.0a9e18.1: %.type.abf52e.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.5: type = facet_type <@.1, @.1(%T.6)> [symbolic]
+// CHECK:STDOUT:   %Self.4: %.type.5 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_interface_type @Generic [template]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %.type.b: type = facet_type <@.2> [template]
-// CHECK:STDOUT:   %Self.74: %.type.b = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.type.4: type = facet_type <@.2> [template]
+// CHECK:STDOUT:   %Self.c: %.type.4 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %DifferentParams.type: type = generic_interface_type @DifferentParams [template]
 // CHECK:STDOUT:   %DifferentParams.generic: %DifferentParams.type = struct_value () [template]
 // CHECK:STDOUT:   %T.b: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt.e: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %.type.87cdab.2: type = generic_interface_type @.3 [template]
-// CHECK:STDOUT:   %.generic.dd3c8d.2: %.type.87cdab.2 = struct_value () [template]
-// CHECK:STDOUT:   %.type.9: type = facet_type <@.3, @.3(%T.b)> [symbolic]
-// CHECK:STDOUT:   %Self.73: %.type.9 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %.type.abf52e.2: type = generic_interface_type @.3 [template]
+// CHECK:STDOUT:   %.generic.0a9e18.2: %.type.abf52e.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.b: type = facet_type <@.3, @.3(%T.b)> [symbolic]
+// CHECK:STDOUT:   %Self.a: %.type.b = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -69,7 +69,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     .DifferentParams = %DifferentParams.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGeneric.decl: type = interface_decl @NotGeneric [template = constants.%NotGeneric.type] {} {}
-// CHECK:STDOUT:   %.decl.loc19: %.type.87cdab.1 = interface_decl @.1 [template = constants.%.generic.dd3c8d.1] {
+// CHECK:STDOUT:   %.decl.loc19: %.type.abf52e.1 = interface_decl @.1 [template = constants.%.generic.0a9e18.1] {
 // CHECK:STDOUT:     %T.patt.loc19_22.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.d)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc19_22.1, runtime_param<invalid> [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.d)]
 // CHECK:STDOUT:   } {
@@ -83,7 +83,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc21_19.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_19.2 (constants.%T.6)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.type.b] {} {}
+// CHECK:STDOUT:   %.decl.loc29: type = interface_decl @.2 [template = constants.%.type.4] {} {}
 // CHECK:STDOUT:   %DifferentParams.decl: %DifferentParams.type = interface_decl @DifferentParams [template = constants.%DifferentParams.generic] {
 // CHECK:STDOUT:     %T.patt.loc31_27.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.d)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc31_27.1, runtime_param<invalid> [symbolic = %T.patt.loc31_27.2 (constants.%T.patt.d)]
@@ -91,7 +91,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc31_27.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc31_27.2 (constants.%T.6)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.decl.loc38: %.type.87cdab.2 = interface_decl @.3 [template = constants.%.generic.dd3c8d.2] {
+// CHECK:STDOUT:   %.decl.loc38: %.type.abf52e.2 = interface_decl @.3 [template = constants.%.generic.0a9e18.2] {
 // CHECK:STDOUT:     %T.patt.loc38_27.1: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.e)]
 // CHECK:STDOUT:     %T.param_patt: %empty_tuple.type = value_param_pattern %T.patt.loc38_27.1, runtime_param<invalid> [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.e)]
 // CHECK:STDOUT:   } {
@@ -111,11 +111,11 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc19_22.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_22.2 (constants.%T.patt.d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = facet_type <@.1, @.1(%T.loc19_22.2)> [symbolic = %.type (constants.%.type.c)]
-// CHECK:STDOUT:   %Self.2: %.type.c = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:   %.type: type = facet_type <@.1, @.1(%T.loc19_22.2)> [symbolic = %.type (constants.%.type.5)]
+// CHECK:STDOUT:   %Self.2: %.type.5 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @.1.%.type (%.type.c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.1)]
+// CHECK:STDOUT:     %Self.1: @.1.%.type (%.type.5) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -131,7 +131,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @.2 {
-// CHECK:STDOUT:   %Self: %.type.b = bind_symbolic_name Self, 0 [symbolic = constants.%Self.74]
+// CHECK:STDOUT:   %Self: %.type.4 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.c]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -150,11 +150,11 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %T.patt.loc38_27.2: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc38_27.2 (constants.%T.patt.e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.type: type = facet_type <@.3, @.3(%T.loc38_27.2)> [symbolic = %.type (constants.%.type.9)]
-// CHECK:STDOUT:   %Self.2: %.type.9 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.73)]
+// CHECK:STDOUT:   %.type: type = facet_type <@.3, @.3(%T.loc38_27.2)> [symbolic = %.type (constants.%.type.b)]
+// CHECK:STDOUT:   %Self.2: %.type.b = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @.3.%.type (%.type.9) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.73)]
+// CHECK:STDOUT:     %Self.1: @.3.%.type (%.type.b) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

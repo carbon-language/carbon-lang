@@ -152,7 +152,9 @@ struct Worklist {
 
   auto AddEntity(const EntityWithParamsBase& entity) -> void {
     Add(entity.name_id);
-    Add(entity.parent_scope_id);
+    if (entity.parent_scope_id.is_valid()) {
+      Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
+    }
   }
 
   auto Add(FunctionId function_id) -> void {
