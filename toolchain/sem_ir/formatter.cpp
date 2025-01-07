@@ -1201,6 +1201,10 @@ class FormatterImpl {
     out_ << ')';
   }
 
+  auto FormatArg(AbsoluteInstBlockId id) -> void {
+    FormatArg(static_cast<InstBlockId>(id));
+  }
+
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
     const auto& real = sem_ir_->reals().Get(id);

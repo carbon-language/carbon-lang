@@ -5,9 +5,8 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//bazel/manifest:defs.bzl", "manifest")
-load("install_filegroups.bzl", "install_busybox_wrapper", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
+load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
-load("run_tool.bzl", "run_tool")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -89,6 +88,7 @@ cc_test(
         "//common:check",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -130,9 +130,10 @@ lld_aliases = [
 # based on the FHS (Filesystem Hierarchy Standard).
 install_dirs = {
     "bin": [
-        install_busybox_wrapper(
+        install_symlink(
             "carbon",
             "../lib/carbon/carbon-busybox",
+            is_driver = True,
         ),
     ],
     "lib/carbon": [
@@ -151,13 +152,10 @@ install_dirs = {
             "@llvm-project//lld:lld",
             executable = True,
         ),
-        install_busybox_wrapper(
+        install_symlink(
             "clang",
             "../../carbon-busybox",
-            [
-                "clang",
-                "--",
-            ],
+            is_driver = True,
         ),
     ] + [install_symlink(name, "lld") for name in lld_aliases],
 }
@@ -193,12 +191,4 @@ pkg_tar_and_test(
     package_file_name_base = "carbon_toolchain-$(version)",
     package_variables = ":packaging_variables",
     stamp = -1,  # Allow `--stamp` builds to produce file timestamps.
-)
-
-# Support `bazel run` on specific binaries.
-run_tool(
-    name = "run_carbon",
-    data = [":install_data"],
-    env = cc_env(),
-    tool = "prefix_root/bin/carbon",
 )

@@ -45,10 +45,11 @@ impl i32 as I {
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT:   %C.3: type = class_type @C, @C(type, %i32) [template]
 // CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %i32 [template]
+// CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, %impl_witness [template]
 // CHECK:STDOUT:   %C.4: type = class_type @C, @C(%I.type, %I.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -85,6 +86,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -123,11 +125,10 @@ impl i32 as I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %C.3 = bind_name c, %c.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (<error>) [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc11_9.1: type, %X.loc11_19.1: @C.%T.loc11_9.2 (%T)) {
@@ -170,12 +171,12 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.patt.loc11_19.2 => constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C.loc14_17.1 => constants.%C.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%I.type, @F.1.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(type, constants.%i32) {
 // CHECK:STDOUT:   %T.loc11_9.2 => type

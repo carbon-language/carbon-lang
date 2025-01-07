@@ -22,6 +22,7 @@ build --flag_alias=nightly_date=//bazel/version:nightly_date
 build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
 build:clang-tidy --output_groups=report
 build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+build:clang-tidy --action_env=PATH --host_action_env=PATH
 
 # This warning seems to incorrectly fire in this build configuration, despite
 # not firing in our normal builds.
@@ -46,6 +47,10 @@ build --disk_cache=~/.cache/carbon-lang-build-cache
 # future Bazel releases.
 build --experimental_guard_against_concurrent_changes
 
+# Used by clang_configuration.bzl.
+build --action_env=CC --host_action_env=CC
+build --action_env=CMAKE_SYSROOT --host_action_env=CMAKE_SYSROOT
+
 # Disable warnings for all external compilations. These involve code that isn't
 # developed as part of Carbon and may be difficult or impossible to patch, so
 # warnings aren't likely to be actionable.
@@ -56,16 +61,6 @@ build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 # and compile generated code where we can't fix warnings.
 build --per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
 build --host_per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
-
-# The `cc_proto_library` rule doesn't allow providing `copts`:
-# https://github.com/bazelbuild/bazel/issues/22610
-#
-# We unfortunately need to work around issues with `-Wmissing-prototypes` in
-# generated protobuf code, so pass the `copt` manually here. The warning issue
-# is likely part of:
-# https://github.com/llvm/llvm-project/issues/94138
-build --per_file_copt=.*\.pb\.cc$@-Wno-missing-prototypes
-build --host_per_file_copt=.*\.pb\.cc$@-Wno-missing-prototypes
 
 # Default dynamic linking to off. While this can help build performance in some
 # edge cases with very large linked executables and a slow linker, between using
@@ -132,3 +127,8 @@ build --allow_unresolved_symlinks=false
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.
 try-import %workspace%/user.bazelrc
+
+# TODO: Enable as many incompatible flags as we can, per
+# https://bazel.build/release/backward-compatibility. To get the latest list,
+# using `bazelisk --migrate build //...` will help.
+build --incompatible_strict_action_env

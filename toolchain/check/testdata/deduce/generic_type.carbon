@@ -213,8 +213,6 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(@F.%T.loc7_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
@@ -225,6 +223,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc7_17 => constants.%require_complete.2
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(@F.%T.loc7_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc7_6.2) {}
 // CHECK:STDOUT:
@@ -391,8 +391,6 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I(@F.%T.loc7_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc7_6.2 => constants.%T
@@ -402,6 +400,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(@F.%T.loc7_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc7_6.2) {}
 // CHECK:STDOUT:
@@ -669,10 +669,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(%T.loc4_13.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Outer(@F.%T.loc13_6.2) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Inner(@F.%T.loc13_6.2, @F.%U.loc13_16.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc13_6.2 => constants.%T
@@ -692,6 +688,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc13_70.1 => constants.%require_complete.4
 // CHECK:STDOUT:   %require_complete.loc13_70.2 => constants.%require_complete.5
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Outer(@F.%T.loc13_6.2) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner(@F.%T.loc13_6.2, @F.%U.loc13_16.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(%T.loc13_6.2, %U.loc13_16.2) {}
 // CHECK:STDOUT:
@@ -750,9 +750,9 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
@@ -862,7 +862,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_13.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %WithNontype.ref: %WithNontype.type = name_ref WithNontype, file.%WithNontype.decl [template = constants.%WithNontype.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
@@ -888,13 +888,13 @@ fn G() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @WithNontype(@F.%N.loc6_6.2) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.2) {
 // CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.2
 // CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.2
 // CHECK:STDOUT:   %WithNontype.loc6_31.2 => constants.%WithNontype.1
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithNontype(@F.%N.loc6_6.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithNontype(constants.%int_0.2) {
 // CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0.2

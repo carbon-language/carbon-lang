@@ -75,12 +75,12 @@ fn CallNegative() {
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc4_19.1, runtime_param<invalid> [symbolic = %N.patt.loc4_19.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc4_39.3: type = splice_block %.loc4_39.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_39.1: type = splice_block %.loc4_39.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_39.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_39.2: type = converted %int_literal.make_type, %.loc4_39.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_39.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_39.3: type = converted %int_literal.make_type, %.loc4_39.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_19.2 (constants.%N)]
 // CHECK:STDOUT:   }

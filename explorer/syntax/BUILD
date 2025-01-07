@@ -94,7 +94,6 @@ cc_library(
     # don't spend time linting it.
     tags = ["no-clang-tidy"],
     visibility = [
-        "//explorer/fuzzing:__pkg__",
         "//explorer/parse_and_execute:__pkg__",
     ],
     deps = [

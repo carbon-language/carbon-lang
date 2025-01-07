@@ -39,7 +39,7 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:   %CallStatic.type: type = fn_type @CallStatic [template]
 // CHECK:STDOUT:   %CallStatic: %CallStatic.type = struct_value () [template]
 // CHECK:STDOUT:   %T.as_wit: <witness> = facet_access_witness %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %F.type = interface_witness_access %T.as_wit, element0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %F.type = impl_witness_access %T.as_wit, element0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %CallFacet.type: type = fn_type @CallFacet [template]
 // CHECK:STDOUT:   %CallFacet: %CallFacet.type = struct_value () [template]
@@ -71,10 +71,10 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [template = constants.%Interface.type]
 // CHECK:STDOUT:     %T.loc21_14.1: %Interface.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21_32.2: type = splice_block %.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:     %.loc21_32.1: type = splice_block %.loc21_32.2 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Interface.type = name_ref T, %T.loc21_14.1 [symbolic = %T.loc21_14.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc21_32.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc21_32.1: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc21_32.2: type = converted %T.ref, %T.as_type.loc21_32.1 [symbolic = %T.as_type.loc21_32.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @CallFacet.%T.as_type.loc21_32.2 (%T.as_type) = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -102,14 +102,14 @@ fn CallFacet(T:! Interface, x: T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_wit.loc18_4.2: <witness> = facet_access_witness %T.loc13_15.2 [symbolic = %T.as_wit.loc18_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:   %impl.elem0.loc18_4.2: %F.type = interface_witness_access %T.as_wit.loc18_4.2, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %impl.elem0.loc18_4.2: %F.type = impl_witness_access %T.as_wit.loc18_4.2, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: %Interface.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref: %Interface.type = name_ref T, %T.loc13_15.1 [symbolic = %T.loc13_15.2 (constants.%T)]
 // CHECK:STDOUT:     %F.ref: %F.assoc_type = name_ref F, @Interface.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:     %T.as_wit.loc18_4.1: <witness> = facet_access_witness %T.ref [symbolic = %T.as_wit.loc18_4.2 (constants.%T.as_wit)]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: %F.type = interface_witness_access %T.as_wit.loc18_4.1, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc18_4.1: %F.type = impl_witness_access %T.as_wit.loc18_4.1, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

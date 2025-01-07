@@ -89,7 +89,6 @@ TEST(SemIRTest, YAML) {
       Pair("constant_values",
            Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
       Pair("symbolic_constants", Yaml::Mapping(SizeIs(0))),
-      // This production has only two instruction blocks.
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),

@@ -590,12 +590,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc4_31.3: type = splice_block %.loc4_31.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc4_31.1: type = splice_block %.loc4_31.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_31.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc4_31.2: type = converted %int_literal.make_type, %.loc4_31.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_31.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc4_31.3: type = converted %int_literal.make_type, %.loc4_31.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1

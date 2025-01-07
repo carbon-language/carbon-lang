@@ -380,9 +380,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %struct_type.a.b.2: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %int_4.1: Core.IntLiteral = int_value 4 [template]
 // CHECK:STDOUT:   %Convert.bound.3: <bound method> = bound_method %int_3.1, %Convert.10 [template]
@@ -459,7 +459,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
 // CHECK:STDOUT:   %.loc24_53.1: %struct_type.a.b.2 = struct_literal (%int_3, %int_4)
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [template = constants.%D]
-// CHECK:STDOUT:   %impl.elem0.loc24_53.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc24_53.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc24_53.1: <bound method> = bound_method %int_3, %impl.elem0.loc24_53.1 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc24_53.1: <specific function> = specific_function %Convert.bound.loc24_53.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc24_53.1: init %i32 = call %Convert.specific_fn.loc24_53.1(%int_3) [template = constants.%int_3.2]
@@ -467,7 +467,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %.loc24_53.3: ref %D = temporary_storage
 // CHECK:STDOUT:   %.loc24_53.4: ref %i32 = class_element_access %.loc24_53.3, element0
 // CHECK:STDOUT:   %.loc24_53.5: init %i32 = initialize_from %.loc24_53.2 to %.loc24_53.4 [template = constants.%int_3.2]
-// CHECK:STDOUT:   %impl.elem0.loc24_53.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc24_53.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc24_53.2: <bound method> = bound_method %int_4, %impl.elem0.loc24_53.2 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc24_53.2: <specific function> = specific_function %Convert.bound.loc24_53.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc24_53.2: init %i32 = call %Convert.specific_fn.loc24_53.2(%int_4) [template = constants.%int_4.2]

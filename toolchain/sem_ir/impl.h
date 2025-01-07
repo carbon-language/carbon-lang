@@ -28,11 +28,13 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
+  // The witness for the impl. This can be `BuiltinErrorInst` or an import
+  // reference. Note that the entries in the witness are updated at the end of
+  // the impl definition.
+  InstId witness_id = InstId::Invalid;
 
   // The following members are set at the `}` of the impl definition.
-
-  // The witness for the impl. This can be `BuiltinErrorInst`.
-  InstId witness_id = InstId::Invalid;
+  bool defined = false;
 };
 
 // An implementation of a constraint. See EntityWithParamsBase regarding the
@@ -46,11 +48,11 @@ struct Impl : public EntityWithParamsBase,
 
   // Determines whether this impl has been fully defined. This is false until we
   // reach the `}` of the impl definition.
-  auto is_defined() const -> bool { return witness_id.is_valid(); }
+  auto is_defined() const -> bool { return defined; }
 
   // Determines whether this impl's definition has begun but not yet ended.
   auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
+    return has_definition_started() && !is_defined();
   }
 };
 

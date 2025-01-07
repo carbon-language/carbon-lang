@@ -37,9 +37,9 @@ fn H() {
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %tuple.type.9: type = tuple_type (Core.IntLiteral, %tuple.type.2, Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
@@ -113,14 +113,14 @@ fn H() {
 // CHECK:STDOUT:   %F.call: init %tuple.type.2 = call %F.ref() to %tuple.elem1
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %.loc18_50.1: %tuple.type.9 = tuple_literal (%int_1, %F.call, %int_2)
-// CHECK:STDOUT:   %impl.elem0.loc18_50.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc18_50.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc18_50.1: <bound method> = bound_method %int_1, %impl.elem0.loc18_50.1 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_50.1: <specific function> = specific_function %Convert.bound.loc18_50.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc18_50.1: init %i32 = call %Convert.specific_fn.loc18_50.1(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc18_50.2: init %i32 = converted %int_1, %int.convert_checked.loc18_50.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc18_50.3: init %i32 = initialize_from %.loc18_50.2 to %tuple.elem0 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc18_50.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc18_50.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc18_50.2: <bound method> = bound_method %int_2, %impl.elem0.loc18_50.2 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18_50.2: <specific function> = specific_function %Convert.bound.loc18_50.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc18_50.2: init %i32 = call %Convert.specific_fn.loc18_50.2(%int_2) [template = constants.%int_2.2]

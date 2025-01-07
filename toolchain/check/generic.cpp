@@ -15,6 +15,11 @@
 
 namespace Carbon::Check {
 
+static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
+    -> SemIR::SpecificId;
+static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                       SemIR::SpecificId specific_id) -> void;
+
 auto StartGenericDecl(Context& context) -> void {
   context.generic_region_stack().Push();
 }
@@ -315,15 +320,19 @@ auto DiscardGenericDecl(Context& context) -> void {
   context.generic_region_stack().Pop();
 }
 
-auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
-    -> SemIR::GenericId {
+auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
   auto all_bindings =
       context.scope_stack().compile_time_bindings_stack().PeekAllValues();
 
   if (all_bindings.empty()) {
     CARBON_CHECK(context.generic_region_stack().PeekDependentInsts().empty(),
-                 "Have dependent instructions but no compile time bindings are "
-                 "in scope.");
+                 "Have dependent instruction {0} in declaration {1} but no "
+                 "compile time bindings are in scope.",
+                 context.insts().Get(context.generic_region_stack()
+                                         .PeekDependentInsts()
+                                         .front()
+                                         .inst_id),
+                 context.insts().Get(decl_id));
     context.generic_region_stack().Pop();
     return SemIR::GenericId::Invalid;
   }
@@ -333,18 +342,38 @@ auto FinishGenericDecl(Context& context, SemIR::InstId decl_id)
   // collection can have items added to it by import resolution while we are
   // building this generic.
   auto bindings_id = context.inst_blocks().Add(all_bindings);
-  auto generic_id = context.generics().Add(
+
+  SemIR::GenericId generic_id = context.generics().Add(
       SemIR::Generic{.decl_id = decl_id,
                      .bindings_id = bindings_id,
                      .self_specific_id = SemIR::SpecificId::Invalid});
+  // MakeSelfSpecificId could cause something to be imported, which would
+  // invalidate the return value of `context.generics().Get(generic_id)`.
+  auto self_specific_id = MakeSelfSpecificId(context, generic_id);
+  context.generics().Get(generic_id).self_specific_id = self_specific_id;
+  return generic_id;
+}
 
+auto FinishGenericDecl(Context& context, SemIRLoc loc,
+                       SemIR::GenericId generic_id) -> void {
+  if (!generic_id.is_valid()) {
+    return;
+  }
   auto decl_block_id = MakeGenericEvalBlock(
       context, generic_id, SemIR::GenericInstIndex::Region::Declaration);
   context.generic_region_stack().Pop();
   context.generics().Get(generic_id).decl_block_id = decl_block_id;
 
-  auto self_specific_id = MakeSelfSpecific(context, decl_id, generic_id);
-  context.generics().Get(generic_id).self_specific_id = self_specific_id;
+  ResolveSpecificDeclaration(context, loc,
+                             context.generics().GetSelfSpecific(generic_id));
+}
+
+auto BuildGenericDecl(Context& context, SemIR::InstId decl_id)
+    -> SemIR::GenericId {
+  SemIR::GenericId generic_id = BuildGeneric(context, decl_id);
+  if (generic_id.is_valid()) {
+    FinishGenericDecl(context, decl_id, generic_id);
+  }
   return generic_id;
 }
 
@@ -373,13 +402,16 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
   context.generic_region_stack().Pop();
 }
 
-auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
-                  SemIR::InstBlockId args_id) -> SemIR::SpecificId {
-  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
-
+static auto ResolveSpecificDeclaration(Context& context, SemIRLoc loc,
+                                       SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
   if (!context.specifics().Get(specific_id).decl_block_id.is_valid()) {
+    // Set a placeholder value as the decl block ID so we won't attempt to
+    // recursively resolve the same specific.
+    context.specifics().Get(specific_id).decl_block_id =
+        SemIR::InstBlockId::Empty;
+
     auto decl_block_id =
         TryEvalBlockForSpecific(context, loc, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
@@ -387,12 +419,17 @@ auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
     // so re-lookup the specific here.
     context.specifics().Get(specific_id).decl_block_id = decl_block_id;
   }
+}
 
+auto MakeSpecific(Context& context, SemIRLoc loc, SemIR::GenericId generic_id,
+                  SemIR::InstBlockId args_id) -> SemIR::SpecificId {
+  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
+  ResolveSpecificDeclaration(context, loc, specific_id);
   return specific_id;
 }
 
-auto MakeSelfSpecific(Context& context, SemIRLoc loc,
-                      SemIR::GenericId generic_id) -> SemIR::SpecificId {
+static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
+    -> SemIR::SpecificId {
   if (!generic_id.is_valid()) {
     return SemIR::SpecificId::Invalid;
   }
@@ -407,16 +444,23 @@ auto MakeSelfSpecific(Context& context, SemIRLoc loc,
     arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
   }
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
+  return context.specifics().GetOrAdd(generic_id, args_id);
+}
 
+auto MakeSelfSpecific(Context& context, SemIRLoc loc,
+                      SemIR::GenericId generic_id) -> SemIR::SpecificId {
   // Build a corresponding specific.
+  SemIR::SpecificId specific_id = MakeSelfSpecificId(context, generic_id);
   // TODO: This could be made more efficient. We don't need to perform
   // substitution here; we know we want identity mappings for all constants and
   // types. We could also consider not storing the mapping at all in this case.
-  return MakeSpecific(context, loc, generic_id, args_id);
+  ResolveSpecificDeclaration(context, loc, specific_id);
+  return specific_id;
 }
 
 auto ResolveSpecificDefinition(Context& context, SemIRLoc loc,
                                SemIR::SpecificId specific_id) -> bool {
+  // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.is_valid(), "Specific with no generic ID");

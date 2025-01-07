@@ -93,7 +93,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
                        RedeclInfo(new_function, new_loc, new_is_definition),
                        RedeclInfo(prev_function, prev_function.latest_decl_id(),
-                                  prev_function.definition_id.is_valid()),
+                                  prev_function.has_definition_started()),
                        prev_import_ir_id);
 
   if (!prev_function.first_owning_decl_id.is_valid()) {
@@ -261,7 +261,7 @@ static auto BuildFunctionDecl(Context& context,
     if (function_info.is_extern && context.IsImplFile()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
-    function_info.generic_id = FinishGenericDecl(context, decl_id);
+    function_info.generic_id = BuildGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
     FinishGenericRedecl(context, decl_id, function_info.generic_id);

@@ -232,6 +232,14 @@ constexpr int32_t IntId::InvalidIndex = Invalid.AsIndex();
 // an array of `APInt` values and represented as an index in the ID.
 class IntStore {
  public:
+  // The maximum supported bit width of an integer type.
+  // TODO: Pick a maximum size and document it in the design. For now
+  // we use 2^^23, because that's the largest size that LLVM supports.
+  static constexpr int MaxIntWidth = 1 << 23;
+
+  // Pick a canonical bit width for the provided number of significant bits.
+  static auto CanonicalBitWidth(int significant_bits) -> int;
+
   // Accepts a signed `int64_t` and uses the mathematical signed integer value
   // of it as the added integer value.
   //
@@ -394,9 +402,6 @@ class IntStore {
 
     return IntId::Invalid;
   }
-
-  // Pick a canonical bit width for the provided number of significant bits.
-  static auto CanonicalBitWidth(int significant_bits) -> int;
 
   // Canonicalize an incoming signed APInt to the correct bit width.
   static auto CanonicalizeSigned(llvm::APInt value) -> llvm::APInt;

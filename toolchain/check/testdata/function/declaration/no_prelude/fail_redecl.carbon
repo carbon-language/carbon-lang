@@ -90,9 +90,9 @@ fn E() {}
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc21: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21_10.3: type = splice_block %.loc21_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc21_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc21_10.2: type = converted %.loc21_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc21_10.1: type = splice_block %.loc21_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc21_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc21_10.3: type = converted %.loc21_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.loc21: %empty_tuple.type = bind_name x, %x.param.loc21
 // CHECK:STDOUT:   }
@@ -101,9 +101,9 @@ fn E() {}
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc29: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc29_10.3: type = splice_block %.loc29_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc29_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc29_10.2: type = converted %.loc29_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc29_10.1: type = splice_block %.loc29_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc29_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc29_10.3: type = converted %.loc29_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.loc29: %empty_tuple.type = bind_name x, %x.param.loc29
 // CHECK:STDOUT:   }
@@ -113,9 +113,9 @@ fn E() {}
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %.loc39_10.3: type = splice_block %.loc39_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc39_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc39_10.2: type = converted %.loc39_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc39_10.1: type = splice_block %.loc39_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc39_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc39_10.3: type = converted %.loc39_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }

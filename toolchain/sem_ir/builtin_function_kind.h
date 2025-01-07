@@ -37,7 +37,8 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
                    TypeId return_type) const -> bool;
 
   // Returns whether this is a compile-time-only function.
-  auto IsCompTimeOnly() const -> bool;
+  auto IsCompTimeOnly(const File& sem_ir, llvm::ArrayRef<InstId> arg_ids,
+                      TypeId return_type_id) const -> bool;
 };
 
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \

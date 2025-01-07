@@ -22,23 +22,25 @@ class ConstantContext {
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
-  // constant value that has already been lowered.
+  // constant value that has already been lowered. Returns nullptr if it
+  // hasn't been, in which case it should not be needed.
   auto GetConstant(SemIR::InstId inst_id) const -> llvm::Constant* {
     return GetConstant(file_context_->sem_ir().constant_values().Get(inst_id));
   }
 
   // Gets the lowered constant value for a constant that has already been
-  // lowered.
+  // lowered. Returns nullptr if it hasn't been, in which case it should not be
+  // needed.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
     CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
                  const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
-    CARBON_CHECK(
-        inst_id.index >= 0 && inst_id.index <= last_lowered_constant_index_,
-        "Queried constant {0} with instruction {1} that has not been lowered "
-        "yet",
-        const_id, inst_id);
+    if (inst_id.index > last_lowered_constant_index_) {
+      // This constant hasn't been lowered.
+      return nullptr;
+    }
+    CARBON_CHECK(inst_id.index >= 0);
     return constants_[inst_id.index];
   }
 
@@ -46,6 +48,11 @@ class ConstantContext {
   auto GetUnusedConstant(SemIR::TypeId /*type_id*/) const -> llvm::Constant* {
     // TODO: Consider using a poison value of the appropriate type.
     return nullptr;
+  }
+
+  // Gets the value to use for an integer literal.
+  auto GetIntLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetIntLiteralAsValue();
   }
 
   // Gets a callable's function. Returns nullptr for a builtin.
@@ -187,9 +194,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
   // represented as an LLVM integer type.
   auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* struct_type = llvm::dyn_cast<llvm::StructType>(type);
-    CARBON_CHECK(struct_type && struct_type->getNumElements() == 0);
-    return llvm::ConstantStruct::get(struct_type);
+    auto* int_literal_value = context.GetIntLiteralAsValue();
+    CARBON_CHECK(int_literal_value->getType() == type);
+    return int_literal_value;
   }
 
   auto val = context.sem_ir().ints().Get(inst.int_id);
@@ -275,6 +282,6 @@ auto LowerConstants(FileContext& file_context,
     constants[inst_id.index] = value;
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
-}  // namespace Carbon::Lower
+}
 
 }  // namespace Carbon::Lower

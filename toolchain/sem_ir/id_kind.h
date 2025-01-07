@@ -142,9 +142,9 @@ using IdKind = TypeEnum<
     InstId, AbsoluteInstId, AnyRawId, ConstantId, EntityNameId,
     CompileTimeBindIndex, RuntimeParamIndex, FacetTypeId, FunctionId, ClassId,
     InterfaceId, ImplId, GenericId, SpecificId, ImportIRId, ImportIRInstId,
-    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId, ExprRegionId,
-    StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
-    FloatKind>;
+    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId,
+    AbsoluteInstBlockId, ExprRegionId, StructTypeFieldsId, TypeId, TypeBlockId,
+    ElementIndex, LibraryNameId, FloatKind>;
 
 }  // namespace Carbon::SemIR
 

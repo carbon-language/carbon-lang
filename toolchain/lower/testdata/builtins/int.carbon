@@ -8,6 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/int.carbon
 
+// --- basic.carbon
+
+library "[[@TEST_NAME]]";
+
 fn Negate(a: i32) -> i32 = "int.snegate";
 fn TestNegate(a: i32) -> i32 { return Negate(a); }
 
@@ -41,8 +45,11 @@ fn TestXor(a: i32, b: i32) -> i32 { return Xor(a, b); }
 fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 fn TestLeftShift(a: i32, b: i32) -> i32 { return LeftShift(a, b); }
 
-fn RightShift(a: i32, b: i32) -> i32 = "int.right_shift";
-fn TestRightShift(a: i32, b: i32) -> i32 { return RightShift(a, b); }
+fn ArithmeticRightShift(a: i32, b: i32) -> i32 = "int.right_shift";
+fn TestArithmeticRightShift(a: i32, b: i32) -> i32 { return ArithmeticRightShift(a, b); }
+
+fn LogicalRightShift(a: u32, b: u32) -> u32 = "int.right_shift";
+fn TestLogicalRightShift(a: u32, b: u32) -> u32 { return LogicalRightShift(a, b); }
 
 fn Eq(a: i32, b: i32) -> bool = "int.eq";
 fn TestEq(a: i32, b: i32) -> bool { return Eq(a, b); }
@@ -62,8 +69,68 @@ fn TestGreater(a: i32, b: i32) -> bool { return Greater(a, b); }
 fn GreaterEq(a: i32, b: i32) -> bool = "int.greater_eq";
 fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 
-// CHECK:STDOUT: ; ModuleID = 'int.carbon'
-// CHECK:STDOUT: source_filename = "int.carbon"
+// --- mixed_shift.carbon
+
+library "[[@TEST_NAME]]";
+
+fn LeftShiftSmaller(a: i32, b: i16) -> i32 = "int.left_shift";
+fn TestLeftShiftSmaller(a: i32, b: i16) -> i32 { return LeftShiftSmaller(a, b); }
+
+fn RightShiftSmaller(a: i32, b: i16) -> i32 = "int.right_shift";
+fn TestRightShiftSmaller(a: i32, b: i16) -> i32 { return RightShiftSmaller(a, b); }
+
+fn LeftShiftLargerII(a: i16, b: i32) -> i16 = "int.left_shift";
+fn TestLeftShiftLargerII(a: i16, b: i32) -> i16 { return LeftShiftLargerII(a, b); }
+
+fn RightShiftLargerII(a: i16, b: i32) -> i16 = "int.right_shift";
+fn TestRightShiftLargerII(a: i16, b: i32) -> i16 { return RightShiftLargerII(a, b); }
+
+fn LeftShiftLargerIU(a: i16, b: u32) -> i16 = "int.left_shift";
+fn TestLeftShiftLargerIU(a: i16, b: u32) -> i16 { return LeftShiftLargerIU(a, b); }
+
+fn RightShiftLargerIU(a: i16, b: u32) -> i16 = "int.right_shift";
+fn TestRightShiftLargerIU(a: i16, b: u32) -> i16 { return RightShiftLargerIU(a, b); }
+
+fn LeftShiftLargerUI(a: u16, b: i32) -> u16 = "int.left_shift";
+fn TestLeftShiftLargerUI(a: u16, b: i32) -> u16 { return LeftShiftLargerUI(a, b); }
+
+fn RightShiftLargerUI(a: u16, b: i32) -> u16 = "int.right_shift";
+fn TestRightShiftLargerUI(a: u16, b: i32) -> u16 { return RightShiftLargerUI(a, b); }
+
+fn LeftShiftLargerUU(a: u16, b: u32) -> u16 = "int.left_shift";
+fn TestLeftShiftLargerUU(a: u16, b: u32) -> u16 { return LeftShiftLargerUU(a, b); }
+
+fn RightShiftLargerUU(a: u16, b: u32) -> u16 = "int.right_shift";
+fn TestRightShiftLargerUU(a: u16, b: u32) -> u16 { return RightShiftLargerUU(a, b); }
+
+// --- mixed_compare.carbon
+
+fn Eq_u16_u32(a: u16, b: u32) -> bool = "int.eq";
+fn Eq_i16_u32(a: i16, b: u32) -> bool = "int.eq";
+fn Eq_u16_i32(a: u16, b: i32) -> bool = "int.eq";
+fn Eq_i16_i32(a: i16, b: i32) -> bool = "int.eq";
+fn Eq_i32_u32(a: i32, b: u32) -> bool = "int.eq";
+
+fn TestEq_u16_u32(a: u16, b: u32) -> bool { return Eq_u16_u32(a, b); }
+fn TestEq_i16_u32(a: i16, b: u32) -> bool { return Eq_i16_u32(a, b); }
+fn TestEq_u16_i32(a: u16, b: i32) -> bool { return Eq_u16_i32(a, b); }
+fn TestEq_i16_i32(a: i16, b: i32) -> bool { return Eq_i16_i32(a, b); }
+fn TestEq_i32_u32(a: i32, b: u32) -> bool { return Eq_i32_u32(a, b); }
+
+fn Less_u16_u32(a: u16, b: u32) -> bool = "int.less";
+fn Less_i16_u32(a: i16, b: u32) -> bool = "int.less";
+fn Less_u16_i32(a: u16, b: i32) -> bool = "int.less";
+fn Less_i16_i32(a: i16, b: i32) -> bool = "int.less";
+fn Less_i32_u32(a: i32, b: u32) -> bool = "int.less";
+
+fn TestLess_u16_u32(a: u16, b: u32) -> bool { return Less_u16_u32(a, b); }
+fn TestLess_i16_u32(a: i16, b: u32) -> bool { return Less_i16_u32(a, b); }
+fn TestLess_u16_i32(a: u16, b: i32) -> bool { return Less_u16_i32(a, b); }
+fn TestLess_i16_i32(a: i16, b: i32) -> bool { return Less_i16_i32(a, b); }
+fn TestLess_i32_u32(a: i32, b: u32) -> bool { return Less_i32_u32(a, b); }
+
+// CHECK:STDOUT: ; ModuleID = 'basic.carbon'
+// CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestNegate.Main(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -131,46 +198,52 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestRightShift.Main(i32 %a, i32 %b) !dbg !39 {
+// CHECK:STDOUT: define i32 @_CTestArithmeticRightShift.Main(i32 %a, i32 %b) !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b, !dbg !40
 // CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq.Main(i32 %a, i32 %b) !dbg !42 {
+// CHECK:STDOUT: define i32 @_CTestLogicalRightShift.Main(i32 %a, i32 %b) !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !43
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !44
+// CHECK:STDOUT:   %int.right_shift = lshr i32 %a, %b, !dbg !43
+// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(i32 %a, i32 %b) !dbg !45 {
+// CHECK:STDOUT: define i1 @_CTestEq.Main(i32 %a, i32 %b) !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !46
-// CHECK:STDOUT:   ret i1 %int.neq, !dbg !47
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !46
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess.Main(i32 %a, i32 %b) !dbg !48 {
+// CHECK:STDOUT: define i1 @_CTestNeq.Main(i32 %a, i32 %b) !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !49
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !50
+// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !49
+// CHECK:STDOUT:   ret i1 %int.neq, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLessEq.Main(i32 %a, i32 %b) !dbg !51 {
+// CHECK:STDOUT: define i1 @_CTestLess.Main(i32 %a, i32 %b) !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !52
-// CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !53
+// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !52
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreater.Main(i32 %a, i32 %b) !dbg !54 {
+// CHECK:STDOUT: define i1 @_CTestLessEq.Main(i32 %a, i32 %b) !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !55
-// CHECK:STDOUT:   ret i1 %int.greater, !dbg !56
+// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !55
+// CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i32 %a, i32 %b) !dbg !57 {
+// CHECK:STDOUT: define i1 @_CTestGreater.Main(i32 %a, i32 %b) !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !58
-// CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !59
+// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !58
+// CHECK:STDOUT:   ret i1 %int.greater, !dbg !59
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i32 %a, i32 %b) !dbg !60 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !61
+// CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -179,60 +252,291 @@ fn TestGreaterEq(a: i32, b: i32) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "int.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestNegate", linkageName: "_CTestNegate.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestNegate", linkageName: "_CTestNegate.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 39, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 12, column: 32, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAdd", linkageName: "_CTestAdd.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 44, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 37, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestSub", linkageName: "_CTestSub.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 18, column: 44, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 37, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestMul", linkageName: "_CTestMul.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 21, column: 44, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 21, column: 37, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestDiv", linkageName: "_CTestDiv.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 44, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 37, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestMod", linkageName: "_CTestMod.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 27, column: 44, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 27, column: 37, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestComplement", linkageName: "_CTestComplement.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 30, column: 43, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 30, column: 36, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestAnd", linkageName: "_CTestAnd.Main", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 33, column: 44, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 33, column: 37, scope: !27)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestOr", linkageName: "_CTestOr.Main", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !31 = !DILocation(line: 36, column: 43, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 36, column: 36, scope: !30)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestXor", linkageName: "_CTestXor.Main", scope: null, file: !3, line: 39, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !34 = !DILocation(line: 39, column: 44, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 39, column: 37, scope: !33)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "TestLeftShift", linkageName: "_CTestLeftShift.Main", scope: null, file: !3, line: 42, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !37 = !DILocation(line: 42, column: 50, scope: !36)
-// CHECK:STDOUT: !38 = !DILocation(line: 42, column: 43, scope: !36)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestRightShift", linkageName: "_CTestRightShift.Main", scope: null, file: !3, line: 45, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !40 = !DILocation(line: 45, column: 51, scope: !39)
-// CHECK:STDOUT: !41 = !DILocation(line: 45, column: 44, scope: !39)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 48, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !43 = !DILocation(line: 48, column: 44, scope: !42)
-// CHECK:STDOUT: !44 = !DILocation(line: 48, column: 37, scope: !42)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "TestNeq", linkageName: "_CTestNeq.Main", scope: null, file: !3, line: 51, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !46 = !DILocation(line: 51, column: 45, scope: !45)
-// CHECK:STDOUT: !47 = !DILocation(line: 51, column: 38, scope: !45)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "TestLess", linkageName: "_CTestLess.Main", scope: null, file: !3, line: 54, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !49 = !DILocation(line: 54, column: 46, scope: !48)
-// CHECK:STDOUT: !50 = !DILocation(line: 54, column: 39, scope: !48)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "TestLessEq", linkageName: "_CTestLessEq.Main", scope: null, file: !3, line: 57, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !52 = !DILocation(line: 57, column: 48, scope: !51)
-// CHECK:STDOUT: !53 = !DILocation(line: 57, column: 41, scope: !51)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "TestGreater", linkageName: "_CTestGreater.Main", scope: null, file: !3, line: 60, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !55 = !DILocation(line: 60, column: 49, scope: !54)
-// CHECK:STDOUT: !56 = !DILocation(line: 60, column: 42, scope: !54)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "TestGreaterEq", linkageName: "_CTestGreaterEq.Main", scope: null, file: !3, line: 63, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !58 = !DILocation(line: 63, column: 51, scope: !57)
-// CHECK:STDOUT: !59 = !DILocation(line: 63, column: 44, scope: !57)
+// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 39, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 32, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAdd", linkageName: "_CTestAdd.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 44, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 37, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestSub", linkageName: "_CTestSub.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 44, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 37, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestMul", linkageName: "_CTestMul.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 44, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 37, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestDiv", linkageName: "_CTestDiv.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 44, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 37, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestMod", linkageName: "_CTestMod.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 44, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 37, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestComplement", linkageName: "_CTestComplement.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 43, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 36, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestAnd", linkageName: "_CTestAnd.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 44, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 26, column: 37, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestOr", linkageName: "_CTestOr.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 29, column: 43, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 36, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestXor", linkageName: "_CTestXor.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 44, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 37, scope: !33)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "TestLeftShift", linkageName: "_CTestLeftShift.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !37 = !DILocation(line: 35, column: 50, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 35, column: 43, scope: !36)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "TestArithmeticRightShift", linkageName: "_CTestArithmeticRightShift.Main", scope: null, file: !3, line: 38, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !40 = !DILocation(line: 38, column: 61, scope: !39)
+// CHECK:STDOUT: !41 = !DILocation(line: 38, column: 54, scope: !39)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "TestLogicalRightShift", linkageName: "_CTestLogicalRightShift.Main", scope: null, file: !3, line: 41, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !43 = !DILocation(line: 41, column: 58, scope: !42)
+// CHECK:STDOUT: !44 = !DILocation(line: 41, column: 51, scope: !42)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 44, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !46 = !DILocation(line: 44, column: 44, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 44, column: 37, scope: !45)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "TestNeq", linkageName: "_CTestNeq.Main", scope: null, file: !3, line: 47, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !49 = !DILocation(line: 47, column: 45, scope: !48)
+// CHECK:STDOUT: !50 = !DILocation(line: 47, column: 38, scope: !48)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "TestLess", linkageName: "_CTestLess.Main", scope: null, file: !3, line: 50, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !52 = !DILocation(line: 50, column: 46, scope: !51)
+// CHECK:STDOUT: !53 = !DILocation(line: 50, column: 39, scope: !51)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "TestLessEq", linkageName: "_CTestLessEq.Main", scope: null, file: !3, line: 53, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !55 = !DILocation(line: 53, column: 48, scope: !54)
+// CHECK:STDOUT: !56 = !DILocation(line: 53, column: 41, scope: !54)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "TestGreater", linkageName: "_CTestGreater.Main", scope: null, file: !3, line: 56, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !58 = !DILocation(line: 56, column: 49, scope: !57)
+// CHECK:STDOUT: !59 = !DILocation(line: 56, column: 42, scope: !57)
+// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "TestGreaterEq", linkageName: "_CTestGreaterEq.Main", scope: null, file: !3, line: 59, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !61 = !DILocation(line: 59, column: 51, scope: !60)
+// CHECK:STDOUT: !62 = !DILocation(line: 59, column: 44, scope: !60)
+// CHECK:STDOUT: ; ModuleID = 'mixed_shift.carbon'
+// CHECK:STDOUT: source_filename = "mixed_shift.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestLeftShiftSmaller.Main(i32 %a, i16 %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift.rhs = zext i16 %b to i32, !dbg !7
+// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %int.left_shift.rhs, !dbg !7
+// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestRightShiftSmaller.Main(i32 %a, i16 %b) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift.rhs = zext i16 %b to i32, !dbg !10
+// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %int.right_shift.rhs, !dbg !10
+// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerII.Main(i16 %a, i32 %b) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !13
+// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !13
+// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestRightShiftLargerII.Main(i16 %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !16
+// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !16
+// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerIU.Main(i16 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !19
+// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !19
+// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestRightShiftLargerIU.Main(i16 %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !22
+// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !22
+// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUI.Main(i16 %a, i32 %b) !dbg !24 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !25
+// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !25
+// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestRightShiftLargerUI.Main(i16 %a, i32 %b) !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !28
+// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !28
+// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUU.Main(i16 %a, i32 %b) !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !31
+// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !31
+// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestRightShiftLargerUU.Main(i16 %a, i32 %b) !dbg !33 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !34
+// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !34
+// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !35
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "mixed_shift.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestLeftShiftSmaller", linkageName: "_CTestLeftShiftSmaller.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 57, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 50, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestRightShiftSmaller", linkageName: "_CTestRightShiftSmaller.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 58, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 51, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestLeftShiftLargerII", linkageName: "_CTestLeftShiftLargerII.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 58, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 51, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestRightShiftLargerII", linkageName: "_CTestRightShiftLargerII.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 59, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 52, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestLeftShiftLargerIU", linkageName: "_CTestLeftShiftLargerIU.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 17, column: 58, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 51, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestRightShiftLargerIU", linkageName: "_CTestRightShiftLargerIU.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 59, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 52, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLeftShiftLargerUI", linkageName: "_CTestLeftShiftLargerUI.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 58, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 51, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestRightShiftLargerUI", linkageName: "_CTestRightShiftLargerUI.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 26, column: 59, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 26, column: 52, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLeftShiftLargerUU", linkageName: "_CTestLeftShiftLargerUU.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 29, column: 58, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 51, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestRightShiftLargerUU", linkageName: "_CTestRightShiftLargerUU.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 59, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 32, column: 52, scope: !33)
+// CHECK:STDOUT: ; ModuleID = 'mixed_compare.carbon'
+// CHECK:STDOUT: source_filename = "mixed_compare.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_u16_u32.Main(i16 %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !7
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !7
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i16_u32.Main(i16 %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i33, !dbg !10
+// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !10
+// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !10
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_u16_i32.Main(i16 %a, i32 %b) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !13
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !13
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i16_i32.Main(i16 %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i32, !dbg !16
+// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !16
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestEq_i32_u32.Main(i32 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.eq.lhs = sext i32 %a to i33, !dbg !19
+// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !19
+// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !19
+// CHECK:STDOUT:   ret i1 %int.eq, !dbg !20
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_u16_u32.Main(i16 %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !22
+// CHECK:STDOUT:   %int.less = icmp ult i32 %int.less.lhs, %b, !dbg !22
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !23
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i16_u32.Main(i16 %a, i32 %b) !dbg !24 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i33, !dbg !25
+// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !25
+// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !25
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !26
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_u16_i32.Main(i16 %a, i32 %b) !dbg !27 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !28
+// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !28
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !29
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i16_i32.Main(i16 %a, i32 %b) !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i32, !dbg !31
+// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !31
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !32
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i1 @_CTestLess_i32_u32.Main(i32 %a, i32 %b) !dbg !33 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.less.lhs = sext i32 %a to i33, !dbg !34
+// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !34
+// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !34
+// CHECK:STDOUT:   ret i1 %int.less, !dbg !35
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "mixed_compare.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 8, column: 52, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 45, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestEq_i16_u32", linkageName: "_CTestEq_i16_u32.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 52, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 9, column: 45, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestEq_u16_i32", linkageName: "_CTestEq_u16_i32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 52, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 45, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestEq_i16_i32", linkageName: "_CTestEq_i16_i32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 11, column: 52, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 45, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq_i32_u32", linkageName: "_CTestEq_i32_u32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 12, column: 52, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 12, column: 45, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLess_u16_u32", linkageName: "_CTestLess_u16_u32.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 54, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 47, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLess_i16_u32", linkageName: "_CTestLess_i16_u32.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 54, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 47, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestLess_u16_i32", linkageName: "_CTestLess_u16_i32.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 22, column: 54, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 22, column: 47, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLess_i16_i32", linkageName: "_CTestLess_i16_i32.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 54, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 23, column: 47, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestLess_i32_u32", linkageName: "_CTestLess_i32_u32.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 24, column: 54, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 24, column: 47, scope: !33)

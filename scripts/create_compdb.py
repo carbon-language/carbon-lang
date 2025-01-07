@@ -38,8 +38,6 @@ def _build_generated_files(bazel: str) -> None:
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
         ' kind("generated file", deps(//...))'
         ")"
-        " union "
-        'kind("cc_proto_library", deps(//...))'
     )
     generated_file_labels = subprocess.check_output(
         [bazel, "query", "--keep_going", "--output=label", kinds_query],

@@ -339,29 +339,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
-      case CARBON_KIND(ImportRefUnloaded inst): {
-        if (inst.entity_name_id.is_valid()) {
-          step_stack.PushEntityName(inst.entity_name_id);
-        } else {
-          out << "<import ref unloaded invalid entity name>";
-        }
-        break;
-      }
-      case CARBON_KIND(IntType inst): {
-        out << "<builtin ";
-        step_stack.PushString(">");
-        if (auto width_value =
-                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
-          out << (inst.int_kind.is_signed() ? "i" : "u");
-          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
-        } else {
-          out << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
-          step_stack.PushString(")");
-          step_stack.PushInstId(inst.bit_width_id);
-        }
-        break;
-      }
-      case CARBON_KIND(InterfaceWitnessAccess inst): {
+      case CARBON_KIND(ImplWitnessAccess inst): {
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
         auto witness =
@@ -410,6 +388,28 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         if (!period_self) {
           step_stack.PushInstId(witness.facet_value_inst_id);
+        }
+        break;
+      }
+      case CARBON_KIND(ImportRefUnloaded inst): {
+        if (inst.entity_name_id.is_valid()) {
+          step_stack.PushEntityName(inst.entity_name_id);
+        } else {
+          out << "<import ref unloaded invalid entity name>";
+        }
+        break;
+      }
+      case CARBON_KIND(IntType inst): {
+        out << "<builtin ";
+        step_stack.PushString(">");
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+          out << (inst.int_kind.is_signed() ? "i" : "u");
+          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
+        } else {
+          out << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
+          step_stack.PushString(")");
+          step_stack.PushInstId(inst.bit_width_id);
         }
         break;
       }
@@ -571,11 +571,11 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImplWitness::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:
       case RequireCompleteType::Kind:

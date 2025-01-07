@@ -136,10 +136,11 @@ static auto GetInterfaceFromFacetType(Context& context, SemIR::TypeId type_id)
   return facet_type_info.TryAsSingleInterface();
 }
 
-static auto AccessMemberOfInterfaceWitness(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId witness_id,
-    SemIR::SpecificId interface_specific_id,
-    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id)
+static auto AccessMemberOfImplWitness(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId witness_id,
+                                      SemIR::SpecificId interface_specific_id,
+                                      SemIR::AssociatedEntityType assoc_type,
+                                      SemIR::InstId member_id)
     -> SemIR::InstId {
   auto member_value_id = context.constant_values().GetConstantInstId(member_id);
   if (!member_value_id.is_valid()) {
@@ -162,7 +163,7 @@ static auto AccessMemberOfInterfaceWitness(
   auto subst_type_id = SemIR::GetTypeInSpecific(
       context.sem_ir(), interface_specific_id, assoc_type.entity_type_id);
 
-  return context.GetOrAddInst<SemIR::InterfaceWitnessAccess>(
+  return context.GetOrAddInst<SemIR::ImplWitnessAccess>(
       loc_id, {.type_id = subst_type_id,
                .witness_id = witness_id,
                .index = assoc_entity->index});
@@ -185,8 +186,8 @@ static auto PerformImplLookup(
   }
 
   auto witness_id =
-      LookupInterfaceWitness(context, loc_id, type_const_id,
-                             assoc_type.interface_type_id.AsConstantId());
+      LookupImplWitness(context, loc_id, type_const_id,
+                        assoc_type.interface_type_id.AsConstantId());
   if (!witness_id.is_valid()) {
     auto interface_type_id = context.GetInterfaceType(
         interface_type->interface_id, interface_type->specific_id);
@@ -211,9 +212,9 @@ static auto PerformImplLookup(
     }
     return SemIR::ErrorInst::SingletonInstId;
   }
-  return AccessMemberOfInterfaceWitness(context, loc_id, witness_id,
-                                        interface_type->specific_id, assoc_type,
-                                        member_id);
+  return AccessMemberOfImplWitness(context, loc_id, witness_id,
+                                   interface_type->specific_id, assoc_type,
+                                   member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing
@@ -313,9 +314,9 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           return SemIR::ErrorInst::SingletonInstId;
         }
 
-        member_id = AccessMemberOfInterfaceWitness(
-            context, loc_id, witness_inst_id, assoc_interface->specific_id,
-            *assoc_type, member_id);
+        member_id = AccessMemberOfImplWitness(context, loc_id, witness_inst_id,
+                                              assoc_interface->specific_id,
+                                              *assoc_type, member_id);
       } else {
         // Handles `x.F` if `x` is of type `class C` that extends an interface
         // containing `F`.

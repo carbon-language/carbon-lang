@@ -60,9 +60,9 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %struct_type.base.n [symbolic]
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.21: <witness> = impl_witness (imports.%import_ref.15), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.11: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.11: %Convert.type.11 = struct_value () [template]
-// CHECK:STDOUT:   %interface.20: <witness> = interface_witness (%Convert.11) [template]
 // CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_0.1, %Convert.11 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
@@ -103,12 +103,12 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %return.param_patt: type = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param0
-// CHECK:STDOUT:     %.loc2_27.3: type = splice_block %.loc2_27.2 [template = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc2_27.1: type = splice_block %.loc2_27.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc2_27.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc2_27.2: type = converted %int_literal.make_type, %.loc2_27.1 [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc2_27.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc2_27.3: type = converted %int_literal.make_type, %.loc2_27.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param runtime_param1
@@ -134,7 +134,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %.loc15_13: type = splice_block %ptr [template = constants.%ptr.2] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
-// CHECK:STDOUT:       %impl.elem0: %Convert.type.10 = interface_witness_access constants.%interface.20, element0 [template = constants.%Convert.11]
+// CHECK:STDOUT:       %impl.elem0: %Convert.type.10 = impl_witness_access constants.%impl_witness.21, element0 [template = constants.%Convert.11]
 // CHECK:STDOUT:       %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:       %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:       %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]

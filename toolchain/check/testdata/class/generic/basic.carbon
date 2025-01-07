@@ -121,9 +121,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc11_13.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @GetValue.%Class (%Class) = value_param runtime_param0
-// CHECK:STDOUT:       %.loc17_21.2: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
-// CHECK:STDOUT:         %.loc17_21.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc17_21.1 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %.loc17_21.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
+// CHECK:STDOUT:         %.loc17_21.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc17_21.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @GetValue.%Class (%Class) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @GetValue.%T (%T) = out_param runtime_param1
@@ -206,8 +206,6 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %complete_type.loc22_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetAddr(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
@@ -215,12 +213,14 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %ptr.loc12_38.1 => constants.%ptr.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@GetValue.%T) {}
+// CHECK:STDOUT: specific @Class(@GetAddr.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GetValue(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@GetValue.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:

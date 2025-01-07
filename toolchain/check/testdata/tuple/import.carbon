@@ -62,9 +62,9 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %tuple.type.3: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_0.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
@@ -131,13 +131,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %X.param_patt: %tuple.type.8 = value_param_pattern %X.patt.loc7_9.1, runtime_param<invalid> [symbolic = %X.patt.loc7_9.2 (constants.%X.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.param: %tuple.type.8 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc7_22.3: type = splice_block %.loc7_22.2 [template = constants.%tuple.type.8] {
+// CHECK:STDOUT:     %.loc7_22.1: type = splice_block %.loc7_22.3 [template = constants.%tuple.type.8] {
 // CHECK:STDOUT:       %int_32.loc7_14: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc7_14: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %int_32.loc7_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc7_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:       %.loc7_22.1: %tuple.type.5 = tuple_literal (%i32.loc7_14, %i32.loc7_19)
-// CHECK:STDOUT:       %.loc7_22.2: type = converted %.loc7_22.1, constants.%tuple.type.8 [template = constants.%tuple.type.8]
+// CHECK:STDOUT:       %.loc7_22.2: %tuple.type.5 = tuple_literal (%i32.loc7_14, %i32.loc7_19)
+// CHECK:STDOUT:       %.loc7_22.3: type = converted %.loc7_22.2, constants.%tuple.type.8 [template = constants.%tuple.type.8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.loc7_9.1: %tuple.type.8 = bind_symbolic_name X, 0, %X.param [symbolic = %X.loc7_9.2 (constants.%X)]
 // CHECK:STDOUT:   }
@@ -149,13 +149,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:     %.loc9_18.1: %tuple.type.12 = tuple_literal (%int_1, %int_2)
-// CHECK:STDOUT:     %impl.elem0.loc9_18.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %impl.elem0.loc9_18.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:     %Convert.bound.loc9_18.1: <bound method> = bound_method %int_1, %impl.elem0.loc9_18.1 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:     %Convert.specific_fn.loc9_18.1: <specific function> = specific_function %Convert.bound.loc9_18.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:     %int.convert_checked.loc9_18.1: init %i32 = call %Convert.specific_fn.loc9_18.1(%int_1) [template = constants.%int_1.2]
 // CHECK:STDOUT:     %.loc9_18.2: %i32 = value_of_initializer %int.convert_checked.loc9_18.1 [template = constants.%int_1.2]
 // CHECK:STDOUT:     %.loc9_18.3: %i32 = converted %int_1, %.loc9_18.2 [template = constants.%int_1.2]
-// CHECK:STDOUT:     %impl.elem0.loc9_18.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %impl.elem0.loc9_18.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:     %Convert.bound.loc9_18.2: <bound method> = bound_method %int_2, %impl.elem0.loc9_18.2 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:     %Convert.specific_fn.loc9_18.2: <specific function> = specific_function %Convert.bound.loc9_18.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:     %int.convert_checked.loc9_18.2: init %i32 = call %Convert.specific_fn.loc9_18.2(%int_2) [template = constants.%int_2.2]
@@ -190,7 +190,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc4: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
 // CHECK:STDOUT:   %.loc4_24.1: %tuple.type.3 = tuple_literal (%int_0.loc4)
-// CHECK:STDOUT:   %impl.elem0.loc4: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc4: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc4: <bound method> = bound_method %int_0.loc4, %impl.elem0.loc4 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc4: <specific function> = specific_function %Convert.bound.loc4, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc4: init %i32 = call %Convert.specific_fn.loc4(%int_0.loc4) [template = constants.%int_0.2]
@@ -206,7 +206,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
 // CHECK:STDOUT:   %.loc5_59.1: %tuple.type.12 = tuple_literal (%int_2, %int_3)
 // CHECK:STDOUT:   %.loc5_60.1: %tuple.type.13 = tuple_literal (%.loc5_51.1, %.loc5_59.1)
-// CHECK:STDOUT:   %impl.elem0.loc5_47: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc5_47: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc5_47: <bound method> = bound_method %int_0.loc5, %impl.elem0.loc5_47 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc5_47: <specific function> = specific_function %Convert.bound.loc5_47, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc5_47: init %i32 = call %Convert.specific_fn.loc5_47(%int_0.loc5) [template = constants.%int_0.2]
@@ -216,7 +216,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_47.3: init %tuple.type.2 = tuple_init (%.loc5_47.2) to %tuple.elem0.loc5_51 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc5_51.2: init %tuple.type.2 = converted %.loc5_47.1, %.loc5_47.3 [template = constants.%tuple.1]
 // CHECK:STDOUT:   %.loc5_51.3: init %tuple.type.2 = initialize_from %.loc5_51.2 to %tuple.elem0.loc5_51 [template = constants.%tuple.1]
-// CHECK:STDOUT:   %impl.elem0.loc5_51: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc5_51: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc5_51: <bound method> = bound_method %int_1, %impl.elem0.loc5_51 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc5_51: <specific function> = specific_function %Convert.bound.loc5_51, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc5_51: init %i32 = call %Convert.specific_fn.loc5_51(%int_1) [template = constants.%int_1.2]
@@ -225,7 +225,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %.loc5_51.5: init %i32 = initialize_from %.loc5_51.4 to %tuple.elem1.loc5_51 [template = constants.%int_1.2]
 // CHECK:STDOUT:   %.loc5_51.6: init %tuple.type.7 = tuple_init (%.loc5_51.3, %.loc5_51.5) to %tuple.elem0.loc5_60 [template = constants.%tuple.2]
 // CHECK:STDOUT:   %.loc5_60.2: init %tuple.type.7 = converted %.loc5_51.1, %.loc5_51.6 [template = constants.%tuple.2]
-// CHECK:STDOUT:   %impl.elem0.loc5_59.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc5_59.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc5_59.1: <bound method> = bound_method %int_2, %impl.elem0.loc5_59.1 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc5_59.1: <specific function> = specific_function %Convert.bound.loc5_59.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc5_59.1: init %i32 = call %Convert.specific_fn.loc5_59.1(%int_2) [template = constants.%int_2.2]
@@ -233,7 +233,7 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %tuple.elem1.loc5_60: ref %tuple.type.8 = tuple_access file.%b_ref.var, element1
 // CHECK:STDOUT:   %tuple.elem0.loc5_59: ref %i32 = tuple_access %tuple.elem1.loc5_60, element0
 // CHECK:STDOUT:   %.loc5_59.3: init %i32 = initialize_from %.loc5_59.2 to %tuple.elem0.loc5_59 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %impl.elem0.loc5_59.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc5_59.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc5_59.2: <bound method> = bound_method %int_3, %impl.elem0.loc5_59.2 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc5_59.2: <specific function> = specific_function %Convert.bound.loc5_59.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc5_59.2: init %i32 = call %Convert.specific_fn.loc5_59.2(%int_3) [template = constants.%int_3.2]
@@ -287,13 +287,13 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.194
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.197
+// CHECK:STDOUT:     .Int = %import_ref.252
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.255
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.195: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.196 = import_ref Implicit//default, inst980 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.253: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.254 = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -326,8 +326,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.196
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.195
+// CHECK:STDOUT:     .Self = imports.%import_ref.254
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.253
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,8 +420,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst980 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.252: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.253 = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -448,8 +448,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.195
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.194
+// CHECK:STDOUT:     .Self = imports.%import_ref.253
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.252
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -506,12 +506,12 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %import_ref.3: %C.type = import_ref Implicit//default, C, loaded [template = constants.%C.generic]
 // CHECK:STDOUT:   %import_ref.4: %F.type = import_ref Implicit//default, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.196
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.254
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.194: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
-// CHECK:STDOUT:   %import_ref.195 = import_ref Implicit//default, inst980 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.252: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %import_ref.253 = import_ref Implicit//default, inst1052 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -538,8 +538,8 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.195
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.194
+// CHECK:STDOUT:     .Self = imports.%import_ref.253
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.252
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

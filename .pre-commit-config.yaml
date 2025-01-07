@@ -85,7 +85,7 @@ repos:
       - id: clang-format
         name: clang-format
         entry: clang-format
-        types_or: [c++, proto, def]
+        types_or: [c++, def]
         language: python
         args: ['-i']
         additional_dependencies: ['clang-format==17.0.1']
@@ -184,7 +184,7 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.(carbon|c|json|proto|scss|ypp)(\.tmpl)?$'
+          - '\.(carbon|c|json|scss|ypp)(\.tmpl)?$'
           - ''
           - '// '
           - ''

@@ -4,6 +4,8 @@
 
 package Core library "prelude/operators/bitwise";
 
+import library "prelude/types/int_literal";
+
 // Bit complement: `^a`.
 interface BitComplement {
   fn Op[self: Self]() -> Self;
@@ -57,4 +59,31 @@ interface RightShift {
 // Right shift with assignment: `a >>= b`.
 interface RightShiftAssign {
   fn Op[addr self: Self*](other: Self);
+}
+
+
+// Operations for IntLiteral. These need to be here because IntLiteral has no
+// associated library of its own.
+impl IntLiteral() as BitAnd {
+  fn Op[self: Self](other: Self) -> Self = "int.and";
+}
+
+impl IntLiteral() as BitComplement {
+  fn Op[self: Self]() -> Self = "int.complement";
+}
+
+impl IntLiteral() as BitOr {
+  fn Op[self: Self](other: Self) -> Self = "int.or";
+}
+
+impl IntLiteral() as BitXor {
+  fn Op[self: Self](other: Self) -> Self = "int.xor";
+}
+
+impl IntLiteral() as LeftShift {
+  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
+}
+
+impl IntLiteral() as RightShift {
+  fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }

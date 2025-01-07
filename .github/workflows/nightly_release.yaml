@@ -88,11 +88,11 @@ jobs:
       - name: Extract the release version
         run: |
           # Make sure we can run the toolchain to get the version.
-          ./bazel-bin/toolchain/install/run_carbon version
+          ./bazel-bin/toolchain/carbon version
 
           # Now stash it in a variable and export it.
           VERSION=$( \
-            ./bazel-bin/toolchain/install/run_carbon version \
+            ./bazel-bin/toolchain/carbon version \
             | cut -d' ' -f5 | cut -d'+' -f1)
           echo "release_version=$VERSION" >> $GITHUB_ENV
 

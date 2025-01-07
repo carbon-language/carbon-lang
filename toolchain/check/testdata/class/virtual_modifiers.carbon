@@ -508,9 +508,9 @@ class Derived {
 // CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
 // CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_3.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_3.2: %i32 = int_value 3 [template]
@@ -567,7 +567,7 @@ class Derived {
 // CHECK:STDOUT:   %i.var: ref %i32 = var i
 // CHECK:STDOUT:   %i: ref %i32 = bind_name i, %i.var
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [template = constants.%int_3.1]
-// CHECK:STDOUT:   %impl.elem0.loc12: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc12: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc12: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc12: <specific function> = specific_function %Convert.bound.loc12, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %Convert.specific_fn.loc12(%int_3.loc12) [template = constants.%int_3.2]
@@ -598,14 +598,14 @@ class Derived {
 // CHECK:STDOUT:   %.loc15_35.2: ref %ptr.1 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc15_35.3: ref %ptr.1 = vtable_ptr
 // CHECK:STDOUT:   %.loc15_35.4: init %ptr.1 = initialize_from %.loc15_35.3 to %.loc15_35.2
-// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc15_35.1 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_35.1: <specific function> = specific_function %Convert.bound.loc15_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.1: init %i32 = call %Convert.specific_fn.loc15_35.1(%int_5) [template = constants.%int_5.2]
 // CHECK:STDOUT:   %.loc15_35.5: init %i32 = converted %int_5, %int.convert_checked.loc15_35.1 [template = constants.%int_5.2]
 // CHECK:STDOUT:   %.loc15_35.6: ref %i32 = class_element_access %b2.var, element2
 // CHECK:STDOUT:   %.loc15_35.7: init %i32 = initialize_from %.loc15_35.5 to %.loc15_35.6 [template = constants.%int_5.2]
-// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc15_35.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc15_35.2: <bound method> = bound_method %int_3.loc15, %impl.elem0.loc15_35.2 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc15_35.2: <specific function> = specific_function %Convert.bound.loc15_35.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc15_35.2: init %i32 = call %Convert.specific_fn.loc15_35.2(%int_3.loc15) [template = constants.%int_3.2]
@@ -619,7 +619,7 @@ class Derived {
 // CHECK:STDOUT:   %m2.ref: %Base.elem = name_ref m2, @Base.%.loc6 [template = @Base.%.loc6]
 // CHECK:STDOUT:   %.loc18_5: ref %i32 = class_element_access %b1.ref, element2
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4.1]
-// CHECK:STDOUT:   %impl.elem0.loc18: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc18: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc18: <bound method> = bound_method %int_4, %impl.elem0.loc18 [template = constants.%Convert.bound.3]
 // CHECK:STDOUT:   %Convert.specific_fn.loc18: <specific function> = specific_function %Convert.bound.loc18, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.3]
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %Convert.specific_fn.loc18(%int_4) [template = constants.%int_4.2]

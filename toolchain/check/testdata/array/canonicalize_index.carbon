@@ -28,9 +28,9 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int_1.1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2.1: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.18), @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
 // CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
 // CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %int_1.1, %Convert.10 [template]
 // CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [template]
 // CHECK:STDOUT:   %int_1.2: %i32 = int_value 1 [template]
@@ -124,7 +124,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int_2.loc14_31: Core.IntLiteral = int_value 2 [template = constants.%int_2.1]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.2]
 // CHECK:STDOUT:   %.loc14_35.1: %tuple.type = tuple_literal (%int_1.loc14_28, %int_2.loc14_31, %int_3)
-// CHECK:STDOUT:   %impl.elem0.loc14_35.1: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_35.1: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_35.1: <bound method> = bound_method %int_1.loc14_28, %impl.elem0.loc14_35.1 [template = constants.%Convert.bound.1]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_35.1: <specific function> = specific_function %Convert.bound.loc14_35.1, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.1]
 // CHECK:STDOUT:   %int.convert_checked.loc14_35.1: init %i32 = call %Convert.specific_fn.loc14_35.1(%int_1.loc14_28) [template = constants.%int_1.2]
@@ -132,7 +132,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc14_35.3: ref %i32 = array_index file.%a.var, %int_0
 // CHECK:STDOUT:   %.loc14_35.4: init %i32 = initialize_from %.loc14_35.2 to %.loc14_35.3 [template = constants.%int_1.2]
-// CHECK:STDOUT:   %impl.elem0.loc14_35.2: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_35.2: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_35.2: <bound method> = bound_method %int_2.loc14_31, %impl.elem0.loc14_35.2 [template = constants.%Convert.bound.2]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_35.2: <specific function> = specific_function %Convert.bound.loc14_35.2, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.2]
 // CHECK:STDOUT:   %int.convert_checked.loc14_35.2: init %i32 = call %Convert.specific_fn.loc14_35.2(%int_2.loc14_31) [template = constants.%int_2.2]
@@ -140,7 +140,7 @@ let c: [i32; ConvertToU32(3)]* = &a;
 // CHECK:STDOUT:   %int_1.loc14_35: Core.IntLiteral = int_value 1 [template = constants.%int_1.1]
 // CHECK:STDOUT:   %.loc14_35.6: ref %i32 = array_index file.%a.var, %int_1.loc14_35
 // CHECK:STDOUT:   %.loc14_35.7: init %i32 = initialize_from %.loc14_35.5 to %.loc14_35.6 [template = constants.%int_2.2]
-// CHECK:STDOUT:   %impl.elem0.loc14_35.3: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:   %impl.elem0.loc14_35.3: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
 // CHECK:STDOUT:   %Convert.bound.loc14_35.3: <bound method> = bound_method %int_3, %impl.elem0.loc14_35.3 [template = constants.%Convert.bound.4]
 // CHECK:STDOUT:   %Convert.specific_fn.loc14_35.3: <specific function> = specific_function %Convert.bound.loc14_35.3, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4]
 // CHECK:STDOUT:   %int.convert_checked.loc14_35.3: init %i32 = call %Convert.specific_fn.loc14_35.3(%int_3) [template = constants.%int_3.1]

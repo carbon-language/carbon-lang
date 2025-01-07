@@ -65,6 +65,79 @@ static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
       context.sem_ir().insts().Get(int_id).type_id());
 }
 
+// Creates a zext or sext instruction depending on the signedness of the
+// operand.
+static auto CreateZExtOrSExt(FunctionContext& context, llvm::Value* value,
+                             llvm::Type* type, bool is_signed,
+                             const llvm::Twine& name = "") -> llvm::Value* {
+  return is_signed ? context.builder().CreateSExt(value, type, name)
+                   : context.builder().CreateZExt(value, type, name);
+}
+
+// Handles a call to a builtin integer bit shift operator.
+static auto HandleIntShift(FunctionContext& context, SemIR::InstId inst_id,
+                           llvm::Instruction::BinaryOps bin_op,
+                           SemIR::InstId lhs_id, SemIR::InstId rhs_id) -> void {
+  llvm::Value* lhs = context.GetValue(lhs_id);
+  llvm::Value* rhs = context.GetValue(rhs_id);
+
+  // Weirdly, LLVM requires the operands of bit shift operators to be of the
+  // same type. We can always use the width of the LHS, because if the RHS
+  // doesn't fit in that then the cast is out of range anyway. Zero-extending is
+  // always fine because it's an error for the RHS to be negative.
+  //
+  // TODO: In a development build we should trap if the RHS is signed and
+  // negative or greater than or equal to the number of bits in the left-hand
+  // type.
+  rhs = context.builder().CreateZExtOrTrunc(rhs, lhs->getType(), "rhs");
+
+  context.SetLocal(inst_id, context.builder().CreateBinOp(bin_op, lhs, rhs));
+}
+
+// Handles a call to a builtin integer comparison operator.
+static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
+                                SemIR::BuiltinFunctionKind builtin_kind,
+                                SemIR::InstId lhs_id, SemIR::InstId rhs_id)
+    -> void {
+  llvm::Value* lhs = context.GetValue(lhs_id);
+  llvm::Value* rhs = context.GetValue(rhs_id);
+  const auto* lhs_type = cast<llvm::IntegerType>(lhs->getType());
+  const auto* rhs_type = cast<llvm::IntegerType>(rhs->getType());
+
+  // We perform a signed comparison if either operand is signed.
+  bool lhs_signed = IsSignedInt(context, lhs_id);
+  bool rhs_signed = IsSignedInt(context, rhs_id);
+  bool cmp_signed = lhs_signed || rhs_signed;
+
+  // Compute the width for the comparison. This is the smallest width that
+  // fits both types, after widening them to include a sign bit if
+  // necessary.
+  auto width_for_cmp = [&](const llvm::IntegerType* type, bool is_signed) {
+    unsigned width = type->getBitWidth();
+    if (!is_signed && cmp_signed) {
+      // We're performing a signed comparison but this input is unsigned.
+      // Widen it by at least one bit to provide a sign bit.
+      ++width;
+    }
+    return width;
+  };
+  // TODO: This might be an awkward size, such as 33 or 65 bits, for a
+  // signed/unsigned comparison. Would it be better to round this up to a
+  // "nicer" bit width?
+  unsigned cmp_width = std::max(width_for_cmp(lhs_type, lhs_signed),
+                                width_for_cmp(rhs_type, rhs_signed));
+  auto* cmp_type = llvm::IntegerType::get(context.llvm_context(), cmp_width);
+
+  // Widen the operands as needed.
+  lhs = CreateZExtOrSExt(context, lhs, cmp_type, lhs_signed, "lhs");
+  rhs = CreateZExtOrSExt(context, rhs, cmp_type, rhs_signed, "rhs");
+
+  context.SetLocal(
+      inst_id,
+      context.builder().CreateICmp(
+          GetBuiltinICmpPredicate(builtin_kind, cmp_signed), lhs, rhs));
+}
+
 // Handles a call to a builtin function.
 static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                               SemIR::BuiltinFunctionKind builtin_kind,
@@ -245,19 +318,15 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
     case SemIR::BuiltinFunctionKind::IntLeftShift: {
-      context.SetLocal(
-          inst_id, context.builder().CreateShl(context.GetValue(arg_ids[0]),
-                                               context.GetValue(arg_ids[1])));
+      HandleIntShift(context, inst_id, llvm::Instruction::Shl, arg_ids[0],
+                     arg_ids[1]);
       return;
     }
     case SemIR::BuiltinFunctionKind::IntRightShift: {
-      context.SetLocal(
-          inst_id,
-          IsSignedInt(context, inst_id)
-              ? context.builder().CreateAShr(context.GetValue(arg_ids[0]),
-                                             context.GetValue(arg_ids[1]))
-              : context.builder().CreateLShr(context.GetValue(arg_ids[0]),
-                                             context.GetValue(arg_ids[1])));
+      HandleIntShift(context, inst_id,
+                     IsSignedInt(context, inst_id) ? llvm::Instruction::AShr
+                                                   : llvm::Instruction::LShr,
+                     arg_ids[0], arg_ids[1]);
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -268,12 +337,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntGreaterEq:
     case SemIR::BuiltinFunctionKind::BoolEq:
     case SemIR::BuiltinFunctionKind::BoolNeq: {
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateICmp(
-              GetBuiltinICmpPredicate(builtin_kind,
-                                      IsSignedInt(context, arg_ids[0])),
-              context.GetValue(arg_ids[0]), context.GetValue(arg_ids[1])));
+      HandleIntComparison(context, inst_id, builtin_kind, arg_ids[0],
+                          arg_ids[1]);
       return;
     }
     case SemIR::BuiltinFunctionKind::FloatNegate: {
@@ -320,7 +385,9 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
-      CARBON_CHECK(builtin_kind.IsCompTimeOnly());
+      CARBON_CHECK(builtin_kind.IsCompTimeOnly(
+          context.sem_ir(), arg_ids,
+          context.sem_ir().insts().Get(inst_id).type_id()));
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
   }

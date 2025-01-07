@@ -18,7 +18,7 @@
       "type": "lldb-dap",
       "request": "launch",
       "name": "carbon compile (lldb)",
-      "program": "bazel-bin/toolchain/install/prefix_root/lib/carbon/carbon-busybox",
+      "program": "bazel-bin/toolchain/carbon",
       "args": [
         "compile",
         "--phase=lower",
