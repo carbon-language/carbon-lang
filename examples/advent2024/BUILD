@@ -9,6 +9,11 @@ utils = [
     "sort.carbon",
 ]
 
+# A list of examples that should be excluded because they don't build any more.
+# For example, to exclude day3_part2, use:
+# excluded = [(3, 2)]
+excluded = []
+
 # Produce a binary "dayX_partY" for each matching `.carbon` file.
 [
     carbon_binary(
@@ -20,4 +25,5 @@ utils = [
     )
     for day in range(1, 14)
     for part in range(1, 3)
+    if (day, part) not in excluded
 ]

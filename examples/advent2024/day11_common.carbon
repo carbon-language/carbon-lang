@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// https://adventofcode.com/2024/day/11
+
+// https://adventofcode.com/2024/day/1
+
 library "day11_common";
 
 import Core library "io";

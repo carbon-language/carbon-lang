@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// https://adventofcode.com/2024/day/2
+
 library "day2_common";
 
 fn Abs(n: i32) -> i32 {
