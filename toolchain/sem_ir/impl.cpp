@@ -23,7 +23,6 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
       specific_id = interface_type->specific_id;
     }
   }
-  // FIXME: should this include interface_type->specific_id as well?
   return LookupBucketRef(
       *this, lookup_
                  .Insert(std::tuple{self_id, interface_id, specific_id},
