@@ -418,8 +418,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
             SemIR::LocId::Invalid;
         if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
-          loc_id_or_fingerprint =
-              fingerprinter_.GetOrCompute(*sem_ir_, inst_id);
+          loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
         } else {
           loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
         }

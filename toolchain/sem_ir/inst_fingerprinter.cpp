@@ -335,13 +335,13 @@ struct Worklist {
 };
 }  // namespace
 
-auto InstFingerprinter::GetOrCompute(const File& file, InstId inst_id)
+auto InstFingerprinter::GetOrCompute(const File* file, InstId inst_id)
     -> uint64_t {
   Worklist worklist = {.sem_ir = nullptr,
-                       .todo = {{&file, inst_id}},
+                       .todo = {{file, inst_id}},
                        .fingerprints = &fingerprints_};
   worklist.Run();
-  return fingerprints_.Lookup(std::pair(&file, inst_id)).value();
+  return fingerprints_.Lookup(std::pair(file, inst_id)).value();
 }
 
 }  // namespace Carbon::SemIR

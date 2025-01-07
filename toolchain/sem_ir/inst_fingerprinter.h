@@ -15,7 +15,7 @@ namespace Carbon::SemIR {
 class InstFingerprinter {
  public:
   // Gets or computes a fingerprint for the given instruction.
-  auto GetOrCompute(const File& file, InstId inst_id) -> uint64_t;
+  auto GetOrCompute(const File* file, InstId inst_id) -> uint64_t;
 
  private:
   // The fingerprint for each instruction that has had its fingerprint computed,
