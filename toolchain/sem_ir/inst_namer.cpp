@@ -265,11 +265,13 @@ auto InstNamer::Namespace::AllocateName(
     uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
     llvm::raw_string_ostream out(name);
     out << ".";
-    // Include names with 1-6 characters from the fingerprint. Then fall back to
+    // Include names with 3-6 characters from the fingerprint. Then fall back to
     // sequential numbering.
     for (int n : llvm::seq(1, 7)) {
       out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
-      add_name();
+      if (n >= 3) {
+        add_name();
+      }
     }
   }
 

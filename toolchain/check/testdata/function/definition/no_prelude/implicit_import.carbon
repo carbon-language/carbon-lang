@@ -348,22 +348,22 @@ fn B() {}
 // CHECK:STDOUT:   %A.type: type = fn_type @A [template]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f = import_ref Main//def_alias, A, unloaded
-// CHECK:STDOUT:   %import_ref.e: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.f82 = import_ref Main//def_alias, A, unloaded
+// CHECK:STDOUT:   %import_ref.e1b: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.f
-// CHECK:STDOUT:     .B = imports.%import_ref.e
+// CHECK:STDOUT:     .A = imports.%import_ref.f82
+// CHECK:STDOUT:     .B = imports.%import_ref.e1b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() [from "def_alias.carbon"];

@@ -89,8 +89,8 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.5: <namespace> = import_ref Other//a, NS1, loaded
-// CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.5, [template] {
+// CHECK:STDOUT:   %import_ref.503: <namespace> = import_ref Other//a, NS1, loaded
+// CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.503, [template] {
 // CHECK:STDOUT:     .A = %import_ref.ca7
 // CHECK:STDOUT:     .B = file.%B.decl
 // CHECK:STDOUT:   }
@@ -99,7 +99,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Other//a, loc5_14, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Other//a, loc5_14, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.ca8 = import_ref Other//a, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,7 +138,7 @@ fn Run() {
 // CHECK:STDOUT: class @A [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.ca8
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return.param_patt: %A {
@@ -167,14 +167,14 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.0
+// CHECK:STDOUT:     .F = %import_ref.097
 // CHECK:STDOUT:     .NS1 = %NS1
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.0: %F.type = import_ref Other//b, F, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.8: <witness> = import_ref Other//b, inst28 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.b = import_ref Other//b, inst29 [indirect], unloaded
+// CHECK:STDOUT:   %import_ref.097: %F.type = import_ref Other//b, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Other//b, inst28 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.bbd = import_ref Other//b, inst29 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,14 +190,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8
+// CHECK:STDOUT:   .Self = imports.%import_ref.bbd
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.0 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.097 [template = constants.%F]
 // CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
 // CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
@@ -205,7 +205,7 @@ fn Run() {
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %A = name_ref a, %a
 // CHECK:STDOUT:   %Other.ref.loc13: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%import_ref.0 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%import_ref.097 [template = constants.%F]
 // CHECK:STDOUT:   %.loc13: ref %A = splice_block %a.ref {}
 // CHECK:STDOUT:   %F.call.loc13: init %A = call %F.ref.loc13() to %.loc13
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13

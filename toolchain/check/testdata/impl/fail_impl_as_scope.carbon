@@ -24,13 +24,13 @@ impl as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [template]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.c: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.4: %F.type.c = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Simple.type, %F.type.c [template]
+// CHECK:STDOUT:   %F.type.c46: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.41f: %F.type.c46 = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Simple.type, %F.type.c46 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.e: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.21d: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.eac: %F.type.21d = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,7 +56,7 @@ impl as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.c = fn_decl @F.1 [template = constants.%F.4] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.c46 = fn_decl @F.1 [template = constants.%F.41f] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -66,7 +66,7 @@ impl as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %Simple.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.e] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.21d = fn_decl @F.2 [template = constants.%F.eac] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
