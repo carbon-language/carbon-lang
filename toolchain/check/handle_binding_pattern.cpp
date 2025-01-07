@@ -119,7 +119,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         cast_type_id, type_node,
         [&] {
           CARBON_DIAGNOSTIC(IncompleteTypeInFieldDecl, Error,
-                            "Field has incomplete type `{0}`.", SemIR::TypeId);
+                            "field has incomplete type `{0}`", SemIR::TypeId);
           return context.emitter().Build(type_node, IncompleteTypeInFieldDecl,
                                          cast_type_id);
         },
@@ -156,7 +156,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       parent_interface_decl.has_value() && is_generic) {
     cast_type_id = context.AsCompleteType(cast_type_id, type_node, [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedDecl, Error,
-                        "Associated constant has incomplete type `{0}`.",
+                        "associated constant has incomplete type `{0}`",
                         SemIR::TypeId);
       return context.emitter().Build(type_node, IncompleteTypeInAssociatedDecl,
                                      cast_type_id);

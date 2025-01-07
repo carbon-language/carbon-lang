@@ -392,7 +392,7 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   if (lexical_result.is_valid()) {
     if (!full_pattern_stack_.IsBindNameUsable(lexical_result)) {
       CARBON_DIAGNOSTIC(ReadDuringInitialization, Error,
-                        "`{0}` read before initialization.", SemIR::NameId);
+                        "`{0}` read before initialization", SemIR::NameId);
       emitter_->Emit(node_id, ReadDuringInitialization, name_id);
       return {.specific_id = SemIR::SpecificId::Invalid,
               .inst_id = SemIR::ErrorInst::SingletonInstId};

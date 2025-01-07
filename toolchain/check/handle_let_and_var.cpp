@@ -238,8 +238,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     if (auto decl = pattern.inst.TryAs<SemIR::AssociatedConstantDecl>();
         !decl.has_value()) {
       CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "Pattern in associated constant declaration must be a "
-                        "single `:!` binding.");
+                        "pattern in associated constant declaration must be a "
+                        "single `:!` binding");
       context.emitter().Emit(pattern.loc_id,
                              ExpectedSymbolicBindingInAssociatedConstant);
       context.name_scopes()
