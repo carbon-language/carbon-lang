@@ -397,9 +397,7 @@ struct BoundMethod {
   // `self`, or whose address will be used to initialize `self` for an `addr
   // self` parameter.
   InstId object_id;
-  // The instruction from which to find the function being bound to an object.
-  // The actual function (e.g. FunctionType) comes from the this instruction's
-  // type id.
+  // The function being bound, whose type_id is always a `FunctionType`.
   InstId function_id;
 };
 
