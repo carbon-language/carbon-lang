@@ -37,8 +37,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187e
-// CHECK:STDOUT:     .Float = %import_ref.20bd
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Float = %import_ref.20b
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

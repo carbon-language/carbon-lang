@@ -269,7 +269,7 @@ auto InstNamer::Namespace::AllocateName(
     // sequential numbering.
     for (int n : llvm::seq(1, 7)) {
       out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
-      if (n >= 4) {
+      if (n >= 3) {
         add_name();
       }
     }

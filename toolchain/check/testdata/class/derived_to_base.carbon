@@ -45,23 +45,23 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [template]
-// CHECK:STDOUT:   %struct_type.a.7cc1: type = struct_type {.a: %i32} [template]
-// CHECK:STDOUT:   %complete_type.2976: <witness> = complete_type_witness %struct_type.a.7cc1 [template]
+// CHECK:STDOUT:   %struct_type.a.7cc: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %complete_type.297: <witness> = complete_type_witness %struct_type.a.7cc [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
-// CHECK:STDOUT:   %B.elem.e38b: type = unbound_element_type %B, %A [template]
-// CHECK:STDOUT:   %B.elem.4d36: type = unbound_element_type %B, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.b.9700: type = struct_type {.base: %A, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type.0f85: <witness> = complete_type_witness %struct_type.base.b.9700 [template]
+// CHECK:STDOUT:   %B.elem.e38: type = unbound_element_type %B, %A [template]
+// CHECK:STDOUT:   %B.elem.4d3: type = unbound_element_type %B, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.b.970: type = struct_type {.base: %A, .b: %i32} [template]
+// CHECK:STDOUT:   %complete_type.0f8: <witness> = complete_type_witness %struct_type.base.b.970 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %C.elem.f0c4: type = unbound_element_type %C, %B [template]
-// CHECK:STDOUT:   %C.elem.1242: type = unbound_element_type %C, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.c.b658: type = struct_type {.base: %B, .c: %i32} [template]
-// CHECK:STDOUT:   %complete_type.c8ec: <witness> = complete_type_witness %struct_type.base.c.b658 [template]
-// CHECK:STDOUT:   %ptr.0199: type = ptr_type %C [template]
-// CHECK:STDOUT:   %ptr.e792: type = ptr_type %B [template]
+// CHECK:STDOUT:   %C.elem.f0c: type = unbound_element_type %C, %B [template]
+// CHECK:STDOUT:   %C.elem.124: type = unbound_element_type %C, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.c.b65: type = struct_type {.base: %B, .c: %i32} [template]
+// CHECK:STDOUT:   %complete_type.c8e: <witness> = complete_type_witness %struct_type.base.c.b65 [template]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [template]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [template]
 // CHECK:STDOUT:   %ConvertCToB.type: type = fn_type @ConvertCToB [template]
 // CHECK:STDOUT:   %ConvertCToB: %ConvertCToB.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.6dbd: type = ptr_type %A [template]
+// CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [template]
 // CHECK:STDOUT:   %ConvertBToA.type: type = fn_type @ConvertBToA [template]
 // CHECK:STDOUT:   %ConvertBToA: %ConvertBToA.type = struct_value () [template]
 // CHECK:STDOUT:   %ConvertCToA.type: type = fn_type @ConvertCToA [template]
@@ -72,34 +72,34 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %ConvertRef: %ConvertRef.type = struct_value () [template]
 // CHECK:STDOUT:   %ConvertInit.type: type = fn_type @ConvertInit [template]
 // CHECK:STDOUT:   %ConvertInit: %ConvertInit.type = struct_value () [template]
-// CHECK:STDOUT:   %int_1.5b81: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %struct_type.a.a6c3: type = struct_type {.a: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %int_2.ecc8: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %struct_type.base.b.bf01: type = struct_type {.base: %struct_type.a.a6c3, .b: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %int_3.1baa: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %struct_type.base.c.1361: type = struct_type {.base: %struct_type.base.b.bf01, .c: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %Convert.type.cd1a: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.5b05: <witness> = impl_witness (imports.%import_ref.7238), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.4666: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.9251: %Convert.type.4666 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound.afd1: <bound method> = bound_method %int_1.5b81, %Convert.9251 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.b730: <specific function> = specific_function %Convert.bound.afd1, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.c605: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.c605) [template]
-// CHECK:STDOUT:   %Convert.bound.f0b0: <bound method> = bound_method %int_2.ecc8, %Convert.9251 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.20e1: <specific function> = specific_function %Convert.bound.f0b0, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_2.1667: %i32 = int_value 2 [template]
-// CHECK:STDOUT:   %B.val: %B = struct_value (%A.val, %int_2.1667) [template]
-// CHECK:STDOUT:   %Convert.bound.0db0: <bound method> = bound_method %int_3.1baa, %Convert.9251 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.4567: <specific function> = specific_function %Convert.bound.0db0, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_3.25ba: %i32 = int_value 3 [template]
-// CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.25ba) [template]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
+// CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [template]
+// CHECK:STDOUT:   %struct_type.base.b.bf0: type = struct_type {.base: %struct_type.a.a6c, .b: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %struct_type.base.c.136: type = struct_type {.base: %struct_type.base.b.bf0, .c: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.afd: <bound method> = bound_method %int_1.5b8, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.b73: <specific function> = specific_function %Convert.bound.afd, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_1.c60: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %A.val: %A = struct_value (%int_1.c60) [template]
+// CHECK:STDOUT:   %Convert.bound.f0b: <bound method> = bound_method %int_2.ecc, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.20e: <specific function> = specific_function %Convert.bound.f0b, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_2.166: %i32 = int_value 2 [template]
+// CHECK:STDOUT:   %B.val: %B = struct_value (%A.val, %int_2.166) [template]
+// CHECK:STDOUT:   %Convert.bound.0db: <bound method> = bound_method %int_3.1ba, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.456: <specific function> = specific_function %Convert.bound.0db, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_3.25b: %i32 = int_value 3 [template]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%B.val, %int_3.25b) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187e
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a691
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -123,55 +123,55 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [template = constants.%ConvertCToB] {
-// CHECK:STDOUT:     %p.patt: %ptr.0199 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.0199 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.e792 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.e792 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.019 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.e79 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.e79 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:     %ptr.loc25_27: type = ptr_type %B [template = constants.%ptr.e792]
-// CHECK:STDOUT:     %p.param: %ptr.0199 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc25_20: type = splice_block %ptr.loc25_20 [template = constants.%ptr.0199] {
+// CHECK:STDOUT:     %ptr.loc25_27: type = ptr_type %B [template = constants.%ptr.e79]
+// CHECK:STDOUT:     %p.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc25_20: type = splice_block %ptr.loc25_20 [template = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %ptr.loc25_20: type = ptr_type %C [template = constants.%ptr.0199]
+// CHECK:STDOUT:       %ptr.loc25_20: type = ptr_type %C [template = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.0199 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.e792 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.e792 = return_slot %return.param
+// CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.e79 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [template = constants.%ConvertBToA] {
-// CHECK:STDOUT:     %p.patt: %ptr.e792 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.e792 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.6dbd = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6dbd = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.e79 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.e79 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %ptr.loc26_27: type = ptr_type %A [template = constants.%ptr.6dbd]
-// CHECK:STDOUT:     %p.param: %ptr.e792 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc26_20: type = splice_block %ptr.loc26_20 [template = constants.%ptr.e792] {
+// CHECK:STDOUT:     %ptr.loc26_27: type = ptr_type %A [template = constants.%ptr.6db]
+// CHECK:STDOUT:     %p.param: %ptr.e79 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc26_20: type = splice_block %ptr.loc26_20 [template = constants.%ptr.e79] {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:       %ptr.loc26_20: type = ptr_type %B [template = constants.%ptr.e792]
+// CHECK:STDOUT:       %ptr.loc26_20: type = ptr_type %B [template = constants.%ptr.e79]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.e792 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6dbd = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.6dbd = return_slot %return.param
+// CHECK:STDOUT:     %p: %ptr.e79 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [template = constants.%ConvertCToA] {
-// CHECK:STDOUT:     %p.patt: %ptr.0199 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.0199 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.6dbd = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6dbd = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %p.patt: %ptr.019 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.019 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %ptr.loc27_27: type = ptr_type %A [template = constants.%ptr.6dbd]
-// CHECK:STDOUT:     %p.param: %ptr.0199 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc27_20: type = splice_block %ptr.loc27_20 [template = constants.%ptr.0199] {
+// CHECK:STDOUT:     %ptr.loc27_27: type = ptr_type %A [template = constants.%ptr.6db]
+// CHECK:STDOUT:     %p.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc27_20: type = splice_block %ptr.loc27_20 [template = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %ptr.loc27_20: type = ptr_type %C [template = constants.%ptr.0199]
+// CHECK:STDOUT:       %ptr.loc27_20: type = ptr_type %C [template = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.0199 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6dbd = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.6dbd = return_slot %return.param
+// CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [template = constants.%ConvertValue] {
 // CHECK:STDOUT:     %c.patt: %C = binding_pattern c
@@ -182,28 +182,28 @@ fn ConvertInit() {
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [template = constants.%ConvertRef] {
-// CHECK:STDOUT:     %c.patt: %ptr.0199 = binding_pattern c
-// CHECK:STDOUT:     %c.param_patt: %ptr.0199 = value_param_pattern %c.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.6dbd = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.6dbd = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %c.patt: %ptr.019 = binding_pattern c
+// CHECK:STDOUT:     %c.param_patt: %ptr.019 = value_param_pattern %c.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %ptr.6db = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.6db = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref.loc33: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:     %ptr.loc33_26: type = ptr_type %A [template = constants.%ptr.6dbd]
-// CHECK:STDOUT:     %c.param: %ptr.0199 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc33: type = splice_block %ptr.loc33_19 [template = constants.%ptr.0199] {
+// CHECK:STDOUT:     %ptr.loc33_26: type = ptr_type %A [template = constants.%ptr.6db]
+// CHECK:STDOUT:     %c.param: %ptr.019 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc33: type = splice_block %ptr.loc33_19 [template = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %ptr.loc33_19: type = ptr_type %C [template = constants.%ptr.0199]
+// CHECK:STDOUT:       %ptr.loc33_19: type = ptr_type %C [template = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %ptr.0199 = bind_name c, %c.param
-// CHECK:STDOUT:     %return.param: ref %ptr.6dbd = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.6dbd = return_slot %return.param
+// CHECK:STDOUT:     %c: %ptr.019 = bind_name c, %c.param
+// CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertInit.decl: %ConvertInit.type = fn_decl @ConvertInit [template = constants.%ConvertInit] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %.loc12: %A.elem = field_decl a, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.7cc1 [template = constants.%complete_type.2976]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.7cc [template = constants.%complete_type.297]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -213,9 +213,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
-// CHECK:STDOUT:   %.loc16: %B.elem.e38b = base_decl %A.ref, element0 [template]
-// CHECK:STDOUT:   %.loc17: %B.elem.4d36 = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.9700 [template = constants.%complete_type.0f85]
+// CHECK:STDOUT:   %.loc16: %B.elem.e38 = base_decl %A.ref, element0 [template]
+// CHECK:STDOUT:   %.loc17: %B.elem.4d3 = field_decl b, element1 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.970 [template = constants.%complete_type.0f8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -227,9 +227,9 @@ fn ConvertInit() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21: %C.elem.f0c4 = base_decl %B.ref, element0 [template]
-// CHECK:STDOUT:   %.loc22: %C.elem.1242 = field_decl c, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.b658 [template = constants.%complete_type.c8ec]
+// CHECK:STDOUT:   %.loc21: %C.elem.f0c = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc22: %C.elem.124 = field_decl c, element1 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.b65 [template = constants.%complete_type.c8e]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -239,34 +239,34 @@ fn ConvertInit() {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %ptr.0199) -> %ptr.e792 {
+// CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %ptr.019) -> %ptr.e79 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.0199 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.019 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc25_39.2: ref %B = class_element_access %.loc25_39.1, element0
-// CHECK:STDOUT:   %addr: %ptr.e792 = addr_of %.loc25_39.2
-// CHECK:STDOUT:   %.loc25_39.3: %ptr.e792 = converted %p.ref, %addr
+// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc25_39.2
+// CHECK:STDOUT:   %.loc25_39.3: %ptr.e79 = converted %p.ref, %addr
 // CHECK:STDOUT:   return %.loc25_39.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertBToA(%p.param_patt: %ptr.e792) -> %ptr.6dbd {
+// CHECK:STDOUT: fn @ConvertBToA(%p.param_patt: %ptr.e79) -> %ptr.6db {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.e792 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.e79 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26_39.1: ref %B = deref %p.ref
 // CHECK:STDOUT:   %.loc26_39.2: ref %A = class_element_access %.loc26_39.1, element0
-// CHECK:STDOUT:   %addr: %ptr.6dbd = addr_of %.loc26_39.2
-// CHECK:STDOUT:   %.loc26_39.3: %ptr.6dbd = converted %p.ref, %addr
+// CHECK:STDOUT:   %addr: %ptr.6db = addr_of %.loc26_39.2
+// CHECK:STDOUT:   %.loc26_39.3: %ptr.6db = converted %p.ref, %addr
 // CHECK:STDOUT:   return %.loc26_39.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertCToA(%p.param_patt: %ptr.0199) -> %ptr.6dbd {
+// CHECK:STDOUT: fn @ConvertCToA(%p.param_patt: %ptr.019) -> %ptr.6db {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.0199 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.019 = name_ref p, %p
 // CHECK:STDOUT:   %.loc27_39.1: ref %C = deref %p.ref
 // CHECK:STDOUT:   %.loc27_39.2: ref %B = class_element_access %.loc27_39.1, element0
 // CHECK:STDOUT:   %.loc27_39.3: ref %A = class_element_access %.loc27_39.2, element0
-// CHECK:STDOUT:   %addr: %ptr.6dbd = addr_of %.loc27_39.3
-// CHECK:STDOUT:   %.loc27_39.4: %ptr.6dbd = converted %p.ref, %addr
+// CHECK:STDOUT:   %addr: %ptr.6db = addr_of %.loc27_39.3
+// CHECK:STDOUT:   %.loc27_39.4: %ptr.6db = converted %p.ref, %addr
 // CHECK:STDOUT:   return %.loc27_39.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -281,55 +281,55 @@ fn ConvertInit() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertRef(%c.param_patt: %ptr.0199) -> %ptr.6dbd {
+// CHECK:STDOUT: fn @ConvertRef(%c.param_patt: %ptr.019) -> %ptr.6db {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %c.ref: %ptr.0199 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %ptr.019 = name_ref c, %c
 // CHECK:STDOUT:   %.loc34_12: ref %C = deref %c.ref
 // CHECK:STDOUT:   %A.ref.loc34: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc34_15.1: ref %B = class_element_access %.loc34_12, element0
 // CHECK:STDOUT:   %.loc34_15.2: ref %A = class_element_access %.loc34_15.1, element0
 // CHECK:STDOUT:   %.loc34_15.3: ref %A = converted %.loc34_12, %.loc34_15.2
-// CHECK:STDOUT:   %addr: %ptr.6dbd = addr_of %.loc34_15.3
+// CHECK:STDOUT:   %addr: %ptr.6db = addr_of %.loc34_15.3
 // CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b81]
-// CHECK:STDOUT:   %.loc38_39.1: %struct_type.a.a6c3 = struct_literal (%int_1)
-// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc8]
-// CHECK:STDOUT:   %.loc38_48.1: %struct_type.base.b.bf01 = struct_literal (%.loc38_39.1, %int_2)
-// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1baa]
-// CHECK:STDOUT:   %.loc38_57.1: %struct_type.base.c.1361 = struct_literal (%.loc38_48.1, %int_3)
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc38_39.1: %struct_type.a.a6c = struct_literal (%int_1)
+// CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
+// CHECK:STDOUT:   %.loc38_48.1: %struct_type.base.b.bf0 = struct_literal (%.loc38_39.1, %int_2)
+// CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
+// CHECK:STDOUT:   %.loc38_57.1: %struct_type.base.c.136 = struct_literal (%.loc38_48.1, %int_3)
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %impl.elem0.loc38_39: %Convert.type.cd1a = impl_witness_access constants.%impl_witness.5b05, element0 [template = constants.%Convert.9251]
-// CHECK:STDOUT:   %Convert.bound.loc38_39: <bound method> = bound_method %int_1, %impl.elem0.loc38_39 [template = constants.%Convert.bound.afd1]
-// CHECK:STDOUT:   %Convert.specific_fn.loc38_39: <specific function> = specific_function %Convert.bound.loc38_39, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.b730]
-// CHECK:STDOUT:   %int.convert_checked.loc38_39: init %i32 = call %Convert.specific_fn.loc38_39(%int_1) [template = constants.%int_1.c605]
-// CHECK:STDOUT:   %.loc38_39.2: init %i32 = converted %int_1, %int.convert_checked.loc38_39 [template = constants.%int_1.c605]
+// CHECK:STDOUT:   %impl.elem0.loc38_39: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %Convert.bound.loc38_39: <bound method> = bound_method %int_1, %impl.elem0.loc38_39 [template = constants.%Convert.bound.afd]
+// CHECK:STDOUT:   %Convert.specific_fn.loc38_39: <specific function> = specific_function %Convert.bound.loc38_39, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.b73]
+// CHECK:STDOUT:   %int.convert_checked.loc38_39: init %i32 = call %Convert.specific_fn.loc38_39(%int_1) [template = constants.%int_1.c60]
+// CHECK:STDOUT:   %.loc38_39.2: init %i32 = converted %int_1, %int.convert_checked.loc38_39 [template = constants.%int_1.c60]
 // CHECK:STDOUT:   %.loc38_57.2: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc38_57.3: ref %B = class_element_access %.loc38_57.2, element0
 // CHECK:STDOUT:   %.loc38_48.2: ref %A = class_element_access %.loc38_57.3, element0
 // CHECK:STDOUT:   %.loc38_39.3: ref %i32 = class_element_access %.loc38_48.2, element0
-// CHECK:STDOUT:   %.loc38_39.4: init %i32 = initialize_from %.loc38_39.2 to %.loc38_39.3 [template = constants.%int_1.c605]
+// CHECK:STDOUT:   %.loc38_39.4: init %i32 = initialize_from %.loc38_39.2 to %.loc38_39.3 [template = constants.%int_1.c60]
 // CHECK:STDOUT:   %.loc38_39.5: init %A = class_init (%.loc38_39.4), %.loc38_48.2 [template = constants.%A.val]
 // CHECK:STDOUT:   %.loc38_48.3: init %A = converted %.loc38_39.1, %.loc38_39.5 [template = constants.%A.val]
-// CHECK:STDOUT:   %impl.elem0.loc38_48: %Convert.type.cd1a = impl_witness_access constants.%impl_witness.5b05, element0 [template = constants.%Convert.9251]
-// CHECK:STDOUT:   %Convert.bound.loc38_48: <bound method> = bound_method %int_2, %impl.elem0.loc38_48 [template = constants.%Convert.bound.f0b0]
-// CHECK:STDOUT:   %Convert.specific_fn.loc38_48: <specific function> = specific_function %Convert.bound.loc38_48, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.20e1]
-// CHECK:STDOUT:   %int.convert_checked.loc38_48: init %i32 = call %Convert.specific_fn.loc38_48(%int_2) [template = constants.%int_2.1667]
-// CHECK:STDOUT:   %.loc38_48.4: init %i32 = converted %int_2, %int.convert_checked.loc38_48 [template = constants.%int_2.1667]
+// CHECK:STDOUT:   %impl.elem0.loc38_48: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %Convert.bound.loc38_48: <bound method> = bound_method %int_2, %impl.elem0.loc38_48 [template = constants.%Convert.bound.f0b]
+// CHECK:STDOUT:   %Convert.specific_fn.loc38_48: <specific function> = specific_function %Convert.bound.loc38_48, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.20e]
+// CHECK:STDOUT:   %int.convert_checked.loc38_48: init %i32 = call %Convert.specific_fn.loc38_48(%int_2) [template = constants.%int_2.166]
+// CHECK:STDOUT:   %.loc38_48.4: init %i32 = converted %int_2, %int.convert_checked.loc38_48 [template = constants.%int_2.166]
 // CHECK:STDOUT:   %.loc38_48.5: ref %i32 = class_element_access %.loc38_57.3, element1
-// CHECK:STDOUT:   %.loc38_48.6: init %i32 = initialize_from %.loc38_48.4 to %.loc38_48.5 [template = constants.%int_2.1667]
+// CHECK:STDOUT:   %.loc38_48.6: init %i32 = initialize_from %.loc38_48.4 to %.loc38_48.5 [template = constants.%int_2.166]
 // CHECK:STDOUT:   %.loc38_48.7: init %B = class_init (%.loc38_48.3, %.loc38_48.6), %.loc38_57.3 [template = constants.%B.val]
 // CHECK:STDOUT:   %.loc38_57.4: init %B = converted %.loc38_48.1, %.loc38_48.7 [template = constants.%B.val]
-// CHECK:STDOUT:   %impl.elem0.loc38_57: %Convert.type.cd1a = impl_witness_access constants.%impl_witness.5b05, element0 [template = constants.%Convert.9251]
-// CHECK:STDOUT:   %Convert.bound.loc38_57: <bound method> = bound_method %int_3, %impl.elem0.loc38_57 [template = constants.%Convert.bound.0db0]
-// CHECK:STDOUT:   %Convert.specific_fn.loc38_57: <specific function> = specific_function %Convert.bound.loc38_57, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4567]
-// CHECK:STDOUT:   %int.convert_checked.loc38_57: init %i32 = call %Convert.specific_fn.loc38_57(%int_3) [template = constants.%int_3.25ba]
-// CHECK:STDOUT:   %.loc38_57.5: init %i32 = converted %int_3, %int.convert_checked.loc38_57 [template = constants.%int_3.25ba]
+// CHECK:STDOUT:   %impl.elem0.loc38_57: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %Convert.bound.loc38_57: <bound method> = bound_method %int_3, %impl.elem0.loc38_57 [template = constants.%Convert.bound.0db]
+// CHECK:STDOUT:   %Convert.specific_fn.loc38_57: <specific function> = specific_function %Convert.bound.loc38_57, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.456]
+// CHECK:STDOUT:   %int.convert_checked.loc38_57: init %i32 = call %Convert.specific_fn.loc38_57(%int_3) [template = constants.%int_3.25b]
+// CHECK:STDOUT:   %.loc38_57.5: init %i32 = converted %int_3, %int.convert_checked.loc38_57 [template = constants.%int_3.25b]
 // CHECK:STDOUT:   %.loc38_57.6: ref %i32 = class_element_access %.loc38_57.2, element1
-// CHECK:STDOUT:   %.loc38_57.7: init %i32 = initialize_from %.loc38_57.5 to %.loc38_57.6 [template = constants.%int_3.25ba]
+// CHECK:STDOUT:   %.loc38_57.7: init %i32 = initialize_from %.loc38_57.5 to %.loc38_57.6 [template = constants.%int_3.25b]
 // CHECK:STDOUT:   %.loc38_57.8: init %C = class_init (%.loc38_57.4, %.loc38_57.7), %.loc38_57.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc38_57.9: ref %C = temporary %.loc38_57.2, %.loc38_57.8
 // CHECK:STDOUT:   %.loc38_59: ref %C = converted %.loc38_57.1, %.loc38_57.9

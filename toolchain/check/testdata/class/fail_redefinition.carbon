@@ -48,21 +48,21 @@ fn Class.I() {}
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %H.type.ba69: type = fn_type @H.1 [template]
-// CHECK:STDOUT:   %H.9d52: %H.type.ba69 = struct_value () [template]
-// CHECK:STDOUT:   %I.type.92e5: type = fn_type @I.1 [template]
-// CHECK:STDOUT:   %I.f313: %I.type.92e5 = struct_value () [template]
+// CHECK:STDOUT:   %H.type.ba6: type = fn_type @H.1 [template]
+// CHECK:STDOUT:   %H.9d5: %H.type.ba6 = struct_value () [template]
+// CHECK:STDOUT:   %I.type.92e: type = fn_type @I.1 [template]
+// CHECK:STDOUT:   %I.f31: %I.type.92e = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.a954: type = class_type @.1 [template]
-// CHECK:STDOUT:   %G.type.aaba: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %G.c830: %G.type.aaba = struct_value () [template]
-// CHECK:STDOUT:   %H.type.607c: type = fn_type @H.2 [template]
-// CHECK:STDOUT:   %H.f718: %H.type.607c = struct_value () [template]
-// CHECK:STDOUT:   %I.type.4060: type = fn_type @I.2 [template]
-// CHECK:STDOUT:   %I.f46e: %I.type.4060 = struct_value () [template]
-// CHECK:STDOUT:   %G.type.bf5c: type = fn_type @G.2 [template]
-// CHECK:STDOUT:   %G.5fad: %G.type.bf5c = struct_value () [template]
+// CHECK:STDOUT:   %.a95: type = class_type @.1 [template]
+// CHECK:STDOUT:   %G.type.aab: type = fn_type @G.1 [template]
+// CHECK:STDOUT:   %G.c83: %G.type.aab = struct_value () [template]
+// CHECK:STDOUT:   %H.type.607: type = fn_type @H.2 [template]
+// CHECK:STDOUT:   %H.f71: %H.type.607 = struct_value () [template]
+// CHECK:STDOUT:   %I.type.406: type = fn_type @I.2 [template]
+// CHECK:STDOUT:   %I.f46: %I.type.406 = struct_value () [template]
+// CHECK:STDOUT:   %G.type.bf5: type = fn_type @G.2 [template]
+// CHECK:STDOUT:   %G.5fa: %G.type.bf5 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -79,17 +79,17 @@ fn Class.I() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a954] {} {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %G.decl: %G.type.bf5c = fn_decl @G.2 [template = constants.%G.5fad] {} {}
-// CHECK:STDOUT:   %H.decl: %H.type.ba69 = fn_decl @H.1 [template = constants.%H.9d52] {} {}
-// CHECK:STDOUT:   %I.decl: %I.type.92e5 = fn_decl @I.1 [template = constants.%I.f313] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.bf5 = fn_decl @G.2 [template = constants.%G.5fa] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.ba6 = fn_decl @H.1 [template = constants.%H.9d5] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.92e = fn_decl @I.1 [template = constants.%I.f31] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %H.decl: %H.type.ba69 = fn_decl @H.1 [template = constants.%H.9d52] {} {}
-// CHECK:STDOUT:   %I.decl: %I.type.92e5 = fn_decl @I.1 [template = constants.%I.f313] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.ba6 = fn_decl @H.1 [template = constants.%H.9d5] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.92e = fn_decl @I.1 [template = constants.%I.f31] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -102,13 +102,13 @@ fn Class.I() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
-// CHECK:STDOUT:   %G.decl: %G.type.aaba = fn_decl @G.1 [template = constants.%G.c830] {} {}
-// CHECK:STDOUT:   %H.decl: %H.type.607c = fn_decl @H.2 [template = constants.%H.f718] {} {}
-// CHECK:STDOUT:   %I.decl: %I.type.4060 = fn_decl @I.2 [template = constants.%I.f46e] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.aab = fn_decl @G.1 [template = constants.%G.c83] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type.607 = fn_decl @H.2 [template = constants.%H.f71] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.406 = fn_decl @I.2 [template = constants.%I.f46] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.a954
+// CHECK:STDOUT:   .Self = constants.%.a95
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .I = %I.decl
