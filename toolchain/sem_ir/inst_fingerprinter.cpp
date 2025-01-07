@@ -24,7 +24,7 @@ struct Worklist {
   // to build a Merkle tree containing a fingerprint for the current
   // instruction.
   llvm::SmallVector<llvm::stable_hash> contents = {};
-  // Known cached instruction fingerprints.
+  // Known cached instruction fingerprints. Each item in `todo` will be added to the cache if not already present.
   Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
 
   // Add an invalid marker to the contents. This is used when the entity
@@ -310,10 +310,8 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      for (auto [arg, kind] : {std::pair(inst.arg0(), arg0_kind),
-                               std::pair(inst.arg1(), arg1_kind)}) {
-        AddWithKind(arg, kind);
-      }
+      AddWithKind(inst.arg0(), arg0_kind);
+      AddWithKind(inst.arg1(), arg1_kind);
 
       // If we didn't add any work, we have a fingerprint for this instruction.
       if (todo.size() == init_size) {
