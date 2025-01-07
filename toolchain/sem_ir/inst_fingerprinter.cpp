@@ -99,16 +99,20 @@ struct Worklist {
     Add(sem_ir->types().GetInstId(type_id));
   }
 
+  template<typename T>
+  auto AddBlock(llvm::ArrayRef<T> block) -> void {
+    contents.push_back(block.size());
+    for (auto inner_id : block) {
+      Add(inner_id);
+    }
+  }
+
   auto Add(InstBlockId inst_block_id) -> void {
     if (!inst_block_id.is_valid()) {
       AddInvalid();
       return;
     }
-    auto block = sem_ir->inst_blocks().Get(inst_block_id);
-    contents.push_back(block.size());
-    for (auto inner_id : block) {
-      Add(inner_id);
-    }
+    AddBlock(sem_ir->inst_blocks().Get(inst_block_id));
   }
 
   auto Add(TypeBlockId type_block_id) -> void {
@@ -116,11 +120,12 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    auto block = sem_ir->type_blocks().Get(type_block_id);
-    contents.push_back(block.size());
-    for (auto inner_id : block) {
-      Add(inner_id);
-    }
+    AddBlock(sem_ir->type_blocks().Get(type_block_id));
+  }
+
+  auto Add(StructTypeField field) -> void {
+    Add(field.name_id);
+    Add(field.type_id);
   }
 
   auto Add(StructTypeFieldsId struct_type_fields_id) -> void {
@@ -128,12 +133,7 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    auto block = sem_ir->struct_type_fields().Get(struct_type_fields_id);
-    contents.push_back(block.size());
-    for (auto field : block) {
-      Add(field.name_id);
-      Add(field.type_id);
-    }
+    AddBlock(sem_ir->struct_type_fields().Get(struct_type_fields_id));
   }
 
   auto Add(NameScopeId name_scope_id) -> void {
