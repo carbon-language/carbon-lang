@@ -4,8 +4,6 @@
 
 // https://adventofcode.com/2024/day/12
 
-// https://adventofcode.com/2024/day/1
-
 library "day12_common";
 
 import Core library "io";
