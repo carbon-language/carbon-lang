@@ -35,8 +35,8 @@ impl () as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc16_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc16_7.2: type = converted %.loc16_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc19_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_7.2: type = converted %.loc19_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
@@ -53,7 +53,7 @@ impl () as I {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc16_7.2 as %I.ref {
+// CHECK:STDOUT: impl @impl: %.loc19_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }

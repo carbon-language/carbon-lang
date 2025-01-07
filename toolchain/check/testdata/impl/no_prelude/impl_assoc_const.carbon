@@ -37,9 +37,12 @@ library "[[@TEST_NAME]]";
 interface J { let U:! type; }
 
 impl () as J where .U = {};
-// CHECK:STDERR: fail_mismatch.carbon:[[@LINE+4]]:1: error: redeclaration with different value for associated constant U [AssociatedConstantDifferentInRedecl]
+// CHECK:STDERR: fail_mismatch.carbon:[[@LINE+7]]:1: error: redeclaration with different value for associated constant U [AssociatedConstantDifferentInRedecl]
 // CHECK:STDERR: impl () as J where .U = () {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_mismatch.carbon:[[@LINE-4]]:1: note: impl previously declared here [ImplPreviousDeclHere]
+// CHECK:STDERR: impl () as J where .U = {};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as J where .U = () {}
 
@@ -49,9 +52,12 @@ library "[[@TEST_NAME]]";
 interface K { let V:! type; }
 
 impl () as K where .V = {};
-// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+4]]:1: error: associated constant V given value in declaration but not redeclaration [AssociatedConstantMissingInRedecl]
+// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+7]]:1: error: associated constant V given value in declaration but not redeclaration [AssociatedConstantMissingInRedecl]
 // CHECK:STDERR: impl () as K {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-4]]:1: note: impl previously declared here [ImplPreviousDeclHere]
+// CHECK:STDERR: impl () as K where .V = {};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as K {}
 
@@ -305,18 +311,18 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %J.ref.loc10: type = name_ref J, file.%J.decl [template = constants.%J.type]
+// CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %J.ref.loc13: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self.2: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc10: %J.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %U.ref.loc10: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_wit.loc10: <witness> = facet_access_witness %.Self.ref.loc10 [symbolic = constants.%.Self.as_wit]
-// CHECK:STDOUT:     %impl.elem0.loc10: type = impl_witness_access %.Self.as_wit.loc10, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc10_26.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self.2 [template = constants.%J_where.type.2] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10, %.loc10_26.2
+// CHECK:STDOUT:     %.Self.ref.loc13: %J.type = name_ref .Self, %.Self.2 [symbolic = constants.%.Self]
+// CHECK:STDOUT:     %U.ref.loc13: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0]
+// CHECK:STDOUT:     %.Self.as_wit.loc13: <witness> = facet_access_witness %.Self.ref.loc13 [symbolic = constants.%.Self.as_wit]
+// CHECK:STDOUT:     %impl.elem0.loc13: type = impl_witness_access %.Self.as_wit.loc13, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:     %.loc13_26.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_26.2: type = converted %.loc13_26.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self.2 [template = constants.%J_where.type.2] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13, %.loc13_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -375,9 +381,9 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %K.ref.loc10: type = name_ref K, file.%K.decl [template = constants.%K.type]
+// CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %K.ref.loc13: type = name_ref K, file.%K.decl [template = constants.%K.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
