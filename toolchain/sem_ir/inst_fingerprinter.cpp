@@ -24,7 +24,8 @@ struct Worklist {
   // to build a Merkle tree containing a fingerprint for the current
   // instruction.
   llvm::SmallVector<llvm::stable_hash> contents = {};
-  // Known cached instruction fingerprints. Each item in `todo` will be added to the cache if not already present.
+  // Known cached instruction fingerprints. Each item in `todo` will be added to
+  // the cache if not already present.
   Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
 
   // Add an invalid marker to the contents. This is used when the entity
@@ -288,11 +289,17 @@ struct Worklist {
   auto Run() -> void {
     while (!todo.empty()) {
       auto [next_sem_ir, next_inst_id] = todo.back();
+
+      // If we already have a fingerprint for this instruction, we have nothing
+      // to do. Just pop it from `todo`.
       if (fingerprints->Contains(std::pair(next_sem_ir, next_inst_id))) {
         todo.pop_back();
         continue;
       }
 
+      // Keep this instruction in `todo` for now. If we add more work, we'll
+      // finish that work and process this instruction again, and if not, we'll
+      // pop the instruction at the end of the loop.
       size_t init_size = todo.size();
       auto inst = next_sem_ir->insts().Get(next_inst_id);
       auto [arg0_kind, arg1_kind] = inst.ArgKinds();
@@ -301,6 +308,7 @@ struct Worklist {
       sem_ir = next_sem_ir;
       contents.clear();
 
+      // Add the instruction's fields to the contents.
       Add(inst.kind());
 
       // Don't include the type if it's `type` or `<error>`, because those types
@@ -313,7 +321,9 @@ struct Worklist {
       AddWithKind(inst.arg0(), arg0_kind);
       AddWithKind(inst.arg1(), arg1_kind);
 
-      // If we didn't add any work, we have a fingerprint for this instruction.
+      // If we didn't add any work, we have a fingerprint for this instruction;
+      // pop it from the todo list. Otherwise, we leave it on the todo list so
+      // we can compute its fingerprint once we've finished the work we added.
       if (todo.size() == init_size) {
         auto fingerprint = llvm::stable_hash_combine(contents);
         fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
