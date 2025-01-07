@@ -7,3 +7,6 @@ bazel-carbon-lang
 
 # See github_tools/MODULE.bazel.
 github_tools
+
+# Used as part of repo patching.
+third_party/boost_unordered

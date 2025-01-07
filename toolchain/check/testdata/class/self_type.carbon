@@ -32,15 +32,15 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %ptr.1 [template]
-// CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.1} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.p [template]
+// CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %ptr.e71 [template]
+// CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.e71} [template]
+// CHECK:STDOUT:   %complete_type.56d: <witness> = complete_type_witness %struct_type.p [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -93,7 +93,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18: %Class.elem = field_decl p, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [template = constants.%complete_type.56d]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -107,8 +107,8 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc21
 // CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc18 [template = @Class.%.loc18]
-// CHECK:STDOUT:   %.loc22_16.1: ref %ptr.1 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc22_16.2: %ptr.1 = bind_value %.loc22_16.1
+// CHECK:STDOUT:   %.loc22_16.1: ref %ptr.e71 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc22_16.2: %ptr.e71 = bind_value %.loc22_16.1
 // CHECK:STDOUT:   %.loc22_11.1: ref %Class = deref %.loc22_16.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc22_11.1, %F.ref
@@ -124,10 +124,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return
 // CHECK:STDOUT:   %s.ref.loc15_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc15_16: ref %Class = name_ref s, %s
-// CHECK:STDOUT:   %addr: %ptr.1 = addr_of %s.ref.loc15_16
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %s.ref.loc15_16
 // CHECK:STDOUT:   %.loc15_17.1: %struct_type.p = struct_literal (%addr)
-// CHECK:STDOUT:   %.loc15_17.2: ref %ptr.1 = class_element_access %s.ref.loc15_5, element0
-// CHECK:STDOUT:   %.loc15_17.3: init %ptr.1 = initialize_from %addr to %.loc15_17.2
+// CHECK:STDOUT:   %.loc15_17.2: ref %ptr.e71 = class_element_access %s.ref.loc15_5, element0
+// CHECK:STDOUT:   %.loc15_17.3: init %ptr.e71 = initialize_from %addr to %.loc15_17.2
 // CHECK:STDOUT:   %.loc15_17.4: init %Class = class_init (%.loc15_17.3), %s.ref.loc15_5
 // CHECK:STDOUT:   %.loc15_7: init %Class = converted %.loc15_17.1, %.loc15_17.4
 // CHECK:STDOUT:   assign %s.ref.loc15_5, %.loc15_7

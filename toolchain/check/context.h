@@ -638,7 +638,10 @@ class Context {
   auto global_init() -> GlobalInit& { return global_init_; }
 
   // Marks the start of a region of insts in a pattern context that might
-  // represent an expression or a pattern.
+  // represent an expression or a pattern. Typically this is called when
+  // handling a parse node that can immediately precede a subpattern (such
+  // as `let` or a `,` in a pattern list), and the handler for the subpattern
+  // node makes the matching `EndSubpatternAs*` call.
   auto BeginSubpattern() -> void;
 
   // Ends a region started by BeginSubpattern (in stack order), treating it as
@@ -673,7 +676,7 @@ class Context {
     // The corresponding AnyBindName inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
-    SemIR::ExprRegionId type_expr_id;
+    SemIR::ExprRegionId type_expr_region_id;
   };
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;

@@ -123,12 +123,12 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//a, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
-// CHECK:STDOUT:     .C = %import_ref.2
+// CHECK:STDOUT:   %import_ref.7e6: <namespace> = import_ref Same//a, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.7e6, [template] {
+// CHECK:STDOUT:     .C = %import_ref.857
 // CHECK:STDOUT:     .B = file.%B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Same//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.857: type = import_ref Same//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -149,7 +149,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [template = imports.%A]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.857 [template = constants.%C]
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -162,11 +162,11 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %import_ref.de6: <namespace> = import_ref Same//b, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.de6, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3 = import_ref Same//b, F, unloaded
+// CHECK:STDOUT:   %import_ref.f8e = import_ref Same//b, F, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -176,7 +176,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = imports.%A
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .F = imports.%import_ref.f8e
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -192,8 +192,8 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//c, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %import_ref.bb7: <namespace> = import_ref Same//c, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.bb7, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -226,19 +226,19 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//d, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %import_ref.b75: <namespace> = import_ref Same//d, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.b75, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <namespace> = import_ref Same//d, B, loaded
-// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.2, [template] {
+// CHECK:STDOUT:   %import_ref.153: <namespace> = import_ref Same//d, B, loaded
+// CHECK:STDOUT:   %B: <namespace> = namespace %import_ref.153, [template] {
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <namespace> = import_ref Same//d, C, loaded
-// CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.3, [template] {
-// CHECK:STDOUT:     .D = %import_ref.4
+// CHECK:STDOUT:   %import_ref.cee: <namespace> = import_ref Same//d, C, loaded
+// CHECK:STDOUT:   %C: <namespace> = namespace %import_ref.cee, [template] {
+// CHECK:STDOUT:     .D = %import_ref.49e
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.4: %D.type = import_ref Same//d, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.49e: %D.type = import_ref Same//d, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -264,7 +264,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %A.ref: <namespace> = name_ref A, imports.%A [template = imports.%A]
 // CHECK:STDOUT:   %B.ref: <namespace> = name_ref B, imports.%B [template = imports.%B]
 // CHECK:STDOUT:   %C.ref: <namespace> = name_ref C, imports.%C [template = imports.%C]
-// CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.4 [template = constants.%D]
+// CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.49e [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()
 // CHECK:STDOUT:   assign file.%e.var, %D.call
 // CHECK:STDOUT:   return
@@ -281,11 +281,11 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Same//b, A, loaded
-// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %import_ref.de6: <namespace> = import_ref Same//b, A, loaded
+// CHECK:STDOUT:   %A: <namespace> = namespace %import_ref.de6, [template] {
 // CHECK:STDOUT:     .B = %B
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: %F.type = import_ref Same//b, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.44d: %F.type = import_ref Same//b, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -295,7 +295,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .A = imports.%A
-// CHECK:STDOUT:     .F = imports.%import_ref.3
+// CHECK:STDOUT:     .F = imports.%import_ref.44d
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:   }
@@ -308,7 +308,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.3 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.44d [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

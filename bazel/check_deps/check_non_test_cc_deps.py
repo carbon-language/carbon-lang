@@ -29,15 +29,13 @@ try:
 except FileNotFoundError:
     sys.exit("ERROR: unable to find deps file: %s" % deps_path)
 
-# bazel_dep repos can have a `name~version` format, whereas use_repo and
-# use_repo_rule have a `@@_main~rule_name~repo_name` format. We process the
-# latter case first because we only have a couple; once done, we can assume
-# anything after the ~ is a version.
+# This errors out on dependencies that aren't recognized, and continues on
+# allowed dependencies.
 for dep in deps:
     print("Checking dependency: " + dep)
     repo, _, rule = dep.partition("//")
 
-    if repo == "@@_main~llvm_project~llvm-project":
+    if repo == "@@+llvm_project+llvm-project":
         package, _, rule = rule.partition(":")
 
         # Other packages in the LLVM project shouldn't be accidentally used
@@ -63,34 +61,31 @@ for dep in deps:
         # The rest of LLVM, LLD, and Clang themselves are safe to depend on.
         continue
 
-    # Ignore the version, just use the repo name.
-    repo_base = repo.split("~")[0]
-
     # Carbon code is always allowed.
-    if repo_base == "" and not rule.startswith("third_party"):
+    if repo == "" and not rule.startswith("third_party"):
         continue
 
     # An empty stub library added by rules_cc:
     # https://github.com/bazelbuild/rules_cc/blob/main/BUILD
-    if repo_base == "@@rules_cc" and rule == ":link_extra_lib":
+    if repo == "@@rules_cc+" and rule == ":link_extra_lib":
         continue
 
     # An utility library provided by Bazel that is under a compatible license.
-    if repo_base == "@@bazel_tools" and rule == "tools/cpp/runfiles:runfiles":
+    if repo == "@@bazel_tools" and rule == "tools/cpp/runfiles:runfiles":
         continue
 
     # These are stubs wrapping system libraries for LLVM. They aren't
     # distributed and so should be fine.
-    if repo_base in (
-        "@@zlib",
-        "@@zstd",
+    if repo in (
+        "@@zlib+",
+        "@@zstd+",
     ):
         continue
 
     # This should never be reached from non-test code, but these targets do
     # exist. Specially diagnose them to try to provide a more helpful
     # message.
-    if repo_base in (
+    if repo in (
         "@google_benchmark",
         "@abseil-cpp",
         "@googletest",
@@ -98,4 +93,4 @@ for dep in deps:
         sys.exit("ERROR: dependency only allowed in test code: %s" % dep)
 
     # Conservatively fail if a dependency isn't explicitly allowed above.
-    sys.exit("ERROR: unknown dependency: %s" % dep)
+    sys.exit(f"ERROR: unknown dependency on {repo}: {dep}")

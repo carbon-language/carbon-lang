@@ -200,13 +200,13 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//def, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.72e: type = import_ref Test//def, Def, loaded [template = constants.%Def.type]
+// CHECK:STDOUT:   %import_ref.8da = import_ref Test//def, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .Def [private] = imports.%import_ref.72e
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -216,14 +216,14 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %Def.type = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param runtime_param0
-// CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%import_ref.1 [template = constants.%Def.type]
+// CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%import_ref.72e [template = constants.%Def.type]
 // CHECK:STDOUT:     %i: %Def.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.8da
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,13 +305,13 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.c44: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:   %import_ref.2f8 = import_ref Test//forward_with_def, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.c44
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -321,14 +321,14 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.param_patt: %ForwardWithDef.type = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param runtime_param0
-// CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.1 [template = constants.%ForwardWithDef.type]
+// CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.c44 [template = constants.%ForwardWithDef.type]
 // CHECK:STDOUT:     %i: %ForwardWithDef.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.2f8
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

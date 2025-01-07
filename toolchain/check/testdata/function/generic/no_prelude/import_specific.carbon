@@ -124,22 +124,22 @@ fn H() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %F.specific_fn.1: <specific function> = specific_function %F, @F(%C) [template]
+// CHECK:STDOUT:   %F.specific_fn.002: <specific function> = specific_function %F, @F(%C) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %F.specific_fn.2: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %F.specific_fn.3dc: <specific function> = specific_function %F, @F(%T) [symbolic]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%C) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
+// CHECK:STDOUT:   %import_ref.d4d: %F.type = import_ref Main//library, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.f18: %G.type = import_ref Main//library, G, loaded [template = constants.%G]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.1
-// CHECK:STDOUT:     .G = imports.%import_ref.2
+// CHECK:STDOUT:     .F = imports.%import_ref.d4d
+// CHECK:STDOUT:     .G = imports.%import_ref.f18
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
@@ -158,11 +158,11 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.d4d [template = constants.%F]
 // CHECK:STDOUT:   %C.ref.loc10: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn.1]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn.002]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
-// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.2 [template = constants.%G]
+// CHECK:STDOUT:   %G.ref: %G.type = name_ref G, imports.%import_ref.f18 [template = constants.%G]
 // CHECK:STDOUT:   %C.ref.loc12: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%C) [template = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()
@@ -183,7 +183,7 @@ fn H() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function constants.%F, @F(%T) [symbolic = %F.specific_fn (constants.%F.specific_fn.2)]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function constants.%F, @F(%T) [symbolic = %F.specific_fn (constants.%F.specific_fn.3dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type);
 // CHECK:STDOUT: }
@@ -214,6 +214,6 @@ fn H() {
 // CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.specific_fn => constants.%F.specific_fn.1
+// CHECK:STDOUT:   %F.specific_fn => constants.%F.specific_fn.002
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

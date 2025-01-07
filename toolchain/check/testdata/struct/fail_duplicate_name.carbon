@@ -60,9 +60,9 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: Core.IntLiteral} [template]
+// CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %struct_type.a.2: type = struct_type {.a: %i32} [template]
+// CHECK:STDOUT:   %struct_type.a.7cc: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %struct_type.b.c: type = struct_type {.b: %i32, .c: %i32} [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template]
@@ -70,7 +70,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -103,8 +103,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.2 = var x
-// CHECK:STDOUT:   %x: ref %struct_type.a.2 = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.7cc = var x
+// CHECK:STDOUT:   %x: ref %struct_type.a.7cc = bind_name x, %x.var
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var y
 // CHECK:STDOUT:   %y: ref %struct_type.b.c = bind_name y, %y.var
 // CHECK:STDOUT: }
@@ -114,7 +114,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1.loc27: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc27: %struct_type.a.1 = struct_literal (%int_1.loc27)
+// CHECK:STDOUT:   %.loc27: %struct_type.a.a6c = struct_literal (%int_1.loc27)
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error>
 // CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2.loc36: Core.IntLiteral = int_value 2 [template = constants.%int_2]

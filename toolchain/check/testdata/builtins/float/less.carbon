@@ -46,20 +46,20 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %float.f4e: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.be3: f64 = float_literal 2 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 0 [template]
-// CHECK:STDOUT:   %float.4: f64 = float_literal -1 [template]
+// CHECK:STDOUT:   %float.555: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %float.f51: f64 = float_literal -1 [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     .Float = %import_ref.20b
+// CHECK:STDOUT:     .Bool = %import_ref.f7c
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -198,8 +198,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true_.ref.loc9: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Less.ref.loc9: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
-// CHECK:STDOUT:   %float.loc9_21: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc9_26: f64 = float_literal 2 [template = constants.%float.2]
+// CHECK:STDOUT:   %float.loc9_21: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc9_26: f64 = float_literal 2 [template = constants.%float.be3]
 // CHECK:STDOUT:   %float.less.loc9: init bool = call %Less.ref.loc9(%float.loc9_21, %float.loc9_26) [template = constants.%true]
 // CHECK:STDOUT:   %.loc9_13.1: bool = value_of_initializer %float.less.loc9 [template = constants.%true]
 // CHECK:STDOUT:   %.loc9_13.2: bool = converted %float.less.loc9, %.loc9_13.1 [template = constants.%true]
@@ -217,8 +217,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc9_13.3: type = block_arg !if.expr.result.loc9 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref.loc10: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Less.ref.loc10: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
-// CHECK:STDOUT:   %float.loc10_22: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc10_27: f64 = float_literal 1 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc10_22: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc10_27: f64 = float_literal 1 [template = constants.%float.f4e]
 // CHECK:STDOUT:   %float.less.loc10: init bool = call %Less.ref.loc10(%float.loc10_22, %float.loc10_27) [template = constants.%false]
 // CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %float.less.loc10 [template = constants.%false]
 // CHECK:STDOUT:   %.loc10_14.2: bool = converted %float.less.loc10, %.loc10_14.1 [template = constants.%false]
@@ -236,8 +236,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc10_14.3: type = block_arg !if.expr.result.loc10 [template = constants.%False]
 // CHECK:STDOUT:   %false_.ref.loc11: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Less.ref.loc11: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
-// CHECK:STDOUT:   %float.loc11_22: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc11_27: f64 = float_literal 0 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc11_22: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc11_27: f64 = float_literal 0 [template = constants.%float.555]
 // CHECK:STDOUT:   %float.less.loc11: init bool = call %Less.ref.loc11(%float.loc11_22, %float.loc11_27) [template = constants.%false]
 // CHECK:STDOUT:   %.loc11_14.1: bool = value_of_initializer %float.less.loc11 [template = constants.%false]
 // CHECK:STDOUT:   %.loc11_14.2: bool = converted %float.less.loc11, %.loc11_14.1 [template = constants.%false]
@@ -256,11 +256,11 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %true_.ref.loc12: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Less.ref.loc12: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
 // CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %float.loc12_28: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.negate.loc12: init f64 = call %Negate.ref.loc12(%float.loc12_28) [template = constants.%float.4]
-// CHECK:STDOUT:   %float.loc12_34: f64 = float_literal 0 [template = constants.%float.3]
-// CHECK:STDOUT:   %.loc12_31.1: f64 = value_of_initializer %float.negate.loc12 [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc12_31.2: f64 = converted %float.negate.loc12, %.loc12_31.1 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc12_28: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.negate.loc12: init f64 = call %Negate.ref.loc12(%float.loc12_28) [template = constants.%float.f51]
+// CHECK:STDOUT:   %float.loc12_34: f64 = float_literal 0 [template = constants.%float.555]
+// CHECK:STDOUT:   %.loc12_31.1: f64 = value_of_initializer %float.negate.loc12 [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc12_31.2: f64 = converted %float.negate.loc12, %.loc12_31.1 [template = constants.%float.f51]
 // CHECK:STDOUT:   %float.less.loc12: init bool = call %Less.ref.loc12(%.loc12_31.2, %float.loc12_34) [template = constants.%true]
 // CHECK:STDOUT:   %.loc12_13.1: bool = value_of_initializer %float.less.loc12 [template = constants.%true]
 // CHECK:STDOUT:   %.loc12_13.2: bool = converted %float.less.loc12, %.loc12_13.1 [template = constants.%true]
@@ -278,12 +278,12 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc12_13.3: type = block_arg !if.expr.result.loc12 [template = constants.%True]
 // CHECK:STDOUT:   %false_.ref.loc13: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Less.ref.loc13: %Less.type = name_ref Less, file.%Less.decl [template = constants.%Less]
-// CHECK:STDOUT:   %float.loc13_22: f64 = float_literal 0 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc13_22: f64 = float_literal 0 [template = constants.%float.555]
 // CHECK:STDOUT:   %Negate.ref.loc13: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %float.loc13_34: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.negate.loc13: init f64 = call %Negate.ref.loc13(%float.loc13_34) [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc13_37.1: f64 = value_of_initializer %float.negate.loc13 [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc13_37.2: f64 = converted %float.negate.loc13, %.loc13_37.1 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc13_34: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.negate.loc13: init f64 = call %Negate.ref.loc13(%float.loc13_34) [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc13_37.1: f64 = value_of_initializer %float.negate.loc13 [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc13_37.2: f64 = converted %float.negate.loc13, %.loc13_37.1 [template = constants.%float.f51]
 // CHECK:STDOUT:   %float.less.loc13: init bool = call %Less.ref.loc13(%float.loc13_22, %.loc13_37.2) [template = constants.%false]
 // CHECK:STDOUT:   %.loc13_14.1: bool = value_of_initializer %float.less.loc13 [template = constants.%false]
 // CHECK:STDOUT:   %.loc13_14.2: bool = converted %float.less.loc13, %.loc13_14.1 [template = constants.%false]

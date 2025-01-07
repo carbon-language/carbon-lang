@@ -113,7 +113,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -166,7 +166,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -265,11 +265,11 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %I.type.1: type = facet_type <@I.1> [template]
-// CHECK:STDOUT:   %Self.1: %I.type.1 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.1> [template]
+// CHECK:STDOUT:   %Self.fb7: %I.type.733 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %I.type.2: type = facet_type <@I.2> [template]
-// CHECK:STDOUT:   %Self.2: %I.type.2 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.726: type = facet_type <@I.2> [template]
+// CHECK:STDOUT:   %Self.532: %I.type.726 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,12 +288,12 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%I.type.1] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.1 [template = constants.%I.type.733] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.1 {
-// CHECK:STDOUT:   %Self: %I.type.1 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
+// CHECK:STDOUT:   %Self: %I.type.733 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.fb7]
 // CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -302,7 +302,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.2 {
-// CHECK:STDOUT:   %Self: %I.type.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
+// CHECK:STDOUT:   %Self: %I.type.726 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.532]
 // CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -311,7 +311,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%I.type.2] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [template = constants.%I.type.726] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

@@ -11,8 +11,6 @@
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/set.h"
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/mem_usage.h"

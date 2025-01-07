@@ -103,6 +103,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
     ],
     # Always link dump methods.
