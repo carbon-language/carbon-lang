@@ -14,7 +14,7 @@ class NoF {
   // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:3: error: missing implementation of F in impl of interface I [ImplMissingFunction]
   // CHECK:STDERR:   impl as I {}
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-6]]:15: note: associated function F declared here [ImplAssociatedFunctionHere]
+  // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-6]]:15: note: associated function F declared here [AssociatedFunctionHere]
   // CHECK:STDERR: interface I { fn F(); }
   // CHECK:STDERR:               ^~~~~~~
   // CHECK:STDERR:
@@ -26,7 +26,7 @@ class FNotFunction {
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:5: error: associated function F implemented by non-function [ImplFunctionWithNonFunction]
     // CHECK:STDERR:     class F;
     // CHECK:STDERR:     ^~~~~~~~
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-18]]:15: note: associated function F declared here [ImplAssociatedFunctionHere]
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-18]]:15: note: associated function F declared here [AssociatedFunctionHere]
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:
@@ -42,7 +42,7 @@ class FAlias {
     // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE+7]]:11: error: associated function F implemented by non-function [ImplFunctionWithNonFunction]
     // CHECK:STDERR:     alias F = PossiblyF;
     // CHECK:STDERR:           ^
-    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-34]]:15: note: associated function F declared here [ImplAssociatedFunctionHere]
+    // CHECK:STDERR: fail_impl_bad_assoc_fn.carbon:[[@LINE-34]]:15: note: associated function F declared here [AssociatedFunctionHere]
     // CHECK:STDERR: interface I { fn F(); }
     // CHECK:STDERR:               ^~~~~~~
     // CHECK:STDERR:

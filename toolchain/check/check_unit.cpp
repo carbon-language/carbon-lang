@@ -399,9 +399,9 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         auto& impl = context_.impls().Get(impl_decl.impl_id);
         if (!impl.is_defined()) {
           FillImplWitnessWithErrors(context_, impl);
-          CARBON_DIAGNOSTIC(MissingImplDefinition, Error,
+          CARBON_DIAGNOSTIC(ImplMissingDefinition, Error,
                             "impl declared but not defined");
-          emitter_.Emit(decl_inst_id, MissingImplDefinition);
+          emitter_.Emit(decl_inst_id, ImplMissingDefinition);
         }
         break;
       }

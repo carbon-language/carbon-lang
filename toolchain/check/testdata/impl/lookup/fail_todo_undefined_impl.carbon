@@ -15,7 +15,7 @@ interface I {
 class C {
   // This doesn't match `impl C as I` below under proposal #3763.
 
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: impl declared but not defined [MissingImplDefinition]
+  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

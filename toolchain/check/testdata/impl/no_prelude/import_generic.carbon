@@ -57,13 +57,13 @@ library "[[@TEST_NAME]]";
 class D {}
 interface J(T:! type) {}
 
-// CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl forall [T:! type] D as J(T);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl forall [T:! type] D as J(T);
 
-// CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_import_generic_decl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

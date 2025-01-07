@@ -14,7 +14,7 @@ library "[[@TEST_NAME]]";
 
 interface A {}
 
-// CHECK:STDERR: fail_decl_in_api_definition_in_impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_in_api_definition_in_impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as A;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 
 interface B {}
 
-// CHECK:STDERR: fail_decl_only_in_api.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_only_in_api.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as B;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -68,7 +68,7 @@ library "[[@TEST_NAME]]";
 
 interface C {}
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as C;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -94,7 +94,7 @@ impl library "[[@TEST_NAME]]";
 
 interface D {}
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 impl () as D;

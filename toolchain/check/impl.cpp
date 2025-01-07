@@ -23,10 +23,10 @@ namespace Carbon::Check {
 static auto NoteAssociatedFunction(Context& context,
                                    Context::DiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
-  CARBON_DIAGNOSTIC(ImplAssociatedFunctionHere, Note,
+  CARBON_DIAGNOSTIC(AssociatedFunctionHere, Note,
                     "associated function {0} declared here", SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.latest_decl_id(), ImplAssociatedFunctionHere,
+  builder.Note(function.latest_decl_id(), AssociatedFunctionHere,
                function.name_id);
 }
 
@@ -383,12 +383,19 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
       auto& witness_value = witness_block[index];
       if (!witness_value.is_valid()) {
-        CARBON_DIAGNOSTIC(AssociatedConstantNeedsValue, Error,
-                          "associated constant {0} not given a value",
+        CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
+                          "associated constant {0} not given a value in impl "
+                          "of interface {1}",
+                          SemIR::NameId, SemIR::NameId);
+        CARBON_DIAGNOSTIC(AssociatedConstantHere, Note,
+                          "associated constant {0} declared here",
                           SemIR::NameId);
-        // FIXME: Note declaration of associated constant in interface
-        context.emitter().Emit(impl.constraint_id, AssociatedConstantNeedsValue,
-                               decl->name_id);
+        context.emitter()
+            .Build(impl.constraint_id, ImplAssociatedConstantNeedsValue,
+                   decl->name_id, interface.name_id)
+            .Note(assoc_entities[index], AssociatedConstantHere, decl->name_id)
+            .Emit();
+
         witness_value = SemIR::ErrorInst::SingletonInstId;
       }
     }

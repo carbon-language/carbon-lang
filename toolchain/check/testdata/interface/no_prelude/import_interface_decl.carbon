@@ -18,7 +18,7 @@ impl library "[[@TEST_NAME]]";
 // --- fail_b.carbon
 library "[[@TEST_NAME]]";
 interface B {}
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as B;
 // CHECK:STDERR: ^~~~~~~~~~~~~
 impl () as B;
