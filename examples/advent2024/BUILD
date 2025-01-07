@@ -9,12 +9,13 @@ utils = [
     "sort.carbon",
 ]
 
+# Produce a binary "dayX_partY" for each matching `.carbon` file.
 [
     carbon_binary(
-        name = "day%d_part%d" % (day, part),
+        name = "day{0}_part{1}".format(day, part),
         srcs = [
-            "day%d_common.carbon" % day,
-            "day%d_part%d.carbon" % (day, part),
+            "day{0}_common.carbon".format(day),
+            "day{0}_part{1}.carbon".format(day, part),
         ] + utils,
     )
     for day in range(1, 14)
