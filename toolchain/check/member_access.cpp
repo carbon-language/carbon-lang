@@ -380,7 +380,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
             loc_id, {.type_id = context.GetSingletonType(
                          SemIR::BoundMethodType::SingletonInstId),
                      .object_id = base_id,
-                     .function_id = member_id});
+                     .function_decl_id = member_id});
       }
       [[fallthrough]];
     }

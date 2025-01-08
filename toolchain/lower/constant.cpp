@@ -167,7 +167,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
     -> llvm::Constant* {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  return context.GetConstant(inst.function_id);
+  return context.GetConstant(inst.function_decl_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,

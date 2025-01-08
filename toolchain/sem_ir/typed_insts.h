@@ -398,7 +398,7 @@ struct BoundMethod {
   // self` parameter.
   InstId object_id;
   // The function being bound, whose type_id is always a `FunctionType`.
-  InstId function_id;
+  InstId function_decl_id;
 };
 
 // The type of bound method values.

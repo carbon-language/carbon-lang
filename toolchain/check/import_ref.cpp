@@ -1452,7 +1452,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
                SemIR::BoundMethodType::SingletonInstId);
   auto object_id = GetLocalConstantInstId(resolver, inst.object_id);
-  auto function_id = GetLocalConstantInstId(resolver, inst.function_id);
+  auto function_decl_id =
+      GetLocalConstantInstId(resolver, inst.function_decl_id);
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -1462,7 +1463,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = resolver.local_context().GetSingletonType(
                      SemIR::BoundMethodType::SingletonInstId),
                  .object_id = object_id,
-                 .function_id = function_id});
+                 .function_decl_id = function_decl_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
