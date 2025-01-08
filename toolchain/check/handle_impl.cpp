@@ -191,8 +191,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
 // associated name that describes them.
 static auto PopImplIntroducerAndParamsAsNameComponent(
-    Context& context, Parse::AnyImplDeclId end_of_decl_node_id)
-    -> NameComponent {
+    Context& context, Parse::NodeId end_of_decl_node_id) -> NameComponent {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
 
@@ -213,38 +212,14 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
-  // Subtracting 1 since we don't want to include the final `{` or `;` of the
-  // declaration when performing syntactic match.
-  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               end_node_kind == Parse::NodeKind::ImplDecl);
+  // Subtracting 1 since we don't want to include the final `{`, `;`, or `where`
+  // of the declaration when performing syntactic match.
+  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
+  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
+               node_kind == Parse::NodeKind::ImplDecl ||
+               node_kind == Parse::NodeKind::WhereOperand);
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
   --last_param_iter;
-
-  // Following proposal #3763, exclude a final `where` clause, if present. See:
-  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-
-  // Caches the NodeKind for the current value of *last_param_iter so
-  if (context.parse_tree().node_kind(*last_param_iter) ==
-      Parse::NodeKind::WhereExpr) {
-    int where_operands_to_skip = 1;
-    --last_param_iter;
-    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                 last_param_iter);
-    do {
-      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
-      if (node_kind == Parse::NodeKind::WhereExpr) {
-        // If we have a nested `where`, we need to see another `WhereOperand`
-        // before we find the one that matches our original `WhereExpr` node.
-        ++where_operands_to_skip;
-      } else if (node_kind == Parse::NodeKind::WhereOperand) {
-        --where_operands_to_skip;
-      }
-      --last_param_iter;
-      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
-                   last_param_iter);
-    } while (where_operands_to_skip > 0);
-  }
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
@@ -313,8 +288,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto [self_type_node, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
   auto self_type_id = context.GetTypeIdForTypeInst(self_inst_id);
+
+  // Finish processing the name, which should be empty, but might have
+  // parameters.
+  auto name_context = context.decl_name_stack().FinishImplName();
+  CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
+
   // Pop the `impl` introducer and any `forall` parameters as a "name".
-  auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
+  // Stop at the `where` node, if present, to exclude it from syntactic match.
+  auto name = PopImplIntroducerAndParamsAsNameComponent(
+      context, name_context.where_operand_node_id.is_valid()
+                   ? name_context.where_operand_node_id
+                   : node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
@@ -333,11 +318,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Impl>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::ImplDecl);
-
-  // Finish processing the name, which should be empty, but might have
-  // parameters.
-  auto name_context = context.decl_name_stack().FinishImplName();
-  CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
 
   // TODO: Check for an orphan `impl`.
 

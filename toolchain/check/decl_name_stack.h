@@ -151,6 +151,11 @@ class DeclNameStack {
       // The ID of an unresolved identifier.
       SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
     };
+
+    // The `WhereOperand` node_id for the constraint in an impl decl, if any.
+    // FIXME: Can this be in a union with some other field that isn't used for
+    // impl decls?
+    Parse::NodeId where_operand_node_id = Parse::NodeId::Invalid;
   };
 
   // Information about a declaration name that has been temporarily removed from
@@ -199,6 +204,9 @@ class DeclNameStack {
   // `impl`s don't actually have names, but want the rest of the name processing
   // logic such as building parameter scopes, so are a special case.
   auto FinishImplName() -> NameContext;
+
+  // Set the position of the `WhereOperand` node in an `impl...as...where...`.
+  auto SetImplWhereOperandNodeId(Parse::NodeId node_id) -> void;
 
   // Pops the declaration name from the declaration name stack, and pops all
   // scopes that were entered as part of handling the declaration name. These
