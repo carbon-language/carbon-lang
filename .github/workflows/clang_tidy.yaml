@@ -8,6 +8,7 @@ on:
   push:
     branches: [trunk, action-test]
   pull_request:
+  merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -20,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  clang-tidy:
     runs-on: ubuntu-22.04
 
     steps:

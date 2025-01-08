@@ -249,7 +249,7 @@ auto InstNamer::Namespace::AllocateName(
 
   // Append location information to try to disambiguate.
   // TODO: Consider handling inst_id cases.
-  if (LocId* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
+  if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
     if (loc_id->is_node_id()) {
       const auto& tree = inst_namer.sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id->node_id());

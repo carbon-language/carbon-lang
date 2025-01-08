@@ -4,14 +4,35 @@
 
 #include "toolchain/language_server/language_server.h"
 
-#include "toolchain/language_server/server.h"
+#include "clang-tools-extra/clangd/LSPBinder.h"
+#include "clang-tools-extra/clangd/Transport.h"
+#include "toolchain/language_server/context.h"
+#include "toolchain/language_server/incoming_messages.h"
+#include "toolchain/language_server/outgoing_messages.h"
 
 namespace Carbon::LanguageServer {
 
 auto Run(std::FILE* input_stream, llvm::raw_ostream& output_stream)
     -> ErrorOr<Success> {
-  Server server(input_stream, output_stream);
-  return server.Run();
+  // Set up the connection.
+  std::unique_ptr<clang::clangd::Transport> transport(
+      clang::clangd::newJSONTransport(input_stream, output_stream,
+                                      /*InMirror=*/nullptr,
+                                      /*Pretty=*/true));
+  Context context;
+  IncomingMessages incoming(transport.get(), &context);
+  OutgoingMessages outgoing(transport.get());
+
+  // Run the server loop.
+  llvm::Error err = transport->loop(incoming);
+  if (err) {
+    std::string str;
+    llvm::raw_string_ostream out(str);
+    out << err;
+    return Error(str);
+  } else {
+    return Success();
+  }
 }
 
 }  // namespace Carbon::LanguageServer

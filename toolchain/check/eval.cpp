@@ -721,6 +721,26 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
   return ValidateFloatBitWidth(context, loc, result.bit_width_id);
 }
 
+// Performs a conversion between integer types, truncating if the value doesn't
+// fit in the destination type.
+static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
+                              SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
+  auto arg_val =
+      context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
+  auto [dest_is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  if (bit_width_id.is_valid()) {
+    // TODO: If the value fits in the destination type, reuse the existing
+    // int_id rather than recomputing it. This is probably the most common case.
+    bool src_is_signed = context.sem_ir().types().IsSignedInt(
+        context.insts().Get(arg_id).type_id());
+    unsigned width = context.ints().Get(bit_width_id).getZExtValue();
+    arg_val =
+        src_is_signed ? arg_val.sextOrTrunc(width) : arg_val.zextOrTrunc(width);
+  }
+  return MakeIntResult(context, dest_type_id, dest_is_signed, arg_val);
+}
+
 // Performs a conversion between integer types, diagnosing if the value doesn't
 // fit in the destination type.
 static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
@@ -1284,6 +1304,12 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvert: {
+      if (phase == Phase::Symbolic) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       if (phase == Phase::Symbolic) {
         return MakeConstantResult(context, call, phase);

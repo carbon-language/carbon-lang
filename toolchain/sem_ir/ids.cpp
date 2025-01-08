@@ -12,8 +12,6 @@ namespace Carbon::SemIR {
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
-  } else if (is_poisoned()) {
-    out << "<poisoned>";
   } else {
     IdBase::Print(out);
   }
