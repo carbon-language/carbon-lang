@@ -34,13 +34,12 @@ impl () as J where .U = {} {
   fn F[self: Self](u: {}) -> {} { return u; }
 }
 
-class C {}
+class C {
+  // This allows the type to be copyable so it can be returned.
+  adapt {};
+}
 
 impl C as J where .U = C {
-  // CHECK:STDERR: fail_todo_associated_type_in_signature.carbon:[[@LINE+4]]:40: error: cannot copy value of type `C` [CopyOfUncopyableType]
-  // CHECK:STDERR:   fn F[self: Self](u: C) -> C { return self; }
-  // CHECK:STDERR:                                        ^~~~
-  // CHECK:STDERR:
   fn F[self: Self](u: C) -> C { return self; }
 }
 
@@ -148,19 +147,19 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness (constants.%empty_struct_type, <error>) [template = constants.%impl_witness.f71]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
-// CHECK:STDOUT:     %C.ref.loc28_6: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31_6: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [template = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %U.ref: %assoc_type = name_ref U, @J.%assoc0 [template = constants.%assoc0.021]
 // CHECK:STDOUT:     %.Self.as_wit: <witness> = facet_access_witness %.Self.ref [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access %.Self.as_wit, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %C.ref.loc28_24: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %.loc28: type = where_expr %.Self [template = constants.%J_where.type.2f6] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc28_24
+// CHECK:STDOUT:     %C.ref.loc31_24: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %.loc31: type = where_expr %.Self [template = constants.%J_where.type.2f6] {
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc31_24
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc28: <witness> = impl_witness (constants.%C, <error>) [template = constants.%impl_witness.c2b]
+// CHECK:STDOUT:   %impl_witness.loc31: <witness> = impl_witness (constants.%C, <error>) [template = constants.%impl_witness.c2b]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -231,7 +230,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   witness = file.%impl_witness.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.2: %C.ref.loc28_6 as %.loc28 {
+// CHECK:STDOUT: impl @impl.2: %C.ref.loc31_6 as %.loc31 {
 // CHECK:STDOUT:   %F.decl: %F.type.6c5 = fn_decl @F.3 [template = constants.%F.b69] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
@@ -240,12 +239,12 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc33_29: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc32_29: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %self.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.2.%C.ref.loc28_6 [template = constants.%C]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.2.%C.ref.loc31_6 [template = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %u.param: %C = value_param runtime_param1
-// CHECK:STDOUT:     %C.ref.loc33_23: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc32_23: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %u: %C = bind_name u, %u.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -253,10 +252,13 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = file.%impl_witness.loc28
+// CHECK:STDOUT:   witness = file.%impl_witness.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %.loc28_10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc28_11: type = converted %.loc28_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc28_11 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -277,10 +279,10 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   return %u.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3[%self.param_patt: %C](%u.param_patt: %C) -> %return.param_patt: %C {
+// CHECK:STDOUT: fn @F.3[%self.param_patt: %C](%u.param_patt: %C) -> %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return %self.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.f9f) {
