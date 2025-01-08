@@ -51,38 +51,38 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NotGenericNoParams.type: type = facet_type <@NotGenericNoParams> [template]
-// CHECK:STDOUT:   %Self.d20: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.238: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %NotGenericButParams.type.f26: type = generic_interface_type @NotGenericButParams [template]
 // CHECK:STDOUT:   %NotGenericButParams.generic: %NotGenericButParams.type.f26 = struct_value () [template]
 // CHECK:STDOUT:   %NotGenericButParams.type.014: type = facet_type <@NotGenericButParams> [template]
-// CHECK:STDOUT:   %Self.68e: %NotGenericButParams.type.014 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.43b: %NotGenericButParams.type.014 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.type.cde: type = generic_interface_type @GenericAndParams.1 [template]
 // CHECK:STDOUT:   %GenericAndParams.generic.827: %GenericAndParams.type.cde = struct_value () [template]
-// CHECK:STDOUT:   %GenericAndParams.type.74e: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.d71: %GenericAndParams.type.74e = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.type.73e: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T)> [symbolic]
+// CHECK:STDOUT:   %Self.2f4: %GenericAndParams.type.73e = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.37e: type = class_type @C, @C(%T) [symbolic]
-// CHECK:STDOUT:   %GenericNoParams.type.835: type = facet_type <@GenericNoParams> [template]
-// CHECK:STDOUT:   %GenericNoParams.type.37b: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.b46: %GenericNoParams.type.37b = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericNoParams.type.f90: type = facet_type <@GenericNoParams> [template]
+// CHECK:STDOUT:   %GenericNoParams.type.b79: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic]
+// CHECK:STDOUT:   %Self.0f6: %GenericNoParams.type.b79 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.2dc: type = generic_interface_type @GenericAndParams.2, @C(%T) [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.generic.102: %GenericAndParams.type.2dc = struct_value () [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.171: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%T, %U)> [symbolic]
-// CHECK:STDOUT:   %Self.7ac: %GenericAndParams.type.171 = bind_symbolic_name Self, 2 [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.type.597: type = generic_interface_type @GenericAndParams.2, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.generic.2ec: %GenericAndParams.type.597 = struct_value () [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.type.d96: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%T, %U)> [symbolic]
+// CHECK:STDOUT:   %Self.37a: %GenericAndParams.type.d96 = bind_symbolic_name Self, 2 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template]
-// CHECK:STDOUT:   %GenericAndParams.type.d45: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%X)> [template]
-// CHECK:STDOUT:   %C.f9e: type = class_type @C, @C(%X) [template]
-// CHECK:STDOUT:   %GenericAndParams.type.e61: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
-// CHECK:STDOUT:   %GenericAndParams.generic.0a6: %GenericAndParams.type.e61 = struct_value () [template]
-// CHECK:STDOUT:   %GenericAndParams.type.43c: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%X, %X)> [template]
+// CHECK:STDOUT:   %GenericAndParams.type.4b6: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%X)> [template]
+// CHECK:STDOUT:   %C.fac: type = class_type @C, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.type.425: type = generic_interface_type @GenericAndParams.2, @C(%X) [template]
+// CHECK:STDOUT:   %GenericAndParams.generic.b50: %GenericAndParams.type.425 = struct_value () [template]
+// CHECK:STDOUT:   %GenericAndParams.type.79c: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%X, %X)> [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -125,32 +125,32 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.cde = name_ref GenericAndParams, file.%GenericAndParams.decl [template = constants.%GenericAndParams.generic.827]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(constants.%X)> [template = constants.%GenericAndParams.type.d45]
+// CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(constants.%X)> [template = constants.%GenericAndParams.type.4b6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.4 [template] {} {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc17_13: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%X) [template = constants.%C.f9e]
-// CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%GenericNoParams.type.835]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%X) [template = constants.%C.fac]
+// CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, @C.%GenericNoParams.decl [template = constants.%GenericNoParams.type.f90]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.5 [template] {} {
 // CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%X) [template = constants.%C.f9e]
-// CHECK:STDOUT:     %.loc18: %GenericAndParams.type.e61 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.generic.0a6]
-// CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.e61 = name_ref GenericAndParams, %.loc18 [template = constants.%GenericAndParams.generic.0a6]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%X) [template = constants.%C.fac]
+// CHECK:STDOUT:     %.loc18: %GenericAndParams.type.425 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [template = constants.%GenericAndParams.generic.b50]
+// CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.425 = name_ref GenericAndParams, %.loc18 [template = constants.%GenericAndParams.generic.b50]
 // CHECK:STDOUT:     %X.ref.loc18_33: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X)> [template = constants.%GenericAndParams.type.43c]
+// CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(constants.%X, constants.%X)> [template = constants.%GenericAndParams.type.79c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGenericNoParams {
-// CHECK:STDOUT:   %Self: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.d20]
+// CHECK:STDOUT:   %Self: %NotGenericNoParams.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.238]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -158,7 +158,7 @@ interface A(T: type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGenericButParams {
-// CHECK:STDOUT:   %Self: %NotGenericButParams.type.014 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.68e]
+// CHECK:STDOUT:   %Self: %NotGenericButParams.type.014 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.43b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -170,11 +170,11 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc6_28.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_28.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T.loc6_28.2)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.74e)]
-// CHECK:STDOUT:   %Self.2: %GenericAndParams.type.74e = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.d71)]
+// CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.1, @GenericAndParams.1(%T.loc6_28.2)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.73e)]
+// CHECK:STDOUT:   %Self.2: %GenericAndParams.type.73e = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.2f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericAndParams.1.%GenericAndParams.type (%GenericAndParams.type.74e) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.d71)]
+// CHECK:STDOUT:     %Self.1: @GenericAndParams.1.%GenericAndParams.type (%GenericAndParams.type.73e) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.2f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -185,11 +185,11 @@ interface A(T: type) {}
 // CHECK:STDOUT: generic interface @GenericNoParams(@C.%T.loc8_9.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %GenericNoParams.type: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic = %GenericNoParams.type (constants.%GenericNoParams.type.37b)]
-// CHECK:STDOUT:   %Self.2: %GenericNoParams.type.37b = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b46)]
+// CHECK:STDOUT:   %GenericNoParams.type: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic = %GenericNoParams.type (constants.%GenericNoParams.type.b79)]
+// CHECK:STDOUT:   %Self.2: %GenericNoParams.type.b79 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.37b) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.b46)]
+// CHECK:STDOUT:     %Self.1: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.b79) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.0f6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -203,11 +203,11 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%T, %U.loc10_30.2)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.171)]
-// CHECK:STDOUT:   %Self.2: %GenericAndParams.type.171 = bind_symbolic_name Self, 2 [symbolic = %Self.2 (constants.%Self.7ac)]
+// CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.2, @GenericAndParams.2(%T, %U.loc10_30.2)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.d96)]
+// CHECK:STDOUT:   %Self.2: %GenericAndParams.type.d96 = bind_symbolic_name Self, 2 [symbolic = %Self.2 (constants.%Self.37a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericAndParams.2.%GenericAndParams.type (%GenericAndParams.type.171) = bind_symbolic_name Self, 2 [symbolic = %Self.2 (constants.%Self.7ac)]
+// CHECK:STDOUT:     %Self.1: @GenericAndParams.2.%GenericAndParams.type (%GenericAndParams.type.d96) = bind_symbolic_name Self, 2 [symbolic = %Self.2 (constants.%Self.37a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -245,12 +245,12 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc8_9.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericAndParams.type: type = generic_interface_type @GenericAndParams.2, @C(%T.loc8_9.2) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.2dc)]
-// CHECK:STDOUT:   %GenericAndParams.generic: @C.%GenericAndParams.type (%GenericAndParams.type.2dc) = struct_value () [symbolic = %GenericAndParams.generic (constants.%GenericAndParams.generic.102)]
+// CHECK:STDOUT:   %GenericAndParams.type: type = generic_interface_type @GenericAndParams.2, @C(%T.loc8_9.2) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.597)]
+// CHECK:STDOUT:   %GenericAndParams.generic: @C.%GenericAndParams.type (%GenericAndParams.type.597) = struct_value () [symbolic = %GenericAndParams.generic (constants.%GenericAndParams.generic.2ec)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%GenericNoParams.type.835] {} {}
-// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.2dc) = interface_decl @GenericAndParams.2 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.102)] {
+// CHECK:STDOUT:     %GenericNoParams.decl: type = interface_decl @GenericNoParams [template = constants.%GenericNoParams.type.f90] {} {}
+// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.597) = interface_decl @GenericAndParams.2 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.2ec)] {
 // CHECK:STDOUT:       %U.patt.loc10_30.1: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
 // CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc10_30.1, runtime_param<invalid> [symbolic = %U.patt.loc10_30.2 (constants.%U.patt)]
 // CHECK:STDOUT:     } {
@@ -260,7 +260,7 @@ interface A(T: type) {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.37e
+// CHECK:STDOUT:     .Self = constants.%C.f2e
 // CHECK:STDOUT:     .GenericNoParams = %GenericNoParams.decl
 // CHECK:STDOUT:     .GenericAndParams = %GenericAndParams.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -305,8 +305,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc6_28.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.d45
-// CHECK:STDOUT:   %Self.2 => constants.%Self.d71
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.4b6
+// CHECK:STDOUT:   %Self.2 => constants.%Self.2f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
@@ -314,8 +314,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:   %T.patt.loc8_9.2 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.e61
-// CHECK:STDOUT:   %GenericAndParams.generic => constants.%GenericAndParams.generic.0a6
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.425
+// CHECK:STDOUT:   %GenericAndParams.generic => constants.%GenericAndParams.generic.b50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.2(constants.%X, constants.%X) {
@@ -324,8 +324,8 @@ interface A(T: type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.43c
-// CHECK:STDOUT:   %Self.2 => constants.%Self.7ac
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.79c
+// CHECK:STDOUT:   %Self.2 => constants.%Self.37a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_generic_implicit_params.carbon

@@ -196,7 +196,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.45169f.2: %T = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %N.patt.51ccc0.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,7 +221,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.45169f.2)]
+// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.51ccc0.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:

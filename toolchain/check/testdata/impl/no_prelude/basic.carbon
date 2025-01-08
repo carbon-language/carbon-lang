@@ -23,16 +23,16 @@ impl C as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [template]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.c46: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.41f: %F.type.c46 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Simple.type, %F.type.c46 [template]
+// CHECK:STDOUT:   %F.type.e2e: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.df8: %F.type.e2e = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Simple.type, %F.type.e2e [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Simple.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.228: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.07c: %F.type.228 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.f9e: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.f50: %F.type.f9e = struct_value () [template]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -52,7 +52,7 @@ impl C as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.c46 = fn_decl @F.1 [template = constants.%F.41f] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.e2e = fn_decl @F.1 [template = constants.%F.df8] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -62,7 +62,7 @@ impl C as Simple {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %Simple.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.228 = fn_decl @F.2 [template = constants.%F.07c] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.f9e = fn_decl @F.2 [template = constants.%F.f50] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl

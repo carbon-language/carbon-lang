@@ -120,9 +120,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [template]
-// CHECK:STDOUT:   %Self.f9f: %J.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.ccd: %J.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
-// CHECK:STDOUT:   %Self.fb7: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %assoc_type.579: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type.579 = assoc_entity element0, @I.%Member [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
@@ -230,7 +230,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
-// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.f9f]
+// CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.ccd]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -238,7 +238,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.fb7]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type.579 = assoc_entity element0, %Member [template = constants.%assoc0]
 // CHECK:STDOUT:   %Second: %J.type = assoc_const_decl Second [template]
@@ -291,11 +291,11 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %L.type: type = facet_type <@L> [template]
-// CHECK:STDOUT:   %Self.863: %L.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.1d2: %L.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %M.type: type = facet_type <@M> [template]
-// CHECK:STDOUT:   %Self.443: %M.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.bcc: %M.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [template]
-// CHECK:STDOUT:   %Self.744: %K.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.09f: %K.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %K.type, %L.type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @K.%Associated [template]
 // CHECK:STDOUT:   %.Self: %K.type = bind_symbolic_name .Self [symbolic]
@@ -352,7 +352,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L {
-// CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.863]
+// CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1d2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -360,7 +360,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @M {
-// CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.443]
+// CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.bcc]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -368,7 +368,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
-// CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.744]
+// CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.09f]
 // CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl Associated [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Associated [template = constants.%assoc0]
 // CHECK:STDOUT:
@@ -404,7 +404,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -459,7 +459,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -516,7 +516,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -583,26 +583,26 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.b29: type = import_ref Main//state_constraints, J, loaded [template = constants.%J.type]
-// CHECK:STDOUT:   %import_ref.492 = import_ref Main//state_constraints, I, unloaded
-// CHECK:STDOUT:   %import_ref.61d = import_ref Main//state_constraints, EqualEqual, unloaded
-// CHECK:STDOUT:   %import_ref.fcb: %Impls.type = import_ref Main//state_constraints, Impls, loaded [template = constants.%Impls]
-// CHECK:STDOUT:   %import_ref.df6 = import_ref Main//state_constraints, And, unloaded
+// CHECK:STDOUT:   %import_ref.7c1: type = import_ref Main//state_constraints, J, loaded [template = constants.%J.type]
+// CHECK:STDOUT:   %import_ref.541 = import_ref Main//state_constraints, I, unloaded
+// CHECK:STDOUT:   %import_ref.cdb = import_ref Main//state_constraints, EqualEqual, unloaded
+// CHECK:STDOUT:   %import_ref.e7f: %Impls.type = import_ref Main//state_constraints, Impls, loaded [template = constants.%Impls]
+// CHECK:STDOUT:   %import_ref.45f = import_ref Main//state_constraints, And, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.17d = import_ref Main//state_constraints, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8fd = import_ref Main//state_constraints, inst17 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .J = imports.%import_ref.b29
-// CHECK:STDOUT:     .I = imports.%import_ref.492
-// CHECK:STDOUT:     .EqualEqual = imports.%import_ref.61d
-// CHECK:STDOUT:     .Impls = imports.%import_ref.fcb
-// CHECK:STDOUT:     .And = imports.%import_ref.df6
+// CHECK:STDOUT:     .J = imports.%import_ref.7c1
+// CHECK:STDOUT:     .I = imports.%import_ref.541
+// CHECK:STDOUT:     .EqualEqual = imports.%import_ref.cdb
+// CHECK:STDOUT:     .Impls = imports.%import_ref.e7f
+// CHECK:STDOUT:     .And = imports.%import_ref.45f
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .DoesNotImplI = %DoesNotImplI.decl
@@ -614,7 +614,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.b29 [template = constants.%J.type]
+// CHECK:STDOUT:     %J.ref: type = name_ref J, imports.%import_ref.7c1 [template = constants.%J.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   %DoesNotImplI.decl: %DoesNotImplI.type = fn_decl @DoesNotImplI [template = constants.%DoesNotImplI] {} {}
@@ -624,7 +624,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Y.param: %J_where.type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc26_22.1: type = splice_block %.loc26_22.2 [template = constants.%J_where.type] {
-// CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%import_ref.b29 [template = constants.%J.type]
+// CHECK:STDOUT:       %J.ref: type = name_ref J, imports.%import_ref.7c1 [template = constants.%J.type]
 // CHECK:STDOUT:       %.Self: %J.type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: %J.type = name_ref .Self, %.Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:       %.loc26_38: %empty_struct_type = struct_literal ()
@@ -639,7 +639,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J [from "state_constraints.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.17d
+// CHECK:STDOUT:   .Self = imports.%import_ref.8fd
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -658,7 +658,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DoesNotImplI() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.fcb [template = constants.%Impls]
+// CHECK:STDOUT:   %Impls.ref: %Impls.type = name_ref Impls, imports.%import_ref.e7f [template = constants.%Impls]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %.loc23: %J_where.type = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return

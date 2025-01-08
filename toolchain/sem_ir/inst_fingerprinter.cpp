@@ -34,7 +34,7 @@ struct Worklist {
   auto AddInvalid() -> void { contents.push_back(-1); }
 
   // Add a string to the contents.
-  auto AddString(llvm::StringRef string) {
+  auto AddString(llvm::StringRef string) -> void {
     contents.push_back(llvm::stable_hash_name(string));
   }
 
@@ -65,8 +65,16 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    Add(sem_ir->entity_names().Get(entity_name_id).name_id);
-    // TODO: Should we include the other parts of the entity name?
+    const auto& entity_name = sem_ir->entity_names().Get(entity_name_id);
+    if (entity_name.bind_index.is_valid()) {
+      Add(entity_name.bind_index);
+      // Don't include the name. While it is part of the canonical identity of a
+      // compile-time binding, renaming it (and its uses) is a compatible change
+      // that we would like to not affect the fingerprint.
+    } else {
+      Add(entity_name.name_id);
+    }
+    // TODO: Should we include the parent index?
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -170,9 +178,14 @@ struct Worklist {
 
   auto Add(ImplId impl_id) -> void {
     const auto& impl = sem_ir->impls().Get(impl_id);
-    Add(impl.self_id);
-    Add(impl.constraint_id);
+    Add(sem_ir->constant_values().Get(impl.self_id));
+    Add(sem_ir->constant_values().Get(impl.constraint_id));
     Add(impl.parent_scope_id);
+  }
+
+  auto Add(DeclInstBlockId /*block_id*/) -> void {
+    // Intentionally exclude decl blocks from fingerprinting. Changes to the
+    // decl block don't change the identity of the declaration.
   }
 
   auto Add(FacetTypeId facet_type_id) -> void {
@@ -248,7 +261,7 @@ struct Worklist {
              std::same_as<T, CompileTimeBindIndex> ||
              std::same_as<T, ElementIndex> || std::same_as<T, FloatKind> ||
              std::same_as<T, IntKind> || std::same_as<T, RuntimeParamIndex>)
-  auto Add(T arg) {
+  auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     contents.push_back(arg.index);
   }
@@ -256,7 +269,7 @@ struct Worklist {
   template <typename T>
     requires(std::same_as<T, AnyRawId> || std::same_as<T, ExprRegionId> ||
              std::same_as<T, LocId> || std::same_as<T, RealId>)
-  auto Add(T /*arg*/) {
+  auto Add(T /*arg*/) -> void {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }
 
@@ -319,6 +332,7 @@ struct Worklist {
         Add(inst.type_id());
       }
 
+      // TODO: Exclude the decl block of a declaration.
       AddWithKind(inst.arg0(), arg0_kind);
       AddWithKind(inst.arg1(), arg1_kind);
 

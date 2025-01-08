@@ -330,8 +330,8 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2f0: type = import_ref Main//mix_current_package, C1, loaded [template = constants.%C1]
-// CHECK:STDOUT:   %import_ref.dcf: type = import_ref Main//c2, C2, loaded [template = constants.%C2]
+// CHECK:STDOUT:   %import_ref.0d9: type = import_ref Main//mix_current_package, C1, loaded [template = constants.%C1]
+// CHECK:STDOUT:   %import_ref.09c: type = import_ref Main//c2, C2, loaded [template = constants.%C2]
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//c1, loc4_11, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//c2, loc4_11, loaded [template = constants.%complete_type]
@@ -340,8 +340,8 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = imports.%import_ref.2f0
-// CHECK:STDOUT:     .C2 = imports.%import_ref.dcf
+// CHECK:STDOUT:     .C1 = imports.%import_ref.0d9
+// CHECK:STDOUT:     .C2 = imports.%import_ref.09c
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:     .c2 = %c2
 // CHECK:STDOUT:   }
@@ -401,14 +401,14 @@ import Other library "o1";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.2f0: type = import_ref Main//dup_c1, C1, loaded [template = constants.%C1]
+// CHECK:STDOUT:   %import_ref.0d9: type = import_ref Main//dup_c1, C1, loaded [template = constants.%C1]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//c1, loc4_11, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.eb7 = import_ref Main//c1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C1 = imports.%import_ref.2f0
+// CHECK:STDOUT:     .C1 = imports.%import_ref.0d9
 // CHECK:STDOUT:     .c1 = %c1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
@@ -437,7 +437,7 @@ import Other library "o1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.d58: <namespace> = import_ref Main//ns, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.d58, [template] {
-// CHECK:STDOUT:     .C = %import_ref.3c0
+// CHECK:STDOUT:     .C = %import_ref.50d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -460,7 +460,7 @@ import Other library "o1";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.0f6: <namespace> = import_ref Main//use_ns, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.0f6, [template] {
-// CHECK:STDOUT:     .C = %import_ref.a76
+// CHECK:STDOUT:     .C = %import_ref.1c4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//ns, loc5_13, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2dd = import_ref Main//ns, inst15 [no loc], unloaded
@@ -520,8 +520,8 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .O1 = %import_ref.136
-// CHECK:STDOUT:     .O2 = %import_ref.f3b
+// CHECK:STDOUT:     .O1 = %import_ref.880
+// CHECK:STDOUT:     .O2 = %import_ref.328
 // CHECK:STDOUT:     import Other//o2
 // CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
@@ -597,7 +597,7 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .O1 = %import_ref.136
+// CHECK:STDOUT:     .O1 = %import_ref.880
 // CHECK:STDOUT:     import Other//o1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Other//o1, loc4_11, loaded [template = constants.%complete_type]

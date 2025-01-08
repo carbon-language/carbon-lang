@@ -18,8 +18,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'tuple.carbon'
 // CHECK:STDOUT: source_filename = "tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.3ea.loc12_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
-// CHECK:STDOUT: @tuple.654.loc13_29 = internal constant { i32, i32 } { i32 4, i32 5 }
+// CHECK:STDOUT: @tuple.ee6.loc12_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
+// CHECK:STDOUT: @tuple.0a0.loc13_29 = internal constant { i32, i32 } { i32 4, i32 5 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -29,11 +29,11 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %tuple.elem0.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   %tuple.elem2.loc12.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.3ea.loc12_37, i64 12, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.ee6.loc12_37, i64 12, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %b.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %tuple.elem1.loc13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.654.loc13_29, i64 8, i1 false), !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.0a0.loc13_29, i64 8, i1 false), !dbg !11
 // CHECK:STDOUT:   %tuple.elem0.loc14_43.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc14_43.1 = load i32, ptr %tuple.elem0.loc14_43.tuple.elem, align 4, !dbg !12
 // CHECK:STDOUT:   %tuple.elem1.loc14_43.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !12

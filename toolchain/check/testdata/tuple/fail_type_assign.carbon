@@ -22,13 +22,13 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [template]
-// CHECK:STDOUT:   %tuple.type.0e4: type = tuple_type (%i32) [template]
+// CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -40,8 +40,8 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %x.var: ref %tuple.type.0e4 = var x
-// CHECK:STDOUT:   %x: ref %tuple.type.0e4 = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var x
+// CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

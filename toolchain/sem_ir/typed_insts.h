@@ -486,7 +486,7 @@ struct ClassDecl {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // Access to a member of a class, such as `base.index`. This provides a
@@ -728,7 +728,7 @@ struct FunctionDecl {
   FunctionId function_id;
   // The declaration block, containing the function declaration's parameters and
   // their types.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // The type of a function.
@@ -785,7 +785,7 @@ struct ImplDecl {
   ImplId impl_id;
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // A witness that a type implements an interface.
@@ -885,7 +885,7 @@ struct InterfaceDecl {
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // A literal integer value.

@@ -84,7 +84,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %import_ref.a99: ref <error> = import_ref Implicit//default, c_ref, loaded
 // CHECK:STDOUT:   %import_ref.9a8: ref <error> = import_ref Implicit//default, d_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

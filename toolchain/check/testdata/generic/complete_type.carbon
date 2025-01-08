@@ -83,15 +83,15 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %A.619: type = class_type @A, @A(%T) [symbolic]
+// CHECK:STDOUT:   %A.130: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %A.elem.78a: type = unbound_element_type %A.619, %T [symbolic]
-// CHECK:STDOUT:   %struct_type.v.65f: type = struct_type {.v: %T} [symbolic]
-// CHECK:STDOUT:   %complete_type.5c5: <witness> = complete_type_witness %struct_type.v.65f [symbolic]
-// CHECK:STDOUT:   %A.ffe: type = class_type @A, @A(%B) [template]
+// CHECK:STDOUT:   %A.elem.1ce: type = unbound_element_type %A.130, %T [symbolic]
+// CHECK:STDOUT:   %struct_type.v.ff1: type = struct_type {.v: %T} [symbolic]
+// CHECK:STDOUT:   %complete_type.460: <witness> = complete_type_witness %struct_type.v.ff1 [symbolic]
+// CHECK:STDOUT:   %A.1d4: type = class_type @A, @A(%B) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %A.elem.853: type = unbound_element_type %A.ffe, %B [template]
+// CHECK:STDOUT:   %A.elem.4ce: type = unbound_element_type %A.1d4, %B [template]
 // CHECK:STDOUT:   %struct_type.v.d45: type = struct_type {.v: %B} [template]
 // CHECK:STDOUT:   %complete_type.1df: <witness> = complete_type_witness %struct_type.v.d45 [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -122,16 +122,16 @@ fn G() { F(B); }
 // CHECK:STDOUT:     %T.loc6_9.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %A.ffe = binding_pattern x
-// CHECK:STDOUT:     %x.param_patt: %A.ffe = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:     %x.patt: %A.1d4 = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: %A.1d4 = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param: %A.ffe = value_param runtime_param0
-// CHECK:STDOUT:     %.loc27: type = splice_block %A [template = constants.%A.ffe] {
+// CHECK:STDOUT:     %x.param: %A.1d4 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc27: type = splice_block %A [template = constants.%A.1d4] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [template = constants.%A.generic]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [template = constants.%B]
-// CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [template = constants.%A.ffe]
+// CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [template = constants.%A.1d4]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %A.ffe = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %A.1d4 = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [template = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -150,23 +150,23 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @A.%T.loc6_9.2 (%T) [symbolic = %require_complete (constants.%require_complete)]
-// CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.619)]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.619), @A.%T.loc6_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.78a)]
-// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.65f)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.65f) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.5c5)]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_9.2) [symbolic = %A (constants.%A.130)]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type @A.%A (%A.130), @A.%T.loc6_9.2 (%T) [symbolic = %A.elem (constants.%A.elem.1ce)]
+// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_9.2 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.ff1)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness @A.%struct_type.v (%struct_type.v.ff1) [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.78a) = field_decl v, element0 [template]
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.65f [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.5c5)]
+// CHECK:STDOUT:     %.loc13: @A.%A.elem (%A.elem.1ce) = field_decl v, element0 [template]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.v.ff1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.460)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%A.619
+// CHECK:STDOUT:     .Self = constants.%A.130
 // CHECK:STDOUT:     .v = %.loc13
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param_patt: %A.ffe) {
+// CHECK:STDOUT: fn @F(%x.param_patt: %A.1d4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -184,8 +184,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %A => constants.%A.ffe
-// CHECK:STDOUT:   %A.elem => constants.%A.elem.853
+// CHECK:STDOUT:   %A => constants.%A.1d4
+// CHECK:STDOUT:   %A.elem => constants.%A.elem.4ce
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.d45
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type.1df
 // CHECK:STDOUT: }

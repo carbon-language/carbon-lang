@@ -89,15 +89,15 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Equal.type.91b: type = fn_type @Equal.1 [template]
-// CHECK:STDOUT:   %NotEqual.type.d35: type = fn_type @NotEqual.1 [template]
+// CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %NotEqual.type.e6c: type = fn_type @NotEqual.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type.e09: type = fn_type @Equal.2 [template]
-// CHECK:STDOUT:   %Equal.960: %Equal.type.e09 = struct_value () [template]
-// CHECK:STDOUT:   %NotEqual.type.3bf: type = fn_type @NotEqual.2 [template]
-// CHECK:STDOUT:   %NotEqual.ba6: %NotEqual.type.3bf = struct_value () [template]
+// CHECK:STDOUT:   %Equal.type.b4a: type = fn_type @Equal.2 [template]
+// CHECK:STDOUT:   %Equal.f96: %Equal.type.b4a = struct_value () [template]
+// CHECK:STDOUT:   %NotEqual.type.a7d: type = fn_type @NotEqual.2 [template]
+// CHECK:STDOUT:   %NotEqual.c3f: %NotEqual.type.a7d = struct_value () [template]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [template]
 // CHECK:STDOUT:   %TestEqual: %TestEqual.type = struct_value () [template]
 // CHECK:STDOUT:   %TestNotEqual.type: type = fn_type @TestNotEqual [template]
@@ -106,12 +106,12 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Eq = %import_ref.32e
-// CHECK:STDOUT:     .Bool = %import_ref.f7c
+// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %import_ref.783
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.32e: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
+// CHECK:STDOUT:   %import_ref.822: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -126,7 +126,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.32e [template = constants.%Eq.type]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.822 [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [template = constants.%TestEqual] {
@@ -172,7 +172,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Eq.ref {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.e09 = fn_decl @Equal.2 [template = constants.%Equal.960] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.b4a = fn_decl @Equal.2 [template = constants.%Equal.f96] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -192,7 +192,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.3bf = fn_decl @NotEqual.2 [template = constants.%NotEqual.ba6] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.a7d = fn_decl @NotEqual.2 [template = constants.%NotEqual.c3f] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -235,7 +235,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %Equal.type.91b = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.960]
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
 // CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc12_16.1: bool = value_of_initializer %Equal.call
@@ -247,7 +247,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %NotEqual.type.d35 = impl_witness_access constants.%impl_witness, element1 [template = constants.%NotEqual.ba6]
+// CHECK:STDOUT:   %impl.elem1: %NotEqual.type.e6c = impl_witness_access constants.%impl_witness, element1 [template = constants.%NotEqual.c3f]
 // CHECK:STDOUT:   %NotEqual.bound: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %NotEqual.call: init bool = call %NotEqual.bound(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc16_16.1: bool = value_of_initializer %NotEqual.call
@@ -271,8 +271,8 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.f7c
-// CHECK:STDOUT:     .Eq = %import_ref.32e
+// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .Eq = %import_ref.822
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -359,14 +359,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %Eq.type: type = facet_type <@Eq> [template]
-// CHECK:STDOUT:   %Equal.type.91b: type = fn_type @Equal.1 [template]
+// CHECK:STDOUT:   %Equal.type.79c: type = fn_type @Equal.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT:   %Equal.type.e09: type = fn_type @Equal.2 [template]
-// CHECK:STDOUT:   %Equal.960: %Equal.type.e09 = struct_value () [template]
-// CHECK:STDOUT:   %NotEqual.type.3bf: type = fn_type @NotEqual.2 [template]
-// CHECK:STDOUT:   %NotEqual.ba6: %NotEqual.type.3bf = struct_value () [template]
+// CHECK:STDOUT:   %Equal.type.b4a: type = fn_type @Equal.2 [template]
+// CHECK:STDOUT:   %Equal.f96: %Equal.type.b4a = struct_value () [template]
+// CHECK:STDOUT:   %NotEqual.type.a7d: type = fn_type @NotEqual.2 [template]
+// CHECK:STDOUT:   %NotEqual.c3f: %NotEqual.type.a7d = struct_value () [template]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [template]
 // CHECK:STDOUT:   %TestRhsBad: %TestRhsBad.type = struct_value () [template]
 // CHECK:STDOUT:   %TestLhsBad.type: type = fn_type @TestLhsBad [template]
@@ -375,13 +375,13 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Eq = %import_ref.32e
-// CHECK:STDOUT:     .Bool = %import_ref.f7c
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Eq = %import_ref.822
+// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.32e: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
+// CHECK:STDOUT:   %import_ref.822: type = import_ref Core//prelude/operators/comparison, Eq, loaded [template = constants.%Eq.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -398,7 +398,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.32e [template = constants.%Eq.type]
+// CHECK:STDOUT:     %Eq.ref: type = name_ref Eq, imports.%import_ref.822 [template = constants.%Eq.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Equal.decl, @impl.1.%NotEqual.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [template = constants.%TestRhsBad] {
@@ -444,7 +444,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Eq.ref {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.e09 = fn_decl @Equal.2 [template = constants.%Equal.960] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.b4a = fn_decl @Equal.2 [template = constants.%Equal.f96] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -464,7 +464,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.3bf = fn_decl @NotEqual.2 [template = constants.%NotEqual.ba6] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.a7d = fn_decl @NotEqual.2 [template = constants.%NotEqual.c3f] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %other.patt: %C = binding_pattern other
@@ -515,7 +515,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %Equal.type.91b = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.960]
+// CHECK:STDOUT:   %impl.elem0: %Equal.type.79c = impl_witness_access constants.%impl_witness, element0 [template = constants.%Equal.f96]
 // CHECK:STDOUT:   %Equal.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23_15: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Equal.call: init bool = call %Equal.bound(%a.ref, <error>)

@@ -63,8 +63,8 @@ interface BeingDefined {
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %H.assoc_type: type = assoc_entity_type %BeingDefined.type, %H.type [template]
 // CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, @BeingDefined.%H.decl [template]
-// CHECK:STDOUT:   %.type.bee: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.b15: %.type.bee = struct_value () [template]
+// CHECK:STDOUT:   %.type.5fb: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.b15: %.type.5fb = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,7 +93,7 @@ interface BeingDefined {
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %H.assoc_type = assoc_entity element0, %H.decl [template = constants.%assoc0]
-// CHECK:STDOUT:   %.decl: %.type.bee = fn_decl @.2 [template = constants.%.b15] {} {}
+// CHECK:STDOUT:   %.decl: %.type.5fb = fn_decl @.2 [template = constants.%.b15] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

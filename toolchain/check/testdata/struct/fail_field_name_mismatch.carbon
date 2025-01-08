@@ -27,12 +27,12 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [template]
-// CHECK:STDOUT:   %struct_type.b.fc0: type = struct_type {.b: %i32} [template]
+// CHECK:STDOUT:   %struct_type.b.0a3: type = struct_type {.b: %i32} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -47,8 +47,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var x
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var
-// CHECK:STDOUT:   %y.var: ref %struct_type.b.fc0 = var y
-// CHECK:STDOUT:   %y: ref %struct_type.b.fc0 = bind_name y, %y.var
+// CHECK:STDOUT:   %y.var: ref %struct_type.b.0a3 = var y
+// CHECK:STDOUT:   %y: ref %struct_type.b.0a3 = bind_name y, %y.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

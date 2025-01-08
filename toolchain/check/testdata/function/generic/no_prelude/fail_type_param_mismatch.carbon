@@ -26,8 +26,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
-// CHECK:STDOUT:   %require_complete.968: <witness> = require_complete_type %ptr [symbolic]
-// CHECK:STDOUT:   %require_complete.427: <witness> = require_complete_type %U [symbolic]
+// CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr [symbolic]
+// CHECK:STDOUT:   %require_complete.b54: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -55,8 +55,8 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr (constants.%ptr)]
-// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.968)]
-// CHECK:STDOUT:   %require_complete.loc16: <witness> = require_complete_type @F.%U.loc11_16.2 (%U) [symbolic = %require_complete.loc16 (constants.%require_complete.427)]
+// CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete.loc16: <witness> = require_complete_type @F.%U.loc11_16.2 (%U) [symbolic = %require_complete.loc16 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: type) {
 // CHECK:STDOUT:   !entry:

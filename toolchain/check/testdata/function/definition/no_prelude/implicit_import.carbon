@@ -352,14 +352,14 @@ fn B() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.f82 = import_ref Main//def_alias, A, unloaded
-// CHECK:STDOUT:   %import_ref.e1b: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.0c3 = import_ref Main//def_alias, A, unloaded
+// CHECK:STDOUT:   %import_ref.9d1: %A.type = import_ref Main//def_alias, B, loaded [template = constants.%A]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.f82
-// CHECK:STDOUT:     .B = imports.%import_ref.e1b
+// CHECK:STDOUT:     .A = imports.%import_ref.0c3
+// CHECK:STDOUT:     .B = imports.%import_ref.9d1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>

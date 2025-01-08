@@ -39,9 +39,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [template]
-// CHECK:STDOUT:   %F.type.945: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.ffd: %F.type.945 = struct_value () [template]
+// CHECK:STDOUT:   %F.1f2: %F.type.f1b = struct_value () [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -84,7 +84,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type.945 = fn_decl @F.1 [template = constants.%F.ffd] {
+// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [template = constants.%F.1f2] {
 // CHECK:STDOUT:     %self.patt: %ptr.e71 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.e71 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
@@ -120,7 +120,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: fn @F.2(%c.param_patt: %Class, %p.param_patt: %ptr.e71) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref.loc27: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc27: %F.type.945 = name_ref F, @Class.%F.decl [template = constants.%F.ffd]
+// CHECK:STDOUT:   %F.ref.loc27: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
 // CHECK:STDOUT:   %F.bound.loc27: <bound method> = bound_method %c.ref.loc27, %F.ref.loc27
 // CHECK:STDOUT:   %F.call.loc27: init %empty_tuple.type = call %F.bound.loc27(<error>)
 // CHECK:STDOUT:   %c.ref.loc29: %Class = name_ref c, %c
@@ -129,7 +129,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.call.loc29: init %empty_tuple.type = call %G.bound.loc29(%c.ref.loc29)
 // CHECK:STDOUT:   %p.ref.loc32: %ptr.e71 = name_ref p, %p
 // CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref.loc32
-// CHECK:STDOUT:   %F.ref.loc32: %F.type.945 = name_ref F, @Class.%F.decl [template = constants.%F.ffd]
+// CHECK:STDOUT:   %F.ref.loc32: %F.type.f1b = name_ref F, @Class.%F.decl [template = constants.%F.1f2]
 // CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc32
 // CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr)

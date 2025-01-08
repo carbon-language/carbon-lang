@@ -91,10 +91,10 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.503: <namespace> = import_ref Other//a, NS1, loaded
 // CHECK:STDOUT:   %NS1: <namespace> = namespace %import_ref.503, [template] {
-// CHECK:STDOUT:     .A = %import_ref.ca7
+// CHECK:STDOUT:     .A = %import_ref.257
 // CHECK:STDOUT:     .B = file.%B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.ca7: type = import_ref Other//a, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.257: type = import_ref Other//a, A, loaded [template = constants.%A]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -112,7 +112,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS1: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.ca7
+// CHECK:STDOUT:     .A = imports.%import_ref.257
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
@@ -121,7 +121,7 @@ fn Run() {
 // CHECK:STDOUT:     %return.param_patt: %A = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1 [template = imports.%NS1]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.ca7 [template = constants.%A]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.257 [template = constants.%A]
 // CHECK:STDOUT:     %return.param: ref %A = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %A = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -167,12 +167,12 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.097
+// CHECK:STDOUT:     .F = %import_ref.f04
 // CHECK:STDOUT:     .NS1 = %NS1
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.097: %F.type = import_ref Other//b, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.f04: %F.type = import_ref Other//b, F, loaded [template = constants.%F]
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Other//b, inst28 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.bbd = import_ref Other//b, inst29 [indirect], unloaded
 // CHECK:STDOUT: }
@@ -197,7 +197,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.097 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%import_ref.f04 [template = constants.%F]
 // CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
 // CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
@@ -205,7 +205,7 @@ fn Run() {
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %A = name_ref a, %a
 // CHECK:STDOUT:   %Other.ref.loc13: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%import_ref.097 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%import_ref.f04 [template = constants.%F]
 // CHECK:STDOUT:   %.loc13: ref %A = splice_block %a.ref {}
 // CHECK:STDOUT:   %F.call.loc13: init %A = call %F.ref.loc13() to %.loc13
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13

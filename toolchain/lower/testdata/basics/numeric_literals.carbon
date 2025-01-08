@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'numeric_literals.carbon'
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.e55.loc19_4 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
+// CHECK:STDOUT: @array.712.loc19_4 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
 // CHECK:STDOUT: @array.a2f.loc27_4 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
@@ -42,7 +42,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 1, !dbg !8
 // CHECK:STDOUT:   %.loc19_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 2, !dbg !8
 // CHECK:STDOUT:   %.loc19_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 3, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.e55.loc19_4, i64 16, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.712.loc19_4, i64 16, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 48, ptr %floats.var), !dbg !7
 // CHECK:STDOUT:   %.loc27_3.2.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 0, !dbg !10
 // CHECK:STDOUT:   %.loc27_3.4.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 1, !dbg !10

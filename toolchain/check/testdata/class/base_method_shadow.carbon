@@ -38,23 +38,23 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [template]
-// CHECK:STDOUT:   %F.type.76a: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.type.649: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.a9f: %F.type.76a = struct_value () [template]
+// CHECK:STDOUT:   %F.485: %F.type.649 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [template]
-// CHECK:STDOUT:   %F.type.e92: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.d7d: %F.type.e92 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.8c6: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.92a: %F.type.8c6 = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.953: type = struct_type {.base: %A} [template]
 // CHECK:STDOUT:   %complete_type.020: <witness> = complete_type_witness %struct_type.base.953 [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %B [template]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [template]
-// CHECK:STDOUT:   %F.type.675: type = fn_type @F.3 [template]
-// CHECK:STDOUT:   %F.2c9: %F.type.675 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.c29: type = fn_type @F.3 [template]
+// CHECK:STDOUT:   %F.437: %F.type.c29 = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.0ff: type = struct_type {.base: %B} [template]
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
@@ -123,7 +123,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F.decl: %F.type.76a = fn_decl @F.1 [template = constants.%F.a9f] {
+// CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [template = constants.%F.485] {
 // CHECK:STDOUT:     %self.patt: %ptr.6db = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.6db = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc12_8: auto = addr_pattern %self.param_patt
@@ -146,7 +146,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.e92 = fn_decl @F.2 [template = constants.%F.d7d] {
+// CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.2 [template = constants.%F.92a] {
 // CHECK:STDOUT:     %self.patt: %ptr.e79 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.e79 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc17_8: auto = addr_pattern %self.param_patt
@@ -171,7 +171,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %.loc21: %C.elem = base_decl %B.ref, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.675 = fn_decl @F.3 [template = constants.%F.2c9] {
+// CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [template = constants.%F.437] {
 // CHECK:STDOUT:     %self.patt: %ptr.019 = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.019 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc22_8: auto = addr_pattern %self.param_patt
@@ -215,25 +215,25 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.6db = name_ref a, %a
 // CHECK:STDOUT:   %.loc30: ref %A = deref %a.ref
-// CHECK:STDOUT:   %F.ref.loc30: %F.type.76a = name_ref F, @A.%F.decl [template = constants.%F.a9f]
+// CHECK:STDOUT:   %F.ref.loc30: %F.type.649 = name_ref F, @A.%F.decl [template = constants.%F.485]
 // CHECK:STDOUT:   %F.bound.loc30: <bound method> = bound_method %.loc30, %F.ref.loc30
 // CHECK:STDOUT:   %addr.loc30: %ptr.6db = addr_of %.loc30
 // CHECK:STDOUT:   %F.call.loc30: init %empty_tuple.type = call %F.bound.loc30(%addr.loc30)
 // CHECK:STDOUT:   %b.ref: %ptr.e79 = name_ref b, %b
 // CHECK:STDOUT:   %.loc31: ref %B = deref %b.ref
-// CHECK:STDOUT:   %F.ref.loc31: %F.type.e92 = name_ref F, @B.%F.decl [template = constants.%F.d7d]
+// CHECK:STDOUT:   %F.ref.loc31: %F.type.8c6 = name_ref F, @B.%F.decl [template = constants.%F.92a]
 // CHECK:STDOUT:   %F.bound.loc31: <bound method> = bound_method %.loc31, %F.ref.loc31
 // CHECK:STDOUT:   %addr.loc31: %ptr.e79 = addr_of %.loc31
 // CHECK:STDOUT:   %F.call.loc31: init %empty_tuple.type = call %F.bound.loc31(%addr.loc31)
 // CHECK:STDOUT:   %c.ref: %ptr.019 = name_ref c, %c
 // CHECK:STDOUT:   %.loc32: ref %C = deref %c.ref
-// CHECK:STDOUT:   %F.ref.loc32: %F.type.675 = name_ref F, @C.%F.decl [template = constants.%F.2c9]
+// CHECK:STDOUT:   %F.ref.loc32: %F.type.c29 = name_ref F, @C.%F.decl [template = constants.%F.437]
 // CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
 // CHECK:STDOUT:   %addr.loc32: %ptr.019 = addr_of %.loc32
 // CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32)
 // CHECK:STDOUT:   %d.ref: %ptr.19c = name_ref d, %d
 // CHECK:STDOUT:   %.loc33_4.1: ref %D = deref %d.ref
-// CHECK:STDOUT:   %F.ref.loc33: %F.type.e92 = name_ref F, @B.%F.decl [template = constants.%F.d7d]
+// CHECK:STDOUT:   %F.ref.loc33: %F.type.8c6 = name_ref F, @B.%F.decl [template = constants.%F.92a]
 // CHECK:STDOUT:   %F.bound.loc33: <bound method> = bound_method %.loc33_4.1, %F.ref.loc33
 // CHECK:STDOUT:   %addr.loc33_4.1: %ptr.19c = addr_of %.loc33_4.1
 // CHECK:STDOUT:   %.loc33_4.2: ref %D = deref %addr.loc33_4.1

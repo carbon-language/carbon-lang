@@ -91,8 +91,8 @@ var a: Incomplete;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.b50: type = import_ref Main//a, Empty, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.81e: type = import_ref Main//a, Incomplete, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.e6e: type = import_ref Main//a, Empty, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.9b0: type = import_ref Main//a, Incomplete, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -103,8 +103,8 @@ var a: Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Empty = imports.%import_ref.b50
-// CHECK:STDOUT:     .Incomplete = imports.%import_ref.81e
+// CHECK:STDOUT:     .Empty = imports.%import_ref.e6e
+// CHECK:STDOUT:     .Incomplete = imports.%import_ref.9b0
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
