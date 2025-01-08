@@ -48,25 +48,25 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %Int [symbolic]
+// CHECK:STDOUT:   %require_complete.5cb: <witness> = require_complete_type %Int [symbolic]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64 [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %i64.builtin [template]
+// CHECK:STDOUT:   %complete_type.4a1: <witness> = complete_type_witness %i64.builtin [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_64) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Int = %import_ref.2
+// CHECK:STDOUT:     .IntLiteral = %import_ref.8ee
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Int.type = import_ref Core//prelude/types/int, Int, loaded [template = constants.%Int.generic]
+// CHECK:STDOUT:   %import_ref.8ee: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.187: %Int.type = import_ref Core//prelude/types/int, Int, loaded [template = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -85,14 +85,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref.loc4_48: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc4_52: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref.loc4_52: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc4_64: init type = call %IntLiteral.ref.loc4_52() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %int_literal.make_type.loc4_64 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.2: type = converted %int_literal.make_type.loc4_64, %.loc4_64.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc4_26: init type = call %IntLiteral.ref.loc4_14() [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_26.2: type = value_of_initializer %int_literal.make_type.loc4_26 [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_26.3: type = converted %int_literal.make_type.loc4_26, %.loc4_26.2 [template = Core.IntLiteral]
@@ -101,7 +101,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %n.param: @F.%Int.loc4_42.2 (%Int) = value_param runtime_param0
 // CHECK:STDOUT:     %.loc4_42: type = splice_block %Int.loc4_42.1 [symbolic = %Int.loc4_42.2 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%import_ref.2 [template = constants.%Int.generic]
+// CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%import_ref.187 [template = constants.%Int.generic]
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc4_42.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.2 (constants.%Int)]
 // CHECK:STDOUT:     }
@@ -116,7 +116,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %int_literal.make_type, %.loc8_33.1 [template = Core.IntLiteral]
@@ -137,7 +137,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int.loc4_42.2: type = class_type @Int, @Int(%N.loc4_6.2) [symbolic = %Int.loc4_42.2 (constants.%Int)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Int.loc4_42.2 (%Int) [symbolic = %require_complete (constants.%require_complete.2)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%Int.loc4_42.2 (%Int) [symbolic = %require_complete (constants.%require_complete.5cb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%n.param_patt: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
@@ -169,7 +169,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int.loc4_42.2 => constants.%i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_float.carbon
@@ -190,13 +190,13 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Float = %import_ref.2
+// CHECK:STDOUT:     .IntLiteral = %import_ref.8ee
+// CHECK:STDOUT:     .Float = %import_ref.20b
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
-// CHECK:STDOUT:   %import_ref.2: %Float.type = import_ref Core//prelude/types, Float, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.8ee: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.20b: %Float.type = import_ref Core//prelude/types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -215,14 +215,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref.loc8_50: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref.loc8_54: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref.loc8_54: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type.loc8_66: init type = call %IntLiteral.ref.loc8_54() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_66.1: type = value_of_initializer %int_literal.make_type.loc8_66 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_66.2: type = converted %int_literal.make_type.loc8_66, %.loc8_66.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc8_26.1: type = splice_block %.loc8_26.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref.loc8_10: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref.loc8_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref.loc8_14: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type.loc8_26: init type = call %IntLiteral.ref.loc8_14() [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc8_26.2: type = value_of_initializer %int_literal.make_type.loc8_26 [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc8_26.3: type = converted %int_literal.make_type.loc8_26, %.loc8_26.2 [template = Core.IntLiteral]
@@ -231,7 +231,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %n.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [template = <error>] {
 // CHECK:STDOUT:       %Core.ref.loc8_32: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%import_ref.2 [template = constants.%Float]
+// CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%import_ref.20b [template = constants.%Float]
 // CHECK:STDOUT:       %N.ref.loc8: Core.IntLiteral = name_ref N, %N.loc8_6.1 [symbolic = %N.loc8_6.2 (constants.%N)]
 // CHECK:STDOUT:       %float.make_type: init type = call %Float.ref(%N.ref.loc8)
 // CHECK:STDOUT:       %.loc8_44.1: type = value_of_initializer %float.make_type
@@ -248,7 +248,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %return.param_patt: Core.IntLiteral = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc12_33.1: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc12_33.2: type = converted %int_literal.make_type, %.loc12_33.1 [template = Core.IntLiteral]

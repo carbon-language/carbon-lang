@@ -22,15 +22,15 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %T [symbolic]
+// CHECK:STDOUT:   %ptr.251: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %const: type = const_type %T [symbolic]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%ptr.1, %const) [symbolic]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %tuple.type.2 [symbolic]
+// CHECK:STDOUT:   %tuple.type.e07: type = tuple_type (%ptr.251, %const) [symbolic]
+// CHECK:STDOUT:   %require_complete.21d: <witness> = require_complete_type %tuple.type.e07 [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %struct_type.a [symbolic]
+// CHECK:STDOUT:   %require_complete.96f: <witness> = require_complete_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template]
 // CHECK:STDOUT:   %array_type: type = array_type %int_5, %T [symbolic]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %array_type [symbolic]
+// CHECK:STDOUT:   %require_complete.43b: <witness> = require_complete_type %array_type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -60,19 +60,19 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %T.patt.loc12_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %ptr (constants.%ptr.1)]
+// CHECK:STDOUT:   %ptr: type = ptr_type @F.%T.loc12_6.2 (%T) [symbolic = %ptr (constants.%ptr.251)]
 // CHECK:STDOUT:   %const: type = const_type @F.%T.loc12_6.2 (%T) [symbolic = %const (constants.%const)]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr (%ptr.1), @F.%const (%const)) [symbolic = %tuple.type (constants.%tuple.type.2)]
-// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%tuple.type (%tuple.type.2) [symbolic = %require_complete.loc13 (constants.%require_complete.1)]
+// CHECK:STDOUT:   %tuple.type: type = tuple_type (@F.%ptr (%ptr.251), @F.%const (%const)) [symbolic = %tuple.type (constants.%tuple.type.e07)]
+// CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type @F.%tuple.type (%tuple.type.e07) [symbolic = %require_complete.loc13 (constants.%require_complete.21d)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @F.%T.loc12_6.2 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
-// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @F.%struct_type.a (%struct_type.a) [symbolic = %require_complete.loc14 (constants.%require_complete.2)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type @F.%struct_type.a (%struct_type.a) [symbolic = %require_complete.loc14 (constants.%require_complete.96f)]
 // CHECK:STDOUT:   %array_type: type = array_type constants.%int_5, @F.%T.loc12_6.2 (%T) [symbolic = %array_type (constants.%array_type)]
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type (%array_type) [symbolic = %require_complete.loc15 (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type @F.%array_type (%array_type) [symbolic = %require_complete.loc15 (constants.%require_complete.43b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.2) = var u
-// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.2) = bind_name u, %u.var
+// CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.e07) = var u
+// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.e07) = bind_name u, %u.var
 // CHECK:STDOUT:     %v.var: ref @F.%struct_type.a (%struct_type.a) = var v
 // CHECK:STDOUT:     %v: ref @F.%struct_type.a (%struct_type.a) = bind_name v, %v.var
 // CHECK:STDOUT:     %w.var: ref @F.%array_type (%array_type) = var w

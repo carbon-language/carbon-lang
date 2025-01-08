@@ -95,15 +95,15 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//b, inst15 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.5: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.dcd = import_ref Main//b, B, unloaded
+// CHECK:STDOUT:   %import_ref.a54 = import_ref Main//b, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.e5c: type = import_ref Main//b, loc6_7, loaded [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %import_ref.cc5: type = import_ref Main//b, loc6_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = imports.%import_ref.1
+// CHECK:STDOUT:     .B = imports.%import_ref.dcd
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc1_6.2 = import <invalid>
@@ -111,9 +111,9 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.a54
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.4 as imports.%import_ref.5 [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.e5c as imports.%import_ref.cc5 [from "fail_b.carbon"];
 // CHECK:STDOUT:

@@ -49,15 +49,15 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %B.patt: bool = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%B) [symbolic]
+// CHECK:STDOUT:   %C.a1d: type = class_type @C, @C(%B) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%true) [template]
+// CHECK:STDOUT:   %C.ec9: type = class_type @C, @C(%true) [template]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [template]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%false) [template]
+// CHECK:STDOUT:   %C.9f8: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -124,33 +124,33 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %B.loc6_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc6_9.2 (constants.%B)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [template = constants.%True] {
-// CHECK:STDOUT:     %return.patt: %C.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.2 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C.ec9 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C.ec9 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [template = constants.%C.2]
-// CHECK:STDOUT:     %return.param: ref %C.2 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C.2 = return_slot %return.param
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [template = constants.%C.ec9]
+// CHECK:STDOUT:     %return.param: ref %C.ec9 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C.ec9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %False.decl: %False.type = fn_decl @False [template = constants.%False] {
-// CHECK:STDOUT:     %return.patt: %C.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C.9f8 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C.9f8 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %false: bool = bool_literal false [template = constants.%false]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [template = constants.%C.3]
-// CHECK:STDOUT:     %return.param: ref %C.3 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C.3 = return_slot %return.param
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [template = constants.%C.9f8]
+// CHECK:STDOUT:     %return.param: ref %C.9f8 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C.9f8 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.3 = var a
-// CHECK:STDOUT:   %a: ref %C.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %b.var: ref %C.2 = var b
-// CHECK:STDOUT:   %b: ref %C.2 = bind_name b, %b.var
-// CHECK:STDOUT:   %c.var: ref %C.2 = var c
-// CHECK:STDOUT:   %c: ref %C.2 = bind_name c, %c.var
-// CHECK:STDOUT:   %d.var: ref %C.3 = var d
-// CHECK:STDOUT:   %d: ref %C.3 = bind_name d, %d.var
+// CHECK:STDOUT:   %a.var: ref %C.9f8 = var a
+// CHECK:STDOUT:   %a: ref %C.9f8 = bind_name a, %a.var
+// CHECK:STDOUT:   %b.var: ref %C.ec9 = var b
+// CHECK:STDOUT:   %b: ref %C.ec9 = bind_name b, %b.var
+// CHECK:STDOUT:   %c.var: ref %C.ec9 = var c
+// CHECK:STDOUT:   %c: ref %C.ec9 = bind_name c, %c.var
+// CHECK:STDOUT:   %d.var: ref %C.9f8 = var d
+// CHECK:STDOUT:   %d: ref %C.9f8 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc6_9.1: bool) {
@@ -163,34 +163,34 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.1
+// CHECK:STDOUT:     .Self = constants.%C.a1d
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Neq(%a.param_patt: bool, %b.param_patt: bool) -> bool = "bool.neq";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.2;
+// CHECK:STDOUT: fn @True() -> %C.ec9;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.3;
+// CHECK:STDOUT: fn @False() -> %C.9f8;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc11: %False.type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   %.loc11: ref %C.3 = splice_block file.%a.var {}
-// CHECK:STDOUT:   %False.call.loc11: init %C.3 = call %False.ref.loc11() to %.loc11
+// CHECK:STDOUT:   %.loc11: ref %C.9f8 = splice_block file.%a.var {}
+// CHECK:STDOUT:   %False.call.loc11: init %C.9f8 = call %False.ref.loc11() to %.loc11
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc11
 // CHECK:STDOUT:   %True.ref.loc12: %True.type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   %.loc12: ref %C.2 = splice_block file.%b.var {}
-// CHECK:STDOUT:   %True.call.loc12: init %C.2 = call %True.ref.loc12() to %.loc12
+// CHECK:STDOUT:   %.loc12: ref %C.ec9 = splice_block file.%b.var {}
+// CHECK:STDOUT:   %True.call.loc12: init %C.ec9 = call %True.ref.loc12() to %.loc12
 // CHECK:STDOUT:   assign file.%b.var, %True.call.loc12
 // CHECK:STDOUT:   %True.ref.loc13: %True.type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   %.loc13: ref %C.2 = splice_block file.%c.var {}
-// CHECK:STDOUT:   %True.call.loc13: init %C.2 = call %True.ref.loc13() to %.loc13
+// CHECK:STDOUT:   %.loc13: ref %C.ec9 = splice_block file.%c.var {}
+// CHECK:STDOUT:   %True.call.loc13: init %C.ec9 = call %True.ref.loc13() to %.loc13
 // CHECK:STDOUT:   assign file.%c.var, %True.call.loc13
 // CHECK:STDOUT:   %False.ref.loc14: %False.type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   %.loc14: ref %C.3 = splice_block file.%d.var {}
-// CHECK:STDOUT:   %False.call.loc14: init %C.3 = call %False.ref.loc14() to %.loc14
+// CHECK:STDOUT:   %.loc14: ref %C.9f8 = splice_block file.%d.var {}
+// CHECK:STDOUT:   %False.call.loc14: init %C.9f8 = call %False.ref.loc14() to %.loc14
 // CHECK:STDOUT:   assign file.%d.var, %False.call.loc14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -223,23 +223,23 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %B.patt: bool = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.1: type = class_type @C, @C(%B) [symbolic]
+// CHECK:STDOUT:   %C.a1d: type = class_type @C, @C(%B) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %C.2: type = class_type @C, @C(%true) [template]
+// CHECK:STDOUT:   %C.ec9: type = class_type @C, @C(%true) [template]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [template]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
-// CHECK:STDOUT:   %C.3: type = class_type @C, @C(%false) [template]
+// CHECK:STDOUT:   %C.9f8: type = class_type @C, @C(%false) [template]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [template]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.1
-// CHECK:STDOUT:     .Eq = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.f7c
+// CHECK:STDOUT:     .Eq = %import_ref.32e
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -270,33 +270,33 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %B.loc4_9.1: bool = bind_symbolic_name B, 0, %B.param [symbolic = %B.loc4_9.2 (constants.%B)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %True.decl: %True.type = fn_decl @True [template = constants.%True] {
-// CHECK:STDOUT:     %return.patt: %C.2 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.2 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C.ec9 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C.ec9 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %true: bool = bool_literal true [template = constants.%true]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [template = constants.%C.2]
-// CHECK:STDOUT:     %return.param: ref %C.2 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C.2 = return_slot %return.param
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%true) [template = constants.%C.ec9]
+// CHECK:STDOUT:     %return.param: ref %C.ec9 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C.ec9 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %False.decl: %False.type = fn_decl @False [template = constants.%False] {
-// CHECK:STDOUT:     %return.patt: %C.3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %C.3 = out_param_pattern %return.patt, runtime_param0
+// CHECK:STDOUT:     %return.patt: %C.9f8 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %C.9f8 = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:     %false: bool = bool_literal false [template = constants.%false]
-// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [template = constants.%C.3]
-// CHECK:STDOUT:     %return.param: ref %C.3 = out_param runtime_param0
-// CHECK:STDOUT:     %return: ref %C.3 = return_slot %return.param
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%false) [template = constants.%C.9f8]
+// CHECK:STDOUT:     %return.param: ref %C.9f8 = out_param runtime_param0
+// CHECK:STDOUT:     %return: ref %C.9f8 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.3 = var a
-// CHECK:STDOUT:   %a: ref %C.3 = bind_name a, %a.var
-// CHECK:STDOUT:   %b.var: ref %C.2 = var b
-// CHECK:STDOUT:   %b: ref %C.2 = bind_name b, %b.var
-// CHECK:STDOUT:   %c.var: ref %C.2 = var c
-// CHECK:STDOUT:   %c: ref %C.2 = bind_name c, %c.var
-// CHECK:STDOUT:   %d.var: ref %C.3 = var d
-// CHECK:STDOUT:   %d: ref %C.3 = bind_name d, %d.var
+// CHECK:STDOUT:   %a.var: ref %C.9f8 = var a
+// CHECK:STDOUT:   %a: ref %C.9f8 = bind_name a, %a.var
+// CHECK:STDOUT:   %b.var: ref %C.ec9 = var b
+// CHECK:STDOUT:   %b: ref %C.ec9 = bind_name b, %b.var
+// CHECK:STDOUT:   %c.var: ref %C.ec9 = var c
+// CHECK:STDOUT:   %c: ref %C.ec9 = bind_name c, %c.var
+// CHECK:STDOUT:   %d.var: ref %C.9f8 = var d
+// CHECK:STDOUT:   %d: ref %C.9f8 = bind_name d, %d.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%B.loc4_9.1: bool) {
@@ -309,32 +309,32 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.1
+// CHECK:STDOUT:     .Self = constants.%C.a1d
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @True() -> %C.2;
+// CHECK:STDOUT: fn @True() -> %C.ec9;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @False() -> %C.3;
+// CHECK:STDOUT: fn @False() -> %C.9f8;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %False.ref.loc9: %False.type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   %.loc9: ref %C.3 = splice_block file.%a.var {}
-// CHECK:STDOUT:   %False.call.loc9: init %C.3 = call %False.ref.loc9() to %.loc9
+// CHECK:STDOUT:   %.loc9: ref %C.9f8 = splice_block file.%a.var {}
+// CHECK:STDOUT:   %False.call.loc9: init %C.9f8 = call %False.ref.loc9() to %.loc9
 // CHECK:STDOUT:   assign file.%a.var, %False.call.loc9
 // CHECK:STDOUT:   %True.ref.loc10: %True.type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   %.loc10: ref %C.2 = splice_block file.%b.var {}
-// CHECK:STDOUT:   %True.call.loc10: init %C.2 = call %True.ref.loc10() to %.loc10
+// CHECK:STDOUT:   %.loc10: ref %C.ec9 = splice_block file.%b.var {}
+// CHECK:STDOUT:   %True.call.loc10: init %C.ec9 = call %True.ref.loc10() to %.loc10
 // CHECK:STDOUT:   assign file.%b.var, %True.call.loc10
 // CHECK:STDOUT:   %True.ref.loc11: %True.type = name_ref True, file.%True.decl [template = constants.%True]
-// CHECK:STDOUT:   %.loc11: ref %C.2 = splice_block file.%c.var {}
-// CHECK:STDOUT:   %True.call.loc11: init %C.2 = call %True.ref.loc11() to %.loc11
+// CHECK:STDOUT:   %.loc11: ref %C.ec9 = splice_block file.%c.var {}
+// CHECK:STDOUT:   %True.call.loc11: init %C.ec9 = call %True.ref.loc11() to %.loc11
 // CHECK:STDOUT:   assign file.%c.var, %True.call.loc11
 // CHECK:STDOUT:   %False.ref.loc12: %False.type = name_ref False, file.%False.decl [template = constants.%False]
-// CHECK:STDOUT:   %.loc12: ref %C.3 = splice_block file.%d.var {}
-// CHECK:STDOUT:   %False.call.loc12: init %C.3 = call %False.ref.loc12() to %.loc12
+// CHECK:STDOUT:   %.loc12: ref %C.9f8 = splice_block file.%d.var {}
+// CHECK:STDOUT:   %False.call.loc12: init %C.9f8 = call %False.ref.loc12() to %.loc12
 // CHECK:STDOUT:   assign file.%d.var, %False.call.loc12
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

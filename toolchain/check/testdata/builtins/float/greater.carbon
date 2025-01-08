@@ -46,20 +46,20 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %False: type = class_type @False [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 1 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %float.f4e: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.be3: f64 = float_literal 2 [template]
 // CHECK:STDOUT:   %false: bool = bool_literal false [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 0 [template]
+// CHECK:STDOUT:   %float.555: f64 = float_literal 0 [template]
 // CHECK:STDOUT:   %true: bool = bool_literal true [template]
-// CHECK:STDOUT:   %float.4: f64 = float_literal -1 [template]
+// CHECK:STDOUT:   %float.f51: f64 = float_literal -1 [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     .Float = %import_ref.20b
+// CHECK:STDOUT:     .Bool = %import_ref.f7c
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -198,8 +198,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false_.ref.loc9: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Greater.ref.loc9: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
-// CHECK:STDOUT:   %float.loc9_25: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc9_30: f64 = float_literal 2 [template = constants.%float.2]
+// CHECK:STDOUT:   %float.loc9_25: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc9_30: f64 = float_literal 2 [template = constants.%float.be3]
 // CHECK:STDOUT:   %float.greater.loc9: init bool = call %Greater.ref.loc9(%float.loc9_25, %float.loc9_30) [template = constants.%false]
 // CHECK:STDOUT:   %.loc9_14.1: bool = value_of_initializer %float.greater.loc9 [template = constants.%false]
 // CHECK:STDOUT:   %.loc9_14.2: bool = converted %float.greater.loc9, %.loc9_14.1 [template = constants.%false]
@@ -217,8 +217,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc9_14.3: type = block_arg !if.expr.result.loc9 [template = constants.%False]
 // CHECK:STDOUT:   %false_.ref.loc10: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Greater.ref.loc10: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
-// CHECK:STDOUT:   %float.loc10_25: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc10_30: f64 = float_literal 1 [template = constants.%float.1]
+// CHECK:STDOUT:   %float.loc10_25: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc10_30: f64 = float_literal 1 [template = constants.%float.f4e]
 // CHECK:STDOUT:   %float.greater.loc10: init bool = call %Greater.ref.loc10(%float.loc10_25, %float.loc10_30) [template = constants.%false]
 // CHECK:STDOUT:   %.loc10_14.1: bool = value_of_initializer %float.greater.loc10 [template = constants.%false]
 // CHECK:STDOUT:   %.loc10_14.2: bool = converted %float.greater.loc10, %.loc10_14.1 [template = constants.%false]
@@ -236,8 +236,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc10_14.3: type = block_arg !if.expr.result.loc10 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc11: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Greater.ref.loc11: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
-// CHECK:STDOUT:   %float.loc11_24: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc11_29: f64 = float_literal 0 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc11_24: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.loc11_29: f64 = float_literal 0 [template = constants.%float.555]
 // CHECK:STDOUT:   %float.greater.loc11: init bool = call %Greater.ref.loc11(%float.loc11_24, %float.loc11_29) [template = constants.%true]
 // CHECK:STDOUT:   %.loc11_13.1: bool = value_of_initializer %float.greater.loc11 [template = constants.%true]
 // CHECK:STDOUT:   %.loc11_13.2: bool = converted %float.greater.loc11, %.loc11_13.1 [template = constants.%true]
@@ -256,11 +256,11 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %false_.ref.loc12: %False = name_ref false_, %false_
 // CHECK:STDOUT:   %Greater.ref.loc12: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
 // CHECK:STDOUT:   %Negate.ref.loc12: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %float.loc12_32: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.negate.loc12: init f64 = call %Negate.ref.loc12(%float.loc12_32) [template = constants.%float.4]
-// CHECK:STDOUT:   %float.loc12_38: f64 = float_literal 0 [template = constants.%float.3]
-// CHECK:STDOUT:   %.loc12_35.1: f64 = value_of_initializer %float.negate.loc12 [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc12_35.2: f64 = converted %float.negate.loc12, %.loc12_35.1 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc12_32: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.negate.loc12: init f64 = call %Negate.ref.loc12(%float.loc12_32) [template = constants.%float.f51]
+// CHECK:STDOUT:   %float.loc12_38: f64 = float_literal 0 [template = constants.%float.555]
+// CHECK:STDOUT:   %.loc12_35.1: f64 = value_of_initializer %float.negate.loc12 [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc12_35.2: f64 = converted %float.negate.loc12, %.loc12_35.1 [template = constants.%float.f51]
 // CHECK:STDOUT:   %float.greater.loc12: init bool = call %Greater.ref.loc12(%.loc12_35.2, %float.loc12_38) [template = constants.%false]
 // CHECK:STDOUT:   %.loc12_14.1: bool = value_of_initializer %float.greater.loc12 [template = constants.%false]
 // CHECK:STDOUT:   %.loc12_14.2: bool = converted %float.greater.loc12, %.loc12_14.1 [template = constants.%false]
@@ -278,12 +278,12 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %.loc12_14.3: type = block_arg !if.expr.result.loc12 [template = constants.%False]
 // CHECK:STDOUT:   %true_.ref.loc13: %True = name_ref true_, %true_
 // CHECK:STDOUT:   %Greater.ref.loc13: %Greater.type = name_ref Greater, file.%Greater.decl [template = constants.%Greater]
-// CHECK:STDOUT:   %float.loc13_24: f64 = float_literal 0 [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc13_24: f64 = float_literal 0 [template = constants.%float.555]
 // CHECK:STDOUT:   %Negate.ref.loc13: %Negate.type = name_ref Negate, file.%Negate.decl [template = constants.%Negate]
-// CHECK:STDOUT:   %float.loc13_36: f64 = float_literal 1 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.negate.loc13: init f64 = call %Negate.ref.loc13(%float.loc13_36) [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc13_39.1: f64 = value_of_initializer %float.negate.loc13 [template = constants.%float.4]
-// CHECK:STDOUT:   %.loc13_39.2: f64 = converted %float.negate.loc13, %.loc13_39.1 [template = constants.%float.4]
+// CHECK:STDOUT:   %float.loc13_36: f64 = float_literal 1 [template = constants.%float.f4e]
+// CHECK:STDOUT:   %float.negate.loc13: init f64 = call %Negate.ref.loc13(%float.loc13_36) [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc13_39.1: f64 = value_of_initializer %float.negate.loc13 [template = constants.%float.f51]
+// CHECK:STDOUT:   %.loc13_39.2: f64 = converted %float.negate.loc13, %.loc13_39.1 [template = constants.%float.f51]
 // CHECK:STDOUT:   %float.greater.loc13: init bool = call %Greater.ref.loc13(%float.loc13_24, %.loc13_39.2) [template = constants.%true]
 // CHECK:STDOUT:   %.loc13_13.1: bool = value_of_initializer %float.greater.loc13 [template = constants.%true]
 // CHECK:STDOUT:   %.loc13_13.2: bool = converted %float.greater.loc13, %.loc13_13.1 [template = constants.%true]

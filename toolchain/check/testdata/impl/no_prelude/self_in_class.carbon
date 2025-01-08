@@ -28,17 +28,17 @@ class A {
 // CHECK:STDOUT:   %DefaultConstructible.type: type = facet_type <@DefaultConstructible> [template]
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %Make.type.1: type = fn_type @Make.1 [template]
-// CHECK:STDOUT:   %Make.1: %Make.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %Make.assoc_type: type = assoc_entity_type %DefaultConstructible.type, %Make.type.1 [template]
+// CHECK:STDOUT:   %Make.type.040: type = fn_type @Make.1 [template]
+// CHECK:STDOUT:   %Make.a8e: %Make.type.040 = struct_value () [template]
+// CHECK:STDOUT:   %Make.assoc_type: type = assoc_entity_type %DefaultConstructible.type, %Make.type.040 [template]
 // CHECK:STDOUT:   %assoc0: %Make.assoc_type = assoc_entity element0, @DefaultConstructible.%Make.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%Make.decl) [template]
-// CHECK:STDOUT:   %Make.type.2: type = fn_type @Make.2 [template]
-// CHECK:STDOUT:   %Make.2: %Make.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %Make.type.db7: type = fn_type @Make.2 [template]
+// CHECK:STDOUT:   %Make.8a3: %Make.type.db7 = struct_value () [template]
 // CHECK:STDOUT:   %DefaultConstructible.facet: %DefaultConstructible.type = facet_value %C, %impl_witness [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT: }
@@ -56,7 +56,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @DefaultConstructible {
 // CHECK:STDOUT:   %Self: %DefaultConstructible.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Make.decl: %Make.type.1 = fn_decl @Make.1 [template = constants.%Make.1] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.040 = fn_decl @Make.1 [template = constants.%Make.a8e] {
 // CHECK:STDOUT:     %return.patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @Make.1.%Self.as_type.loc12_16.1 (%Self.as_type) = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -75,7 +75,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %DefaultConstructible.ref {
-// CHECK:STDOUT:   %Make.decl: %Make.type.2 = fn_decl @Make.2 [template = constants.%Make.2] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.db7 = fn_decl @Make.2 [template = constants.%Make.8a3] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
 // CHECK:STDOUT:   } {

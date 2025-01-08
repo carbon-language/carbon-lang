@@ -105,7 +105,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %BaseDecl: type = class_type @BaseDecl [template]
 // CHECK:STDOUT:   %TwoAbstract: type = class_type @TwoAbstract [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Virtual: type = class_type @Virtual [template]
 // CHECK:STDOUT:   %WrongOrder: type = class_type @WrongOrder [template]
 // CHECK:STDOUT:   %AbstractAndBase: type = class_type @AbstractAndBase [template]
@@ -116,7 +116,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -161,7 +161,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @BaseDecl;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @TwoAbstract {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%TwoAbstract
@@ -169,7 +169,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Virtual {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Virtual
@@ -177,7 +177,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongOrder {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%WrongOrder
@@ -185,7 +185,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractAndBase {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractAndBase
@@ -195,7 +195,7 @@ fn AbstractWithDefinition.G() {
 // CHECK:STDOUT: class @AbstractWithDefinition {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition
