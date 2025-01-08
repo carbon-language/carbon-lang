@@ -23,6 +23,12 @@ class InstFingerprinter {
  private:
   // The fingerprint for each instruction that has had its fingerprint computed,
   // indexed by the InstId's index.
+  //
+  // TODO: Experiment with also caching fingerprints for instruction blocks once
+  // we can get realistic performance measurements for this. This would simplify
+  // the `GetOrCompute` overload for `InstBlockId`s, and may save some work if
+  // the same canonical inst block is used by multiple instructions, for example
+  // as a specific argument list.
   Map<std::pair<const File*, InstId>, uint64_t> fingerprints_;
 };
 

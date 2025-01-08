@@ -295,15 +295,22 @@ struct Worklist {
     table[kind.ToIndex()](*this, arg);
   }
 
-  // Ensure all the instructions on the todo list have fingerprints.
-  auto Run() -> void {
-    while (!todo.empty()) {
+  // Ensure all the instructions on the todo list have fingerprints. To avoid a
+  // re-lookup, returns the fingerprint of the first instruction on the todo
+  // list, and requires the todo list to be non-empty.
+  auto Run() -> uint64_t {
+    CARBON_CHECK(!todo.empty());
+    while (true) {
       auto [next_sem_ir, next_inst_id] = todo.back();
 
       // If we already have a fingerprint for this instruction, we have nothing
       // to do. Just pop it from `todo`.
-      if (fingerprints->Contains(std::pair(next_sem_ir, next_inst_id))) {
+      if (auto lookup =
+              fingerprints->Lookup(std::pair(next_sem_ir, next_inst_id))) {
         todo.pop_back();
+        if (todo.empty()) {
+          return lookup.value();
+        }
         continue;
       }
 
@@ -334,8 +341,12 @@ struct Worklist {
       // pop it from the todo list. Otherwise, we leave it on the todo list so
       // we can compute its fingerprint once we've finished the work we added.
       if (todo.size() == init_size) {
-        fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), Finish());
+        uint64_t fingerprint = Finish();
+        fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
         todo.pop_back();
+        if (todo.empty()) {
+          return fingerprint;
+        }
       }
     }
   }
@@ -346,8 +357,7 @@ auto InstFingerprinter::GetOrCompute(const File* file, InstId inst_id)
     -> uint64_t {
   Worklist worklist = {.todo = {{file, inst_id}},
                        .fingerprints = &fingerprints_};
-  worklist.Run();
-  return fingerprints_.Lookup(std::pair(file, inst_id)).value();
+  return worklist.Run();
 }
 
 auto InstFingerprinter::GetOrCompute(const File* file,
