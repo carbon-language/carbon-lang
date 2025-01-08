@@ -30,7 +30,7 @@ auto IncomingMessages::AddCallHandler(
     void (*handler)(Context&, const ParamsT&,
                     llvm::function_ref<void(llvm::Expected<ResultT>)>))
     -> void {
-  CallHandler wrapped =
+  CallHandler parsing_handler =
       [name, handler](
           Context& context, llvm::json::Value raw_params,
           llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)
@@ -42,7 +42,7 @@ auto IncomingMessages::AddCallHandler(
     }
     handler(context, *params, on_done);
   };
-  auto result = call_handlers_.Insert(name, wrapped);
+  auto result = call_handlers_.Insert(name, parsing_handler);
   CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
 }
 
@@ -51,7 +51,7 @@ auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
                                               void (*handler)(Context&,
                                                               const ParamsT&))
     -> void {
-  NotificationHandler wrapped =
+  NotificationHandler parsing_handler =
       [name, handler](Context& context, llvm::json::Value raw_params) -> void {
     auto params = Parse<ParamsT>(name, raw_params);
     if (!params) {
@@ -60,7 +60,7 @@ auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
     }
     handler(context, *params);
   };
-  auto result = notification_handlers_.Insert(name, wrapped);
+  auto result = notification_handlers_.Insert(name, parsing_handler);
   CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
 }
 
