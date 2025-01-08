@@ -282,9 +282,12 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   for (auto rewrite : facet_type_info.rewrite_constraints) {
     auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
     auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
-    // TODO: Need to handle this case when more is supported.
-    CARBON_CHECK(WitnessAccessMatchesInterface(context, access.witness_id,
-                                               interface_type->interface_id));
+    if (!WitnessAccessMatchesInterface(context, access.witness_id,
+                                       interface_type->interface_id)) {
+      // Skip rewrite constraints that apply to associated constants of
+      // a different interface than the one being implemented.
+      continue;
+    }
     CARBON_CHECK(access.index.index >= 0);
     CARBON_CHECK(access.index.index <
                  static_cast<int32_t>(rewrite_values.size()));
