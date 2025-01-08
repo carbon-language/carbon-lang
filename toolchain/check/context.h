@@ -72,6 +72,17 @@ class Context {
   using BuildDiagnosticFn =
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
 
+  struct LookupNameInExactScopeResult {
+    // The matching entity if found, or invalid if poisoned or not found.
+    SemIR::InstId inst_id;
+
+    // The access level required to use inst_id, if it's valid.
+    SemIR::AccessKind access_kind;
+
+    // Whether a poisoned entry was found.
+    bool is_poisoned = false;
+  };
+
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
                    llvm::function_ref<const Parse::TreeAndSubtrees&()>
@@ -212,9 +223,9 @@ class Context {
   auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If found, returns the referenced instruction and false. If
-  // poisoned, returns invalid instructions and true. poisoned. If scope_id is
-  // invalid, uses the current contextual scope.
+  // declaration. If scope_id is invalid, uses the current contextual scope. If
+  // found, returns the referenced instruction and false. If poisoned, returns
+  // an invalid instruction and true.
   // TODO: For poisoned names, return the poisoning instruction.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
                         SemIR::NameScopeId scope_id)
@@ -224,15 +235,9 @@ class Context {
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
                              bool required = true) -> LookupResult;
 
-  struct LookupNameInExactScopeResult {
-    SemIR::InstId inst_id;
-    SemIR::AccessKind access_kind;
-    bool is_poisoned = false;
-  };
-
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
-  // instruction if the name is not found or poisoned.
+  // instruction if the name is poisoned or not found.
   // TODO: Return the poisoning instruction if poisoned.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,

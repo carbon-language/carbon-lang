@@ -237,11 +237,10 @@ class DeclNameStack {
   auto AddNameOrDiagnose(NameContext name_context, SemIR::InstId target_id,
                          SemIR::AccessKind access_kind) -> void;
 
-  // Adds a name to name lookup if not already declared or poisoned in this
+  // Adds a name to name lookup if neither already declared nor poisoned in this
   // scope. If declared, returns the existing instruction and false. If
-  // poisoned, returns invalid instruction and true.
+  // poisoned, returns an invalid instruction and true.
   // TODO: Return the poisoning instruction if poisoned.
-  // name has already been declared in this scope.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
                        SemIR::AccessKind access_kind)
       -> std::pair<SemIR::InstId, bool>;
