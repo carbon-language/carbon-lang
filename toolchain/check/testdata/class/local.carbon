@@ -81,10 +81,7 @@ class A {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -99,11 +96,7 @@ class A {
 // CHECK:STDOUT:   %.loc19: %B.elem = field_decl n, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.033 [template = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   .n = %.loc19
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {

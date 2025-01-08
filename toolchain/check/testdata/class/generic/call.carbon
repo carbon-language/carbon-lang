@@ -97,7 +97,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.8cf: %i32 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.ab2: type = class_type @Class, @Class(%T, %N.356) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [template]
@@ -156,9 +155,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class.ab2
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,7 +195,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.8cf: %i32 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T, %N.356) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
@@ -248,9 +244,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -272,7 +266,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.8cf: %i32 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T, %N.356) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
@@ -322,9 +315,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -346,7 +337,6 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %N.patt.8cf: %i32 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T, %N.356) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT: }
@@ -397,9 +387,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -495,10 +483,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Outer.9d6
-// CHECK:STDOUT:     .Inner = %Inner.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -562,13 +547,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Inner.c71
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .C = %C.decl
-// CHECK:STDOUT:     .D = %D.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

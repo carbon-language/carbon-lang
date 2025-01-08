@@ -134,10 +134,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc4: %Base.elem = field_decl b, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.0a3 [template = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .b = %.loc4
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -146,12 +143,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc10: %Derived.elem.344 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.f8f [template = constants.%complete_type.da6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .d = %.loc10
-// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %Derived {
@@ -241,9 +233,7 @@ class Derived {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -251,9 +241,6 @@ class Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d [template = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .d = %.loc7
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

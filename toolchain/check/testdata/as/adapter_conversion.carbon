@@ -233,12 +233,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x = %.loc5
-// CHECK:STDOUT:   .y = %.loc6
-// CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -246,9 +241,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %A {
@@ -366,9 +359,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %i32 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [template = constants.%complete_type.f8a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -436,9 +427,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %.loc4_19 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -446,9 +435,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -456,9 +443,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -466,9 +451,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %C.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -534,11 +517,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc6: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x = %.loc5
-// CHECK:STDOUT:   .y = %.loc6
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -546,9 +525,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -637,11 +614,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc6: %A.elem = field_decl y, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x = %.loc5
-// CHECK:STDOUT:   .y = %.loc6
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -649,9 +622,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.y.871 [template = constants.%complete_type.70a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -733,9 +704,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: class @Noncopyable {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Noncopyable
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -747,9 +716,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %.loc9_27 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.560 [template = constants.%complete_type.ce5]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %A) {
@@ -816,9 +783,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: class @Noncopyable {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Noncopyable
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -830,9 +795,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %.loc9_27 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %tuple.type.560 [template = constants.%complete_type.ce5]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param_patt: %A) {
@@ -901,10 +864,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   %.loc5: %A.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.ed6 [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .x = %.loc5
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -912,9 +872,7 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT:   adapt_decl %A.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.ed6 [template = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

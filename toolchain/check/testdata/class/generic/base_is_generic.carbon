@@ -171,10 +171,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.2ac [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Base.370
-// CHECK:STDOUT:     .x = %.loc5
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,10 +179,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc9: %Param.elem = field_decl y, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.0f9]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Param
-// CHECK:STDOUT:   .y = %.loc9
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -195,11 +189,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %Base, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.8bc [template = constants.%complete_type.b07]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend %Base
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DoubleFieldAccess(%d.param_patt: %Derived) -> %i32 {
@@ -272,15 +262,10 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.e8d: <witness> = import_ref Main//extend_generic_base, loc10_1, loaded [template = constants.%complete_type.09d]
-// CHECK:STDOUT:   %import_ref.446 = import_ref Main//extend_generic_base, inst42 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.a92: %Param.elem = import_ref Main//extend_generic_base, loc9_8, loaded [template = %.be7]
 // CHECK:STDOUT:   %import_ref.b5f: <witness> = import_ref Main//extend_generic_base, loc6_1, loaded [symbolic = @Base.%complete_type (constants.%complete_type.433)]
-// CHECK:STDOUT:   %import_ref.8e0 = import_ref Main//extend_generic_base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.7f7: @Base.%Base.elem (%Base.elem.9af) = import_ref Main//extend_generic_base, loc5_8, loaded [template = %.e66]
 // CHECK:STDOUT:   %import_ref.bd0: <witness> = import_ref Main//extend_generic_base, loc14_1, loaded [template = constants.%complete_type.b07]
-// CHECK:STDOUT:   %import_ref.f6c = import_ref Main//extend_generic_base, inst76 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.d24 = import_ref Main//extend_generic_base, loc13_27, unloaded
-// CHECK:STDOUT:   %import_ref.77a301.2: type = import_ref Main//extend_generic_base, loc13_26, loaded [template = constants.%Base.7a8]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -312,19 +297,12 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.bd0
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.f6c
-// CHECK:STDOUT:   .base = imports.%import_ref.d24
-// CHECK:STDOUT:   extend imports.%import_ref.77a301.2
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param [from "extend_generic_base.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.e8d
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.446
-// CHECK:STDOUT:   .y = imports.%import_ref.a92
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Base(constants.%T: type) [from "extend_generic_base.carbon"] {
@@ -340,10 +318,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.b5f
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.8e0
-// CHECK:STDOUT:     .x = imports.%import_ref.7f7
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -386,7 +361,6 @@ fn H() {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
@@ -436,11 +410,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc8: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.f2e
-// CHECK:STDOUT:     .base = %.loc8
-// CHECK:STDOUT:     has_error
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,10 +418,7 @@ fn H() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -488,7 +455,6 @@ fn H() {
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %X.type: type = generic_class_type @X [template]
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [template]
-// CHECK:STDOUT:   %X.75b6d8.1: type = class_type @X, @X(%U) [symbolic]
 // CHECK:STDOUT:   %G.type.56f312.1: type = fn_type @G, @X(%U) [symbolic]
 // CHECK:STDOUT:   %G.b504c4.1: %G.type.56f312.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -575,10 +541,7 @@ fn H() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%X.75b6d8.1
-// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,11 +564,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc9: @C.%C.elem (%C.elem.3f4) = base_decl %X.loc9_19.1, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc10_1.1: <witness> = complete_type_witness %struct_type.base.f5f [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.768)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc10_1.1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.f2e
-// CHECK:STDOUT:     .base = %.loc9
-// CHECK:STDOUT:     extend %X.loc9_19.1
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -770,12 +729,8 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//extend_generic_symbolic_base, loc6_1, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.e8e = import_ref Main//extend_generic_symbolic_base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.b8a: @X.%G.type (%G.type.56f312.1) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%G (constants.%G.b504c4.1)]
 // CHECK:STDOUT:   %import_ref.93f: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.768)]
-// CHECK:STDOUT:   %import_ref.4c0 = import_ref Main//extend_generic_symbolic_base, inst68 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.65d = import_ref Main//extend_generic_symbolic_base, loc9_20, unloaded
-// CHECK:STDOUT:   %import_ref.561eb2.2: type = import_ref Main//extend_generic_symbolic_base, loc9_19, loaded [symbolic = @C.%X (constants.%X.75b6d8.2)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -805,11 +760,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.93f
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.4c0
-// CHECK:STDOUT:     .base = imports.%import_ref.65d
-// CHECK:STDOUT:     extend imports.%import_ref.561eb2.2
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -823,10 +774,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.e8e
-// CHECK:STDOUT:     .G = imports.%import_ref.b8a
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

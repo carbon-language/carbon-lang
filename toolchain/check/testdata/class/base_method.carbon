@@ -116,11 +116,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -128,11 +124,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %.loc22: %Derived.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b1e [template = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc22
-// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[addr %self.param_patt: %ptr.11f]() {

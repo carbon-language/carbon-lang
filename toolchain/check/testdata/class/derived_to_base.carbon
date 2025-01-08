@@ -205,10 +205,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc12: %A.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.ba9 [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .a = %.loc12
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -217,12 +214,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc17: %B.elem.5c3 = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b.b44 [template = constants.%complete_type.725]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .base = %.loc16
-// CHECK:STDOUT:   .b = %.loc17
-// CHECK:STDOUT:   extend %A.ref
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -231,12 +223,7 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc22: %C.elem.646 = field_decl c, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.c.8e2 [template = constants.%complete_type.58a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc21
-// CHECK:STDOUT:   .c = %.loc22
-// CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertCToB(%p.param_patt: %ptr.019) -> %ptr.e79 {

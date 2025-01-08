@@ -125,6 +125,7 @@ class Derived {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.c3d: <vtable> = vtable (%H) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [template]
@@ -132,6 +133,7 @@ class Derived {
 // CHECK:STDOUT:   %J: %J.type = struct_value () [template]
 // CHECK:STDOUT:   %K.type: type = fn_type @K [template]
 // CHECK:STDOUT:   %K: %K.type = struct_value () [template]
+// CHECK:STDOUT:   %.2b2: <vtable> = vtable (%J, %K) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -154,24 +156,19 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [template = constants.%H] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%H.decl) [template = constants.%.c3d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .H = %H.decl
+// CHECK:STDOUT:   vtable_id = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
 // CHECK:STDOUT:   %K.decl: %K.type = fn_decl @K [template = constants.%K] {} {}
+// CHECK:STDOUT:   %.loc12: <vtable> = vtable (%J.decl, %K.decl) [template = constants.%.2b2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Abstract
-// CHECK:STDOUT:   .J = %J.decl
-// CHECK:STDOUT:   .K = %K.decl
+// CHECK:STDOUT:   vtable_id = %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @H();
@@ -191,6 +188,10 @@ class Derived {
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %H.type: type = fn_type @H [template]
+// CHECK:STDOUT:   %H: %H.type = struct_value () [template]
+// CHECK:STDOUT:   %.cce: <vtable> = vtable (%H) [template]
+// CHECK:STDOUT:   %.02f: <vtable> = vtable (%H, %F) [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base [template]
 // CHECK:STDOUT: }
@@ -205,9 +206,8 @@ class Derived {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.917: type = import_ref Modifiers//default, Base, loaded [template = constants.%Base]
+// CHECK:STDOUT:   %import_ref.5c1: <vtable> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%.cce]
 // CHECK:STDOUT:   %import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type.513]
-// CHECK:STDOUT:   %import_ref.1f3 = import_ref Modifiers//default, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.2cc = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -226,25 +226,20 @@ class Derived {
 // CHECK:STDOUT:   %Modifiers.ref: <namespace> = name_ref Modifiers, imports.%Modifiers [template = imports.%Modifiers]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%import_ref.917 [template = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %.loc9: <vtable> = vtable (constants.%H, %F.decl) [template = constants.%.02f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   vtable_id = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.05e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.1f3
-// CHECK:STDOUT:   .H = imports.%import_ref.2cc
+// CHECK:STDOUT:   vtable_id = imports.%import_ref.5c1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H() [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
@@ -267,9 +262,8 @@ class Derived {
 // CHECK:STDOUT:     .Base = %import_ref.917
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %import_ref.ace = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.1f3 = import_ref Modifiers//default, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.2cc = import_ref Modifiers//default, loc5_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -285,10 +279,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.05e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.1f3
-// CHECK:STDOUT:   .H = imports.%import_ref.2cc
+// CHECK:STDOUT:   vtable_id = imports.%import_ref.ace
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -312,6 +303,7 @@ class Derived {
 // CHECK:STDOUT:   %F.type.13a: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.df5: %F.type.13a = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.593: <vtable> = vtable (%F.df5) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [template]
@@ -342,26 +334,20 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A1 {
 // CHECK:STDOUT:   %F.decl: %F.type.13a = fn_decl @F.1 [template = constants.%F.df5] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.593]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A1
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A2 {
 // CHECK:STDOUT:   %A1.ref: type = name_ref A1, file.%A1.decl [template = constants.%A1]
 // CHECK:STDOUT:   %.loc9: %A2.elem = base_decl %A1.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.4ae = fn_decl @F.2 [template = constants.%F.1d5] {} {}
+// CHECK:STDOUT:   %.loc11: <vtable> = vtable (constants.%F.df5) [template = constants.%.593]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.a6f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A2
-// CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %A1.ref
+// CHECK:STDOUT:   vtable_id = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1();
@@ -375,6 +361,7 @@ class Derived {
 // CHECK:STDOUT:   %F.type.e4c: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.8f5: %F.type.e4c = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.bc5: <vtable> = vtable (%F.8f5) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [template]
@@ -413,40 +400,30 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B1 {
 // CHECK:STDOUT:   %F.decl: %F.type.e4c = fn_decl @F.1 [template = constants.%F.8f5] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.bc5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B1
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B2 {
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [template = constants.%B1]
 // CHECK:STDOUT:   %.loc9: %B2.elem = base_decl %B1.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.b26 = fn_decl @F.2 [template = constants.%F.d48] {} {}
+// CHECK:STDOUT:   %.loc11: <vtable> = vtable (constants.%F.8f5) [template = constants.%.bc5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.508 [template = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B2
-// CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %B1.ref
+// CHECK:STDOUT:   vtable_id = %.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [template = constants.%B2]
 // CHECK:STDOUT:   %.loc14: %C.elem = base_decl %B2.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [template = constants.%F.437] {} {}
+// CHECK:STDOUT:   %.loc16: <vtable> = vtable (constants.%F.8f5) [template = constants.%.bc5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.421 [template = constants.%complete_type.066]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc14
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %B2.ref
+// CHECK:STDOUT:   vtable_id = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1();
@@ -462,6 +439,7 @@ class Derived {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.f2b: <vtable> = vtable () [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT: }
@@ -484,12 +462,10 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %.loc9: <vtable> = vtable () [template = constants.%.f2b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F();
@@ -504,6 +480,7 @@ class Derived {
 // CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5ee: <vtable> = vtable (%F.d17) [template]
 // CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.454, .m1: %i32, .m2: %i32} [template]
 // CHECK:STDOUT:   %complete_type.cf7: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [template]
@@ -552,14 +529,10 @@ class Derived {
 // CHECK:STDOUT:   %.loc5: %Base.elem = field_decl m1, element1 [template]
 // CHECK:STDOUT:   %.loc6: %Base.elem = field_decl m2, element2 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {} {}
+// CHECK:STDOUT:   %.loc9: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [template = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .m1 = %.loc5
-// CHECK:STDOUT:   .m2 = %.loc6
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1();
@@ -641,6 +614,7 @@ class Derived {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.f2b: <vtable> = vtable () [template]
 // CHECK:STDOUT:   %struct_type.vptr.base: type = struct_type {.<vptr>: %ptr.454, .base: %Base} [template]
 // CHECK:STDOUT:   %complete_type.336: <witness> = complete_type_witness %struct_type.vptr.base [template]
 // CHECK:STDOUT: }
@@ -666,23 +640,17 @@ class Derived {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Base.ref, element1 [template]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
+// CHECK:STDOUT:   %.loc10: <vtable> = vtable () [template = constants.%.f2b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr.base [template = constants.%complete_type.336]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT:   vtable_id = %.loc10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F();

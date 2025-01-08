@@ -85,11 +85,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc13: %Inner.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   .b = %.loc13
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
@@ -97,11 +93,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc20: %Outer.elem = field_decl d, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.dce [template = constants.%complete_type.8b6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Outer
-// CHECK:STDOUT:   .c = %.loc19
-// CHECK:STDOUT:   .d = %.loc20
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> %Inner;

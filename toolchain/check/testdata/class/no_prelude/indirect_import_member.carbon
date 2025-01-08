@@ -121,10 +121,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -156,8 +153,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//a, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.2cf = import_ref Main//a, loc5_10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -170,10 +165,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .F = imports.%import_ref.2cf
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- d.carbon
@@ -201,8 +193,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//c, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//c, inst19 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//c, inst20 [indirect], unloaded
-// CHECK:STDOUT:   %import_ref.230 = import_ref Main//c, inst21 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -220,18 +210,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C: type = bind_alias C, imports.%import_ref.06e [template = constants.%C]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .C = %C
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .F = imports.%import_ref.230
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- f.carbon
@@ -261,7 +245,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//a, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.943: %F.type = import_ref Main//a, loc5_10, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -277,10 +260,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .F = imports.%import_ref.943
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() [from "a.carbon"];
@@ -308,7 +288,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//c, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//c, inst19 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//c, inst20 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.5d3: %F.type = import_ref Main//c, inst21 [indirect], loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,10 +303,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .F = imports.%import_ref.5d3
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() [from "a.carbon"];
@@ -355,7 +331,6 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//c, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//c, inst19 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//c, inst20 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.5d3: %F.type = import_ref Main//c, inst21 [indirect], loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -371,10 +346,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
-// CHECK:STDOUT:   .F = imports.%import_ref.5d3
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() [from "a.carbon"];
@@ -403,10 +375,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.b0a: type = import_ref Main//e, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.cab = import_ref Main//e, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f3: <witness> = import_ref Main//e, inst22 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.db8 = import_ref Main//e, inst23 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.c85: %F.type = import_ref Main//e, inst24 [indirect], loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -422,18 +392,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cab
-// CHECK:STDOUT:   .C = imports.%import_ref.bf1
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.db8
-// CHECK:STDOUT:   .F = imports.%import_ref.c85
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() [from "a.carbon"];
@@ -463,10 +427,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.b0a: type = import_ref Main//e, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.cab = import_ref Main//e, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f3: <witness> = import_ref Main//e, inst22 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.db8 = import_ref Main//e, inst23 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.c85: %F.type = import_ref Main//e, inst24 [indirect], loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -482,18 +444,12 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cab
-// CHECK:STDOUT:   .C = imports.%import_ref.bf1
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "e.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.db8
-// CHECK:STDOUT:   .F = imports.%import_ref.c85
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() [from "a.carbon"];

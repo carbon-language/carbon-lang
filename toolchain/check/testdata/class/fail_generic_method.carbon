@@ -128,11 +128,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc14_1.2 (constants.%complete_type.f1b)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
-// CHECK:STDOUT:     .a = %.loc12
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

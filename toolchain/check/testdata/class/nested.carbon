@@ -111,15 +111,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %.loc38: %Outer.elem.fe9 = field_decl pi, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.po.qo.pi [template = constants.%complete_type.e99]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Outer
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .Inner = %Inner.decl
-// CHECK:STDOUT:   .H = %H.decl
-// CHECK:STDOUT:   .po = %.loc36
-// CHECK:STDOUT:   .qo = %.loc37
-// CHECK:STDOUT:   .pi = %.loc38
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
@@ -129,13 +121,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.pi.po.qi [template = constants.%complete_type.7ae]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .pi = %.loc19
-// CHECK:STDOUT:   .po = %.loc20
-// CHECK:STDOUT:   .qi = %.loc21
-// CHECK:STDOUT:   .G = %G.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {

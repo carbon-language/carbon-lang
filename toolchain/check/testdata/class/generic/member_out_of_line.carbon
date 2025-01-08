@@ -227,12 +227,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %.loc7: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc8_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .G = %G.decl
-// CHECK:STDOUT:     .n = %.loc7
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,7 +299,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [template]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [template]
-// CHECK:STDOUT:   %A: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %B.type: type = generic_class_type @B, @A(%T) [symbolic]
@@ -380,10 +374,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%A
-// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -415,10 +406,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%B
-// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -506,10 +494,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%NotGeneric
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
@@ -538,7 +523,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooFew.type: type = fn_type @TooFew, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooFew: %TooFew.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -582,10 +566,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %TooFew.decl: @Generic.%TooFew.type (%TooFew.type) = fn_decl @TooFew [symbolic = @Generic.%TooFew (constants.%TooFew)] {} {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Generic
-// CHECK:STDOUT:     .TooFew = %TooFew.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -615,7 +596,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooMany.type: type = fn_type @TooMany, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %TooMany: %TooMany.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -666,10 +646,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %TooMany.decl: @Generic.%TooMany.type (%TooMany.type) = fn_decl @TooMany [symbolic = @Generic.%TooMany (constants.%TooMany)] {} {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Generic
-// CHECK:STDOUT:     .TooMany = %TooMany.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -716,7 +693,6 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [template]
-// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %WrongType.type: type = fn_type @WrongType, @Generic(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %WrongType: %WrongType.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -769,10 +745,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %WrongType.decl: @Generic.%WrongType.type (%WrongType.type) = fn_decl @WrongType [symbolic = @Generic.%WrongType (constants.%WrongType)] {} {}
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Generic
-// CHECK:STDOUT:     .WrongType = %WrongType.decl
+// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
