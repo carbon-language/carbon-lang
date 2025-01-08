@@ -10,6 +10,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -696,10 +697,11 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
   if (class_info.is_dynamic) {
     llvm::SmallVector<SemIR::InstId> vtable;
     if (!defining_vptr) {
+      LoadImportRef(context, base_class_info->vtable_id);
+      auto vtable_id = context.constant_values().GetConstantInstId(
+          base_class_info->vtable_id);
       auto base_vtable_inst_block = context.inst_blocks().Get(
-          context.insts()
-              .GetAs<SemIR::Vtable>(base_class_info->vtable_id)
-              .virtual_functions_id);
+          context.insts().GetAs<SemIR::Vtable>(vtable_id).virtual_functions_id);
       for (auto fn_decl_id : base_vtable_inst_block) {
         /*
         auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(fn_decl_id);

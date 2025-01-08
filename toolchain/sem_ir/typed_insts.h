@@ -1496,8 +1496,10 @@ struct VtablePtr {
 
 // Definition of ABI-neutral vtable information for a dynamic class.
 struct Vtable {
-  static constexpr auto Kind =
-      InstKind::Vtable.Define<Parse::NodeId>({.ir_name = "vtable"});
+  static constexpr auto Kind = InstKind::Vtable.Define<Parse::NodeId>(
+      {.ir_name = "vtable",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
   TypeId type_id;
   InstBlockId virtual_functions_id;
 };

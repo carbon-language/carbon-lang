@@ -1422,7 +1422,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
+                                SemIR::InstId /*import_inst_id*/)
+    -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   auto virtual_functions =
       GetLocalInstBlockContents(resolver, inst.virtual_functions_id);
@@ -1432,13 +1433,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Vtable inst,
 
   auto virtual_functions_id = GetLocalCanonicalInstBlockId(
       resolver, inst.virtual_functions_id, virtual_functions);
-  auto inst_id = resolver.local_context().AddInstInNoBlock(
-      resolver.local_context().MakeImportedLocAndInst<SemIR::Vtable>(
-          AddImportIRInst(resolver, import_inst_id),
-          {.type_id =
-               resolver.local_context().GetTypeIdForTypeConstant(type_const_id),
-           .virtual_functions_id = virtual_functions_id}));
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
+  return ResolveAs<SemIR::Vtable>(
+      resolver, {.type_id = resolver.local_context().GetTypeIdForTypeConstant(
+                     type_const_id),
+                 .virtual_functions_id = virtual_functions_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -1657,14 +1655,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                       : SemIR::InstId::Invalid;
   auto& new_class = resolver.local_classes().Get(class_id);
 
-  auto vtable_id =
-      import_class.vtable_id.is_valid()
-          ? GetLocalConstantInstId(resolver, import_class.vtable_id)
-          : SemIR::InstId::Invalid;
-
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(class_const_id, new_class.first_decl_id());
   }
+
+  auto vtable_id = import_class.vtable_id.is_valid()
+                       ? AddImportRef(resolver, import_class.vtable_id)
+                       : SemIR::InstId::Invalid;
 
   new_class.parent_scope_id = parent_scope_id;
   new_class.implicit_param_patterns_id = GetLocalParamPatternsId(
