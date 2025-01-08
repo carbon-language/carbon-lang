@@ -17,6 +17,9 @@ class InstFingerprinter {
   // Gets or computes a fingerprint for the given instruction.
   auto GetOrCompute(const File* file, InstId inst_id) -> uint64_t;
 
+  // Gets or computes a fingerprint for the given instruction block.
+  auto GetOrCompute(const File* file, InstBlockId inst_block_id) -> uint64_t;
+
  private:
   // The fingerprint for each instruction that has had its fingerprint computed,
   // indexed by the InstId's index.

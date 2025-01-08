@@ -139,10 +139,16 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
-  // TODO: Add proper support for generic entities. The ID we emit here will not
-  // be consistent across object files.
+  // TODO: Add proper support for mangling generic entities. For now we use a
+  // fingerprint of the specific arguments, which should be stable across files,
+  // but isn't necessarily stable across toolchain changes.
   if (specific_id.is_valid()) {
-    os << "." << specific_id.index;
+    os << ".";
+    llvm::write_hex(
+        os,
+        fingerprinter_.GetOrCompute(
+            &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
+        llvm::HexPrintStyle::Lower, 16);
   }
 
   return os.str();
