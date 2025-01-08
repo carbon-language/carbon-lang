@@ -25,7 +25,7 @@ struct FakeDiagnosticConverter : DiagnosticConverter<int> {
 };
 
 class DiagnosticEmitterTest : public ::testing::Test {
- protected:
+ public:
   DiagnosticEmitterTest() : emitter_(converter_, consumer_) {}
 
   FakeDiagnosticConverter converter_;

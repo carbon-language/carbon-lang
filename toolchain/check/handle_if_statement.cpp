@@ -28,7 +28,7 @@ auto HandleParseNode(Context& context, Parse::IfConditionId node_id) -> bool {
   // Start emitting the `then` block.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
-  context.AddCurrentCodeBlockToFunction();
+  context.AddToRegion(then_block_id, node_id);
 
   context.node_stack().Push(node_id, else_block_id);
   return true;
@@ -40,7 +40,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementElseId node_id)
 
   // Switch to emitting the `else` block.
   context.inst_block_stack().Push(else_block_id);
-  context.AddCurrentCodeBlockToFunction();
+  context.AddToRegion(else_block_id, node_id);
 
   context.node_stack().Push(node_id);
   return true;
@@ -56,6 +56,7 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
       context.AddInst<SemIR::Branch>(node_id, {.target_id = else_block_id});
       context.inst_block_stack().Pop();
       context.inst_block_stack().Push(else_block_id);
+      context.AddToRegion(else_block_id, node_id);
       break;
     }
 
@@ -72,7 +73,6 @@ auto HandleParseNode(Context& context, Parse::IfStatementId node_id) -> bool {
     }
   }
 
-  context.AddCurrentCodeBlockToFunction();
   return true;
 }
 

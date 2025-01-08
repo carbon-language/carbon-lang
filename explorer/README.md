@@ -133,11 +133,6 @@ To explain this boilerplate:
 -   `bazel run testdata/DIR/FILE.carbon.verbose` -- Runs explorer on the file
     with tracing enabled.
 
-### Updating fuzzer logic after making AST changes
-
-Please refer to
-[Fuzzer documentation](https://github.com/carbon-language/carbon-lang/blob/trunk/explorer/fuzzing/README.md).
-
 ## Explorer's Trace Output
 
 Explorer's Trace Output refers to a detailed record of program phases and their

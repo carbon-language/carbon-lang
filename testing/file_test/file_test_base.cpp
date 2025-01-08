@@ -292,6 +292,7 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   // Process arguments.
   if (context.test_args.empty()) {
     context.test_args = GetDefaultArgs();
+    context.test_args.append(context.extra_args);
   }
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
@@ -767,16 +768,23 @@ static auto TryConsumeCheck(
   return true;
 }
 
-// Processes ARGS lines when found. Returns true if the line is consumed.
+// Processes ARGS and EXTRA-ARGS lines when found. Returns true if the line is
+// consumed.
 static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
-                           llvm::SmallVector<std::string>* args)
+                           llvm::SmallVector<std::string>* args,
+                           llvm::SmallVector<std::string>* extra_args)
     -> ErrorOr<bool> {
-  if (!line_trimmed.consume_front("// ARGS: ")) {
+  llvm::SmallVector<std::string>* arg_list = nullptr;
+  if (line_trimmed.consume_front("// ARGS: ")) {
+    arg_list = args;
+  } else if (line_trimmed.consume_front("// EXTRA-ARGS: ")) {
+    arg_list = extra_args;
+  } else {
     return false;
   }
 
-  if (!args->empty()) {
-    return ErrorBuilder() << "ARGS was specified multiple times: "
+  if (!args->empty() || !extra_args->empty()) {
+    return ErrorBuilder() << "ARGS / EXTRA-ARGS specified multiple times: "
                           << line.str();
   }
 
@@ -784,7 +792,7 @@ static auto TryConsumeArgs(llvm::StringRef line, llvm::StringRef line_trimmed,
   std::pair<llvm::StringRef, llvm::StringRef> cursor =
       llvm::getToken(line_trimmed);
   while (!cursor.first.empty()) {
-    args->push_back(std::string(cursor.first));
+    arg_list->push_back(std::string(cursor.first));
     cursor = llvm::getToken(cursor.second);
   }
 
@@ -884,7 +892,8 @@ auto FileTestBase::ProcessTestFile(TestContext& context) -> ErrorOr<Success> {
         FileTestLine(split.file_index, line_index, line));
 
     CARBON_ASSIGN_OR_RETURN(
-        is_consumed, TryConsumeArgs(line, line_trimmed, &context.test_args));
+        is_consumed, TryConsumeArgs(line, line_trimmed, &context.test_args,
+                                    &context.extra_args));
     if (is_consumed) {
       continue;
     }

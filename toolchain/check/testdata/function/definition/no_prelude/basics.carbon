@@ -39,8 +39,8 @@ fn F(n: C) {}
 // CHECK:STDOUT:     %n.patt: %C = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %C = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %n.param: %C = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %n: %C = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

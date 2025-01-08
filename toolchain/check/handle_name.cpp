@@ -128,9 +128,8 @@ static auto HandleIdentifierName(Context& context,
     -> bool {
   // The parent is responsible for binding the name.
   auto name_id = GetIdentifierAsName(context, node_id);
-  if (!name_id) {
-    return context.TODO(node_id, "Error recovery from keyword name.");
-  }
+  CARBON_CHECK(name_id,
+               "Unreachable until we support checking error parse nodes");
   context.node_stack().Push(node_id, *name_id);
   return true;
 }
@@ -150,9 +149,8 @@ auto HandleParseNode(Context& context,
 auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
     -> bool {
   auto name_id = GetIdentifierAsName(context, node_id);
-  if (!name_id) {
-    return context.TODO(node_id, "Error recovery from keyword name.");
-  }
+  CARBON_CHECK(name_id,
+               "Unreachable until we support checking error parse nodes");
   context.node_stack().Push(node_id,
                             HandleNameAsExpr(context, node_id, *name_id));
   return true;

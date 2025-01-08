@@ -77,10 +77,6 @@ var b: Bool() = false;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Bool.ref: %Bool.type = name_ref Bool, imports.%import_ref [template = constants.%Bool]
-// CHECK:STDOUT:   %bool.make_type: init type = call %Bool.ref() [template = bool]
-// CHECK:STDOUT:   %.loc6_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc6_13.2: type = converted %bool.make_type, %.loc6_13.1 [template = bool]
 // CHECK:STDOUT:   %b.var: ref bool = var b
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
 // CHECK:STDOUT: }

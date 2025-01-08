@@ -78,6 +78,9 @@ class DeclNameStack {
       // An identifier didn't resolve.
       Unresolved,
 
+      // An identifier was poisoned in this scope.
+      Poisoned,
+
       // The name has already been finished. This is not set in the name
       // returned by `FinishName`, but is used internally to track that
       // `FinishName` has already been called.
@@ -231,14 +234,16 @@ class DeclNameStack {
                SemIR::AccessKind access_kind) -> void;
 
   // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameOrDiagnoseDuplicate(NameContext name_context,
-                                  SemIR::InstId target_id,
-                                  SemIR::AccessKind access_kind) -> void;
+  auto AddNameOrDiagnose(NameContext name_context, SemIR::InstId target_id,
+                         SemIR::AccessKind access_kind) -> void;
 
-  // Adds a name to name lookup, or returns the existing instruction if this
-  // name has already been declared in this scope.
+  // Adds a name to name lookup if neither already declared nor poisoned in this
+  // scope. If declared, returns the existing instruction and false. If
+  // poisoned, returns an invalid instruction and true.
+  // TODO: Return the poisoning instruction if poisoned.
   auto LookupOrAddName(NameContext name_context, SemIR::InstId target_id,
-                       SemIR::AccessKind access_kind) -> SemIR::InstId;
+                       SemIR::AccessKind access_kind)
+      -> std::pair<SemIR::InstId, bool>;
 
  private:
   // Returns a name context corresponding to an empty name.

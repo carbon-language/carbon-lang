@@ -10,6 +10,10 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/FormatVariadic.h"
 
+// Recursion is used for subcommands. This should be okay since recursion is
+// limited by command line architecture.
+// NOLINTBEGIN(misc-no-recursion)
+
 namespace Carbon::CommandLine {
 
 auto operator<<(llvm::raw_ostream& output, ParseResult result)
@@ -1311,41 +1315,41 @@ void ArgBuilder::HelpHidden(bool is_help_hidden) {
 ArgBuilder::ArgBuilder(Arg* arg) : arg_(arg) {}
 
 void FlagBuilder::Default(bool flag_value) {
-  arg_->has_default = true;
-  arg_->default_flag = flag_value;
+  arg()->has_default = true;
+  arg()->default_flag = flag_value;
 }
 
-void FlagBuilder::Set(bool* flag) { arg_->flag_storage = flag; }
+void FlagBuilder::Set(bool* flag) { arg()->flag_storage = flag; }
 
 void IntegerArgBuilder::Default(int integer_value) {
-  arg_->has_default = true;
-  arg_->default_integer = integer_value;
+  arg()->has_default = true;
+  arg()->default_integer = integer_value;
 }
 
 void IntegerArgBuilder::Set(int* integer) {
-  arg_->is_append = false;
-  arg_->integer_storage = integer;
+  arg()->is_append = false;
+  arg()->integer_storage = integer;
 }
 
 void IntegerArgBuilder::Append(llvm::SmallVectorImpl<int>* sequence) {
-  arg_->is_append = true;
-  arg_->integer_sequence = sequence;
+  arg()->is_append = true;
+  arg()->integer_sequence = sequence;
 }
 
 void StringArgBuilder::Default(llvm::StringRef string_value) {
-  arg_->has_default = true;
-  arg_->default_string = string_value;
+  arg()->has_default = true;
+  arg()->default_string = string_value;
 }
 
 void StringArgBuilder::Set(llvm::StringRef* string) {
-  arg_->is_append = false;
-  arg_->string_storage = string;
+  arg()->is_append = false;
+  arg()->string_storage = string;
 }
 
 void StringArgBuilder::Append(
     llvm::SmallVectorImpl<llvm::StringRef>* sequence) {
-  arg_->is_append = true;
-  arg_->string_sequence = sequence;
+  arg()->is_append = true;
+  arg()->string_sequence = sequence;
 }
 
 static auto IsValidName(llvm::StringRef name) -> bool {
@@ -1525,3 +1529,5 @@ auto Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args,
 }
 
 }  // namespace Carbon::CommandLine
+
+// NOLINTEND(misc-no-recursion)

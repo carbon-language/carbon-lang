@@ -30,7 +30,7 @@ using ::testing::Pair;
 namespace Yaml = ::Carbon::Testing::Yaml;
 
 class TreeTest : public ::testing::Test {
- protected:
+ public:
   Testing::CompileHelper compile_helper_;
 };
 

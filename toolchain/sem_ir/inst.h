@@ -256,6 +256,21 @@ class Inst : public Printable<Inst> {
     arg1_ = arg1;
   }
 
+  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
+  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
+  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
+
+  // Convert a field from its raw representation.
+  template <typename T>
+    requires IdKind::Contains<T>
+  static constexpr auto FromRaw(int32_t raw) -> T {
+    return T(raw);
+  }
+  template <>
+  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
+    return IntId::MakeRaw(raw);
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void;
 
   friend auto operator==(Inst lhs, Inst rhs) -> bool {
@@ -273,21 +288,6 @@ class Inst : public Printable<Inst> {
       : Inst(kind.AsInt(), type_id, arg0, arg1) {}
   explicit Inst(int32_t kind, TypeId type_id, int32_t arg0, int32_t arg1)
       : kind_(kind), type_id_(type_id), arg0_(arg0), arg1_(arg1) {}
-
-  // Convert a field to its raw representation, used as `arg0_` / `arg1_`.
-  static constexpr auto ToRaw(AnyIdBase base) -> int32_t { return base.index; }
-  static constexpr auto ToRaw(IntId id) -> int32_t { return id.AsRaw(); }
-
-  // Convert a field from its raw representation.
-  template <typename T>
-    requires IdKind::Contains<T>
-  static constexpr auto FromRaw(int32_t raw) -> T {
-    return T(raw);
-  }
-  template <>
-  constexpr auto FromRaw<IntId>(int32_t raw) -> IntId {
-    return IntId::MakeRaw(raw);
-  }
 
   int32_t kind_;
   TypeId type_id_;

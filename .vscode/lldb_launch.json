@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb-dap",
+      "request": "launch",
+      "name": "file_test (lldb)",
+      "program": "bazel-bin/toolchain/testing/file_test",
+      "args": ["--file_tests=${relativeFile}"],
+      "debuggerRoot": "${workspaceFolder}",
+      "initCommands": [
+        "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
+        "settings set target.source-map \".\" \"${workspaceFolder}\""
+      ],
+      "env": { "TEST_TMPDIR": "/tmp" }
+    },
+    {
+      "type": "lldb-dap",
+      "request": "launch",
+      "name": "carbon compile (lldb)",
+      "program": "bazel-bin/toolchain/carbon",
+      "args": [
+        "compile",
+        "--phase=lower",
+        "--dump-sem-ir",
+        "--stream-errors",
+        "${relativeFile}"
+      ],
+      "debuggerRoot": "${workspaceFolder}",
+      "initCommands": [
+        "command script import external/+llvm_project+llvm-project/llvm/utils/lldbDataFormatters.py",
+        "settings set target.source-map \".\" \"${workspaceFolder}\""
+      ]
+    }
+  ]
+}

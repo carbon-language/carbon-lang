@@ -141,14 +141,21 @@ cc_library(
 
 cc_library(
     name = "inst_namer",
-    srcs = ["inst_namer.cpp"],
-    hdrs = ["inst_namer.h"],
+    srcs = [
+        "inst_fingerprinter.cpp",
+        "inst_namer.cpp",
+    ],
+    hdrs = [
+        "inst_fingerprinter.h",
+        "inst_namer.h",
+    ],
     deps = [
         ":file",
         ":typed_insts",
         "//common:ostream",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:tree",
         "@llvm-project//llvm:Support",
@@ -180,6 +187,20 @@ cc_library(
         ":file",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "dump",
+    srcs = ["dump.cpp"],
+    hdrs = ["dump.h"],
+    deps = [
+        ":file",
+        ":stringify_type",
+        "//common:ostream",
+    ],
+    # Always link dump methods so they are callable from a debugger
+    # even though they are never called.
+    alwayslink = 1,
 )
 
 cc_test(

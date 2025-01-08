@@ -68,6 +68,12 @@ class FileContext {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
+  // Returns a lowered value to use for a value of int literal type.
+  auto GetIntLiteralAsValue() -> llvm::Constant* {
+    // TODO: Consider adding a named struct type for integer literals.
+    return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
+  }
+
   // Returns a global value for the given instruction.
   auto GetGlobal(SemIR::InstId inst_id) -> llvm::Value*;
 

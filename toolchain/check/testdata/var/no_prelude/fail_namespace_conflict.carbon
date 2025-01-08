@@ -39,12 +39,8 @@ var A: () = ();
 // CHECK:STDOUT:     .A = %A.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.loc11: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.loc20_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc20_9.2: type = converted %.loc20_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %A.var.loc20: ref %empty_tuple.type = var A
 // CHECK:STDOUT:   %A.loc20: ref %empty_tuple.type = bind_name A, %A.var.loc20
-// CHECK:STDOUT:   %.loc28_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc28_9.2: type = converted %.loc28_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %A.var.loc28: ref %empty_tuple.type = var A
 // CHECK:STDOUT:   %A.loc28: ref %empty_tuple.type = bind_name A, %A.var.loc28
 // CHECK:STDOUT: }

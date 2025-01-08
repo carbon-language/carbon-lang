@@ -57,8 +57,8 @@ fn F(x: X) {
 // CHECK:STDOUT:     %x.patt: %X = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %X = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %X.ref.loc14: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x.param: %X = value_param runtime_param0
+// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -77,7 +77,6 @@ fn F(x: X) {
 // CHECK:STDOUT:   %s: ref String = bind_name s, %s.var
 // CHECK:STDOUT:   %str: String = string_literal "hello" [template = constants.%str]
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %X.ref.loc27: type = name_ref X, file.%X.decl [template = constants.%X]
 // CHECK:STDOUT:   %y.var: ref %X = var y
 // CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x

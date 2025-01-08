@@ -41,10 +41,8 @@ let c_var: c = d;
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [template = constants.%D]
 // CHECK:STDOUT:   %d.var: ref %D = var d
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
-// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

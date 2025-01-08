@@ -30,9 +30,6 @@ fn Main() {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_14.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var x
 // CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [template = constants.%Main] {} {}
@@ -40,9 +37,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc14_16.2: type = converted %.loc14_16.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [template = constants.%struct_type.v]
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var y
 // CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x

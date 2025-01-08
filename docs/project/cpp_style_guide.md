@@ -184,6 +184,11 @@ these.
     -   Tests are an exception and should typically be wrapped in an anonymous
         namespace under the namespace of the code under test, to keep everything
         internal.
+-   For
+    [Access Control](https://google.github.io/styleguide/cppguide.html#Access_Control),
+    specifically for test fixtures in `.cpp` files, we use `public` instead of
+    `protected`. This is motivated by the
+    `misc-non-private-member-variables-in-classes` tidy check.
 
 ### Copyable and movable types
 

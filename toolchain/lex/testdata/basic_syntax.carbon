@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // Dump all tokens so that we include the file start and end.
-// ARGS: compile --phase=lex --dump-tokens %s
+// EXTRA-ARGS: --no-omit-file-boundary-tokens
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

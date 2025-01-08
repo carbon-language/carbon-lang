@@ -307,10 +307,13 @@ class ArgBuilder {
   void MetaAction(T action);
 
  protected:
-  friend CommandBuilder;
+  friend class CommandBuilder;
   // `arg` must not be null.
   explicit ArgBuilder(Arg* arg);
 
+  auto arg() -> Arg* { return arg_; }
+
+ private:
   Arg* arg_;
 };
 
@@ -756,7 +759,7 @@ auto OneOfArgBuilder::OneOfValue(llvm::StringRef str, T value)
 template <typename T, typename U, size_t N>
 void OneOfArgBuilder::SetOneOf(const OneOfValueT<U> (&values)[N], T* result) {
   static_assert(N > 0, "Must include at least one value.");
-  arg_->is_append = false;
+  arg()->is_append = false;
   OneOfImpl(
       values, [result](T value) { *result = value; },
       std::make_index_sequence<N>{});
@@ -766,7 +769,7 @@ template <typename T, typename U, size_t N>
 void OneOfArgBuilder::AppendOneOf(const OneOfValueT<U> (&values)[N],
                                   llvm::SmallVectorImpl<T>* sequence) {
   static_assert(N > 0, "Must include at least one value.");
-  arg_->is_append = true;
+  arg()->is_append = true;
   OneOfImpl(
       values, [sequence](T value) { sequence->push_back(value); },
       std::make_index_sequence<N>{});
@@ -792,12 +795,12 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
 
   // Directly copy the value strings into a heap-allocated array in the
   // argument.
-  new (&arg_->value_strings)
+  new (&arg()->value_strings)
       llvm::OwningArrayRef<llvm::StringRef>(value_strings);
 
   // And build a type-erased action that maps a specific value string to a value
   // by index.
-  new (&arg_->value_action) Arg::ValueActionT(
+  new (&arg()->value_action) Arg::ValueActionT(
       [values, match](const Arg& arg, llvm::StringRef value_string) -> bool {
         for (int i : llvm::seq<int>(0, N)) {
           if (value_string == arg.value_strings[i]) {
@@ -810,11 +813,11 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
 
   // Fold over all the input values to see if there is a default.
   if ((input_values[Indices].is_default || ...)) {
-    CARBON_CHECK(!arg_->is_append, "Can't append default.");
+    CARBON_CHECK(!arg()->is_append, "Can't append default.");
     CARBON_CHECK((input_values[Indices].is_default + ... + 0) == 1,
                  "Cannot default more than one value.");
 
-    arg_->has_default = true;
+    arg()->has_default = true;
 
     // First build a lambda that configures the default using an index. We'll
     // call this below, this lambda isn't the one that is stored.
@@ -822,12 +825,12 @@ void OneOfArgBuilder::OneOfImpl(const OneOfValueT<U> (&input_values)[N],
       // Now that we have the desired default index, build a lambda and store it
       // as the default action. This lambda is stored and so it captures the
       // necessary information explicitly and by value.
-      new (&arg_->default_action)
+      new (&arg()->default_action)
           Arg::DefaultActionT([value = default_value.value,
                                match](const Arg& /*arg*/) { match(value); });
 
       // Also store the index itself for use when printing help.
-      arg_->default_value_index = index;
+      arg()->default_value_index = index;
     };
 
     // Now we fold across the inputs and in the one case that is the default, we

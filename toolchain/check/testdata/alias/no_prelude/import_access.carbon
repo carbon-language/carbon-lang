@@ -88,29 +88,28 @@ var inst: Test.A = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Test//def, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Test//def, A, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.85d = import_ref Test//def, C, unloaded
+// CHECK:STDOUT:   %import_ref.7c2: type = import_ref Test//def, A, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c4 = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .A [private] = imports.%import_ref.2
+// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .A [private] = imports.%import_ref.7c2
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%import_ref.2 [template = constants.%C]
 // CHECK:STDOUT:   %inst.var: ref %C = var inst
 // CHECK:STDOUT:   %inst: ref %C = bind_name inst, %inst.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -138,7 +137,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
 // CHECK:STDOUT: }
@@ -168,8 +166,6 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [template = <error>]
 // CHECK:STDOUT:   %inst.var: ref <error> = var inst
 // CHECK:STDOUT:   %inst: ref <error> = bind_name inst, %inst.var
 // CHECK:STDOUT: }

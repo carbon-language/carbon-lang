@@ -6,6 +6,7 @@
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 namespace cam = ::clang::ast_matchers;
 
 namespace Carbon {

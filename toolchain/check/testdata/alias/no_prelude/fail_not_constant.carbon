@@ -36,17 +36,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc12_11.2: type = converted %.loc12_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc12_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc12_16.2: init %empty_tuple.type = tuple_init () to %a.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_17: init %empty_tuple.type = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc12_17
-// CHECK:STDOUT:   %.loc13_11: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc13_12: type = converted %.loc13_11, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %ptr: type = ptr_type %empty_tuple.type [template = constants.%ptr]
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a

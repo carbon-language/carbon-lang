@@ -91,7 +91,7 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
   CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
                        RedeclInfo(new_function, new_loc, new_is_definition),
                        RedeclInfo(prev_function, prev_function.latest_decl_id(),
-                                  prev_function.definition_id.is_valid()),
+                                  prev_function.has_definition_started()),
                        prev_import_ir_id);
 
   if (!prev_function.first_owning_decl_id.is_valid()) {
@@ -246,15 +246,19 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
-                 function_info, is_definition);
+  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
+    context.DiagnosePoisonedName(function_info.latest_decl_id());
+  } else {
+    TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
+                   function_info, is_definition);
+  }
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
     if (function_info.is_extern && context.IsImplFile()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
-    function_info.generic_id = FinishGenericDecl(context, decl_id);
+    function_info.generic_id = BuildGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
@@ -278,7 +282,8 @@ static auto BuildFunctionDecl(Context& context,
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
-  if (!name_context.prev_inst_id().is_valid()) {
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
+      !name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = decl_id;
@@ -371,9 +376,9 @@ static auto HandleFunctionDefinitionAfterSignature(
   // Create the function scope and the entry block.
   context.return_scope_stack().push_back({.decl_id = decl_id});
   context.inst_block_stack().Push();
+  context.PushRegion(context.inst_block_stack().PeekOrAdd());
   context.scope_stack().Push(decl_id);
   StartGenericDefinition(context);
-  context.AddCurrentCodeBlockToFunction();
 
   CheckFunctionDefinitionSignature(context, function);
 
@@ -434,8 +439,10 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   context.return_scope_stack().pop_back();
   context.decl_name_stack().PopScope();
 
-  // If this is a generic function, collect information about the definition.
   auto& function = context.functions().Get(function_id);
+  function.body_block_ids = context.PopRegion();
+
+  // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
 
   return true;

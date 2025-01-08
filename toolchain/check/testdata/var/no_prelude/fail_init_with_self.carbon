@@ -32,8 +32,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var x
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]

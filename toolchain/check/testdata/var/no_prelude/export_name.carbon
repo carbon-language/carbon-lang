@@ -53,8 +53,6 @@ var w: () = v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
 // CHECK:STDOUT: }
@@ -94,8 +92,6 @@ var w: () = v;
 // CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc11_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_9.2: type = converted %.loc11_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %w.var: ref %empty_tuple.type = var w
 // CHECK:STDOUT:   %w: ref %empty_tuple.type = bind_name w, %w.var
 // CHECK:STDOUT: }

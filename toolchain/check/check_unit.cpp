@@ -8,6 +8,7 @@
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/node_id_traversal.h"
@@ -346,6 +347,11 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     node_id = *maybe_node_id;
     auto parse_kind = context_.parse_tree().node_kind(node_id);
 
+    if (context_.parse_tree().node_has_error(node_id)) {
+      context_.TODO(node_id, "handle invalid parse trees in `check`");
+      return false;
+    }
+
     bool result;
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                              \
@@ -390,8 +396,12 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         break;
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        if (!context_.impls().Get(impl_decl.impl_id).is_defined()) {
-          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        auto& impl = context_.impls().Get(impl_decl.impl_id);
+        if (!impl.is_defined()) {
+          FillImplWitnessWithErrors(context_, impl);
+          CARBON_DIAGNOSTIC(MissingImplDefinition, Error,
+                            "impl declared but not defined");
+          emitter_.Emit(decl_inst_id, MissingImplDefinition);
         }
         break;
       }

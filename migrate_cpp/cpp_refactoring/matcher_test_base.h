@@ -19,25 +19,25 @@ namespace Carbon::Testing {
 template <typename MatcherFactoryType>
 class MatcherTestBase : public ::testing::Test {
  protected:
-  MatcherTestBase() : matchers(&replacements) {
-    matchers.Register(std::make_unique<MatcherFactoryType>());
+  MatcherTestBase() : matchers_(&replacements_) {
+    matchers_.Register(std::make_unique<MatcherFactoryType>());
   }
 
   // Expects that the replacements produced by running the finder result in
   // the specified code transformation.
   void ExpectReplacement(llvm::StringRef before, llvm::StringRef after) {
     auto factory =
-        clang::tooling::newFrontendActionFactory(matchers.GetFinder());
+        clang::tooling::newFrontendActionFactory(matchers_.GetFinder());
     constexpr char Filename[] = "test.cc";
-    replacements.clear();
-    replacements.insert({Filename, {}});
+    replacements_.clear();
+    replacements_.insert({Filename, {}});
     ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
         factory->create(), before, {}, Filename, "clang-tool",
         std::make_shared<clang::PCHContainerOperations>(),
         clang::tooling::FileContentMappings()));
-    EXPECT_THAT(replacements, testing::ElementsAre(testing::Key(Filename)));
+    EXPECT_THAT(replacements_, testing::ElementsAre(testing::Key(Filename)));
     llvm::Expected<std::string> actual =
-        clang::tooling::applyAllReplacements(before, replacements[Filename]);
+        clang::tooling::applyAllReplacements(before, replacements_[Filename]);
 
     // Make a specific note if the matcher didn't make any changes.
     std::string unchanged;
@@ -57,8 +57,9 @@ class MatcherTestBase : public ::testing::Test {
     }
   }
 
-  Matcher::ReplacementMap replacements;
-  MatcherManager matchers;
+ private:
+  Matcher::ReplacementMap replacements_;
+  MatcherManager matchers_;
 };
 
 }  // namespace Carbon::Testing

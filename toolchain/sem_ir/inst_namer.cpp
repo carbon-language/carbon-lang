@@ -5,11 +5,16 @@
 #include "toolchain/sem_ir/inst_namer.h"
 
 #include "common/ostream.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -205,9 +210,10 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   return value->first();
 }
 
-auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
-                                        SemIR::LocId loc_id, std::string name)
-    -> Name {
+auto InstNamer::Namespace::AllocateName(
+    const InstNamer& inst_namer,
+    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
+    std::string name) -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
@@ -243,16 +249,30 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
 
   // Append location information to try to disambiguate.
   // TODO: Consider handling inst_id cases.
-  if (loc_id.is_node_id()) {
-    const auto& tree = inst_namer.sem_ir_->parse_tree();
-    auto token = tree.node_token(loc_id.node_id());
-    llvm::raw_string_ostream(name)
-        << ".loc" << tree.tokens().GetLineNumber(token);
-    add_name();
+  if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
+    if (loc_id->is_node_id()) {
+      const auto& tree = inst_namer.sem_ir_->parse_tree();
+      auto token = tree.node_token(loc_id->node_id());
+      llvm::raw_string_ostream(name)
+          << ".loc" << tree.tokens().GetLineNumber(token);
+      add_name();
 
-    llvm::raw_string_ostream(name)
-        << "_" << tree.tokens().GetColumnNumber(token);
-    add_name();
+      llvm::raw_string_ostream(name)
+          << "_" << tree.tokens().GetColumnNumber(token);
+      add_name();
+    }
+  } else {
+    uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
+    llvm::raw_string_ostream out(name);
+    out << ".";
+    // Include names with 3-6 characters from the fingerprint. Then fall back to
+    // sequential numbering.
+    for (int n : llvm::seq(1, 7)) {
+      out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
+      if (n >= 3) {
+        add_name();
+      }
+    }
   }
 
   // Append numbers until we find an available name.
@@ -362,23 +382,51 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
   }
 }
 
-auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
+auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
                                     llvm::ArrayRef<InstId> block) -> void {
-  Scope& scope = GetScopeInfo(scope_id);
+  llvm::SmallVector<std::pair<ScopeId, InstId>> insts;
+
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are queued such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto queue_block_insts = [&](ScopeId scope_id,
+                               llvm::ArrayRef<InstId> inst_ids) {
+    for (auto inst_id : llvm::reverse(inst_ids)) {
+      if (inst_id.is_valid()) {
+        insts.push_back(std::make_pair(scope_id, inst_id));
+      }
+    }
+  };
+  auto queue_block_id = [&](ScopeId scope_id, InstBlockId block_id) {
+    if (block_id.is_valid()) {
+      queue_block_insts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+    }
+  };
+
+  queue_block_insts(top_scope_id, block);
 
   // Use bound names where available. Otherwise, assign a backup name.
-  for (auto inst_id : block) {
-    if (!inst_id.is_valid()) {
-      continue;
-    }
+  while (!insts.empty()) {
+    auto [scope_id, inst_id] = insts.pop_back_val();
+
+    Scope& scope = GetScopeInfo(scope_id);
 
     auto untyped_inst = sem_ir_->insts().Get(inst_id);
     auto add_inst_name = [&](std::string name) {
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
+        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
+            SemIR::LocId::Invalid;
+        if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
+          loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
+        } else {
+          loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
+        }
         insts_[inst_id.index] = {
-            scope_id, scope.insts.AllocateName(
-                          *this, sem_ir_->insts().GetLocId(inst_id), name)};
+            scope_id,
+            scope.insts.AllocateName(*this, loc_id_or_fingerprint, name)};
       } else {
         CARBON_CHECK(old_scope_id == scope_id,
                      "Attempting to name inst in multiple scopes");
@@ -475,7 +523,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         continue;
       }
       case CARBON_KIND(BoundMethod inst): {
-        auto type_id = sem_ir_->insts().Get(inst.function_id).type_id();
+        auto type_id = sem_ir_->insts().Get(inst.function_decl_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
           add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
                            ".bound");
@@ -508,8 +556,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& class_info = sem_ir_->classes().Get(inst.class_id);
         add_inst_name_id(class_info.name_id, ".decl");
         auto class_scope_id = GetScopeFor(inst.class_id);
-        CollectNamesInBlock(class_scope_id, class_info.pattern_block_id);
-        CollectNamesInBlock(class_scope_id, inst.decl_block_id);
+        queue_block_id(class_scope_id, class_info.pattern_block_id);
+        queue_block_id(class_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(ClassType inst): {
@@ -593,8 +641,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         const auto& function_info = sem_ir_->functions().Get(inst.function_id);
         add_inst_name_id(function_info.name_id, ".decl");
         auto function_scope_id = GetScopeFor(inst.function_id);
-        CollectNamesInBlock(function_scope_id, function_info.pattern_block_id);
-        CollectNamesInBlock(function_scope_id, inst.decl_block_id);
+        queue_block_id(function_scope_id, function_info.pattern_block_id);
+        queue_block_id(function_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(FunctionType inst): {
@@ -614,10 +662,24 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       }
       case CARBON_KIND(ImplDecl inst): {
         auto impl_scope_id = GetScopeFor(inst.impl_id);
-        CollectNamesInBlock(
-            impl_scope_id, sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
-        CollectNamesInBlock(impl_scope_id, inst.decl_block_id);
+        queue_block_id(impl_scope_id,
+                       sem_ir_->impls().Get(inst.impl_id).pattern_block_id);
+        queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
+      }
+      case ImplWitness::Kind: {
+        // TODO: Include name of interface (is this available from the
+        // specific?).
+        add_inst_name("impl_witness");
+        continue;
+      }
+      case CARBON_KIND(ImplWitnessAccess inst): {
+        // TODO: Include information about the impl?
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "impl.elem" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
       }
       case CARBON_KIND(ImportDecl inst): {
         if (inst.package_id.is_valid()) {
@@ -637,7 +699,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         if (const_id.is_valid() && const_id.is_template()) {
           auto const_inst_id = sem_ir_->constant_values().GetInstId(const_id);
           if (!insts_[const_inst_id.index].second) {
-            CollectNamesInBlock(ScopeId::ImportRefs, const_inst_id);
+            queue_block_insts(ScopeId::ImportRefs,
+                              llvm::ArrayRef(const_inst_id));
           }
         }
         continue;
@@ -647,21 +710,8 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
             sem_ir_->interfaces().Get(inst.interface_id);
         add_inst_name_id(interface_info.name_id, ".decl");
         auto interface_scope_id = GetScopeFor(inst.interface_id);
-        CollectNamesInBlock(interface_scope_id,
-                            interface_info.pattern_block_id);
-        CollectNamesInBlock(interface_scope_id, inst.decl_block_id);
-        continue;
-      }
-      case InterfaceWitness::Kind: {
-        // TODO: Include name of interface.
-        add_inst_name("interface");
-        continue;
-      }
-      case CARBON_KIND(InterfaceWitnessAccess inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
-        out << "impl.elem" << inst.index.index;
-        add_inst_name(std::move(name));
+        queue_block_id(interface_scope_id, interface_info.pattern_block_id);
+        queue_block_id(interface_scope_id, inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(IntType inst): {
@@ -713,7 +763,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
       case CARBON_KIND(SpecificFunction inst): {
         InstId callee_id = inst.callee_id;
         if (auto method = sem_ir_->insts().TryGetAs<BoundMethod>(callee_id)) {
-          callee_id = method->function_id;
+          callee_id = method->function_decl_id;
         }
         auto type_id = sem_ir_->insts().Get(callee_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
@@ -729,7 +779,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId scope_id,
         break;
       }
       case CARBON_KIND(SpliceBlock inst): {
-        CollectNamesInBlock(scope_id, inst.block_id);
+        queue_block_id(scope_id, inst.block_id);
         break;
       }
       case StringLiteral::Kind: {

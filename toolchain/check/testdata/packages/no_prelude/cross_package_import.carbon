@@ -257,9 +257,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -343,13 +345,13 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
-// CHECK:STDOUT:     .F2 = %import_ref.2
+// CHECK:STDOUT:     .F = %import_ref.5c2
+// CHECK:STDOUT:     .F2 = %import_ref.3d3
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn2
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
-// CHECK:STDOUT:   %import_ref.2: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
+// CHECK:STDOUT:   %import_ref.5c2: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.3d3: %F2.type = import_ref Other//other_fn2, F2, loaded [template = constants.%F2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -364,10 +366,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref.loc8: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5c2 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   %Other.ref.loc9: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%import_ref.2 [template = constants.%F2]
+// CHECK:STDOUT:   %F2.ref: %F2.type = name_ref F2, imports.%import_ref.3d3 [template = constants.%F2]
 // CHECK:STDOUT:   %F2.call: init %empty_tuple.type = call %F2.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -388,11 +390,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
+// CHECK:STDOUT:     .F = %import_ref.5c2
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_extern
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5c2: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -407,7 +409,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5c2 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -442,11 +444,11 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .F = %import_ref.1
+// CHECK:STDOUT:     .F = %import_ref.5c2
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:     import Other//other_fn_conflict
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
+// CHECK:STDOUT:   %import_ref.5c2: %F.type = import_ref Other//other_fn, F, loaded [template = constants.%F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -461,7 +463,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Other.ref: <namespace> = name_ref Other, imports.%Other [template = imports.%Other]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.1 [template = constants.%F]
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%import_ref.5c2 [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -476,8 +478,8 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <namespace> = import_ref Main//main_other_ns, Other, loaded
-// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.1, [template] {
+// CHECK:STDOUT:   %import_ref.b6b: <namespace> = import_ref Main//main_other_ns, Other, loaded
+// CHECK:STDOUT:   %Other: <namespace> = namespace %import_ref.b6b, [template] {
 // CHECK:STDOUT:     .F = file.%F.decl
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }

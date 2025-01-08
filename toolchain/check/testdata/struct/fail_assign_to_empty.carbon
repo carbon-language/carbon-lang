@@ -34,8 +34,6 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc14_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT: }

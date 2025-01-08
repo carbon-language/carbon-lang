@@ -35,13 +35,17 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
 
-  auto existing_inst_id = context.decl_name_stack().LookupOrAddName(
-      name_context, namespace_id, SemIR::AccessKind::Public);
-  if (existing_inst_id.is_valid()) {
-    // If there's a name conflict with a namespace, "merge" by using the
-    // previous declaration. Otherwise, diagnose the issue.
+  auto [existing_inst_id, is_poisoned] =
+      context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
+                                                SemIR::AccessKind::Public);
+  if (is_poisoned) {
+    context.DiagnosePoisonedName(namespace_id);
+  } else if (existing_inst_id.is_valid()) {
     if (auto existing =
             context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
+      // If there's a name conflict with a namespace, "merge" by using the
+      // previous declaration. Otherwise, diagnose the issue.
+
       // Point at the other namespace.
       namespace_inst.name_scope_id = existing->name_scope_id;
 

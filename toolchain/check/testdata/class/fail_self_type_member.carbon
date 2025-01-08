@@ -18,7 +18,7 @@ fn F() -> bool {
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: error: semantics TODO: `Error recovery from keyword name.` [SemanticsTodo]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   var c2: Class.Self = c1;
   // CHECK:STDERR:                 ^~~~
   var c2: Class.Self = c1;
@@ -29,8 +29,6 @@ fn F() -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, bool [template]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: bool} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [template]
@@ -39,19 +37,14 @@ fn F() -> bool {
 // CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc12_10.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:   %.loc12_10.2: type = converted %bool.make_type, %.loc12_10.1 [template = bool]
-// CHECK:STDOUT:   %.loc12_8: %Class.elem = field_decl b, element0 [template]
+// CHECK:STDOUT:   %.loc12: %Class.elem = field_decl b, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .b = %.loc12_8
+// CHECK:STDOUT:   .b = %.loc12
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> bool {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @F() -> bool;
 // CHECK:STDOUT:

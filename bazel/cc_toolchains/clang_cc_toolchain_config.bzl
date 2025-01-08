@@ -156,7 +156,6 @@ def _impl(ctx):
                             "--system-header-prefix=clang-tools-extra/",
                             "--system-header-prefix=clang/",
                             "--system-header-prefix=gmock/",
-                            "--system-header-prefix=google/protobuf/",
                             "--system-header-prefix=gtest/",
                             "--system-header-prefix=libfuzzer/",
                             "--system-header-prefix=llvm/",

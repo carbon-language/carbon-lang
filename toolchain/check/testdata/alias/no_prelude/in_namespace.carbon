@@ -46,8 +46,6 @@ fn F() -> NS.a {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   %NS.ref: <namespace> = name_ref NS, %NS [template = %NS]
-// CHECK:STDOUT:   %a.ref: type = name_ref a, %a [template = constants.%C]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %C = out_param_pattern %return.patt, runtime_param0
@@ -60,14 +58,12 @@ fn F() -> NS.a {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc11_19.2: type = converted %.loc11_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %.loc11_16: %C.elem = field_decl v, element0 [template]
+// CHECK:STDOUT:   %.loc11: %C.elem = field_decl v, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .v = %.loc11_16
+// CHECK:STDOUT:   .v = %.loc11
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

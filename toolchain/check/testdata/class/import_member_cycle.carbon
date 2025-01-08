@@ -53,8 +53,6 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [template = constants.%Cycle]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [template = constants.%ptr]
 // CHECK:STDOUT:   %.loc5: %Cycle.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type]
 // CHECK:STDOUT:
@@ -76,19 +74,19 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.a2c: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, loc5_8, unloaded
+// CHECK:STDOUT:   %import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.3a6 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = imports.%import_ref.1
+// CHECK:STDOUT:     .Cycle = imports.%import_ref.a2c
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
@@ -99,15 +97,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   .a = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.3a6
+// CHECK:STDOUT:   .a = imports.%import_ref.4e0
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.72d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, imports.%import_ref.1 [template = constants.%Cycle]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [template = constants.%ptr]
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
 // CHECK:STDOUT:   return

@@ -62,8 +62,6 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .v [private] = @__global_init.%v
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_17.2: type = converted %.loc4_17.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -92,8 +90,6 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc4_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_10.2: type = converted %.loc4_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -114,8 +110,6 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.loc10_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc10_10.2: type = converted %.loc10_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -143,8 +137,6 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = @__global_init.%v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc9_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc9_10.2: type = converted %.loc9_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

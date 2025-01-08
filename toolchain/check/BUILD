@@ -95,8 +95,6 @@ cc_library(
 cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
-    # Contains Dump methods without a forward declaration.
-    copts = ["-Wno-missing-prototypes"],
     deps = [
         ":context",
         "//common:check",
@@ -105,6 +103,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
     ],
     # Always link dump methods.

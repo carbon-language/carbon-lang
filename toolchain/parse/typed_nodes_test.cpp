@@ -45,7 +45,7 @@ namespace {
 #include "toolchain/parse/node_kind.def"
 
 class TypedNodeTest : public ::testing::Test {
- protected:
+ public:
   using Peer = TypedNodesTestPeer;
 
   Testing::CompileHelper compile_helper_;

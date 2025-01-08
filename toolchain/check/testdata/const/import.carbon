@@ -39,7 +39,7 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -63,15 +63,8 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:     %return.param: ref %const = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref %const = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %const.loc6: type = const_type %i32 [template = constants.%const]
 // CHECK:STDOUT:   %a_ref.var: ref %const = var a_ref
 // CHECK:STDOUT:   %a_ref: ref %const = bind_name a_ref, %a_ref.var
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %const.loc7: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:   %ptr: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a_ptr_ref.var: ref %ptr = var a_ptr_ref
 // CHECK:STDOUT:   %a_ptr_ref: ref %ptr = bind_name a_ptr_ref, %a_ptr_ref.var
 // CHECK:STDOUT: }
@@ -99,11 +92,11 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Implicit//default, F, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %const = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %import_ref.3: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
+// CHECK:STDOUT:   %import_ref.cd8 = import_ref Implicit//default, F, unloaded
+// CHECK:STDOUT:   %import_ref.0e1: ref %const = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %import_ref.5a2: ref %ptr = import_ref Implicit//default, a_ptr_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.4
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -111,9 +104,9 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .F = imports.%import_ref.1
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.2
-// CHECK:STDOUT:     .a_ptr_ref = imports.%import_ref.3
+// CHECK:STDOUT:     .F = imports.%import_ref.cd8
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.0e1
+// CHECK:STDOUT:     .a_ptr_ref = imports.%import_ref.5a2
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .a_ptr = %a_ptr
@@ -121,26 +114,18 @@ var a_ptr: const i32* = a_ptr_ref;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %const.loc6: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:   %ptr.loc6: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a.var: ref %ptr = var a
 // CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var
-// CHECK:STDOUT:   %int_32.loc7: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc7: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %const.loc7: type = const_type %i32 [template = constants.%const]
-// CHECK:STDOUT:   %ptr.loc7: type = ptr_type %const [template = constants.%ptr]
 // CHECK:STDOUT:   %a_ptr.var: ref %ptr = var a_ptr
 // CHECK:STDOUT:   %a_ptr: ref %ptr = bind_name a_ptr, %a_ptr.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%import_ref.2
+// CHECK:STDOUT:   %a_ref.ref: ref %const = name_ref a_ref, imports.%import_ref.0e1
 // CHECK:STDOUT:   %addr: %ptr = addr_of %a_ref.ref
 // CHECK:STDOUT:   assign file.%a.var, %addr
-// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%import_ref.3
+// CHECK:STDOUT:   %a_ptr_ref.ref: ref %ptr = name_ref a_ptr_ref, imports.%import_ref.5a2
 // CHECK:STDOUT:   %.loc7: %ptr = bind_value %a_ptr_ref.ref
 // CHECK:STDOUT:   assign file.%a_ptr.var, %.loc7
 // CHECK:STDOUT:   return

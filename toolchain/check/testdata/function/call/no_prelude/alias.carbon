@@ -57,8 +57,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc16_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc16_11.2: type = converted %.loc16_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [template = constants.%A]

@@ -8,9 +8,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_control_flow.carbon
 
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+11]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+15]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: alias a = true or false;
 // CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+11]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: alias a = true or false;
+// CHECK:STDERR:           ^~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_control_flow.carbon:[[@LINE+7]]:11: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: alias a = true or false;
@@ -31,7 +35,7 @@ alias a = true or false;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc22: bool = block_arg <unexpected instblockref inst_block5> [template = constants.%true]
+// CHECK:STDOUT:   %.loc26: bool = block_arg <unexpected instblockref inst_block5> [template = constants.%true]
 // CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [template = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

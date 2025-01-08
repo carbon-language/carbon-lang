@@ -9,6 +9,8 @@
 
 namespace Carbon::Testing::Yaml {
 
+// This is for tests, so we should be okay with the recursion here.
+// NOLINTNEXTLINE(misc-no-recursion)
 static auto Parse(llvm::yaml::Node* node) -> Value {
   CARBON_CHECK(node != nullptr);
 

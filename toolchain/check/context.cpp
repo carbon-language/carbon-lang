@@ -222,6 +222,18 @@ auto Context::DiagnoseDuplicateName(SemIRLoc dup_def, SemIRLoc prev_def)
       .Emit();
 }
 
+auto Context::DiagnosePoisonedName(SemIRLoc loc) -> void {
+  // TODO: Improve the diagnostic to replace NodeId::Invalid with the location
+  // where the name was poisoned. See discussion in
+  // https://github.com/carbon-language/carbon-lang/pull/4654#discussion_r1876607172
+  CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
+                    "name used before it was declared");
+  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  emitter_->Build(SemIR::LocId::Invalid, NameUseBeforeDecl)
+      .Note(loc, NameUseBeforeDeclNote)
+      .Emit();
+}
+
 auto Context::DiagnoseNameNotFound(SemIRLoc loc, SemIR::NameId name_id)
     -> void {
   CARBON_DIAGNOSTIC(NameNotFound, Error, "name `{0}` not found", SemIR::NameId);
@@ -265,7 +277,7 @@ auto Context::NoteIncompleteClass(SemIR::ClassId class_id,
                                   DiagnosticBuilder& builder) -> void {
   const auto& class_info = classes().Get(class_id);
   CARBON_CHECK(!class_info.is_defined(), "Class is not incomplete");
-  if (class_info.definition_id.is_valid()) {
+  if (class_info.has_definition_started()) {
     CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
                       "class is incomplete within its definition");
     builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
@@ -301,7 +313,8 @@ auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
 }
 
 auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                               SemIR::NameScopeId scope_id) -> SemIR::InstId {
+                               SemIR::NameScopeId scope_id)
+    -> std::pair<SemIR::InstId, bool> {
   if (!scope_id.is_valid()) {
     // Look for a name in the current scope only. There are two cases where the
     // name would be in an outer scope:
@@ -326,7 +339,7 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    return scope_stack().LookupInCurrentScope(name_id);
+    return {scope_stack().LookupInCurrentScope(name_id), false};
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally
@@ -337,9 +350,9 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //
     //    // Error, no `F` in `B`.
     //    fn B.F() {}
-    return LookupNameInExactScope(loc_id, name_id, scope_id,
-                                  name_scopes().Get(scope_id))
-        .first;
+    auto result = LookupNameInExactScope(loc_id, name_id, scope_id,
+                                         name_scopes().Get(scope_id));
+    return {result.inst_id, result.is_poisoned};
   }
 }
 
@@ -354,6 +367,8 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
       scope_stack().LookupInLexicalScopes(name_id);
 
   // Walk the non-lexical scopes and perform lookups into each of them.
+  // Collect scopes to poison this name when it's found.
+  llvm::SmallVector<LookupScope> scopes_to_poison;
   for (auto [index, lookup_scope_id, specific_id] :
        llvm::reverse(non_lexical_scopes)) {
     if (auto non_lexical_result =
@@ -361,8 +376,17 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
                                 LookupScope{.name_scope_id = lookup_scope_id,
                                             .specific_id = specific_id},
                                 /*required=*/false);
-        non_lexical_result.inst_id.is_valid()) {
-      return non_lexical_result;
+        !non_lexical_result.is_poisoned) {
+      if (non_lexical_result.inst_id.is_valid()) {
+        // Poison the scopes for this name.
+        for (const auto [scope_id, specific_id] : scopes_to_poison) {
+          name_scopes().Get(scope_id).AddPoison(name_id);
+        }
+
+        return non_lexical_result;
+      }
+      scopes_to_poison.push_back(
+          {.name_scope_id = lookup_scope_id, .specific_id = specific_id});
     }
   }
 
@@ -386,11 +410,13 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      const SemIR::NameScope& scope)
-    -> std::pair<SemIR::InstId, SemIR::AccessKind> {
+    -> LookupNameInExactScopeResult {
   if (auto entry_id = scope.Lookup(name_id)) {
     auto entry = scope.GetEntry(*entry_id);
-    LoadImportRef(*this, entry.inst_id);
-    return {entry.inst_id, entry.access_kind};
+    if (!entry.is_poisoned) {
+      LoadImportRef(*this, entry.inst_id);
+    }
+    return {entry.inst_id, entry.access_kind, entry.is_poisoned};
   }
 
   if (!scope.import_ir_scopes().empty()) {
@@ -556,7 +582,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     const auto& name_scope = name_scopes().Get(scope_id);
     has_error |= name_scope.has_error();
 
-    auto [scope_result_id, access_kind] =
+    auto [scope_result_id, access_kind, is_poisoned] =
         LookupNameInExactScope(loc_id, name_id, scope_id, name_scope);
 
     auto is_access_prohibited =
@@ -572,7 +598,7 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
       });
     }
 
-    if (!scope_result_id.is_valid() || is_access_prohibited) {
+    if (!is_poisoned && (!scope_result_id.is_valid() || is_access_prohibited)) {
       // If nothing is found in this scope or if we encountered an invalid
       // access, look in its extended scopes.
       const auto& extended = name_scope.extended_scopes();
@@ -614,9 +640,10 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
 
     result.inst_id = scope_result_id;
     result.specific_id = specific_id;
+    result.is_poisoned = is_poisoned;
   }
 
-  if (required && !result.inst_id.is_valid()) {
+  if (required && (!result.inst_id.is_valid() || result.is_poisoned)) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
         DiagnoseMemberNameNotFound(loc_id, name_id, lookup_scopes);
@@ -635,7 +662,8 @@ auto Context::LookupQualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id,
     }
 
     return {.specific_id = SemIR::SpecificId::Invalid,
-            .inst_id = SemIR::ErrorInst::SingletonInstId};
+            .inst_id = SemIR::ErrorInst::SingletonInstId,
+            .is_poisoned = result.is_poisoned};
   }
 
   return result;
@@ -655,7 +683,7 @@ static auto GetCorePackage(Context& context, SemIRLoc loc, llvm::StringRef name)
   auto core_name_id = SemIR::NameId::ForIdentifier(core_ident_id);
 
   // Look up `package.Core`.
-  auto [core_inst_id, _] = context.LookupNameInExactScope(
+  auto [core_inst_id, _, is_poisoned] = context.LookupNameInExactScope(
       loc, core_name_id, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_inst_id.is_valid()) {
@@ -683,7 +711,7 @@ auto Context::LookupNameInCore(SemIRLoc loc, llvm::StringRef name)
   }
 
   auto name_id = SemIR::NameId::ForIdentifier(identifiers().Add(name));
-  auto [inst_id, _] = LookupNameInExactScope(
+  auto [inst_id, _, is_poisoned] = LookupNameInExactScope(
       loc, name_id, core_package_id, name_scopes().Get(core_package_id));
   if (!inst_id.is_valid()) {
     CARBON_DIAGNOSTIC(
@@ -744,6 +772,7 @@ auto Context::AddConvergenceBlockAndPush(Parse::NodeId node_id, int num_blocks)
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id, node_id);
 }
 
 auto Context::AddConvergenceBlockWithArgAndPush(
@@ -763,6 +792,7 @@ auto Context::AddConvergenceBlockWithArgAndPush(
     inst_block_stack().Pop();
   }
   inst_block_stack().Push(new_block_id);
+  AddToRegion(new_block_id, node_id);
 
   // Acquire the result value.
   SemIR::TypeId result_type_id = insts().Get(*block_args.begin()).type_id();
@@ -799,30 +829,91 @@ auto Context::SetBlockArgResultBeforeConstantUse(SemIR::InstId select_id,
   }
 }
 
-auto Context::AddCurrentCodeBlockToFunction(Parse::NodeId node_id) -> void {
-  CARBON_CHECK(!inst_block_stack().empty(), "no current code block");
-
-  if (return_scope_stack().empty()) {
-    CARBON_CHECK(node_id.is_valid(),
-                 "No current function, but node_id not provided");
-    TODO(node_id,
+auto Context::AddToRegion(SemIR::InstBlockId block_id, SemIR::LocId loc_id)
+    -> void {
+  if (region_stack_.empty()) {
+    TODO(loc_id,
          "Control flow expressions are currently only supported inside "
          "functions.");
     return;
   }
-
-  if (!inst_block_stack().is_current_block_reachable()) {
-    // Don't include unreachable blocks in the function.
+  if (block_id == SemIR::InstBlockId::Unreachable) {
     return;
   }
 
-  auto function_id =
-      insts()
-          .GetAs<SemIR::FunctionDecl>(return_scope_stack().back().decl_id)
-          .function_id;
-  functions()
-      .Get(function_id)
-      .body_block_ids.push_back(inst_block_stack().PeekOrAdd());
+  region_stack_.AppendToTop(block_id);
+}
+
+auto Context::BeginSubpattern() -> void {
+  inst_block_stack().Push();
+  PushRegion(inst_block_stack().PeekOrAdd());
+}
+
+auto Context::EndSubpatternAsExpr(SemIR::InstId result_id)
+    -> SemIR::ExprRegionId {
+  if (region_stack_.PeekArray().size() > 1) {
+    // End the exit block with a branch to a successor block, whose contents
+    // will be determined later.
+    AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+        {.target_id = inst_blocks().AddDefaultValue()}));
+  } else {
+    // This single-block region will be inserted as a SpliceBlock, so we don't
+    // need control flow out of it.
+  }
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+
+  // TODO: Is it possible to validate that this region is genuinely
+  // single-entry, single-exit?
+  return sem_ir().expr_regions().Add(
+      {.block_ids = PopRegion(), .result_id = result_id});
+}
+
+auto Context::EndSubpatternAsEmpty() -> void {
+  auto block_id = inst_block_stack().Pop();
+  CARBON_CHECK(block_id == region_stack_.PeekArray().back());
+  CARBON_CHECK(region_stack_.PeekArray().size() == 1);
+  CARBON_CHECK(inst_blocks().Get(block_id).empty());
+  region_stack_.PopArray();
+}
+
+auto Context::InsertHere(SemIR::ExprRegionId region_id) -> SemIR::InstId {
+  auto region = sem_ir_->expr_regions().Get(region_id);
+  auto loc_id = insts().GetLocId(region.result_id);
+  auto exit_block = inst_blocks().Get(region.block_ids.back());
+  if (region.block_ids.size() == 1) {
+    // TODO: Is it possible to avoid leaving an "orphan" block in the IR in the
+    // first two cases?
+    if (exit_block.empty()) {
+      return region.result_id;
+    }
+    if (exit_block.size() == 1) {
+      inst_block_stack_.AddInstId(exit_block.front());
+      return region.result_id;
+    }
+    return AddInst<SemIR::SpliceBlock>(
+        loc_id, {.type_id = insts().Get(region.result_id).type_id(),
+                 .block_id = region.block_ids.front(),
+                 .result_id = region.result_id});
+  }
+  if (region_stack_.empty()) {
+    TODO(loc_id,
+         "Control flow expressions are currently only supported inside "
+         "functions.");
+    return SemIR::ErrorInst::SingletonInstId;
+  }
+  AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
+      {.target_id = region.block_ids.front()}));
+  inst_block_stack_.Pop();
+  // TODO: this will cumulatively cost O(MN) running time for M blocks
+  // at the Nth level of the stack. Figure out how to do better.
+  region_stack_.AppendToTop(region.block_ids);
+  auto resume_with_block_id =
+      insts().GetAs<SemIR::Branch>(exit_block.back()).target_id;
+  CARBON_CHECK(inst_blocks().GetOrEmpty(resume_with_block_id).empty());
+  inst_block_stack_.Push(resume_with_block_id);
+  AddToRegion(resume_with_block_id, loc_id);
+  return region.result_id;
 }
 
 auto Context::is_current_position_reachable() -> bool {
@@ -1198,7 +1289,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<SemIR::BindSymbolicName,
-                                          SemIR::InterfaceWitnessAccess>())
+                                          SemIR::ImplWitnessAccess>())
   auto BuildValueReprForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::ValueRepr {
     // For symbolic types, we arbitrarily pick a copy representation.

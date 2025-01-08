@@ -14,7 +14,7 @@ namespace N;
 // CHECK:STDERR: fn N.base() {}
 // CHECK:STDERR:      ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_base_as_declared_name.carbon:[[@LINE+3]]:6: error: semantics TODO: `HandleInvalidParse` [SemanticsTodo]
+// CHECK:STDERR: fail_base_as_declared_name.carbon:[[@LINE+3]]:6: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn N.base() {}
 // CHECK:STDERR:      ^~~~
 fn N.base() {}

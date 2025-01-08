@@ -41,7 +41,7 @@ var b: T = *a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -83,11 +83,8 @@ var b: T = *a;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %T.ref.loc8: type = name_ref T, imports.%import_ref
-// CHECK:STDOUT:   %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
-// CHECK:STDOUT:   %T.ref.loc12: type = name_ref T, imports.%import_ref
 // CHECK:STDOUT:   %b.var: ref <error> = var b
 // CHECK:STDOUT:   %b: ref <error> = bind_name b, %b.var
 // CHECK:STDOUT: }

@@ -37,7 +37,7 @@ using ::testing::Pair;
 namespace Yaml = ::Carbon::Testing::Yaml;
 
 class LexerTest : public ::testing::Test {
- protected:
+ public:
   Testing::CompileHelper compile_helper_;
 };
 
@@ -337,7 +337,9 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                           // newline
                           {.kind = TokenKind::RealLiteral, .text = "9.0"},
                           {.kind = TokenKind::Period},
-                          {.kind = TokenKind::RealLiteral, .text = "9.5"},
+                          {.kind = TokenKind::IntLiteral, .text = "9"},
+                          {.kind = TokenKind::Period},
+                          {.kind = TokenKind::IntLiteral, .text = "5"},
                           // newline
                           {.kind = TokenKind::Error, .text = "10.foo"},
                           // newline

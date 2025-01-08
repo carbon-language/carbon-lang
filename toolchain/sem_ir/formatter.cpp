@@ -20,6 +20,11 @@
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
+// TODO: Consider addressing recursion here, although it's not critical because
+// the formatter isn't required to work on arbitrary code. Still, it may help
+// in the future to debug complex code.
+// NOLINTBEGIN(misc-no-recursion)
+
 namespace Carbon::SemIR {
 
 // Formatter for printing textual Semantics IR.
@@ -625,7 +630,11 @@ class FormatterImpl {
       out_ << label;
     }
 
-    for (auto [name_id, inst_id, access_kind] : scope.entries()) {
+    for (auto [name_id, inst_id, access_kind, is_poisoned] : scope.entries()) {
+      if (is_poisoned) {
+        // TODO: Add poisoned names.
+        continue;
+      }
       Indent();
       out_ << ".";
       FormatName(name_id);
@@ -1192,6 +1201,10 @@ class FormatterImpl {
     out_ << ')';
   }
 
+  auto FormatArg(AbsoluteInstBlockId id) -> void {
+    FormatArg(static_cast<InstBlockId>(id));
+  }
+
   auto FormatArg(RealId id) -> void {
     // TODO: Format with a `.` when the exponent is near zero.
     const auto& real = sem_ir_->reals().Get(id);
@@ -1379,3 +1392,5 @@ auto Formatter::Print(llvm::raw_ostream& out) -> void {
 }
 
 }  // namespace Carbon::SemIR
+
+// NOLINTEND(misc-no-recursion)

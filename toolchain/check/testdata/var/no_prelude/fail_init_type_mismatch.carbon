@@ -34,8 +34,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc15_11.2: type = converted %.loc15_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT:   %.loc15_16.1: %empty_tuple.type = tuple_literal ()

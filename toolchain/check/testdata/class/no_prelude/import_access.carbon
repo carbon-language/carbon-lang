@@ -207,27 +207,26 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9e9: type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4ce = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .Def [private] = imports.%import_ref.9e9
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Def.ref: type = name_ref Def, imports.%import_ref.1 [template = constants.%Def]
 // CHECK:STDOUT:   %c.var: ref %Def = var c
 // CHECK:STDOUT:   %c: ref %Def = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.4ce
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -250,7 +249,6 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -280,8 +278,6 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
-// CHECK:STDOUT:   %Def.ref: <error> = name_ref Def, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -303,27 +299,26 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.570: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.414 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.570
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%import_ref.1 [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %c.var: ref %ForwardWithDef = var c
 // CHECK:STDOUT:   %c: ref %ForwardWithDef = bind_name c, %c.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.414
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -346,7 +341,6 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -376,8 +370,6 @@ private class Redecl {}
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
-// CHECK:STDOUT:   %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [template = <error>]
 // CHECK:STDOUT:   %c.var: ref <error> = var c
 // CHECK:STDOUT:   %c: ref <error> = bind_name c, %c.var
 // CHECK:STDOUT: }
@@ -415,9 +407,11 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: %ptr = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: %ptr = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Forward [template = constants.%ptr]
 // CHECK:STDOUT:     %c.param: %ptr = value_param runtime_param0
+// CHECK:STDOUT:     %.loc4: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:       %Forward.ref: type = name_ref Forward, imports.%import_ref [template = constants.%Forward]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Forward [template = constants.%ptr]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %ptr = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = class_decl @Forward [template = constants.%Forward] {} {}
@@ -452,9 +446,11 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %.loc10: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
+// CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -487,10 +483,12 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = binding_pattern c
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
-// CHECK:STDOUT:     %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
-// CHECK:STDOUT:     %ptr: type = ptr_type <error> [template = <error>]
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %.loc9: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
+// CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
+// CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: <error> = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

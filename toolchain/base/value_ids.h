@@ -21,8 +21,7 @@ namespace Carbon {
 //
 // These values are not canonicalized, because we don't expect them to repeat
 // and don't use them in SemIR values.
-class Real : public Printable<Real> {
- public:
+struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& output_stream) const -> void {
     mantissa.print(output_stream, /*isSigned=*/false);
     output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
