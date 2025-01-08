@@ -35,7 +35,7 @@ class NodeCategory : public Printable<NodeCategory> {
     Statement = 1 << 7,
     IntConst = 1 << 8,
     Requirement = 1 << 9,
-    IdentifierName = 1 << 10,
+    NonExprIdentifierName = 1 << 10,
     NameQualifier = 1 << 11,
     None = 0,
 

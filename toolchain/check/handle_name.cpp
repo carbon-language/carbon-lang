@@ -124,7 +124,8 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
 }
 
 static auto HandleIdentifierName(Context& context,
-                                 Parse::AnyIdentifierNameId node_id) -> bool {
+                                 Parse::AnyNonExprIdentifierNameId node_id)
+    -> bool {
   // The parent is responsible for binding the name.
   auto name_id = GetIdentifierAsName(context, node_id);
   if (!name_id) {

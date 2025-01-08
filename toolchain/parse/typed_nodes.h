@@ -127,17 +127,19 @@ using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 using EmptyDecl = LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex,
                            NodeCategory::Decl | NodeCategory::Statement>;
 
-// A name in a non-expression context, such as a declaration.
+// A name in a non-expression context, such as a declaration, that is known
+// to be followed by parameters.
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::IdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
 
+// A name in a non-expression context, such as a declaration, that is known
+// to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::IdentifierName>;
+             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
 
 // A name in an expression context.
-// FIXME rename?
 using IdentifierNameExpr =
     LeafNode<NodeKind::IdentifierNameExpr, Lex::IdentifierTokenIndex,
              NodeCategory::Expr>;
@@ -186,7 +188,7 @@ struct NameQualifierWithoutParams {
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<AnyNameQualifierId> qualifiers;
-  AnyIdentifierNameId name;
+  AnyNonExprIdentifierNameId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<TuplePatternId> params;
 };
@@ -1119,7 +1121,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    AnyIdentifierNameId name;
+    AnyNonExprIdentifierNameId name;
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;

@@ -225,7 +225,12 @@ CARBON_PARSE_STATE(CodeBlock)
 //   (state done)
 CARBON_PARSE_STATE(CodeBlockFinish)
 
-// Handles a declaration name and parameters, such as `Foo[...](...)`.
+// Handles a declaration name and parameters, such as `Foo[...](...).Bar(...)`.
+// The variants impose different restrictions on the parameters:
+// - NoParams indicates that the declaration cannot contain parameters anywhere.
+// - QualifierParams indicates that the name qualifiers can have parameters,
+//   but the final name cannot (for example, `Foo[...](...).Bar` is allowed).
+// - AllParams indicates that the name can have parameters anywhere.
 //
 // name . ...
 // ^~~~~~
@@ -252,7 +257,8 @@ CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, NoParams, QualifierParams,
                              AllParams)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
-// Only used after implicit parameters.
+// Only used after implicit parameters. The variants have the same meaning as
+// in DeclNameAndParams.
 //
 // name [ ... ] ( ... )
 //             ^
@@ -266,7 +272,8 @@ CARBON_PARSE_STATE_VARIANTS2(DeclNameAndParamsAfterImplicit, QualifierParams,
                              AllParams)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
-// Only used after implicit parameters.
+// Only used after implicit parameters. The variants have the same meaning as
+// in DeclNameAndParams.
 //
 // name [ ... ] ( ... ) .
 //                      ^

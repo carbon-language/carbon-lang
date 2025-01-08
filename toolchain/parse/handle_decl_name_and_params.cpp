@@ -8,10 +8,13 @@
 namespace Carbon::Parse {
 
 namespace {
+// Identifies one of the variants of the DeclNameAndParams,
+// DeclNameAndParamsAfterImplicit, or DeclNameAndParamsAfterParams states.
 enum class Variant { NoParams, QualifierParams, AllParams };
 }  // namespace
 
-static auto BaseState(Variant variant) -> State {
+// Returns the specified variant of the DeclNameAndParams state.
+static auto DeclNameAndParamsAs(Variant variant) -> State {
   switch (variant) {
     case Variant::NoParams:
       return State::DeclNameAndParamsAsNoParams;
@@ -22,7 +25,8 @@ static auto BaseState(Variant variant) -> State {
   }
 }
 
-static auto AfterImplicitState(Variant variant) {
+// Returns the specified variant of the DeclNameAndParamsAfterImplicit state.
+static auto DeclNameAndParamsAfterImplicitAs(Variant variant) {
   switch (variant) {
     case Variant::NoParams:
       CARBON_FATAL("State does not exist");
@@ -33,7 +37,8 @@ static auto AfterImplicitState(Variant variant) {
   }
 }
 
-static auto AfterParamsState(Variant variant) {
+// Returns the specified variant of the DeclNameAndParamsAfterParams state.
+static auto DeclNameAndParamsAfterParamsAs(Variant variant) {
   switch (variant) {
     case Variant::NoParams:
       CARBON_FATAL("State does not exist");
@@ -84,7 +89,7 @@ static auto HandleDeclNameAndParams(Context& context, Variant variant) -> void {
       context.AddNode(NodeKind::NameQualifierWithoutParams,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
-      context.PushState(BaseState(variant));
+      context.PushState(DeclNameAndParamsAs(variant));
 
       break;
     }
@@ -94,7 +99,7 @@ static auto HandleDeclNameAndParams(Context& context, Variant variant) -> void {
         return;
       }
       context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *identifier);
-      state.state = AfterImplicitState(variant);
+      state.state = DeclNameAndParamsAfterImplicitAs(variant);
       context.PushState(state);
       context.PushState(State::PatternListAsImplicit);
       break;
@@ -105,7 +110,7 @@ static auto HandleDeclNameAndParams(Context& context, Variant variant) -> void {
         return;
       }
       context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *identifier);
-      state.state = AfterParamsState(variant);
+      state.state = DeclNameAndParamsAfterParamsAs(variant);
       context.PushState(state);
       context.PushState(State::PatternListAsTuple);
       break;
@@ -142,7 +147,7 @@ static auto HandleDeclNameAndParamsAfterImplicit(Context& context,
     return;
   }
 
-  state.state = AfterParamsState(variant);
+  state.state = DeclNameAndParamsAfterParamsAs(variant);
   context.PushState(state);
   context.PushState(State::PatternListAsTuple);
 }
@@ -163,7 +168,7 @@ static auto HandleDeclNameAndParamsAfterParams(Context& context,
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
     context.AddNode(NodeKind::NameQualifierWithParams, *period,
                     state.has_error);
-    context.PushState(BaseState(variant));
+    context.PushState(DeclNameAndParamsAs(variant));
   } else {
     if (variant != Variant::AllParams) {
       CARBON_DIAGNOSTIC(UnexpectedParamsAfterDeclName, Error,
