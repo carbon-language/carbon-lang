@@ -128,18 +128,106 @@ build --allow_unresolved_symlinks=false
 # RC file here if present.
 try-import %workspace%/user.bazelrc
 
-# TODO: WORKSPACE will be removed in bazel 9, should finish moving off.
+# Incompatible with `rules_tree_sitter`.
+# TODO: WORKSPACE will be removed in bazel 9, and we need to move off.
+# TODO: The registry has a different treesitter rule set, and we should
+# investigate switching. See:
+# https://registry.bazel.build/modules/tree-sitter-bazel
 common --enable_workspace
-
-# The version of treesitter rules we're using depends on empty globs.
-# TODO: Look at the different rules in the registry.
+# This is on by default in bazel 8.
 common --incompatible_disallow_empty_glob=false
-
-# TODO: Enable as many incompatible flags as we can, per
-# https://bazel.build/release/backward-compatibility. To get the latest list,
-# using `bazelisk --migrate build //...` will help.
-common --incompatible_strict_action_env
+# common --incompatible_auto_exec_groups
+# common --incompatible_disable_starlark_host_transitions
 
 # This excludes things like rules_android to reduce warnings.
-# TODO: Disable this completely.
+# TODO: There's a pending fix, so hopefully we can remove it soon.
+# - Issue: https://github.com/bazelbuild/bazel/issues/23929
+# - 8.0.1 tracker: https://github.com/bazelbuild/bazel/issues/24649
 common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_shell
+
+# Query error in `@bazel_tools`. This reproduces with
+# `bazel query 'deps(//...)'`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_disable_non_executable_java_binary
+
+# Incompatible with `rules_cc`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_no_rule_outputs_param
+# common --incompatible_stop_exporting_language_modules
+
+# Incompatible with `rules_pkg`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_disable_target_default_provider_fields
+
+# Incompatible with `rules_shell`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_check_visibility_for_toolchains
+
+# Incompatible with `tcmalloc`.
+# TODO: Fix `bazel build -c opt //...`.
+# common --incompatible_config_setting_private_default_visibility
+
+# Enable as many incompatible flags as we can, per
+# https://bazel.build/release/backward-compatibility. To get the latest list,
+# using `bazelisk --migrate build //...` will help.
+common --incompatible_allow_tags_propagation
+common --incompatible_always_check_depset_elements
+common --incompatible_always_include_files_in_data
+common --incompatible_bazel_test_exec_run_under
+common --incompatible_check_sharding_support
+common --incompatible_check_testonly_for_output_files
+common --incompatible_default_to_explicit_init_py
+common --incompatible_depset_for_java_output_source_jars
+common --incompatible_depset_for_libraries_to_link_getter
+common --incompatible_disable_native_android_rules
+common --incompatible_disable_native_repo_rules
+common --incompatible_disable_objc_library_transition
+common --incompatible_disable_target_provider_fields
+common --incompatible_disallow_ctx_resolve_tools
+common --incompatible_disallow_legacy_py_provider
+common --incompatible_disallow_sdk_frameworks_attributes
+common --incompatible_disallow_struct_provider_syntax
+common --incompatible_do_not_split_linking_cmdline
+common --incompatible_dont_enable_host_nonhost_crosstool_features
+common --incompatible_dont_use_javasourceinfoprovider
+common --incompatible_enable_apple_toolchain_resolution
+common --incompatible_enable_deprecated_label_apis
+common --incompatible_enable_proto_toolchain_resolution
+common --incompatible_enforce_config_setting_visibility
+common --incompatible_exclusive_test_sandboxed
+common --incompatible_fail_on_unknown_attributes
+common --incompatible_fix_package_group_reporoot_syntax
+common --incompatible_java_common_parameters
+common --incompatible_legacy_local_fallback
+common --incompatible_make_thinlto_command_lines_standalone
+common --incompatible_merge_fixed_and_default_shell_env
+common --incompatible_merge_genfiles_directory
+common --incompatible_modify_execution_info_additive
+common --incompatible_new_actions_api
+common --incompatible_no_attr_license
+common --incompatible_no_implicit_file_export
+common --incompatible_no_implicit_watch_label
+common --incompatible_objc_alwayslink_by_default
+common --incompatible_package_group_has_public_syntax
+common --incompatible_py2_outputs_are_suffixed
+common --incompatible_py3_is_default
+common --incompatible_python_disable_py2
+common --incompatible_python_disallow_native_rules
+common --incompatible_remote_use_new_exit_code_for_lost_inputs
+common --incompatible_remove_legacy_whole_archive
+common --incompatible_require_ctx_in_configure_features
+common --incompatible_require_linker_input_cc_api
+common --incompatible_run_shell_command_string
+common --incompatible_sandbox_hermetic_tmp
+common --incompatible_simplify_unconditional_selects_in_rule_attrs
+common --incompatible_stop_exporting_build_file_path
+common --incompatible_strict_action_env
+common --incompatible_strip_executable_safely
+common --incompatible_top_level_aspects_require_providers
+common --incompatible_unambiguous_label_stringification
+common --incompatible_use_cc_configure_from_rules_cc
+common --incompatible_use_new_cgroup_implementation
+common --incompatible_use_plus_in_repo_names
+common --incompatible_use_python_toolchains
+common --incompatible_validate_top_level_header_inclusions
+common --incompatible_visibility_private_attributes_at_definition

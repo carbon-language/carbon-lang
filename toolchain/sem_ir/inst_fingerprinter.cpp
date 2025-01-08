@@ -233,7 +233,7 @@ struct Worklist {
   }
 
   auto Add(ImportIRId ir_id) -> void {
-    auto* ir = sem_ir->import_irs().Get(ir_id).sem_ir;
+    const auto* ir = sem_ir->import_irs().Get(ir_id).sem_ir;
     Add(ir->package_id());
     Add(ir->library_id());
   }
@@ -267,7 +267,7 @@ struct Worklist {
     using Kind = decltype(kind);
 
     // Build a lookup table to add an argument of the given kind.
-    static constexpr std::array<AddFunction, Kind::NumTypes + 2> table = [] {
+    static constexpr std::array<AddFunction, Kind::NumTypes + 2> Table = [] {
       std::array<AddFunction, Kind::NumTypes + 2> table;
       table[Kind::None.ToIndex()] = [](Worklist& /*worklist*/,
                                        uint64_t /*arg*/) {};
@@ -283,7 +283,7 @@ struct Worklist {
       return table;
     }();
 
-    table[kind.ToIndex()](*this, arg);
+    Table[kind.ToIndex()](*this, arg);
   }
 
   // Ensure all the instructions on the todo list have fingerprints.

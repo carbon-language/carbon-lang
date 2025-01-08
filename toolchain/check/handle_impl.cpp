@@ -212,21 +212,45 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
+
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  // TODO: Following proposal #3763, we should exclude any `where` clause, and
-  // add `Self` before `as` if needed, see:
+  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
+  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
+               end_node_kind == Parse::NodeKind::ImplDecl);
+  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  --last_param_iter;
+
+  // Following proposal #3763, exclude a final `where` clause, if present. See:
   // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               node_kind == Parse::NodeKind::ImplDecl);
-  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
+
+  // Caches the NodeKind for the current value of *last_param_iter so
+  if (context.parse_tree().node_kind(*last_param_iter) ==
+      Parse::NodeKind::WhereExpr) {
+    int where_operands_to_skip = 1;
+    --last_param_iter;
+    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
+                 last_param_iter);
+    do {
+      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
+      if (node_kind == Parse::NodeKind::WhereExpr) {
+        // If we have a nested `where`, we need to see another `WhereOperand`
+        // before we find the one that matches our original `WhereExpr` node.
+        ++where_operands_to_skip;
+      } else if (node_kind == Parse::NodeKind::WhereOperand) {
+        --where_operands_to_skip;
+      }
+      --last_param_iter;
+      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
+                   last_param_iter);
+    } while (where_operands_to_skip > 0);
+  }
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
+      .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
@@ -297,6 +321,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
+  // TODO: Do facet type resolution here.
+  // TODO: Determine `interface_id` and `specific_id` once and save it in the
+  // resolved facet type, instead of in multiple functions called below.
+  // TODO: Skip work below if facet type resolution fails, so we don't have a
+  // valid/non-error `interface_id` at all.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?

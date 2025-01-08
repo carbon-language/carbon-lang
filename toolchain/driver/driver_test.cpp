@@ -122,6 +122,17 @@ TEST_F(DriverTest, CompileCommandErrors) {
       StrEq("error: not all required positional arguments were provided; first "
             "missing and required positional argument: `FILE`\n"));
 
+  // Pass non-existing file
+  EXPECT_FALSE(driver_
+                   .RunCommand({"compile", "--dump-mem-usage",
+                                "non-existing-file.carbon"})
+                   .success);
+  EXPECT_THAT(
+      test_error_stream_.TakeStr(),
+      ContainsRegex("No such file or directory[\\n]*non-existing-file.carbon"));
+  // Flush output stream, because it's ok that it's not empty here.
+  test_output_stream_.TakeStr();
+
   // Invalid output filename. No reliably error message here.
   // TODO: Likely want a different filename on Windows.
   auto empty_file = MakeTestFile("");

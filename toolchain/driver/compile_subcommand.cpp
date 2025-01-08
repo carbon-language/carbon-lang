@@ -369,14 +369,17 @@ class CompilationUnit {
       source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                   input_filename_, *consumer_);
     });
-    if (mem_usage_) {
-      mem_usage_->Add("source_", source_->text().size(),
-                      source_->text().size());
-    }
+
     if (!source_) {
       success_ = false;
       return;
     }
+
+    if (mem_usage_) {
+      mem_usage_->Add("source_", source_->text().size(),
+                      source_->text().size());
+    }
+
     CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
     LogCall("Lex::Lex", "lex",

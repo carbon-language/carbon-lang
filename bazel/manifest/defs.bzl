@@ -9,8 +9,11 @@ def _manifest(ctx):
 
     files = []
     for src in ctx.attr.srcs:
-        files.extend([f.path for f in src.files.to_list()])
-        files.extend([f.path for f in src.default_runfiles.files.to_list()])
+        files.extend([f.path for f in src[DefaultInfo].files.to_list()])
+        files.extend([
+            f.path
+            for f in src[DefaultInfo].default_runfiles.files.to_list()
+        ])
 
     if ctx.attr.strip_package_dir:
         package_dir = ctx.label.package + "/"
