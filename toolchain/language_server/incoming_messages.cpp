@@ -4,28 +4,74 @@
 
 #include "toolchain/language_server/incoming_messages.h"
 
-#include "toolchain/language_server/handler_registry.h"
+#include "toolchain/language_server/handle.h"
 
 namespace Carbon::LanguageServer {
 
-// Copies a registry's entries to the corresponding handler map.
-template <typename RegistryT, typename HandlerT>
-static auto BuildHandlerMap(Map<std::string, HandlerT>& handlers) -> void {
-  CARBON_CHECK(!RegistryT::entries().empty(),
-               "An empty registry may mean a linking error");
-  for (const auto& handler_entry : RegistryT::entries()) {
-    auto name = handler_entry.getName();
-    auto result =
-        handlers.Insert(name, handler_entry.instantiate()->GetHandler(name));
-    CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
+// Parses a JSON value into a specific parameter type. The name of the method is
+// used when producing errors.
+template <typename ParamsT>
+inline auto Parse(llvm::StringRef name, const llvm::json::Value& raw_params)
+    -> llvm::Expected<ParamsT> {
+  ParamsT params;
+  llvm::json::Path::Root root;
+  if (!clang::clangd::fromJSON(raw_params, params, root)) {
+    return llvm::make_error<clang::clangd::LSPError>(
+        llvm::formatv("in call to `{0}`, JSON parse failed: {1}", name,
+                      llvm::fmt_consume(root.getError())),
+        clang::clangd::ErrorCode::InvalidParams);
   }
+  return std::move(params);
+}
+
+template <typename ParamsT, typename ResultT>
+auto IncomingMessages::AddCallHandler(
+    llvm::StringRef name,
+    void (*handler)(Context&, const ParamsT&,
+                    llvm::function_ref<void(llvm::Expected<ResultT>)>))
+    -> void {
+  CallHandler wrapped =
+      [name, handler](
+          Context& context, llvm::json::Value raw_params,
+          llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)
+      -> void {
+    auto params = Parse<ParamsT>(name, raw_params);
+    if (!params) {
+      on_done(params.takeError());
+      return;
+    }
+    handler(context, *params, on_done);
+  };
+  auto result = call_handlers_.Insert(name, wrapped);
+  CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
+}
+
+template <typename ParamsT>
+auto IncomingMessages::AddNotificationHandler(llvm::StringRef name,
+                                              void (*handler)(Context&,
+                                                              const ParamsT&))
+    -> void {
+  NotificationHandler wrapped =
+      [name, handler](Context& context, llvm::json::Value raw_params) -> void {
+    auto params = Parse<ParamsT>(name, raw_params);
+    if (!params) {
+      // TODO: Maybe we should do something more with this error?
+      llvm::consumeError(params.takeError());
+    }
+    handler(context, *params);
+  };
+  auto result = notification_handlers_.Insert(name, wrapped);
+  CARBON_CHECK(result.is_inserted(), "Duplicate handler: {0}", name);
 }
 
 IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
                                    Context* context)
     : transport_(transport), context_(context) {
-  BuildHandlerMap<CallHandlerRegistry>(call_handlers_);
-  BuildHandlerMap<NotificationHandlerRegistry>(notification_handlers_);
+  AddCallHandler("textDocument/documentSymbol", &HandleDocumentSymbol);
+  AddCallHandler("initialize", &HandleInitialize);
+  AddNotificationHandler("textDocument/didChange",
+                         &HandleDidChangeTextDocument);
+  AddNotificationHandler("textDocument/didOpen", &HandleDidOpenTextDocument);
 }
 
 auto IncomingMessages::onCall(llvm::StringRef name, llvm::json::Value params,

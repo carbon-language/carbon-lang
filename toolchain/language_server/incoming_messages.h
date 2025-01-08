@@ -10,7 +10,6 @@
 #include "common/check.h"
 #include "common/map.h"
 #include "toolchain/language_server/context.h"
-#include "toolchain/language_server/handler_registry.h"
 
 namespace Carbon::LanguageServer {
 
@@ -42,6 +41,24 @@ class IncomingMessages : public clang::clangd::Transport::MessageHandler {
   }
 
  private:
+  // These are the signatures expected for handlers.
+  using CallHandler = std::function<void(
+      Context& context, llvm::json::Value raw_params,
+      llvm::function_ref<void(llvm::Expected<llvm::json::Value>)> on_done)>;
+  using NotificationHandler =
+      std::function<void(Context& context, llvm::json::Value raw_params)>;
+
+  template <typename ParamsT, typename ResultT>
+  auto AddCallHandler(
+      llvm::StringRef name,
+      void (*handler)(Context&, const ParamsT&,
+                      llvm::function_ref<void(llvm::Expected<ResultT>)>))
+      -> void;
+  template <typename ParamsT>
+  auto AddNotificationHandler(llvm::StringRef name,
+                              void (*handler)(Context&, const ParamsT&))
+      -> void;
+
   // The connection to the client.
   clang::clangd::Transport* transport_;
   // The context for handlers.

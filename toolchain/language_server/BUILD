@@ -12,8 +12,6 @@ cc_library(
     hdrs = ["language_server.h"],
     deps = [
         ":context",
-        ":handler_registry",
-        ":handlers",
         ":incoming_messages",
         ":outgoing_messages",
         "//common:error",
@@ -32,25 +30,11 @@ cc_library(
 )
 
 cc_library(
-    name = "handler_registry",
-    srcs = [
-        "handler_registry_for_call.cpp",
-        "handler_registry_for_notification.cpp",
-    ],
-    hdrs = ["handler_registry.h"],
-    deps = [
-        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
-        "@llvm-project//llvm:Support",
-    ],
-    alwayslink = 1,
-)
-
-cc_library(
-    name = "handlers",
+    name = "handle",
     srcs = glob(["handle_*"]),
+    hdrs = ["handle.h"],
     deps = [
         ":context",
-        ":handler_registry",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:null_diagnostics",
         "//toolchain/lex",
@@ -59,7 +43,6 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
     ],
-    alwayslink = 1,
 )
 
 cc_library(
@@ -68,7 +51,7 @@ cc_library(
     hdrs = ["incoming_messages.h"],
     deps = [
         ":context",
-        ":handler_registry",
+        ":handle",
         "//common:check",
         "//common:map",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",

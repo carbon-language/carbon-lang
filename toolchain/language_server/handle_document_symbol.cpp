@@ -4,8 +4,7 @@
 
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
-#include "toolchain/language_server/context.h"
-#include "toolchain/language_server/handler_registry.h"
+#include "toolchain/language_server/handle.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/parse.h"
@@ -31,8 +30,7 @@ static auto GetIdentifierName(const SharedValueStores& value_stores,
   return std::nullopt;
 }
 
-// Provides information about document symbols.
-static auto HandleDocumentSymbol(
+auto HandleDocumentSymbol(
     Context& context, const clang::clangd::DocumentSymbolParams& params,
     llvm::function_ref<
         void(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)>
@@ -89,8 +87,5 @@ static auto HandleDocumentSymbol(
   }
   on_done(result);
 }
-
-static RegisterCallHandler<HandleDocumentSymbol> register_call(
-    "textDocument/didChange", "");
 
 }  // namespace Carbon::LanguageServer

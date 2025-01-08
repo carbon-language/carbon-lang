@@ -7,7 +7,6 @@
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
 #include "toolchain/language_server/context.h"
-#include "toolchain/language_server/handler_registry.h"
 #include "toolchain/language_server/incoming_messages.h"
 #include "toolchain/language_server/outgoing_messages.h"
 
