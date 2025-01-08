@@ -74,7 +74,7 @@ class InstBlockStack {
 
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
-    CARBON_CHECK(empty(), "{0}", id_stack_.size());
+    CARBON_CHECK(empty(), "{0} still has {1} entries", name_, id_stack_.size());
   }
 
   auto empty() const -> bool { return id_stack_.empty(); }

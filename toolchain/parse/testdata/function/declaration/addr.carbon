@@ -14,9 +14,9 @@ fn foo(addr a: i32*);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 4},

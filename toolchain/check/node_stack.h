@@ -521,7 +521,8 @@ class NodeStack {
         case Parse::NodeKind::ForStatement:
         case Parse::NodeKind::FunctionDecl:
         case Parse::NodeKind::FunctionDefinition:
-        case Parse::NodeKind::IdentifierName:
+        case Parse::NodeKind::IdentifierNameNotBeforeParams:
+        case Parse::NodeKind::IdentifierNameBeforeParams:
         case Parse::NodeKind::IdentifierNameExpr:
         case Parse::NodeKind::IfConditionStart:
         case Parse::NodeKind::IfExprElse:
@@ -594,7 +595,8 @@ class NodeStack {
         case Parse::NodeKind::NamedConstraintDefinition:
         case Parse::NodeKind::NamedConstraintDefinitionStart:
         case Parse::NodeKind::NamedConstraintIntroducer:
-        case Parse::NodeKind::NameQualifier:
+        case Parse::NodeKind::NameQualifierWithParams:
+        case Parse::NodeKind::NameQualifierWithoutParams:
         case Parse::NodeKind::Namespace:
         case Parse::NodeKind::NamespaceStart:
         case Parse::NodeKind::PackageDecl:

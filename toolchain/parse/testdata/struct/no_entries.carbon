@@ -14,7 +14,7 @@ var y: {} = {};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'y'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
 // CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 4},

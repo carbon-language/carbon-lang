@@ -49,14 +49,10 @@ struct NameComponent {
   SemIR::InstBlockId pattern_block_id;
 };
 
-// Pop a name component from the node stack and pattern block stack.
+// Pop a name component from the node stack (and pattern block stack, if it has
+// parameters).
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id =
                                             SemIR::InstId::Invalid)
-    -> NameComponent;
-
-// Pop the name of a declaration from the node stack and pattern block stack,
-// and diagnose if it has parameters.
-auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
     -> NameComponent;
 
 }  // namespace Carbon::Check

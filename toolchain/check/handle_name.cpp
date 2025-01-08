@@ -123,8 +123,8 @@ static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
       {.type_id = type_id, .name_id = name_id, .value_id = result.inst_id});
 }
 
-auto HandleParseNode(Context& context, Parse::IdentifierNameId node_id)
-    -> bool {
+static auto HandleIdentifierName(Context& context,
+                                 Parse::AnyIdentifierNameId node_id) -> bool {
   // The parent is responsible for binding the name.
   auto name_id = GetIdentifierAsName(context, node_id);
   if (!name_id) {
@@ -132,6 +132,18 @@ auto HandleParseNode(Context& context, Parse::IdentifierNameId node_id)
   }
   context.node_stack().Push(node_id, *name_id);
   return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::IdentifierNameNotBeforeParamsId node_id) -> bool {
+  return HandleIdentifierName(context, node_id);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::IdentifierNameBeforeParamsId node_id) -> bool {
+  // Push a pattern block stack entry to handle the parameter pattern.
+  context.pattern_block_stack().Push();
+  return HandleIdentifierName(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
@@ -174,13 +186,15 @@ auto HandleParseNode(Context& context, Parse::SelfValueNameExprId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::NameQualifierId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context,
+                     Parse::NameQualifierWithParamsId /*node_id*/) -> bool {
   context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
-  // Push a pattern block for the signature (if any) of the next NameComponent.
-  // TODO: Instead use a separate parse node kind for an identifier that's
-  // followed by a pattern, and push a pattern block when handling it.
-  context.pattern_block_stack().Push();
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::NameQualifierWithoutParamsId /*node_id*/) -> bool {
+  context.decl_name_stack().ApplyNameQualifier(PopNameComponent(context));
   return true;
 }
 

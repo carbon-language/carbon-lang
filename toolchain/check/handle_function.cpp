@@ -36,8 +36,6 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // The function is potentially generic.
   StartGenericDecl(context);
-  // Start a new pattern block for the signature.
-  context.pattern_block_stack().Push();
   return true;
 }
 

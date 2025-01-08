@@ -18,17 +18,12 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
   context.decl_name_stack().PushScopeAndStartName();
-
-  // Push a pattern block to handle parameters of the namespace declaration.
-  // TODO: Disallow these in parse, instead of check, so we don't have to do
-  // this.
-  context.pattern_block_stack().Push();
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
-  auto name_context = context.decl_name_stack().FinishName(
-      PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
+  auto name_context =
+      context.decl_name_stack().FinishName(PopNameComponent(context));
 
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();

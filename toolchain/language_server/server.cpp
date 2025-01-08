@@ -100,18 +100,25 @@ auto Server::onReply(llvm::json::Value /*id*/,
   return true;
 }
 
-// Returns the text of first child of kind Parse::NodeKind::IdentifierName.
+// Returns the text of first child of kind IdentifierNameBeforeParams or
+// IdentifierNameNotBeforeParams.
 static auto GetIdentifierName(const SharedValueStores& value_stores,
                               const Lex::TokenizedBuffer& tokens,
                               const Parse::TreeAndSubtrees& p,
                               Parse::NodeId node)
     -> std::optional<llvm::StringRef> {
   for (auto ch : p.children(node)) {
-    if (p.tree().node_kind(ch) == Parse::NodeKind::IdentifierName) {
-      auto token = p.tree().node_token(ch);
-      if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
-        return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+    switch (p.tree().node_kind(ch)) {
+      case Parse::NodeKind::IdentifierNameBeforeParams:
+      case Parse::NodeKind::IdentifierNameNotBeforeParams: {
+        auto token = p.tree().node_token(ch);
+        if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
+          return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+        }
+        break;
       }
+      default:
+        break;
     }
   }
   return std::nullopt;

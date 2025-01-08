@@ -229,17 +229,17 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 //
 // name . ...
 // ^~~~~~
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAs(NoParams|QualifierParams|AllParams)
 //
-// name [ ... ]
+// name [ ... ]    (variant is not NoParams)
 // ^~~~
 //   1. PatternListAsImplicit
-//   2. DeclNameAndParamsAfterImplicit
+//   2. DeclNameAndParamsAfterImplicitAs(QualifierParams|AllParams)
 //
-// name ( ... )
+// name ( ... )    (variant is not NoParams)
 // ^~~~
 //   1. PatternListAsTuple
-//   2. DeclNameAndParamsAfterParams
+//   2. DeclNameAndParamsAfterParamsAs(QualifierParams|AllParams)
 //
 // name ...
 // ^~~~
@@ -248,7 +248,8 @@ CARBON_PARSE_STATE(CodeBlockFinish)
 //  ???
 // ^
 //   (state done)
-CARBON_PARSE_STATE(DeclNameAndParams)
+CARBON_PARSE_STATE_VARIANTS3(DeclNameAndParams, NoParams, QualifierParams,
+                             AllParams)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
 // Only used after implicit parameters.
@@ -256,24 +257,26 @@ CARBON_PARSE_STATE(DeclNameAndParams)
 // name [ ... ] ( ... )
 //             ^
 //   1. PatternListAsTuple
-//   2. DeclNameAndParamsAfterParams
+//   2. DeclNameAndParamsAfterParamsAs(QualifierParams|AllParams)
 //
 // name [ ... ] ???
 //             ^
 //   (state done)
-CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
+CARBON_PARSE_STATE_VARIANTS2(DeclNameAndParamsAfterImplicit, QualifierParams,
+                             AllParams)
 
 // Handles regular parameters such as `(...)` for the general declaration case.
 // Only used after implicit parameters.
 //
 // name [ ... ] ( ... ) .
 //                      ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAs(QualifierParams|AllParams)
 //
-// name [ ... ] ( ... ) ...
+// name [ ... ] ( ... ) ...    (state is not QualifierParams)
 //                     ^
 //   (state done)
-CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
+CARBON_PARSE_STATE_VARIANTS2(DeclNameAndParamsAfterParams, QualifierParams,
+                             AllParams)
 
 // Handles processing of a declaration scope. Things like fn, class, interface,
 // and so on.
@@ -395,6 +398,8 @@ CARBON_PARSE_STATE(DeclScopeLoop)
 // The forms of this are:
 // - Member access expressions.
 // - Designated names in structs.
+//
+// This does not handle periods in name qualifiers.
 //
 // Expressions have member accesses such as `x.y`, while structs have
 // designators such as `.z`.
@@ -679,7 +684,7 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 //
 // fn ...
 //   ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsAllParams
 //   2. FunctionAfterParams
 CARBON_PARSE_STATE(FunctionIntroducer)
 
@@ -735,7 +740,7 @@ CARBON_PARSE_STATE(FunctionDefinitionFinish)
 //
 // export Name;
 //       ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsQualifierParams
 //   2. ExportFinish
 CARBON_PARSE_STATE(ExportName)
 
@@ -770,7 +775,7 @@ CARBON_PARSE_STATE(Library)
 //
 // namespace ...
 //          ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsNoParams
 //   2. NamespaceFinish
 CARBON_PARSE_STATE(Namespace)
 
@@ -796,7 +801,7 @@ CARBON_PARSE_STATE(Package)
 //
 // alias ...
 //      ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsQualifierParams
 //   2. AliasInitializer
 CARBON_PARSE_STATE(Alias)
 
@@ -1258,7 +1263,7 @@ CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
 //
 // class/interface/constraint ...
 //                           ^
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsAllParams
 //   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
 CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
                              NamedConstraint)
@@ -1443,7 +1448,7 @@ CARBON_PARSE_STATE(LetFinish)
 //
 // choice ...
 // ^~~~~~
-//   1. DeclNameAndParams
+//   1. DeclNameAndParamsAsAllParams
 //   2. ChoiceAlternativeListStart
 //   3. ChoiceDefinitionFinish
 CARBON_PARSE_STATE(ChoiceIntroducer)

@@ -14,7 +14,7 @@ fn foo[]();
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'foo'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},

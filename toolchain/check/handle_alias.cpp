@@ -16,11 +16,6 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
     -> bool {
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
   context.decl_name_stack().PushScopeAndStartName();
-
-  // Push a pattern block to handle parameters of the alias declaration.
-  // TODO: Disallow these in parse, instead of check, so we don't have to do
-  // this.
-  context.pattern_block_stack().Push();
   return true;
 }
 
@@ -32,8 +27,8 @@ auto HandleParseNode(Context& /*context*/,
 auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
-  auto name_context = context.decl_name_stack().FinishName(
-      PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
+  auto name_context =
+      context.decl_name_stack().FinishName(PopNameComponent(context));
 
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();

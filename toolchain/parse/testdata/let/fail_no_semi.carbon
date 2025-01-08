@@ -21,7 +21,7 @@ let
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: '', has_error: yes},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: '', has_error: yes},
 // CHECK:STDOUT:         {kind: 'InvalidParse', text: '', has_error: yes},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: '', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:     {kind: 'LetDecl', text: 'let', has_error: yes, subtree_size: 5},
