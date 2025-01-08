@@ -16,12 +16,13 @@ namespace Carbon::LanguageServer {
 // Returns the text of first child of kind Parse::NodeKind::IdentifierName.
 static auto GetIdentifierName(const SharedValueStores& value_stores,
                               const Lex::TokenizedBuffer& tokens,
-                              const Parse::TreeAndSubtrees& p,
+                              const Parse::TreeAndSubtrees& tree_and_subtrees,
                               Parse::NodeId node)
     -> std::optional<llvm::StringRef> {
-  for (auto ch : p.children(node)) {
-    if (p.tree().node_kind(ch) == Parse::NodeKind::IdentifierName) {
-      auto token = p.tree().node_token(ch);
+  for (auto child : tree_and_subtrees.children(node)) {
+    if (tree_and_subtrees.tree().node_kind(child) ==
+        Parse::NodeKind::IdentifierName) {
+      auto token = tree_and_subtrees.tree().node_token(child);
       if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
         return value_stores.identifiers().Get(tokens.GetIdentifier(token));
       }
@@ -42,15 +43,15 @@ auto HandleDocumentSymbol(
   vfs.addFile(lookup.key(), /*mtime=*/0,
               llvm::MemoryBuffer::getMemBufferCopy(lookup.value()));
 
-  auto buf =
+  auto source =
       SourceBuffer::MakeFromFile(vfs, lookup.key(), NullDiagnosticConsumer());
-  auto lexed = Lex::Lex(value_stores, *buf, NullDiagnosticConsumer());
-  auto parsed = Parse::Parse(lexed, NullDiagnosticConsumer(), nullptr);
-  Parse::TreeAndSubtrees tree_and_subtrees(lexed, parsed);
+  auto tokens = Lex::Lex(value_stores, *source, NullDiagnosticConsumer());
+  auto tree = Parse::Parse(tokens, NullDiagnosticConsumer(), nullptr);
+  Parse::TreeAndSubtrees tree_and_subtrees(tokens, tree);
   std::vector<clang::clangd::DocumentSymbol> result;
-  for (const auto& node : parsed.postorder()) {
+  for (const auto& node : tree.postorder()) {
     clang::clangd::SymbolKind symbol_kind;
-    switch (parsed.node_kind(node)) {
+    switch (tree.node_kind(node)) {
       case Parse::NodeKind::FunctionDecl:
       case Parse::NodeKind::FunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
@@ -70,10 +71,10 @@ auto HandleDocumentSymbol(
     }
 
     if (auto name =
-            GetIdentifierName(value_stores, lexed, tree_and_subtrees, node)) {
-      auto tok = parsed.node_token(node);
-      clang::clangd::Position pos{lexed.GetLineNumber(tok) - 1,
-                                  lexed.GetColumnNumber(tok) - 1};
+            GetIdentifierName(value_stores, tokens, tree_and_subtrees, node)) {
+      auto token = tree.node_token(node);
+      clang::clangd::Position pos{tokens.GetLineNumber(token) - 1,
+                                  tokens.GetColumnNumber(token) - 1};
 
       clang::clangd::DocumentSymbol symbol{
           .name = std::string(*name),
