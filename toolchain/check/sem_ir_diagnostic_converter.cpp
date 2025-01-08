@@ -9,7 +9,21 @@ namespace Carbon::Check {
 
 auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
                                           ContextFnT context_fn) const
-    -> DiagnosticLoc {
+    -> std::pair<DiagnosticLoc, int32_t> {
+  auto diag_loc = ConvertLocImpl(loc, context_fn);
+  if (last_token_.is_valid()) {
+    // If the last processed token is after `loc`'s generated last_byte_offset,
+    // use the later offset.
+    diag_loc.second =
+        std::max(diag_loc.second,
+                 sem_ir_->parse_tree().tokens().GetByteOffset(last_token_));
+  }
+  return diag_loc;
+}
+
+auto SemIRDiagnosticConverter::ConvertLocImpl(SemIRLoc loc,
+                                              ContextFnT context_fn) const
+    -> std::pair<DiagnosticLoc, int32_t> {
   // Cursors for the current IR and instruction in that IR.
   const auto* cursor_ir = sem_ir_;
   auto cursor_inst_id = SemIR::InstId::Invalid;
@@ -23,7 +37,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
                  "If we get invalid locations here, we may need to more "
                  "thoroughly track ImportDecls.");
 
-    DiagnosticLoc in_import_loc;
+    std::pair<DiagnosticLoc, int32_t> in_import_loc;
     auto import_loc_id = cursor_ir->insts().GetLocId(import_ir.decl_id);
     if (import_loc_id.is_node_id()) {
       // For imports in the current file, the location is simple.
@@ -50,7 +64,7 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
     if (import_loc_id.is_valid()) {
       // TODO: Include the name of the imported library in the diagnostic.
       CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-      context_fn(in_import_loc, InImport);
+      context_fn(in_import_loc.first, InImport);
     }
 
     cursor_ir = import_ir.sem_ir;
@@ -59,7 +73,8 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
 
   // If the location is is an import, follows it and returns nullopt.
   // Otherwise, it's a parse node, so return the final location.
-  auto handle_loc = [&](SemIR::LocId loc_id) -> std::optional<DiagnosticLoc> {
+  auto handle_loc = [&](SemIR::LocId loc_id)
+      -> std::optional<std::pair<DiagnosticLoc, int32_t>> {
     if (loc_id.is_import_ir_inst_id()) {
       follow_import_ref(loc_id.import_ir_inst_id());
       return std::nullopt;
@@ -172,7 +187,7 @@ auto SemIRDiagnosticConverter::ConvertLocInFile(const SemIR::File* sem_ir,
                                                 Parse::NodeId node_id,
                                                 bool token_only,
                                                 ContextFnT context_fn) const
-    -> DiagnosticLoc {
+    -> std::pair<DiagnosticLoc, int32_t> {
   return node_converters_[sem_ir->check_ir_id().index]->ConvertLoc(
       Parse::NodeLoc(node_id, token_only), context_fn);
 }

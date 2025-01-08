@@ -12,17 +12,17 @@
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+12]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                      ^~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:22: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_not_in_function.carbon:[[@LINE+4]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: let x: i32 = if true then 1 else 0;
-// CHECK:STDERR:                      ^~~~~~
+// CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 

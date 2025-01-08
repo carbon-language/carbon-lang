@@ -23,10 +23,11 @@ class DiagnosticConverter {
 
   virtual ~DiagnosticConverter() = default;
 
-  // Converts a LocT to a DiagnosticLoc. ConvertLoc may invoke
-  // context_fn to provide context messages.
+  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
+  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
+  // messages.
   virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
-      -> DiagnosticLoc = 0;
+      -> std::pair<DiagnosticLoc, int32_t> = 0;
 
   // Converts arg types as needed. Not all uses require conversion, so the
   // default returns the argument unchanged.

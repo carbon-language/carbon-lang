@@ -335,7 +335,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto loc = unit_and_imports_->unit->node_converter->ConvertLoc(
+    auto [loc, _] = unit_and_imports_->unit->node_converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
     loc.FormatLocation(output);
     output << ": checking " << context_.parse_tree().node_kind(node_id) << "\n";
@@ -345,7 +345,9 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   while (auto maybe_node_id = traversal.Next()) {
     node_id = *maybe_node_id;
-    auto parse_kind = context_.parse_tree().node_kind(node_id);
+
+    unit_and_imports_->unit->sem_ir_converter->AdvanceToken(
+        context_.parse_tree().node_token(node_id));
 
     if (context_.parse_tree().node_has_error(node_id)) {
       context_.TODO(node_id, "handle invalid parse trees in `check`");
@@ -353,6 +355,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     }
 
     bool result;
+    auto parse_kind = context_.parse_tree().node_kind(node_id);
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                              \
   case Parse::NodeKind::Name: {                                   \

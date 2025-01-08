@@ -114,15 +114,17 @@ class DiagnosticEmitter {
       if (!emitter_) {
         return;
       }
-      AddMessageWithDiagnosticLoc(
-          emitter_->converter_->ConvertLoc(
-              loc,
-              [&](DiagnosticLoc context_loc,
-                  const DiagnosticBase<>& context_diagnostic_base) {
-                AddMessageWithDiagnosticLoc(context_loc,
-                                            context_diagnostic_base, {});
-              }),
-          diagnostic_base, args);
+      auto [diag_loc, last_byte_offset] = emitter_->converter_->ConvertLoc(
+          loc, [&](DiagnosticLoc context_loc,
+                   const DiagnosticBase<>& context_diagnostic_base) {
+            AddMessageWithDiagnosticLoc(context_loc, context_diagnostic_base,
+                                        {});
+          });
+      // Use the last byte offset from the first message.
+      if (diagnostic_.messages.empty()) {
+        diagnostic_.last_byte_offset = last_byte_offset;
+      }
+      AddMessageWithDiagnosticLoc(diag_loc, diagnostic_base, args);
     }
 
     // Adds a message to the diagnostic, handling conversion of the arguments. A

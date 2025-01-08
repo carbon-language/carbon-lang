@@ -44,11 +44,11 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
 
   // Map the given token into a diagnostic location.
   auto ConvertLoc(NodeLoc node_loc, ContextFnT context_fn) const
-      -> DiagnosticLoc override {
+      -> std::pair<DiagnosticLoc, int32_t> override {
     // Support the invalid token as a way to emit only the filename, when there
     // is no line association.
     if (!node_loc.node_id().is_valid()) {
-      return {.filename = filename_};
+      return {{.filename = filename_}, -1};
     }
 
     const auto& tree = get_tree_and_subtrees_();
@@ -73,20 +73,22 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
         end_token = desc_token;
       }
     }
-    DiagnosticLoc start_loc =
-        token_converter_.ConvertLoc(start_token, context_fn);
+    auto start_loc = token_converter_.ConvertLoc(start_token, context_fn);
     if (start_token == end_token) {
       return start_loc;
     }
-    DiagnosticLoc end_loc = token_converter_.ConvertLoc(end_token, context_fn);
+    auto end_loc = token_converter_.ConvertLoc(end_token, context_fn);
+    start_loc.second = end_loc.second;
     // For multiline locations we simply return the rest of the line for now
     // since true multiline locations are not yet supported.
-    if (start_loc.line_number != end_loc.line_number) {
-      start_loc.length = start_loc.line.size() - start_loc.column_number + 1;
+    if (start_loc.first.line_number != end_loc.first.line_number) {
+      start_loc.first.length =
+          start_loc.first.line.size() - start_loc.first.column_number + 1;
     } else {
-      if (start_loc.column_number != end_loc.column_number) {
-        start_loc.length =
-            end_loc.column_number + end_loc.length - start_loc.column_number;
+      if (start_loc.first.column_number != end_loc.first.column_number) {
+        start_loc.first.length = end_loc.first.column_number +
+                                 end_loc.first.length -
+                                 start_loc.first.column_number;
       }
     }
     return start_loc;

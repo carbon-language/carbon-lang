@@ -8,6 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_converter.h"
+#include "toolchain/lex/token_index.h"
 #include "toolchain/parse/tree_node_diagnostic_converter.h"
 #include "toolchain/sem_ir/file.h"
 
@@ -24,24 +25,40 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   // Converts an instruction's location to a diagnostic location, which will be
   // the underlying line of code. Adds context for any imports used in the
   // current SemIR to get to the underlying code.
+  //
+  // The returned last_byte_offset will be the maximum of what is found for the
+  // location, and the byte offset of `last_token_`.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
-      -> DiagnosticLoc override;
+      -> std::pair<DiagnosticLoc, int32_t> override;
 
   // Implements argument conversions for supported check-phase arguments.
   auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
 
+  // If a byte offset is past the current last byte offset, advances forward.
+  // Earlier offsets are ignored.
+  auto AdvanceToken(Lex::TokenIndex token) -> void {
+    last_token_ = std::max(last_token_, token);
+  }
+
  private:
+  // Implements `ConvertLoc`, but without `last_token_` applied.
+  auto ConvertLocImpl(SemIRLoc loc, ContextFnT context_fn) const
+      -> std::pair<DiagnosticLoc, int32_t>;
+
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.
   auto ConvertLocInFile(const SemIR::File* sem_ir, Parse::NodeId node_id,
                         bool token_only, ContextFnT context_fn) const
-      -> DiagnosticLoc;
+      -> std::pair<DiagnosticLoc, int32_t>;
 
   // Converters for each SemIR.
   llvm::ArrayRef<Parse::NodeLocConverter*> node_converters_;
 
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;
+
+  // The last token encountered during processing.
+  Lex::TokenIndex last_token_ = Lex::TokenIndex::Invalid;
 };
 
 }  // namespace Carbon::Check

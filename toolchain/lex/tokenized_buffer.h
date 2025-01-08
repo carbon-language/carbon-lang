@@ -69,7 +69,7 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 
   // Map the given token into a diagnostic location.
   auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
-      -> DiagnosticLoc override;
+      -> std::pair<DiagnosticLoc, int32_t> override;
 
  private:
   const TokenizedBuffer* buffer_;
@@ -161,6 +161,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the previous line handle.
   auto GetPrevLine(LineIndex line) const -> LineIndex;
 
+  auto GetByteOffset(TokenIndex token) const -> int32_t {
+    return GetTokenInfo(token).byte_offset();
+  }
+
   // Returns true if the token comes after the comment.
   auto IsAfterComment(TokenIndex token, CommentIndex comment_index) const
       -> bool;
@@ -227,7 +231,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     // Map the given position within the source buffer into a diagnostic
     // location.
     auto ConvertLoc(const char* loc, ContextFnT context_fn) const
-        -> DiagnosticLoc override;
+        -> std::pair<DiagnosticLoc, int32_t> override;
 
    private:
     const TokenizedBuffer* buffer_;

@@ -14,8 +14,8 @@ inline auto NullDiagnosticConverter() -> DiagnosticConverter<LocT>& {
   struct Converter : public DiagnosticConverter<LocT> {
     auto ConvertLoc(LocT /*loc*/,
                     DiagnosticConverter<LocT>::ContextFnT /*context_fn*/) const
-        -> DiagnosticLoc override {
-      return {};
+        -> std::pair<DiagnosticLoc, int32_t> override {
+      return {{}, -1};
     }
   };
   static auto* converter = new Converter;

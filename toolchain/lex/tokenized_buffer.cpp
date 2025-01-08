@@ -376,7 +376,8 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
 }
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
-    const char* loc, ContextFnT /*context_fn*/) const -> DiagnosticLoc {
+    const char* loc, ContextFnT /*context_fn*/) const
+    -> std::pair<DiagnosticLoc, int32_t> {
   CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc),
                "location not within buffer");
   int32_t offset = loc - buffer_->source_->text().begin();
@@ -406,15 +407,16 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   // tail of the line such as CR+LF, etc.
   line.consume_back("\n");
 
-  return {.filename = buffer_->source_->filename(),
-          .line = line,
-          .line_number = line_number + 1,
-          .column_number = column_number + 1};
+  return {{.filename = buffer_->source_->filename(),
+           .line = line,
+           .line_number = line_number + 1,
+           .column_number = column_number + 1},
+          offset};
 }
 
 auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
                                           ContextFnT context_fn) const
-    -> DiagnosticLoc {
+    -> std::pair<DiagnosticLoc, int32_t> {
   // Map the token location into a position within the source buffer.
   const auto& token_info = buffer_->GetTokenInfo(token);
   const char* token_start =
@@ -423,10 +425,10 @@ auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  DiagnosticLoc loc =
+  std::pair<DiagnosticLoc, int32_t> loc =
       TokenizedBuffer::SourceBufferDiagnosticConverter(buffer_).ConvertLoc(
           token_start, context_fn);
-  loc.length = buffer_->GetTokenText(token).size();
+  loc.first.length = buffer_->GetTokenText(token).size();
   return loc;
 }
 

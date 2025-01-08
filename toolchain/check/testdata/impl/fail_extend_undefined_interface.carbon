@@ -11,16 +11,12 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+11]]:3: error: implementation of undefined interface I [ImplOfUndefinedInterface]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: implementation of undefined interface I [ImplOfUndefinedInterface]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+4]]:3: error: impl declared but not defined [MissingImplDefinition]
-  // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   extend impl as I;
 }
@@ -29,7 +25,7 @@ fn F(c: C) {
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+10]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   C.F();
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-17]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-10]]:18: note: declared as an extended scope here [FromExtendHere]
@@ -37,15 +33,19 @@ fn F(c: C) {
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+9]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+13]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-32]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-28]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:18: note: declared as an extended scope here [FromExtendHere]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:                  ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-25]]:3: error: impl declared but not defined [MissingImplDefinition]
+  // CHECK:STDERR:   extend impl as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   c.F();
 }
 
@@ -82,7 +82,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %c.param_patt: %C = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param runtime_param0
-// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %c: %C = bind_name c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -107,8 +107,8 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc39: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc39: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, file.%C.decl [template = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc35: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc49: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return

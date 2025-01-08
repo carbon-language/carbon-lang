@@ -616,7 +616,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  auto diag_loc = converter_.ConvertLoc(
+  auto [diag_loc, _] = converter_.ConvertLoc(
       inst_id, [&](DiagnosticLoc /*context_loc*/,
                    const DiagnosticBase<>& /*context_diagnostic_base*/) {});
   return {.filename = diag_loc.filename,
