@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
+#include "toolchain/diagnostics/diagnostic_converter.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
@@ -91,9 +92,8 @@ class Context {
   static_assert(sizeof(StateStackEntry) == 12,
                 "StateStackEntry has unexpected size!");
 
-  explicit Context(Tree& tree, Lex::TokenizedBuffer& tokens,
-                   Lex::TokenDiagnosticEmitter& emitter,
-                   Lex::TokenIterator* position,
+  explicit Context(Tree* tree, Lex::TokenizedBuffer* tokens,
+                   DiagnosticConsumer* consumer,
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
@@ -136,14 +136,10 @@ class Context {
       -> void;
 
   // Returns the current position and moves past it.
-  auto Consume() -> Lex::TokenIndex {
-    auto pos = **position_;
-    ConsumeAndDiscard();
-    return pos;
-  }
+  auto Consume() -> Lex::TokenIndex { return *(position_++); }
 
   // Consumes the current token. Does not return it.
-  auto ConsumeAndDiscard() -> void { ++*position_; }
+  auto ConsumeAndDiscard() -> void { ++position_; }
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
@@ -235,7 +231,7 @@ class Context {
   // provided, it specifies which token to inspect.
   auto PositionKind(Lookahead lookahead = Lookahead::CurrentToken) const
       -> Lex::TokenKind {
-    return tokens_->GetKind((*position_)[static_cast<int32_t>(lookahead)]);
+    return tokens_->GetKind(position_[static_cast<int32_t>(lookahead)]);
   }
 
   // Tests whether the next token to be consumed is of the specified kind. If
@@ -260,7 +256,7 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void { PushState(state, **position_); }
+  auto PushState(State state) -> void { PushState(state, *position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree when the current position isn't the start of the subtree.
@@ -272,7 +268,7 @@ class Context {
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
     PushState({.state = State::Expr,
                .ambient_precedence = ambient_precedence,
-               .token = **position_,
+               .token = *position_,
                .subtree_start = tree_->size()});
   }
 
@@ -282,7 +278,7 @@ class Context {
     PushState({.state = state,
                .ambient_precedence = ambient_precedence,
                .lhs_precedence = lhs_precedence,
-               .token = **position_,
+               .token = *position_,
                .subtree_start = tree_->size()});
   }
 
@@ -363,10 +359,12 @@ class Context {
 
   auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
 
-  auto emitter() -> Lex::TokenDiagnosticEmitter& { return *emitter_; }
+  auto has_errors() const -> bool { return err_tracker_.seen_error(); }
 
-  auto position() -> Lex::TokenIterator& { return *position_; }
-  auto position() const -> Lex::TokenIterator { return *position_; }
+  auto emitter() -> Lex::TokenDiagnosticEmitter& { return emitter_; }
+
+  auto position() -> Lex::TokenIterator& { return position_; }
+  auto position() const -> Lex::TokenIterator { return position_; }
 
   auto state_stack() -> llvm::SmallVector<StateStackEntry>& {
     return state_stack_;
@@ -389,19 +387,42 @@ class Context {
   }
 
  private:
+  // Applies the `position_` to the `last_byte_offset` returned by `ConvertLoc`.
+  class TokenDiagnosticConverterForParse
+      : public Lex::TokenDiagnosticConverter {
+   public:
+    explicit TokenDiagnosticConverterForParse(Lex::TokenizedBuffer* tokens,
+                                              Lex::TokenIterator* position)
+        : Lex::TokenDiagnosticConverter(tokens), position_(position) {}
+
+    auto ConvertLoc(Lex::TokenIndex token, ContextFnT context_fn) const
+        -> std::pair<DiagnosticLoc, int32_t> override {
+      auto loc = Lex::TokenDiagnosticConverter::ConvertLoc(token, context_fn);
+      loc.second = std::max(loc.second, tokens().GetByteOffset(**position_));
+      return loc;
+    }
+
+   private:
+    // The position in `Parse()`.
+    Lex::TokenIterator* position_;
+  };
+
   // Prints a single token for a stack dump. Used by PrintForStackDump.
   auto PrintTokenForStackDump(llvm::raw_ostream& output,
                               Lex::TokenIndex token) const -> void;
 
   Tree* tree_;
   Lex::TokenizedBuffer* tokens_;
-  Lex::TokenDiagnosticEmitter* emitter_;
+
+  TokenDiagnosticConverterForParse converter_;
+  ErrorTrackingDiagnosticConsumer err_tracker_;
+  Lex::TokenDiagnosticEmitter emitter_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
 
   // The current position within the token buffer.
-  Lex::TokenIterator* const position_;
+  Lex::TokenIterator position_;
   // The FileEnd token.
   Lex::TokenIterator end_;
 
