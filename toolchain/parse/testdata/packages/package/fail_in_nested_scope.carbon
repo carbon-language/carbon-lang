@@ -23,8 +23,7 @@ class C {
 
 fn F() {
   // `package` here is an expression naming the package scope.
-  // TODO: Produce a better diagnostic for `package` not followed by `.`.
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+4]]:11: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+4]]:11: error: expected `.` after `package` expression [ExpectedPeriodAfterPackage]
   // CHECK:STDERR:   package P;
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
@@ -40,7 +39,7 @@ class C {
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl package P;
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-30]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-29]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   // CHECK:STDERR:
@@ -52,7 +51,7 @@ fn F() {
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl package P;
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-42]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-41]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   impl package P;
