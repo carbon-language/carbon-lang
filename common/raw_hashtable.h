@@ -530,7 +530,7 @@ class BaseImpl {
   friend class TableImpl;
 
   static constexpr ssize_t Alignment = std::max<ssize_t>(
-      {alignof(MetadataGroup), alignof(StorageEntry<KeyT, ValueT>)});
+      alignof(MetadataGroup), alignof(StorageEntry<KeyT, ValueT>));
 
   // Implementation of inline small storage for the provided key type, value
   // type, and small size. Specialized for a zero small size to be an empty
