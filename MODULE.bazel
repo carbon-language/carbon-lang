@@ -60,8 +60,8 @@ archive_override(
 bazel_dep(name = "tcmalloc", version = "0.0.0-20240411-5ed309d", dev_dependency = True)
 git_override(
     module_name = "tcmalloc",
-    # HEAD as of 2024-12-20.
-    commit = "91765c11461a01579fcbdddf430a556b818818c4",
+    # HEAD as of 2025-01-09.
+    commit = "d02a005a369252a4f239b36cc698daf7f87ba648",
     remote = "https://github.com/google/tcmalloc.git",
 )
 
