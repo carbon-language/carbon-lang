@@ -11,13 +11,21 @@ auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
                                           ContextFnT context_fn) const
     -> std::pair<DiagnosticLoc, int32_t> {
   auto diag_loc = ConvertLocImpl(loc, context_fn);
+
+  // Use the token when possible, but -1 is the default value.
+  auto last_offset = -1;
   if (last_token_.is_valid()) {
-    // If the last processed token is after `loc`'s generated last_byte_offset,
-    // use the later offset.
-    diag_loc.second =
-        std::max(diag_loc.second,
-                 sem_ir_->parse_tree().tokens().GetByteOffset(last_token_));
+    last_offset = sem_ir_->parse_tree().tokens().GetByteOffset(last_token_);
   }
+
+  // When the diagnostic is in the same file, we use the last possible offset;
+  // otherwise, we ignore the offset because it's probably in that file.
+  if (diag_loc.first.filename == sem_ir_->filename()) {
+    diag_loc.second = std::max(diag_loc.second, last_offset);
+  } else {
+    diag_loc.second = last_offset;
+  }
+
   return diag_loc;
 }
 

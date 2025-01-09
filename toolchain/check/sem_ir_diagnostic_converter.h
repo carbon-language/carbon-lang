@@ -25,8 +25,9 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
   // used in the current SemIR to get to the underlying code.
   //
-  // The returned last_byte_offset will be the maximum of offsets for `loc` and
-  // `last_token_`.
+  // For the last byte offset, this uses `last_token_` exclusively for imported
+  // locations, or `loc` if it's in the same file and (for whatever reason)
+  // later.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
       -> std::pair<DiagnosticLoc, int32_t> override;
 
