@@ -5,8 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_LANGUAGE_SERVER_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LANGUAGE_SERVER_CONTEXT_H_
 
-#include "clang-tools-extra/clangd/Protocol.h"
-#include "clang-tools-extra/clangd/support/Function.h"
+#include <string>
+
 #include "common/map.h"
 
 namespace Carbon::LanguageServer {
