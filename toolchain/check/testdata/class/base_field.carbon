@@ -89,7 +89,6 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc14: %Base.elem = field_decl c, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.ebc]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -99,7 +98,6 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc21: %Derived.elem.344 = field_decl e, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template = constants.%complete_type.401]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%p.param_patt: %ptr.404) -> %ptr.235 {

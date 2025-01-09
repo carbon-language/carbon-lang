@@ -281,11 +281,6 @@ class FormatterImpl {
       FormatName(class_info.complete_type_witness_id);
       out_ << "\n";
 
-      Indent();
-      out_ << "vtable_id = ";
-      FormatName(class_info.vtable_id);
-      out_ << "\n";
-
       CloseBrace();
     } else {
       Semicolon();

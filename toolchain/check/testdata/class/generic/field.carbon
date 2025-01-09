@@ -163,7 +163,6 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %.loc12: @Class.%Class.elem (%Class.elem.e262de.1) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc13_1.1: <witness> = complete_type_witness %struct_type.x.2ac3f0.1 [symbolic = %complete_type.loc13_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc13_1.1
-// CHECK:STDOUT:     vtable_id = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -287,7 +287,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc17: %Class.elem = field_decl k, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.0bf [template = constants.%complete_type.954]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Class]() -> %i32 {

@@ -94,7 +94,6 @@ fn Class.I() {}
 // CHECK:STDOUT:   %I.decl: %I.type.2b6 = fn_decl @I.1 [template = constants.%I.c9a] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.2 {
@@ -103,7 +102,6 @@ fn Class.I() {}
 // CHECK:STDOUT:   %I.decl: %I.type.b27 = fn_decl @I.2 [template = constants.%I.a7f] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_id = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
