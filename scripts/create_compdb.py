@@ -36,7 +36,9 @@ def _build_generated_files(bazel: str) -> None:
     kinds_query = (
         "filter("
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
-        ' kind("generated file", deps(//...))'
+        # tree_sitter is excluded here because it causes the query to failure on
+        # `@platforms`.
+        ' kind("generated file", deps(//... except //utils/tree_sitter/...))'
         ")"
     )
     generated_file_labels = subprocess.check_output(
