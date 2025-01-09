@@ -22,10 +22,12 @@ class C {
 }
 
 fn F() {
-  // We don't parse packaging keywords as declaration statements.
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+4]]:3: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   library "foo";
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-15]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: class C {
+  // CHECK:STDERR: ^~~~~
   // CHECK:STDERR:
   library "foo";
 }
@@ -36,7 +38,7 @@ class C {
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl library "foo";
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-26]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-28]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   // CHECK:STDERR:
@@ -44,11 +46,10 @@ class C {
 }
 
 fn F() {
-  // This reaches decl parsing because `impl` is a valid modifier or introducer.
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl library "foo";
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-38]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-39]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   impl library "foo";
@@ -68,8 +69,8 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'library', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'LibraryIntroducer', text: 'library'},
+// CHECK:STDOUT:       {kind: 'LibraryDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},

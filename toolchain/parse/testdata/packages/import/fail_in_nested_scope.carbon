@@ -20,10 +20,12 @@ class A {
 }
 
 fn F() {
-  // We don't parse packaging keywords as declaration statements.
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
   // CHECK:STDERR:   import C;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-15]]:1: note: first declaration is here [FirstDecl]
+  // CHECK:STDERR: class A {
+  // CHECK:STDERR: ^~~~~
   import C;
 }
 
@@ -41,8 +43,8 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'import', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ImportIntroducer', text: 'import'},
+// CHECK:STDOUT:       {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -22,12 +22,16 @@ class C {
 }
 
 fn F() {
-  // We don't parse packaging keywords as declaration statements.
+  // `package` here is an expression naming the package scope.
+  // TODO: Produce a better diagnostic for `package` not followed by `.`.
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+4]]:11: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:   package P;
   // CHECK:STDERR:           ^
   // CHECK:STDERR:
   package P;
+
+  // OK
+  package.P;
 }
 
 // impl.carbon
@@ -36,7 +40,7 @@ class C {
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl package P;
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-26]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-30]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   // CHECK:STDERR:
@@ -48,7 +52,7 @@ fn F() {
   // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+6]]:3: error: the `package` declaration must be the first non-comment line [PackageTooLate]
   // CHECK:STDERR:   impl package P;
   // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-38]]:1: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-42]]:1: note: first non-comment line is here [FirstNonCommentLine]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~
   impl package P;
@@ -70,7 +74,11 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'PackageExpr', text: 'package'},
 // CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
+// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
+// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'P'},
+// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
 // CHECK:STDOUT:         {kind: 'IdentifierName', text: 'C'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},

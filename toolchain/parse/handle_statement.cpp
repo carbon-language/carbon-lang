@@ -58,9 +58,13 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Class:
     case Lex::TokenKind::Constraint:
     case Lex::TokenKind::Fn:
+    case Lex::TokenKind::Import:
     case Lex::TokenKind::Interface:
     case Lex::TokenKind::Let:
+    case Lex::TokenKind::Library:
     case Lex::TokenKind::Namespace:
+    // We intentionally don't handle Package here, because `package.` can be
+    // used at the start of an expression, and it's not worth disambiguating it.
     case Lex::TokenKind::Var: {
       context.PushState(State::Decl);
       break;
