@@ -54,7 +54,7 @@ class InstBlockStack {
 
   // Adds the given instruction ID to the block at the top of the stack.
   auto AddInstId(SemIR::InstId inst_id) -> void {
-    CARBON_CHECK(!empty(), "no current block");
+    CARBON_CHECK(!empty(), "{0} has no current block", name_);
     insts_stack_.AppendToTop(inst_id);
   }
 

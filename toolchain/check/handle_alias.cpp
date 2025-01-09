@@ -27,8 +27,8 @@ auto HandleParseNode(Context& /*context*/,
 auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
-  auto name_context =
-      context.decl_name_stack().FinishName(PopNameComponent(context));
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Alias));
 
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Alias>();

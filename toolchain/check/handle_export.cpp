@@ -22,8 +22,8 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
-  auto name_context =
-      context.decl_name_stack().FinishName(PopNameComponent(context));
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Export));
   context.decl_name_stack().PopScope();
 
   auto introducer =

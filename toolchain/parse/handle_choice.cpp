@@ -10,7 +10,7 @@ auto HandleChoiceIntroducer(Context& context) -> void {
   auto state = context.PopState();
 
   context.PushState(state, State::ChoiceDefinitionStart);
-  context.PushState(State::DeclNameAndParamsAsAllParams, state.token);
+  context.PushState(State::DeclNameAndParams, state.token);
 }
 
 auto HandleChoiceDefinitionStart(Context& context) -> void {

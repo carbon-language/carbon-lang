@@ -22,8 +22,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
-  auto name_context =
-      context.decl_name_stack().FinishName(PopNameComponent(context));
+  auto name_context = context.decl_name_stack().FinishName(
+      PopNameComponentWithoutParams(context, Lex::TokenKind::Namespace));
 
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Namespace>();
