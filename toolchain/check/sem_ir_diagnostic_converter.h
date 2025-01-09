@@ -22,9 +22,8 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
       const SemIR::File* sem_ir)
       : node_converters_(node_converters), sem_ir_(sem_ir) {}
 
-  // Converts an instruction's location to a diagnostic location, which will be
-  // the underlying line of code. Adds context for any imports used in the
-  // current SemIR to get to the underlying code.
+  // Implements `DiagnosticConverter::ConvertLoc`. Adds context for any imports
+  // used in the current SemIR to get to the underlying code.
   //
   // The returned last_byte_offset will be the maximum of offsets for `loc` and
   // `last_token_`.

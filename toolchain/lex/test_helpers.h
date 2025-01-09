@@ -24,6 +24,7 @@ class SingleTokenDiagnosticConverter : public DiagnosticConverter<const char*> {
   explicit SingleTokenDiagnosticConverter(llvm::StringRef token)
       : token_(token) {}
 
+  // Implements `DiagnosticConverter::ConvertLoc`.
   auto ConvertLoc(const char* pos, ContextFnT /*context_fn*/) const
       -> std::pair<DiagnosticLoc, int32_t> override {
     CARBON_CHECK(StringRefContainsPointer(token_, pos),

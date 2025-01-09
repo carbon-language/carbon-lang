@@ -42,7 +42,7 @@ class NodeLocConverter : public DiagnosticConverter<NodeLoc> {
         filename_(filename),
         get_tree_and_subtrees_(get_tree_and_subtrees) {}
 
-  // Map the given token into a diagnostic location.
+  // Implements `DiagnosticConverter::ConvertLoc`.
   auto ConvertLoc(NodeLoc node_loc, ContextFnT context_fn) const
       -> std::pair<DiagnosticLoc, int32_t> override {
     // Support the invalid token as a way to emit only the filename, when there

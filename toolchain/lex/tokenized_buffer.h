@@ -67,7 +67,7 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
   explicit TokenDiagnosticConverter(const TokenizedBuffer* tokens)
       : tokens_(tokens) {}
 
-  // Map the given token into a diagnostic location.
+  // Implements `DiagnosticConverter::ConvertLoc`.
   auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
       -> std::pair<DiagnosticLoc, int32_t> override;
 
@@ -231,8 +231,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* tokens)
         : tokens_(tokens) {}
 
-    // Map the given position within the source buffer into a diagnostic
-    // location.
+    // Implements `DiagnosticConverter::ConvertLoc`.
     auto ConvertLoc(const char* loc, ContextFnT context_fn) const
         -> std::pair<DiagnosticLoc, int32_t> override;
 
