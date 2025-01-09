@@ -95,12 +95,12 @@ file_test(
 )
 
 filegroup(
-    name = "treesitter_testdata",
+    name = "tree_sitter_testdata",
     srcs = glob(
         ["testdata/**/*.carbon"],
         exclude = [
             "testdata/**/fail_*",
         ],
     ),
-    visibility = ["//utils/treesitter:__pkg__"],
+    visibility = ["//utils/tree_sitter:__pkg__"],
 )

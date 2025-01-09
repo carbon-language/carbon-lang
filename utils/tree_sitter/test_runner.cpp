@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "utils/treesitter/src/tree_sitter/parser.h"
+#include "utils/tree_sitter/src/tree_sitter/parser.h"
 
 extern "C" {
 auto tree_sitter_carbon() -> TSLanguage*;
@@ -30,7 +30,7 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 // TODO: use file_test.cpp
 auto main(int argc, char** argv) -> int {
   if (argc < 2) {
-    std::cerr << "Usage: treesitter_carbon_tester <file>...\n";
+    std::cerr << "Usage: test_runner <file>...\n";
     return 2;
   }
 

@@ -38,7 +38,11 @@ def main() -> None:
     args = [
         scripts_utils.locate_bazel(),
         "query",
-        "somepath(//..., @llvm-project//third-party/unittest:gtest)",
+        "somepath("
+        # tree_sitter is excluded here because it causes the query to failure on
+        # `@platforms`.
+        + "//... except //utils/tree_sitter/..., "
+        + "@llvm-project//third-party/unittest:gtest)",
     ]
     p = subprocess.run(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8"

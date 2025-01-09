@@ -1,9 +1,0 @@
-{
-  "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": []
-  },
-  "dependencies": {
-    "tree-sitter-cli": "^0.24.6"
-  }
-}
