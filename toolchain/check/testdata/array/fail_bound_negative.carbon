@@ -20,14 +20,14 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Negate.type.1: type = fn_type @Negate.1 [template]
-// CHECK:STDOUT:   %Negate: %Negate.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [template]
+// CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -40,7 +40,7 @@ var a: [i32; Negate(1)];
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Negate.decl: %Negate.type.1 = fn_decl @Negate.1 [template = constants.%Negate] {
+// CHECK:STDOUT:   %Negate.decl: %Negate.type.15b = fn_decl @Negate.1 [template = constants.%Negate] {
 // CHECK:STDOUT:     %n.patt: %i32 = binding_pattern n
 // CHECK:STDOUT:     %n.param_patt: %i32 = value_param_pattern %n.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern

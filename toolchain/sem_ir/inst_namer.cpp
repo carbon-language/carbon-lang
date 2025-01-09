@@ -7,11 +7,14 @@
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -207,9 +210,10 @@ auto InstNamer::Namespace::Name::str() const -> llvm::StringRef {
   return value->first();
 }
 
-auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
-                                        SemIR::LocId loc_id, std::string name)
-    -> Name {
+auto InstNamer::Namespace::AllocateName(
+    const InstNamer& inst_namer,
+    std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint,
+    std::string name) -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
@@ -245,16 +249,30 @@ auto InstNamer::Namespace::AllocateName(const InstNamer& inst_namer,
 
   // Append location information to try to disambiguate.
   // TODO: Consider handling inst_id cases.
-  if (loc_id.is_node_id()) {
-    const auto& tree = inst_namer.sem_ir_->parse_tree();
-    auto token = tree.node_token(loc_id.node_id());
-    llvm::raw_string_ostream(name)
-        << ".loc" << tree.tokens().GetLineNumber(token);
-    add_name();
+  if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
+    if (loc_id->is_node_id()) {
+      const auto& tree = inst_namer.sem_ir_->parse_tree();
+      auto token = tree.node_token(loc_id->node_id());
+      llvm::raw_string_ostream(name)
+          << ".loc" << tree.tokens().GetLineNumber(token);
+      add_name();
 
-    llvm::raw_string_ostream(name)
-        << "_" << tree.tokens().GetColumnNumber(token);
-    add_name();
+      llvm::raw_string_ostream(name)
+          << "_" << tree.tokens().GetColumnNumber(token);
+      add_name();
+    }
+  } else {
+    uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
+    llvm::raw_string_ostream out(name);
+    out << ".";
+    // Include names with 3-6 characters from the fingerprint. Then fall back to
+    // sequential numbering.
+    for (int n : llvm::seq(1, 7)) {
+      out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
+      if (n >= 3) {
+        add_name();
+      }
+    }
   }
 
   // Append numbers until we find an available name.
@@ -399,9 +417,16 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     auto add_inst_name = [&](std::string name) {
       ScopeId old_scope_id = insts_[inst_id.index].first;
       if (old_scope_id == ScopeId::None) {
+        std::variant<SemIR::LocId, uint64_t> loc_id_or_fingerprint =
+            SemIR::LocId::Invalid;
+        if (scope_id == ScopeId::Constants || scope_id == ScopeId::ImportRefs) {
+          loc_id_or_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, inst_id);
+        } else {
+          loc_id_or_fingerprint = sem_ir_->insts().GetLocId(inst_id);
+        }
         insts_[inst_id.index] = {
-            scope_id, scope.insts.AllocateName(
-                          *this, sem_ir_->insts().GetLocId(inst_id), name)};
+            scope_id,
+            scope.insts.AllocateName(*this, loc_id_or_fingerprint, name)};
       } else {
         CARBON_CHECK(old_scope_id == scope_id,
                      "Attempting to name inst in multiple scopes");
@@ -498,7 +523,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(BoundMethod inst): {
-        auto type_id = sem_ir_->insts().Get(inst.function_id).type_id();
+        auto type_id = sem_ir_->insts().Get(inst.function_decl_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {
           add_inst_name_id(sem_ir_->functions().Get(fn_ty->function_id).name_id,
                            ".bound");
@@ -642,6 +667,20 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         queue_block_id(impl_scope_id, inst.decl_block_id);
         break;
       }
+      case ImplWitness::Kind: {
+        // TODO: Include name of interface (is this available from the
+        // specific?).
+        add_inst_name("impl_witness");
+        continue;
+      }
+      case CARBON_KIND(ImplWitnessAccess inst): {
+        // TODO: Include information about the impl?
+        std::string name;
+        llvm::raw_string_ostream out(name);
+        out << "impl.elem" << inst.index.index;
+        add_inst_name(std::move(name));
+        continue;
+      }
       case CARBON_KIND(ImportDecl inst): {
         if (inst.package_id.is_valid()) {
           add_inst_name_id(inst.package_id, ".import");
@@ -673,18 +712,6 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         auto interface_scope_id = GetScopeFor(inst.interface_id);
         queue_block_id(interface_scope_id, interface_info.pattern_block_id);
         queue_block_id(interface_scope_id, inst.decl_block_id);
-        continue;
-      }
-      case InterfaceWitness::Kind: {
-        // TODO: Include name of interface.
-        add_inst_name("interface");
-        continue;
-      }
-      case CARBON_KIND(InterfaceWitnessAccess inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
-        out << "impl.elem" << inst.index.index;
-        add_inst_name(std::move(name));
         continue;
       }
       case CARBON_KIND(IntType inst): {
@@ -736,7 +763,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       case CARBON_KIND(SpecificFunction inst): {
         InstId callee_id = inst.callee_id;
         if (auto method = sem_ir_->insts().TryGetAs<BoundMethod>(callee_id)) {
-          callee_id = method->function_id;
+          callee_id = method->function_decl_id;
         }
         auto type_id = sem_ir_->insts().Get(callee_id).type_id();
         if (auto fn_ty = sem_ir_->types().TryGetAs<FunctionType>(type_id)) {

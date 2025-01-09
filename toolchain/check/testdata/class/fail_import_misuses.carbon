@@ -86,46 +86,46 @@ var a: Incomplete;
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.a95: type = class_type @.1 [template]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//a, Empty, loaded [template = constants.%Empty]
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//a, Incomplete, loaded [template = constants.%Incomplete]
+// CHECK:STDOUT:   %import_ref.b50: type = import_ref Main//a, Empty, loaded [template = constants.%Empty]
+// CHECK:STDOUT:   %import_ref.81e: type = import_ref Main//a, Incomplete, loaded [template = constants.%Incomplete]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//a, loc5_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//a, loc5_1, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.fd7 = import_ref Main//a, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Empty = imports.%import_ref.1
-// CHECK:STDOUT:     .Incomplete = imports.%import_ref.2
+// CHECK:STDOUT:     .Empty = imports.%import_ref.b50
+// CHECK:STDOUT:     .Incomplete = imports.%import_ref.81e
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT:   %a.var: ref <error> = var a
 // CHECK:STDOUT:   %a: ref <error> = bind_name a, %a.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.fd7
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.1
+// CHECK:STDOUT:   .Self = constants.%.a95
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

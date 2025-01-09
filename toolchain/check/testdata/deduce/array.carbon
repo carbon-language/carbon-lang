@@ -125,41 +125,41 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.1: type = array_type %int_3, %T [symbolic]
+// CHECK:STDOUT:   %array_type.fa4: type = array_type %int_3, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
-// CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %require_complete.db1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.029: <witness> = require_complete_type %array_type.fa4 [symbolic]
+// CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.925 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %int_0.f61: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3, %C [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%C.val, %C.val, %C.val) [template]
+// CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%C) [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %array_type.2 [template]
+// CHECK:STDOUT:   %complete_type.dd1: <witness> = complete_type_witness %array_type.002 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -177,21 +177,21 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6_6.1, runtime_param<invalid> [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_24.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_24.2 (%array_type.fa4) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_24.2 (%array_type.fa4) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.%T.loc6_6.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc6_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_24.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_24: type = splice_block %array_type.loc6_24.1 [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_24.2 (%array_type.fa4) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_24: type = splice_block %array_type.loc6_24.1 [symbolic = %array_type.loc6_24.2 (constants.%array_type.fa4)] {
 // CHECK:STDOUT:       %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:       %array_type.loc6_24.1: type = array_type %int_3, %T [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %array_type.loc6_24.1: type = array_type %int_3, %T [symbolic = %array_type.loc6_24.2 (constants.%array_type.fa4)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_24.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_24.2 (%array_type.fa4) = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_6.2 (%T) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -206,7 +206,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -216,25 +216,25 @@ fn G() -> i32 {
 // CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
 // CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_3, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_3, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.fa4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.1)]
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %require_complete.loc6_17 (constants.%require_complete.2)]
+// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.db1)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.fa4) [symbolic = %require_complete.loc6_17 (constants.%require_complete.029)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1)) -> @F.%T.loc6_6.2 (%T) {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.fa4)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.1) = name_ref a, %a
-// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.fa4) = name_ref a, %a
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.1) = value_as_ref %a.ref
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.fa4) = value_as_ref %a.ref
 // CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.2
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
@@ -243,13 +243,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a: ref %array_type.002 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %tuple.type = tuple_literal (%.loc9_21.1, %.loc9_25.1, %.loc9_29.1)
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc9_30.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc9_21.2: init %C = class_init (), %.loc9_30.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.3: init %C = converted %.loc9_21.1, %.loc9_21.2 [template = constants.%C.val]
@@ -261,14 +261,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_30.6: ref %C = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_30.8: init %array_type.2 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc9_31: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_30.8: init %array_type.002 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_31: init %array_type.002 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc8: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc10: %array_type.2 = bind_value %a.ref
+// CHECK:STDOUT:   %.loc10: %array_type.002 = bind_value %a.ref
 // CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%.loc10) to %.loc8
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
@@ -276,17 +276,17 @@ fn G() -> i32 {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.1
+// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.fa4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.2
+// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.1
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.4
+// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.dd1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- bound_only.carbon
@@ -294,50 +294,50 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
-// CHECK:STDOUT:   %array_type.1: type = array_type %N, %C [symbolic]
+// CHECK:STDOUT:   %N.f0243b.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.7d2de8.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %array_type.f81: type = array_type %N.f0243b.1, %C [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %N, %Convert.10 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn.1(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.109: <witness> = require_complete_type %array_type.f81 [symbolic]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.2a5: <bound method> = bound_method %N.f0243b.1, %Convert.925 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn.660: <specific function> = specific_function %Convert.bound.2a5, @Convert.2(%int_32) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn.660(%N.f0243b.1) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3.1, %C [template]
+// CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3.1ba, %C [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%C.val, %C.val, %C.val) [template]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_3.1) [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %array_type.2 [template]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_3.1, %Convert.10 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_3.2: %i32 = int_value 3 [template]
+// CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [template]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_3.1ba) [template]
+// CHECK:STDOUT:   %complete_type.dd1: <witness> = complete_type_witness %array_type.002 [template]
+// CHECK:STDOUT:   %Convert.bound.0db: <bound method> = bound_method %int_3.1ba, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.456: <specific function> = specific_function %Convert.bound.0db, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_3.25b: %i32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Int = %import_ref.2
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
+// CHECK:STDOUT:     .IntLiteral = %import_ref.8ee
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.8ee: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -350,10 +350,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc6_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_6.1, runtime_param<invalid> [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_37.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_37.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %N.patt.loc6_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_6.1, runtime_param<invalid> [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_37.2 (%array_type.f81) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_37.2 (%array_type.f81) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -362,19 +362,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc6_26.1: type = splice_block %.loc6_26.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc6_26.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc6_26.3: type = converted %int_literal.make_type, %.loc6_26.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_6.2 (constants.%N)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_37.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_37: type = splice_block %array_type.loc6_37.1 [symbolic = %array_type.loc6_37.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %N.loc6_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_37.2 (%array_type.f81) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_37: type = splice_block %array_type.loc6_37.1 [symbolic = %array_type.loc6_37.2 (constants.%array_type.f81)] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %N.ref.loc6_36: Core.IntLiteral = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N)]
-// CHECK:STDOUT:       %array_type.loc6_37.1: type = array_type %N.ref.loc6_36, %C [symbolic = %array_type.loc6_37.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %N.ref.loc6_36: Core.IntLiteral = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:       %array_type.loc6_37.1: type = array_type %N.ref.loc6_36, %C [symbolic = %array_type.loc6_37.2 (constants.%array_type.f81)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_37.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_37.2 (%array_type.f81) = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -390,7 +390,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -398,22 +398,22 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc6_6.1: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc6_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc6_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:   %array_type.loc6_37.2: type = array_type %N.loc6_6.2, %C [symbolic = %array_type.loc6_37.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %N.loc6_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:   %N.patt.loc6_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:   %array_type.loc6_37.2: type = array_type %N.loc6_6.2, %C [symbolic = %array_type.loc6_37.2 (constants.%array_type.f81)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_37.2 (%array_type.1) [symbolic = %require_complete (constants.%require_complete.2)]
-// CHECK:STDOUT:   %Convert.bound.loc6_57.2: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.10 [symbolic = %Convert.bound.loc6_57.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc6_57.2: <specific function> = specific_function %Convert.bound.loc6_57.2, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_57.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_37.2 (%array_type.f81) [symbolic = %require_complete (constants.%require_complete.109)]
+// CHECK:STDOUT:   %Convert.bound.loc6_57.2: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.925 [symbolic = %Convert.bound.loc6_57.2 (constants.%Convert.bound.2a5)]
+// CHECK:STDOUT:   %Convert.specific_fn.loc6_57.2: <specific function> = specific_function %Convert.bound.loc6_57.2, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_57.2 (constants.%Convert.specific_fn.660)]
 // CHECK:STDOUT:   %int.convert_checked.loc6_57.2: init %i32 = call %Convert.specific_fn.loc6_57.2(%N.loc6_6.2) [symbolic = %int.convert_checked.loc6_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_37.2 (%array_type.1)) -> %i32 {
+// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_37.2 (%array_type.f81)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc6_56: Core.IntLiteral = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N)]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:     %Convert.bound.loc6_57.1: <bound method> = bound_method %N.ref.loc6_56, %impl.elem0 [symbolic = %Convert.bound.loc6_57.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc6_57.1: <specific function> = specific_function %Convert.bound.loc6_57.1, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_57.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:     %N.ref.loc6_56: Core.IntLiteral = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:     %Convert.bound.loc6_57.1: <bound method> = bound_method %N.ref.loc6_56, %impl.elem0 [symbolic = %Convert.bound.loc6_57.2 (constants.%Convert.bound.2a5)]
+// CHECK:STDOUT:     %Convert.specific_fn.loc6_57.1: <specific function> = specific_function %Convert.bound.loc6_57.1, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_57.2 (constants.%Convert.specific_fn.660)]
 // CHECK:STDOUT:     %int.convert_checked.loc6_57.1: init %i32 = call %Convert.specific_fn.loc6_57.1(%N.ref.loc6_56) [symbolic = %int.convert_checked.loc6_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc6_57.1: %i32 = value_of_initializer %int.convert_checked.loc6_57.1 [symbolic = %int.convert_checked.loc6_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc6_57.2: %i32 = converted %N.ref.loc6_56, %.loc6_57.1 [symbolic = %int.convert_checked.loc6_57.2 (constants.%int.convert_checked)]
@@ -423,8 +423,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a: ref %array_type.002 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %empty_struct_type = struct_literal ()
@@ -441,35 +441,35 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_30.6: ref %C = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_30.8: init %array_type.2 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc9_31: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_30.8: init %array_type.002 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_31: init %array_type.002 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1) [template = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc10_12: %array_type.2 = bind_value %a.ref
+// CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:   %.loc10_12: %array_type.002 = bind_value %a.ref
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc10_12)
 // CHECK:STDOUT:   %.loc10_14.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc10_14.2: %i32 = converted %F.call, %.loc10_14.1
 // CHECK:STDOUT:   return %.loc10_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.loc6_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N
-// CHECK:STDOUT:   %array_type.loc6_37.2 => constants.%array_type.1
+// CHECK:STDOUT: specific @F(constants.%N.f0243b.1) {
+// CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.f0243b.1
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.f0243b.1
+// CHECK:STDOUT:   %array_type.loc6_37.2 => constants.%array_type.f81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%int_3.1) {
-// CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_3.1
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%int_3.1
-// CHECK:STDOUT:   %array_type.loc6_37.2 => constants.%array_type.2
+// CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
+// CHECK:STDOUT:   %N.loc6_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %array_type.loc6_37.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.4
-// CHECK:STDOUT:   %Convert.bound.loc6_57.2 => constants.%Convert.bound.2
-// CHECK:STDOUT:   %Convert.specific_fn.loc6_57.2 => constants.%Convert.specific_fn.2
-// CHECK:STDOUT:   %int.convert_checked.loc6_57.2 => constants.%int_3.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.dd1
+// CHECK:STDOUT:   %Convert.bound.loc6_57.2 => constants.%Convert.bound.0db
+// CHECK:STDOUT:   %Convert.specific_fn.loc6_57.2 => constants.%Convert.specific_fn.456
+// CHECK:STDOUT:   %int.convert_checked.loc6_57.2 => constants.%int_3.25b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- type_and_bound.carbon
@@ -477,7 +477,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
@@ -485,22 +485,22 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %array_type.1: type = array_type %N, %T [symbolic]
+// CHECK:STDOUT:   %array_type.24b: type = array_type %N, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.1 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.24b [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3, %C [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%C.val, %C.val, %C.val) [template]
+// CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%C, %int_3) [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %array_type.2 [template]
+// CHECK:STDOUT:   %complete_type.dd1: <witness> = complete_type_witness %array_type.002 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -526,8 +526,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6_6.1, runtime_param<invalid> [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc6_16.1: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_16.2 (constants.%N.patt)]
 // CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc6_16.1, runtime_param<invalid> [symbolic = %N.patt.loc6_16.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_47.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_47.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_47.2 (%array_type.24b) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_47.2 (%array_type.24b) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
@@ -540,19 +540,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %.loc6_36.3: type = converted %int_literal.make_type, %.loc6_36.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_16.1: Core.IntLiteral = bind_symbolic_name N, 1, %N.param [symbolic = %N.loc6_16.2 (constants.%N)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_47.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_47: type = splice_block %array_type.loc6_47.1 [symbolic = %array_type.loc6_47.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_47.2 (%array_type.24b) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_47: type = splice_block %array_type.loc6_47.1 [symbolic = %array_type.loc6_47.2 (constants.%array_type.24b)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc6_16.1 [symbolic = %N.loc6_16.2 (constants.%N)]
-// CHECK:STDOUT:       %array_type.loc6_47.1: type = array_type %N.ref, %T [symbolic = %array_type.loc6_47.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %array_type.loc6_47.1: type = array_type %N.ref, %T [symbolic = %array_type.loc6_47.2 (constants.%array_type.24b)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_47.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_47.2 (%array_type.24b) = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -564,12 +564,12 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %N.loc6_16.2: Core.IntLiteral = bind_symbolic_name N, 1 [symbolic = %N.loc6_16.2 (constants.%N)]
 // CHECK:STDOUT:   %N.patt.loc6_16.2: Core.IntLiteral = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_16.2 (constants.%N.patt)]
-// CHECK:STDOUT:   %array_type.loc6_47.2: type = array_type %N.loc6_16.2, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_47.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %array_type.loc6_47.2: type = array_type %N.loc6_16.2, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_47.2 (constants.%array_type.24b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_47.2 (%array_type.1) [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_47.2 (%array_type.24b) [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type, %N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_47.2 (%array_type.1)) {
+// CHECK:STDOUT:   fn[%T.param_patt: type, %N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc6_47.2 (%array_type.24b)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -577,8 +577,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a: ref %array_type.002 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %empty_struct_type = struct_literal ()
@@ -595,13 +595,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_30.6: ref %C = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_30.8: init %array_type.2 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc9_31: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_30.8: init %array_type.002 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_31: init %array_type.002 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%int_3) [template = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc10: %array_type.2 = bind_value %a.ref
+// CHECK:STDOUT:   %.loc10: %array_type.002 = bind_value %a.ref
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc10)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -611,7 +611,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%N
 // CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%N
-// CHECK:STDOUT:   %array_type.loc6_47.2 => constants.%array_type.1
+// CHECK:STDOUT:   %array_type.loc6_47.2 => constants.%array_type.24b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C, constants.%int_3) {
@@ -619,10 +619,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %N.loc6_16.2 => constants.%int_3
 // CHECK:STDOUT:   %N.patt.loc6_16.2 => constants.%int_3
-// CHECK:STDOUT:   %array_type.loc6_47.2 => constants.%array_type.2
+// CHECK:STDOUT:   %array_type.loc6_47.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.dd1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bound_mismatch.carbon
@@ -630,42 +630,42 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array_type.1: type = array_type %int_2, %T [symbolic]
+// CHECK:STDOUT:   %array_type.2e9: type = array_type %int_2, %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.1: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
-// CHECK:STDOUT:   %int_0.1: Core.IntLiteral = int_value 0 [template]
+// CHECK:STDOUT:   %require_complete.db1: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.a03: <witness> = require_complete_type %array_type.2e9 [symbolic]
+// CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.1, %Convert.10 [template]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0.5c6, %Convert.925 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_0.2: %i32 = int_value 0 [template]
+// CHECK:STDOUT:   %int_0.f61: %i32 = int_value 0 [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3, %C [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%C.val, %C.val, %C.val) [template]
-// CHECK:STDOUT:   %array_type.3: type = array_type %int_2, %C [template]
+// CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [template]
+// CHECK:STDOUT:   %array_type.15a: type = array_type %int_2, %C [template]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%C) [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %array_type.3 [template]
+// CHECK:STDOUT:   %complete_type.8eb: <witness> = complete_type_witness %array_type.15a [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -683,21 +683,21 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc6_6.1: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %T.param_patt: type = value_param_pattern %T.patt.loc6_6.1, runtime_param<invalid> [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_24.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_24.2 (%array_type.2e9) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_24.2 (%array_type.2e9) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: @F.%T.loc6_6.2 (%T) = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: @F.%T.loc6_6.2 (%T) = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_30: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:     %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %T.loc6_6.1: type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc6_6.2 (constants.%T)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_24.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_24: type = splice_block %array_type.loc6_24.1 [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_24.2 (%array_type.2e9) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_24: type = splice_block %array_type.loc6_24.1 [symbolic = %array_type.loc6_24.2 (constants.%array_type.2e9)] {
 // CHECK:STDOUT:       %T.ref.loc6_20: type = name_ref T, %T.loc6_6.1 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:       %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:       %array_type.loc6_24.1: type = array_type %int_2, %T [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %array_type.loc6_24.1: type = array_type %int_2, %T [symbolic = %array_type.loc6_24.2 (constants.%array_type.2e9)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_24.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_24.2 (%array_type.2e9) = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_6.2 (%T) = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.2 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -712,7 +712,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -722,25 +722,25 @@ fn G() -> i32 {
 // CHECK:STDOUT: generic fn @F(%T.loc6_6.1: type) {
 // CHECK:STDOUT:   %T.loc6_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_6.2 (constants.%T)]
 // CHECK:STDOUT:   %T.patt.loc6_6.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_6.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_2, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %array_type.loc6_24.2: type = array_type constants.%int_2, @F.%T.loc6_6.2 (%T) [symbolic = %array_type.loc6_24.2 (constants.%array_type.2e9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.1)]
-// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.1) [symbolic = %require_complete.loc6_17 (constants.%require_complete.2)]
+// CHECK:STDOUT:   %require_complete.loc6_27: <witness> = require_complete_type @F.%T.loc6_6.2 (%T) [symbolic = %require_complete.loc6_27 (constants.%require_complete.db1)]
+// CHECK:STDOUT:   %require_complete.loc6_17: <witness> = require_complete_type @F.%array_type.loc6_24.2 (%array_type.2e9) [symbolic = %require_complete.loc6_17 (constants.%require_complete.a03)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.1)) -> @F.%T.loc6_6.2 (%T) {
+// CHECK:STDOUT:   fn[%T.param_patt: type](%a.param_patt: @F.%array_type.loc6_24.2 (%array_type.2e9)) -> @F.%T.loc6_6.2 (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.1) = name_ref a, %a
-// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_24.2 (%array_type.2e9) = name_ref a, %a
+// CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
 // CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.2]
-// CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.1) = value_as_ref %a.ref
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_43.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_43.2: %i32 = converted %int_0, %.loc6_43.1 [template = constants.%int_0.f61]
+// CHECK:STDOUT:     %.loc6_44.1: ref @F.%array_type.loc6_24.2 (%array_type.2e9) = value_as_ref %a.ref
 // CHECK:STDOUT:     %.loc6_44.2: ref @F.%T.loc6_6.2 (%T) = array_index %.loc6_44.1, %.loc6_43.2
 // CHECK:STDOUT:     %.loc6_44.3: @F.%T.loc6_6.2 (%T) = bind_value %.loc6_44.2
 // CHECK:STDOUT:     return %.loc6_44.3
@@ -749,13 +749,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a: ref %array_type.002 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc10_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_30.1: %tuple.type = tuple_literal (%.loc10_21.1, %.loc10_25.1, %.loc10_29.1)
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.1]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc10_30.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc10_21.2: init %C = class_init (), %.loc10_30.2 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_30.3: init %C = converted %.loc10_21.1, %.loc10_21.2 [template = constants.%C.val]
@@ -767,14 +767,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc10_30.6: ref %C = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc10_29.2: init %C = class_init (), %.loc10_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_30.7: init %C = converted %.loc10_29.1, %.loc10_29.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_30.8: init %array_type.2 = array_init (%.loc10_30.3, %.loc10_30.5, %.loc10_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc10_31: init %array_type.2 = converted %.loc10_30.1, %.loc10_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc10_30.8: init %array_type.002 = array_init (%.loc10_30.3, %.loc10_30.5, %.loc10_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc10_31: init %array_type.002 = converted %.loc10_30.1, %.loc10_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc10_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc8: ref %C = splice_block %return {}
-// CHECK:STDOUT:   %.loc21: %array_type.3 = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: %array_type.15a = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(<error>) to %.loc8
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
@@ -782,17 +782,17 @@ fn G() -> i32 {
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%T
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%T
-// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.1
+// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.2e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
 // CHECK:STDOUT:   %T.loc6_6.2 => constants.%C
 // CHECK:STDOUT:   %T.patt.loc6_6.2 => constants.%C
-// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.3
+// CHECK:STDOUT:   %array_type.loc6_24.2 => constants.%array_type.15a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.1
-// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.4
+// CHECK:STDOUT:   %require_complete.loc6_27 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc6_17 => constants.%complete_type.8eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_type_mismatch.carbon
@@ -800,52 +800,52 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [template]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [template]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
-// CHECK:STDOUT:   %array_type.1: type = array_type %N, %C [symbolic]
+// CHECK:STDOUT:   %N.f0243b.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.7d2de8.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %array_type.f81: type = array_type %N.f0243b.1, %C [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.2: <witness> = require_complete_type %array_type.1 [symbolic]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.10) [template]
-// CHECK:STDOUT:   %Convert.bound.1: <bound method> = bound_method %N, %Convert.10 [symbolic]
-// CHECK:STDOUT:   %Convert.specific_fn.1: <specific function> = specific_function %Convert.bound.1, @Convert.2(%int_32) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn.1(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.109: <witness> = require_complete_type %array_type.f81 [symbolic]
+// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound.2a5: <bound method> = bound_method %N.f0243b.1, %Convert.925 [symbolic]
+// CHECK:STDOUT:   %Convert.specific_fn.660: <specific function> = specific_function %Convert.bound.2a5, @Convert.2(%int_32) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn.660(%N.f0243b.1) [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %int_3.1: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3.1, %D [template]
+// CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [template]
+// CHECK:STDOUT:   %array_type.fe4: type = array_type %int_3.1ba, %D [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%D.val, %D.val, %D.val) [template]
-// CHECK:STDOUT:   %array_type.3: type = array_type %int_3.1, %C [template]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_3.1) [template]
-// CHECK:STDOUT:   %complete_type.4: <witness> = complete_type_witness %array_type.3 [template]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_3.1, %Convert.10 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_3.2: %i32 = int_value 3 [template]
+// CHECK:STDOUT:   %array: %array_type.fe4 = tuple_value (%D.val, %D.val, %D.val) [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3.1ba, %C [template]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_3.1ba) [template]
+// CHECK:STDOUT:   %complete_type.dd1: <witness> = complete_type_witness %array_type.002 [template]
+// CHECK:STDOUT:   %Convert.bound.0db: <bound method> = bound_method %int_3.1ba, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.456: <specific function> = specific_function %Convert.bound.0db, @Convert.2(%int_32) [template]
+// CHECK:STDOUT:   %int_3.25b: %i32 = int_value 3 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .IntLiteral = %import_ref.1
-// CHECK:STDOUT:     .Int = %import_ref.2
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.6
+// CHECK:STDOUT:     .IntLiteral = %import_ref.8ee
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.1: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
+// CHECK:STDOUT:   %import_ref.8ee: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [template = constants.%IntLiteral]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -860,10 +860,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc7_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc7_6.1, runtime_param<invalid> [symbolic = %N.patt.loc7_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc7_37.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc7_37.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %N.patt.loc7_6.1: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:     %N.param_patt: Core.IntLiteral = value_param_pattern %N.patt.loc7_6.1, runtime_param<invalid> [symbolic = %N.patt.loc7_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc7_37.2 (%array_type.f81) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc7_37.2 (%array_type.f81) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -872,19 +872,19 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc7_26.1: type = splice_block %.loc7_26.3 [template = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.1 [template = constants.%IntLiteral]
+// CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%import_ref.8ee [template = constants.%IntLiteral]
 // CHECK:STDOUT:       %int_literal.make_type: init type = call %IntLiteral.ref() [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc7_26.2: type = value_of_initializer %int_literal.make_type [template = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc7_26.3: type = converted %int_literal.make_type, %.loc7_26.2 [template = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc7_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_6.2 (constants.%N)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc7_37.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc7_37: type = splice_block %array_type.loc7_37.1 [symbolic = %array_type.loc7_37.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %N.loc7_6.1: Core.IntLiteral = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc7_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc7_37.2 (%array_type.f81) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc7_37: type = splice_block %array_type.loc7_37.1 [symbolic = %array_type.loc7_37.2 (constants.%array_type.f81)] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %N.ref.loc7_36: Core.IntLiteral = name_ref N, %N.loc7_6.1 [symbolic = %N.loc7_6.2 (constants.%N)]
-// CHECK:STDOUT:       %array_type.loc7_37.1: type = array_type %N.ref.loc7_36, %C [symbolic = %array_type.loc7_37.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %N.ref.loc7_36: Core.IntLiteral = name_ref N, %N.loc7_6.1 [symbolic = %N.loc7_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:       %array_type.loc7_37.1: type = array_type %N.ref.loc7_36, %C [symbolic = %array_type.loc7_37.2 (constants.%array_type.f81)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc7_37.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc7_37.2 (%array_type.f81) = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -900,7 +900,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -908,7 +908,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
@@ -916,22 +916,22 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc7_6.1: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc7_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc7_6.2 (constants.%N)]
-// CHECK:STDOUT:   %N.patt.loc7_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt)]
-// CHECK:STDOUT:   %array_type.loc7_37.2: type = array_type %N.loc7_6.2, %C [symbolic = %array_type.loc7_37.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %N.loc7_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc7_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:   %N.patt.loc7_6.2: Core.IntLiteral = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc7_6.2 (constants.%N.patt.7d2de8.1)]
+// CHECK:STDOUT:   %array_type.loc7_37.2: type = array_type %N.loc7_6.2, %C [symbolic = %array_type.loc7_37.2 (constants.%array_type.f81)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc7_37.2 (%array_type.1) [symbolic = %require_complete (constants.%require_complete.2)]
-// CHECK:STDOUT:   %Convert.bound.loc7_57.2: <bound method> = bound_method %N.loc7_6.2, constants.%Convert.10 [symbolic = %Convert.bound.loc7_57.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:   %Convert.specific_fn.loc7_57.2: <specific function> = specific_function %Convert.bound.loc7_57.2, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc7_57.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc7_37.2 (%array_type.f81) [symbolic = %require_complete (constants.%require_complete.109)]
+// CHECK:STDOUT:   %Convert.bound.loc7_57.2: <bound method> = bound_method %N.loc7_6.2, constants.%Convert.925 [symbolic = %Convert.bound.loc7_57.2 (constants.%Convert.bound.2a5)]
+// CHECK:STDOUT:   %Convert.specific_fn.loc7_57.2: <specific function> = specific_function %Convert.bound.loc7_57.2, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc7_57.2 (constants.%Convert.specific_fn.660)]
 // CHECK:STDOUT:   %int.convert_checked.loc7_57.2: init %i32 = call %Convert.specific_fn.loc7_57.2(%N.loc7_6.2) [symbolic = %int.convert_checked.loc7_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc7_37.2 (%array_type.1)) -> %i32 {
+// CHECK:STDOUT:   fn[%N.param_patt: Core.IntLiteral](%a.param_patt: @F.%array_type.loc7_37.2 (%array_type.f81)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc7_56: Core.IntLiteral = name_ref N, %N.loc7_6.1 [symbolic = %N.loc7_6.2 (constants.%N)]
-// CHECK:STDOUT:     %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:     %Convert.bound.loc7_57.1: <bound method> = bound_method %N.ref.loc7_56, %impl.elem0 [symbolic = %Convert.bound.loc7_57.2 (constants.%Convert.bound.1)]
-// CHECK:STDOUT:     %Convert.specific_fn.loc7_57.1: <specific function> = specific_function %Convert.bound.loc7_57.1, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc7_57.2 (constants.%Convert.specific_fn.1)]
+// CHECK:STDOUT:     %N.ref.loc7_56: Core.IntLiteral = name_ref N, %N.loc7_6.1 [symbolic = %N.loc7_6.2 (constants.%N.f0243b.1)]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:     %Convert.bound.loc7_57.1: <bound method> = bound_method %N.ref.loc7_56, %impl.elem0 [symbolic = %Convert.bound.loc7_57.2 (constants.%Convert.bound.2a5)]
+// CHECK:STDOUT:     %Convert.specific_fn.loc7_57.1: <specific function> = specific_function %Convert.bound.loc7_57.1, @Convert.2(constants.%int_32) [symbolic = %Convert.specific_fn.loc7_57.2 (constants.%Convert.specific_fn.660)]
 // CHECK:STDOUT:     %int.convert_checked.loc7_57.1: init %i32 = call %Convert.specific_fn.loc7_57.1(%N.ref.loc7_56) [symbolic = %int.convert_checked.loc7_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc7_57.1: %i32 = value_of_initializer %int.convert_checked.loc7_57.1 [symbolic = %int.convert_checked.loc7_57.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:     %.loc7_57.2: %i32 = converted %N.ref.loc7_56, %.loc7_57.1 [symbolic = %int.convert_checked.loc7_57.2 (constants.%int.convert_checked)]
@@ -941,8 +941,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.fe4 = var a
+// CHECK:STDOUT:   %a: ref %array_type.fe4 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc11_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_29.1: %empty_struct_type = struct_literal ()
@@ -959,35 +959,35 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc11_30.6: ref %D = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc11_29.2: init %D = class_init (), %.loc11_30.6 [template = constants.%D.val]
 // CHECK:STDOUT:   %.loc11_30.7: init %D = converted %.loc11_29.1, %.loc11_29.2 [template = constants.%D.val]
-// CHECK:STDOUT:   %.loc11_30.8: init %array_type.2 = array_init (%.loc11_30.3, %.loc11_30.5, %.loc11_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc11_31: init %array_type.2 = converted %.loc11_30.1, %.loc11_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc11_30.8: init %array_type.fe4 = array_init (%.loc11_30.3, %.loc11_30.5, %.loc11_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc11_31: init %array_type.fe4 = converted %.loc11_30.1, %.loc11_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1) [template = constants.%F.specific_fn]
-// CHECK:STDOUT:   %.loc22_12: %array_type.3 = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %a.ref: ref %array_type.fe4 = name_ref a, %a
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [template = constants.%F.specific_fn]
+// CHECK:STDOUT:   %.loc22_12: %array_type.002 = converted %a.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(<error>)
 // CHECK:STDOUT:   %.loc22_14.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc22_14.2: %i32 = converted %F.call, %.loc22_14.1
 // CHECK:STDOUT:   return %.loc22_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.loc7_6.2 => constants.%N
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N
-// CHECK:STDOUT:   %array_type.loc7_37.2 => constants.%array_type.1
+// CHECK:STDOUT: specific @F(constants.%N.f0243b.1) {
+// CHECK:STDOUT:   %N.loc7_6.2 => constants.%N.f0243b.1
+// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%N.f0243b.1
+// CHECK:STDOUT:   %array_type.loc7_37.2 => constants.%array_type.f81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%int_3.1) {
-// CHECK:STDOUT:   %N.loc7_6.2 => constants.%int_3.1
-// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%int_3.1
-// CHECK:STDOUT:   %array_type.loc7_37.2 => constants.%array_type.3
+// CHECK:STDOUT: specific @F(constants.%int_3.1ba) {
+// CHECK:STDOUT:   %N.loc7_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %N.patt.loc7_6.2 => constants.%int_3.1ba
+// CHECK:STDOUT:   %array_type.loc7_37.2 => constants.%array_type.002
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.4
-// CHECK:STDOUT:   %Convert.bound.loc7_57.2 => constants.%Convert.bound.2
-// CHECK:STDOUT:   %Convert.specific_fn.loc7_57.2 => constants.%Convert.specific_fn.2
-// CHECK:STDOUT:   %int.convert_checked.loc7_57.2 => constants.%int_3.2
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.dd1
+// CHECK:STDOUT:   %Convert.bound.loc7_57.2 => constants.%Convert.bound.0db
+// CHECK:STDOUT:   %Convert.specific_fn.loc7_57.2 => constants.%Convert.specific_fn.456
+// CHECK:STDOUT:   %int.convert_checked.loc7_57.2 => constants.%int_3.25b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bound_type_mismatch.carbon
@@ -995,38 +995,38 @@ fn G() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %N.2: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
-// CHECK:STDOUT:   %Convert.type.9: type = fn_type @Convert.3, @impl.2(%int_32) [template]
-// CHECK:STDOUT:   %Convert.9: %Convert.type.9 = struct_value () [template]
-// CHECK:STDOUT:   %interface.19: <witness> = interface_witness (%Convert.9) [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.2, %Convert.9 [symbolic]
+// CHECK:STDOUT:   %N.3e4: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.52a: %i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.a9b: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [template]
+// CHECK:STDOUT:   %impl_witness.dd3: <witness> = impl_witness (imports.%import_ref.a80), @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.d18: type = fn_type @Convert.3, @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.079: %Convert.type.d18 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.3e4, %Convert.079 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(%int_32) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.2) [symbolic]
-// CHECK:STDOUT:   %array_type.1: type = array_type %int.convert_checked, %C [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.3e4) [symbolic]
+// CHECK:STDOUT:   %array_type.044: type = array_type %int.convert_checked, %C [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.3: <witness> = require_complete_type %array_type.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.54c: <witness> = require_complete_type %array_type.044 [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
-// CHECK:STDOUT:   %array_type.2: type = array_type %int_3, %C [template]
+// CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
-// CHECK:STDOUT:   %array: %array_type.2 = tuple_value (%C.val, %C.val, %C.val) [template]
+// CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1042,10 +1042,10 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc6_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.2)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc6_6.1, runtime_param<invalid> [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.2)]
-// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_23.2 (%array_type.1) = binding_pattern a
-// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_23.2 (%array_type.1) = value_param_pattern %a.patt, runtime_param0
+// CHECK:STDOUT:     %N.patt.loc6_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.52a)]
+// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc6_6.1, runtime_param<invalid> [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.52a)]
+// CHECK:STDOUT:     %a.patt: @F.%array_type.loc6_23.2 (%array_type.044) = binding_pattern a
+// CHECK:STDOUT:     %a.param_patt: @F.%array_type.loc6_23.2 (%array_type.044) = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
@@ -1056,20 +1056,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_6.2 (constants.%N.2)]
-// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_23.2 (%array_type.1) = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6_23: type = splice_block %array_type.loc6_23.1 [symbolic = %array_type.loc6_23.2 (constants.%array_type.1)] {
+// CHECK:STDOUT:     %N.loc6_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc6_6.2 (constants.%N.3e4)]
+// CHECK:STDOUT:     %a.param: @F.%array_type.loc6_23.2 (%array_type.044) = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6_23: type = splice_block %array_type.loc6_23.1 [symbolic = %array_type.loc6_23.2 (constants.%array_type.044)] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:       %N.ref.loc6_22: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.2)]
-// CHECK:STDOUT:       %impl.elem0: %Convert.type.2 = interface_witness_access constants.%interface.19, element0 [template = constants.%Convert.9]
+// CHECK:STDOUT:       %N.ref.loc6_22: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.3e4)]
+// CHECK:STDOUT:       %impl.elem0: %Convert.type.a9b = impl_witness_access constants.%impl_witness.dd3, element0 [template = constants.%Convert.079]
 // CHECK:STDOUT:       %Convert.bound.loc6_22.1: <bound method> = bound_method %N.ref.loc6_22, %impl.elem0 [symbolic = %Convert.bound.loc6_22.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:       %Convert.specific_fn.loc6_22.1: <specific function> = specific_function %Convert.bound.loc6_22.1, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_22.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:       %int.convert_checked.loc6_22.1: init Core.IntLiteral = call %Convert.specific_fn.loc6_22.1(%N.ref.loc6_22) [symbolic = %int.convert_checked.loc6_22.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc6_22.1: Core.IntLiteral = value_of_initializer %int.convert_checked.loc6_22.1 [symbolic = %int.convert_checked.loc6_22.2 (constants.%int.convert_checked)]
 // CHECK:STDOUT:       %.loc6_22.2: Core.IntLiteral = converted %N.ref.loc6_22, %.loc6_22.1 [symbolic = %int.convert_checked.loc6_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:       %array_type.loc6_23.1: type = array_type %.loc6_22.2, %C [symbolic = %array_type.loc6_23.2 (constants.%array_type.1)]
+// CHECK:STDOUT:       %array_type.loc6_23.1: type = array_type %.loc6_22.2, %C [symbolic = %array_type.loc6_23.2 (constants.%array_type.044)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_23.2 (%array_type.1) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_23.2 (%array_type.044) = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1085,7 +1085,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -1093,27 +1093,27 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc6_6.1: %i32) {
-// CHECK:STDOUT:   %N.loc6_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N.2)]
-// CHECK:STDOUT:   %N.patt.loc6_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.2)]
-// CHECK:STDOUT:   %Convert.bound.loc6_22.2: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.9 [symbolic = %Convert.bound.loc6_22.2 (constants.%Convert.bound)]
+// CHECK:STDOUT:   %N.loc6_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_6.2 (constants.%N.3e4)]
+// CHECK:STDOUT:   %N.patt.loc6_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_6.2 (constants.%N.patt.52a)]
+// CHECK:STDOUT:   %Convert.bound.loc6_22.2: <bound method> = bound_method %N.loc6_6.2, constants.%Convert.079 [symbolic = %Convert.bound.loc6_22.2 (constants.%Convert.bound)]
 // CHECK:STDOUT:   %Convert.specific_fn.loc6_22.2: <specific function> = specific_function %Convert.bound.loc6_22.2, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn.loc6_22.2 (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:   %int.convert_checked.loc6_22.2: init Core.IntLiteral = call %Convert.specific_fn.loc6_22.2(%N.loc6_6.2) [symbolic = %int.convert_checked.loc6_22.2 (constants.%int.convert_checked)]
-// CHECK:STDOUT:   %array_type.loc6_23.2: type = array_type %int.convert_checked.loc6_22.2, %C [symbolic = %array_type.loc6_23.2 (constants.%array_type.1)]
+// CHECK:STDOUT:   %array_type.loc6_23.2: type = array_type %int.convert_checked.loc6_22.2, %C [symbolic = %array_type.loc6_23.2 (constants.%array_type.044)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_23.2 (%array_type.1) [symbolic = %require_complete (constants.%require_complete.3)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type.loc6_23.2 (%array_type.044) [symbolic = %require_complete (constants.%require_complete.54c)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%N.param_patt: %i32](%a.param_patt: @F.%array_type.loc6_23.2 (%array_type.1)) -> %i32 {
+// CHECK:STDOUT:   fn[%N.param_patt: %i32](%a.param_patt: @F.%array_type.loc6_23.2 (%array_type.044)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc6_42: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.2)]
+// CHECK:STDOUT:     %N.ref.loc6_42: %i32 = name_ref N, %N.loc6_6.1 [symbolic = %N.loc6_6.2 (constants.%N.3e4)]
 // CHECK:STDOUT:     return %N.ref.loc6_42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.var: ref %array_type.2 = var a
-// CHECK:STDOUT:   %a: ref %array_type.2 = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.002 = var a
+// CHECK:STDOUT:   %a: ref %array_type.002 = bind_name a, %a.var
 // CHECK:STDOUT:   %.loc9_21.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_25.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_29.1: %empty_struct_type = struct_literal ()
@@ -1130,20 +1130,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_30.6: ref %C = array_index %a.var, %int_2
 // CHECK:STDOUT:   %.loc9_29.2: init %C = class_init (), %.loc9_30.6 [template = constants.%C.val]
 // CHECK:STDOUT:   %.loc9_30.7: init %C = converted %.loc9_29.1, %.loc9_29.2 [template = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_30.8: init %array_type.2 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
-// CHECK:STDOUT:   %.loc9_31: init %array_type.2 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_30.8: init %array_type.002 = array_init (%.loc9_30.3, %.loc9_30.5, %.loc9_30.7) to %a.var [template = constants.%array]
+// CHECK:STDOUT:   %.loc9_31: init %array_type.002 = converted %.loc9_30.1, %.loc9_30.8 [template = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc9_31
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
-// CHECK:STDOUT:   %a.ref: ref %array_type.2 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%N.2) {
-// CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.2
-// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.2
+// CHECK:STDOUT: specific @F(constants.%N.3e4) {
+// CHECK:STDOUT:   %N.loc6_6.2 => constants.%N.3e4
+// CHECK:STDOUT:   %N.patt.loc6_6.2 => constants.%N.3e4
 // CHECK:STDOUT:   %Convert.bound.loc6_22.2 => constants.%Convert.bound
 // CHECK:STDOUT:   %Convert.specific_fn.loc6_22.2 => constants.%Convert.specific_fn
 // CHECK:STDOUT:   %int.convert_checked.loc6_22.2 => constants.%int.convert_checked
-// CHECK:STDOUT:   %array_type.loc6_23.2 => constants.%array_type.1
+// CHECK:STDOUT:   %array_type.loc6_23.2 => constants.%array_type.044
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

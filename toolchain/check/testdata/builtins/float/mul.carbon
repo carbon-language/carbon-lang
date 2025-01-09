@@ -60,9 +60,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid.type: type = fn_type @RuntimeCallIsValid [template]
 // CHECK:STDOUT:   %RuntimeCallIsValid: %RuntimeCallIsValid.type = struct_value () [template]
-// CHECK:STDOUT:   %float.1: f64 = float_literal 2 [template]
-// CHECK:STDOUT:   %float.2: f64 = float_literal 0.5 [template]
-// CHECK:STDOUT:   %float.3: f64 = float_literal 1 [template]
+// CHECK:STDOUT:   %float.be3: f64 = float_literal 2 [template]
+// CHECK:STDOUT:   %float.c22: f64 = float_literal 0.5 [template]
+// CHECK:STDOUT:   %float.f4e: f64 = float_literal 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,9 +163,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [template = constants.%Mul]
-// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2 [template = constants.%float.1]
-// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 0.5 [template = constants.%float.2]
-// CHECK:STDOUT:   %float.mul: init f64 = call %Mul.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.3]
+// CHECK:STDOUT:   %float.loc8_18: f64 = float_literal 2 [template = constants.%float.be3]
+// CHECK:STDOUT:   %float.loc8_23: f64 = float_literal 0.5 [template = constants.%float.c22]
+// CHECK:STDOUT:   %float.mul: init f64 = call %Mul.ref(%float.loc8_18, %float.loc8_23) [template = constants.%float.f4e]
 // CHECK:STDOUT:   assign file.%x.var, %float.mul
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -196,8 +196,8 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.2
+// CHECK:STDOUT:     .Float = %import_ref.20b
+// CHECK:STDOUT:     .Bool = %import_ref.f7c
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

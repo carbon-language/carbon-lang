@@ -107,15 +107,15 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
                            SemIR::AccessKind access_kind) -> void {
-  auto prev_id = context.decl_name_stack().LookupOrAddName(
+  auto [prev_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
       name_context, class_decl_id, access_kind);
-  if (!prev_id.is_valid()) {
+  if (is_poisoned) {
+    // This is a declaration of a poisoned name.
+    context.DiagnosePoisonedName(class_decl_id);
     return;
   }
 
-  if (prev_id.is_poisoned()) {
-    // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(class_decl_id);
+  if (!prev_id.is_valid()) {
     return;
   }
 
@@ -237,7 +237,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_info.generic_id = FinishGenericDecl(context, class_decl_id);
+    class_info.generic_id = BuildGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
       class_decl.type_id = context.GetGenericClassType(

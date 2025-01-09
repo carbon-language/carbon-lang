@@ -102,6 +102,7 @@ auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_type_id = SemIR::ErrorInst::SingletonTypeId;
+    return false;
   }
 
   // Build the implicit access to the enclosing `Self`.
@@ -211,21 +212,45 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
+
   // Subtracting 1 since we don't want to include the final `{` or `;` of the
   // declaration when performing syntactic match.
-  // TODO: Following proposal #3763, we should exclude any `where` clause, and
-  // add `Self` before `as` if needed, see:
+  auto end_node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
+  CARBON_CHECK(end_node_kind == Parse::NodeKind::ImplDefinitionStart ||
+               end_node_kind == Parse::NodeKind::ImplDecl);
+  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  --last_param_iter;
+
+  // Following proposal #3763, exclude a final `where` clause, if present. See:
   // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               node_kind == Parse::NodeKind::ImplDecl);
-  Parse::NodeId last_param_node_id(end_of_decl_node_id.index - 1);
+
+  // Caches the NodeKind for the current value of *last_param_iter so
+  if (context.parse_tree().node_kind(*last_param_iter) ==
+      Parse::NodeKind::WhereExpr) {
+    int where_operands_to_skip = 1;
+    --last_param_iter;
+    CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
+                 last_param_iter);
+    do {
+      auto node_kind = context.parse_tree().node_kind(*last_param_iter);
+      if (node_kind == Parse::NodeKind::WhereExpr) {
+        // If we have a nested `where`, we need to see another `WhereOperand`
+        // before we find the one that matches our original `WhereExpr` node.
+        ++where_operands_to_skip;
+      } else if (node_kind == Parse::NodeKind::WhereOperand) {
+        --where_operands_to_skip;
+      }
+      --last_param_iter;
+      CARBON_CHECK(Parse::Tree::PostorderIterator(first_param_node_id) <
+                   last_param_iter);
+    } while (where_operands_to_skip > 0);
+  }
 
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
+      .last_param_node_id = *last_param_iter,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
@@ -240,8 +265,6 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 static auto MergeImplRedecl(Context& context, SemIR::Impl& new_impl,
                             SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
-
-  // TODO: Following #3763, disallow redeclarations in different scopes.
 
   // If the parameters aren't the same, then this is not a redeclaration of this
   // `impl`. Keep looking for a prior declaration without issuing a diagnostic.
@@ -298,6 +321,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
+  // TODO: Do facet type resolution here.
+  // TODO: Determine `interface_id` and `specific_id` once and save it in the
+  // resolved facet type, instead of in multiple functions called below.
+  // TODO: Skip work below if facet type resolution fails, so we don't have a
+  // valid/non-error `interface_id` at all.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -343,8 +371,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
-    impl_info.generic_id = FinishGenericDecl(context, impl_decl_id);
+    impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
@@ -416,6 +445,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
 
+  if (!impl_info.is_defined()) {
+    ImplWitnessStartDefinition(context, impl_info);
+  }
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -439,7 +471,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
 
   auto& impl_info = context.impls().Get(impl_id);
   if (!impl_info.is_defined()) {
-    impl_info.witness_id = BuildImplWitness(context, impl_info);
+    FinishImplWitness(context, impl_info);
     impl_info.defined = true;
   }
 

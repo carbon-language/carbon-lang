@@ -7,6 +7,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -720,6 +721,26 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
   return ValidateFloatBitWidth(context, loc, result.bit_width_id);
 }
 
+// Performs a conversion between integer types, truncating if the value doesn't
+// fit in the destination type.
+static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
+                              SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
+  auto arg_val =
+      context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
+  auto [dest_is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  if (bit_width_id.is_valid()) {
+    // TODO: If the value fits in the destination type, reuse the existing
+    // int_id rather than recomputing it. This is probably the most common case.
+    bool src_is_signed = context.sem_ir().types().IsSignedInt(
+        context.insts().Get(arg_id).type_id());
+    unsigned width = context.ints().Get(bit_width_id).getZExtValue();
+    arg_val =
+        src_is_signed ? arg_val.sextOrTrunc(width) : arg_val.zextOrTrunc(width);
+  }
+  return MakeIntResult(context, dest_type_id, dest_is_signed, arg_val);
+}
+
 // Performs a conversion between integer types, diagnosing if the value doesn't
 // fit in the destination type.
 static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
@@ -1283,6 +1304,12 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvert: {
+      if (phase == Phase::Symbolic) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       if (phase == Phase::Symbolic) {
         return MakeConstantResult(context, call, phase);
@@ -1543,9 +1570,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id,
           &SemIR::AssociatedEntityType::entity_type_id);
     case SemIR::BoundMethod::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::BoundMethod::type_id,
-          &SemIR::BoundMethod::object_id, &SemIR::BoundMethod::function_id);
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::BoundMethod::type_id,
+                                        &SemIR::BoundMethod::object_id,
+                                        &SemIR::BoundMethod::function_decl_id);
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ClassType::specific_id);
@@ -1567,9 +1595,13 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       return RebuildIfFieldsAreConstant(
           eval_context, inst,
           &SemIR::GenericInterfaceType::enclosing_specific_id);
-    case SemIR::InterfaceWitness::Kind:
+    case SemIR::ImplWitness::Kind:
+      // We intentionally don't replace the `elements_id` field here. We want to
+      // track that specific InstBlock in particular, not coalesce blocks with
+      // the same members. That block may get updated, and we want to pick up
+      // those changes.
       return RebuildIfFieldsAreConstant(eval_context, inst,
-                                        &SemIR::InterfaceWitness::elements_id);
+                                        &SemIR::ImplWitness::specific_id);
     case CARBON_KIND(SemIR::IntType int_type): {
       return RebuildAndValidateIfFieldsAreConstant(
           eval_context, inst,
@@ -1744,11 +1776,48 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
 
     // The elements of a constant aggregate can be accessed.
     case SemIR::ClassElementAccess::Kind:
-    case SemIR::InterfaceWitnessAccess::Kind:
     case SemIR::StructAccess::Kind:
     case SemIR::TupleAccess::Kind:
       return PerformAggregateAccess(eval_context, inst);
 
+    case CARBON_KIND(SemIR::ImplWitnessAccess access_inst): {
+      // This is PerformAggregateAccess followed by GetConstantInSpecific.
+      Phase phase = Phase::Template;
+      if (ReplaceFieldWithConstantValue(eval_context, &access_inst,
+                                        &SemIR::ImplWitnessAccess::witness_id,
+                                        &phase)) {
+        if (auto witness = eval_context.insts().TryGetAs<SemIR::ImplWitness>(
+                access_inst.witness_id)) {
+          auto elements = eval_context.inst_blocks().Get(witness->elements_id);
+          auto index = static_cast<size_t>(access_inst.index.index);
+          CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+          // `Phase` is not used here. If this element is a template constant,
+          // then so is the result of indexing, even if the aggregate also
+          // contains a symbolic context.
+
+          auto element = elements[index];
+          if (!element.is_valid()) {
+            // TODO: Perhaps this should be a `{}` value with incomplete type?
+            CARBON_DIAGNOSTIC(ImplAccessMemberBeforeComplete, Error,
+                              "accessing member from impl before the end of "
+                              "its definition");
+            // TODO: Add note pointing to the impl declaration.
+            eval_context.emitter().Emit(eval_context.GetDiagnosticLoc(inst_id),
+                                        ImplAccessMemberBeforeComplete);
+            return SemIR::ErrorInst::SingletonConstantId;
+          }
+          LoadImportRef(eval_context.context(), element);
+          return GetConstantValueInSpecific(eval_context.sem_ir(),
+                                            witness->specific_id, element);
+        } else {
+          CARBON_CHECK(phase != Phase::Template,
+                       "Failed to evaluate template constant {0} arg0: {1}",
+                       inst, eval_context.insts().Get(access_inst.witness_id));
+        }
+        return MakeConstantResult(eval_context.context(), access_inst, phase);
+      }
+      return MakeNonConstantResult(phase);
+    }
     case CARBON_KIND(SemIR::ArrayIndex index): {
       return PerformArrayIndex(eval_context, index);
     }

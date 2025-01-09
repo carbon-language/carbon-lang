@@ -28,11 +28,12 @@ struct ImplFields {
   // The first block of the impl body.
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::Invalid;
+  // The witness for the impl. This can be `BuiltinErrorInst` or an import
+  // reference. Note that the entries in the witness are updated at the end of
+  // the impl definition.
+  InstId witness_id = InstId::Invalid;
 
   // The following members are set at the `}` of the impl definition.
-
-  // The witness for the impl. This can be `BuiltinErrorInst`.
-  InstId witness_id = InstId::Invalid;
   bool defined = false;
 };
 
@@ -188,7 +189,8 @@ class ImplStore {
  private:
   File& sem_ir_;
   ValueStore<ImplId> values_;
-  Map<std::pair<InstId, InstId>, ImplOrLookupBucketId> lookup_;
+  Map<std::tuple<InstId, InterfaceId, SpecificId>, ImplOrLookupBucketId>
+      lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };

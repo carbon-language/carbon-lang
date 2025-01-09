@@ -19,9 +19,9 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.1.loc12_25 = internal constant [1 x i32] [i32 1]
-// CHECK:STDOUT: @array.2.loc13_33 = internal constant [2 x double] [double 0x4026333333333334, double 2.200000e+00]
-// CHECK:STDOUT: @array.3.loc14_41 = internal constant [5 x {}] zeroinitializer
+// CHECK:STDOUT: @array.0e3.loc12_25 = internal constant [1 x i32] [i32 1]
+// CHECK:STDOUT: @array.6a2.loc13_33 = internal constant [2 x double] [double 0x4026333333333334, double 2.200000e+00]
+// CHECK:STDOUT: @array.1cb.loc14_41 = internal constant [5 x {}] zeroinitializer
 // CHECK:STDOUT: @tuple.loc15_37 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
@@ -33,18 +33,18 @@ fn Run() {
 // CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !7
 // CHECK:STDOUT:   %.loc12_24.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, i64 0, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.1.loc12_25, i64 4, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.0e3.loc12_25, i64 4, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %b.var), !dbg !7
 // CHECK:STDOUT:   %.loc13_32.2.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 0, !dbg !10
 // CHECK:STDOUT:   %.loc13_32.4.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b.var, ptr align 8 @array.2.loc13_33, i64 16, i1 false), !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b.var, ptr align 8 @array.6a2.loc13_33, i64 16, i1 false), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !7
 // CHECK:STDOUT:   %.loc14_40.2.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 0, !dbg !12
 // CHECK:STDOUT:   %.loc14_40.4.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 1, !dbg !12
 // CHECK:STDOUT:   %.loc14_40.6.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 2, !dbg !12
 // CHECK:STDOUT:   %.loc14_40.8.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 3, !dbg !12
 // CHECK:STDOUT:   %.loc14_40.10.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 4, !dbg !12
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @array.3.loc14_41, i64 0, i1 false), !dbg !13
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @array.1cb.loc14_41, i64 0, i1 false), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %d.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !14
 // CHECK:STDOUT:   %tuple.elem1.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !14

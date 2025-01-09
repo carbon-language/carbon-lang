@@ -238,6 +238,10 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
 
+// Converts between integer types, truncating if necessary.
+constexpr BuiltinInfo IntConvert = {"int.convert",
+                                    ValidateSignature<auto(AnyInt)->AnyInt>};
+
 // Converts between integer types, with a diagnostic if the value doesn't fit.
 constexpr BuiltinInfo IntConvertChecked = {
     "int.convert_checked", ValidateSignature<auto(AnyInt)->AnyInt>};
@@ -421,26 +425,54 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
   return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
 }
 
+// Determines whether a builtin call involves an integer literal in its
+// arguments or return type. If so, for many builtins we want to treat the call
+// as being compile-time-only. This is because `Core.IntLiteral` has an empty
+// runtime representation, and a value of that type isn't necessarily a
+// compile-time constant, so an arbitrary runtime value of type
+// `Core.IntLiteral` may not have a value available for the builtin to use. For
+// example, given:
+//
+// var n: Core.IntLiteral() = 123;
+//
+// we would be unable to lower a runtime operation such as `(1 as i32) << n`
+// because the runtime representation of `n` doesn't track its value at all.
+//
+// For now, we treat all operations involving `Core.IntLiteral` as being
+// compile-time-only.
+//
+// TODO: We will need to accept things like `some_i32 << 5` eventually. We could
+// allow builtin calls at runtime if all the IntLiteral arguments have constant
+// values, or add logic to the prelude to promote the `IntLiteral` operand to a
+// different type in such cases.
+//
+// TODO: For now, we also treat builtins *returning* `Core.IntLiteral` as being
+// compile-time-only. This is mostly done for simplicity, but should probably be
+// revisited.
+static auto AnyIntLiteralTypes(const File& sem_ir,
+                               llvm::ArrayRef<InstId> arg_ids,
+                               TypeId return_type_id) -> bool {
+  if (sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id)) {
+    return true;
+  }
+  for (auto arg_id : arg_ids) {
+    if (sem_ir.types().Is<SemIR::IntLiteralType>(
+            sem_ir.insts().Get(arg_id).type_id())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
-  // Some builtin functions are unconditionally compile-time-only, or
-  // unconditionally usable at runtime. However, we need to take extra care for
-  // builtins operating on an arbitrary integer type, because `Core.IntLiteral`
-  // has an empty runtime representation and a value of that type isn't
-  // necessarily a compile-time constant. For example, given:
-  //
-  // var n: Core.IntLiteral() = 123;
-  //
-  // we would be unable to lower a runtime operation such as `(1 as i32) << n`
-  // because the runtime representation of `n` doesn't track its value at all.
-  // So we treat operations involving `Core.IntLiteral` as being
-  // compile-time-only.
   switch (*this) {
     case IntConvertChecked:
       // Checked integer conversions are compile-time only.
       return true;
 
+    case IntConvert:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:
@@ -451,46 +483,17 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case IntAnd:
     case IntOr:
     case IntXor:
-      // Integer builtins producing an IntLiteral are compile-time only.
-      // TODO: We could allow these at runtime and just produce an empty struct
-      // result. Should we?
-      return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
-
     case IntLeftShift:
     case IntRightShift:
-      // Shifts by an integer literal amount are compile-time only. We don't
-      // have a value for the shift amount at runtime in general.
-      // TODO: Decide how shifting a non-literal by a literal amount should
-      // work. We could support these with a builtin in the case where the shift
-      // amount has a compile-time value, or we could perform a conversion in
-      // the prelude.
-      if (sem_ir.types().Is<SemIR::IntLiteralType>(
-              sem_ir.insts().Get(arg_ids[1]).type_id())) {
-        return true;
-      }
-
-      // Integer builtins producing an IntLiteral are compile-time only.
-      // TODO: We could allow these at runtime and just produce an empty struct
-      // result. Should we?
-      return sem_ir.types().Is<SemIR::IntLiteralType>(return_type_id);
-
     case IntEq:
     case IntNeq:
     case IntLess:
     case IntLessEq:
     case IntGreater:
     case IntGreaterEq:
-      // Comparisons involving an integer literal operand are compile-time only.
-      // We don't have a value for an integer literal operand argument at
-      // runtime in general.
-      // TODO: Figure out how mixed literal / non-literal comparisons should
-      // work. We could support these with builtins in the case where the
-      // operand has a compile-time value, or we could perform a conversion in
-      // the prelude.
-      return sem_ir.types().Is<SemIR::IntLiteralType>(
-                 sem_ir.insts().Get(arg_ids[0]).type_id()) ||
-             sem_ir.types().Is<SemIR::IntLiteralType>(
-                 sem_ir.insts().Get(arg_ids[1]).type_id());
+      // Integer operations are compile-time-only if they involve integer
+      // literal types. See AnyIntLiteralTypes comment for explanation.
+      return AnyIntLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     default:
       // TODO: Should the sized MakeType functions be compile-time only? We

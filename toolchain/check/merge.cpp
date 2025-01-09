@@ -394,18 +394,38 @@ static auto CheckRedeclParamSyntax(Context& context,
   CARBON_CHECK(prev_last_param_node_id.is_valid(),
                "prev_last_param_node_id.is_valid should match "
                "prev_first_param_node_id.is_valid");
+  Parse::Tree::PostorderIterator new_iter(new_first_param_node_id);
+  Parse::Tree::PostorderIterator new_end(new_last_param_node_id);
+  Parse::Tree::PostorderIterator prev_iter(prev_first_param_node_id);
+  Parse::Tree::PostorderIterator prev_end(prev_last_param_node_id);
+  // Done when one past the last node to check.
+  ++new_end;
+  ++prev_end;
 
-  auto new_range = Parse::Tree::PostorderIterator::MakeRange(
-      new_first_param_node_id, new_last_param_node_id);
-  auto prev_range = Parse::Tree::PostorderIterator::MakeRange(
-      prev_first_param_node_id, prev_last_param_node_id);
-
-  // zip is using the shortest range. If they differ in length, there should be
-  // some difference inside the range because the range includes parameter
-  // brackets. As a consequence, we don't explicitly handle different range
-  // sizes here.
-  for (auto [new_node_id, prev_node_id] : llvm::zip(new_range, prev_range)) {
+  // Compare up to the shortest length.
+  for (; new_iter != new_end && prev_iter != prev_end;
+       ++new_iter, ++prev_iter) {
+    auto new_node_id = *new_iter;
+    auto prev_node_id = *prev_iter;
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
+      // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
+      // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
+      auto new_node_kind = context.parse_tree().node_kind(new_node_id);
+      auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
+      if (new_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(prev_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++prev_iter;
+        continue;
+      }
+      if (prev_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+          new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
+          context.parse_tree().node_kind(new_iter[1]) ==
+              Parse::NodeKind::TypeImplAs) {
+        ++new_iter;
+        continue;
+      }
       if (!diagnose) {
         return false;
       }
@@ -419,6 +439,17 @@ static auto CheckRedeclParamSyntax(Context& context,
           .Emit();
       return false;
     }
+  }
+  // The prefixes are the same, but the lengths may still be different. This is
+  // only relevant for `impl` declarations where the final bracketing node is
+  // not included in the range of nodes being compared, and in those cases
+  // `diagnose` is false.
+  if (new_iter != new_end) {
+    CARBON_CHECK(!diagnose);
+    return false;
+  } else if (prev_iter != prev_end) {
+    CARBON_CHECK(!diagnose);
+    return false;
   }
 
   return true;

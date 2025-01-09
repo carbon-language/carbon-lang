@@ -22,23 +22,25 @@ class ConstantContext {
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
-  // constant value that has already been lowered.
+  // constant value that has already been lowered. Returns nullptr if it
+  // hasn't been, in which case it should not be needed.
   auto GetConstant(SemIR::InstId inst_id) const -> llvm::Constant* {
     return GetConstant(file_context_->sem_ir().constant_values().Get(inst_id));
   }
 
   // Gets the lowered constant value for a constant that has already been
-  // lowered.
+  // lowered. Returns nullptr if it hasn't been, in which case it should not be
+  // needed.
   auto GetConstant(SemIR::ConstantId const_id) const -> llvm::Constant* {
     CARBON_CHECK(const_id.is_template(), "Unexpected constant ID {0}",
                  const_id);
     auto inst_id =
         file_context_->sem_ir().constant_values().GetInstId(const_id);
-    CARBON_CHECK(
-        inst_id.index >= 0 && inst_id.index <= last_lowered_constant_index_,
-        "Queried constant {0} with instruction {1} that has not been lowered "
-        "yet",
-        const_id, inst_id);
+    if (inst_id.index > last_lowered_constant_index_) {
+      // This constant hasn't been lowered.
+      return nullptr;
+    }
+    CARBON_CHECK(inst_id.index >= 0);
     return constants_[inst_id.index];
   }
 
@@ -165,7 +167,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
     -> llvm::Constant* {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  return context.GetConstant(inst.function_id);
+  return context.GetConstant(inst.function_decl_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -197,12 +199,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
     return int_literal_value;
   }
 
-  auto val = context.sem_ir().ints().Get(inst.int_id);
   int bit_width = int_type->getBitWidth();
-  bool is_signed =
-      context.sem_ir().types().GetIntTypeInfo(inst.type_id).is_signed;
-  return llvm::ConstantInt::get(type, is_signed ? val.sextOrTrunc(bit_width)
-                                                : val.zextOrTrunc(bit_width));
+  auto val = context.sem_ir().ints().GetAtWidth(inst.int_id, bit_width);
+  return llvm::ConstantInt::get(type, val);
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)
@@ -280,6 +279,6 @@ auto LowerConstants(FileContext& file_context,
     constants[inst_id.index] = value;
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
-}  // namespace Carbon::Lower
+}
 
 }  // namespace Carbon::Lower

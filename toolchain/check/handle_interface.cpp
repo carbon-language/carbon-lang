@@ -63,16 +63,14 @@ static auto BuildInterfaceDecl(Context& context,
       SemIR::LibraryNameId::Invalid)};
 
   // Check whether this is a redeclaration.
-  auto existing_id = context.decl_name_stack().LookupOrAddName(
+  auto [existing_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
       name_context, interface_decl_id, introducer.modifier_set.GetAccessKind());
-  if (existing_id.is_valid()) {
-    if (existing_id.is_poisoned()) {
-      // This is a declaration of a poisoned name.
-      context.DiagnosePoisonedName(interface_decl_id);
-    } else if (auto existing_interface_decl =
-                   context.insts()
-                       .Get(existing_id)
-                       .TryAs<SemIR::InterfaceDecl>()) {
+  if (is_poisoned) {
+    // This is a declaration of a poisoned name.
+    context.DiagnosePoisonedName(interface_decl_id);
+  } else if (existing_id.is_valid()) {
+    if (auto existing_interface_decl =
+            context.insts().Get(existing_id).TryAs<SemIR::InterfaceDecl>()) {
       auto existing_interface =
           context.interfaces().Get(existing_interface_decl->interface_id);
       if (CheckRedeclParamsMatch(
@@ -115,7 +113,7 @@ static auto BuildInterfaceDecl(Context& context,
     // there was an error in the qualifier, we will have lost track of the
     // interface name here. We should keep track of it even if the name is
     // invalid.
-    interface_info.generic_id = FinishGenericDecl(context, interface_decl_id);
+    interface_info.generic_id = BuildGenericDecl(context, interface_decl_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {
       interface_decl.type_id = context.GetGenericInterfaceType(

@@ -262,13 +262,13 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case ImplWitness::Kind:
+      case ImplWitnessAccess::Kind:
       case ImportDecl::Kind:
       case IntLiteralType::Kind:
       case IntType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
-      case InterfaceWitnessAccess::Kind:
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
       case PointerType::Kind:

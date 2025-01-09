@@ -17,7 +17,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %struct_type.a.1: type = struct_type {.a: %empty_struct_type} [template]
+// CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [template]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_struct_type} [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -25,8 +25,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.1 = var x
-// CHECK:STDOUT:   %x: ref %struct_type.a.1 = bind_name x, %x.var
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var x
+// CHECK:STDOUT:   %x: ref %struct_type.a.225 = bind_name x, %x.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
