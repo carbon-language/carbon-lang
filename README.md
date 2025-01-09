@@ -380,8 +380,7 @@ Carbon focused talks from the community:
     ([video](https://youtu.be/Za_KWj5RMR8))
     -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
 -   Carbon's high-level semantic IR lightning talk, EuroLLVM
-    ([video](https://youtu.be/vIWT4RhUcyw),
-    [slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
+    ([video](https://youtu.be/vIWT4RhUcyw))
 
 ### 2023
 
