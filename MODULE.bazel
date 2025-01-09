@@ -28,12 +28,45 @@ http_archive = use_repo_rule(
     "http_archive",
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "abseil-cpp", version = "20240722.0.bcr.2")
-bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
-bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "aspect_bazel_lib", version = "2.8.1")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "google_benchmark", version = "1.8.5")
+bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
+bazel_dep(name = "rules_nodejs", version = "6.3.2")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "tree-sitter-bazel", version = "0.24.4")
+bazel_dep(name = "aspect_rules_js", version = "2.1.0")
+
+bazel_lib_toolchains = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
+bazel_lib_toolchains.tar()
+use_repo(bazel_lib_toolchains, "bsd_tar_toolchains")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm", dev_dependency = True)
+npm.npm_translate_lock(
+    name = "npm",
+    bins = {
+        "tree-sitter-cli": [
+            "tree-sitter-cli=./bin/tree-sitter-cli",
+        ],
+    },
+    pnpm_lock = "//bazel/npm:pnpm-lock.yaml",
+    verify_node_modules_ignored = "//:.bazelignore",
+)
+use_repo(npm, "npm")
+node_dev = use_extension(
+    "@rules_nodejs//nodejs:extensions.bzl",
+    "node",
+    dev_dependency = True,
+)
+use_repo(node_dev, "nodejs_toolchains")
+node_dev.toolchain()
+
+# Allows developers to use the matching pnpm version, for example:
+# bazel run -- @pnpm --dir /home/runner/work/rules_js/rules_js install
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm")
+use_repo(pnpm, "pnpm")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.

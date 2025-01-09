@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <tree_sitter/api.h>
-#include <tree_sitter/parser.h>
 
 #include <cstdlib>
 #include <filesystem>
@@ -12,6 +11,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "utils/treesitter/src/tree_sitter/parser.h"
 
 extern "C" {
 auto tree_sitter_carbon() -> TSLanguage*;

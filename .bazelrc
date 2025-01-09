@@ -128,17 +128,6 @@ build --allow_unresolved_symlinks=false
 # RC file here if present.
 try-import %workspace%/user.bazelrc
 
-# Incompatible with `rules_tree_sitter`.
-# TODO: WORKSPACE will be removed in bazel 9, and we need to move off.
-# TODO: The registry has a different treesitter rule set, and we should
-# investigate switching. See:
-# https://registry.bazel.build/modules/tree-sitter-bazel
-common --enable_workspace
-# This is on by default in bazel 8.
-common --incompatible_disallow_empty_glob=false
-# common --incompatible_auto_exec_groups
-# common --incompatible_disable_starlark_host_transitions
-
 # This excludes things like rules_android to reduce warnings.
 # TODO: There's a pending fix, so hopefully we can remove it soon.
 # - Issue: https://github.com/bazelbuild/bazel/issues/23929
@@ -169,6 +158,7 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 common --incompatible_allow_tags_propagation
 common --incompatible_always_check_depset_elements
 common --incompatible_always_include_files_in_data
+# common --incompatible_auto_exec_groups
 common --incompatible_bazel_test_exec_run_under
 common --incompatible_check_sharding_support
 common --incompatible_check_testonly_for_output_files
@@ -179,6 +169,7 @@ common --incompatible_depset_for_libraries_to_link_getter
 common --incompatible_disable_native_android_rules
 common --incompatible_disable_native_repo_rules
 common --incompatible_disable_objc_library_transition
+common --incompatible_disable_starlark_host_transitions
 common --incompatible_disable_target_provider_fields
 common --incompatible_disallow_ctx_resolve_tools
 common --incompatible_disallow_legacy_py_provider

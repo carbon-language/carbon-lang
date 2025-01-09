@@ -2,18 +2,38 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
-load("@rules_tree_sitter//tree_sitter:tree_sitter.bzl", "tree_sitter_cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
-package(default_visibility = [
-    "//bazel/check_deps:__pkg__",
-    "//installers:__subpackages__",
-])
+package(default_visibility = ["//bazel/check_deps:__pkg__"])
 
-tree_sitter_cc_library(
+genrule(
+    name = "call_tree_sitter",
+    srcs = [
+        ":grammar.js",
+        "//bazel/npm:node_modules/tree-sitter-cli/dir",
+    ],
+    outs = [
+        "src/scanner.c",
+        "src/tree_sitter/parser.h",
+    ],
+    cmd = " ".join([
+        "$(NODE_PATH)",
+        "./$(execpath //bazel/npm:node_modules/tree-sitter-cli/dir)/bin/tree-sitter-cli",
+        "--help",
+    ]),
+    toolchains = ["@nodejs_toolchains//:resolved_toolchain"],
+    tools = ["@nodejs_toolchains//:resolved_toolchain"],
+)
+
+cc_library(
     name = "treesitter",
-    srcs = ["src/scanner.c"],
-    grammar = ["grammar.js"],
+    srcs = [
+        "src/parser.c",
+        "src/scanner.c",
+    ],
+    hdrs = ["src/tree_sitter/parser.h"],
+    copts = ["-Wno-missing-prototypes"],
+    deps = ["@tree-sitter-bazel//:tree-sitter"],
 )
 
 cc_binary(
