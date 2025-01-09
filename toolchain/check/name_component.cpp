@@ -11,65 +11,69 @@ namespace Carbon::Check {
 
 auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     -> NameComponent {
-  NameComponent name_component = {
-      .name_loc_id = Parse::NodeId::Invalid,
-      .name_id = SemIR::NameId::Invalid,
-      .first_param_node_id = Parse::NodeId::Invalid,
-      .last_param_node_id = Parse::NodeId::Invalid,
-      .implicit_params_loc_id = Parse::NodeId::Invalid,
-      .implicit_param_patterns_id = SemIR::InstBlockId::Invalid,
-      .params_loc_id = Parse::NodeId::Invalid,
-      .param_patterns_id = SemIR::InstBlockId::Invalid,
-      .call_params_id = SemIR::InstBlockId::Invalid,
-      .return_slot_pattern_id = return_slot_pattern_id,
-      .pattern_block_id = SemIR::InstBlockId::Invalid,
-  };
+  Parse::NodeId first_param_node_id = Parse::InvalidNodeId();
+  Parse::NodeId last_param_node_id = Parse::InvalidNodeId();
 
   // Explicit params.
-  if (auto [params_loc_id, param_patterns_id] =
-          context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
-      param_patterns_id) {
-    name_component.first_param_node_id =
+  auto [params_loc_id, param_patterns_id] =
+      context.node_stack().PopWithNodeIdIf<Parse::NodeKind::TuplePattern>();
+  if (param_patterns_id) {
+    first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::TuplePatternStart>();
-    name_component.last_param_node_id = params_loc_id;
-    name_component.params_loc_id = params_loc_id;
-    name_component.param_patterns_id = *param_patterns_id;
+    last_param_node_id = params_loc_id;
+  } else {
+    param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
   // Implicit params.
-  if (auto [implicit_params_loc_id, implicit_param_patterns_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
-      implicit_param_patterns_id) {
+  auto [implicit_params_loc_id, implicit_param_patterns_id] =
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeKind::ImplicitParamList>();
+  if (implicit_param_patterns_id) {
     // Implicit params always come before explicit params.
-    name_component.first_param_node_id =
+    first_param_node_id =
         context.node_stack()
             .PopForSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Only use the end of implicit params if there weren't explicit params.
-    if (!name_component.last_param_node_id.is_valid()) {
-      name_component.last_param_node_id = implicit_params_loc_id;
+    if (last_param_node_id.is_valid()) {
+      last_param_node_id = params_loc_id;
     }
-    name_component.implicit_params_loc_id = implicit_params_loc_id;
-    name_component.implicit_param_patterns_id = *implicit_param_patterns_id;
+  } else {
+    implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  if (name_component.param_patterns_id.is_valid() ||
-      name_component.implicit_param_patterns_id.is_valid()) {
-    std::tie(name_component.name_loc_id, name_component.name_id) =
+  Parse::NodeId name_loc_id = Parse::NodeId::Invalid;
+  auto name_id = SemIR::NameId::Invalid;
+  auto call_params_id = SemIR::InstBlockId::Invalid;
+  auto pattern_block_id = SemIR::InstBlockId::Invalid;
+  if (param_patterns_id->is_valid() || implicit_param_patterns_id->is_valid()) {
+    std::tie(name_loc_id, name_id) =
         context.node_stack()
             .PopWithNodeId<Parse::NodeKind::IdentifierNameBeforeParams>();
-    name_component.call_params_id = CalleePatternMatch(
-        context, name_component.implicit_param_patterns_id,
-        name_component.param_patterns_id, return_slot_pattern_id);
-    name_component.pattern_block_id = context.pattern_block_stack().Pop();
+    call_params_id =
+        CalleePatternMatch(context, *implicit_param_patterns_id,
+                           *param_patterns_id, return_slot_pattern_id);
+    pattern_block_id = context.pattern_block_stack().Pop();
   } else {
-    std::tie(name_component.name_loc_id, name_component.name_id) =
+    std::tie(name_loc_id, name_id) =
         context.node_stack()
             .PopWithNodeId<Parse::NodeKind::IdentifierNameNotBeforeParams>();
   }
 
-  return name_component;
+  return {
+      .name_loc_id = name_loc_id,
+      .name_id = name_id,
+      .first_param_node_id = first_param_node_id,
+      .last_param_node_id = last_param_node_id,
+      .implicit_params_loc_id = implicit_params_loc_id,
+      .implicit_param_patterns_id = *implicit_param_patterns_id,
+      .params_loc_id = params_loc_id,
+      .param_patterns_id = *param_patterns_id,
+      .call_params_id = call_params_id,
+      .return_slot_pattern_id = return_slot_pattern_id,
+      .pattern_block_id = pattern_block_id,
+  };
 }
 
 // Pop the name of a declaration from the node stack, and diagnose if it has
