@@ -29,15 +29,8 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
 
 static auto IsNamespaceScope(Context& context, SemIR::NameScopeId name_scope_id)
     -> bool {
-  if (!name_scope_id.is_valid()) {
-    return false;
-  }
-
-  const auto& name_scope = context.name_scopes().Get(name_scope_id);
-  if (!name_scope.inst_id().is_valid()) {
-    return false;
-  }
-  return context.insts().Is<SemIR::Namespace>(name_scope.inst_id());
+  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
+  return inst && inst->Is<SemIR::Namespace>();
 }
 
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
