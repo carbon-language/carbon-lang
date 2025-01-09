@@ -12,7 +12,7 @@
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:21: error: `T` read before initialization [ReadDuringInitialization]
+// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:21: error: `T` used before initialization [UsedBeforeInitialization]
 // CHECK:STDERR: alias A(T:! type) = T*;
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:

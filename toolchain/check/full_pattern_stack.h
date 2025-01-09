@@ -37,6 +37,9 @@ class FullPatternStack {
       CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
       auto& lookup_result = lookup_->Get(name_id);
       if (!lookup_result.empty()) {
+        // TODO: find a way to preserve location information, so that we can
+        // provide good diagnostics for a redeclaration of `name_id` in
+        // the initializer, if that becomes possible.
         std::swap(lookup_result.back().inst_id, inst_id);
       }
     }

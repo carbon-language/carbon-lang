@@ -390,9 +390,9 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
   }
 
   if (lexical_result == SemIR::InstId::InitTombstone) {
-    CARBON_DIAGNOSTIC(ReadDuringInitialization, Error,
-                      "`{0}` read before initialization", SemIR::NameId);
-    emitter_->Emit(node_id, ReadDuringInitialization, name_id);
+    CARBON_DIAGNOSTIC(UsedBeforeInitialization, Error,
+                      "`{0}` used before initialization", SemIR::NameId);
+    emitter_->Emit(node_id, UsedBeforeInitialization, name_id);
     return {.specific_id = SemIR::SpecificId::Invalid,
             .inst_id = SemIR::ErrorInst::SingletonInstId};
   }
