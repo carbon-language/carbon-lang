@@ -134,6 +134,10 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_disable_non_executable_java_binary
 
+# Incompatible with the clang-tidy build mode.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_auto_exec_groups
+
 # Incompatible with `rules_cc`.
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_no_rule_outputs_param
@@ -157,7 +161,6 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 common --incompatible_allow_tags_propagation
 common --incompatible_always_check_depset_elements
 common --incompatible_always_include_files_in_data
-common --incompatible_auto_exec_groups
 common --incompatible_bazel_test_exec_run_under
 common --incompatible_check_sharding_support
 common --incompatible_check_testonly_for_output_files
