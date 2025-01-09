@@ -14,6 +14,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -703,21 +704,20 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
       auto base_vtable_inst_block = context.inst_blocks().Get(
           context.insts().GetAs<SemIR::Vtable>(vtable_id).virtual_functions_id);
       for (auto fn_decl_id : base_vtable_inst_block) {
-        /*
-        auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(fn_decl_id);
+        auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
         auto fn = context.functions().Get(fn_decl.function_id);
         for (auto override_fn_decl_id :
-        context.vtable_stack().PeekCurrentBlockContents()) { auto
-        override_fn_decl =
-        context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id); auto
-        override_fn = context.functions().Get(override_fn_decl.function_id); if
-        (override_fn.virtual_modifier ==
+             context.vtable_stack().PeekCurrentBlockContents()) {
+          auto override_fn_decl =
+              context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
+          auto override_fn =
+              context.functions().Get(override_fn_decl.function_id);
+          if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
             fn_decl_id = override_fn_decl_id;
           }
         }
-        */
         vtable.push_back(fn_decl_id);
       }
     }
