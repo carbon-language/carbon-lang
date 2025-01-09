@@ -139,6 +139,10 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 # common --incompatible_no_rule_outputs_param
 # common --incompatible_stop_exporting_language_modules
 
+# Incompatible with `rules_flex`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_disable_starlark_host_transitions
+
 # Incompatible with `rules_pkg`.
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_disable_target_default_provider_fields
@@ -164,7 +168,6 @@ common --incompatible_depset_for_libraries_to_link_getter
 common --incompatible_disable_native_android_rules
 common --incompatible_disable_native_repo_rules
 common --incompatible_disable_objc_library_transition
-common --incompatible_disable_starlark_host_transitions
 common --incompatible_disable_target_provider_fields
 common --incompatible_disallow_ctx_resolve_tools
 common --incompatible_disallow_legacy_py_provider
