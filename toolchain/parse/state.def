@@ -275,8 +275,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 
-// Handles processing of a declaration scope. Things like fn, class, interface,
-// and so on.
+// Handles processing of a declaration. Things like fn, class, interface, and so
+// on.
 //
 // abstract
 // ^~~~~~~~
@@ -298,95 +298,95 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~~~
 // virtual
 // ^~~~~~~
-//   1. DeclScopeLoop
+//   1. Decl
 //
 // adapt ...
 // ^~~~~
 //   1. AdaptAfterIntroducer
-//   2. DeclScopeLoop
 //
 // alias ...
 // ^~~~~
 //   1. Alias
-//   2. DeclScopeLoop
 //
 // base : ...
 // ^~~~
 //   1. BaseAfterIntroducer
-//   2. DeclScopeLoop
 //
 // choice ...
 // ^~~~~~
 //   1. ChoiceIntroducer
-//   2. DeclScopeLoop
 //
 // class ...
 // ^~~~~
 //   1. TypeAfterIntroducerAsClass
-//   2. DeclScopeLoop
 //
 // constraint ...
 // ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsNamedConstraint
-//   2. DeclScopeLoop
 //
 // export <name> ...
 // ^~~~~~
 //   1. ExportName
-//   2. DeclScopeLoop
 //
 // fn ...
 // ^~
 //   1. FunctionIntroducer
-//   2. DeclScopeLoop
 //
 // impl ...
 // ^~~~
 //   1. ImplAfterIntroducer
-//   2. DeclScopeLoop
 //
 // import ...    (in packaging directives)
 // ^~~~~~
 //   1. Import
-//   2. DeclScopeLoop
 //
 // interface ...
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
-//   2. DeclScopeLoop
 //
 // let ...
 // ^~~
 //   1. Let
-//   2. DeclScopeLoop
 //
 // library ...    (in packaging directives)
 // ^~~~~~~
 //   1. Library
-//   2. DeclScopeLoop
 //
 // namespace ...
 // ^~~~~~~~~
 //   1. Namespace
-//   2. DeclScopeLoop
 //
 // package ...    (in packaging directives)
 // ^~~~~~~
 //   1. Package
-//   2. DeclScopeLoop
 //
 // var ...
 // ^~~
 //   1. VarAsDecl
-//   2. DeclScopeLoop
 //
 // ;
 // ^
-//   1. DeclScopeLoop
+//   (state done)
 //
 // ??? ;
 // ^~~~~
 //   (state done)
+CARBON_PARSE_STATE(Decl)
+
+// Handles processing of a declaration scope, which contains a sequence of
+// declarations.
+//
+//  }
+// ^
+//  <eof>
+// ^
+//   (state done)
+//
+//  ...
+// ^
+//   1. Decl
+//   2. DeclScopeLoop
+//
 CARBON_PARSE_STATE(DeclScopeLoop)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
@@ -1069,10 +1069,6 @@ CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
 // ^
 //   1. StatementReturn
 //
-//  var ...
-// ^
-//   1. VarAsDecl
-//
 //  returned ...
 // ^
 //   1. VarAsReturned
@@ -1089,6 +1085,10 @@ CARBON_PARSE_STATE_VARIANTS2(BindingPatternFinish, Generic, Regular)
 //  match ...
 // ^
 //   1. MatchIntroducer
+//
+//  <decl introducer or modifier>
+// ^
+//   1. Decl
 CARBON_PARSE_STATE(Statement)
 
 // Handles `break` processing at the `;`.

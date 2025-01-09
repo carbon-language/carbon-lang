@@ -187,6 +187,9 @@ CARBON_DIAGNOSTIC_KIND(ExternLibraryIncorrect)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryExpected)
 CARBON_DIAGNOSTIC_KIND(ExternRequiresDeclInApiFile)
 
+// Namespace checking.
+CARBON_DIAGNOSTIC_KIND(NamespaceDeclNotAtTopLevel)
+
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
 CARBON_DIAGNOSTIC_KIND(CallArgCountMismatch)

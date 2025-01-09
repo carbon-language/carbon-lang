@@ -78,7 +78,8 @@ using AnyMemberAccessId =
                      NodeCategory::IntConst>;
 using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
-using AnyStatementId = NodeIdInCategory<NodeCategory::Statement>;
+using AnyStatementId =
+    NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 
 // NodeId with kind that matches one of the `T::Kind`s.
