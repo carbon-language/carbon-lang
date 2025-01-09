@@ -12,6 +12,27 @@
 
 namespace Carbon::Parse {
 
+namespace {
+// Applies the `position_` to the `last_byte_offset` returned by `ConvertLoc`.
+class TokenDiagnosticConverterForParse : public Lex::TokenDiagnosticConverter {
+ public:
+  explicit TokenDiagnosticConverterForParse(Lex::TokenizedBuffer* tokens,
+                                            Lex::TokenIterator* position)
+      : Lex::TokenDiagnosticConverter(tokens), position_(position) {}
+
+  auto ConvertLoc(Lex::TokenIndex token, ContextFnT context_fn) const
+      -> std::pair<DiagnosticLoc, int32_t> override {
+    auto loc = Lex::TokenDiagnosticConverter::ConvertLoc(token, context_fn);
+    loc.second = std::max(loc.second, tokens().GetByteOffset(**position_));
+    return loc;
+  }
+
+ private:
+  // The position in `Parse()`.
+  Lex::TokenIterator* position_;
+};
+}  // namespace
+
 auto HandleInvalid(Context& context) -> void {
   CARBON_FATAL("The Invalid state shouldn't be on the stack: {0}",
                context.PopState());
@@ -19,13 +40,17 @@ auto HandleInvalid(Context& context) -> void {
 
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
-  Lex::TokenDiagnosticConverter converter(&tokens);
+  // This owns the parse position so that the converter can know where the
+  // context is.
+  Lex::TokenIterator position = tokens.tokens().begin();
+
+  TokenDiagnosticConverterForParse converter(&tokens, &position);
   ErrorTrackingDiagnosticConsumer err_tracker(consumer);
   Lex::TokenDiagnosticEmitter emitter(converter, err_tracker);
 
   // Delegate to the parser.
   Tree tree(tokens);
-  Context context(tree, tokens, emitter, vlog_stream);
+  Context context(tree, tokens, emitter, &position, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 

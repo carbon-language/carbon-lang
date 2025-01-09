@@ -64,15 +64,18 @@ using TokenIterator = IndexIterator<TokenIndex>;
 // buffer locations.
 class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
  public:
-  explicit TokenDiagnosticConverter(const TokenizedBuffer* buffer)
-      : buffer_(buffer) {}
+  explicit TokenDiagnosticConverter(const TokenizedBuffer* tokens)
+      : tokens_(tokens) {}
 
   // Map the given token into a diagnostic location.
   auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
       -> std::pair<DiagnosticLoc, int32_t> override;
 
+ protected:
+  auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
+
  private:
-  const TokenizedBuffer* buffer_;
+  const TokenizedBuffer* tokens_;
 };
 
 // A buffer of tokenized Carbon source code.
@@ -225,8 +228,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   class SourceBufferDiagnosticConverter
       : public DiagnosticConverter<const char*> {
    public:
-    explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* buffer)
-        : buffer_(buffer) {}
+    explicit SourceBufferDiagnosticConverter(const TokenizedBuffer* tokens)
+        : tokens_(tokens) {}
 
     // Map the given position within the source buffer into a diagnostic
     // location.
@@ -234,7 +237,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
         -> std::pair<DiagnosticLoc, int32_t> override;
 
    private:
-    const TokenizedBuffer* buffer_;
+    const TokenizedBuffer* tokens_;
   };
 
   // Specifies minimum widths to use when printing a token's fields via

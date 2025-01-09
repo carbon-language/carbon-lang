@@ -93,6 +93,7 @@ class Context {
 
   explicit Context(Tree& tree, Lex::TokenizedBuffer& tokens,
                    Lex::TokenDiagnosticEmitter& emitter,
+                   Lex::TokenIterator* position,
                    llvm::raw_ostream* vlog_stream);
 
   // Adds a node to the parse tree that has no children (a leaf).
@@ -135,10 +136,14 @@ class Context {
       -> void;
 
   // Returns the current position and moves past it.
-  auto Consume() -> Lex::TokenIndex { return *(position_++); }
+  auto Consume() -> Lex::TokenIndex {
+    auto pos = **position_;
+    ConsumeAndDiscard();
+    return pos;
+  }
 
   // Consumes the current token. Does not return it.
-  auto ConsumeAndDiscard() -> void { ++position_; }
+  auto ConsumeAndDiscard() -> void { ++*position_; }
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
@@ -230,7 +235,7 @@ class Context {
   // provided, it specifies which token to inspect.
   auto PositionKind(Lookahead lookahead = Lookahead::CurrentToken) const
       -> Lex::TokenKind {
-    return tokens_->GetKind(position_[static_cast<int32_t>(lookahead)]);
+    return tokens_->GetKind((*position_)[static_cast<int32_t>(lookahead)]);
   }
 
   // Tests whether the next token to be consumed is of the specified kind. If
@@ -255,7 +260,7 @@ class Context {
   }
 
   // Pushes a new state with the current position for context.
-  auto PushState(State state) -> void { PushState(state, *position_); }
+  auto PushState(State state) -> void { PushState(state, **position_); }
 
   // Pushes a new state with a specific token for context. Used when forming a
   // new subtree when the current position isn't the start of the subtree.
@@ -267,7 +272,7 @@ class Context {
   auto PushStateForExpr(PrecedenceGroup ambient_precedence) -> void {
     PushState({.state = State::Expr,
                .ambient_precedence = ambient_precedence,
-               .token = *position_,
+               .token = **position_,
                .subtree_start = tree_->size()});
   }
 
@@ -277,7 +282,7 @@ class Context {
     PushState({.state = state,
                .ambient_precedence = ambient_precedence,
                .lhs_precedence = lhs_precedence,
-               .token = *position_,
+               .token = **position_,
                .subtree_start = tree_->size()});
   }
 
@@ -360,8 +365,8 @@ class Context {
 
   auto emitter() -> Lex::TokenDiagnosticEmitter& { return *emitter_; }
 
-  auto position() -> Lex::TokenIterator& { return position_; }
-  auto position() const -> Lex::TokenIterator { return position_; }
+  auto position() -> Lex::TokenIterator& { return *position_; }
+  auto position() const -> Lex::TokenIterator { return *position_; }
 
   auto state_stack() -> llvm::SmallVector<StateStackEntry>& {
     return state_stack_;
@@ -396,7 +401,7 @@ class Context {
   llvm::raw_ostream* vlog_stream_;
 
   // The current position within the token buffer.
-  Lex::TokenIterator position_;
+  Lex::TokenIterator* const position_;
   // The FileEnd token.
   Lex::TokenIterator end_;
 

@@ -22,14 +22,14 @@ namespace Carbon::Parse {
 
 Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
                  Lex::TokenDiagnosticEmitter& emitter,
-                 llvm::raw_ostream* vlog_stream)
+                 Lex::TokenIterator* position, llvm::raw_ostream* vlog_stream)
     : tree_(&tree),
       tokens_(&tokens),
       emitter_(&emitter),
       vlog_stream_(vlog_stream),
-      position_(tokens_->tokens().begin()),
+      position_(position),
       end_(tokens_->tokens().end()) {
-  CARBON_CHECK(position_ != end_, "Empty TokenizedBuffer");
+  CARBON_CHECK(*position_ != end_, "Empty TokenizedBuffer");
   --end_;
   CARBON_CHECK(tokens_->GetKind(*end_) == Lex::TokenKind::FileEnd,
                "TokenizedBuffer should end with FileEnd, ended with {0}",
@@ -58,7 +58,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedParenAfter,
+    emitter_->Emit(**position_, ExpectedParenAfter,
                    tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
@@ -79,7 +79,7 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                       "unexpected tokens before `{0}`", Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedCloseSymbol,
+    emitter_->Emit(**position_, ExpectedCloseSymbol,
                    open_token_kind.closing_symbol());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
@@ -106,7 +106,7 @@ auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
 
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
     -> std::optional<Lex::TokenIndex> {
-  auto new_position = position_;
+  auto new_position = *position_;
   while (true) {
     Lex::TokenIndex token = *new_position;
     Lex::TokenKind kind = tokens().GetKind(token);
@@ -133,14 +133,14 @@ auto Context::SkipMatchingGroup() -> bool {
     return false;
   }
 
-  SkipTo(tokens().GetMatchedClosingToken(*position_));
-  ++position_;
+  SkipTo(tokens().GetMatchedClosingToken(**position_));
+  ++*position_;
   return true;
 }
 
 auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
-  if (position_ == end_) {
-    return *(position_ - 1);
+  if (*position_ == end_) {
+    return *(*position_ - 1);
   }
 
   Lex::LineIndex root_line = tokens().GetLine(skip_root);
@@ -161,7 +161,7 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
     if (PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return *(position_ - 1);
+      return *(*position_ - 1);
     }
 
     // We assume that a semicolon is always intended to be the end of the
@@ -176,18 +176,18 @@ auto Context::SkipPastLikelyEnd(Lex::TokenIndex skip_root) -> Lex::TokenIndex {
     }
 
     // Otherwise just step forward one token.
-    ++position_;
-  } while (position_ != end_ &&
-           is_same_line_or_indent_greater_than_root(*position_));
+    ++*position_;
+  } while (*position_ != end_ &&
+           is_same_line_or_indent_greater_than_root(**position_));
 
-  return *(position_ - 1);
+  return *(*position_ - 1);
 }
 
 auto Context::SkipTo(Lex::TokenIndex t) -> void {
-  CARBON_CHECK(t >= *position_, "Tried to skip backwards from {0} to {1}",
-               position_, Lex::TokenIterator(t));
-  position_ = Lex::TokenIterator(t);
-  CARBON_CHECK(position_ != end_, "Skipped past EOF.");
+  CARBON_CHECK(t >= **position_, "Tried to skip backwards from {0} to {1}",
+               *position_, Lex::TokenIterator(t));
+  *position_ = Lex::TokenIterator(t);
+  CARBON_CHECK(*position_ != end_, "Skipped past EOF.");
 }
 
 // Determines whether the given token is considered to be the start of an
@@ -219,10 +219,10 @@ static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
 }
 
 auto Context::IsLexicallyValidInfixOperator() -> bool {
-  CARBON_CHECK(position_ != end_, "Expected an operator token.");
+  CARBON_CHECK(*position_ != end_, "Expected an operator token.");
 
-  bool leading_space = tokens().HasLeadingWhitespace(*position_);
-  bool trailing_space = tokens().HasTrailingWhitespace(*position_);
+  bool leading_space = tokens().HasLeadingWhitespace(**position_);
+  bool trailing_space = tokens().HasTrailingWhitespace(**position_);
 
   // If there's whitespace on both sides, it's an infix operator.
   if (leading_space && trailing_space) {
@@ -237,9 +237,9 @@ auto Context::IsLexicallyValidInfixOperator() -> bool {
   // Otherwise, for an infix operator, the preceding token must be any close
   // bracket, identifier, or literal and the next token must be an open paren,
   // identifier, or literal.
-  if (position_ == tokens().tokens().begin() ||
-      !IsAssumedEndOfOperand(tokens().GetKind(*(position_ - 1))) ||
-      !IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+  if (*position_ == tokens().tokens().begin() ||
+      !IsAssumedEndOfOperand(tokens().GetKind(*(*position_ - 1))) ||
+      !IsAssumedStartOfOperand(tokens().GetKind(*(*position_ + 1)))) {
     return false;
   }
 
@@ -247,14 +247,14 @@ auto Context::IsLexicallyValidInfixOperator() -> bool {
 }
 
 auto Context::IsTrailingOperatorInfix() -> bool {
-  if (position_ == end_) {
+  if (*position_ == end_) {
     return false;
   }
 
   // An operator that follows the infix operator rules is parsed as
   // infix, unless the next token means that it can't possibly be.
   if (IsLexicallyValidInfixOperator() &&
-      IsPossibleStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+      IsPossibleStartOfOperand(tokens().GetKind(*(*position_ + 1)))) {
     return true;
   }
 
@@ -262,8 +262,8 @@ auto Context::IsTrailingOperatorInfix() -> bool {
   // not valid at all. If the next token looks like the start of an operand,
   // then parse as infix, otherwise as postfix. Either way we'll produce a
   // diagnostic later on.
-  if (tokens().HasLeadingWhitespace(*position_) &&
-      IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+  if (tokens().HasLeadingWhitespace(**position_) &&
+      IsAssumedStartOfOperand(tokens().GetKind(*(*position_ + 1)))) {
     return true;
   }
 
@@ -284,32 +284,32 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
                         "binary operator",
                         IntAsSelect);
       IntAsSelect pos(0);
-      if (tokens().HasLeadingWhitespace(*position_)) {
+      if (tokens().HasLeadingWhitespace(**position_)) {
         pos.value = 1;
-      } else if (tokens().HasTrailingWhitespace(*position_)) {
+      } else if (tokens().HasTrailingWhitespace(**position_)) {
         pos.value = -1;
       }
-      emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
+      emitter_->Emit(**position_, BinaryOperatorRequiresWhitespace, pos);
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
 
     // Whitespace is not permitted between a symbolic pre/postfix operator and
     // its operand.
-    if ((prefix ? tokens().HasTrailingWhitespace(*position_)
-                : tokens().HasLeadingWhitespace(*position_))) {
+    if ((prefix ? tokens().HasTrailingWhitespace(**position_)
+                : tokens().HasLeadingWhitespace(**position_))) {
       CARBON_DIAGNOSTIC(
           UnaryOperatorHasWhitespace, Error,
           "whitespace is not allowed {0:after|before} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, prefix);
+      emitter_->Emit(**position_, UnaryOperatorHasWhitespace, prefix);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(
           UnaryOperatorRequiresWhitespace, Error,
           "whitespace is required {0:before|after} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+      emitter_->Emit(**position_, UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }
@@ -321,7 +321,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
                         "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
+      emitter_->Emit(**position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
 
@@ -409,7 +409,7 @@ auto Context::ParseLibrarySpecifier(bool accept_default)
   auto library_token = ConsumeChecked(Lex::TokenKind::Library);
   auto library_id = ParseLibraryName(accept_default);
   if (!library_id) {
-    AddLeafNode(NodeKind::LibraryName, *position_, /*has_error=*/true);
+    AddLeafNode(NodeKind::LibraryName, **position_, /*has_error=*/true);
   }
   AddNode(NodeKind::LibrarySpecifier, library_token, /*has_error=*/false);
   return library_id;
@@ -476,7 +476,7 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
     PrintTokenForStackDump(output, entry.token);
   }
   output << "\tcursor\tposition_";
-  PrintTokenForStackDump(output, *position_);
+  PrintTokenForStackDump(output, **position_);
 }
 
 auto Context::PrintTokenForStackDump(llvm::raw_ostream& output,
