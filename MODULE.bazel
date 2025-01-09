@@ -73,8 +73,8 @@ bazel_dep(name = "rules_cc", version = "0.1.0")
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
     module_name = "bazel_clang_tidy",
-    # HEAD as of 2024-03-12.
-    commit = "bff5c59c843221b05ef0e37cef089ecc9d24e7da",
+    # HEAD as of 2025-01-09.
+    commit = "db677011c7363509a288a9fb3bf0a50830bbf791",
     remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
@@ -89,8 +89,8 @@ register_toolchains("@bazel_cc_toolchain//:all")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
-    # HEAD as of 2024-03-12.
-    commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
+    # HEAD as of 2025-01-09.
+    commit = "4f28899228fb3ad0126897876f147ca15026151e",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )
 
