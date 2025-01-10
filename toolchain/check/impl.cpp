@@ -291,8 +291,10 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     CARBON_CHECK(access.index.index <
                  static_cast<int32_t>(rewrite_values.size()));
     auto& rewrite_value = rewrite_values[access.index.index];
-    if (rewrite_value.is_valid()) {
-      if (rewrite_value != rewrite.rhs_const_id) {
+    if (rewrite_value.is_valid() &&
+        rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+      if (rewrite_value != rewrite.rhs_const_id &&
+          rewrite.rhs_const_id != SemIR::ErrorInst::SingletonConstantId) {
         // TODO: Do at least this checking as part of facet type resolution
         // instead.
 
