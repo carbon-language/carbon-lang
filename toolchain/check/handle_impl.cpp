@@ -321,7 +321,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
-  // TODO: Do facet type resolution here.
+  // TODO: Do facet type resolution here, and enforce that the constraint
+  // extends a single interface.
   // TODO: Determine `interface_id` and `specific_id` once and save it in the
   // resolved facet type, instead of in multiple functions called below.
   // TODO: Skip work below if facet type resolution fails, so we don't have a

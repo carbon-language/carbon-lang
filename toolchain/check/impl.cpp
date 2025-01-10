@@ -170,9 +170,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
   const auto& interface =
       context.interfaces().Get(interface_type->interface_id);
 
-  // TODO: This is going to try and define all the interfaces for this facet
-  // type, and so once we support impl of a facet type with more than one
-  // interface, it might give the wrong name in the diagnostic.
+  // TODO: This should be done as part of facet type resolution.
   if (!context.RequireDefinedType(
           facet_type_id, context.insts().GetLocId(impl.latest_decl_id()), [&] {
             CARBON_DIAGNOSTIC(ImplOfUndefinedInterface, Error,
