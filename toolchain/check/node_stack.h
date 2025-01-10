@@ -386,7 +386,8 @@ class NodeStack {
     // `TuplePattern` produces an `InstBlockId`.
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
-    set_id_if_category_is(Parse::NodeCategory::MemberName,
+    set_id_if_category_is(Parse::NodeCategory::MemberName |
+                              Parse::NodeCategory::NonExprIdentifierName,
                           Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
                           Id::KindFor<SemIR::InstId>());

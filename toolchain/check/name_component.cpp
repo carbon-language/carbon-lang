@@ -43,23 +43,18 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
     implicit_param_patterns_id = SemIR::InstBlockId::Invalid;
   }
 
-  Parse::NodeId name_loc_id = Parse::NodeId::Invalid;
-  auto name_id = SemIR::NameId::Invalid;
   auto call_params_id = SemIR::InstBlockId::Invalid;
   auto pattern_block_id = SemIR::InstBlockId::Invalid;
   if (param_patterns_id->is_valid() || implicit_param_patterns_id->is_valid()) {
-    std::tie(name_loc_id, name_id) =
-        context.node_stack()
-            .PopWithNodeId<Parse::NodeKind::IdentifierNameBeforeParams>();
     call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            *param_patterns_id, return_slot_pattern_id);
     pattern_block_id = context.pattern_block_stack().Pop();
-  } else {
-    std::tie(name_loc_id, name_id) =
-        context.node_stack()
-            .PopWithNodeId<Parse::NodeKind::IdentifierNameNotBeforeParams>();
   }
+
+  auto [name_loc_id, name_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeCategory::NonExprIdentifierName>();
 
   return {
       .name_loc_id = name_loc_id,

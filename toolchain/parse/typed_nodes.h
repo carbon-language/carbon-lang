@@ -165,8 +165,7 @@ using BaseName =
 // T).`.
 struct NameQualifierWithParams {
   static constexpr auto Kind = NodeKind::NameQualifierWithParams.Define(
-      {.category = NodeCategory::NameQualifier,
-       .bracketed_by = IdentifierNameBeforeParams::Kind});
+      {.bracketed_by = IdentifierNameBeforeParams::Kind});
 
   IdentifierNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
@@ -177,8 +176,7 @@ struct NameQualifierWithParams {
 // A name qualifier without parameters, such as `A.`.
 struct NameQualifierWithoutParams {
   static constexpr auto Kind = NodeKind::NameQualifierWithoutParams.Define(
-      {.category = NodeCategory::NameQualifier,
-       .bracketed_by = IdentifierNameNotBeforeParams::Kind});
+      {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
 
   IdentifierNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
@@ -187,7 +185,9 @@ struct NameQualifierWithoutParams {
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<AnyNameQualifierId> qualifiers;
+  llvm::SmallVector<
+      NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
+      qualifiers;
   AnyNonExprIdentifierNameId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<TuplePatternId> params;
