@@ -371,7 +371,7 @@ struct BlockArg {
       InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
 
   TypeId type_id;
-  InstBlockId block_id;
+  LabelId block_id;
 };
 
 // A literal bool value, `true` or `false`.
@@ -420,7 +420,7 @@ struct AnyBranch {
 
   InstKind kind;
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -432,7 +432,7 @@ struct Branch {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
 };
 
 // Control flow to branch to the target block if `cond_id` is true.
@@ -442,7 +442,7 @@ struct BranchIf {
       {.ir_name = "br", .terminator_kind = TerminatorKind::TerminatorSequence});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId cond_id;
 };
 
@@ -454,7 +454,7 @@ struct BranchWithArg {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId arg_id;
 };
 

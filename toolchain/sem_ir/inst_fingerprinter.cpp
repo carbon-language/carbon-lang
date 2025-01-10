@@ -188,6 +188,10 @@ struct Worklist {
     // decl block don't change the identity of the declaration.
   }
 
+  auto Add(LabelId /*block_id*/) -> void {
+    CARBON_FATAL("Should never fingerprint a label");
+  }
+
   auto Add(FacetTypeId facet_type_id) -> void {
     const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
     for (auto [interface_id, specific_id] : facet_type.impls_constraints) {
