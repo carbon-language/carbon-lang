@@ -25,6 +25,7 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::TestDiagnosticNote,
 
     // These diagnose filesystem issues that are hard to unit test.
+    DiagnosticKind::CppInteropFailedAccessingFileBuffer,
     DiagnosticKind::ErrorReadingFile,
     DiagnosticKind::ErrorStattingFile,
     DiagnosticKind::FileTooLarge,
@@ -41,10 +42,9 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
 TEST(Coverage, DiagnosticKind) {
-  Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
-                            R"(^ *// CHECK:STDERR: .*\.carbon:.* \[(\w+)\]$)",
-                            llvm::ArrayRef(DiagnosticKinds),
-                            llvm::ArrayRef(UntestedDiagnosticKinds));
+  Testing::TestKindCoverage(
+      absl::GetFlag(FLAGS_testdata_manifest), R"( \[([A-Z]\w*)\]$)",
+      llvm::ArrayRef(DiagnosticKinds), llvm::ArrayRef(UntestedDiagnosticKinds));
 }
 
 }  // namespace

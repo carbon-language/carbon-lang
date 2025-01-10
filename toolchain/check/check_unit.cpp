@@ -4,12 +4,18 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <string>
+
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/node_id_traversal.h"
 
@@ -29,9 +35,11 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 }
 
 CheckUnit::CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                      llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       total_ir_count_(total_ir_count),
+      fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(*unit_and_imports_->unit->sem_ir_converter,
                unit_and_imports_->err_tracker),
@@ -130,6 +138,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
+  ImportCppPackages();
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -322,6 +331,37 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
         context_, namespace_type_id, import_decl_id, package_id,
         CollectTransitiveImports(import_decl_id, local_imports, api_imports),
         has_load_error);
+  }
+}
+
+auto CheckUnit::ImportCppPackages() -> void {
+  for (const auto& import : unit_and_imports_->cpp_imports) {
+    llvm::StringRef cpp_file_path =
+        unit_and_imports_->unit->value_stores->string_literal_values().Get(
+            import.library_id);
+
+    auto file = fs_->openFileForRead(cpp_file_path);
+    if (!file) {
+      CARBON_DIAGNOSTIC(CppInteropFileNotFound, Error,
+                        "file '{0}' couldn't be opened for reading: {1}",
+                        std::string, std::string);
+      emitter_.Emit(import.node_id, CppInteropFileNotFound, cpp_file_path.str(),
+                    file.getError().message());
+      continue;
+    }
+
+    llvm::vfs::File& file_ref = *file.get();
+    auto buffer = file_ref.getBuffer(cpp_file_path);
+    if (!buffer) {
+      CARBON_DIAGNOSTIC(CppInteropFailedAccessingFileBuffer, Error,
+                        "failed accessing buffer of file '{0}': {1}",
+                        std::string, std::string);
+      emitter_.Emit(import.node_id, CppInteropFailedAccessingFileBuffer,
+                    cpp_file_path.str(), buffer.getError().message());
+      continue;
+    }
+    ImportCppFile(context_, import.node_id, cpp_file_path,
+                  buffer.get()->getBuffer());
   }
 }
 
