@@ -324,11 +324,11 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
       auto& witness_value = witness_block[index];
-      if (witness_value == SemIR::ErrorInst::SingletonInstId) {
-        continue;
-      }
       auto rewrite_value = rewrite_values[index];
-      if (witness_value.is_valid()) {
+      if (witness_value.is_valid() &&
+          witness_value != SemIR::ErrorInst::SingletonInstId) {
+        // TODO: Support just using the witness values if the redeclaration uses
+        // `where _`, per proposal #1084.
         if (!rewrite_value.is_valid()) {
           CARBON_DIAGNOSTIC(AssociatedConstantMissingInRedecl, Error,
                             "associated constant {0} given value in "
@@ -342,7 +342,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
           continue;
         }
         auto witness_const_id = context.constant_values().Get(witness_value);
-        if (witness_const_id != rewrite_value) {
+        if (witness_const_id != rewrite_value &&
+            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
           // TODO: Figure out how to print the two different values
           CARBON_DIAGNOSTIC(
               AssociatedConstantDifferentInRedecl, Error,
