@@ -124,7 +124,7 @@ class DiagnosticEmitter {
       if (diagnostic_.messages.empty()) {
         diagnostic_.last_byte_offset = converted.last_byte_offset;
       }
-      AddMessageWithDiagnosticLoc(converted.diag_loc, diagnostic_base, args);
+      AddMessageWithDiagnosticLoc(converted.loc, diagnostic_base, args);
     }
 
     // Adds a message to the diagnostic, handling conversion of the arguments. A
