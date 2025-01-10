@@ -29,7 +29,7 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
   // locations, or `loc` if it's in the same file and (for whatever reason)
   // later.
   auto ConvertLoc(SemIRLoc loc, ContextFnT context_fn) const
-      -> std::pair<DiagnosticLoc, int32_t> override;
+      -> ConvertedDiagnosticLoc override;
 
   // Implements argument conversions for supported check-phase arguments.
   auto ConvertArg(llvm::Any arg) const -> llvm::Any override;
@@ -43,13 +43,13 @@ class SemIRDiagnosticConverter : public DiagnosticConverter<SemIRLoc> {
  private:
   // Implements `ConvertLoc`, but without `last_token_` applied.
   auto ConvertLocImpl(SemIRLoc loc, ContextFnT context_fn) const
-      -> std::pair<DiagnosticLoc, int32_t>;
+      -> ConvertedDiagnosticLoc;
 
   // Converts a node_id corresponding to a specific sem_ir to a diagnostic
   // location.
   auto ConvertLocInFile(const SemIR::File* sem_ir, Parse::NodeId node_id,
                         bool token_only, ContextFnT context_fn) const
-      -> std::pair<DiagnosticLoc, int32_t>;
+      -> ConvertedDiagnosticLoc;
 
   // Converters for each SemIR.
   llvm::ArrayRef<Parse::NodeLocConverter*> node_converters_;

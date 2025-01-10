@@ -69,7 +69,7 @@ class TokenDiagnosticConverter : public DiagnosticConverter<TokenIndex> {
 
   // Implements `DiagnosticConverter::ConvertLoc`.
   auto ConvertLoc(TokenIndex token, ContextFnT context_fn) const
-      -> std::pair<DiagnosticLoc, int32_t> override;
+      -> ConvertedDiagnosticLoc override;
 
  protected:
   auto tokens() const -> const TokenizedBuffer& { return *tokens_; }
@@ -233,7 +233,7 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
     // Implements `DiagnosticConverter::ConvertLoc`.
     auto ConvertLoc(const char* loc, ContextFnT context_fn) const
-        -> std::pair<DiagnosticLoc, int32_t> override;
+        -> ConvertedDiagnosticLoc override;
 
    private:
     const TokenizedBuffer* tokens_;

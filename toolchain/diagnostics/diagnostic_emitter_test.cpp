@@ -19,8 +19,9 @@ using testing::ElementsAre;
 
 struct FakeDiagnosticConverter : DiagnosticConverter<int> {
   auto ConvertLoc(int n, ContextFnT /*context_fn*/) const
-      -> std::pair<DiagnosticLoc, int32_t> override {
-    return {{.line_number = 1, .column_number = n}, -1};
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {.line_number = 1, .column_number = n},
+            .last_byte_offset = -1};
   }
 };
 

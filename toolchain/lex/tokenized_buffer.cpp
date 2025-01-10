@@ -377,7 +377,7 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
     const char* loc, ContextFnT /*context_fn*/) const
-    -> std::pair<DiagnosticLoc, int32_t> {
+    -> ConvertedDiagnosticLoc {
   CARBON_CHECK(StringRefContainsPointer(tokens_->source_->text(), loc),
                "location not within buffer");
   int32_t offset = loc - tokens_->source_->text().begin();
@@ -407,16 +407,16 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   // tail of the line such as CR+LF, etc.
   line.consume_back("\n");
 
-  return {{.filename = tokens_->source_->filename(),
-           .line = line,
-           .line_number = line_number + 1,
-           .column_number = column_number + 1},
-          offset};
+  return {.loc = {.filename = tokens_->source_->filename(),
+                  .line = line,
+                  .line_number = line_number + 1,
+                  .column_number = column_number + 1},
+          .last_byte_offset = offset};
 }
 
 auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
                                           ContextFnT context_fn) const
-    -> std::pair<DiagnosticLoc, int32_t> {
+    -> ConvertedDiagnosticLoc {
   // Map the token location into a position within the source buffer.
   const auto& token_info = tokens_->GetTokenInfo(token);
   const char* token_start =
@@ -425,11 +425,11 @@ auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  std::pair<DiagnosticLoc, int32_t> loc =
+  auto converted =
       TokenizedBuffer::SourceBufferDiagnosticConverter(tokens_).ConvertLoc(
           token_start, context_fn);
-  loc.first.length = tokens_->GetTokenText(token).size();
-  return loc;
+  converted.loc.length = tokens_->GetTokenText(token).size();
+  return converted;
 }
 
 }  // namespace Carbon::Lex

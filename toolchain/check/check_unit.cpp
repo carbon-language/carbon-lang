@@ -335,12 +335,12 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto [loc, _] = unit_and_imports_->unit->node_converter->ConvertLoc(
+    auto converted = unit_and_imports_->unit->node_converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
-    loc.FormatLocation(output);
+    converted.loc.FormatLocation(output);
     output << ": checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    loc.FormatSnippet(output, /*indent=*/10);
+    converted.loc.FormatSnippet(output, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {

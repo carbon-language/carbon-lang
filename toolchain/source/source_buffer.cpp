@@ -13,8 +13,8 @@ namespace Carbon {
 namespace {
 struct FilenameConverter : DiagnosticConverter<llvm::StringRef> {
   auto ConvertLoc(llvm::StringRef filename, ContextFnT /*context_fn*/) const
-      -> std::pair<DiagnosticLoc, int32_t> override {
-    return {{.filename = filename}, -1};
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {.filename = filename}, .last_byte_offset = -1};
   }
 };
 }  // namespace

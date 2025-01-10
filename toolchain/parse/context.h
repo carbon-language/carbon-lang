@@ -396,10 +396,12 @@ class Context {
         : Lex::TokenDiagnosticConverter(tokens), position_(position) {}
 
     auto ConvertLoc(Lex::TokenIndex token, ContextFnT context_fn) const
-        -> std::pair<DiagnosticLoc, int32_t> override {
-      auto loc = Lex::TokenDiagnosticConverter::ConvertLoc(token, context_fn);
-      loc.second = std::max(loc.second, tokens().GetByteOffset(**position_));
-      return loc;
+        -> ConvertedDiagnosticLoc override {
+      auto converted =
+          Lex::TokenDiagnosticConverter::ConvertLoc(token, context_fn);
+      converted.last_byte_offset = std::max(
+          converted.last_byte_offset, tokens().GetByteOffset(**position_));
+      return converted;
     }
 
    private:

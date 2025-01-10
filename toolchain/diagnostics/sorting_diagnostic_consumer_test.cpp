@@ -22,8 +22,8 @@ CARBON_DIAGNOSTIC(TestDiagnostic, Error, "M{0}", int);
 
 struct FakeDiagnosticConverter : DiagnosticConverter<int32_t> {
   auto ConvertLoc(int32_t last_byte_offset, ContextFnT /*context_fn*/) const
-      -> std::pair<DiagnosticLoc, int32_t> override {
-    return {{}, last_byte_offset};
+      -> ConvertedDiagnosticLoc override {
+    return {.loc = {}, .last_byte_offset = last_byte_offset};
   }
 };
 
