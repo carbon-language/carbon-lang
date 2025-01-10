@@ -271,6 +271,9 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
                           "associated constant {0} given two different values",
                           SemIR::NameId);
         auto decl_id = assoc_entities[access.index.index];
+        decl_id = context.constant_values().GetInstId(
+            SemIR::GetConstantValueInSpecific(
+                context.sem_ir(), interface_type->specific_id, decl_id));
         CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
         auto decl =
             context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
