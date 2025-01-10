@@ -46,14 +46,14 @@ interface I {
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
 // CHECK:STDOUT:   %.3ad: %.type = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type.2e2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.5e0: %F.type.2e2 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.1cc: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.f49: %F.type.1cc = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type.733: type = facet_type <@I.2> [template]
 // CHECK:STDOUT:   %Self: %I.type.733 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type.ad2: type = fn_type @I.1 [template]
-// CHECK:STDOUT:   %I: %I.type.ad2 = struct_value () [template]
+// CHECK:STDOUT:   %I.type.d37: type = fn_type @I.1 [template]
+// CHECK:STDOUT:   %I: %I.type.d37 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,7 +81,7 @@ interface I {
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: %I.type.ad2 = fn_decl @I.1 [template = constants.%I] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.d37 = fn_decl @I.1 [template = constants.%I] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -93,7 +93,7 @@ interface I {
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.2e2 = fn_decl @F.2 [template = constants.%F.5e0] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1cc = fn_decl @F.2 [template = constants.%F.f49] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
