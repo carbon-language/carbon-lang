@@ -105,6 +105,8 @@ fn TestRightShiftLargerUU(a: u16, b: u32) -> u16 { return RightShiftLargerUU(a, 
 
 // --- mixed_compare.carbon
 
+library "[[@TEST_NAME]]";
+
 fn Eq_u16_u32(a: u16, b: u32) -> bool = "int.eq";
 fn Eq_i16_u32(a: i16, b: u32) -> bool = "int.eq";
 fn Eq_u16_i32(a: u16, b: i32) -> bool = "int.eq";
@@ -128,6 +130,43 @@ fn TestLess_i16_u32(a: i16, b: u32) -> bool { return Less_i16_u32(a, b); }
 fn TestLess_u16_i32(a: u16, b: i32) -> bool { return Less_u16_i32(a, b); }
 fn TestLess_i16_i32(a: i16, b: i32) -> bool { return Less_i16_i32(a, b); }
 fn TestLess_i32_u32(a: i32, b: u32) -> bool { return Less_i32_u32(a, b); }
+
+// --- convert.carbon
+
+library "[[@TEST_NAME]]";
+
+// Size preserving
+fn Int32ToInt32(a: i32) -> i32 = "int.convert";
+fn Int32ToUint32(a: i32) -> u32 = "int.convert";
+fn Uint32ToInt32(a: u32) -> i32 = "int.convert";
+fn Uint32ToUint32(a: u32) -> u32 = "int.convert";
+
+fn TestInt32ToInt32(a: i32) -> i32 { return Int32ToInt32(a); }
+fn TestInt32ToUint32(a: i32) -> u32 { return Int32ToUint32(a); }
+fn TestUint32ToInt32(a: u32) -> i32 { return Uint32ToInt32(a); }
+fn TestUint32ToUint32(a: u32) -> u32 { return Uint32ToUint32(a); }
+
+// Narrowing
+fn Int32ToInt16(a: i32) -> i16 = "int.convert";
+fn Int32ToUint16(a: i32) -> u16 = "int.convert";
+fn Uint32ToInt16(a: u32) -> i16 = "int.convert";
+fn Uint32ToUint16(a: u32) -> u16 = "int.convert";
+
+fn TestInt32ToInt16(a: i32) -> i16 { return Int32ToInt16(a); }
+fn TestInt32ToUint16(a: i32) -> u16 { return Int32ToUint16(a); }
+fn TestUint32ToInt16(a: u32) -> i16 { return Uint32ToInt16(a); }
+fn TestUint32ToUint16(a: u32) -> u16 { return Uint32ToUint16(a); }
+
+// Widening
+fn Int32ToInt64(a: i32) -> i64 = "int.convert";
+fn Int32ToUint64(a: i32) -> u64 = "int.convert";
+fn Uint32ToInt64(a: u32) -> i64 = "int.convert";
+fn Uint32ToUint64(a: u32) -> u64 = "int.convert";
+
+fn TestInt32ToInt64(a: i32) -> i64 { return Int32ToInt64(a); }
+fn TestInt32ToUint64(a: i32) -> u64 { return Int32ToUint64(a); }
+fn TestUint32ToInt64(a: u32) -> i64 { return Uint32ToInt64(a); }
+fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
@@ -508,35 +547,147 @@ fn TestLess_i32_u32(a: i32, b: u32) -> bool { return Less_i32_u32(a, b); }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "mixed_compare.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq_u16_u32", linkageName: "_CTestEq_u16_u32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 8, column: 52, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 45, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestEq_i16_u32", linkageName: "_CTestEq_i16_u32.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 52, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 9, column: 45, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestEq_u16_i32", linkageName: "_CTestEq_u16_i32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 52, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 45, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestEq_i16_i32", linkageName: "_CTestEq_i16_i32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 11, column: 52, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 45, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq_i32_u32", linkageName: "_CTestEq_i32_u32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 12, column: 52, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 12, column: 45, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLess_u16_u32", linkageName: "_CTestLess_u16_u32.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 54, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 47, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLess_i16_u32", linkageName: "_CTestLess_i16_u32.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 54, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 47, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestLess_u16_i32", linkageName: "_CTestLess_u16_i32.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 22, column: 54, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 22, column: 47, scope: !27)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLess_i16_i32", linkageName: "_CTestLess_i16_i32.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 54, scope: !30)
-// CHECK:STDOUT: !32 = !DILocation(line: 23, column: 47, scope: !30)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestLess_i32_u32", linkageName: "_CTestLess_i32_u32.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !34 = !DILocation(line: 24, column: 54, scope: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 24, column: 47, scope: !33)
+// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 52, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 10, column: 45, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestEq_i16_u32", linkageName: "_CTestEq_i16_u32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 52, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 45, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestEq_u16_i32", linkageName: "_CTestEq_u16_i32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 12, column: 52, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 45, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestEq_i16_i32", linkageName: "_CTestEq_i16_i32.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 52, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 13, column: 45, scope: !15)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TestEq_i32_u32", linkageName: "_CTestEq_i32_u32.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DILocation(line: 14, column: 52, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 14, column: 45, scope: !18)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TestLess_u16_u32", linkageName: "_CTestLess_u16_u32.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 22, column: 54, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 22, column: 47, scope: !21)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "TestLess_i16_u32", linkageName: "_CTestLess_i16_u32.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 54, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 47, scope: !24)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TestLess_u16_i32", linkageName: "_CTestLess_u16_i32.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 24, column: 54, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 24, column: 47, scope: !27)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TestLess_i16_i32", linkageName: "_CTestLess_i16_i32.Main", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 25, column: 54, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 25, column: 47, scope: !30)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "TestLess_i32_u32", linkageName: "_CTestLess_i32_u32.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !34 = !DILocation(line: 26, column: 54, scope: !33)
+// CHECK:STDOUT: !35 = !DILocation(line: 26, column: 47, scope: !33)
+// CHECK:STDOUT: ; ModuleID = 'convert.carbon'
+// CHECK:STDOUT: source_filename = "convert.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestInt32ToInt32.Main(i32 %a) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %a, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestInt32ToUint32.Main(i32 %a) !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %a, !dbg !9
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestUint32ToInt32.Main(i32 %a) !dbg !10 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %a, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i32 @_CTestUint32ToUint32.Main(i32 %a) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %a, !dbg !13
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestInt32ToInt16.Main(i32 %a) !dbg !14 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !15
+// CHECK:STDOUT:   ret i16 %int.convert, !dbg !16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestInt32ToUint16.Main(i32 %a) !dbg !17 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !18
+// CHECK:STDOUT:   ret i16 %int.convert, !dbg !19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestUint32ToInt16.Main(i32 %a) !dbg !20 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !21
+// CHECK:STDOUT:   ret i16 %int.convert, !dbg !22
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i16 @_CTestUint32ToUint16.Main(i32 %a) !dbg !23 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !24
+// CHECK:STDOUT:   ret i16 %int.convert, !dbg !25
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i64 @_CTestInt32ToInt64.Main(i32 %a) !dbg !26 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !27
+// CHECK:STDOUT:   ret i64 %int.convert, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i64 @_CTestInt32ToUint64.Main(i32 %a) !dbg !29 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !30
+// CHECK:STDOUT:   ret i64 %int.convert, !dbg !31
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i64 @_CTestUint32ToInt64.Main(i32 %a) !dbg !32 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !33
+// CHECK:STDOUT:   ret i64 %int.convert, !dbg !34
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define i64 @_CTestUint32ToUint64.Main(i32 %a) !dbg !35 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !36
+// CHECK:STDOUT:   ret i64 %int.convert, !dbg !37
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestInt32ToInt32", linkageName: "_CTestInt32ToInt32.Main", scope: null, file: !3, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 38, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "TestInt32ToUint32", linkageName: "_CTestInt32ToUint32.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 11, column: 39, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "TestUint32ToInt32", linkageName: "_CTestUint32ToInt32.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 12, column: 39, scope: !10)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestUint32ToUint32", linkageName: "_CTestUint32ToUint32.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 13, column: 40, scope: !12)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "TestInt32ToInt16", linkageName: "_CTestInt32ToInt16.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DILocation(line: 21, column: 45, scope: !14)
+// CHECK:STDOUT: !16 = !DILocation(line: 21, column: 38, scope: !14)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "TestInt32ToUint16", linkageName: "_CTestInt32ToUint16.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 46, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 39, scope: !17)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "TestUint32ToInt16", linkageName: "_CTestUint32ToInt16.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 46, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 39, scope: !20)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "TestUint32ToUint16", linkageName: "_CTestUint32ToUint16.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !24 = !DILocation(line: 24, column: 47, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 24, column: 40, scope: !23)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "TestInt32ToInt64", linkageName: "_CTestInt32ToInt64.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !27 = !DILocation(line: 32, column: 45, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 32, column: 38, scope: !26)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "TestInt32ToUint64", linkageName: "_CTestInt32ToUint64.Main", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !30 = !DILocation(line: 33, column: 46, scope: !29)
+// CHECK:STDOUT: !31 = !DILocation(line: 33, column: 39, scope: !29)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "TestUint32ToInt64", linkageName: "_CTestUint32ToInt64.Main", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !33 = !DILocation(line: 34, column: 46, scope: !32)
+// CHECK:STDOUT: !34 = !DILocation(line: 34, column: 39, scope: !32)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "TestUint32ToUint64", linkageName: "_CTestUint32ToUint64.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !36 = !DILocation(line: 35, column: 47, scope: !35)
+// CHECK:STDOUT: !37 = !DILocation(line: 35, column: 40, scope: !35)

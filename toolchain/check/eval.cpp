@@ -721,6 +721,26 @@ static auto ValidateFloatType(Context& context, SemIRLoc loc,
   return ValidateFloatBitWidth(context, loc, result.bit_width_id);
 }
 
+// Performs a conversion between integer types, truncating if the value doesn't
+// fit in the destination type.
+static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
+                              SemIR::TypeId dest_type_id) -> SemIR::ConstantId {
+  auto arg_val =
+      context.ints().Get(context.insts().GetAs<SemIR::IntValue>(arg_id).int_id);
+  auto [dest_is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  if (bit_width_id.is_valid()) {
+    // TODO: If the value fits in the destination type, reuse the existing
+    // int_id rather than recomputing it. This is probably the most common case.
+    bool src_is_signed = context.sem_ir().types().IsSignedInt(
+        context.insts().Get(arg_id).type_id());
+    unsigned width = context.ints().Get(bit_width_id).getZExtValue();
+    arg_val =
+        src_is_signed ? arg_val.sextOrTrunc(width) : arg_val.zextOrTrunc(width);
+  }
+  return MakeIntResult(context, dest_type_id, dest_is_signed, arg_val);
+}
+
 // Performs a conversion between integer types, diagnosing if the value doesn't
 // fit in the destination type.
 static auto PerformCheckedIntConvert(Context& context, SemIRLoc loc,
@@ -1284,6 +1304,12 @@ static auto MakeConstantForBuiltinCall(Context& context, SemIRLoc loc,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvert: {
+      if (phase == Phase::Symbolic) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       if (phase == Phase::Symbolic) {
         return MakeConstantResult(context, call, phase);
@@ -1501,13 +1527,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           [&](SemIR::ArrayType result) {
             auto bound_id = array_type.bound_id;
-            auto int_bound =
-                eval_context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
+            auto bound_inst = eval_context.insts().Get(result.bound_id);
+            auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
             if (!int_bound) {
-              // TODO: Permit symbolic array bounds. This will require fixing
-              // callers of `GetArrayBoundValue`.
-              eval_context.context().TODO(bound_id, "symbolic array bound");
-              return false;
+              CARBON_CHECK(eval_context.constant_values()
+                               .Get(result.bound_id)
+                               .is_symbolic(),
+                           "Unexpected inst {0} for template constant int",
+                           bound_inst);
+              return true;
             }
             // TODO: We should check that the size of the resulting array type
             // fits in 64 bits, not just that the bound does. Should we use a
@@ -1542,9 +1570,10 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst, &SemIR::AssociatedEntityType::interface_type_id,
           &SemIR::AssociatedEntityType::entity_type_id);
     case SemIR::BoundMethod::Kind:
-      return RebuildIfFieldsAreConstant(
-          eval_context, inst, &SemIR::BoundMethod::type_id,
-          &SemIR::BoundMethod::object_id, &SemIR::BoundMethod::function_id);
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::BoundMethod::type_id,
+                                        &SemIR::BoundMethod::object_id,
+                                        &SemIR::BoundMethod::function_decl_id);
     case SemIR::ClassType::Kind:
       return RebuildIfFieldsAreConstant(eval_context, inst,
                                         &SemIR::ClassType::specific_id);

@@ -22,7 +22,7 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
   out << ", names: {";
   llvm::ListSeparator sep;
   for (auto entry : names_) {
-    if (entry.inst_id.is_poisoned()) {
+    if (entry.is_poisoned) {
       continue;
     }
     out << sep << entry.name_id << ": " << entry.inst_id;
@@ -33,7 +33,7 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto NameScope::AddRequired(Entry name_entry) -> void {
-  CARBON_CHECK(!name_entry.inst_id.is_poisoned(),
+  CARBON_CHECK(!name_entry.is_poisoned,
                "Cannot add a poisoned name: {0}. Use AddPoison()",
                name_entry.name_id);
   auto add_name = [&] {
@@ -49,8 +49,6 @@ auto NameScope::AddRequired(Entry name_entry) -> void {
 auto NameScope::LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
                             AccessKind access_kind)
     -> std::pair<bool, EntryId> {
-  CARBON_CHECK(!inst_id.is_poisoned(),
-               "Cannot add a poisoned name: {0}. Use AddPoison()", name_id);
   auto insert_result = name_map_.Insert(name_id, EntryId(names_.size()));
   if (!insert_result.is_inserted()) {
     return {false, EntryId(insert_result.value())};
@@ -66,8 +64,9 @@ auto NameScope::AddPoison(NameId name_id) -> void {
   CARBON_CHECK(insert_result.is_inserted(),
                "Trying to poison an existing name: {0}", name_id);
   names_.push_back({.name_id = name_id,
-                    .inst_id = InstId::PoisonedName,
-                    .access_kind = AccessKind::Public});
+                    .inst_id = InstId::Invalid,
+                    .access_kind = AccessKind::Public,
+                    .is_poisoned = true});
 }
 
 auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const

@@ -123,11 +123,6 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
     return;
   }
 
-  if (prev_id.is_poisoned()) {
-    context.DiagnosePoisonedName(function_info.latest_decl_id());
-    return;
-  }
-
   auto prev_function_id = SemIR::FunctionId::Invalid;
   auto prev_import_ir_id = SemIR::ImportIRId::Invalid;
   CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
@@ -253,8 +248,12 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
-                 function_info, is_definition);
+  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
+    context.DiagnosePoisonedName(function_info.latest_decl_id());
+  } else {
+    TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
+                   function_info, is_definition);
+  }
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
@@ -285,7 +284,8 @@ static auto BuildFunctionDecl(Context& context,
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
-  if (!name_context.prev_inst_id().is_valid()) {
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
+      !name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = decl_id;

@@ -239,7 +239,16 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   }
 
   // Check that the tuple is the right size.
-  uint64_t array_bound = sem_ir.GetArrayBoundValue(array_type.bound_id);
+  std::optional<uint64_t> array_bound =
+      sem_ir.GetArrayBoundValue(array_type.bound_id);
+  if (!array_bound) {
+    // TODO: Should this fall back to using `ImplicitAs`?
+    CARBON_DIAGNOSTIC(ArrayInitDependentBound, Error,
+                      "cannot initialize array with dependent bound from a "
+                      "list of initializers");
+    context.emitter().Emit(value_loc_id, ArrayInitDependentBound);
+    return SemIR::ErrorInst::SingletonInstId;
+  }
   if (tuple_elem_types.size() != array_bound) {
     CARBON_DIAGNOSTIC(
         ArrayInitFromLiteralArgCountMismatch, Error,
@@ -253,7 +262,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                            literal_elems.empty()
                                ? ArrayInitFromExprArgCountMismatch
                                : ArrayInitFromLiteralArgCountMismatch,
-                           array_bound, tuple_elem_types.size());
+                           *array_bound, tuple_elem_types.size());
     return SemIR::ErrorInst::SingletonInstId;
   }
 
@@ -274,7 +283,7 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // TODO: Annotate diagnostics coming from here with the array element index,
   // if initializing from a tuple literal.
   llvm::SmallVector<SemIR::InstId> inits;
-  inits.reserve(array_bound + 1);
+  inits.reserve(*array_bound + 1);
   for (auto [i, src_type_id] : llvm::enumerate(tuple_elem_types)) {
     // TODO: This call recurses back into conversion. Switch to an iterative
     // approach.

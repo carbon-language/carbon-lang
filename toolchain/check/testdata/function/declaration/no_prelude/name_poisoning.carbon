@@ -285,12 +285,28 @@ interface A {
 class X {
   extend impl as A {
     fn F() { return; }
-    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE+3]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+    // CHECK:STDERR: fail_using_poisoned_name_in_impl_outside_class.carbon:[[@LINE+4]]:10: error: `impl as` can only be used in a class [ImplAsOutsideClass]
     // CHECK:STDERR:     impl as B {}
     // CHECK:STDERR:          ^~
+    // CHECK:STDERR:
     impl as B {}
   }
 }
+
+// --- fail_no_poison_when_lookup_fails.carbon
+
+library "[[@TEST_NAME]]";
+
+namespace N;
+// Here we fail to find C so we don't poison anything.
+// CHECK:STDERR: fail_no_poison_when_lookup_fails.carbon:[[@LINE+3]]:11: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fn N.F(x: C);
+// CHECK:STDERR:           ^
+fn N.F(x: C);
+
+// No failures below because nothing was poisoned.
+class C {}
+class N.C {}
 
 // CHECK:STDOUT: --- no_poison.carbon
 // CHECK:STDOUT:
@@ -1141,4 +1157,54 @@ class X {
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_no_poison_when_lookup_fails.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
+// CHECK:STDOUT:   %C.f79: type = class_type @C.1 [template]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %C.9f4: type = class_type @C.2 [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:     .C = %C.decl.loc13
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
+// CHECK:STDOUT:     %x.patt: <error> = binding_pattern x
+// CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: <error> = value_param runtime_param0
+// CHECK:STDOUT:     %C.ref: <error> = name_ref C, <error> [template = <error>]
+// CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C.1 [template = constants.%C.f79] {} {}
+// CHECK:STDOUT:   %C.decl.loc13: type = class_decl @C.2 [template = constants.%C.9f4] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C.1 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C.f79
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C.9f4
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%x.param_patt: <error>);
 // CHECK:STDOUT:

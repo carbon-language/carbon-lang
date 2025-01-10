@@ -159,28 +159,32 @@ TEST(NameScope, Poison) {
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(
                   NameScope::Entry({.name_id = poison1,
-                                    .inst_id = InstId::PoisonedName,
-                                    .access_kind = AccessKind::Public}))));
+                                    .inst_id = InstId::Invalid,
+                                    .access_kind = AccessKind::Public,
+                                    .is_poisoned = true}))));
 
   NameId poison2(++id);
   name_scope.AddPoison(poison2);
   EXPECT_THAT(name_scope.entries(),
               ElementsAre(NameScopeEntryEquals(NameScope::Entry(
                               {.name_id = poison1,
-                               .inst_id = InstId::PoisonedName,
-                               .access_kind = AccessKind::Public})),
+                               .inst_id = InstId::Invalid,
+                               .access_kind = AccessKind::Public,
+                               .is_poisoned = true})),
                           NameScopeEntryEquals(NameScope::Entry(
                               {.name_id = poison2,
-                               .inst_id = InstId::PoisonedName,
-                               .access_kind = AccessKind::Public}))));
+                               .inst_id = InstId::Invalid,
+                               .access_kind = AccessKind::Public,
+                               .is_poisoned = true}))));
 
   auto lookup = name_scope.Lookup(poison1);
   ASSERT_NE(lookup, std::nullopt);
-  EXPECT_THAT(name_scope.GetEntry(*lookup),
-              NameScopeEntryEquals(
-                  NameScope::Entry({.name_id = poison1,
-                                    .inst_id = InstId::PoisonedName,
-                                    .access_kind = AccessKind::Public})));
+  EXPECT_THAT(
+      name_scope.GetEntry(*lookup),
+      NameScopeEntryEquals(NameScope::Entry({.name_id = poison1,
+                                             .inst_id = InstId::Invalid,
+                                             .access_kind = AccessKind::Public,
+                                             .is_poisoned = true})));
 }
 
 TEST(NameScope, ExtendedScopes) {

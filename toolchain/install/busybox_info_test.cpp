@@ -256,8 +256,8 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
 TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
   // Add two installs of Carbon nested inside each other in a realistic
   // scenario: `/usr` and `/usr/local`.
-  auto usr_prefix = MakeInstallTree(dir_ / "usr");
-  auto usr_local_prefix = MakeInstallTree(dir_ / "usr/local");
+  MakeInstallTree(dir_ / "usr");
+  MakeInstallTree(dir_ / "usr/local");
 
   // Now add a stray symlink directly in `.../usr/local` to the local install.
   //
