@@ -67,11 +67,20 @@ static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
 
 // Creates a zext or sext instruction depending on the signedness of the
 // operand.
-static auto CreateZExtOrSExt(FunctionContext& context, llvm::Value* value,
-                             llvm::Type* type, bool is_signed,
-                             const llvm::Twine& name = "") -> llvm::Value* {
+static auto CreateExt(FunctionContext& context, llvm::Value* value,
+                      llvm::Type* type, bool is_signed,
+                      const llvm::Twine& name = "") -> llvm::Value* {
   return is_signed ? context.builder().CreateSExt(value, type, name)
                    : context.builder().CreateZExt(value, type, name);
+}
+
+// Creates a zext, sext, or trunc instruction depending on the signedness of the
+// operand.
+static auto CreateExtOrTrunc(FunctionContext& context, llvm::Value* value,
+                             llvm::Type* type, bool is_signed,
+                             const llvm::Twine& name = "") -> llvm::Value* {
+  return is_signed ? context.builder().CreateSExtOrTrunc(value, type, name)
+                   : context.builder().CreateZExtOrTrunc(value, type, name);
 }
 
 // Handles a call to a builtin integer bit shift operator.
@@ -129,8 +138,8 @@ static auto HandleIntComparison(FunctionContext& context, SemIR::InstId inst_id,
   auto* cmp_type = llvm::IntegerType::get(context.llvm_context(), cmp_width);
 
   // Widen the operands as needed.
-  lhs = CreateZExtOrSExt(context, lhs, cmp_type, lhs_signed, "lhs");
-  rhs = CreateZExtOrSExt(context, rhs, cmp_type, rhs_signed, "rhs");
+  lhs = CreateExt(context, lhs, cmp_type, lhs_signed, "lhs");
+  rhs = CreateExt(context, rhs, cmp_type, rhs_signed, "rhs");
 
   context.SetLocal(
       inst_id,
@@ -203,6 +212,16 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
+
+    case SemIR::BuiltinFunctionKind::IntConvert: {
+      context.SetLocal(
+          inst_id,
+          CreateExtOrTrunc(
+              context, context.GetValue(arg_ids[0]),
+              context.GetType(context.sem_ir().insts().Get(inst_id).type_id()),
+              IsSignedInt(context, arg_ids[0])));
+      return;
+    }
 
     case SemIR::BuiltinFunctionKind::IntSNegate: {
       // Lower `-x` as `0 - x`.

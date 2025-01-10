@@ -7,27 +7,6 @@ workspace(name = "carbon")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 ###############################################################################
-# Example conversion repositories
-###############################################################################
-
-local_repository(
-    name = "brotli",
-    path = "third_party/examples/brotli/original",
-)
-
-new_local_repository(
-    name = "woff2",
-    build_file = "third_party/examples/woff2/BUILD.original",
-    path = "third_party/examples/woff2/original",
-    workspace_file = "third_party/examples/woff2/WORKSPACE.original",
-)
-
-local_repository(
-    name = "woff2_carbon",
-    path = "third_party/examples/woff2/carbon",
-)
-
-###############################################################################
 # Treesitter rules
 ###############################################################################
 

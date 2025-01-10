@@ -232,7 +232,6 @@ auto ImplWitnessStartDefinition(Context& /*context*/, SemIR::Impl& impl)
   CARBON_CHECK(impl.is_being_defined());
   // TODO: Check we have a value for all non-function associated constants in
   // the constraint, and fill the witness with them.
-  return;
 }
 
 // Adds functions to the witness that the specified impl implements the given
@@ -277,7 +276,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
         auto fn_type = type_inst.As<SemIR::FunctionType>();
         auto& fn = context.functions().Get(fn_type.function_id);
-        auto [impl_decl_id, _] = context.LookupNameInExactScope(
+        auto [impl_decl_id, _, is_poisoned] = context.LookupNameInExactScope(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);

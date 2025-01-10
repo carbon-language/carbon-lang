@@ -207,14 +207,14 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//def, Def, loaded [template = constants.%Def]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.9e9: type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.4ce = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .Def [private] = imports.%import_ref.9e9
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -225,8 +225,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Def [from "def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.4ce
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -299,14 +299,14 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %import_ref.2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.570: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.414 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.1
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.570
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -317,8 +317,8 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardWithDef [from "forward_with_def.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.3
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.2
+// CHECK:STDOUT:   .Self = imports.%import_ref.414
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -36,13 +36,13 @@ base class A {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [template]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base [template]
-// CHECK:STDOUT:   %.1: type = class_type @.1 [template]
-// CHECK:STDOUT:   %.elem: type = unbound_element_type %.1, %A [template]
+// CHECK:STDOUT:   %complete_type.020: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT:   %.a95: type = class_type @.1 [template]
+// CHECK:STDOUT:   %.elem: type = unbound_element_type %.a95, %A [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -61,11 +61,11 @@ base class A {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [template = constants.%B] {} {}
-// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.1] {} {}
+// CHECK:STDOUT:   %.decl: type = class_decl @.1 [template = constants.%.a95] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
@@ -75,7 +75,7 @@ base class A {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %.loc16: %B.elem = base_decl %A.ref, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.020]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -91,7 +91,7 @@ base class A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%.1
+// CHECK:STDOUT:   .Self = constants.%.a95
 // CHECK:STDOUT:   .base = %.loc27
 // CHECK:STDOUT:   .c = %.loc31
 // CHECK:STDOUT:   extend %A.ref

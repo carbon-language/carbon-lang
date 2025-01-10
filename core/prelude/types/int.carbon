@@ -32,6 +32,11 @@ impl forall [N:! IntLiteral()] Int(N) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
+// TODO: Allow as an implicit conversion if N > M.
+impl forall [M:! IntLiteral(), N:! IntLiteral()] Int(M) as As(Int(N)) {
+  fn Convert[self: Self]() -> Int(N) = "int.convert";
+}
+
 // Comparisons.
 
 impl forall [N:! IntLiteral()] Int(N) as Eq {

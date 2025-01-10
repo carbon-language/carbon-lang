@@ -55,8 +55,9 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
 static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
                                     SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  auto [_, self_type_inst_id] = context.LookupUnqualifiedName(
+  auto [_, self_type_inst_id, is_poisoned] = context.LookupUnqualifiedName(
       loc_id.node_id(), SemIR::NameId::SelfType, /*required=*/false);
+  CARBON_CHECK(!is_poisoned);
   if (!self_type_inst_id.is_valid()) {
     return SemIR::AccessKind::Public;
   }
@@ -379,7 +380,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
             loc_id, {.type_id = context.GetSingletonType(
                          SemIR::BoundMethodType::SingletonInstId),
                      .object_id = base_id,
-                     .function_id = member_id});
+                     .function_decl_id = member_id});
       }
       [[fallthrough]];
     }

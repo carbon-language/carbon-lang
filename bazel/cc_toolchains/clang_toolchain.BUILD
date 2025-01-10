@@ -7,6 +7,8 @@
 
 load(":cc_toolchain_config.bzl", "cc_local_toolchain_suite")
 
+package(default_visibility = ["//visibility:public"])
+
 cc_local_toolchain_suite(
     name = "bazel_cc_toolchain",
     configs = [

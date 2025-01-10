@@ -4,6 +4,8 @@
 
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
+package(default_visibility = ["//visibility:public"])
+
 # Flag controlling whether the target config is used for the `carbon_*` Bazel
 # rules. The default is to use the exec config as that is more correct in cases
 # where the target config is not compatible with the exec (cross compiling), and

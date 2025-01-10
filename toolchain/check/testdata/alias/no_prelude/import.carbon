@@ -106,32 +106,32 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//class1, C, unloaded
-// CHECK:STDOUT:   %import_ref.2: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3 = import_ref Main//class1, a, unloaded
-// CHECK:STDOUT:   %import_ref.4: <witness> = import_ref Main//class1, loc4_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.5 = import_ref Main//class1, inst14 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.85d = import_ref Main//class1, C, unloaded
+// CHECK:STDOUT:   %import_ref.8af: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.6da = import_ref Main//class1, a, unloaded
+// CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//class1, loc4_10, loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//class1, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.1
-// CHECK:STDOUT:     .c_alias = imports.%import_ref.2
-// CHECK:STDOUT:     .a = imports.%import_ref.3
+// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .c_alias = imports.%import_ref.8af
+// CHECK:STDOUT:     .a = imports.%import_ref.6da
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.2 [template = constants.%C]
-// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.2 [template = constants.%C]
+// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.8af [template = constants.%C]
+// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.8af [template = constants.%C]
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class1.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.5
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.4
+// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class3.carbon
@@ -144,16 +144,16 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//class2, b, unloaded
-// CHECK:STDOUT:   %import_ref.3: <witness> = import_ref Main//class2, inst21 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.4 = import_ref Main//class2, inst22 [indirect], unloaded
+// CHECK:STDOUT:   %import_ref.77b: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.b9b = import_ref Main//class2, b, unloaded
+// CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//class2, inst21 [indirect], loaded [template = constants.%complete_type]
+// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//class2, inst22 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.1
-// CHECK:STDOUT:     .b = imports.%import_ref.2
+// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.77b
+// CHECK:STDOUT:     .b = imports.%import_ref.b9b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -163,8 +163,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class2.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.3
+// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- var1.carbon
@@ -202,27 +202,27 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1 = import_ref Main//var1, a, unloaded
-// CHECK:STDOUT:   %import_ref.2: ref %empty_tuple.type = import_ref Main//var1, a_alias, loaded
+// CHECK:STDOUT:   %import_ref.0e2 = import_ref Main//var1, a, unloaded
+// CHECK:STDOUT:   %import_ref.22c: ref %empty_tuple.type = import_ref Main//var1, a_alias, loaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a = imports.%import_ref.1
-// CHECK:STDOUT:     .a_alias = imports.%import_ref.2
+// CHECK:STDOUT:     .a = imports.%import_ref.0e2
+// CHECK:STDOUT:     .a_alias = imports.%import_ref.22c
 // CHECK:STDOUT:     .a_alias_alias = %a_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
-// CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%import_ref.2
+// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.22c
+// CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%import_ref.22c
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.2
+// CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%import_ref.22c
 // CHECK:STDOUT:   %.loc8_13: init %empty_tuple.type = tuple_init () to file.%b.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_20: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_20
@@ -237,14 +237,14 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: ref %empty_tuple.type = import_ref Main//var2, a_alias_alias, loaded [template = <error>]
-// CHECK:STDOUT:   %import_ref.2 = import_ref Main//var2, b, unloaded
+// CHECK:STDOUT:   %import_ref.692: ref %empty_tuple.type = import_ref Main//var2, a_alias_alias, loaded [template = <error>]
+// CHECK:STDOUT:   %import_ref.bb6 = import_ref Main//var2, b, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_alias_alias = imports.%import_ref.1
-// CHECK:STDOUT:     .b = imports.%import_ref.2
+// CHECK:STDOUT:     .a_alias_alias = imports.%import_ref.692
+// CHECK:STDOUT:     .b = imports.%import_ref.bb6
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -254,7 +254,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.1 [template = <error>]
+// CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.692 [template = <error>]
 // CHECK:STDOUT:   %.loc10_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%c.var, %.loc10_26

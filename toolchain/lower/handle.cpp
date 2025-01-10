@@ -109,7 +109,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BoundMethod inst) -> void {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  context.SetLocal(inst_id, context.GetValue(inst.function_id));
+  context.SetLocal(inst_id, context.GetValue(inst.function_decl_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,

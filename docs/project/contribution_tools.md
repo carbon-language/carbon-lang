@@ -324,7 +324,7 @@ echo $CC
 which clang
 which clang-16
 clang --version
-grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/_main\~clang_toolchain_extension\~bazel_cc_toolchain/clang_detected_variables.bzl
+grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/+clang_toolchain_extension+bazel_cc_toolchain/clang_detected_variables.bzl
 
 # If on macOS:
 brew --prefix llvm

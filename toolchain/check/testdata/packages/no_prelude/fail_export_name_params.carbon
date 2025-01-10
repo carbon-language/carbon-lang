@@ -96,8 +96,8 @@ export C2(T:! type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %C1.type = import_ref Foo//a, C1, loaded [template = constants.%C1.generic]
-// CHECK:STDOUT:   %import_ref.2: %C2.type = import_ref Foo//a, C2, loaded [template = constants.%C2.generic]
+// CHECK:STDOUT:   %import_ref.c46: %C1.type = import_ref Foo//a, C1, loaded [template = constants.%C1.generic]
+// CHECK:STDOUT:   %import_ref.f3f: %C2.type = import_ref Foo//a, C2, loaded [template = constants.%C2.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,10 +106,10 @@ export C2(T:! type);
 // CHECK:STDOUT:     .C2 = %C2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%import_ref.1 [template = constants.%C1.generic]
+// CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%import_ref.c46 [template = constants.%C1.generic]
 // CHECK:STDOUT:   %T.param: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %T.param [symbolic = constants.%T]
-// CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.2 [template = constants.%C2.generic]
+// CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%import_ref.f3f [template = constants.%C2.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C1(constants.%T: type) [from "a.carbon"] {

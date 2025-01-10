@@ -55,7 +55,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.187
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -99,10 +99,10 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.197: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Int = %import_ref.252
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Int = %import_ref.d69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -110,7 +110,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Float = imports.%import_ref.1
+// CHECK:STDOUT:     .Float = imports.%import_ref.197
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .GetFloat = %GetFloat.decl
@@ -140,7 +140,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GetFloat(%dyn_size.param_patt: %i32) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.1 [template = constants.%Float]
+// CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%import_ref.197 [template = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
 // CHECK:STDOUT:   %.loc9_25.1: type = value_of_initializer %float.make_type
@@ -160,23 +160,23 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [template]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [template]
-// CHECK:STDOUT:   %int_32.1: Core.IntLiteral = int_value 32 [template]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32.1) [template]
-// CHECK:STDOUT:   %Convert.type.2: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.19: <witness> = impl_witness (imports.%import_ref.14), @impl.1(%int_32.1) [template]
-// CHECK:STDOUT:   %Convert.type.10: type = fn_type @Convert.2, @impl.1(%int_32.1) [template]
-// CHECK:STDOUT:   %Convert.10: %Convert.type.10 = struct_value () [template]
-// CHECK:STDOUT:   %int_64.1: Core.IntLiteral = int_value 64 [template]
-// CHECK:STDOUT:   %Convert.bound.2: <bound method> = bound_method %int_64.1, %Convert.10 [template]
-// CHECK:STDOUT:   %Convert.specific_fn.2: <specific function> = specific_function %Convert.bound.2, @Convert.2(%int_32.1) [template]
-// CHECK:STDOUT:   %int_64.2: %i32 = int_value 64 [template]
+// CHECK:STDOUT:   %int_32.be0: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32.be0) [template]
+// CHECK:STDOUT:   %Convert.type.e4d: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32.be0) [template]
+// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32.be0) [template]
+// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
+// CHECK:STDOUT:   %int_64.fab: Core.IntLiteral = int_value 64 [template]
+// CHECK:STDOUT:   %Convert.bound.8f9: <bound method> = bound_method %int_64.fab, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.specific_fn.124: <specific function> = specific_function %Convert.bound.8f9, @Convert.2(%int_32.be0) [template]
+// CHECK:STDOUT:   %int_64.949: %i32 = int_value 64 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
+// CHECK:STDOUT:   %import_ref.197: %Float.type = import_ref Main//types, Float, loaded [template = constants.%Float]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.5
-// CHECK:STDOUT:     .Int = %import_ref.252
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Int = %import_ref.d69
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -184,7 +184,7 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Float = imports.%import_ref.1
+// CHECK:STDOUT:     .Float = imports.%import_ref.197
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .invalid_float = %invalid_float
 // CHECK:STDOUT:     .dyn_size = %dyn_size
@@ -204,12 +204,12 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64.1]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.2 = impl_witness_access constants.%impl_witness.19, element0 [template = constants.%Convert.10]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_64, %impl.elem0 [template = constants.%Convert.bound.2]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32.1) [template = constants.%Convert.specific_fn.2]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_64) [template = constants.%int_64.2]
-// CHECK:STDOUT:   %.loc12: init %i32 = converted %int_64, %int.convert_checked [template = constants.%int_64.2]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64.fab]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.e4d = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_64, %impl.elem0 [template = constants.%Convert.bound.8f9]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32.be0) [template = constants.%Convert.specific_fn.124]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_64) [template = constants.%int_64.949]
+// CHECK:STDOUT:   %.loc12: init %i32 = converted %int_64, %int.convert_checked [template = constants.%int_64.949]
 // CHECK:STDOUT:   assign file.%dyn_size.var, %.loc12
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

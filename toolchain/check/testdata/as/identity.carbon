@@ -36,7 +36,7 @@ fn Initializing() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [template]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.2: type = ptr_type %X [template]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [template]
 // CHECK:STDOUT:   %Reference.type: type = fn_type @Reference [template]
 // CHECK:STDOUT:   %Reference: %Reference.type = struct_value () [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
@@ -72,15 +72,15 @@ fn Initializing() {
 // CHECK:STDOUT:     %n: %X = bind_name n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reference.decl: %Reference.type = fn_decl @Reference [template = constants.%Reference] {
-// CHECK:STDOUT:     %p.patt: %ptr.2 = binding_pattern p
-// CHECK:STDOUT:     %p.param_patt: %ptr.2 = value_param_pattern %p.patt, runtime_param0
+// CHECK:STDOUT:     %p.patt: %ptr.d17 = binding_pattern p
+// CHECK:STDOUT:     %p.param_patt: %ptr.d17 = value_param_pattern %p.patt, runtime_param0
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: %ptr.2 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [template = constants.%ptr.2] {
+// CHECK:STDOUT:     %p.param: %ptr.d17 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [template = constants.%ptr.d17] {
 // CHECK:STDOUT:       %X.ref.loc21: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:       %ptr: type = ptr_type %X [template = constants.%ptr.2]
+// CHECK:STDOUT:       %ptr: type = ptr_type %X [template = constants.%ptr.d17]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.2 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.d17 = bind_name p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [template = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %X = return_slot_pattern
@@ -109,13 +109,13 @@ fn Initializing() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Reference(%p.param_patt: %ptr.2) {
+// CHECK:STDOUT: fn @Reference(%p.param_patt: %ptr.d17) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.2 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.d17 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22: ref %X = deref %p.ref
 // CHECK:STDOUT:   %X.ref.loc22: type = name_ref X, file.%X.decl [template = constants.%X]
-// CHECK:STDOUT:   %addr: %ptr.2 = addr_of %.loc22
-// CHECK:STDOUT:   %q: %ptr.2 = bind_name q, %addr
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc22
+// CHECK:STDOUT:   %q: %ptr.d17 = bind_name q, %addr
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -68,7 +68,7 @@ fn E() {}
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.1: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
@@ -108,7 +108,7 @@ fn E() {}
 // CHECK:STDOUT:     %x.loc29: %empty_tuple.type = bind_name x, %x.param.loc29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.1] {
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
