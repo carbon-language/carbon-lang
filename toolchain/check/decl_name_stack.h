@@ -95,7 +95,7 @@ class DeclNameStack {
     // construction.
     auto MakeEntityWithParamsBase(const NameComponent& name,
                                   SemIR::InstId decl_id, bool is_extern,
-                                  SemIR::LibraryNameId extern_library)
+                                  SemIR::LibraryNameId extern_library) const
         -> SemIR::EntityWithParamsBase {
       return {
           .name_id = name_id_for_new_inst(),
@@ -121,7 +121,7 @@ class DeclNameStack {
 
     // Returns the name_id for a new instruction. This is `None` when the name
     // resolved.
-    auto name_id_for_new_inst() -> SemIR::NameId {
+    auto name_id_for_new_inst() const -> SemIR::NameId {
       return state == State::Unresolved ? unresolved_name_id
                                         : SemIR::NameId::None;
     }
@@ -192,6 +192,9 @@ class DeclNameStack {
   // popped and passed to this function, and will be added to the declaration
   // name.
   auto FinishName(const NameComponent& name) -> NameContext;
+
+  // Replace a call to FinishName() when there was no name present.
+  auto AbortName() -> void;
 
   // Finishes the current declaration name processing for an `impl`, returning
   // the final context for adding the name to lookup.

@@ -721,6 +721,15 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
+  struct ChoiceDeferredBinding {
+    Parse::NodeId node_id;
+    NameComponent name_component;
+    DeclNameStack::NameContext name_context;
+  };
+  auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
+    return choice_deferred_bindings_;
+  }
+
  private:
   // A FoldingSet node for a type.
   class TypeNode : public llvm::FastFoldingSetNode {
@@ -845,6 +854,10 @@ class Context {
 
   // Stack of single-entry regions being built.
   ArrayStack<SemIR::InstBlockId> region_stack_;
+
+  // Each alternative in a Choice gets an entry here, they are stored in order.
+  // The vector is consumed and emptied at the end of the Choice definition.
+  llvm::SmallVector<ChoiceDeferredBinding> choice_deferred_bindings_;
 };
 
 }  // namespace Carbon::Check

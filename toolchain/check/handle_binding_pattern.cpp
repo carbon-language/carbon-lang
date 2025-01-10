@@ -241,6 +241,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           }
           break;
         }
+        case Lex::TokenKind::Choice:
         case Lex::TokenKind::Class:
         case Lex::TokenKind::Impl:
         case Lex::TokenKind::Interface: {

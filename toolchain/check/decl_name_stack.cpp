@@ -72,6 +72,13 @@ auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
   return result;
 }
 
+auto DeclNameStack::AbortName() -> void {
+  CARBON_CHECK(decl_name_stack_.back().state != NameContext::State::Finished,
+               "Finished name twice");
+
+  decl_name_stack_.back().state = NameContext::State::Finished;
+}
+
 auto DeclNameStack::FinishImplName() -> NameContext {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Empty,
                "Impl has a name");
