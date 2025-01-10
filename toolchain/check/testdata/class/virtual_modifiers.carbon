@@ -566,7 +566,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc10: <vtable> = vtable () [template = constants.%.f2b]
+// CHECK:STDOUT:   %.loc9: <vtable> = vtable () [template = constants.%.f2b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -800,7 +800,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractBase {
 // CHECK:STDOUT:   %F.decl: %F.type.abb = fn_decl @F.1 [template = constants.%F.b77] {} {}
-// CHECK:STDOUT:   %.loc13: <vtable> = vtable (%F.decl) [template = constants.%.c77]
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.c77]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -811,27 +811,27 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractIntermediate {
 // CHECK:STDOUT:   %AbstractBase.ref: type = name_ref AbstractBase, file.%AbstractBase.decl [template = constants.%AbstractBase]
-// CHECK:STDOUT:   %.loc16: %AbstractIntermediate.elem = base_decl %AbstractBase.ref, element0 [template]
-// CHECK:STDOUT:   %.loc17: <vtable> = vtable (constants.%F.b77) [template = constants.%.c77]
+// CHECK:STDOUT:   %.loc9: %AbstractIntermediate.elem = base_decl %AbstractBase.ref, element0 [template]
+// CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.b77) [template = constants.%.c77]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.efd [template = constants.%complete_type.2d3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractIntermediate
-// CHECK:STDOUT:   .base = %.loc16
+// CHECK:STDOUT:   .base = %.loc9
 // CHECK:STDOUT:   extend %AbstractBase.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %AbstractIntermediate.ref: type = name_ref AbstractIntermediate, file.%AbstractIntermediate.decl [template = constants.%AbstractIntermediate]
-// CHECK:STDOUT:   %.loc20: %Derived.elem = base_decl %AbstractIntermediate.ref, element0 [template]
+// CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %AbstractIntermediate.ref, element0 [template]
 // CHECK:STDOUT:   %F.decl: %F.type.55a = fn_decl @F.2 [template = constants.%F.8d5] {} {}
-// CHECK:STDOUT:   %.loc22: <vtable> = vtable (%F.decl) [template = constants.%.8cc]
+// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [template = constants.%.8cc]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.da5 [template = constants.%complete_type.f8c]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .base = %.loc20
+// CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   extend %AbstractIntermediate.ref
 // CHECK:STDOUT:   complete_type_witness = %complete_type
