@@ -377,7 +377,8 @@ Carbon focused talks from the community:
     ([video](https://youtu.be/Y_px536l_80),
     [slides](https://docs.google.com/presentation/d/10aM1mFMN6Cd5ZkE4OfeiZtSnkVNbo33N-V0et21umww/edit))
 -   Carbon: An experiment in different tradeoffs, panel session, EuroLLVM
-    ([video](https://youtu.be/Za_KWj5RMR8))
+    ([video](https://youtu.be/Za_KWj5RMR8),
+    [slides](https://llvm.org/devmtg/2024-04/slides/LightningTalks/Smith-Carbons-high-level-semanticIR.pdf))
     -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
 -   Carbon's high-level semantic IR lightning talk, EuroLLVM
     ([video](https://youtu.be/vIWT4RhUcyw))
