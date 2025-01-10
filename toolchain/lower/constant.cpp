@@ -167,7 +167,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
     -> llvm::Constant* {
   // Propagate just the function; the object is separately provided to the
   // enclosing call as an implicit argument.
-  return context.GetConstant(inst.function_id);
+  return context.GetConstant(inst.function_decl_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -199,12 +199,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
     return int_literal_value;
   }
 
-  auto val = context.sem_ir().ints().Get(inst.int_id);
   int bit_width = int_type->getBitWidth();
-  bool is_signed =
-      context.sem_ir().types().GetIntTypeInfo(inst.type_id).is_signed;
-  return llvm::ConstantInt::get(type, is_signed ? val.sextOrTrunc(bit_width)
-                                                : val.zextOrTrunc(bit_width));
+  auto val = context.sem_ir().ints().GetAtWidth(inst.int_id, bit_width);
+  return llvm::ConstantInt::get(type, val);
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::Namespace inst)

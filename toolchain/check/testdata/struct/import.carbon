@@ -276,7 +276,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1017 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1061 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -396,7 +396,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1017 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1061 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -486,7 +486,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1017 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.5c7 = import_ref Implicit//default, inst1061 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

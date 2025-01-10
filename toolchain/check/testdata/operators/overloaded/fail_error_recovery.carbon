@@ -37,8 +37,8 @@ fn G(n: i32) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
-// CHECK:STDOUT:   %impl_witness.a03: <witness> = impl_witness (imports.%import_ref.c16), @impl.13(%int_32) [template]
-// CHECK:STDOUT:   %Op.type.16e: type = fn_type @Op.2, @impl.13(%int_32) [template]
+// CHECK:STDOUT:   %impl_witness.a03: <witness> = impl_witness (imports.%import_ref.c16), @impl.14(%int_32) [template]
+// CHECK:STDOUT:   %Op.type.16e: type = fn_type @Op.2, @impl.14(%int_32) [template]
 // CHECK:STDOUT:   %Op.ceb: %Op.type.16e = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

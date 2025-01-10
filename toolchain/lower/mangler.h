@@ -10,6 +10,7 @@
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_fingerprinter.h"
 
 namespace Carbon::Lower {
 
@@ -49,6 +50,10 @@ class Mangler {
   }
 
   FileContext& file_context_;
+
+  // TODO: If `file_context_` has an `InstNamer`, we could share its
+  // fingerprinter.
+  SemIR::InstFingerprinter fingerprinter_;
 };
 
 }  // namespace Carbon::Lower

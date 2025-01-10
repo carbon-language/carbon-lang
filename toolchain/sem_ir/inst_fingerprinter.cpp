@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
+#include <variant>
+
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -17,9 +19,10 @@ namespace Carbon::SemIR {
 namespace {
 struct Worklist {
   // The file containing the instruction we're currently processing.
-  const File* sem_ir;
+  const File* sem_ir = nullptr;
   // The instructions we need to compute fingerprints for.
-  llvm::SmallVector<std::pair<const File*, InstId>> todo;
+  llvm::SmallVector<std::pair<const File*, std::variant<InstId, InstBlockId>>>
+      todo;
   // The contents of the current instruction as accumulated so far. This is used
   // to build a Merkle tree containing a fingerprint for the current
   // instruction.
@@ -27,6 +30,9 @@ struct Worklist {
   // Known cached instruction fingerprints. Each item in `todo` will be added to
   // the cache if not already present.
   Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
+
+  // Finish fingerprinting and compute the fingerprint.
+  auto Finish() -> uint64_t { return llvm::stable_hash_combine(contents); }
 
   // Add an invalid marker to the contents. This is used when the entity
   // contains an invalid ID. This uses an arbitrary fixed value that is assumed
@@ -286,28 +292,62 @@ struct Worklist {
     Table[kind.ToIndex()](*this, arg);
   }
 
-  // Ensure all the instructions on the todo list have fingerprints.
-  auto Run() -> void {
-    while (!todo.empty()) {
-      auto [next_sem_ir, next_inst_id] = todo.back();
+  // Ensure all the instructions on the todo list have fingerprints. To avoid a
+  // re-lookup, returns the fingerprint of the first instruction on the todo
+  // list, and requires the todo list to be non-empty.
+  auto Run() -> uint64_t {
+    CARBON_CHECK(!todo.empty());
+    while (true) {
+      const size_t init_size = todo.size();
+      auto [next_sem_ir, next_inst_id_or_block] = todo.back();
+
+      sem_ir = next_sem_ir;
+      contents.clear();
+
+      if (auto* inst_block_id =
+              std::get_if<InstBlockId>(&next_inst_id_or_block)) {
+        // Add all the instructions in the block so they all contribute to the
+        // `contents`.
+        Add(*inst_block_id);
+
+        // If we didn't add any more work, then we have a fingerprint for the
+        // instruction block, otherwise we wait until that work is completed. If
+        // the block is the last thing in `todo`, we return the fingerprint.
+        // Otherwise we would just discard it because we don't currently cache
+        // the fingerprint for blocks, but we really only expect `InstBlockId`
+        // to be at the bottom of the `todo` stack since they are not added to
+        // `todo` during Run().
+        if (todo.size() == init_size) {
+          auto fingerprint = Finish();
+          todo.pop_back();
+          CARBON_CHECK(todo.empty(),
+                       "An InstBlockId was inserted into `todo` during Run()");
+          return fingerprint;
+        }
+
+        // Move on to processing the instructions in the block; we will come
+        // back to this branch once they are done.
+        continue;
+      }
+
+      auto next_inst_id = std::get<InstId>(next_inst_id_or_block);
 
       // If we already have a fingerprint for this instruction, we have nothing
       // to do. Just pop it from `todo`.
-      if (fingerprints->Contains(std::pair(next_sem_ir, next_inst_id))) {
+      if (auto lookup =
+              fingerprints->Lookup(std::pair(next_sem_ir, next_inst_id))) {
         todo.pop_back();
+        if (todo.empty()) {
+          return lookup.value();
+        }
         continue;
       }
 
       // Keep this instruction in `todo` for now. If we add more work, we'll
       // finish that work and process this instruction again, and if not, we'll
       // pop the instruction at the end of the loop.
-      size_t init_size = todo.size();
       auto inst = next_sem_ir->insts().Get(next_inst_id);
       auto [arg0_kind, arg1_kind] = inst.ArgKinds();
-
-      // Prepare to fingerprint this instruction.
-      sem_ir = next_sem_ir;
-      contents.clear();
 
       // Add the instruction's fields to the contents.
       Add(inst.kind());
@@ -326,9 +366,12 @@ struct Worklist {
       // pop it from the todo list. Otherwise, we leave it on the todo list so
       // we can compute its fingerprint once we've finished the work we added.
       if (todo.size() == init_size) {
-        auto fingerprint = llvm::stable_hash_combine(contents);
+        uint64_t fingerprint = Finish();
         fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
         todo.pop_back();
+        if (todo.empty()) {
+          return fingerprint;
+        }
       }
     }
   }
@@ -337,11 +380,16 @@ struct Worklist {
 
 auto InstFingerprinter::GetOrCompute(const File* file, InstId inst_id)
     -> uint64_t {
-  Worklist worklist = {.sem_ir = nullptr,
-                       .todo = {{file, inst_id}},
+  Worklist worklist = {.todo = {{file, inst_id}},
                        .fingerprints = &fingerprints_};
-  worklist.Run();
-  return fingerprints_.Lookup(std::pair(file, inst_id)).value();
+  return worklist.Run();
+}
+
+auto InstFingerprinter::GetOrCompute(const File* file,
+                                     InstBlockId inst_block_id) -> uint64_t {
+  Worklist worklist = {.todo = {{file, inst_block_id}},
+                       .fingerprints = &fingerprints_};
+  return worklist.Run();
 }
 
 }  // namespace Carbon::SemIR

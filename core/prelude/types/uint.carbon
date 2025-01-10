@@ -5,6 +5,7 @@
 package Core library "prelude/types/uint";
 
 import library "prelude/types/int_literal";
+import library "prelude/types/int";
 import library "prelude/operators";
 
 private fn MakeUInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
@@ -30,6 +31,21 @@ impl forall [N:! IntLiteral()] IntLiteral() as As(UInt(N)) {
 
 impl forall [N:! IntLiteral()] UInt(N) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
+
+// TODO: Allow as an implicit conversion if N > M.
+impl forall [M:! IntLiteral(), N:! IntLiteral()] UInt(M) as As(UInt(N)) {
+  fn Convert[self: Self]() -> UInt(N) = "int.convert";
+}
+
+// TODO: Allow as an implicit conversion if N > M.
+impl forall [M:! IntLiteral(), N:! IntLiteral()] UInt(M) as As(Int(N)) {
+  fn Convert[self: Self]() -> Int(N) = "int.convert";
+}
+
+// Never implicit.
+impl forall [M:! IntLiteral(), N:! IntLiteral()] Int(M) as As(UInt(N)) {
+  fn Convert[self: Self]() -> UInt(N) = "int.convert";
 }
 
 // Comparisons.

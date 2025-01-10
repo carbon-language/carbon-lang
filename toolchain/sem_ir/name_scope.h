@@ -24,7 +24,9 @@ class NameScope : public Printable<NameScope> {
     NameId name_id;
     InstId inst_id;
     AccessKind access_kind;
+    bool is_poisoned = false;
   };
+  static_assert(sizeof(Entry) == 12);
 
   struct EntryId : public IdBase<EntryId> {
     static constexpr llvm::StringLiteral Label = "name_scope_entry";
