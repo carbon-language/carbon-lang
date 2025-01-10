@@ -47,18 +47,18 @@ base class BaseDecl;
 // CHECK:STDERR:
 abstract abstract class TwoAbstract { }
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:19: error: `base` not allowed on declaration with `virtual` [ModifierNotAllowedWith]
 // CHECK:STDERR: protected virtual base class Virtual {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `virtual` not allowed on `class` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:                   ^~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:11: note: `virtual` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:19: error: `base` not allowed on declaration with `virtual` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected virtual base class Virtual {}
-// CHECK:STDERR:                   ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: note: `virtual` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:11: error: `virtual` not allowed on `class` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: protected virtual base class Virtual {}
 // CHECK:STDERR:           ^~~~~~~
 // CHECK:STDERR:

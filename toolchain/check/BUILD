@@ -276,6 +276,7 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:token_index",
         "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify_type",

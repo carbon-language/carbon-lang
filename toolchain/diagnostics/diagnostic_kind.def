@@ -106,6 +106,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedLibraryName)
 CARBON_DIAGNOSTIC_KIND(ExpectedLibraryNameOrDefault)
 CARBON_DIAGNOSTIC_KIND(MissingLibraryKeyword)
 CARBON_DIAGNOSTIC_KIND(ExportImportPackage)
+CARBON_DIAGNOSTIC_KIND(ExpectedPeriodAfterPackage)
 
 // For-specific diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedIn)
@@ -186,6 +187,9 @@ CARBON_DIAGNOSTIC_KIND(ExternLibraryInImporter)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIncorrect)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryExpected)
 CARBON_DIAGNOSTIC_KIND(ExternRequiresDeclInApiFile)
+
+// Namespace checking.
+CARBON_DIAGNOSTIC_KIND(NamespaceDeclNotAtTopLevel)
 
 // Function call checking.
 CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)

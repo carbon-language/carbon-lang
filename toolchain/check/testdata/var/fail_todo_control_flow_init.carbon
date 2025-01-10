@@ -12,17 +12,17 @@
 // CHECK:STDERR: var x: () = if true then () else ();
 // CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+12]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+12]]:21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x: () = if true then () else ();
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                     ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+8]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x: () = if true then () else ();
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+4]]:21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+4]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x: () = if true then () else ();
-// CHECK:STDERR:                     ^~~~~~~
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
 var x: () = if true then () else ();
 
@@ -30,17 +30,17 @@ var x: () = if true then () else ();
 // CHECK:STDERR: var x2: () = if false then () else ();
 // CHECK:STDERR:              ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+12]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+12]]:23: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x2: () = if false then () else ();
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                       ^~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+8]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x2: () = if false then () else ();
-// CHECK:STDERR:              ^~~~~~~~
+// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+4]]:23: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_control_flow_init.carbon:[[@LINE+4]]:14: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var x2: () = if false then () else ();
-// CHECK:STDERR:                       ^~~~~~~
+// CHECK:STDERR:              ^~~~~~~~
 // CHECK:STDERR:
 var x2: () = if false then () else ();
 

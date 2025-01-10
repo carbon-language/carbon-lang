@@ -242,21 +242,8 @@ static auto TryHandleAsModifier(Context& context) -> bool {
   }
 }
 
-auto HandleDeclScopeLoop(Context& context) -> void {
-  // This maintains the current state unless we're at the end of the scope.
-
-  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
-      context.PositionIs(Lex::TokenKind::FileEnd)) {
-    // This is the end of the scope, so the loop state ends.
-    context.PopAndDiscardState();
-    return;
-  }
-
-  // Create a state with the correct starting position, with a dummy kind
-  // until we see the declaration's introducer.
-  Context::StateStackEntry state{.state = State::Invalid,
-                                 .token = *context.position(),
-                                 .subtree_start = context.tree().size()};
+auto HandleDecl(Context& context) -> void {
+  auto state = context.PopState();
 
   // Add a placeholder node, to be replaced by the declaration introducer once
   // it is found.
@@ -269,6 +256,18 @@ auto HandleDeclScopeLoop(Context& context) -> void {
   if (!TryHandleAsDecl(context, state, saw_modifier)) {
     HandleUnrecognizedDecl(context, state.subtree_start);
   }
+}
+
+auto HandleDeclScopeLoop(Context& context) -> void {
+  // This maintains the current state unless we're at the end of the scope.
+  if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace) ||
+      context.PositionIs(Lex::TokenKind::FileEnd)) {
+    // This is the end of the scope, so the loop state ends.
+    context.PopAndDiscardState();
+    return;
+  }
+
+  context.PushState(State::Decl);
 }
 
 }  // namespace Carbon::Parse

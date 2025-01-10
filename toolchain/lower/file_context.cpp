@@ -616,13 +616,13 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
-  auto diag_loc = converter_.ConvertLoc(
+  auto converted = converter_.ConvertLoc(
       inst_id, [&](DiagnosticLoc /*context_loc*/,
                    const DiagnosticBase<>& /*context_diagnostic_base*/) {});
-  return {.filename = diag_loc.filename,
-          .line_number = diag_loc.line_number == -1 ? 0 : diag_loc.line_number,
-          .column_number =
-              diag_loc.column_number == -1 ? 0 : diag_loc.column_number};
+  const auto& loc = converted.loc;
+  return {.filename = loc.filename,
+          .line_number = loc.line_number == -1 ? 0 : loc.line_number,
+          .column_number = loc.column_number == -1 ? 0 : loc.column_number};
 }
 
 }  // namespace Carbon::Lower

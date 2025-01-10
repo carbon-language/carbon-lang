@@ -10,6 +10,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -24,6 +25,12 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   // this.
   context.pattern_block_stack().Push();
   return true;
+}
+
+static auto IsNamespaceScope(Context& context, SemIR::NameScopeId name_scope_id)
+    -> bool {
+  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
+  return inst && inst->Is<SemIR::Namespace>();
 }
 
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
@@ -83,6 +90,11 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
         name_context.parent_scope_id);
+    if (!IsNamespaceScope(context, name_context.parent_scope_id)) {
+      CARBON_DIAGNOSTIC(NamespaceDeclNotAtTopLevel, Error,
+                        "`namespace` declaration not at top level");
+      context.emitter().Emit(node_id, NamespaceDeclNotAtTopLevel);
+    }
   }
 
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);

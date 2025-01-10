@@ -20,12 +20,13 @@
 
 namespace Carbon::Parse {
 
-Context::Context(Tree& tree, Lex::TokenizedBuffer& tokens,
-                 Lex::TokenDiagnosticEmitter& emitter,
-                 llvm::raw_ostream* vlog_stream)
-    : tree_(&tree),
-      tokens_(&tokens),
-      emitter_(&emitter),
+Context::Context(Tree* tree, Lex::TokenizedBuffer* tokens,
+                 DiagnosticConsumer* consumer, llvm::raw_ostream* vlog_stream)
+    : tree_(tree),
+      tokens_(tokens),
+      converter_(tokens, &position_),
+      err_tracker_(*consumer),
+      emitter_(converter_, err_tracker_),
       vlog_stream_(vlog_stream),
       position_(tokens_->tokens().begin()),
       end_(tokens_->tokens().end()) {
@@ -58,8 +59,8 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedParenAfter,
-                   tokens().GetKind(default_token));
+    emitter_.Emit(*position_, ExpectedParenAfter,
+                  tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
   }
@@ -79,8 +80,8 @@ auto Context::ConsumeAndAddCloseSymbol(Lex::TokenIndex expected_open,
     // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                       "unexpected tokens before `{0}`", Lex::TokenKind);
-    emitter_->Emit(*position_, ExpectedCloseSymbol,
-                   open_token_kind.closing_symbol());
+    emitter_.Emit(*position_, ExpectedCloseSymbol,
+                  open_token_kind.closing_symbol());
 
     SkipTo(tokens().GetMatchedClosingToken(expected_open));
     AddNode(close_kind, Consume(), /*has_error=*/true);
@@ -289,7 +290,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
       } else if (tokens().HasTrailingWhitespace(*position_)) {
         pos.value = -1;
       }
-      emitter_->Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
+      emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -302,14 +303,14 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
           UnaryOperatorHasWhitespace, Error,
           "whitespace is not allowed {0:after|before} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorHasWhitespace, prefix);
+      emitter_.Emit(*position_, UnaryOperatorHasWhitespace, prefix);
     } else if (IsLexicallyValidInfixOperator()) {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(
           UnaryOperatorRequiresWhitespace, Error,
           "whitespace is required {0:before|after} this unary operator",
           BoolAsSelect);
-      emitter_->Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+      emitter_.Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }
@@ -321,7 +322,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
     if (!already_has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
                         "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_->Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
+      emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
       ReturnErrorOnState();
     }
 

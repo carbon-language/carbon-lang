@@ -31,13 +31,13 @@ fn A {
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR:      ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn A => 0;
+// CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
 fn A => 0;
 

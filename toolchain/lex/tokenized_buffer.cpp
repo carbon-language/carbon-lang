@@ -376,28 +376,29 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
 }
 
 auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
-    const char* loc, ContextFnT /*context_fn*/) const -> DiagnosticLoc {
-  CARBON_CHECK(StringRefContainsPointer(buffer_->source_->text(), loc),
+    const char* loc, ContextFnT /*context_fn*/) const
+    -> ConvertedDiagnosticLoc {
+  CARBON_CHECK(StringRefContainsPointer(tokens_->source_->text(), loc),
                "location not within buffer");
-  int32_t offset = loc - buffer_->source_->text().begin();
+  int32_t offset = loc - tokens_->source_->text().begin();
 
   // Find the first line starting after the given location.
   const auto* next_line_it = llvm::partition_point(
-      buffer_->line_infos_,
+      tokens_->line_infos_,
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
-  CARBON_CHECK(next_line_it != buffer_->line_infos_.begin(),
+  CARBON_CHECK(next_line_it != tokens_->line_infos_.begin(),
                "location precedes the start of the first line");
   const auto* line_it = std::prev(next_line_it);
-  int line_number = line_it - buffer_->line_infos_.begin();
+  int line_number = line_it - tokens_->line_infos_.begin();
   int column_number = offset - line_it->start;
 
   // Grab the line from the buffer by slicing from this line to the next
   // minus the newline. When on the last line, instead use the start to the end
   // of the buffer.
-  llvm::StringRef text = buffer_->source_->text();
-  llvm::StringRef line = next_line_it != buffer_->line_infos_.end()
+  llvm::StringRef text = tokens_->source_->text();
+  llvm::StringRef line = next_line_it != tokens_->line_infos_.end()
                              ? text.slice(line_it->start, next_line_it->start)
                              : text.substr(line_it->start);
 
@@ -406,28 +407,29 @@ auto TokenizedBuffer::SourceBufferDiagnosticConverter::ConvertLoc(
   // tail of the line such as CR+LF, etc.
   line.consume_back("\n");
 
-  return {.filename = buffer_->source_->filename(),
-          .line = line,
-          .line_number = line_number + 1,
-          .column_number = column_number + 1};
+  return {.loc = {.filename = tokens_->source_->filename(),
+                  .line = line,
+                  .line_number = line_number + 1,
+                  .column_number = column_number + 1},
+          .last_byte_offset = offset};
 }
 
 auto TokenDiagnosticConverter::ConvertLoc(TokenIndex token,
                                           ContextFnT context_fn) const
-    -> DiagnosticLoc {
+    -> ConvertedDiagnosticLoc {
   // Map the token location into a position within the source buffer.
-  const auto& token_info = buffer_->GetTokenInfo(token);
+  const auto& token_info = tokens_->GetTokenInfo(token);
   const char* token_start =
-      buffer_->source_->text().begin() + token_info.byte_offset();
+      tokens_->source_->text().begin() + token_info.byte_offset();
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  DiagnosticLoc loc =
-      TokenizedBuffer::SourceBufferDiagnosticConverter(buffer_).ConvertLoc(
+  auto converted =
+      TokenizedBuffer::SourceBufferDiagnosticConverter(tokens_).ConvertLoc(
           token_start, context_fn);
-  loc.length = buffer_->GetTokenText(token).size();
-  return loc;
+  converted.loc.length = tokens_->GetTokenText(token).size();
+  return converted;
 }
 
 }  // namespace Carbon::Lex

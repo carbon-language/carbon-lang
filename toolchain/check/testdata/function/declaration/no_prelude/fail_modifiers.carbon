@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:9: error: `protected` must appear before `default` [ModifierMustAppearBefore]
+// CHECK:STDERR: default protected fn WrongOrder();
+// CHECK:STDERR:         ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `default` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `protected` must appear before `default` [ModifierMustAppearBefore]
-// CHECK:STDERR: default protected fn WrongOrder();
-// CHECK:STDERR:         ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
 // CHECK:STDERR: default protected fn WrongOrder();
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 default protected fn WrongOrder();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `virtual` not allowed; requires class scope [ModifierRequiresClass]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:9: error: `virtual` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
+// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `virtual` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:9: error: `virtual` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
-// CHECK:STDERR:         ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `virtual` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `virtual` not allowed; requires class scope [ModifierRequiresClass]
 // CHECK:STDERR: virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
@@ -43,14 +43,14 @@ virtual virtual fn DuplicateVirtual() {}
 // CHECK:STDERR:
 private protected fn TwoAccess();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `abstract` not allowed; requires class scope [ModifierRequiresClass]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:10: error: `virtual` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
+// CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
+// CHECK:STDERR:          ^~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:10: error: `virtual` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
-// CHECK:STDERR:          ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed; requires class scope [ModifierRequiresClass]
 // CHECK:STDERR: abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
@@ -62,21 +62,21 @@ abstract virtual fn ModifiersConflict() {}
 // CHECK:STDERR:
 base fn InvalidModifier();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
-// CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:9: error: `final` not allowed on declaration with `default` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:9: error: `final` not allowed on declaration with `default` [ModifierNotAllowedWith]
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: note: `default` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:15: error: `virtual` not allowed on declaration with `default` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:15: error: `virtual` not allowed on declaration with `default` [ModifierNotAllowedWith]
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
+// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
 // CHECK:STDERR: default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
