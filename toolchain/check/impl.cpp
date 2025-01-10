@@ -315,7 +315,8 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   }
 
   // For each non-function associated constant, update witness entry.
-  for (auto [index, decl_id] : llvm::enumerate(assoc_entities)) {
+  for (auto index : llvm::seq(assoc_entities.size())) {
+    auto decl_id = assoc_entities[index];
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_type->specific_id, decl_id));

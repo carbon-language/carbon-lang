@@ -479,7 +479,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.43 [template] {} {
+// CHECK:STDOUT:   impl_decl @impl.44 [template] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
@@ -537,7 +537,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:   witness = (%N, %F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.43: %.loc14_7.2 as %.loc14_14 {
+// CHECK:STDOUT: impl @impl.44: %.loc14_7.2 as %.loc14_14 {
 // CHECK:STDOUT:   %F.decl: %F.type.936 = fn_decl @F.2 [template = constants.%F.6b2] {
 // CHECK:STDOUT:     %self.patt: %empty_tuple.type = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %empty_tuple.type = value_param_pattern %self.patt, runtime_param0
@@ -550,7 +550,7 @@ impl () as I where .N = 2 {
 // CHECK:STDOUT:     %.loc15_26.2: type = converted %bool.make_type, %.loc15_26.1 [template = bool]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, bool [template = constants.%array_type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param runtime_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.43.%.loc14_7.2 [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.44.%.loc14_7.2 [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %array_type = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
