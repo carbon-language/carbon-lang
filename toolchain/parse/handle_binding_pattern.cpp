@@ -52,8 +52,7 @@ auto HandleBindingPattern(Context& context) -> void {
   if (!has_name) {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
-                        *context.position(),
-                        /*has_error=*/true);
+                        *context.position(), /*has_error=*/true);
     on_error(/*expected_name=*/true);
   }
 

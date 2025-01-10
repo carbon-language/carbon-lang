@@ -189,8 +189,7 @@ auto HandleExprInPostfix(Context& context) -> void {
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
           context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
-                              context.Consume(),
-                              /*has_error=*/true);
+                              context.Consume(), /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
           context.AddInvalidParse(context.Consume());
         } else {
