@@ -376,7 +376,6 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      // TODO: Exclude the decl block of a declaration.
       AddWithKind(inst.arg0(), arg0_kind);
       AddWithKind(inst.arg1(), arg1_kind);
 
