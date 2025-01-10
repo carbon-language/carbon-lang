@@ -183,44 +183,13 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
     return SemIR::ErrorInst::SingletonInstId;
   }
 
-  llvm::SmallVector<SemIR::InstId> table;
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
-  table.reserve(assoc_entities.size());
-
+  llvm::SmallVector<SemIR::InstId> table(assoc_entities.size(),
+                                         SemIR::InstId::Invalid);
   for (auto decl_id : assoc_entities) {
     LoadImportRef(context, decl_id);
-    decl_id =
-        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
-            context.sem_ir(), interface_type->specific_id, decl_id));
-    CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
-    auto decl = context.insts().Get(decl_id);
-    CARBON_KIND_SWITCH(decl) {
-      case CARBON_KIND(SemIR::StructValue struct_value): {
-        if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
-          table.push_back(SemIR::ErrorInst::SingletonInstId);
-          break;
-        }
-        auto type_inst = context.types().GetAsInst(struct_value.type_id);
-        auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
-        if (!fn_type) {
-          CARBON_FATAL("Unexpected type: {0}", type_inst);
-        }
-        table.push_back(SemIR::InstId::Invalid);
-        break;
-      }
-      case SemIR::AssociatedConstantDecl::Kind: {
-        table.push_back(SemIR::InstId::Invalid);
-        break;
-      }
-      default:
-        CARBON_CHECK(decl_id == SemIR::ErrorInst::SingletonInstId,
-                     "Unexpected kind of associated entity {0}", decl);
-        table.push_back(SemIR::ErrorInst::SingletonInstId);
-        break;
-    }
   }
-  CARBON_CHECK(table.size() == assoc_entities.size());
 
   auto table_id = context.inst_blocks().Add(table);
   return context.AddInst<SemIR::ImplWitness>(
@@ -456,17 +425,21 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::SingletonTypeId) {
+          witness_block[index] = SemIR::ErrorInst::SingletonInstId;
           break;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
-        auto fn_type = type_inst.As<SemIR::FunctionType>();
-        auto& fn = context.functions().Get(fn_type.function_id);
+        auto fn_type = type_inst.TryAs<SemIR::FunctionType>();
+        if (!fn_type) {
+          CARBON_FATAL("Unexpected type: {0}", type_inst);
+        }
+        auto& fn = context.functions().Get(fn_type->function_id);
         auto [impl_decl_id, _, is_poisoned] = context.LookupNameInExactScope(
             decl_id, fn.name_id, impl.scope_id, impl_scope);
         if (impl_decl_id.is_valid()) {
           used_decl_ids.push_back(impl_decl_id);
           witness_block[index] = CheckAssociatedFunctionImplementation(
-              context, fn_type, impl_decl_id, self_type_id, impl.witness_id);
+              context, *fn_type, impl_decl_id, self_type_id, impl.witness_id);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -475,7 +448,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
           auto builder =
               context.emitter().Build(impl.definition_id, ImplMissingFunction,
                                       fn.name_id, interface.name_id);
-          NoteAssociatedFunction(context, builder, fn_type.function_id);
+          NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 
           witness_block[index] = SemIR::ErrorInst::SingletonInstId;
@@ -489,7 +462,7 @@ auto FinishImplWitness(Context& context, SemIR::Impl& impl) -> void {
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::SingletonInstId,
                      "Unexpected kind of associated entity {0}", decl);
-        // These are set to their final values already.
+        witness_block[index] = SemIR::ErrorInst::SingletonInstId;
         break;
     }
   }
