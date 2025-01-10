@@ -240,7 +240,7 @@ static auto WitnessAccessMatchesInterface(
   auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
   auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
   auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
-  auto facet_info = context.facet_types().Get(facet_type.facet_type_id);
+  const auto& facet_info = context.facet_types().Get(facet_type.facet_type_id);
   if (auto impls = facet_info.TryAsSingleInterface()) {
     return *impls == interface;
   }
@@ -315,8 +315,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
   }
 
   // For each non-function associated constant, update witness entry.
-  for (auto index : llvm::seq(assoc_entities.size())) {
-    auto decl_id = assoc_entities[index];
+  for (auto [index, decl_id] : llvm::enumerate(assoc_entities)) {
     decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_type->specific_id, decl_id));
