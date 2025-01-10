@@ -233,17 +233,16 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
 }
 
 // Returns `true` if the `FacetAccessWitness` of `witness_id` matches
-// `interface_id`.
-static auto WitnessAccessMatchesInterface(Context& context,
-                                          SemIR::InstId witness_id,
-                                          SemIR::InterfaceId interface_id)
-    -> bool {
+// `interface`.
+static auto WitnessAccessMatchesInterface(
+    Context& context, SemIR::InstId witness_id,
+    SemIR::FacetTypeInfo::ImplsConstraint interface) -> bool {
   auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
   auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
   auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
   auto facet_info = context.facet_types().Get(facet_type.facet_type_id);
   if (auto impls = facet_info.TryAsSingleInterface()) {
-    return impls->interface_id == interface_id;
+    return *impls == interface;
   }
   return false;
 }
@@ -283,7 +282,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
     auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
     auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
     if (!WitnessAccessMatchesInterface(context, access.witness_id,
-                                       interface_type->interface_id)) {
+                                       *interface_type)) {
       // Skip rewrite constraints that apply to associated constants of
       // a different interface than the one being implemented.
       continue;
