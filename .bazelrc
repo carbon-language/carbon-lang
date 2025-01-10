@@ -163,10 +163,6 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_check_visibility_for_toolchains
 
-# Incompatible with `tcmalloc`.
-# TODO: Fix `bazel build -c opt //...`.
-# common --incompatible_config_setting_private_default_visibility
-
 # Enable as many incompatible flags as we can, per
 # https://bazel.build/release/backward-compatibility. To get the latest list,
 # using `bazelisk --migrate build //...` will help.
@@ -176,6 +172,7 @@ common --incompatible_always_include_files_in_data
 common --incompatible_bazel_test_exec_run_under
 common --incompatible_check_sharding_support
 common --incompatible_check_testonly_for_output_files
+common --incompatible_config_setting_private_default_visibility
 common --incompatible_default_to_explicit_init_py
 common --incompatible_depset_for_java_output_source_jars
 common --incompatible_depset_for_libraries_to_link_getter

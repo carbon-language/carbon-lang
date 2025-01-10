@@ -1527,13 +1527,15 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context, inst,
           [&](SemIR::ArrayType result) {
             auto bound_id = array_type.bound_id;
-            auto int_bound =
-                eval_context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
+            auto bound_inst = eval_context.insts().Get(result.bound_id);
+            auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
             if (!int_bound) {
-              // TODO: Permit symbolic array bounds. This will require fixing
-              // callers of `GetArrayBoundValue`.
-              eval_context.context().TODO(bound_id, "symbolic array bound");
-              return false;
+              CARBON_CHECK(eval_context.constant_values()
+                               .Get(result.bound_id)
+                               .is_symbolic(),
+                           "Unexpected inst {0} for template constant int",
+                           bound_inst);
+              return true;
             }
             // TODO: We should check that the size of the resulting array type
             // fits in 64 bits, not just that the bound does. Should we use a

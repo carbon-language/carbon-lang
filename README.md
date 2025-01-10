@@ -368,14 +368,17 @@ Carbon focused talks from the community:
     Meeting ([video](https://youtu.be/j0BL52NdjAU),
     [slides](https://chandlerc.blog/slides/2024-llvm-generic-implementation/#/))
 -   The Carbon Language: Road to 0.1, NDC {TechTown}
-    ([slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
+    ([video](https://youtu.be/bBvLmDJrzvI),
+    [slides](https://chandlerc.blog/slides/2024-ndc-techtown-carbon-road-to-0-dot-1))
 -   How designing Carbon with C++ interop taught me about C++ variadics and
     overloads, CppNorth ([video](https://youtu.be/8SGMy9ENGz8),
     [slides](https://chandlerc.blog/slides/2024-cppnorth-design-stories))
 -   Generic Arity: Definition-Checked Variadics in Carbon, C++Now
-    ([video](https://youtu.be/Y_px536l_80))
+    ([video](https://youtu.be/Y_px536l_80),
+    [slides](https://docs.google.com/presentation/d/10aM1mFMN6Cd5ZkE4OfeiZtSnkVNbo33N-V0et21umww/edit))
 -   Carbon: An experiment in different tradeoffs, panel session, EuroLLVM
-    ([video](https://youtu.be/Za_KWj5RMR8))
+    ([video](https://youtu.be/Za_KWj5RMR8),
+    [slides](https://llvm.org/devmtg/2024-04/slides/LightningTalks/Smith-Carbons-high-level-semanticIR.pdf))
     -   [Alex Bradbury's notes](https://muxup.com/2024q2/notes-from-the-carbon-panel-session-at-eurollvm)
 -   Carbon's high-level semantic IR lightning talk, EuroLLVM
     ([video](https://youtu.be/vIWT4RhUcyw))
@@ -397,9 +400,11 @@ Carbon focused talks from the community:
 ### 2022
 
 -   Carbon Language: Syntax and trade-offs, Core C++
-    ([video](https://youtu.be/9Y2ivB8VaIs))
+    ([video](https://youtu.be/9Y2ivB8VaIs),
+    [slides](https://docs.google.com/presentation/d/1znvL12xCuEfcsP6tpPdrQPnh-UoPFOLnC_RVXZteYaM/edit))
 -   Carbon Language: An experimental successor to C++, CppNorth
-    ([video](https://youtu.be/omrY53kbVoA))
+    ([video](https://youtu.be/omrY53kbVoA),
+    [slides](https://chandlerc.blog/slides/2022-07-19-cppnorth-keynote/#/))
 
 ## Join us
 

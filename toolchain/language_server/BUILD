@@ -25,7 +25,6 @@ cc_library(
     hdrs = ["context.h"],
     deps = [
         "//common:map",
-        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
 
@@ -42,6 +41,7 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
         "//toolchain/source:source_buffer",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
 

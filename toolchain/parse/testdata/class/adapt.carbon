@@ -60,17 +60,13 @@ class C {
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+3]]:9: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   adapt class;
   // CHECK:STDERR:         ^~~~~
-  // CHECK:STDERR:
   adapt class;
 }
 
 fn F() {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+3]]:3: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   adapt i32;
-  // CHECK:STDERR:   ^~~~~
   adapt i32;
 }
 
@@ -168,8 +164,9 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'adapt', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
+// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
+// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

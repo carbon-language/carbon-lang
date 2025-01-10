@@ -156,6 +156,12 @@ auto HandleExprInPostfix(Context& context) -> void {
     }
     case Lex::TokenKind::Package: {
       context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
+      if (context.PositionKind() != Lex::TokenKind::Period) {
+        CARBON_DIAGNOSTIC(ExpectedPeriodAfterPackage, Error,
+                          "expected `.` after `package` expression");
+        context.emitter().Emit(*context.position(), ExpectedPeriodAfterPackage);
+        state.has_error = true;
+      }
       context.PushState(state);
       break;
     }

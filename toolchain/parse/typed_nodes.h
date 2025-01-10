@@ -124,8 +124,8 @@ using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 // ---------------------
 
 // An empty declaration, such as `;`.
-using EmptyDecl = LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex,
-                           NodeCategory::Decl | NodeCategory::Statement>;
+using EmptyDecl =
+    LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to be followed by parameters.
@@ -436,8 +436,7 @@ using AliasInitializer =
 // An `alias` declaration: `alias a = b;`.
 struct Alias {
   static constexpr auto Kind = NodeKind::Alias.Define(
-      {.category = NodeCategory::Decl | NodeCategory::Statement,
-       .bracketed_by = AliasIntroducer::Kind});
+      {.category = NodeCategory::Decl, .bracketed_by = AliasIntroducer::Kind});
 
   AliasIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -456,8 +455,7 @@ using LetInitializer = LeafNode<NodeKind::LetInitializer, Lex::EqualTokenIndex>;
 // A `let` declaration: `let a: i32 = 5;`.
 struct LetDecl {
   static constexpr auto Kind = NodeKind::LetDecl.Define(
-      {.category = NodeCategory::Decl | NodeCategory::Statement,
-       .bracketed_by = LetIntroducer::Kind});
+      {.category = NodeCategory::Decl, .bracketed_by = LetIntroducer::Kind});
 
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
@@ -483,9 +481,9 @@ using VariableInitializer =
 
 // A `var` declaration: `var a: i32;` or `var a: i32 = 5;`.
 struct VariableDecl {
-  static constexpr auto Kind = NodeKind::VariableDecl.Define(
-      {.category = NodeCategory::Decl | NodeCategory::Statement,
-       .bracketed_by = VariableIntroducer::Kind});
+  static constexpr auto Kind =
+      NodeKind::VariableDecl.Define({.category = NodeCategory::Decl,
+                                     .bracketed_by = VariableIntroducer::Kind});
 
   VariableIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
