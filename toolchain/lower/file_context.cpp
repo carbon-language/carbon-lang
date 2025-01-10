@@ -619,7 +619,7 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> LocForDI {
   auto converted = converter_.ConvertLoc(
       inst_id, [&](DiagnosticLoc /*context_loc*/,
                    const DiagnosticBase<>& /*context_diagnostic_base*/) {});
-  auto& loc = converted.loc;
+  const auto& loc = converted.loc;
   return {.filename = loc.filename,
           .line_number = loc.line_number == -1 ? 0 : loc.line_number,
           .column_number = loc.column_number == -1 ? 0 : loc.column_number};
