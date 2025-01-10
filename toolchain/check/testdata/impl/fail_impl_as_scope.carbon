@@ -19,6 +19,12 @@ impl as Simple {
   fn F() {}
 }
 
+fn Function() {
+  impl as Simple {
+    fn F() {}
+  }
+}
+
 // CHECK:STDOUT: --- fail_impl_as_scope.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
