@@ -7,7 +7,6 @@
 
 #include "common/array_stack.h"
 #include "common/check.h"
-#include "common/set.h"
 #include "toolchain/check/lexical_lookup.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -76,7 +75,6 @@ class FullPatternStack {
     SemIR::InstId inst_id;
   };
   ArrayStack<LookupEntry> bind_name_stack_;
-  Set<SemIR::InstId> unusable_bind_names_;
 };
 
 }  // namespace Carbon::Check
