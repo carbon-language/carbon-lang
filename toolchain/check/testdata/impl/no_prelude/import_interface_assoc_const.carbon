@@ -52,8 +52,8 @@ impl {.d: ()} as I where .T = {};
 // CHECK:STDERR: impl {.d: ()} as I where .T = () { }
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mismatch.carbon:[[@LINE-4]]:1: note: impl previously declared here [ImplPreviousDeclHere]
-// CHECK:STDERR: impl {.d: ()} as I where .T = { };
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl {.d: ()} as I where .T = {};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl {.d: ()} as I where .T = () { }
 
@@ -477,10 +477,10 @@ impl {.l: ()} as NonType where .Y = {.a = {}} { }
 // CHECK:STDOUT:     %T.ref.loc4: %assoc_type = name_ref T, imports.%import_ref.15c [template = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_wit.loc4: <witness> = facet_access_witness %.Self.ref.loc4 [symbolic = constants.%.Self.as_wit]
 // CHECK:STDOUT:     %impl.elem0.loc4: type = impl_witness_access %.Self.as_wit.loc4, element0 [symbolic = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc4_33.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc4_33.2: type = converted %.loc4_33.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc4_32.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc4_32.2: type = converted %.loc4_32.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc4_20: type = where_expr %.Self.1 [template = constants.%I_where.type.f5a] {
-// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc4, %.loc4_33.2
+// CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc4, %.loc4_32.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (constants.%empty_struct_type) [template = constants.%impl_witness]
