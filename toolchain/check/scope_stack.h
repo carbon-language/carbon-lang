@@ -111,9 +111,10 @@ class ScopeStack {
   // is already a `returned var`, returns it instead.
   auto SetReturnedVarOrGetExisting(SemIR::InstId inst_id) -> SemIR::InstId;
 
-  // Looks up the name `name_id` in the current scope. Returns the existing
-  // lookup result, if any.
-  auto LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId;
+  // Looks up the name `name_id` in the current scope and enclosing scopes, but
+  // do not look past `scope_index`. Returns the existing lookup result, if any.
+  auto LookupInLexicalScopesWithin(SemIR::NameId name_id,
+                                   ScopeIndex scope_index) -> SemIR::InstId;
 
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
@@ -122,10 +123,12 @@ class ScopeStack {
   auto LookupInLexicalScopes(SemIR::NameId name_id)
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
-  // Looks up the name `name_id` in the current scope. Returns the existing
-  // instruction if any, and otherwise adds the name with the value `target_id`
-  // and returns Invalid.
-  auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
+  // Looks up the name `name_id` in the current scope, or in `scope_index` if
+  // specified. Returns the existing instruction if the name is already declared
+  // in that scope or any unfinished scope within it, and otherwise adds the
+  // name with the value `target_id` and returns Invalid.
+  auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
+                       ScopeIndex scope_index = ScopeIndex::Invalid)
       -> SemIR::InstId;
 
   // Prepares to add a compile-time binding in the current scope, and returns

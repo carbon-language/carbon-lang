@@ -14,10 +14,6 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
   namespace N;
-  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE+4]]:6: error: name `N` not found [NameNotFound]
-  // CHECK:STDERR:   fn N.F() {}
-  // CHECK:STDERR:      ^
-  // CHECK:STDERR:
   fn N.F() {}
 }
 
@@ -43,10 +39,10 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.3ad: %.type = struct_value () [template]
+// CHECK:STDOUT:   %F.type.bee: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.39e: %F.type.bee = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type.1cc: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.type.1cc: type = fn_type @F.3 [template]
 // CHECK:STDOUT:   %F.f49: %F.type.1cc = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
@@ -93,7 +89,7 @@ interface I {
 // CHECK:STDOUT:   %N: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.1cc = fn_decl @F.2 [template = constants.%F.f49] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1cc = fn_decl @F.3 [template = constants.%F.f49] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -104,17 +100,19 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %N: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.3ad] {} {}
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @.1() {
-// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %N: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type.bee = fn_decl @F.2 [template = constants.%F.39e] {} {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F.3() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
