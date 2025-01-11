@@ -78,15 +78,15 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %Interface.type, %G.type [template]
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, @Interface.%G.decl [template]
-// CHECK:STDOUT:   %.type.067ccc.1: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c3ab6d.1: %.type.067ccc.1 = struct_value () [template]
-// CHECK:STDOUT:   %.type.067ccc.2: type = fn_type @.2 [template]
-// CHECK:STDOUT:   %.c3ab6d.2: %.type.067ccc.2 = struct_value () [template]
+// CHECK:STDOUT:   %.type.136624.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.563abc.1: %.type.136624.1 = struct_value () [template]
+// CHECK:STDOUT:   %.type.136624.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.563abc.2: %.type.136624.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -99,8 +99,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %.decl.loc23: %.type.067ccc.1 = fn_decl @.1 [template = constants.%.c3ab6d.1] {} {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.067ccc.2 = fn_decl @.2 [template = constants.%.c3ab6d.2] {
+// CHECK:STDOUT:   %.decl.loc23: %.type.136624.1 = fn_decl @.1 [template = constants.%.563abc.1] {} {}
+// CHECK:STDOUT:   %.decl.loc31: %.type.136624.2 = fn_decl @.2 [template = constants.%.563abc.2] {
 // CHECK:STDOUT:     %a.patt: %i32 = binding_pattern a
 // CHECK:STDOUT:     %a.param_patt: %i32 = value_param_pattern %a.patt, runtime_param0
 // CHECK:STDOUT:     %b.patt: %i32 = binding_pattern b
@@ -203,16 +203,16 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [template]
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %C.541: type = class_type @C [template]
-// CHECK:STDOUT:   %C.f73: type = class_type @C, @C(%Self) [symbolic]
+// CHECK:STDOUT:   %C.1ea: type = class_type @C [template]
+// CHECK:STDOUT:   %C.7e5: type = class_type @C, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%Self) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %require_complete.427: <witness> = require_complete_type %U [symbolic]
-// CHECK:STDOUT:   %require_complete.bb9: <witness> = require_complete_type %C.f73 [symbolic]
+// CHECK:STDOUT:   %require_complete.b54: <witness> = require_complete_type %U [symbolic]
+// CHECK:STDOUT:   %require_complete.e44: <witness> = require_complete_type %C.7e5 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -230,8 +230,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [template = constants.%Interface.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [symbolic = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %C.f73 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %C.f73 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: %C.7e5 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %C.7e5 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt]
 // CHECK:STDOUT:     %U.param_patt: type = value_param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt]
 // CHECK:STDOUT:     %u.patt: %U = binding_pattern u
@@ -240,12 +240,12 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %return.param_patt: %U = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc20_49: type = name_ref U, %U.loc20 [symbolic = constants.%U]
-// CHECK:STDOUT:     %self.param.loc20: %C.f73 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc20_24.1: type = splice_block %Self.ref.loc20 [symbolic = constants.%C.f73] {
-// CHECK:STDOUT:       %.loc20_24.2: type = specific_constant constants.%C.f73, @C(constants.%Self) [symbolic = constants.%C.f73]
-// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24.2 [symbolic = constants.%C.f73]
+// CHECK:STDOUT:     %self.param.loc20: %C.7e5 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc20_24.1: type = splice_block %Self.ref.loc20 [symbolic = constants.%C.7e5] {
+// CHECK:STDOUT:       %.loc20_24.2: type = specific_constant constants.%C.7e5, @C(constants.%Self) [symbolic = constants.%C.7e5]
+// CHECK:STDOUT:       %Self.ref.loc20: type = name_ref Self, %.loc20_24.2 [symbolic = constants.%C.7e5]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc20: %C.f73 = bind_name self, %self.param.loc20
+// CHECK:STDOUT:     %self.loc20: %C.7e5 = bind_name self, %self.param.loc20
 // CHECK:STDOUT:     %U.param.loc20: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %U.loc20: type = bind_symbolic_name U, 1, %U.param.loc20 [symbolic = constants.%U]
 // CHECK:STDOUT:     %u.param.loc20: %U = value_param runtime_param1
@@ -258,7 +258,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.541] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C.1ea] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -274,8 +274,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {
-// CHECK:STDOUT:       %self.patt: %C.f73 = binding_pattern self
-// CHECK:STDOUT:       %self.param_patt: %C.f73 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:       %self.patt: %C.7e5 = binding_pattern self
+// CHECK:STDOUT:       %self.param_patt: %C.7e5 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:       %U.patt.loc20: type = symbolic_binding_pattern U, 1 [symbolic = constants.%U.patt]
 // CHECK:STDOUT:       %U.param_patt: type = value_param_pattern %U.patt.loc20, runtime_param<invalid> [symbolic = constants.%U.patt]
 // CHECK:STDOUT:       %u.patt: %U = binding_pattern u
@@ -284,12 +284,12 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:       %return.param_patt: %U = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref.loc14_41: type = name_ref U, %U.loc14_22.2 [symbolic = %U.loc14_22.1 (constants.%U)]
-// CHECK:STDOUT:       %self.param.loc14: @F.%C (%C.f73) = value_param runtime_param0
-// CHECK:STDOUT:       %.loc14_16.1: type = splice_block %Self.ref.loc14 [symbolic = %C (constants.%C.f73)] {
-// CHECK:STDOUT:         %.loc14_16.2: type = specific_constant constants.%C.f73, @C(constants.%Self) [symbolic = %C (constants.%C.f73)]
-// CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.2 [symbolic = %C (constants.%C.f73)]
+// CHECK:STDOUT:       %self.param.loc14: @F.%C (%C.7e5) = value_param runtime_param0
+// CHECK:STDOUT:       %.loc14_16.1: type = splice_block %Self.ref.loc14 [symbolic = %C (constants.%C.7e5)] {
+// CHECK:STDOUT:         %.loc14_16.2: type = specific_constant constants.%C.7e5, @C(constants.%Self) [symbolic = %C (constants.%C.7e5)]
+// CHECK:STDOUT:         %Self.ref.loc14: type = name_ref Self, %.loc14_16.2 [symbolic = %C (constants.%C.7e5)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self.loc14: @F.%C (%C.f73) = bind_name self, %self.param.loc14
+// CHECK:STDOUT:       %self.loc14: @F.%C (%C.7e5) = bind_name self, %self.param.loc14
 // CHECK:STDOUT:       %U.param.loc14: type = value_param runtime_param<invalid>
 // CHECK:STDOUT:       %U.loc14_22.2: type = bind_symbolic_name U, 1, %U.param.loc14 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:       %u.param.loc14: @F.%U.loc14_22.1 (%U) = value_param runtime_param1
@@ -301,7 +301,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.f73
+// CHECK:STDOUT:     .Self = constants.%C.7e5
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
@@ -309,15 +309,15 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type, %U.loc14_22.2: type) {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.f73)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C.7e5)]
 // CHECK:STDOUT:   %U.loc14_22.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc14_22.1 (constants.%U)]
 // CHECK:STDOUT:   %U.patt.loc14: type = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc14 (constants.%U.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.427)]
-// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.f73) [symbolic = %require_complete.loc20_22 (constants.%require_complete.bb9)]
+// CHECK:STDOUT:   %require_complete.loc20_46: <witness> = require_complete_type @F.%U.loc14_22.1 (%U) [symbolic = %require_complete.loc20_46 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type @F.%C (%C.7e5) [symbolic = %require_complete.loc20_22 (constants.%require_complete.e44)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn[%self.param_patt: %C.f73](%U.param_patt: type, %u.param_patt: %U) -> %U {
+// CHECK:STDOUT:   fn[%self.param_patt: %C.7e5](%U.param_patt: type, %u.param_patt: %U) -> %U {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %u.ref: @F.%U.loc14_22.1 (%U) = name_ref u, %u.loc20
 // CHECK:STDOUT:     return %u.ref
@@ -333,7 +333,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self, constants.%U) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %C => constants.%C.f73
+// CHECK:STDOUT:   %C => constants.%C.7e5
 // CHECK:STDOUT:   %U.loc14_22.1 => constants.%U
 // CHECK:STDOUT:   %U.patt.loc14 => constants.%U
 // CHECK:STDOUT: }

@@ -17,7 +17,7 @@ var n: i8 = F(i8 *, 0);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'n'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'n'},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i8'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},

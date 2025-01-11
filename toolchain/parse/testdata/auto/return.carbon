@@ -16,7 +16,7 @@ fn f() -> auto {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'f'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'f'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'AutoTypeLiteral', text: 'auto'},

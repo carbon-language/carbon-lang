@@ -19,17 +19,17 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %array_type.b8e: type = array_type %int_1.5b8, %i32 [template]
+// CHECK:STDOUT:   %array_type.0cb: type = array_type %int_1.5b8, %i32 [template]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [template]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [template]
-// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.c60: %i32 = int_value 1 [template]
-// CHECK:STDOUT:   %array.0e3: %array_type.b8e = tuple_value (%int_1.c60) [template]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %array.237: %array_type.0cb = tuple_value (%int_1.5d2) [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %array_type.ce7: type = array_type %int_2, f64 [template]
 // CHECK:STDOUT:   %float.6e4: f64 = float_literal 11.100000000000001 [template]
@@ -47,9 +47,9 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
-// CHECK:STDOUT:     .Float = %import_ref.20bd
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
+// CHECK:STDOUT:     .Float = %import_ref.1d6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -63,8 +63,8 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %a.var: ref %array_type.b8e = var a
-// CHECK:STDOUT:   %a: ref %array_type.b8e = bind_name a, %a.var
+// CHECK:STDOUT:   %a.var: ref %array_type.0cb = var a
+// CHECK:STDOUT:   %a: ref %array_type.0cb = bind_name a, %a.var
 // CHECK:STDOUT:   %b.var: ref %array_type.ce7 = var b
 // CHECK:STDOUT:   %b: ref %array_type.ce7 = bind_name b, %b.var
 // CHECK:STDOUT:   %c.var: ref %array_type.c13 = var c
@@ -75,16 +75,16 @@ var c: [(); 5] = ((), (), (), (), (),);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc11_22.1: %tuple.type.985 = tuple_literal (%int_1.loc11)
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.loc11, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1.loc11) [template = constants.%int_1.c60]
-// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_1.loc11, %int.convert_checked [template = constants.%int_1.c60]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1.loc11) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_22.2: init %i32 = converted %int_1.loc11, %int.convert_checked [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %int_0.loc11: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_22.3: ref %i32 = array_index file.%a.var, %int_0.loc11
-// CHECK:STDOUT:   %.loc11_22.4: init %i32 = initialize_from %.loc11_22.2 to %.loc11_22.3 [template = constants.%int_1.c60]
-// CHECK:STDOUT:   %.loc11_22.5: init %array_type.b8e = array_init (%.loc11_22.4) to file.%a.var [template = constants.%array.0e3]
-// CHECK:STDOUT:   %.loc11_23: init %array_type.b8e = converted %.loc11_22.1, %.loc11_22.5 [template = constants.%array.0e3]
+// CHECK:STDOUT:   %.loc11_22.4: init %i32 = initialize_from %.loc11_22.2 to %.loc11_22.3 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_22.5: init %array_type.0cb = array_init (%.loc11_22.4) to file.%a.var [template = constants.%array.237]
+// CHECK:STDOUT:   %.loc11_23: init %array_type.0cb = converted %.loc11_22.1, %.loc11_22.5 [template = constants.%array.237]
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_23
 // CHECK:STDOUT:   %float.loc12_20: f64 = float_literal 11.100000000000001 [template = constants.%float.6e4]
 // CHECK:STDOUT:   %float.loc12_26: f64 = float_literal 2.2000000000000002 [template = constants.%float.9f7]

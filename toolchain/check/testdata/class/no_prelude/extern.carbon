@@ -495,12 +495,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -508,12 +508,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//decl, C, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -521,12 +521,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -534,12 +534,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -547,12 +547,12 @@ extern class C;
 // CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//extern_decl, C, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//extern_decl, C, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }

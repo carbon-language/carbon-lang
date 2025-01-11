@@ -82,11 +82,11 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//a, C, unloaded
-// CHECK:STDOUT:   %import_ref.18d: type = import_ref Main//a, a, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.a36: type = import_ref Main//a, b, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.3a1: type = import_ref Main//a, c, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.dd9: type = import_ref Main//a, d, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//a, C, unloaded
+// CHECK:STDOUT:   %import_ref.e38: type = import_ref Main//a, a, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.fb0: type = import_ref Main//a, b, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.610: type = import_ref Main//a, c, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.14f: type = import_ref Main//a, d, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.146: <witness> = import_ref Main//a, loc4_22, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//a, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.f99: %C.elem = import_ref Main//a, loc4_16, loaded [template = %.2fc]
@@ -94,11 +94,11 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
-// CHECK:STDOUT:     .a = imports.%import_ref.18d
-// CHECK:STDOUT:     .b = imports.%import_ref.a36
-// CHECK:STDOUT:     .c = imports.%import_ref.3a1
-// CHECK:STDOUT:     .d = imports.%import_ref.dd9
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .a = imports.%import_ref.e38
+// CHECK:STDOUT:     .b = imports.%import_ref.fb0
+// CHECK:STDOUT:     .c = imports.%import_ref.610
+// CHECK:STDOUT:     .d = imports.%import_ref.14f
 // CHECK:STDOUT:     .d_val = %d_val
 // CHECK:STDOUT:     .c_val = %c_val
 // CHECK:STDOUT:     .b_val = %b_val

@@ -37,9 +37,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Float = %import_ref.20bd
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Float = %import_ref.1d6
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

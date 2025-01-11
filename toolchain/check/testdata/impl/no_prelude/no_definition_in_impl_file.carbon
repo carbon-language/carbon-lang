@@ -140,39 +140,39 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.68d: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [template = constants.%A.type]
-// CHECK:STDOUT:   %import_ref.b09 = import_ref Main//decl_in_api_definition_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.14d: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.b61 = import_ref Main//decl_in_api_definition_in_impl, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e5c: type = import_ref Main//decl_in_api_definition_in_impl, loc10_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.1f0: type = import_ref Main//decl_in_api_definition_in_impl, loc10_12, loaded [template = constants.%A.type]
+// CHECK:STDOUT:   %import_ref.831: type = import_ref Main//decl_in_api_definition_in_impl, loc10_12, loaded [template = constants.%A.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.68d
+// CHECK:STDOUT:     .A = imports.%import_ref.14d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.68d [template = constants.%A.type]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.14d [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT:   impl_decl @impl.3 [template] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.68d [template = constants.%A.type]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%import_ref.14d [template = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness.loc14: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.b09
+// CHECK:STDOUT:   .Self = imports.%import_ref.b61
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.e5c as imports.%import_ref.1f0 [from "fail_decl_in_api_definition_in_impl.carbon"];
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.e5c as imports.%import_ref.831 [from "fail_decl_in_api_definition_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc8_7.2 as %A.ref;
 // CHECK:STDOUT:
@@ -241,15 +241,15 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.dcd = import_ref Main//decl_only_in_api, B, unloaded
-// CHECK:STDOUT:   %import_ref.a54 = import_ref Main//decl_only_in_api, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.8b9 = import_ref Main//decl_only_in_api, B, unloaded
+// CHECK:STDOUT:   %import_ref.420 = import_ref Main//decl_only_in_api, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e5c: type = import_ref Main//decl_only_in_api, loc10_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.cc5: type = import_ref Main//decl_only_in_api, loc10_12, loaded [template = constants.%B.type]
+// CHECK:STDOUT:   %import_ref.171: type = import_ref Main//decl_only_in_api, loc10_12, loaded [template = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .B = imports.%import_ref.dcd
+// CHECK:STDOUT:     .B = imports.%import_ref.8b9
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -257,11 +257,11 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_decl_only_in_api.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.a54
+// CHECK:STDOUT:   .Self = imports.%import_ref.420
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%import_ref.e5c as imports.%import_ref.cc5 [from "fail_decl_only_in_api.carbon"];
+// CHECK:STDOUT: impl @impl: imports.%import_ref.e5c as imports.%import_ref.171 [from "fail_decl_only_in_api.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon
 // CHECK:STDOUT:
@@ -304,33 +304,33 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.832: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [template = constants.%C.type]
-// CHECK:STDOUT:   %import_ref.c73 = import_ref Main//decl_in_api_decl_in_impl, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.6be: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.721 = import_ref Main//decl_in_api_decl_in_impl, inst15 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e5c: type = import_ref Main//decl_in_api_decl_in_impl, loc10_7, loaded [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %import_ref.677: type = import_ref Main//decl_in_api_decl_in_impl, loc10_12, loaded [template = constants.%C.type]
+// CHECK:STDOUT:   %import_ref.653: type = import_ref Main//decl_in_api_decl_in_impl, loc10_12, loaded [template = constants.%C.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.832
+// CHECK:STDOUT:     .C = imports.%import_ref.6be
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.832 [template = constants.%C.type]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%import_ref.6be [template = constants.%C.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.c73
+// CHECK:STDOUT:   .Self = imports.%import_ref.721
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.1: imports.%import_ref.e5c as imports.%import_ref.677 [from "fail_decl_in_api_decl_in_impl.carbon"];
+// CHECK:STDOUT: impl @impl.1: imports.%import_ref.e5c as imports.%import_ref.653 [from "fail_decl_in_api_decl_in_impl.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %.loc8_7.2 as %C.ref;
 // CHECK:STDOUT:

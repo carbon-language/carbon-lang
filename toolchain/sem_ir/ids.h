@@ -559,6 +559,36 @@ class AbsoluteInstBlockId : public InstBlockId {
   using InstBlockId::InstBlockId;
 };
 
+// An ID of an instruction block that is used as the declaration block within a
+// declaration instruction. This is a block that is nested within the
+// instruction, but doesn't contribute to its value. Such blocks are not
+// included in the fingerprint of the declaration. This should only be used as
+// the type of a field within a typed instruction class.
+class DeclInstBlockId : public InstBlockId {
+ public:
+  // Support implicit conversion from InstBlockId so that InstBlockId and
+  // DeclInstBlockId have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr DeclInstBlockId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
+
+  using InstBlockId::InstBlockId;
+};
+
+// An ID of an instruction block that is used as a label in a branch instruction
+// or similar. This is a block that is not nested within the instruction, but
+// instead exists elsewhere in the enclosing executable region. This should
+// only be used as the type of a field within a typed instruction class.
+class LabelId : public InstBlockId {
+ public:
+  // Support implicit conversion from InstBlockId so that InstBlockId and
+  // LabelId have the same interface.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr LabelId(InstBlockId inst_block_id) : InstBlockId(inst_block_id) {}
+
+  using InstBlockId::InstBlockId;
+};
+
 // TODO: Move this out of sem_ir and into check, if we don't wind up using it
 // in the SemIR for expression patterns.
 struct ExprRegionId : public IdBase<ExprRegionId> {

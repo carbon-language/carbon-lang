@@ -13,19 +13,25 @@
 
 namespace Carbon::LanguageServer {
 
-// Returns the text of first child of kind Parse::NodeKind::IdentifierName.
+// Returns the text of first child of kind IdentifierNameBeforeParams or
+// IdentifierNameNotBeforeParams.
 static auto GetIdentifierName(const SharedValueStores& value_stores,
                               const Lex::TokenizedBuffer& tokens,
                               const Parse::TreeAndSubtrees& tree_and_subtrees,
                               Parse::NodeId node)
     -> std::optional<llvm::StringRef> {
   for (auto child : tree_and_subtrees.children(node)) {
-    if (tree_and_subtrees.tree().node_kind(child) ==
-        Parse::NodeKind::IdentifierName) {
-      auto token = tree_and_subtrees.tree().node_token(child);
-      if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
-        return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+    switch (tree_and_subtrees.tree().node_kind(child)) {
+      case Parse::NodeKind::IdentifierNameBeforeParams:
+      case Parse::NodeKind::IdentifierNameNotBeforeParams: {
+        auto token = tree_and_subtrees.tree().node_token(child);
+        if (tokens.GetKind(token) == Lex::TokenKind::Identifier) {
+          return value_stores.identifiers().Get(tokens.GetIdentifier(token));
+        }
+        break;
       }
+      default:
+        break;
     }
   }
   return std::nullopt;

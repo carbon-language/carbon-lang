@@ -159,14 +159,14 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- export_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//base, C, unloaded
-// CHECK:STDOUT:   %import_ref.5de = import_ref Main//base, D, unloaded
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//base, C, unloaded
+// CHECK:STDOUT:   %import_ref.e8f = import_ref Main//base, D, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
-// CHECK:STDOUT:     .D = imports.%import_ref.5de
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .D = imports.%import_ref.e8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }
@@ -181,8 +181,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//base, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5de = import_ref Main//base, D, unloaded
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.e8f = import_ref Main//base, D, unloaded
 // CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.276 = import_ref Main//base, loc5_8, unloaded
@@ -191,10 +191,10 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
-// CHECK:STDOUT:     .D = imports.%import_ref.5de
+// CHECK:STDOUT:     .D = imports.%import_ref.e8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.0ac [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.3b0 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -214,8 +214,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//base, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.5de = import_ref Main//base, D, unloaded
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.e8f = import_ref Main//base, D, unloaded
 // CHECK:STDOUT:   %import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.276 = import_ref Main//base, loc5_8, unloaded
@@ -224,10 +224,10 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
 // CHECK:STDOUT:     .C = %C
-// CHECK:STDOUT:     .D = imports.%import_ref.5de
+// CHECK:STDOUT:     .D = imports.%import_ref.e8f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.0ac [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.3b0 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -262,7 +262,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export_import_then_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.f67 = import_ref Main//export_import_then_name, inst23 [indirect], unloaded
@@ -270,7 +270,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -310,7 +310,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Main//export_name, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.f67 = import_ref Main//export_name, inst23 [indirect], unloaded
@@ -318,7 +318,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -358,7 +358,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export_import_then_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.f67 = import_ref Main//export_import_then_name, inst23 [indirect], unloaded
@@ -366,7 +366,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -435,7 +435,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export_import_then_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.f67 = import_ref Main//export_import_then_name, inst23 [indirect], unloaded
@@ -443,7 +443,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -487,8 +487,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.275: type = import_ref Main//base, D, loaded [template = constants.%D]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export_import_then_name, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.b0a: type = import_ref Main//base, D, loaded [template = constants.%D]
 // CHECK:STDOUT:   %import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst21 [indirect], loaded [template = constants.%complete_type.9be]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export_import_then_name, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.f67 = import_ref Main//export_import_then_name, inst23 [indirect], unloaded
@@ -499,8 +499,8 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
-// CHECK:STDOUT:     .D = imports.%import_ref.275
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
+// CHECK:STDOUT:     .D = imports.%import_ref.b0a
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:     .d = %d
 // CHECK:STDOUT:   }

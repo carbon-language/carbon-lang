@@ -27,11 +27,11 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %Class.elem.0a0: type = unbound_element_type %Class, %i32 [template]
+// CHECK:STDOUT:   %Class.elem.c91: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %Class.elem.0c0: type = unbound_element_type %Class, %ptr.e71 [template]
 // CHECK:STDOUT:   %struct_type.n.next: type = struct_type {.n: %i32, .next: %ptr.e71} [template]
-// CHECK:STDOUT:   %complete_type.0a9: <witness> = complete_type_witness %struct_type.n.next [template]
+// CHECK:STDOUT:   %complete_type.78f: <witness> = complete_type_witness %struct_type.n.next [template]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [template]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [template]
 // CHECK:STDOUT:   %MakeReorder.type: type = fn_type @MakeReorder [template]
@@ -41,7 +41,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -107,9 +107,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %.loc12: %Class.elem.0a0 = field_decl n, element0 [template]
+// CHECK:STDOUT:   %.loc12: %Class.elem.c91 = field_decl n, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Class.elem.0c0 = field_decl next, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.0a9]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.78f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

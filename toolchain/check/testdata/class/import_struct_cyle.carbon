@@ -86,7 +86,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.498 = import_ref Main//a, Cycle, unloaded
+// CHECK:STDOUT:   %import_ref.103 = import_ref Main//a, Cycle, unloaded
 // CHECK:STDOUT:   %import_ref.e18: ref %struct_type.b = import_ref Main//a, a, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
@@ -99,7 +99,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = imports.%import_ref.498
+// CHECK:STDOUT:     .Cycle = imports.%import_ref.103
 // CHECK:STDOUT:     .a = imports.%import_ref.e18
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl

@@ -78,10 +78,10 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.d58: <namespace> = import_ref Implicit//default, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.d58, [template] {
-// CHECK:STDOUT:     .A = %import_ref.5d2
+// CHECK:STDOUT:     .A = %import_ref.e9b
 // CHECK:STDOUT:     .ChildNS = %ChildNS
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5d2: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.e9b: %A.type = import_ref Implicit//default, A, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.e9d: <namespace> = import_ref Implicit//default, ChildNS, loaded
 // CHECK:STDOUT:   %ChildNS: <namespace> = namespace %import_ref.e9d, [template] {
 // CHECK:STDOUT:     .B = %import_ref.f00
@@ -122,7 +122,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc4: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %A.ref.loc4: %A.type = name_ref A, imports.%import_ref.5d2 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc4: %A.type = name_ref A, imports.%import_ref.e9b [template = constants.%A]
 // CHECK:STDOUT:   %A.call.loc4: init %empty_tuple.type = call %A.ref.loc4()
 // CHECK:STDOUT:   assign file.%a.var, %A.call.loc4
 // CHECK:STDOUT:   %NS.ref.loc5: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
@@ -132,7 +132,7 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:   assign file.%b.var, %B.call.loc5
 // CHECK:STDOUT:   %package.ref.loc7: <namespace> = name_ref package, package [template = package]
 // CHECK:STDOUT:   %NS.ref.loc7: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %A.ref.loc7: %A.type = name_ref A, imports.%import_ref.5d2 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc7: %A.type = name_ref A, imports.%import_ref.e9b [template = constants.%A]
 // CHECK:STDOUT:   %A.call.loc7: init %empty_tuple.type = call %A.ref.loc7()
 // CHECK:STDOUT:   assign file.%package_a.var, %A.call.loc7
 // CHECK:STDOUT:   %package.ref.loc8: <namespace> = name_ref package, package [template = package]

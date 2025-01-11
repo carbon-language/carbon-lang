@@ -207,14 +207,14 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.9e9: type = import_ref Test//def, Def, loaded [template = constants.%Def]
+// CHECK:STDOUT:   %import_ref.c21: type = import_ref Test//def, Def, loaded [template = constants.%Def]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//def, loc4_20, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.4ce = import_ref Test//def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Def [private] = imports.%import_ref.9e9
+// CHECK:STDOUT:     .Def [private] = imports.%import_ref.c21
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
@@ -299,14 +299,14 @@ private class Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.570: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
+// CHECK:STDOUT:   %import_ref.142: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [template = constants.%ForwardWithDef]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Test//forward_with_def, loc6_23, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.414 = import_ref Test//forward_with_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.570
+// CHECK:STDOUT:     .ForwardWithDef [private] = imports.%import_ref.142
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test

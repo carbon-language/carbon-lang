@@ -21,7 +21,7 @@ fn foo() {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},

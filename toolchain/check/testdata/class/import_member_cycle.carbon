@@ -74,7 +74,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.a2c: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
+// CHECK:STDOUT:   %import_ref.c07: type = import_ref Main//a, Cycle, loaded [template = constants.%Cycle]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -86,7 +86,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cycle = imports.%import_ref.a2c
+// CHECK:STDOUT:     .Cycle = imports.%import_ref.c07
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }

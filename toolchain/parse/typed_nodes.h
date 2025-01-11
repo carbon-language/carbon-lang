@@ -127,10 +127,17 @@ using FileEnd = LeafNode<NodeKind::FileEnd, Lex::FileEndTokenIndex>;
 using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
-// A name in a non-expression context, such as a declaration.
-using IdentifierName =
-    LeafNode<NodeKind::IdentifierName, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName>;
+// A name in a non-expression context, such as a declaration, that is known
+// to be followed by parameters.
+using IdentifierNameBeforeParams =
+    LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
+
+// A name in a non-expression context, such as a declaration, that is known
+// to not be followed by parameters.
+using IdentifierNameNotBeforeParams =
+    LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
+             NodeCategory::MemberName | NodeCategory::NonExprIdentifierName>;
 
 // A name in an expression context.
 using IdentifierNameExpr =
@@ -154,28 +161,36 @@ using SelfTypeNameExpr =
 using BaseName =
     LeafNode<NodeKind::BaseName, Lex::BaseTokenIndex, NodeCategory::MemberName>;
 
-// An unqualified name and optionally a following sequence of parameters.
-// For example, `A`, `A(n: i32)`, or `A[T:! type](n: T)`.
-struct NameAndParams {
-  IdentifierNameId name;
+// A name qualifier with parameters, such as `A(T:! type).` or `A[T:! type](N:!
+// T).`.
+struct NameQualifierWithParams {
+  static constexpr auto Kind = NodeKind::NameQualifierWithParams.Define(
+      {.bracketed_by = IdentifierNameBeforeParams::Kind});
+
+  IdentifierNameBeforeParamsId name;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<TuplePatternId> params;
+  Lex::PeriodTokenIndex token;
 };
 
-// A name qualifier: `A.`, `A(T:! type).`, or `A[T:! type](N:! T).`.
-struct NameQualifier {
-  static constexpr auto Kind =
-      NodeKind::NameQualifier.Define({.bracketed_by = IdentifierName::Kind});
+// A name qualifier without parameters, such as `A.`.
+struct NameQualifierWithoutParams {
+  static constexpr auto Kind = NodeKind::NameQualifierWithoutParams.Define(
+      {.bracketed_by = IdentifierNameNotBeforeParams::Kind});
 
-  NameAndParams name_and_params;
+  IdentifierNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
 
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<NameQualifierId> qualifiers;
-  NameAndParams name_and_params;
+  llvm::SmallVector<
+      NodeIdOneOf<NameQualifierWithParams, NameQualifierWithoutParams>>
+      qualifiers;
+  AnyNonExprIdentifierNameId name;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<TuplePatternId> params;
 };
 
 // Library, package, import, export
@@ -284,7 +299,7 @@ struct BindingPattern {
   static constexpr auto Kind = NodeKind::BindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierName, SelfValueName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -294,7 +309,7 @@ struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  NodeIdOneOf<IdentifierName, SelfValueName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName> name;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };
@@ -1029,7 +1044,7 @@ struct DesignatorExpr {
       {.category = NodeCategory::Expr, .child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierName, SelfTypeName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfTypeName> name;
 };
 
 struct RequirementEqual {
@@ -1104,7 +1119,7 @@ struct ChoiceDefinition {
 
   ChoiceDefinitionStartId signature;
   struct Alternative {
-    IdentifierNameId name;
+    AnyNonExprIdentifierNameId name;
     std::optional<TuplePatternId> parameters;
   };
   CommaSeparatedList<Alternative, ChoiceAlternativeListCommaId> alternatives;
@@ -1133,7 +1148,7 @@ struct StructFieldDesignator {
       NodeKind::StructFieldDesignator.Define({.child_count = 1});
 
   Lex::PeriodTokenIndex token;
-  NodeIdOneOf<IdentifierName, BaseName> name;
+  NodeIdOneOf<IdentifierNameNotBeforeParams, BaseName> name;
 };
 
 // `.a = 0`

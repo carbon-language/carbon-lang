@@ -143,7 +143,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -154,7 +154,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:     .b_val = %b_val
@@ -162,8 +162,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.0ac [template = constants.%C]
-// CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.0ac [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %D: type = bind_alias D, imports.%import_ref.3b0 [template = constants.%C]
 // CHECK:STDOUT:   %b_val.var: ref %C = var b_val
 // CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var
 // CHECK:STDOUT:   %b_ptr.var: ref %ptr.019 = var b_ptr
@@ -199,7 +199,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -210,7 +210,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .E = %E
 // CHECK:STDOUT:     .c_val = %c_val
@@ -218,8 +218,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.0ac [template = constants.%C]
-// CHECK:STDOUT:   %E: type = bind_alias E, imports.%import_ref.0ac [template = constants.%C]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%import_ref.3b0 [template = constants.%C]
+// CHECK:STDOUT:   %E: type = bind_alias E, imports.%import_ref.3b0 [template = constants.%C]
 // CHECK:STDOUT:   %c_val.var: ref %C = var c_val
 // CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var
 // CHECK:STDOUT:   %c_ptr.var: ref %ptr.019 = var c_ptr
@@ -255,8 +255,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//a, C, loaded [template = constants.%C]
-// CHECK:STDOUT:   %import_ref.af7: type = import_ref Main//b, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.ff6: type = import_ref Main//b, D, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.0da = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Main//b, b_ptr, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -269,8 +269,8 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
-// CHECK:STDOUT:     .D = imports.%import_ref.af7
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
+// CHECK:STDOUT:     .D = imports.%import_ref.ff6
 // CHECK:STDOUT:     .b_val = imports.%import_ref.0da
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.ff5
 // CHECK:STDOUT:     .Core = imports.%Core
@@ -314,10 +314,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.af7: type = import_ref Main//b, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.ff6: type = import_ref Main//b, D, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.0da = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Main//b, b_ptr, unloaded
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -328,10 +328,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = imports.%import_ref.af7
+// CHECK:STDOUT:     .D = imports.%import_ref.ff6
 // CHECK:STDOUT:     .b_val = imports.%import_ref.0da
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.ff5
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr
@@ -373,10 +373,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.af7: type = import_ref Main//b, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.ff6: type = import_ref Main//b, D, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.0da = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Main//b, b_ptr, unloaded
-// CHECK:STDOUT:   %import_ref.bbb: type = import_ref Main//c, E, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2c9: type = import_ref Main//c, E, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.963 = import_ref Main//c, c_val, unloaded
 // CHECK:STDOUT:   %import_ref.be6 = import_ref Main//c, c_ptr, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -389,10 +389,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .D = imports.%import_ref.af7
+// CHECK:STDOUT:     .D = imports.%import_ref.ff6
 // CHECK:STDOUT:     .b_val = imports.%import_ref.0da
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.ff5
-// CHECK:STDOUT:     .E = imports.%import_ref.bbb
+// CHECK:STDOUT:     .E = imports.%import_ref.2c9
 // CHECK:STDOUT:     .c_val = imports.%import_ref.963
 // CHECK:STDOUT:     .c_ptr = imports.%import_ref.be6
 // CHECK:STDOUT:     .Core = imports.%Core
@@ -436,10 +436,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.bbb: type = import_ref Main//c, E, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.2c9: type = import_ref Main//c, E, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.963 = import_ref Main//c, c_val, unloaded
 // CHECK:STDOUT:   %import_ref.be6 = import_ref Main//c, c_ptr, unloaded
-// CHECK:STDOUT:   %import_ref.af7: type = import_ref Main//b, D, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.ff6: type = import_ref Main//b, D, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.0da = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %import_ref.ff5 = import_ref Main//b, b_ptr, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
@@ -452,10 +452,10 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .E = imports.%import_ref.bbb
+// CHECK:STDOUT:     .E = imports.%import_ref.2c9
 // CHECK:STDOUT:     .c_val = imports.%import_ref.963
 // CHECK:STDOUT:     .c_ptr = imports.%import_ref.be6
-// CHECK:STDOUT:     .D = imports.%import_ref.af7
+// CHECK:STDOUT:     .D = imports.%import_ref.ff6
 // CHECK:STDOUT:     .b_val = imports.%import_ref.0da
 // CHECK:STDOUT:     .b_ptr = imports.%import_ref.ff5
 // CHECK:STDOUT:     .Core = imports.%Core

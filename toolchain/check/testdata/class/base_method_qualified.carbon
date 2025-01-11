@@ -45,17 +45,17 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %F.type.3ec: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.f90: %F.type.3ec = struct_value () [template]
-// CHECK:STDOUT:   %G.type.975: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %G.476: %G.type.975 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
+// CHECK:STDOUT:   %G.type.6ee: type = fn_type @G.1 [template]
+// CHECK:STDOUT:   %G.663: %G.type.6ee = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %F.type.55a: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.8d5: %F.type.55a = struct_value () [template]
-// CHECK:STDOUT:   %G.type.2ac: type = fn_type @G.2 [template]
-// CHECK:STDOUT:   %G.8df: %G.type.2ac = struct_value () [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %G.type.04c: type = fn_type @G.2 [template]
+// CHECK:STDOUT:   %G.07e: %G.type.04c = struct_value () [template]
 // CHECK:STDOUT:   %struct_type.base.b1e: type = struct_type {.base: %Base} [template]
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base.b1e [template]
 // CHECK:STDOUT:   %Call.type: type = fn_type @Call [template]
@@ -71,7 +71,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -158,7 +158,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc19: %Derived.elem = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.55a = fn_decl @F.2 [template = constants.%F.8d5] {
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -166,7 +166,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [template = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type.2ac = fn_decl @G.2 [template = constants.%G.8df] {
+// CHECK:STDOUT:   %G.decl: %G.type.04c = fn_decl @G.2 [template = constants.%G.07e] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -186,7 +186,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %F.decl: %F.type.3ec = fn_decl @F.1 [template = constants.%F.f90] {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {
 // CHECK:STDOUT:     %self.patt: %Base = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Base = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -200,7 +200,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl: %G.type.975 = fn_decl @G.1 [template = constants.%G.476] {
+// CHECK:STDOUT:   %G.decl: %G.type.6ee = fn_decl @G.1 [template = constants.%G.663] {
 // CHECK:STDOUT:     %self.patt: %Derived = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %Derived = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
@@ -235,7 +235,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %F.ref: %F.type.3ec = name_ref F, @Base.%F.decl [template = constants.%F.f90]
+// CHECK:STDOUT:   %F.ref: %F.type.7c6 = name_ref F, @Base.%F.decl [template = constants.%F.d17]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %a.ref, %F.ref
 // CHECK:STDOUT:   %.loc26_10.1: ref %Base = class_element_access %a.ref, element0
 // CHECK:STDOUT:   %.loc26_10.2: ref %Base = converted %a.ref, %.loc26_10.1
@@ -250,7 +250,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %F.ref: %F.type.3ec = name_ref F, @Base.%F.decl [template = constants.%F.f90]
+// CHECK:STDOUT:   %F.ref: %F.type.7c6 = name_ref F, @Base.%F.decl [template = constants.%F.d17]
 // CHECK:STDOUT:   %.loc30_11.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc30_11.1, %F.ref
 // CHECK:STDOUT:   %.loc30_11.2: ref %Base = class_element_access %.loc30_11.1, element0
@@ -266,7 +266,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Derived = name_ref a, %a
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %G.ref: %G.type.975 = name_ref G, @Base.%G.decl [template = constants.%G.476]
+// CHECK:STDOUT:   %G.ref: %G.type.6ee = name_ref G, @Base.%G.decl [template = constants.%G.663]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %a.ref, %G.ref
 // CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%a.ref)
 // CHECK:STDOUT:   %.loc34_22.1: %i32 = value_of_initializer %G.call
@@ -278,7 +278,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
-// CHECK:STDOUT:   %G.ref: %G.type.975 = name_ref G, @Base.%G.decl [template = constants.%G.476]
+// CHECK:STDOUT:   %G.ref: %G.type.6ee = name_ref G, @Base.%G.decl [template = constants.%G.663]
 // CHECK:STDOUT:   %.loc38_11.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc38_11.1, %G.ref
 // CHECK:STDOUT:   %.loc38_11.2: %Derived = bind_value %.loc38_11.1

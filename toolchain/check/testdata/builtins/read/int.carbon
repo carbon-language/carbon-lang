@@ -32,13 +32,13 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ReadChar = %import_ref.12c
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ReadChar = %import_ref.ecd
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//io
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.12c: %ReadChar.type.9f3 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %import_ref.ecd: %ReadChar.type.9f3 = import_ref Core//io, ReadChar, loaded [template = constants.%ReadChar.01f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -70,7 +70,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc16_26.2: %i32 = converted %read.char.loc16, %.loc16_26.1
 // CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc16_26.2
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.9f3 = name_ref ReadChar, imports.%import_ref.12c [template = constants.%ReadChar.01f]
+// CHECK:STDOUT:   %ReadChar.ref.loc17: %ReadChar.type.9f3 = name_ref ReadChar, imports.%import_ref.ecd [template = constants.%ReadChar.01f]
 // CHECK:STDOUT:   %read.char.loc17: init %i32 = call %ReadChar.ref.loc17()
 // CHECK:STDOUT:   %.loc17_31.1: %i32 = value_of_initializer %read.char.loc17
 // CHECK:STDOUT:   %.loc17_31.2: %i32 = converted %read.char.loc17, %.loc17_31.1

@@ -17,8 +17,8 @@ namespace Foo.;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'NameQualifier', text: '.', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
+// CHECK:STDOUT:       {kind: 'NameQualifierWithoutParams', text: '.', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
 // CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

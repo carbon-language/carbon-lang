@@ -371,7 +371,7 @@ struct BlockArg {
       InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
 
   TypeId type_id;
-  InstBlockId block_id;
+  LabelId block_id;
 };
 
 // A literal bool value, `true` or `false`.
@@ -422,7 +422,7 @@ struct AnyBranch {
 
   InstKind kind;
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -434,7 +434,7 @@ struct Branch {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
 };
 
 // Control flow to branch to the target block if `cond_id` is true.
@@ -444,7 +444,7 @@ struct BranchIf {
       {.ir_name = "br", .terminator_kind = TerminatorKind::TerminatorSequence});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId cond_id;
 };
 
@@ -456,7 +456,7 @@ struct BranchWithArg {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId arg_id;
 };
 
@@ -488,7 +488,7 @@ struct ClassDecl {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // Access to a member of a class, such as `base.index`. This provides a
@@ -730,7 +730,7 @@ struct FunctionDecl {
   FunctionId function_id;
   // The declaration block, containing the function declaration's parameters and
   // their types.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // The type of a function.
@@ -787,7 +787,7 @@ struct ImplDecl {
   ImplId impl_id;
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // A witness that a type implements an interface.
@@ -887,7 +887,7 @@ struct InterfaceDecl {
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // A literal integer value.

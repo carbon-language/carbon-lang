@@ -47,7 +47,7 @@ fn G() {
 // CHECK:STDOUT:   call void @_CF.Main.15b1f98bd9cc0c5b(ptr %c.var), !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main.2cc450fc05045897(ptr %d.var), !dbg !12
 // CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !13
-// CHECK:STDOUT:   call void @_CF.Main.9b813875c98e31f1(i32 %.loc24), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc24), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
@@ -62,7 +62,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main.2cc450fc05045897(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CF.Main.9b813875c98e31f1(i32)
+// CHECK:STDOUT: declare void @_CF.Main.b88d1103f417c6d4(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main.5754c7a55c7cbe4a(%type)
 // CHECK:STDOUT:

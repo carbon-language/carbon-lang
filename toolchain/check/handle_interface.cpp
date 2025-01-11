@@ -25,10 +25,6 @@ auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // This interface is potentially generic.
   StartGenericDecl(context);
-  // Push a pattern block for the signature (if any) of the first NameComponent.
-  // TODO: Instead use a separate parse node kind for an identifier that's
-  // followed by a pattern, and push a pattern block when handling it.
-  context.pattern_block_stack().Push();
   return true;
 }
 

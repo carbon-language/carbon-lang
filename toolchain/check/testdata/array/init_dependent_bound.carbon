@@ -39,17 +39,17 @@ fn H() { G(3); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %N.3e4: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.52a: %i32 = symbolic_binding_pattern N, 0 [symbolic]
+// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.patt.8e2: %i32 = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %Convert.type.d18: type = fn_type @Convert.3, @impl.2(%int_32) [template]
-// CHECK:STDOUT:   %Convert.079: %Convert.type.d18 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.3e4, %Convert.079 [symbolic]
+// CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.3, @impl.2(%int_32) [template]
+// CHECK:STDOUT:   %Convert.960: %Convert.type.4ad = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.51e, %Convert.960 [symbolic]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(%int_32) [symbolic]
-// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.3e4) [symbolic]
+// CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.51e) [symbolic]
 // CHECK:STDOUT:   %array_type: type = array_type %int.convert_checked, %i32 [symbolic]
-// CHECK:STDOUT:   %require_complete.70c: <witness> = require_complete_type %array_type [symbolic]
+// CHECK:STDOUT:   %require_complete.9dc: <witness> = require_complete_type %array_type [symbolic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template]
@@ -58,8 +58,8 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -72,28 +72,28 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {
-// CHECK:STDOUT:     %N.patt.loc4_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.52a)]
-// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_6.1, runtime_param<invalid> [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.52a)]
+// CHECK:STDOUT:     %N.patt.loc4_6.1: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
+// CHECK:STDOUT:     %N.param_patt: %i32 = value_param_pattern %N.patt.loc4_6.1, runtime_param<invalid> [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N.3e4)]
+// CHECK:STDOUT:     %N.loc4_6.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc4_6.2 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.1: %i32) {
-// CHECK:STDOUT:   %N.loc4_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N.3e4)]
-// CHECK:STDOUT:   %N.patt.loc4_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.52a)]
+// CHECK:STDOUT:   %N.loc4_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N.51e)]
+// CHECK:STDOUT:   %N.patt.loc4_6.2: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc4_6.2 (constants.%N.patt.8e2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.079 [symbolic = %Convert.bound (constants.%Convert.bound)]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %N.loc4_6.2, constants.%Convert.960 [symbolic = %Convert.bound (constants.%Convert.bound)]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.3(constants.%int_32) [symbolic = %Convert.specific_fn (constants.%Convert.specific_fn)]
 // CHECK:STDOUT:   %int.convert_checked: init Core.IntLiteral = call %Convert.specific_fn(%N.loc4_6.2) [symbolic = %int.convert_checked (constants.%int.convert_checked)]
 // CHECK:STDOUT:   %array_type: type = array_type %int.convert_checked, %i32 [symbolic = %array_type (constants.%array_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type (%array_type) [symbolic = %require_complete (constants.%require_complete.70c)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type @F.%array_type (%array_type) [symbolic = %require_complete (constants.%require_complete.9dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%N.param_patt: %i32) {
 // CHECK:STDOUT:   !entry:
@@ -108,9 +108,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%N.3e4) {
-// CHECK:STDOUT:   %N.loc4_6.2 => constants.%N.3e4
-// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.3e4
+// CHECK:STDOUT: specific @F(constants.%N.51e) {
+// CHECK:STDOUT:   %N.loc4_6.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.patt.loc4_6.2 => constants.%N.51e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon

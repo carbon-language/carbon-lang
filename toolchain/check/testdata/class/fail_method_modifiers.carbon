@@ -59,8 +59,8 @@ base class BaseClass {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %FinalClass: type = class_type @FinalClass [template]
-// CHECK:STDOUT:   %Abstract.type.448: type = fn_type @Abstract.1 [template]
-// CHECK:STDOUT:   %Abstract.13d: %Abstract.type.448 = struct_value () [template]
+// CHECK:STDOUT:   %Abstract.type.c3e: type = fn_type @Abstract.1 [template]
+// CHECK:STDOUT:   %Abstract.d21: %Abstract.type.c3e = struct_value () [template]
 // CHECK:STDOUT:   %Virtual.type: type = fn_type @Virtual [template]
 // CHECK:STDOUT:   %Virtual: %Virtual.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -71,8 +71,8 @@ base class BaseClass {
 // CHECK:STDOUT:   %Final.type: type = fn_type @Final [template]
 // CHECK:STDOUT:   %Final: %Final.type = struct_value () [template]
 // CHECK:STDOUT:   %BaseClass: type = class_type @BaseClass [template]
-// CHECK:STDOUT:   %Abstract.type.b0f: type = fn_type @Abstract.2 [template]
-// CHECK:STDOUT:   %Abstract.1de: %Abstract.type.b0f = struct_value () [template]
+// CHECK:STDOUT:   %Abstract.type.de1: type = fn_type @Abstract.2 [template]
+// CHECK:STDOUT:   %Abstract.af0: %Abstract.type.de1 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -96,7 +96,7 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FinalClass {
-// CHECK:STDOUT:   %Abstract.decl: %Abstract.type.448 = fn_decl @Abstract.1 [template = constants.%Abstract.13d] {
+// CHECK:STDOUT:   %Abstract.decl: %Abstract.type.c3e = fn_decl @Abstract.1 [template = constants.%Abstract.d21] {
 // CHECK:STDOUT:     %self.patt: %FinalClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %FinalClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -148,7 +148,7 @@ base class BaseClass {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @BaseClass {
-// CHECK:STDOUT:   %Abstract.decl: %Abstract.type.b0f = fn_decl @Abstract.2 [template = constants.%Abstract.1de] {
+// CHECK:STDOUT:   %Abstract.decl: %Abstract.type.de1 = fn_decl @Abstract.2 [template = constants.%Abstract.af0] {
 // CHECK:STDOUT:     %self.patt: %BaseClass = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %BaseClass = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:   } {

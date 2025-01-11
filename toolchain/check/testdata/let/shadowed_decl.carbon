@@ -22,19 +22,19 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
-// CHECK:STDOUT:   %Convert.type.cd1: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
-// CHECK:STDOUT:   %impl_witness.5b0: <witness> = impl_witness (imports.%import_ref.723), @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.type.466: type = fn_type @Convert.2, @impl.1(%int_32) [template]
-// CHECK:STDOUT:   %Convert.925: %Convert.type.466 = struct_value () [template]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.925 [template]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [template]
+// CHECK:STDOUT:   %impl_witness.d39: <witness> = impl_witness (imports.%import_ref.a5b), @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.1(%int_32) [template]
+// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [template]
+// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [template]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(%int_32) [template]
-// CHECK:STDOUT:   %int_1.c60: %i32 = int_value 1 [template]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.a69
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -68,12 +68,12 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT: fn @F(%a.param_patt: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.cd1 = impl_witness_access constants.%impl_witness.5b0, element0 [template = constants.%Convert.925]
+// CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.c60]
-// CHECK:STDOUT:   %.loc12_17.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.c60]
-// CHECK:STDOUT:   %.loc12_17.2: %i32 = converted %int_1, %.loc12_17.1 [template = constants.%int_1.c60]
+// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_1) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_17.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_17.2: %i32 = converted %int_1, %.loc12_17.1 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %a.loc12: %i32 = bind_name a, %.loc12_17.2
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a.loc12
 // CHECK:STDOUT:   return %a.ref
