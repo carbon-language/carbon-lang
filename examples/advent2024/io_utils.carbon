@@ -57,25 +57,7 @@ fn ReadInt64(p: i64*) -> bool {
     }
     // TODO: Check for overflow.
     *p = *p * 10;
-    if (c == 0x31) {
-      *p = *p + 1;
-    } else if (c == 0x32) {
-      *p = *p + 2;
-    } else if (c == 0x33) {
-      *p = *p + 3;
-    } else if (c == 0x34) {
-      *p = *p + 4;
-    } else if (c == 0x35) {
-      *p = *p + 5;
-    } else if (c == 0x36) {
-      *p = *p + 6;
-    } else if (c == 0x37) {
-      *p = *p + 7;
-    } else if (c == 0x38) {
-      *p = *p + 8;
-    } else if (c == 0x39) {
-      *p = *p + 9;
-    }
+    *p = *p + ((c - 0x30) as i64);
     read_any_digits = true;
   }
   return read_any_digits;
@@ -89,17 +71,7 @@ fn PrintInt64NoNewline(n_val: i64) {
   }
   while (pow10 != 0) {
     let d: i64 = n / pow10;
-    // TODO: Core.PrintChar(0x30 + (d as i32));
-    if (d == 0) { Core.PrintChar(0x30); }
-    else if (d == 1) { Core.PrintChar(0x31); }
-    else if (d == 2) { Core.PrintChar(0x32); }
-    else if (d == 3) { Core.PrintChar(0x33); }
-    else if (d == 4) { Core.PrintChar(0x34); }
-    else if (d == 5) { Core.PrintChar(0x35); }
-    else if (d == 6) { Core.PrintChar(0x36); }
-    else if (d == 7) { Core.PrintChar(0x37); }
-    else if (d == 8) { Core.PrintChar(0x38); }
-    else if (d == 9) { Core.PrintChar(0x39); }
+    Core.PrintChar((d + 0x30) as i32);
     n = n % pow10;
     pow10 = pow10 / 10;
   }

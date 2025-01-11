@@ -9,22 +9,6 @@ library "day9_common";
 import Core library "io";
 import library "io_utils";
 
-// TODO: Add a builtin that can do this!
-fn Promote(a: i32) -> i64 {
-  var result: i64 = 0;
-  var bit_i32: i32 = 1;
-  var bit_i64: i64 = 1;
-  while (bit_i32 != 0) {
-    if (a & bit_i32 != 0) {
-      result = result | bit_i64;
-    }
-    bit_i32 <<= 1;
-    // TODO: bit_i64 <<= 1;
-    bit_i64 = bit_i64 << 1;
-  }
-  return result;
-}
-
 class SectorList {
   fn Read() -> SectorList {
     returned var me: SectorList;
@@ -125,7 +109,7 @@ class SectorList {
     var i: i32 = 0;
     while (i < self.size) {
       if (self.data[i] != -1) {
-        total = total + Promote(i * self.data[i]);
+        total = total + ((i * self.data[i]) as i64);
       }
       ++i;
     }

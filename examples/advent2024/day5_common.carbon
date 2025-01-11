@@ -8,31 +8,9 @@ library "day5_common";
 
 import library "io_utils";
 
-// fn LeftShift(a: Core.UInt(100), b: i32) -> Core.UInt(100) = "int.left_shift";
-fn LeftShift_u100(a: Core.UInt(100), b: Core.UInt(100)) -> Core.UInt(100) = "int.left_shift";
-
-// TODO: Add a builtin that can do this!
-fn Promote(a: i32) -> Core.UInt(100) {
-  var result: Core.UInt(100) = 0;
-  var bit_i32: i32 = 1;
-  var bit_u100: Core.UInt(100) = 1;
-  while (bit_i32 != 0) {
-    if (a & bit_i32 != 0) {
-      result = result | bit_u100;
-    }
-    bit_i32 <<= 1;
-    // TODO: bit_u100 <<= 1;
-    bit_u100 = bit_u100 << 1;
-  }
-  return result;
-}
-
-fn LeftShift(a: Core.UInt(100), b: i32) -> Core.UInt(100) {
-  return LeftShift_u100(a, Promote(b));
-}
-
 fn PageMask(page: i32) -> Core.UInt(100) {
-  return LeftShift(1 as Core.UInt(100), page);
+  // TODO: return (1 as Core.UInt(100)) << page;
+  return (1 as Core.UInt(100)) << (page as Core.UInt(100));
 }
 
 class Rules {
