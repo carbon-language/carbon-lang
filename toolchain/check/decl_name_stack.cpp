@@ -82,6 +82,7 @@ auto DeclNameStack::FinishImplName() -> NameContext {
 }
 
 auto DeclNameStack::SetImplWhereOperandNodeId(Parse::NodeId node_id) -> void {
+  CARBON_CHECK(!decl_name_stack_.back().where_operand_node_id.is_valid());
   decl_name_stack_.back().where_operand_node_id = node_id;
 }
 

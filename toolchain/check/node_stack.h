@@ -458,6 +458,7 @@ class NodeStack {
         case Parse::NodeKind::InterfaceIntroducer:
         case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::LetIntroducer:
+        case Parse::NodeKind::ParenExprStart:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
         case Parse::NodeKind::ReturnVarModifier:
@@ -602,7 +603,6 @@ class NodeStack {
         case Parse::NodeKind::PackageIntroducer:
         case Parse::NodeKind::PackageName:
         case Parse::NodeKind::ParenExpr:
-        case Parse::NodeKind::ParenExprStart:
         case Parse::NodeKind::PatternListComma:
         case Parse::NodeKind::Placeholder:
         case Parse::NodeKind::PointerMemberAccessExpr:

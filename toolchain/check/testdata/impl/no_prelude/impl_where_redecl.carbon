@@ -32,10 +32,6 @@ interface K {}
 
 // `impl` matching only ignores a root-level `where` clause.
 
-// CHECK:STDERR: parens_other_nesting.carbon:[[@LINE+4]]:1: error: impl declared but not defined [MissingImplDefinition]
-// CHECK:STDERR: impl {} as (K where .Self impls type) where .Self impls type;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl {} as (K where .Self impls type) where .Self impls type;
 impl {} as (K where .Self impls type) {}
 

@@ -4,19 +4,23 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& /*context*/, Parse::ParenExprStartId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ParenExprStartId node_id)
     -> bool {
-  // The open paren is unused.
+  // Push the start to help track nesting.
+  context.node_stack().Push(node_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ParenExprId node_id) -> bool {
-  // We re-push because the ParenExpr is valid for member expressions, whereas
-  // the child expression might not be.
-  context.node_stack().Push(node_id, context.node_stack().PopExpr());
+  auto expr = context.node_stack().PopExpr();
+  context.node_stack().PopForSoloNodeId<Parse::NodeKind::ParenExprStart>();
+  // We push with the ParenExpr node because it's valid for member expressions,
+  // whereas the child expression might not be.
+  context.node_stack().Push(node_id, expr);
   return true;
 }
 
