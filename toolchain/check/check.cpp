@@ -61,7 +61,8 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitAndImports& unit_info,
-                        Parse::Tree::PackagingNames import) -> void {
+                        Parse::Tree::PackagingNames import, bool fuzzing)
+    -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
@@ -70,6 +71,13 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& [import_package_name, import_library_name] = import_key;
 
   if (import_package_name == CppPackageName && !import_library_name.empty()) {
+    if (fuzzing) {
+      // Clang is not crash-resilient.
+      CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
+                        "Cpp import is not supported in fuzz testing");
+      unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
+      return;
+    }
     unit_info.cpp_imports.push_back(import);
     return;
   }
@@ -302,7 +310,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 
 auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream) -> void {
+                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
@@ -323,7 +331,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
       implicit_names.package_id = IdentifierId::Invalid;
-      TrackImport(api_map, nullptr, unit_info, implicit_names);
+      TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
     Map<ImportKey, Parse::NodeId> explicit_import_map;
@@ -339,11 +347,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::InvalidNodeId(),
                    .package_id = core_ident_id,
-                   .library_id = prelude_id});
+                   .library_id = prelude_id},
+                  fuzzing);
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
-      TrackImport(api_map, &explicit_import_map, unit_info, import);
+      TrackImport(api_map, &explicit_import_map, unit_info, import, fuzzing);
     }
 
     // If there were no imports, mark the file as ready to check for below.

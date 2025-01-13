@@ -24,6 +24,9 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::TestDiagnostic,
     DiagnosticKind::TestDiagnosticNote,
 
+    // Driver specific.
+    DiagnosticKind::CppInteropFuzzing,
+
     // These diagnose filesystem issues that are hard to unit test.
     DiagnosticKind::CppInteropFailedAccessingFileBuffer,
     DiagnosticKind::ErrorReadingFile,

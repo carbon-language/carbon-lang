@@ -38,7 +38,7 @@ struct Unit {
 // checking.
 auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
                      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                     llvm::raw_ostream* vlog_stream) -> void;
+                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void;
 
 }  // namespace Carbon::Check
 
