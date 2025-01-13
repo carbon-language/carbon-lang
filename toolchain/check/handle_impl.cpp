@@ -297,9 +297,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   // Stop at the `where` node, if present, to exclude it from syntactic match.
   auto name = PopImplIntroducerAndParamsAsNameComponent(
-      context, name_context.where_operand_node_id.is_valid()
-                   ? name_context.where_operand_node_id
-                   : node_id);
+      context, !name_context.where_operand_node_id.is_valid()
+                   ? node_id
+                   : name_context.where_operand_node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
