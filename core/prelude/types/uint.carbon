@@ -16,36 +16,36 @@ class UInt(N:! IntLiteral()) {
 
 // Conversions.
 
-impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] UInt(N) as ImplicitAs(IntLiteral()) {
+impl forall [From:! IntLiteral()] UInt(From) as ImplicitAs(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl forall [N:! IntLiteral()] IntLiteral() as As(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] UInt(N) as As(IntLiteral()) {
+impl forall [From:! IntLiteral()] UInt(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Allow as an implicit conversion if N > M.
-impl forall [M:! IntLiteral(), N:! IntLiteral()] UInt(M) as As(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert";
+// TODO: Allow as an implicit conversion if To > From.
+impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert";
 }
 
-// TODO: Allow as an implicit conversion if N > M.
-impl forall [M:! IntLiteral(), N:! IntLiteral()] UInt(M) as As(Int(N)) {
-  fn Convert[self: Self]() -> Int(N) = "int.convert";
+// TODO: Allow as an implicit conversion if To > From.
+impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "int.convert";
 }
 
 // Never implicit.
-impl forall [M:! IntLiteral(), N:! IntLiteral()] Int(M) as As(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert";
+impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert";
 }
 
 // Comparisons.

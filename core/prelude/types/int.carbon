@@ -15,26 +15,26 @@ class Int(N:! IntLiteral()) {
 
 // Conversions.
 
-impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(Int(N)) {
-  fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as ImplicitAs(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] Int(N) as ImplicitAs(IntLiteral()) {
+impl forall [From:! IntLiteral()] Int(From) as ImplicitAs(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl forall [N:! IntLiteral()] IntLiteral() as As(Int(N)) {
-  fn Convert[self: Self]() -> Int(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as As(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] Int(N) as As(IntLiteral()) {
+impl forall [From:! IntLiteral()] Int(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: Allow as an implicit conversion if N > M.
-impl forall [M:! IntLiteral(), N:! IntLiteral()] Int(M) as As(Int(N)) {
-  fn Convert[self: Self]() -> Int(N) = "int.convert";
+impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "int.convert";
 }
 
 // Comparisons.
