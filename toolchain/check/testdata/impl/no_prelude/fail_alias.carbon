@@ -48,15 +48,16 @@ impl AC as AI {}
 // CHECK:STDOUT:   %AI: type = bind_alias AI, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [template = constants.%C]
 // CHECK:STDOUT:   %AC: type = bind_alias AC, %C.decl [template = constants.%C]
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %AC.ref.loc17: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc17: type = name_ref AI, file.%AI [template = constants.%I.type]
+// CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
+// CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [template = constants.%C]
+// CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness () [template = constants.%impl_witness]
-// CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %AC.ref.loc25: type = name_ref AC, file.%AC [template = constants.%C]
-// CHECK:STDOUT:     %AI.ref.loc25: type = name_ref AI, file.%AI [template = constants.%I.type]
+// CHECK:STDOUT:   %impl_witness.loc17: <witness> = impl_witness () [template = constants.%impl_witness]
+// CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
+// CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [template = constants.%C]
+// CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -67,9 +68,14 @@ impl AC as AI {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %AC.ref.loc17 as %AI.ref.loc17 {
+// CHECK:STDOUT: impl @impl.1: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness
+// CHECK:STDOUT:   witness = file.%impl_witness.loc17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @impl.2: %AC.ref as %AI.ref {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = file.%impl_witness.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -295,6 +295,22 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
     return false;
   }
 
+  if (prev_impl.has_definition_started()) {
+    // Impls aren't merged in order to avoid generic region lookup into a
+    // mismatching table.
+    CARBON_DIAGNOSTIC(ImplRedefinition, Error,
+                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
+                      InstIdAsRawType);
+    CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
+                      "previous definition was here");
+    context.emitter()
+        .Build(new_impl.latest_decl_id(), ImplRedefinition, new_impl.self_id,
+               new_impl.constraint_id)
+        .Note(prev_impl.definition_id, ImplPreviousDefinition)
+        .Emit();
+    return false;
+  }
+
   // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
   // TODO: Merge information from the new declaration into the old one as
@@ -427,23 +443,11 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       BuildImplDecl(context, node_id, /*is_definition=*/true);
   auto& impl_info = context.impls().Get(impl_id);
 
-  if (impl_info.has_definition_started()) {
-    CARBON_DIAGNOSTIC(ImplRedefinition, Error,
-                      "redefinition of `impl {0} as {1}`", InstIdAsRawType,
-                      InstIdAsRawType);
-    CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
-                      "previous definition was here");
-    context.emitter()
-        .Build(node_id, ImplRedefinition, impl_info.self_id,
-               impl_info.constraint_id)
-        .Note(impl_info.definition_id, ImplPreviousDefinition)
-        .Emit();
-  } else {
-    impl_info.definition_id = impl_decl_id;
-    impl_info.scope_id = context.name_scopes().Add(
-        impl_decl_id, SemIR::NameId::Invalid,
-        context.decl_name_stack().PeekParentScopeId());
-  }
+  CARBON_CHECK(!impl_info.has_definition_started());
+  impl_info.definition_id = impl_decl_id;
+  impl_info.scope_id =
+      context.name_scopes().Add(impl_decl_id, SemIR::NameId::Invalid,
+                                context.decl_name_stack().PeekParentScopeId());
 
   context.scope_stack().Push(
       impl_decl_id, impl_info.scope_id,
