@@ -857,7 +857,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Unlike previous steps, errors block further progress.
   if (llvm::any_of(units, [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG_TO(driver_env.vlog_stream,
-                   "*** Stopping before lowering due to errors ***");
+                   "*** Stopping before lowering due to errors ***\n");
     return make_result();
   }
 
