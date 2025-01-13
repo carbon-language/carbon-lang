@@ -11,6 +11,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
@@ -81,7 +82,8 @@ auto DeclNameStack::FinishImplName() -> NameContext {
   return result;
 }
 
-auto DeclNameStack::SetImplWhereOperandNodeId(Parse::NodeId node_id) -> void {
+auto DeclNameStack::SetImplWhereOperandNodeId(Parse::WhereOperandId node_id)
+    -> void {
   CARBON_CHECK(!decl_name_stack_.back().where_operand_node_id.is_valid());
   decl_name_stack_.back().where_operand_node_id = node_id;
 }

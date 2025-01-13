@@ -212,13 +212,13 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
-  // Subtracting 1 since we don't want to include the final `{`, `;`, or `where`
-  // of the declaration when performing syntactic match.
   auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
   CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
                node_kind == Parse::NodeKind::ImplDecl ||
                node_kind == Parse::NodeKind::WhereOperand);
   Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
+  // Subtracting 1 since we don't want to include the final `{`, `;`, or `where`
+  // of the declaration when performing syntactic match.
   --last_param_iter;
 
   return {

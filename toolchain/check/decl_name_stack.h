@@ -155,7 +155,8 @@ class DeclNameStack {
     // The `WhereOperand` node_id for the constraint in an impl decl, if any.
     // TODO: Can this be in a union with some other field that isn't used for
     // impl decls?
-    Parse::NodeId where_operand_node_id = Parse::NodeId::Invalid;
+    Parse::WhereOperandId where_operand_node_id =
+        Parse::WhereOperandId::Invalid;
   };
 
   // Information about a declaration name that has been temporarily removed from
@@ -206,7 +207,8 @@ class DeclNameStack {
   auto FinishImplName() -> NameContext;
 
   // Set the position of the `WhereOperand` node in an `impl...as...where...`.
-  auto SetImplWhereOperandNodeId(Parse::NodeId node_id) -> void;
+  // Must only be called once.
+  auto SetImplWhereOperandNodeId(Parse::WhereOperandId node_id) -> void;
 
   // Pops the declaration name from the declaration name stack, and pops all
   // scopes that were entered as part of handling the declaration name. These
