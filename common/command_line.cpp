@@ -1035,12 +1035,12 @@ auto Parser::ParseShortOptionSeq(llvm::StringRef unparsed_arg)
         unparsed_arg));
   }
 
-  for (char c : unparsed_arg) {
-    auto* arg_entry = (c < static_cast<ssize_t>(short_option_table_.size()))
-                          ? short_option_table_[c]
-                          : nullptr;
+  for (unsigned char c : unparsed_arg) {
+    auto* arg_entry =
+        (c < short_option_table_.size()) ? short_option_table_[c] : nullptr;
     if (!arg_entry) {
-      return Error(llvm::formatv("unknown short option `-{0}`", c));
+      return Error(
+          llvm::formatv("unknown short option `-{0}`", static_cast<char>(c)));
     }
     // Mark this argument as parsed.
     arg_entry->setInt(true);
