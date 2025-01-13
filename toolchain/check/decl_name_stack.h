@@ -153,7 +153,7 @@ class DeclNameStack {
     };
 
     // The `WhereOperand` node_id for the constraint in an impl decl, if any.
-    // FIXME: Can this be in a union with some other field that isn't used for
+    // TODO: Can this be in a union with some other field that isn't used for
     // impl decls?
     Parse::NodeId where_operand_node_id = Parse::NodeId::Invalid;
   };
