@@ -20,7 +20,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: one_error.h:2:2: error: "error1"
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeErrors]
+// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "one_error.h";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -42,7 +42,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: multiple_errors.h:3:2: error: "error2"
 // CHECK:STDERR:     3 | #error "error2"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeErrors]
+// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors.h";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -60,7 +60,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: one_warning.h:2:2: warning: "warning1"
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeWarnings]
+// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR: import Cpp library "one_warning.h";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -86,7 +86,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: multiple_warnings.h:4:2: warning: "warning3"
 // CHECK:STDERR:     4 | #warning "warning3"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeWarnings]
+// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR: import Cpp library "multiple_warnings.h";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -108,7 +108,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: one_error_and_one_warning.h:3:2: warning: "warning1"
 // CHECK:STDERR:     3 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeErrors]
+// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "one_error_and_one_warning.h";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -142,7 +142,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3"
 // CHECK:STDERR:     6 | #warning "warning3"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropCodeErrors]
+// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "multiple_errors_and_multiple_warnings.h";
 // CHECK:STDERR: ^~~~~~
 import Cpp library "multiple_errors_and_multiple_warnings.h";

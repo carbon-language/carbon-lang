@@ -12,7 +12,10 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+3]]:1: error: file 'not_found.h' couldn't be opened for reading: No such file or directory [CppInteropFileNotFound]
+// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+6]]:1: error: file 'not_found.h' couldn't be opened for reading [CppInteropCantReadFile]
+// CHECK:STDERR: import Cpp library "not_found.h";
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+3]]:1: note: File read error: No such file or directory [CppInteropCantReadFileNote]
 // CHECK:STDERR: import Cpp library "not_found.h";
 // CHECK:STDERR: ^~~~~~
 import Cpp library "not_found.h";

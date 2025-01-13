@@ -342,11 +342,16 @@ auto CheckUnit::ImportCppPackages() -> void {
 
     auto file = fs_->openFileForRead(cpp_file_path);
     if (!file) {
-      CARBON_DIAGNOSTIC(CppInteropFileNotFound, Error,
-                        "file '{0}' couldn't be opened for reading: {1}",
-                        std::string, std::string);
-      emitter_.Emit(import.node_id, CppInteropFileNotFound, cpp_file_path.str(),
-                    file.getError().message());
+      CARBON_DIAGNOSTIC(CppInteropCantReadFile, Error,
+                        "file '{0}' couldn't be opened for reading",
+                        std::string);
+      CARBON_DIAGNOSTIC(CppInteropCantReadFileNote, Note,
+                        "File read error: {0}", std::string);
+      emitter_
+          .Build(import.node_id, CppInteropCantReadFile, cpp_file_path.str())
+          .Note(import.node_id, CppInteropCantReadFileNote,
+                file.getError().message())
+          .Emit();
       continue;
     }
 

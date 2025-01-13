@@ -69,17 +69,14 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
-  // True if the import has `Main` as the package name, even if it comes from
-  // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_package_name == MainPackageName;
-
-  bool is_cpp =
-      import_package_name == CppPackageName && !import_library_name.empty();
-
-  if (is_cpp) {
+  if (import_package_name == CppPackageName && !import_library_name.empty()) {
     unit_info.cpp_imports.push_back(import);
     return;
   }
+
+  // True if the import has `Main` as the package name, even if it comes from
+  // the file's packaging (diagnostics may differentiate).
+  bool is_explicit_main = import_package_name == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
