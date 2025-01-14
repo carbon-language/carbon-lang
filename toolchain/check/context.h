@@ -244,15 +244,15 @@ class Context {
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
   //
-  // If `for_decl_name` is false, then this is a regular name lookup, and the
-  // name will be poisoned if not found so that later lookups will fail; a
+  // If `is_being_declared` is false, then this is a regular name lookup, and
+  // the name will be poisoned if not found so that later lookups will fail; a
   // poisoned name will be treated as if it is not declared. Otherwise, this is
   // a lookup for a name being declared, so the name will not be poisoned, but
   // poison will be returned if it's already been looked up.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
                               SemIR::NameScope& scope,
-                              bool for_decl_name = false)
+                              bool is_being_declared = false)
       -> LookupNameInExactScopeResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.

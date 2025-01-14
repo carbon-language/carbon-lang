@@ -366,7 +366,7 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    fn B.F() {}
     auto result = LookupNameInExactScope(loc_id, name_id, scope_id,
                                          name_scopes().Get(scope_id),
-                                         /*for_decl_name=*/true);
+                                         /*is_being_declared=*/true);
     return {result.inst_id, result.is_poisoned};
   }
 }
@@ -414,14 +414,14 @@ auto Context::LookupUnqualifiedName(Parse::NodeId node_id,
 auto Context::LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                                      SemIR::NameScopeId scope_id,
                                      SemIR::NameScope& scope,
-                                     bool for_decl_name)
+                                     bool is_being_declared)
     -> LookupNameInExactScopeResult {
-  if (auto entry_id = for_decl_name ? scope.Lookup(name_id)
-                                    : scope.LookupOrPoison(name_id)) {
+  if (auto entry_id = is_being_declared ? scope.Lookup(name_id)
+                                        : scope.LookupOrPoison(name_id)) {
     auto entry = scope.GetEntry(*entry_id);
     if (!entry.is_poisoned) {
       LoadImportRef(*this, entry.inst_id);
-    } else if (for_decl_name) {
+    } else if (is_being_declared) {
       entry.inst_id = SemIR::InstId::Invalid;
     }
     return {entry.inst_id, entry.access_kind, entry.is_poisoned};
