@@ -45,9 +45,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
 
 // Looks for diagnostic kinds that aren't covered by a file_test.
 TEST(Coverage, DiagnosticKind) {
-  Testing::TestKindCoverage(
-      absl::GetFlag(FLAGS_testdata_manifest), R"( \[([A-Z]\w*)\]$)",
-      llvm::ArrayRef(DiagnosticKinds), llvm::ArrayRef(UntestedDiagnosticKinds));
+  Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
+                            R"(^ *// CHECK:STDERR: .* \[(\w+)\]$)",
+                            llvm::ArrayRef(DiagnosticKinds),
+                            llvm::ArrayRef(UntestedDiagnosticKinds));
 }
 
 }  // namespace
