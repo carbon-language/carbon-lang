@@ -1213,7 +1213,7 @@ fn F() {
 // CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl.loc18: type = class_decl @.1 [template = constants.%.a95] {} {}
-// CHECK:STDOUT:   %.decl.loc19: type = class_decl @.2 [template = constants.%.fb7] {} {}
+// CHECK:STDOUT:   %.decl.loc23: type = class_decl @.2 [template = constants.%.fb7] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.1 {
