@@ -211,19 +211,19 @@ static auto BuildFunctionDecl(Context& context,
           .Case(KeywordModifierSet::Impl,
                 SemIR::Function::VirtualModifier::Impl)
           .Default(SemIR::Function::VirtualModifier::None);
-  SemIR::Class* class_info = nullptr;
+  SemIR::Class* virtual_class_info = nullptr;
   if (virtual_modifier != SemIR::Function::VirtualModifier::None &&
       parent_scope_inst) {
     if (auto class_decl = parent_scope_inst->TryAs<SemIR::ClassDecl>()) {
-      class_info = &context.classes().Get(class_decl->class_id);
+      virtual_class_info = &context.classes().Get(class_decl->class_id);
       if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
-          !class_info->base_id.is_valid()) {
+          !virtual_class_info->base_id.is_valid()) {
         CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
         context.emitter().Build(node_id, ImplWithoutBase).Emit();
       }
       // TODO: If this is an `impl` function, check there's a matching base
       // function that's impl or virtual.
-      class_info->is_dynamic = true;
+      virtual_class_info->is_dynamic = true;
     }
   }
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
@@ -250,7 +250,7 @@ static auto BuildFunctionDecl(Context& context,
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
-  if (class_info && class_info->is_dynamic) {
+  if (virtual_class_info) {
     context.vtable_stack().AddInstId(decl_id);
   }
 
