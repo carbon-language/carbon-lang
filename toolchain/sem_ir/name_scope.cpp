@@ -33,8 +33,8 @@ auto NameScope::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto NameScope::AddRequired(Entry name_entry) -> void {
-  CARBON_CHECK(!name_entry.is_poisoned,
-               "Cannot add a poisoned name: {0}.", name_entry.name_id);
+  CARBON_CHECK(!name_entry.is_poisoned, "Cannot add a poisoned name: {0}.",
+               name_entry.name_id);
   auto add_name = [&] {
     EntryId index(names_.size());
     names_.push_back(name_entry);

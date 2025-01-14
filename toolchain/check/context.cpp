@@ -366,7 +366,7 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    fn B.F() {}
     auto result = LookupNameInExactScope(loc_id, name_id, scope_id,
                                          name_scopes().Get(scope_id),
-                                  /*for_decl_name=*/true);
+                                         /*for_decl_name=*/true);
     return {result.inst_id, result.is_poisoned};
   }
 }
