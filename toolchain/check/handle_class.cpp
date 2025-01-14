@@ -710,7 +710,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
              context.vtable_stack().PeekCurrentBlockContents()) {
           auto override_fn_decl =
               context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
-          auto override_fn =
+          const auto& override_fn =
               context.functions().Get(override_fn_decl.function_id);
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
