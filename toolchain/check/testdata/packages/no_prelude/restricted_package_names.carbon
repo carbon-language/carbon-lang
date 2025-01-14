@@ -61,7 +61,11 @@ package Cpp;
 
 // --- fail_cpp.impl.carbon
 
-// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+4]]:6: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
+// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+8]]:6: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
+// CHECK:STDERR: impl package Cpp;
+// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+4]]:6: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: impl package Cpp;
 // CHECK:STDERR:      ^~~~~~~
 // CHECK:STDERR:
@@ -128,10 +132,7 @@ package Cpp library "[[@TEST_NAME]]";
 // CHECK:STDOUT: --- fail_cpp.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import = import <invalid>
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_raw_cpp.carbon

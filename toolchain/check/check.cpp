@@ -70,12 +70,21 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
-  if (import_package_name == CppPackageName && !import_library_name.empty()) {
+  if (import_package_name == CppPackageName) {
+    if (import_library_name.empty()) {
+      // Clang is not crash-resilient.
+      CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
+                        "`{0}` import missing library", std::string);
+      unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary,
+                             CppPackageName.str());
+      return;
+    }
     if (fuzzing) {
       // Clang is not crash-resilient.
       CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
-                        "Cpp import found during fuzzing");
-      unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
+                        "`{0}` import found during fuzzing", std::string);
+      unit_info.emitter.Emit(import.node_id, CppInteropFuzzing,
+                             CppPackageName.str());
       return;
     }
     unit_info.cpp_imports.push_back(import);
@@ -245,8 +254,10 @@ static auto BuildApiMapAndDiagnosePackaging(
       continue;
     } else if (import_key.first == CppPackageName) {
       CARBON_DIAGNOSTIC(CppPackageDeclaration, Error,
-                        "`Cpp` cannot be used by a `package` declaration");
-      unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration);
+                        "`{0}` cannot be used by a `package` declaration",
+                        std::string);
+      unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration,
+                             CppPackageName.str());
       continue;
     }
 

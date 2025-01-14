@@ -12,7 +12,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: imported API 'Cpp' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -36,7 +36,7 @@ import Cpp library;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+5]]:1: error: imported API 'Cpp' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+5]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp library "";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
@@ -51,17 +51,8 @@ import Cpp library "\"foo.h\"";
 
 // CHECK:STDOUT: --- fail_import_cpp.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import, [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import = import Cpp
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_cpp_library.carbon
@@ -70,17 +61,8 @@ import Cpp library "\"foo.h\"";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_cpp_library_empty.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import, [template] {
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import = import Cpp
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_cpp_library_file_with_quotes.carbon
