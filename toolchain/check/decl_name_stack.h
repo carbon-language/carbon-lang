@@ -200,10 +200,6 @@ class DeclNameStack {
   // logic such as building parameter scopes, so are a special case.
   auto FinishImplName() -> NameContext;
 
-  // Set the position of the `WhereOperand` node in an `impl...as...where...`.
-  // Must only be called once.
-  auto SetImplWhereOperandNodeId(Parse::WhereOperandId node_id) -> void;
-
   // Pops the declaration name from the declaration name stack, and pops all
   // scopes that were entered as part of handling the declaration name. These
   // are the scopes corresponding to name qualifiers in the name, for example

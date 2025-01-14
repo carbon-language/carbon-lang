@@ -11,7 +11,6 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/diagnostics/diagnostic.h"
-#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
