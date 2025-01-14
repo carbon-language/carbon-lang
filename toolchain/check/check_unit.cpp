@@ -341,11 +341,8 @@ auto CheckUnit::ImportCppPackages() -> void {
   }
 
   if (imports.size() >= 2) {
-    // TODO: Support multiple Cpp imports.
-    CARBON_DIAGNOSTIC(CppInteropMultipleImports, Error,
-                      "multiple ({0}) Cpp imports are not supported", int);
-    emitter_.Emit(imports[1].node_id, CppInteropMultipleImports,
-                  imports.size());
+    context_.TODO(imports[1].node_id,
+                  "multiple Cpp imports are not yet supported");
     return;
   }
 
