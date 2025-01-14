@@ -46,7 +46,7 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: error: file '"foo.h"' couldn't be opened for reading [CppInteropCantReadFile]
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: error: file `"foo.h"` couldn't be opened for reading [CppInteropCantReadFile]
 // CHECK:STDERR: import Cpp library "\"foo.h\"";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+3]]:1: note: File read error: No such file or directory [CppInteropCantReadFileNote]

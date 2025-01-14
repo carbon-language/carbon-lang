@@ -357,7 +357,7 @@ auto CheckUnit::ImportCppPackages() -> void {
   auto file = fs_->openFileForRead(cpp_file_path);
   if (!file) {
     CARBON_DIAGNOSTIC(CppInteropCantReadFile, Error,
-                      "file '{0}' couldn't be opened for reading", std::string);
+                      "file `{0}` couldn't be opened for reading", std::string);
     CARBON_DIAGNOSTIC(CppInteropCantReadFileNote, Note, "File read error: {0}",
                       std::string);
     emitter_.Build(import.node_id, CppInteropCantReadFile, cpp_file_path.str())
@@ -371,7 +371,7 @@ auto CheckUnit::ImportCppPackages() -> void {
   auto buffer = file_ref.getBuffer(cpp_file_path);
   if (!buffer) {
     CARBON_DIAGNOSTIC(CppInteropFailedAccessingFileBuffer, Error,
-                      "failed accessing buffer of file '{0}': {1}", std::string,
+                      "failed accessing buffer of file `{0}`: {1}", std::string,
                       std::string);
     emitter_.Emit(import.node_id, CppInteropFailedAccessingFileBuffer,
                   cpp_file_path.str(), buffer.getError().message());
