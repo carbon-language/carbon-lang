@@ -79,7 +79,7 @@ static auto BuildInterfaceDecl(Context& context,
         // TODO: This should be refactored a little, particularly for
         // prev_import_ir_id. See similar logic for classes and functions, which
         // might also be refactored to merge.
-        CheckIsAllowedRedecl(
+        DiagnoseIfInvalidRedecl(
             context, Lex::TokenKind::Interface, existing_interface.name_id,
             RedeclInfo(interface_info, node_id, is_definition),
             RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
@@ -87,7 +87,6 @@ static auto BuildInterfaceDecl(Context& context,
             /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
 
         // Can't merge interface definitions due to the generic requirements.
-        // TODO: Should this also be mirrored to classes/functions for generics?
         if (!is_definition || !existing_interface.is_defined()) {
           // This is a redeclaration of an existing interface.
           interface_decl.interface_id = existing_interface_decl->interface_id;

@@ -67,12 +67,14 @@ fn E() {}
 // CHECK:STDOUT:   %B: %B.type = struct_value () [template]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [template]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.d85: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.1: type = fn_type @.1 [template]
+// CHECK:STDOUT:   %.d852be.1: %.type.b6a92a.1 = struct_value () [template]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [template]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %E.type: type = fn_type @E [template]
 // CHECK:STDOUT:   %E: %E.type = struct_value () [template]
+// CHECK:STDOUT:   %.type.b6a92a.2: type = fn_type @.2 [template]
+// CHECK:STDOUT:   %.d852be.2: %.type.b6a92a.2 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -81,7 +83,7 @@ fn E() {}
 // CHECK:STDOUT:     .B = %B.decl.loc21
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .D = %D.decl.loc41
-// CHECK:STDOUT:     .E = %E.decl.loc51
+// CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl.loc11: %A.type = fn_decl @A [template = constants.%A] {} {}
 // CHECK:STDOUT:   %A.decl.loc19: %A.type = fn_decl @A [template = constants.%A] {} {}
@@ -108,7 +110,7 @@ fn E() {}
 // CHECK:STDOUT:     %x.loc29: %empty_tuple.type = bind_name x, %x.param.loc29
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {
+// CHECK:STDOUT:   %.decl.loc39: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {
 // CHECK:STDOUT:     %x.patt: %empty_tuple.type = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %empty_tuple.type = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:   } {
@@ -121,8 +123,8 @@ fn E() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc41: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc49: %D.type = fn_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %E.decl.loc51: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %E.decl.loc58: %E.type = fn_decl @E [template = constants.%E] {} {}
+// CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
+// CHECK:STDOUT:   %.decl.loc58: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
@@ -139,6 +141,11 @@ fn E() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @E() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @.2() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

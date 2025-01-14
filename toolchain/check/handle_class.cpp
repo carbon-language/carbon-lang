@@ -65,7 +65,7 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(
+  DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
       RedeclInfo(new_class, new_loc, new_is_definition),
       RedeclInfo(prev_class, prev_loc, prev_class.is_defined()),

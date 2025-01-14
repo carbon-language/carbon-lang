@@ -88,11 +88,15 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       RedeclInfo(new_function, new_loc, new_is_definition),
-                       RedeclInfo(prev_function, prev_function.latest_decl_id(),
-                                  prev_function.has_definition_started()),
-                       prev_import_ir_id);
+  DiagnoseIfInvalidRedecl(
+      context, Lex::TokenKind::Fn, prev_function.name_id,
+      RedeclInfo(new_function, new_loc, new_is_definition),
+      RedeclInfo(prev_function, prev_function.latest_decl_id(),
+                 prev_function.has_definition_started()),
+      prev_import_ir_id);
+  if (new_is_definition && prev_function.has_definition_started()) {
+    return false;
+  }
 
   if (!prev_function.first_owning_decl_id.is_valid()) {
     prev_function.first_owning_decl_id = new_function.first_owning_decl_id;

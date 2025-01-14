@@ -91,12 +91,10 @@ auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
   context.emitter().Build(loc, ExternRequiresDeclInApiFile).Emit();
 }
 
-// Checks to see if a structurally valid redeclaration is allowed in context.
-// These all still merge.
-auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
-                          SemIR::NameId name_id, RedeclInfo new_decl,
-                          RedeclInfo prev_decl, SemIR::ImportIRId import_ir_id)
-    -> void {
+auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
+                             SemIR::NameId name_id, RedeclInfo new_decl,
+                             RedeclInfo prev_decl,
+                             SemIR::ImportIRId import_ir_id) -> void {
   if (!import_ir_id.is_valid()) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
