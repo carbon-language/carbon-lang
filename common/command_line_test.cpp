@@ -190,6 +190,7 @@ TEST(ArgParserTest, ShortArgs) {
   TestRawOstream os;
 
   EXPECT_THAT(parse({"-v"}, os), IsError(StrEq("unknown short option `-v`")));
+  EXPECT_THAT(parse({"-xvx"}, os), IsError(StrEq("unknown short option `-v`")));
 
   EXPECT_THAT(
       parse({"-xzf"}, os),
