@@ -25,14 +25,12 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::AliasInitializerId /*node_id*/)
-    -> bool {
-  context.full_pattern_stack().StartPatternInitializer();
+auto HandleParseNode(Context& /*context*/,
+                     Parse::AliasInitializerId /*node_id*/) -> bool {
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
-  context.full_pattern_stack().EndPatternInitializer();
   auto [expr_node, expr_id] = context.node_stack().PopExprWithNodeId();
 
   auto name_context = context.decl_name_stack().FinishName(
