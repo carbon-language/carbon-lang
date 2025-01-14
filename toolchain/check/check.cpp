@@ -74,7 +74,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     if (fuzzing) {
       // Clang is not crash-resilient.
       CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
-                        "Cpp import is not supported in fuzz testing");
+                        "Cpp import found during fuzzing");
       unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
       return;
     }
