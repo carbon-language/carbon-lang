@@ -705,7 +705,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
           context.insts().GetAs<SemIR::Vtable>(base_vtable_id).virtual_functions_id);
       for (auto fn_decl_id : base_vtable_inst_block) {
         auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-        auto fn = context.functions().Get(fn_decl.function_id);
+        const auto& fn = context.functions().Get(fn_decl.function_id);
         for (auto override_fn_decl_id :
              context.vtable_stack().PeekCurrentBlockContents()) {
           auto override_fn_decl =
