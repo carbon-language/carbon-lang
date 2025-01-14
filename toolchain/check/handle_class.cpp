@@ -701,8 +701,12 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
       LoadImportRef(context, base_class_info->vtable_id);
       auto base_vtable_id = context.constant_values().GetConstantInstId(
           base_class_info->vtable_id);
-      auto base_vtable_inst_block = context.inst_blocks().Get(
-          context.insts().GetAs<SemIR::Vtable>(base_vtable_id).virtual_functions_id);
+      auto base_vtable_inst_block =
+          context.inst_blocks().Get(context.insts()
+                                        .GetAs<SemIR::Vtable>(base_vtable_id)
+                                        .virtual_functions_id);
+      // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
+      // elements of the top of `vtable_stack`.
       for (auto fn_decl_id : base_vtable_inst_block) {
         auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
         const auto& fn = context.functions().Get(fn_decl.function_id);
@@ -712,6 +716,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
               context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
           const auto& override_fn =
               context.functions().Get(override_fn_decl.function_id);
+          // TODO: Validate that the overriding function's signature matches
+          // that of the overridden function.
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
