@@ -72,10 +72,10 @@ impl forall [T:! type] T as I {
   fn A() {}
 }
 
-// CHECK:STDERR: regression_for_redefinition_regions.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as I` [ImplRedefinition]
+// CHECK:STDERR: fail_redefinition_generic_regions.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as I` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! type] T as I {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: regression_for_redefinition_regions.carbon:[[@LINE-7]]:1: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR: fail_redefinition_generic_regions.carbon:[[@LINE-7]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! type] T as I {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl forall [T:! type] T as I {
@@ -534,7 +534,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- regression_for_redefinition_regions.carbon
+// CHECK:STDOUT: --- fail_redefinition_generic_regions.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
