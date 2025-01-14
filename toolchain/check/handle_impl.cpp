@@ -191,7 +191,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 // Pops the parameters of an `impl`, forming a `NameComponent` with no
 // associated name that describes them.
 static auto PopImplIntroducerAndParamsAsNameComponent(
-    Context& context, Parse::NodeId end_of_decl_node_id) -> NameComponent {
+    Context& context, Parse::NodeId last_param_node_id) -> NameComponent {
   auto [implicit_params_loc_id, implicit_param_patterns_id] =
       context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ImplForall>();
 
@@ -212,20 +212,11 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
   Parse::NodeId first_param_node_id =
       context.node_stack().PopForSoloNodeId<Parse::NodeKind::ImplIntroducer>();
 
-  auto node_kind = context.parse_tree().node_kind(end_of_decl_node_id);
-  CARBON_CHECK(node_kind == Parse::NodeKind::ImplDefinitionStart ||
-               node_kind == Parse::NodeKind::ImplDecl ||
-               node_kind == Parse::NodeKind::WhereOperand);
-  Parse::Tree::PostorderIterator last_param_iter(end_of_decl_node_id);
-  // Subtracting 1 since we don't want to include the final `{`, `;`, or `where`
-  // of the declaration when performing syntactic match.
-  --last_param_iter;
-
   return {
       .name_loc_id = Parse::NodeId::Invalid,
       .name_id = SemIR::NameId::Invalid,
       .first_param_node_id = first_param_node_id,
-      .last_param_node_id = *last_param_iter,
+      .last_param_node_id = last_param_node_id,
       .implicit_params_loc_id = implicit_params_loc_id,
       .implicit_param_patterns_id =
           implicit_param_patterns_id.value_or(SemIR::InstBlockId::Invalid),
@@ -289,13 +280,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // If the constraint is a `where` constraint, we need to stop syntactic
   // matching at it. For this case, `WhereExpr` handling will have left the
   // `WhereOperand` on the node stack.
-  Parse::NodeId end_of_decl_node_id = node_id;
+  Parse::NodeId last_param_node_id = Parse::NodeId::Invalid;
   if (context.parse_tree().node_kind(constraint_node) ==
       Parse::NodeKind::WhereExpr) {
     // Only keep the node ID, not the inst ID.
-    end_of_decl_node_id = context.node_stack()
-                              .PopWithNodeId<Parse::NodeKind::WhereOperand>()
-                              .first;
+    auto [operand_node, _] =
+        context.node_stack().PopWithNodeId<Parse::NodeKind::WhereOperand>();
+    // Exclude the `where` itself from params.
+    last_param_node_id = *--Parse::Tree::PostorderIterator(operand_node);
+  } else {
+    // Exclude the `AnyImplDeclId` (either a `;` or `{`) from params.
+    last_param_node_id = *--Parse::Tree::PostorderIterator(node_id);
   }
 
   auto [self_type_node, self_inst_id] =
@@ -309,7 +304,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name =
-      PopImplIntroducerAndParamsAsNameComponent(context, end_of_decl_node_id);
+      PopImplIntroducerAndParamsAsNameComponent(context, last_param_node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
