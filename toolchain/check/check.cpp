@@ -72,7 +72,6 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
 
   if (import_package_name == CppPackageName) {
     if (import_library_name.empty()) {
-      // Clang is not crash-resilient.
       CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
                         "`{0}` import missing library", std::string);
       unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary,
