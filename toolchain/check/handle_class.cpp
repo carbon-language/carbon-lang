@@ -699,10 +699,10 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
     llvm::SmallVector<SemIR::InstId> vtable;
     if (!defining_vptr) {
       LoadImportRef(context, base_class_info->vtable_id);
-      auto vtable_id = context.constant_values().GetConstantInstId(
+      auto base_vtable_id = context.constant_values().GetConstantInstId(
           base_class_info->vtable_id);
       auto base_vtable_inst_block = context.inst_blocks().Get(
-          context.insts().GetAs<SemIR::Vtable>(vtable_id).virtual_functions_id);
+          context.insts().GetAs<SemIR::Vtable>(base_vtable_id).virtual_functions_id);
       for (auto fn_decl_id : base_vtable_inst_block) {
         auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
         auto fn = context.functions().Get(fn_decl.function_id);
