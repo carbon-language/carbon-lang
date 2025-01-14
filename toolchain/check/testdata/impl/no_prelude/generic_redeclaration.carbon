@@ -64,7 +64,7 @@ interface I {}
 impl C as I {}
 impl (C, C).0 as I {}
 
-// --- regression_for_redefinition_regions.carbon
+// --- fail_redefinition_generic_regions.carbon
 
 interface I {}
 
