@@ -722,6 +722,11 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
           if (override_fn.virtual_modifier ==
                   SemIR::FunctionFields::VirtualModifier::Impl &&
               override_fn.name_id == fn.name_id) {
+            // TODO: This should be a semantic check rather than a syntactic
+            // one. The functions should be allowed to have different signatures
+            // as long as we can synthesize a suitable thunk.
+            CheckFunctionTypeMatches(context, override_fn, fn,
+                                     SemIR::SpecificId::Invalid, false);
             fn_decl_id = override_fn_decl_id;
           }
         }
