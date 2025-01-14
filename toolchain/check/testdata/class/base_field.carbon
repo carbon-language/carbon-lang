@@ -33,21 +33,21 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [template]
-// CHECK:STDOUT:   %complete_type.67b: <witness> = complete_type_witness %struct_type.a.b.c [template]
+// CHECK:STDOUT:   %complete_type.ebc: <witness> = complete_type_witness %struct_type.a.b.c [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %Derived.elem.69e: type = unbound_element_type %Derived, %Base [template]
-// CHECK:STDOUT:   %Derived.elem.d12: type = unbound_element_type %Derived, %i32 [template]
-// CHECK:STDOUT:   %struct_type.base.d.e.9c0: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [template]
-// CHECK:STDOUT:   %complete_type.ea5: <witness> = complete_type_witness %struct_type.base.d.e.9c0 [template]
+// CHECK:STDOUT:   %Derived.elem.344: type = unbound_element_type %Derived, %i32 [template]
+// CHECK:STDOUT:   %struct_type.base.d.e.6a7: type = struct_type {.base: %Base, .d: %i32, .e: %i32} [template]
+// CHECK:STDOUT:   %complete_type.401: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template]
 // CHECK:STDOUT:   %ptr.404: type = ptr_type %Derived [template]
-// CHECK:STDOUT:   %ptr.dc3: type = ptr_type %i32 [template]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [template]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [template]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -66,20 +66,20 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [template = constants.%Access] {
 // CHECK:STDOUT:     %p.patt: %ptr.404 = binding_pattern p
 // CHECK:STDOUT:     %p.param_patt: %ptr.404 = value_param_pattern %p.patt, runtime_param0
-// CHECK:STDOUT:     %return.patt: %ptr.dc3 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %ptr.dc3 = out_param_pattern %return.patt, runtime_param1
+// CHECK:STDOUT:     %return.patt: %ptr.235 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %ptr.235 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc24_30: type = ptr_type %i32 [template = constants.%ptr.dc3]
+// CHECK:STDOUT:     %ptr.loc24_30: type = ptr_type %i32 [template = constants.%ptr.235]
 // CHECK:STDOUT:     %p.param: %ptr.404 = value_param runtime_param0
 // CHECK:STDOUT:     %.loc24: type = splice_block %ptr.loc24_21 [template = constants.%ptr.404] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [template = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc24_21: type = ptr_type %Derived [template = constants.%ptr.404]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
-// CHECK:STDOUT:     %return.param: ref %ptr.dc3 = out_param runtime_param1
-// CHECK:STDOUT:     %return: ref %ptr.dc3 = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param runtime_param1
+// CHECK:STDOUT:     %return: ref %ptr.235 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,7 +87,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc12: %Base.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Base.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %.loc14: %Base.elem = field_decl c, element2 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.67b]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.ebc]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -100,9 +100,9 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc18: %Derived.elem.69e = base_decl %Base.ref, element0 [template]
-// CHECK:STDOUT:   %.loc20: %Derived.elem.d12 = field_decl d, element1 [template]
-// CHECK:STDOUT:   %.loc21: %Derived.elem.d12 = field_decl e, element2 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.9c0 [template = constants.%complete_type.ea5]
+// CHECK:STDOUT:   %.loc20: %Derived.elem.344 = field_decl d, element1 [template]
+// CHECK:STDOUT:   %.loc21: %Derived.elem.344 = field_decl e, element2 [template]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template = constants.%complete_type.401]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -113,7 +113,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%p.param_patt: %ptr.404) -> %ptr.dc3 {
+// CHECK:STDOUT: fn @Access(%p.param_patt: %ptr.404) -> %ptr.235 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.404 = name_ref p, %p
 // CHECK:STDOUT:   %.loc25_12: ref %Derived = deref %p.ref
@@ -121,7 +121,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc25_15.1: ref %Base = class_element_access %.loc25_12, element0
 // CHECK:STDOUT:   %.loc25_15.2: ref %Base = converted %.loc25_12, %.loc25_15.1
 // CHECK:STDOUT:   %.loc25_15.3: ref %i32 = class_element_access %.loc25_15.2, element2
-// CHECK:STDOUT:   %addr: %ptr.dc3 = addr_of %.loc25_15.3
+// CHECK:STDOUT:   %addr: %ptr.235 = addr_of %.loc25_15.3
 // CHECK:STDOUT:   return %addr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

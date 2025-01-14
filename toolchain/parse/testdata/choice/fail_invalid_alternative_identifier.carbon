@@ -25,9 +25,9 @@ choice InvalidAlternativeIdentifier {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'InvalidAlternativeIdentifier'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'InvalidAlternativeIdentifier'},
 // CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'Other'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'Other'},
 // CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '}', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

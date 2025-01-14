@@ -28,14 +28,14 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type.9b7: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -67,7 +67,7 @@ fn G(c: Class) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl n, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.9b7]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class

@@ -10,28 +10,28 @@
 
 class Class {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:1: error: `abstract` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: abstract base default final alias A = Class;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+21]]:10: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+25]]:10: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:          ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:1: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+22]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+14]]:15: error: `default` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+18]]:15: error: `default` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:               ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+15]]:1: note: `abstract` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:23: error: `final` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:23: error: `final` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR:                       ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: abstract base default final alias A = Class;
+// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: abstract base default final alias A = Class;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:

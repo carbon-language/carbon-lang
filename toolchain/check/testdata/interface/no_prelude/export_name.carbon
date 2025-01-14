@@ -67,8 +67,8 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.9f4: type = import_ref Main//base, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.f8c = import_ref Main//base, inst15 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.df2: type = import_ref Main//base, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.e5d = import_ref Main//base, inst15 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -76,12 +76,12 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     .I = %I
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %I: type = export I, imports.%import_ref.9f4 [template = constants.%I.type]
+// CHECK:STDOUT:   %I: type = export I, imports.%import_ref.df2 [template = constants.%I.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "base.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.f8c
+// CHECK:STDOUT:   .Self = imports.%import_ref.e5d
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,13 +94,13 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.042: type = import_ref Main//export, I, loaded [template = constants.%I.type]
-// CHECK:STDOUT:   %import_ref.aef = import_ref Main//export, inst18 [indirect], unloaded
+// CHECK:STDOUT:   %import_ref.df1: type = import_ref Main//export, I, loaded [template = constants.%I.type]
+// CHECK:STDOUT:   %import_ref.6c2 = import_ref Main//export, inst18 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .I = imports.%import_ref.042
+// CHECK:STDOUT:     .I = imports.%import_ref.df1
 // CHECK:STDOUT:     .UseEmpty = %UseEmpty.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
@@ -109,14 +109,14 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:     %i.param_patt: %I.type = value_param_pattern %i.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %I.type = value_param runtime_param0
-// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.042 [template = constants.%I.type]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%import_ref.df1 [template = constants.%I.type]
 // CHECK:STDOUT:     %i: %I.type = bind_name i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "export.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.aef
+// CHECK:STDOUT:   .Self = imports.%import_ref.6c2
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

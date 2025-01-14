@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include <tree_sitter/api.h>
-#include <tree_sitter/parser.h>
 
 #include <cstdlib>
 #include <filesystem>
@@ -12,6 +11,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "utils/tree_sitter/src/tree_sitter/parser.h"
 
 extern "C" {
 auto tree_sitter_carbon() -> TSLanguage*;
@@ -29,7 +30,7 @@ static auto ReadFile(std::filesystem::path path) -> std::string {
 // TODO: use file_test.cpp
 auto main(int argc, char** argv) -> int {
   if (argc < 2) {
-    std::cerr << "Usage: treesitter_carbon_tester <file>...\n";
+    std::cerr << "Usage: test_runner <file>...\n";
     return 2;
   }
 

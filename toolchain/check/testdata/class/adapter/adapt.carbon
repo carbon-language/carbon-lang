@@ -71,14 +71,14 @@ interface I {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %SomeClass.elem: type = unbound_element_type %SomeClass, %i32 [template]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template]
-// CHECK:STDOUT:   %complete_type.e46: <witness> = complete_type_witness %struct_type.a.b [template]
+// CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b [template]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [template]
 // CHECK:STDOUT:   %StructAdapter: type = class_type @StructAdapter [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -100,7 +100,7 @@ interface I {
 // CHECK:STDOUT: class @SomeClass {
 // CHECK:STDOUT:   %.loc5: %SomeClass.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.e46]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClass
@@ -112,7 +112,7 @@ interface I {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [template = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.e46]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%SomeClassAdapter
@@ -126,7 +126,7 @@ interface I {
 // CHECK:STDOUT:   %i32.loc14_23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [template = constants.%struct_type.a.b]
 // CHECK:STDOUT:   adapt_decl %struct_type.a.b [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.e46]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
@@ -137,8 +137,8 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapted: type = class_type @Adapted [template]
-// CHECK:STDOUT:   %F.type.f05: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.8ad: %F.type.f05 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.967: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.9eb: %F.type.967 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %AdaptNotExtend: type = class_type @AdaptNotExtend [template]
@@ -174,7 +174,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
-// CHECK:STDOUT:   %F.decl: %F.type.f05 = fn_decl @F.1 [template = constants.%F.8ad] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.967 = fn_decl @F.1 [template = constants.%F.9eb] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -215,7 +215,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

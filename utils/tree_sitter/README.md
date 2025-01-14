@@ -1,12 +1,21 @@
+# Tree-sitter grammar for Carbon
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Tree-sitter grammar for Carbon
-
 Tree-sitter is currently used for syntax highlighting in supported editors.
+
+## Development
+
+We use a non-hermetic tree-sitter invocation, so it must be installed locally.
+To install tree-sitter, run:
+
+```
+npm install -g tree-sitter-cli
+```
 
 ## Editor Installation
 

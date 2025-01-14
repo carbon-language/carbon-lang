@@ -16,6 +16,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -219,16 +220,20 @@ class Context {
     sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
+  // Adds a name to name lookup. Prints a diagnostic for name conflicts. If
+  // specified, `scope_index` specifies which lexical scope the name is inserted
+  // into, otherwise the name is inserted into the current scope.
+  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
+                       ScopeIndex scope_index = ScopeIndex::Invalid) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration. If scope_id is invalid, uses the current contextual scope. If
-  // found, returns the referenced instruction and false. If poisoned, returns
-  // an invalid instruction and true.
+  // declaration. If scope_id is invalid, performs lookup into the lexical scope
+  // specified by scope_index instead. If found, returns the referenced
+  // instruction and false. If poisoned, returns an invalid instruction and
+  // true.
   // TODO: For poisoned names, return the poisoning instruction.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id)
+                        SemIR::NameScopeId scope_id, ScopeIndex scope_index)
       -> std::pair<SemIR::InstId, bool>;
 
   // Performs an unqualified name lookup, returning the referenced instruction.

@@ -106,8 +106,8 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//class1, C, unloaded
-// CHECK:STDOUT:   %import_ref.8af: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//class1, C, unloaded
+// CHECK:STDOUT:   %import_ref.204: type = import_ref Main//class1, c_alias, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.6da = import_ref Main//class1, a, unloaded
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//class1, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//class1, inst14 [no loc], unloaded
@@ -115,15 +115,15 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
-// CHECK:STDOUT:     .c_alias = imports.%import_ref.8af
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .c_alias = imports.%import_ref.204
 // CHECK:STDOUT:     .a = imports.%import_ref.6da
 // CHECK:STDOUT:     .c_alias_alias = %c_alias_alias
 // CHECK:STDOUT:     .b = %b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.8af [template = constants.%C]
-// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.8af [template = constants.%C]
+// CHECK:STDOUT:   %c_alias.ref: type = name_ref c_alias, imports.%import_ref.204 [template = constants.%C]
+// CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%import_ref.204 [template = constants.%C]
 // CHECK:STDOUT:   %b.var: ref %ptr = var b
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var
 // CHECK:STDOUT: }
@@ -144,7 +144,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.77b: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3fd: type = import_ref Main//class2, c_alias_alias, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.b9b = import_ref Main//class2, b, unloaded
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//class2, inst21 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//class2, inst22 [indirect], unloaded
@@ -152,7 +152,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.77b
+// CHECK:STDOUT:     .c_alias_alias = imports.%import_ref.3fd
 // CHECK:STDOUT:     .b = imports.%import_ref.b9b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }

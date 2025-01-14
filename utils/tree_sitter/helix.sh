@@ -7,7 +7,7 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT/utils/treesitter"
+cd "$ROOT/utils/tree_sitter"
 
 tree-sitter generate --no-bindings
 

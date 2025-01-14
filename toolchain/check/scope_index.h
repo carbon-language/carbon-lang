@@ -20,11 +20,13 @@ namespace Carbon::Check {
 struct ScopeIndex : public IndexBase<ScopeIndex> {
   static constexpr llvm::StringLiteral Label = "scope";
   static const ScopeIndex Package;
+  static const ScopeIndex Invalid;
 
   using IndexBase::IndexBase;
 };
 
 constexpr ScopeIndex ScopeIndex::Package = ScopeIndex(0);
+constexpr ScopeIndex ScopeIndex::Invalid = ScopeIndex(InvalidIndex);
 
 }  // namespace Carbon::Check
 

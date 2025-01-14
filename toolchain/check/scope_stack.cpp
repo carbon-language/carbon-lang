@@ -99,14 +99,16 @@ auto ScopeStack::PopTo(ScopeIndex index) -> void {
                PeekIndex());
 }
 
-auto ScopeStack::LookupInCurrentScope(SemIR::NameId name_id) -> SemIR::InstId {
+auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
+                                             ScopeIndex scope_index)
+    -> SemIR::InstId {
   auto& lexical_results = lexical_lookup_.Get(name_id);
   if (lexical_results.empty()) {
     return SemIR::InstId::Invalid;
   }
 
   auto result = lexical_results.back();
-  if (result.scope_index != PeekIndex()) {
+  if (result.scope_index < scope_index) {
     return SemIR::InstId::Invalid;
   }
 
@@ -139,24 +141,43 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
       llvm::ArrayRef(first_non_lexical_scope, non_lexical_scope_stack_.end())};
 }
 
-auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id)
-    -> SemIR::InstId {
-  if (!scope_stack_.back().names.Insert(name_id).is_inserted()) {
-    auto existing = lexical_lookup_.Get(name_id).back().inst_id;
-    CARBON_CHECK(existing.is_valid(),
-                 "Name in scope but not in lexical lookups");
-    return existing;
+auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
+                                 ScopeIndex scope_index) -> SemIR::InstId {
+  // Find the corresponding scope depth.
+  //
+  // TODO: Consider passing in the depth rather than performing a scan for it.
+  // We only do this scan when declaring an entity such as a class within a
+  // function, so it should be relatively rare, but it's still not necesasry to
+  // recompute this.
+  int scope_depth = scope_stack_.size() - 1;
+  if (scope_index.is_valid()) {
+    scope_depth =
+        std::lower_bound(scope_stack_.begin(), scope_stack_.end(), scope_index,
+                         [](const ScopeStackEntry& entry, ScopeIndex index) {
+                           return entry.index < index;
+                         }) -
+        scope_stack_.begin();
+    CARBON_CHECK(scope_stack_[scope_depth].index == scope_index,
+                 "Declaring name in scope that has already ended");
+  } else {
+    scope_index = scope_stack_[scope_depth].index;
   }
-  ++scope_stack_.back().num_names;
 
-  // TODO: Reject if we previously performed a failed lookup for this name
-  // in this scope or a scope nested within it.
+  // If this name has already been declared in this scope or an inner scope,
+  // return the existing result.
   auto& lexical_results = lexical_lookup_.Get(name_id);
-  CARBON_CHECK(
-      lexical_results.empty() ||
-          lexical_results.back().scope_index < PeekIndex(),
-      "Failed to clean up after scope nested within the current scope");
-  lexical_results.push_back({.inst_id = target_id, .scope_index = PeekIndex()});
+  if (!lexical_results.empty() &&
+      lexical_results.back().scope_index >= scope_index) {
+    return lexical_results.back().inst_id;
+  }
+
+  // Add the name into the scope.
+  bool inserted = scope_stack_[scope_depth].names.Insert(name_id).is_inserted();
+  CARBON_CHECK(inserted, "Name in scope but not in lexical lookups");
+  ++scope_stack_[scope_depth].num_names;
+
+  // Add a corresponding lexical lookup result.
+  lexical_results.push_back({.inst_id = target_id, .scope_index = scope_index});
   return SemIR::InstId::Invalid;
 }
 

@@ -23,14 +23,14 @@ protected var b: ();
 // CHECK:STDERR:
 private protected var c: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: protected protected var d: ();
+// CHECK:STDERR:           ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `protected` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `protected` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: protected protected var d: ();
-// CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:

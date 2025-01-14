@@ -386,7 +386,8 @@ class NodeStack {
     // `TuplePattern` produces an `InstBlockId`.
     set_id_if_category_is(Parse::NodeCategory::Expr,
                           Id::KindFor<SemIR::InstId>());
-    set_id_if_category_is(Parse::NodeCategory::MemberName,
+    set_id_if_category_is(Parse::NodeCategory::MemberName |
+                              Parse::NodeCategory::NonExprIdentifierName,
                           Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
                           Id::KindFor<SemIR::InstId>());
@@ -521,7 +522,8 @@ class NodeStack {
         case Parse::NodeKind::ForStatement:
         case Parse::NodeKind::FunctionDecl:
         case Parse::NodeKind::FunctionDefinition:
-        case Parse::NodeKind::IdentifierName:
+        case Parse::NodeKind::IdentifierNameNotBeforeParams:
+        case Parse::NodeKind::IdentifierNameBeforeParams:
         case Parse::NodeKind::IdentifierNameExpr:
         case Parse::NodeKind::IfConditionStart:
         case Parse::NodeKind::IfExprElse:
@@ -594,7 +596,8 @@ class NodeStack {
         case Parse::NodeKind::NamedConstraintDefinition:
         case Parse::NodeKind::NamedConstraintDefinitionStart:
         case Parse::NodeKind::NamedConstraintIntroducer:
-        case Parse::NodeKind::NameQualifier:
+        case Parse::NodeKind::NameQualifierWithParams:
+        case Parse::NodeKind::NameQualifierWithoutParams:
         case Parse::NodeKind::Namespace:
         case Parse::NodeKind::NamespaceStart:
         case Parse::NodeKind::PackageDecl:

@@ -16,10 +16,10 @@ class Foo {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'Foo'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 5},

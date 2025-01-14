@@ -34,11 +34,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.type.c52: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %AddWith.type.c52 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %AddWith.type.c52, %F.type [symbolic]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %AddWith.type.bc7, %F.type [symbolic]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @AddWith.%F.decl [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -60,15 +60,15 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt.loc4_19.2: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_19.2)> [symbolic = %AddWith.type (constants.%AddWith.type.c52)]
-// CHECK:STDOUT:   %Self.2: %AddWith.type.c52 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T.loc4_19.2)> [symbolic = %AddWith.type (constants.%AddWith.type.bc7)]
+// CHECK:STDOUT:   %Self.2: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @AddWith(%T.loc4_19.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.c52), @AddWith.%F.type (%F.type) [symbolic = %F.assoc_type (constants.%F.assoc_type)]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.bc7), @AddWith.%F.type (%F.type) [symbolic = %F.assoc_type (constants.%F.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc5_9.2: @AddWith.%F.assoc_type (%F.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.c52) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.bc7) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %F.decl: @AddWith.%F.type (%F.type) = fn_decl @F [symbolic = @AddWith.%F (constants.%F)] {} {}
 // CHECK:STDOUT:     %assoc0.loc5_9.1: @AddWith.%F.assoc_type (%F.assoc_type) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_9.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -79,7 +79,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@AddWith.%T.loc4_19.1: type, @AddWith.%Self.1: @AddWith.%AddWith.type (%AddWith.type.c52)) {
+// CHECK:STDOUT: generic fn @F(@AddWith.%T.loc4_19.1: type, @AddWith.%Self.1: @AddWith.%AddWith.type (%AddWith.type.bc7)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -102,44 +102,44 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.type.b35: type = generic_interface_type @AddWith [template]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.b35 = struct_value () [template]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %AddWith.type.b2d: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %AddWith.type.b2d = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.bc7: type = facet_type <@AddWith, @AddWith(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.deb: type = fn_type @F.1, @AddWith(%T) [symbolic]
-// CHECK:STDOUT:   %F.57a: %F.type.deb = struct_value () [symbolic]
-// CHECK:STDOUT:   %F.assoc_type.cbf: type = assoc_entity_type %AddWith.type.b2d, %F.type.deb [symbolic]
-// CHECK:STDOUT:   %assoc0.816: %F.assoc_type.cbf = assoc_entity element0, imports.%import_ref.91c [symbolic]
-// CHECK:STDOUT:   %AddWith.type.32b: type = facet_type <@AddWith, @AddWith(%C)> [template]
-// CHECK:STDOUT:   %F.type.47b: type = fn_type @F.1, @AddWith(%C) [template]
-// CHECK:STDOUT:   %F.000: %F.type.47b = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type.13c: type = assoc_entity_type %AddWith.type.32b, %F.type.47b [template]
-// CHECK:STDOUT:   %assoc0.d29: %F.assoc_type.13c = assoc_entity element0, imports.%import_ref.91c [template]
+// CHECK:STDOUT:   %F.type.fbc: type = fn_type @F.1, @AddWith(%T) [symbolic]
+// CHECK:STDOUT:   %F.be3: %F.type.fbc = struct_value () [symbolic]
+// CHECK:STDOUT:   %F.assoc_type.f26: type = assoc_entity_type %AddWith.type.bc7, %F.type.fbc [symbolic]
+// CHECK:STDOUT:   %assoc0.1ff: %F.assoc_type.f26 = assoc_entity element0, imports.%import_ref.0c5 [symbolic]
+// CHECK:STDOUT:   %AddWith.type.e8e: type = facet_type <@AddWith, @AddWith(%C)> [template]
+// CHECK:STDOUT:   %F.type.cd2: type = fn_type @F.1, @AddWith(%C) [template]
+// CHECK:STDOUT:   %F.b58: %F.type.cd2 = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type.c97: type = assoc_entity_type %AddWith.type.e8e, %F.type.cd2 [template]
+// CHECK:STDOUT:   %assoc0.dc2: %F.assoc_type.c97 = assoc_entity element0, imports.%import_ref.0c5 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template]
-// CHECK:STDOUT:   %F.type.744: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.780: %F.type.744 = struct_value () [template]
-// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.b2d = facet_value %C, %impl_witness [symbolic]
+// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [template]
+// CHECK:STDOUT:   %AddWith.facet: %AddWith.type.bc7 = facet_value %C, %impl_witness [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.7c5: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
-// CHECK:STDOUT:   %import_ref.648 = import_ref Main//a, inst26 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.8a8 = import_ref Main//a, loc5_9, unloaded
-// CHECK:STDOUT:   %import_ref.70f: @AddWith.%F.type (%F.type.deb) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.57a)]
-// CHECK:STDOUT:   %import_ref.91c = import_ref Main//a, loc5_9, unloaded
+// CHECK:STDOUT:   %import_ref.cf6: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [template = constants.%AddWith.generic]
+// CHECK:STDOUT:   %import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
+// CHECK:STDOUT:   %import_ref.ce5 = import_ref Main//a, loc5_9, unloaded
+// CHECK:STDOUT:   %import_ref.b80: @AddWith.%F.type (%F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%F (constants.%F.be3)]
+// CHECK:STDOUT:   %import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .AddWith = imports.%import_ref.7c5
+// CHECK:STDOUT:     .AddWith = imports.%import_ref.cf6
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [template = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%import_ref.7c5 [template = constants.%AddWith.generic]
+// CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%import_ref.cf6 [template = constants.%AddWith.generic]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.32b]
+// CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [template = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%F.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
@@ -149,23 +149,23 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.b2d)]
-// CHECK:STDOUT:   %Self: %AddWith.type.b2d = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.deb)]
-// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.deb) = struct_value () [symbolic = %F (constants.%F.57a)]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.b2d), @AddWith.%F.type (%F.type.deb) [symbolic = %F.assoc_type (constants.%F.assoc_type.cbf)]
-// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.cbf) = assoc_entity element0, imports.%import_ref.91c [symbolic = %assoc0 (constants.%assoc0.816)]
+// CHECK:STDOUT:   %AddWith.type: type = facet_type <@AddWith, @AddWith(%T)> [symbolic = %AddWith.type (constants.%AddWith.type.bc7)]
+// CHECK:STDOUT:   %Self: %AddWith.type.bc7 = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.1, @AddWith(%T) [symbolic = %F.type (constants.%F.type.fbc)]
+// CHECK:STDOUT:   %F: @AddWith.%F.type (%F.type.fbc) = struct_value () [symbolic = %F (constants.%F.be3)]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type @AddWith.%AddWith.type (%AddWith.type.bc7), @AddWith.%F.type (%F.type.fbc) [symbolic = %F.assoc_type (constants.%F.assoc_type.f26)]
+// CHECK:STDOUT:   %assoc0: @AddWith.%F.assoc_type (%F.assoc_type.f26) = assoc_entity element0, imports.%import_ref.0c5 [symbolic = %assoc0 (constants.%assoc0.1ff)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.648
-// CHECK:STDOUT:     .F = imports.%import_ref.8a8
-// CHECK:STDOUT:     witness = (imports.%import_ref.70f)
+// CHECK:STDOUT:     .Self = imports.%import_ref.476
+// CHECK:STDOUT:     .F = imports.%import_ref.ce5
+// CHECK:STDOUT:     witness = (imports.%import_ref.b80)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
-// CHECK:STDOUT:   %F.decl: %F.type.744 = fn_decl @F.2 [template = constants.%F.780] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.2 [template = constants.%F.e62] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -180,7 +180,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.b2d) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.bc7) [from "a.carbon"] {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -204,12 +204,12 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %T.patt => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.32b
+// CHECK:STDOUT:   %AddWith.type => constants.%AddWith.type.e8e
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %F.type => constants.%F.type.47b
-// CHECK:STDOUT:   %F => constants.%F.000
-// CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.13c
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.d29
+// CHECK:STDOUT:   %F.type => constants.%F.type.cd2
+// CHECK:STDOUT:   %F => constants.%F.b58
+// CHECK:STDOUT:   %F.assoc_type => constants.%F.assoc_type.c97
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.dc2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%C, constants.%AddWith.facet) {}

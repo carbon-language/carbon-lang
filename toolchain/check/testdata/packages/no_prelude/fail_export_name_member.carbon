@@ -70,7 +70,7 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Foo//a, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Foo//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Foo//a, inst14 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.4cb = import_ref Foo//a, loc5_8, unloaded
@@ -78,7 +78,7 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT: }

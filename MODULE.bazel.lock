@@ -207,6 +207,8 @@
     "https://bcr.bazel.build/modules/stardoc/0.7.1/MODULE.bazel": "3548faea4ee5dda5580f9af150e79d0f6aea934fc60c1cc50f4efdd9420759e7",
     "https://bcr.bazel.build/modules/stardoc/0.7.2/MODULE.bazel": "fc152419aa2ea0f51c29583fab1e8c99ddefd5b3778421845606ee628629e0e5",
     "https://bcr.bazel.build/modules/stardoc/0.7.2/source.json": "58b029e5e901d6802967754adf0a9056747e8176f017cfe3607c0851f4d42216",
+    "https://bcr.bazel.build/modules/tree-sitter-bazel/0.24.4/MODULE.bazel": "5f23d216376ea547e4b8f8819c201e70c59010ca2badd2a89a226b03e048b847",
+    "https://bcr.bazel.build/modules/tree-sitter-bazel/0.24.4/source.json": "0ad3631cf2c38fb32445968acbc800f5bcff3503f7ca136c0b2d2c7b7d06a60c",
     "https://bcr.bazel.build/modules/upb/0.0.0-20220923-a547704/MODULE.bazel": "7298990c00040a0e2f121f6c32544bab27d4452f80d9ce51349b1a28f3005c43",
     "https://bcr.bazel.build/modules/upb/0.0.0-20230516-61a97ef/MODULE.bazel": "c0df5e35ad55e264160417fd0875932ee3c9dda63d9fccace35ac62f45e1b6f9",
     "https://bcr.bazel.build/modules/xz/5.4.5.bcr.1/MODULE.bazel": "c037f75fa1b7e1ff15fbd15d807a8ce545e9b02f02df0a9777aa9aa7d8b268bb",
@@ -3710,6 +3712,36 @@
             "rules_python++python+pythons_hub",
             "python_3_9_host",
             "rules_python++python+python_3_9_host"
+          ]
+        ]
+      }
+    },
+    "@@tree-sitter-bazel+//:extensions.bzl%tree_sitter_source_code": {
+      "general": {
+        "bzlTransitiveDigest": "7Be5pB4ksIvEy9VCPruRCllTYTjsiIJgaigRzR9e+u4=",
+        "usagesDigest": "+A8gOKWptG2ZhzIqOP3jb/D4vpatFdmbOLuveV6t1Yw=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "tree-sitter-raw": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "urls": [
+                "https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.24.4.tar.gz"
+              ],
+              "sha256": "",
+              "integrity": "sha384-Af1RSXWjSyY7gKQ9W4kaUrJm6EaDFXfCDb1Ca25yZTBQ3hS9Ye7ev57dEGTvAbpz",
+              "strip_prefix": "tree-sitter-0.24.4",
+              "build_file_content": "exports_files(glob([\"lib/**\"]))"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "tree-sitter-bazel+",
+            "bazel_tools",
+            "bazel_tools"
           ]
         ]
       }

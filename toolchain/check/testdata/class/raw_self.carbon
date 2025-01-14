@@ -32,17 +32,17 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.471: type = tuple_type (%i32, %i32) [template]
+// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type.9b7: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -80,15 +80,15 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.param_patt.loc21_16: %Class = value_param_pattern %self.patt.loc21_12, runtime_param0
 // CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, runtime_param1
-// CHECK:STDOUT:     %return.patt: %tuple.type.471 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.471 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc21_41: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21_41: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc21_46: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21_46: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc21_49.1: %tuple.type.24b = tuple_literal (%i32.loc21_41, %i32.loc21_46)
-// CHECK:STDOUT:     %.loc21_49.2: type = converted %.loc21_49.1, constants.%tuple.type.471 [template = constants.%tuple.type.471]
+// CHECK:STDOUT:     %.loc21_49.2: type = converted %.loc21_49.1, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %self.param.loc21_16: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc21_12: %Class = bind_name self, %self.param.loc21_16
@@ -98,8 +98,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:       %i32.loc21_32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc21_24: %i32 = bind_name r#self, %self.param.loc21_30
-// CHECK:STDOUT:     %return.param.loc21: ref %tuple.type.471 = out_param runtime_param2
-// CHECK:STDOUT:     %return.loc21: ref %tuple.type.471 = return_slot %return.param.loc21
+// CHECK:STDOUT:     %return.param.loc21: ref %tuple.type.d07 = out_param runtime_param2
+// CHECK:STDOUT:     %return.loc21: ref %tuple.type.d07 = return_slot %return.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -129,15 +129,15 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:     %self.param_patt.loc21_16: %Class = value_param_pattern %self.patt.loc21_12, runtime_param0
 // CHECK:STDOUT:     %self.patt.loc21_24: %i32 = binding_pattern r#self
 // CHECK:STDOUT:     %self.param_patt.loc21_30: %i32 = value_param_pattern %self.patt.loc21_24, runtime_param1
-// CHECK:STDOUT:     %return.patt: %tuple.type.471 = return_slot_pattern
-// CHECK:STDOUT:     %return.param_patt: %tuple.type.471 = out_param_pattern %return.patt, runtime_param2
+// CHECK:STDOUT:     %return.patt: %tuple.type.d07 = return_slot_pattern
+// CHECK:STDOUT:     %return.param_patt: %tuple.type.d07 = out_param_pattern %return.patt, runtime_param2
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc13_37: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13_37: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc13_42: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13_42: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %.loc13_45.1: %tuple.type.24b = tuple_literal (%i32.loc13_37, %i32.loc13_42)
-// CHECK:STDOUT:     %.loc13_45.2: type = converted %.loc13_45.1, constants.%tuple.type.471 [template = constants.%tuple.type.471]
+// CHECK:STDOUT:     %.loc13_45.2: type = converted %.loc13_45.1, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %self.param.loc13_12: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self.loc13_8: %Class = bind_name self, %self.param.loc13_12
@@ -147,11 +147,11 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:       %i32.loc13_28: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc13_20: %i32 = bind_name r#self, %self.param.loc13_26
-// CHECK:STDOUT:     %return.param.loc13: ref %tuple.type.471 = out_param runtime_param2
-// CHECK:STDOUT:     %return.loc13: ref %tuple.type.471 = return_slot %return.param.loc13
+// CHECK:STDOUT:     %return.param.loc13: ref %tuple.type.d07 = out_param runtime_param2
+// CHECK:STDOUT:     %return.loc13: ref %tuple.type.d07 = return_slot %return.param.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14: %Class.elem = field_decl n, element0 [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.9b7]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -172,20 +172,20 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt: %tuple.type.471 {
+// CHECK:STDOUT: fn @G[%self.param_patt.loc21_16: %Class](%self.param_patt.loc21_30: %i32) -> %return.param_patt: %tuple.type.d07 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc22_11: %Class = name_ref self, %self.loc21_12
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc14 [template = @Class.%.loc14]
 // CHECK:STDOUT:   %.loc22_15.1: ref %i32 = class_element_access %self.ref.loc22_11, element0
 // CHECK:STDOUT:   %.loc22_15.2: %i32 = bind_value %.loc22_15.1
 // CHECK:STDOUT:   %self.ref.loc22_19: %i32 = name_ref r#self, %self.loc21_24
-// CHECK:STDOUT:   %.loc22_25.1: %tuple.type.471 = tuple_literal (%.loc22_15.2, %self.ref.loc22_19)
+// CHECK:STDOUT:   %.loc22_25.1: %tuple.type.d07 = tuple_literal (%.loc22_15.2, %self.ref.loc22_19)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.loc21, element0
 // CHECK:STDOUT:   %.loc22_25.2: init %i32 = initialize_from %.loc22_15.2 to %tuple.elem0
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.loc21, element1
 // CHECK:STDOUT:   %.loc22_25.3: init %i32 = initialize_from %self.ref.loc22_19 to %tuple.elem1
-// CHECK:STDOUT:   %.loc22_25.4: init %tuple.type.471 = tuple_init (%.loc22_25.2, %.loc22_25.3) to %return.loc21
-// CHECK:STDOUT:   %.loc22_26: init %tuple.type.471 = converted %.loc22_25.1, %.loc22_25.4
+// CHECK:STDOUT:   %.loc22_25.4: init %tuple.type.d07 = tuple_init (%.loc22_25.2, %.loc22_25.3) to %return.loc21
+// CHECK:STDOUT:   %.loc22_26: init %tuple.type.d07 = converted %.loc22_25.1, %.loc22_25.4
 // CHECK:STDOUT:   return %.loc22_26 to %return.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

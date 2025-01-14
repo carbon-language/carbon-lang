@@ -140,14 +140,14 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.d58: <namespace> = import_ref Example//a, NS, loaded
 // CHECK:STDOUT:   %NS: <namespace> = namespace %import_ref.d58, [template] {
-// CHECK:STDOUT:     .A = %import_ref.5d2
-// CHECK:STDOUT:     .B1 = %import_ref.436
-// CHECK:STDOUT:     .B2 = %import_ref.fde
+// CHECK:STDOUT:     .A = %import_ref.e9b
+// CHECK:STDOUT:     .B1 = %import_ref.7c2
+// CHECK:STDOUT:     .B2 = %import_ref.531
 // CHECK:STDOUT:     .C = file.%C.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.5d2: %A.type = import_ref Example//a, A, loaded [template = constants.%A]
-// CHECK:STDOUT:   %import_ref.436: %B1.type = import_ref Example//b, B1, loaded [template = constants.%B1]
-// CHECK:STDOUT:   %import_ref.fde: %B2.type = import_ref Example//b, B2, loaded [template = constants.%B2]
+// CHECK:STDOUT:   %import_ref.e9b: %A.type = import_ref Example//a, A, loaded [template = constants.%A]
+// CHECK:STDOUT:   %import_ref.7c2: %B1.type = import_ref Example//b, B1, loaded [template = constants.%B1]
+// CHECK:STDOUT:   %import_ref.531: %B2.type = import_ref Example//b, B2, loaded [template = constants.%B2]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -163,9 +163,9 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
 // CHECK:STDOUT:   %NS: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .A = imports.%import_ref.5d2
-// CHECK:STDOUT:     .B1 = imports.%import_ref.436
-// CHECK:STDOUT:     .B2 = imports.%import_ref.fde
+// CHECK:STDOUT:     .A = imports.%import_ref.e9b
+// CHECK:STDOUT:     .B1 = imports.%import_ref.7c2
+// CHECK:STDOUT:     .B2 = imports.%import_ref.531
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = fn_decl @C [template = constants.%C] {} {}
@@ -180,13 +180,13 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %NS.ref.loc12: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.5d2 [template = constants.%A]
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, imports.%import_ref.e9b [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   %NS.ref.loc13: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %B1.ref: %B1.type = name_ref B1, imports.%import_ref.436 [template = constants.%B1]
+// CHECK:STDOUT:   %B1.ref: %B1.type = name_ref B1, imports.%import_ref.7c2 [template = constants.%B1]
 // CHECK:STDOUT:   %B1.call: init %empty_tuple.type = call %B1.ref()
 // CHECK:STDOUT:   %NS.ref.loc14: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
-// CHECK:STDOUT:   %B2.ref: %B2.type = name_ref B2, imports.%import_ref.fde [template = constants.%B2]
+// CHECK:STDOUT:   %B2.ref: %B2.type = name_ref B2, imports.%import_ref.531 [template = constants.%B2]
 // CHECK:STDOUT:   %B2.call: init %empty_tuple.type = call %B2.ref()
 // CHECK:STDOUT:   %NS.ref.loc15: <namespace> = name_ref NS, imports.%NS [template = imports.%NS]
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C]

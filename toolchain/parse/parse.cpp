@@ -19,13 +19,9 @@ auto HandleInvalid(Context& context) -> void {
 
 auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
            llvm::raw_ostream* vlog_stream) -> Tree {
-  Lex::TokenDiagnosticConverter converter(&tokens);
-  ErrorTrackingDiagnosticConsumer err_tracker(consumer);
-  Lex::TokenDiagnosticEmitter emitter(converter, err_tracker);
-
   // Delegate to the parser.
   Tree tree(tokens);
-  Context context(tree, tokens, emitter, vlog_stream);
+  Context context(&tree, &tokens, &consumer, vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -48,7 +44,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, DiagnosticConsumer& consumer,
 
   // Mark the tree as potentially having errors if there were errors coming in
   // from the tokenized buffer or we diagnosed new errors.
-  tree.set_has_errors(tokens.has_errors() || err_tracker.seen_error());
+  tree.set_has_errors(tokens.has_errors() || context.has_errors());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     // TODO: This is temporarily printing to stderr directly during development.

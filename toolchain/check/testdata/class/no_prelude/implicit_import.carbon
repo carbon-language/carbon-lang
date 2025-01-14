@@ -207,14 +207,14 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//redef_after_def, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//redef_after_def, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//redef_after_def, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//redef_after_def, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.0ac
+// CHECK:STDOUT:     .C = imports.%import_ref.3b0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>
@@ -263,14 +263,14 @@ class B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.85d = import_ref Main//def_alias, C, unloaded
-// CHECK:STDOUT:   %import_ref.79a: type = import_ref Main//def_alias, B, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.f42 = import_ref Main//def_alias, C, unloaded
+// CHECK:STDOUT:   %import_ref.8bd: type = import_ref Main//def_alias, B, loaded [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.85d
-// CHECK:STDOUT:     .B = imports.%import_ref.79a
+// CHECK:STDOUT:     .C = imports.%import_ref.f42
+// CHECK:STDOUT:     .B = imports.%import_ref.8bd
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_6.1 = import <invalid>
 // CHECK:STDOUT:   %default.import.loc2_6.2 = import <invalid>

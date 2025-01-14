@@ -321,7 +321,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
-  // TODO: Do facet type resolution here.
+  // TODO: Do facet type resolution here, and enforce that the constraint
+  // extends a single interface.
   // TODO: Determine `interface_id` and `specific_id` once and save it in the
   // resolved facet type, instead of in multiple functions called below.
   // TODO: Skip work below if facet type resolution fails, so we don't have a
@@ -373,12 +374,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
     impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
+    AddConstantsToImplWitnessFromConstraint(
+        context, impl_info, impl_info.witness_id, impl_decl.impl_id);
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
-    FinishGenericRedecl(context, impl_decl_id,
-                        context.impls().Get(impl_decl.impl_id).generic_id);
+    const auto& first_impl = context.impls().Get(impl_decl.impl_id);
+    AddConstantsToImplWitnessFromConstraint(
+        context, impl_info, first_impl.witness_id, impl_decl.impl_id);
+    FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
   }
 
   // Write the impl ID into the ImplDecl.

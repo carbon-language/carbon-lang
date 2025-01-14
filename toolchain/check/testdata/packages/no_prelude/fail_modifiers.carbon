@@ -50,53 +50,53 @@ export library "export_library";
 
 // --- fail_import_modifiers.carbon
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `impl` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: impl import ImplImport;
-// CHECK:STDERR: ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:6: error: imported API 'ImplImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:6: error: imported API 'ImplImport' not found [ImportNotFound]
 // CHECK:STDERR: impl import ImplImport;
 // CHECK:STDERR:      ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: impl import ImplImport;
+// CHECK:STDERR: ^~~~
 // CHECK:STDERR:
 impl import ImplImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `extend` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: extend import ExtendImport;
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:8: error: imported API 'ExtendImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:8: error: imported API 'ExtendImport' not found [ImportNotFound]
 // CHECK:STDERR: extend import ExtendImport;
 // CHECK:STDERR:        ^~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `extend` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: extend import ExtendImport;
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extend import ExtendImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `virtual` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: virtual import VirtualImport;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:9: error: imported API 'VirtualImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:9: error: imported API 'VirtualImport' not found [ImportNotFound]
 // CHECK:STDERR: virtual import VirtualImport;
 // CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `virtual` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: virtual import VirtualImport;
+// CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 virtual import VirtualImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:1: error: `base` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: base import BaseImport;
-// CHECK:STDERR: ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:6: error: imported API 'BaseImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:6: error: imported API 'BaseImport' not found [ImportNotFound]
 // CHECK:STDERR: base import BaseImport;
 // CHECK:STDERR:      ^~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `base` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: base import BaseImport;
+// CHECK:STDERR: ^~~~
+// CHECK:STDERR:
 base import BaseImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+7]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: private import PrivateImport;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+3]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+7]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
 // CHECK:STDERR: private import PrivateImport;
 // CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: private import PrivateImport;
+// CHECK:STDERR: ^~~~~~~
 private import PrivateImport;
 
 // CHECK:STDOUT: --- fail_export_package.carbon

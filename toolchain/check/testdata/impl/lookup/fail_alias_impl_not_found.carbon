@@ -33,9 +33,9 @@ fn F(c: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.9df: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.478: %F.type.9df = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.9df [template]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %I.type, %F.type.cf0 [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @I.%F.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
@@ -73,7 +73,7 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.9df = fn_decl @F.1 [template = constants.%F.478] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [template = constants.%F.bc6] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

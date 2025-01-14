@@ -42,8 +42,8 @@ class C {
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type.675: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2c9: %F.type.675 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.c29: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.437: %F.type.c29 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,7 +76,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type.675 = fn_decl @F.2 [template = constants.%F.2c9] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.2 [template = constants.%F.437] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

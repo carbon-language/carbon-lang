@@ -29,7 +29,7 @@ interface Interface {
 // CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %Interface.type, %F.type [template]
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, @Interface.%F.decl [template]
 // CHECK:STDOUT:   %.type: type = fn_type @.1 [template]
-// CHECK:STDOUT:   %.c3a: %.type = struct_value () [template]
+// CHECK:STDOUT:   %.563: %.type = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -43,7 +43,7 @@ interface Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
-// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.c3a] {} {}
+// CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.563] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

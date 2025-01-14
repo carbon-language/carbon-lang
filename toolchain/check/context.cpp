@@ -304,20 +304,22 @@ auto Context::NoteUndefinedInterface(SemIR::InterfaceId interface_id,
   }
 }
 
-auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id)
-    -> void {
-  if (auto existing = scope_stack().LookupOrAddName(name_id, target_id);
+auto Context::AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
+                              ScopeIndex scope_index) -> void {
+  if (auto existing =
+          scope_stack().LookupOrAddName(name_id, target_id, scope_index);
       existing.is_valid()) {
     DiagnoseDuplicateName(target_id, existing);
   }
 }
 
 auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                               SemIR::NameScopeId scope_id)
+                               SemIR::NameScopeId scope_id,
+                               ScopeIndex scope_index)
     -> std::pair<SemIR::InstId, bool> {
   if (!scope_id.is_valid()) {
-    // Look for a name in the current scope only. There are two cases where the
-    // name would be in an outer scope:
+    // Look for a name in the specified scope or a scope nested within it only.
+    // There are two cases where the name would be in an outer scope:
     //
     //  - The name is the sole component of the declared name:
     //
@@ -339,7 +341,19 @@ auto Context::LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
     //    In this case, we're not in the correct scope to define a member of
     //    class A, so we should reject, and we achieve this by not finding the
     //    name A from the outer scope.
-    return {scope_stack().LookupInCurrentScope(name_id), false};
+    //
+    // There is also one case where the name would be in an inner scope:
+    //
+    //  - The name is redeclared by a parameter of the same entity:
+    //
+    //    fn F() {
+    //      class C(C:! type);
+    //    }
+    //
+    //    In this case, the class C is not a redeclaration of its parameter, but
+    //    we find the parameter in order to diagnose a redeclaration error.
+    return {scope_stack().LookupInLexicalScopesWithin(name_id, scope_index),
+            false};
   } else {
     // We do not look into `extend`ed scopes here. A qualified name in a
     // declaration must specify the exact scope in which the name was originally

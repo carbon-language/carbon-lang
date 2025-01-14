@@ -88,7 +88,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -140,7 +140,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -195,12 +195,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.767: type = unbound_element_type %AdaptWithBaseAndFields, %Base [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.19e: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.ddf: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -228,7 +228,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.767 = base_decl %Base.ref, element<invalid> [template]
-// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.19e = field_decl n, element<invalid> [template]
+// CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.ddf = field_decl n, element<invalid> [template]
 // CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc15_11 [template]

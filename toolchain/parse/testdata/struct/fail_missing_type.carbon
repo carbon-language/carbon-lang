@@ -17,9 +17,9 @@ var x: {.a:} = {};
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:           {kind: 'StructTypeLiteralStart', text: '{'},
-// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'a'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
 // CHECK:STDOUT:           {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '}', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},

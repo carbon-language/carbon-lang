@@ -34,29 +34,31 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     return;
   }
 
-  context.AddLeafNode(NodeKind::IdentifierName, *identifier);
-
   switch (context.PositionKind()) {
     case Lex::TokenKind::Period:
-      context.AddNode(NodeKind::NameQualifier,
+      context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+      context.AddNode(NodeKind::NameQualifierWithoutParams,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
       context.PushState(State::DeclNameAndParams);
       break;
 
     case Lex::TokenKind::OpenSquareBracket:
+      context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *identifier);
       state.state = State::DeclNameAndParamsAfterImplicit;
       context.PushState(state);
       context.PushState(State::PatternListAsImplicit);
       break;
 
     case Lex::TokenKind::OpenParen:
+      context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *identifier);
       state.state = State::DeclNameAndParamsAfterParams;
       context.PushState(state);
       context.PushState(State::PatternListAsTuple);
       break;
 
     default:
+      context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
       break;
   }
 }
@@ -82,7 +84,8 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
-    context.AddNode(NodeKind::NameQualifier, *period, state.has_error);
+    context.AddNode(NodeKind::NameQualifierWithParams, *period,
+                    state.has_error);
     context.PushState(State::DeclNameAndParams);
   }
 }

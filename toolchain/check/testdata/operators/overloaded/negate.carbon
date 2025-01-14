@@ -31,10 +31,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [template]
-// CHECK:STDOUT:   %Op.type.4d0: type = fn_type @Op.1 [template]
+// CHECK:STDOUT:   %Op.type.e42: type = fn_type @Op.1 [template]
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template]
-// CHECK:STDOUT:   %Op.type.454: type = fn_type @Op.2 [template]
-// CHECK:STDOUT:   %Op.793: %Op.type.454 = struct_value () [template]
+// CHECK:STDOUT:   %Op.type.67d: type = fn_type @Op.2 [template]
+// CHECK:STDOUT:   %Op.64c: %Op.type.67d = struct_value () [template]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [template]
 // CHECK:STDOUT:   %TestOp.type: type = fn_type @TestOp [template]
 // CHECK:STDOUT:   %TestOp: %TestOp.type = struct_value () [template]
@@ -42,11 +42,11 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Negate = %import_ref.a96
+// CHECK:STDOUT:     .Negate = %import_ref.6e9
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.a96: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [template = constants.%Negate.type]
+// CHECK:STDOUT:   %import_ref.6e9: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [template = constants.%Negate.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,7 +60,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   impl_decl @impl.1 [template] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, imports.%import_ref.a96 [template = constants.%Negate.type]
+// CHECK:STDOUT:     %Negate.ref: type = name_ref Negate, imports.%import_ref.6e9 [template = constants.%Negate.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.1.%Op.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %TestOp.decl: %TestOp.type = fn_decl @TestOp [template = constants.%TestOp] {
@@ -79,7 +79,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %C.ref as %Negate.ref {
-// CHECK:STDOUT:   %Op.decl: %Op.type.454 = fn_decl @Op.2 [template = constants.%Op.793] {
+// CHECK:STDOUT:   %Op.decl: %Op.type.67d = fn_decl @Op.2 [template = constants.%Op.64c] {
 // CHECK:STDOUT:     %self.patt: %C = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %C = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %return.patt: %C = return_slot_pattern
@@ -117,7 +117,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: fn @TestOp(%a.param_patt: %C) -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem0: %Op.type.4d0 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.793]
+// CHECK:STDOUT:   %impl.elem0: %Op.type.e42 = impl_witness_access constants.%impl_witness, element0 [template = constants.%Op.64c]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc23: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Op.call: init %C = call %Op.bound(%a.ref) to %.loc23

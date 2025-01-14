@@ -14,13 +14,13 @@ fn F(b: bool) -> type {
 }
 
 // TODO: Short-circuit operators should be permitted outside functions.
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: var and_: F(true and true);
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var and_: F(true and true);
 // CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:11: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: var and_: F(true and true);
+// CHECK:STDERR:           ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var and_: F(true and true);
 
@@ -38,13 +38,13 @@ var and_: F(true and true);
 // CHECK:STDERR:
 var and_val: bool = true and true;
 
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: var or_: F(true or true);
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_: F(true or true);
 // CHECK:STDERR:            ^~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: var or_: F(true or true);
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var or_: F(true or true);
 
@@ -79,9 +79,9 @@ var or_val: bool = true or true;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.f7c
-// CHECK:STDOUT:     .Int = %import_ref.187
-// CHECK:STDOUT:     .Float = %import_ref.20b
+// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Float = %import_ref.1d6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

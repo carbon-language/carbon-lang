@@ -18,9 +18,6 @@ auto HandleParseNode(Context& context, Parse::ExportIntroducerId /*node_id*/)
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Export>();
   // TODO: Probably need to update DeclNameStack to restrict to only namespaces.
   context.decl_name_stack().PushScopeAndStartName();
-  // The parser supports patterns after `export`, so we need a pattern block
-  // to handle them.
-  context.pattern_block_stack().Push();
   return true;
 }
 

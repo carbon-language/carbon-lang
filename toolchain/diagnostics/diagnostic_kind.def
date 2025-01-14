@@ -252,6 +252,10 @@ CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceUndefinedWithinDefinition)
 
 // Impl checking.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantDifferentInRedecl)
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantMissingInRedecl)
+CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
 CARBON_DIAGNOSTIC_KIND(ExtendImplForall)
 CARBON_DIAGNOSTIC_KIND(ExtendImplOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAs)
@@ -259,13 +263,14 @@ CARBON_DIAGNOSTIC_KIND(ExtendImplSelfAsDefault)
 CARBON_DIAGNOSTIC_KIND(ImplAccessMemberBeforeComplete)
 CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
-CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
-CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
-CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
+CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
-CARBON_DIAGNOSTIC_KIND(ImplAssociatedFunctionHere)
+CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
+CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
+CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
+CARBON_DIAGNOSTIC_KIND(ImplPreviousDeclHere)
+CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
 CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
-CARBON_DIAGNOSTIC_KIND(MissingImplDefinition)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
@@ -408,6 +413,7 @@ CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // Where operator and its requirements.
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 

@@ -134,7 +134,8 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
 
     case NameContext::State::Unresolved:
       if (!name_context.parent_scope_id.is_valid()) {
-        context_->AddNameToLookup(name_context.unresolved_name_id, target_id);
+        context_->AddNameToLookup(name_context.unresolved_name_id, target_id,
+                                  name_context.initial_scope_index);
       } else {
         auto& name_scope =
             context_->name_scopes().Get(name_context.parent_scope_id);
@@ -262,7 +263,8 @@ auto DeclNameStack::ApplyAndLookupName(NameContext& name_context,
 
   // For identifier nodes, we need to perform a lookup on the identifier.
   auto [resolved_inst_id, is_poisoned] = context_->LookupNameInDecl(
-      name_context.loc_id, name_id, name_context.parent_scope_id);
+      name_context.loc_id, name_id, name_context.parent_scope_id,
+      name_context.initial_scope_index);
   if (is_poisoned) {
     name_context.unresolved_name_id = name_id;
     name_context.state = NameContext::State::Poisoned;

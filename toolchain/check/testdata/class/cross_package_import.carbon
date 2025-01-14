@@ -198,7 +198,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.0ac
+// CHECK:STDOUT:     .C = %import_ref.3b0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [template = constants.%complete_type]
@@ -285,7 +285,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.0ac
+// CHECK:STDOUT:     .C = %import_ref.3b0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_extern
 // CHECK:STDOUT:   }
@@ -335,7 +335,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [template] {
-// CHECK:STDOUT:     .C = %import_ref.0ac
+// CHECK:STDOUT:     .C = %import_ref.3b0
 // CHECK:STDOUT:     import Other//other_define
 // CHECK:STDOUT:     import Other//other_conflict
 // CHECK:STDOUT:   }

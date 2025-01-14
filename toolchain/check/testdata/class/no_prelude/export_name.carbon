@@ -70,7 +70,7 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.0ac: type = import_ref Main//base, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.3b0: type = import_ref Main//base, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//base, loc4_10, loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//base, inst14 [no loc], unloaded
 // CHECK:STDOUT: }
@@ -80,7 +80,7 @@ var c: C = {};
 // CHECK:STDOUT:     .C = %C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.0ac [template = constants.%C]
+// CHECK:STDOUT:   %C: type = export C, imports.%import_ref.3b0 [template = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
@@ -99,14 +99,14 @@ var c: C = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.4a7: type = import_ref Main//export, C, loaded [template = constants.%C]
+// CHECK:STDOUT:   %import_ref.06e: type = import_ref Main//export, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//export, inst19 [indirect], loaded [template = constants.%complete_type]
 // CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//export, inst20 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .C = imports.%import_ref.4a7
+// CHECK:STDOUT:     .C = imports.%import_ref.06e
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <invalid>

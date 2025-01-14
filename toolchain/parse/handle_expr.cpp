@@ -179,8 +179,9 @@ auto HandleExprInPostfix(Context& context) -> void {
       // For periods, we look at the next token to form a designator like
       // `.Member` or `.Self`.
       auto period = context.Consume();
-      if (context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                          NodeKind::IdentifierName)) {
+      if (context.ConsumeAndAddLeafNodeIf(
+              Lex::TokenKind::Identifier,
+              NodeKind::IdentifierNameNotBeforeParams)) {
         // OK, `.` identifier.
       } else if (context.ConsumeAndAddLeafNodeIf(
                      Lex::TokenKind::SelfTypeIdentifier,
@@ -193,8 +194,8 @@ auto HandleExprInPostfix(Context& context) -> void {
                                ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
-          context.AddLeafNode(NodeKind::IdentifierName, context.Consume(),
-                              /*has_error=*/true);
+          context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
+                              context.Consume(), /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
           context.AddInvalidParse(context.Consume());
         } else {

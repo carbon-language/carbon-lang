@@ -1337,6 +1337,28 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::AssociatedConstantDecl inst,
+                                SemIR::InstId import_inst_id) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto type_id =
+      resolver.local_context().GetTypeIdForTypeConstant(type_const_id);
+
+  // Create a corresponding instruction to represent the declaration.
+  auto inst_id = resolver.local_context().AddInstInNoBlock(
+      resolver.local_context()
+          .MakeImportedLocAndInst<SemIR::AssociatedConstantDecl>(
+              AddImportIRInst(resolver, import_inst_id),
+              {.type_id = type_id,
+               .name_id = GetLocalNameId(resolver, inst.name_id)}));
+  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
+                             inst_id);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedEntity inst) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
@@ -2573,6 +2595,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::ArrayType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::AssociatedConstantDecl inst): {
+      return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::AssociatedEntity inst): {
       return TryResolveTypedInst(resolver, inst);

@@ -13,11 +13,21 @@
 // --- match.carbon
 library "[[@TEST_NAME]]";
 
+interface I { let T:! type; }
 interface J {}
 
 // `impl` matching ignores the `where` clause. It should not get confused by
 // nested `where`, so the following should not trigger impl declaration without
 // definition diagnostics.
+
+impl () as I where .T = {};
+impl () as I where .T = {} and .T impls (type where .Self impls type) {}
+
+impl {} as I;
+impl {} as I where .T = {} and .T impls (type where .Self impls type) {}
+
+impl ({},) as I where .T = {} and .T impls (type where .Self impls type);
+impl ({},) as I where .T = {} {}
 
 impl () as J;
 impl () as J where .Self impls type and .Self impls (type where .Self impls type) {}
@@ -40,7 +50,7 @@ library "[[@TEST_NAME]]";
 
 interface L {}
 
-// CHECK:STDERR: fail_other_nesting.carbon:[[@LINE+3]]:1: error: impl declared but not defined [MissingImplDefinition]
+// CHECK:STDERR: fail_other_nesting.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as (L where .Self impls type) where .Self impls type;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 impl () as (L where .Self impls type) where .Self impls type;

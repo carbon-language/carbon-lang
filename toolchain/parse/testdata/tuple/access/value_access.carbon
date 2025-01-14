@@ -14,7 +14,7 @@ let x: i32 = tuple.0;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:       {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},

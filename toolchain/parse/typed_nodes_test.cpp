@@ -130,7 +130,8 @@ TEST_F(TypedNodeTest, For) {
   ASSERT_TRUE(for_var.has_value());
   auto for_var_binding = tree.ExtractAs<BindingPattern>(for_var->pattern);
   ASSERT_TRUE(for_var_binding.has_value());
-  auto for_var_name = tree.ExtractAs<IdentifierName>(for_var_binding->name);
+  auto for_var_name =
+      tree.ExtractAs<IdentifierNameNotBeforeParams>(for_var_binding->name);
   ASSERT_TRUE(for_var_name.has_value());
 }
 
@@ -230,7 +231,7 @@ Aggregate [^:]*: success
   // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
                                   R"Trace(Aggregate [^:]*: begin
-NodeIdInCategory MemberExpr\|MemberName: kind IdentifierName consumed
+NodeIdInCategory MemberExpr\|MemberName: kind IdentifierNameNotBeforeParams consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
 Aggregate [^:]*: success
 )Trace"));
@@ -252,18 +253,16 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   EXPECT_THAT(err.message(), testing::MatchesRegex(
                                  R"Trace(Aggregate [^:]*: begin
 Aggregate [^:]*: begin
-Aggregate [^:]*: begin
 Optional [^:]*: begin
 NodeIdForKind: TuplePattern consumed
 Optional [^:]*: found
 Optional [^:]*: begin
-NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
+NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
 Optional [^:]*: missing
-NodeIdForKind: IdentifierName consumed
-Aggregate [^:]*: success
+NodeIdInCategory : kind IdentifierNameBeforeParams consumed
 Vector: begin
-NodeIdForKind: NameQualifier consumed
-NodeIdForKind error: wrong kind AbstractModifier, expected NameQualifier
+NodeIdOneOf NameQualifierWithParams or NameQualifierWithoutParams: NameQualifierWithoutParams consumed
+NodeIdOneOf error: wrong kind AbstractModifier, expected NameQualifierWithParams or NameQualifierWithoutParams
 Vector: end
 Aggregate [^:]*: success
 Vector: begin
@@ -352,7 +351,7 @@ TEST_F(TypedNodeTest, VerifyInvalid) {
     Error err = trace;
     EXPECT_THAT(err.message(), testing::MatchesRegex(
                                    R"Trace((?s).*
-NodeIdForKind error: wrong kind IdentifierName, expected ImplicitParamList
+NodeIdForKind error: wrong kind IdentifierNameBeforeParams, expected ImplicitParamList
 .*
 Error: ClassIntroducer node left unconsumed.)Trace"));
   }

@@ -182,13 +182,13 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.71a
-// CHECK:STDOUT:     .AsIntLiteral = %import_ref.630
-// CHECK:STDOUT:     .TestAdd = %import_ref.9a8
-// CHECK:STDOUT:     .AsI32 = %import_ref.208
+// CHECK:STDOUT:     .Int = %import_ref.3b9
+// CHECK:STDOUT:     .AsIntLiteral = %import_ref.d91
+// CHECK:STDOUT:     .TestAdd = %import_ref.a93
+// CHECK:STDOUT:     .AsI32 = %import_ref.614
 // CHECK:STDOUT:     import Core//core
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %import_ref.208: %AsI32.type = import_ref Core//core, AsI32, loaded [template = constants.%AsI32]
+// CHECK:STDOUT:   %import_ref.614: %AsI32.type = import_ref Core//core, AsI32, loaded [template = constants.%AsI32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -212,15 +212,15 @@ var arr: [i32; Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))] = 
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Core.ref.loc4_82: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_86: %AsI32.type = name_ref AsI32, imports.%import_ref.208 [template = constants.%AsI32]
+// CHECK:STDOUT:   %AsI32.ref.loc4_86: %AsI32.type = name_ref AsI32, imports.%import_ref.614 [template = constants.%AsI32]
 // CHECK:STDOUT:   %int_1.loc4_93: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int.convert_checked.loc4_94: init %i32.builtin = call %AsI32.ref.loc4_86(%int_1.loc4_93) [template = constants.%int_1.f38]
 // CHECK:STDOUT:   %Core.ref.loc4_97: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_101: %AsI32.type = name_ref AsI32, imports.%import_ref.208 [template = constants.%AsI32]
+// CHECK:STDOUT:   %AsI32.ref.loc4_101: %AsI32.type = name_ref AsI32, imports.%import_ref.614 [template = constants.%AsI32]
 // CHECK:STDOUT:   %int_2.loc4_108: Core.IntLiteral = int_value 2 [template = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int.convert_checked.loc4_109: init %i32.builtin = call %AsI32.ref.loc4_101(%int_2.loc4_108) [template = constants.%int_2.5a1]
 // CHECK:STDOUT:   %Core.ref.loc4_112: <namespace> = name_ref Core, imports.%Core [template = imports.%Core]
-// CHECK:STDOUT:   %AsI32.ref.loc4_116: %AsI32.type = name_ref AsI32, imports.%import_ref.208 [template = constants.%AsI32]
+// CHECK:STDOUT:   %AsI32.ref.loc4_116: %AsI32.type = name_ref AsI32, imports.%import_ref.614 [template = constants.%AsI32]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int.convert_checked.loc4_124: init %i32.builtin = call %AsI32.ref.loc4_116(%int_3) [template = constants.%int_3.a0f]
 // CHECK:STDOUT:   %.loc4_125.1: %tuple.type = tuple_literal (%int.convert_checked.loc4_94, %int.convert_checked.loc4_109, %int.convert_checked.loc4_124)

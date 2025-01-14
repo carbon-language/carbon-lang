@@ -17,7 +17,7 @@ class C {
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: impl declared but not defined [MissingImplDefinition]
+  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+3]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   extend impl as i32;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
   extend impl as i32;
@@ -35,7 +35,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.187
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

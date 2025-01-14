@@ -38,7 +38,7 @@ in Unicode Normalization Form C (NFC).
 <!--
 Keep in sync:
 - utils/textmate/Syntaxes/Carbon.plist
-- utils/treesitter/queries/highlights.scm
+- utils/tree_sitter/queries/highlights.scm
 -->
 
 The following words are interpreted as keywords:

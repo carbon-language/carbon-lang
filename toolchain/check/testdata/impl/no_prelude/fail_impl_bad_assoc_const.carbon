@@ -4,16 +4,19 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_const.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/no_prelude/fail_impl_bad_assoc_const.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_impl_bad_assoc_const.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/no_prelude/fail_impl_bad_assoc_const.carbon
 
 interface I { let T:! type; }
 
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+3]]:1: error: semantics TODO: `impl of interface with associated constant T` [SemanticsTodo]
-// CHECK:STDERR: impl bool as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
-impl bool as I {}
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+6]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl () as I {}
+// CHECK:STDERR:            ^
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:15: note: associated constant T declared here [AssociatedConstantHere]
+// CHECK:STDERR: interface I { let T:! type; }
+// CHECK:STDERR:               ^~~~~~~~~~~~~
+impl () as I {}
 
 // CHECK:STDOUT: --- fail_impl_bad_assoc_const.carbon
 // CHECK:STDOUT:
@@ -22,31 +25,21 @@ impl bool as I {}
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %assoc_type: type = assoc_entity_type %I.type, type [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, @I.%T [template]
-// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [template]
-// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc16_6.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc16_6.2: type = converted %bool.make_type, %.loc16_6.1 [template = bool]
+// CHECK:STDOUT:     %.loc19_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_7.2: type = converted %.loc19_7.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -60,8 +53,8 @@ impl bool as I {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc16_6.2 as %I.ref {
+// CHECK:STDOUT: impl @impl: %.loc19_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "tree_sitter/parser.h"
+#include "utils/tree_sitter/src/tree_sitter/parser.h"
 
 enum TokenType {
   BINARY_STAR,

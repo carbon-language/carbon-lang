@@ -28,12 +28,13 @@ http_archive = use_repo_rule(
     "http_archive",
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "abseil-cpp", version = "20240722.0.bcr.2")
-bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
-bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "google_benchmark", version = "1.8.5")
+bazel_dep(name = "googletest", version = "1.15.2")
+bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "tree-sitter-bazel", version = "0.24.4")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.

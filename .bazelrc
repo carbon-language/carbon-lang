@@ -57,11 +57,6 @@ build --action_env=CMAKE_SYSROOT --host_action_env=CMAKE_SYSROOT
 build --per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 build --host_per_file_copt=external/.*\.(c|cc|cpp|cxx)$@-w
 
-# The `rules_treesitter` synthesized libraries don't allow us to inject flags,
-# and compile generated code where we can't fix warnings.
-build --per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
-build --host_per_file_copt=utils/treesitter/_treesitter.tree_sitter/.*\.c$@-w
-
 # Default dynamic linking to off. While this can help build performance in some
 # edge cases with very large linked executables and a slow linker, between using
 # fast linkers on all platforms (LLD and the Apple linker), as well as having
@@ -128,17 +123,6 @@ build --allow_unresolved_symlinks=false
 # RC file here if present.
 try-import %workspace%/user.bazelrc
 
-# Incompatible with `rules_tree_sitter`.
-# TODO: WORKSPACE will be removed in bazel 9, and we need to move off.
-# TODO: The registry has a different treesitter rule set, and we should
-# investigate switching. See:
-# https://registry.bazel.build/modules/tree-sitter-bazel
-common --enable_workspace
-# This is on by default in bazel 8.
-common --incompatible_disallow_empty_glob=false
-# common --incompatible_auto_exec_groups
-# common --incompatible_disable_starlark_host_transitions
-
 # This excludes things like rules_android to reduce warnings.
 # TODO: There's a pending fix, so hopefully we can remove it soon.
 # - Issue: https://github.com/bazelbuild/bazel/issues/23929
@@ -150,10 +134,18 @@ common --incompatible_autoload_externally=+@rules_java,+@rules_python,+@rules_sh
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_disable_non_executable_java_binary
 
+# Incompatible with the clang-tidy build mode.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_auto_exec_groups
+
 # Incompatible with `rules_cc`.
 # TODO: Enable the flag once compatibility issues are fixed.
 # common --incompatible_no_rule_outputs_param
 # common --incompatible_stop_exporting_language_modules
+
+# Incompatible with `rules_flex`.
+# TODO: Enable the flag once compatibility issues are fixed.
+# common --incompatible_disable_starlark_host_transitions
 
 # Incompatible with `rules_pkg`.
 # TODO: Enable the flag once compatibility issues are fixed.

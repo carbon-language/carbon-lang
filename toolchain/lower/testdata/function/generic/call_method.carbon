@@ -34,7 +34,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc20_14 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.9b813875c98e31f1(ptr %c.var, i32 %.loc20_14), !dbg !11
+// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.b88d1103f417c6d4(ptr %c.var, i32 %.loc20_14), !dbg !11
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,7 +44,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias nocapture writeonly, ptr noalias nocapture readonly, i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_CF.C.Main.9b813875c98e31f1(ptr, i32)
+// CHECK:STDOUT: declare i32 @_CF.C.Main.b88d1103f417c6d4(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
