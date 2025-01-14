@@ -285,6 +285,19 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
+
+  // If the constraint is a `where` constraint, we need to stop syntactic
+  // matching at it. For this case, `WhereExpr` handling will have left the
+  // `WhereOperand` on the node stack.
+  Parse::NodeId end_of_decl_node_id = node_id;
+  if (context.parse_tree().node_kind(constraint_node) ==
+      Parse::NodeKind::WhereExpr) {
+    // Only keep the node ID, not the inst ID.
+    end_of_decl_node_id = context.node_stack()
+                              .PopWithNodeId<Parse::NodeKind::WhereOperand>()
+                              .first;
+  }
+
   auto [self_type_node, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
   auto self_type_id = context.GetTypeIdForTypeInst(self_inst_id);
@@ -295,11 +308,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   CARBON_CHECK(name_context.state == DeclNameStack::NameContext::State::Empty);
 
   // Pop the `impl` introducer and any `forall` parameters as a "name".
-  // Stop at the `where` node, if present, to exclude it from syntactic match.
-  auto name = PopImplIntroducerAndParamsAsNameComponent(
-      context, name_context.where_operand_node_id.is_valid()
-                   ? Parse::NodeId(name_context.where_operand_node_id)
-                   : node_id);
+  auto name =
+      PopImplIntroducerAndParamsAsNameComponent(context, end_of_decl_node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.

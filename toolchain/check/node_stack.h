@@ -134,15 +134,29 @@ class NodeStack {
            NodeKindToIdKind(PeekNodeKind()) == Id::KindFor<IdT>();
   }
 
-  // Returns whether the *next* node on the stack is a given kind. This doesn't
-  // have the breadth of support versus other Peek functions because it's
-  // expected to be used in narrow circumstances when determining how to treat
-  // the *current* top of the stack.
+  // Returns whether the *next* node on the stack is a given kind.
+  //
+  // This doesn't have the breadth of support versus other Peek functions
+  // because it's expected to be used in narrow circumstances when determining
+  // how to treat the *current* top of the stack.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PeekNextIs() const -> bool {
     CARBON_CHECK(stack_.size() >= 2);
-    return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) ==
-           RequiredParseKind;
+    auto next_kind = parse_tree_->node_kind(stack_[stack_.size() - 2].node_id);
+    return next_kind == RequiredParseKind;
+  }
+
+  // Returns whether the *next* node on the stack has an overlapping
+  // category.
+  //
+  // This doesn't have the breadth of support versus other Peek functions
+  // because it's expected to be used in narrow circumstances when determining
+  // how to treat the *current* top of the stack.
+  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
+  auto PeekNextIs() const -> bool {
+    CARBON_CHECK(stack_.size() >= 2);
+    auto next_kind = parse_tree_->node_kind(stack_[stack_.size() - 2].node_id);
+    return next_kind.category().HasAnyOf(RequiredParseCategory);
   }
 
   // Pops the top of the stack without any verification.

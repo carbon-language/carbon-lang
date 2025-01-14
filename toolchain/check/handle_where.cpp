@@ -122,15 +122,16 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();
-  auto [operand_node_id, period_self_id] =
-      context.node_stack().PopWithNodeId<Parse::NodeKind::WhereOperand>();
-  SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
-  if (context.node_stack().PeekIs<Parse::NodeCategory::ImplAs>()) {
-    // In the `impl ... as ... where ...` case, save the `WhereOperand` node in
-    // the impl declaration so that part can be trimmed off for syntactic decl
-    // matching.
-    context.decl_name_stack().SetImplWhereOperandNodeId(operand_node_id);
+
+  auto period_self_id =
+      context.node_stack().Peek<Parse::NodeKind::WhereOperand>();
+  // In most expressions, pop the `WhereOperand` node. In the `impl ... as ...
+  // where ...` case, leave the `WhereOperand` node on the stack so that part
+  // can be trimmed off by impl's syntactic decl matching.
+  if (!context.node_stack().PeekNextIs<Parse::NodeCategory::ImplAs>()) {
+    context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   }
+  SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
   context.AddInstAndPush<SemIR::WhereExpr>(
       node_id, {.type_id = SemIR::TypeType::SingletonTypeId,
                 .period_self_id = period_self_id,

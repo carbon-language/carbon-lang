@@ -82,12 +82,6 @@ auto DeclNameStack::FinishImplName() -> NameContext {
   return result;
 }
 
-auto DeclNameStack::SetImplWhereOperandNodeId(Parse::WhereOperandId node_id)
-    -> void {
-  CARBON_CHECK(!decl_name_stack_.back().where_operand_node_id.is_valid());
-  decl_name_stack_.back().where_operand_node_id = node_id;
-}
-
 auto DeclNameStack::PopScope() -> void {
   CARBON_CHECK(decl_name_stack_.back().state == NameContext::State::Finished,
                "Missing call to FinishName before PopScope");

@@ -151,12 +151,6 @@ class DeclNameStack {
       // The ID of an unresolved identifier.
       SemIR::NameId unresolved_name_id = SemIR::NameId::Invalid;
     };
-
-    // The `WhereOperand` node_id for the constraint in an impl decl, if any.
-    // TODO: Can this be in a union with some other field that isn't used for
-    // impl decls?
-    Parse::WhereOperandId where_operand_node_id =
-        Parse::WhereOperandId::Invalid;
   };
 
   // Information about a declaration name that has been temporarily removed from
