@@ -36,22 +36,17 @@ import Cpp library;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:1: error: imported API 'Cpp' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+5]]:1: error: imported API 'Cpp' not found [ImportNotFound]
 // CHECK:STDERR: import Cpp library "";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
+// CHECK:STDERR: "foo.h": error: error opening file for read: No such file or directory [ErrorOpeningFile]
 import Cpp library "";
 
 // --- fail_import_cpp_library_file_with_quotes.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: error: file `"foo.h"` couldn't be opened for reading [CppInteropCantReadFile]
-// CHECK:STDERR: import Cpp library "\"foo.h\"";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+3]]:1: note: File read error: No such file or directory [CppInteropCantReadFileNote]
-// CHECK:STDERR: import Cpp library "\"foo.h\"";
-// CHECK:STDERR: ^~~~~~
 import Cpp library "\"foo.h\"";
 
 // CHECK:STDOUT: --- fail_import_cpp.carbon

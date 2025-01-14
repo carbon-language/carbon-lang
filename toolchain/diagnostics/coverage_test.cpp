@@ -28,7 +28,6 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::CppInteropFuzzing,
 
     // These diagnose filesystem issues that are hard to unit test.
-    DiagnosticKind::CppInteropFailedAccessingFileBuffer,
     DiagnosticKind::ErrorReadingFile,
     DiagnosticKind::ErrorStattingFile,
     DiagnosticKind::FileTooLarge,

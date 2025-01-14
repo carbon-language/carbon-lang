@@ -7,17 +7,12 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/no_prelude/file_not_found.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/no_prelude/file_not_found.carbon
+// CHECK:STDERR: not_found.h: error: error opening file for read: No such file or directory [ErrorOpeningFile]
 
 // --- fail_cpp_file_not_found.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+6]]:1: error: file `not_found.h` couldn't be opened for reading [CppInteropCantReadFile]
-// CHECK:STDERR: import Cpp library "not_found.h";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+3]]:1: note: File read error: No such file or directory [CppInteropCantReadFileNote]
-// CHECK:STDERR: import Cpp library "not_found.h";
-// CHECK:STDERR: ^~~~~~
 import Cpp library "not_found.h";
 
 // CHECK:STDOUT: --- fail_cpp_file_not_found.carbon

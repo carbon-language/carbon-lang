@@ -350,35 +350,19 @@ auto CheckUnit::ImportCppPackages() -> void {
   }
 
   const auto& import = imports.front();
-  llvm::StringRef cpp_file_path =
+  llvm::StringRef filename =
       unit_and_imports_->unit->value_stores->string_literal_values().Get(
           import.library_id);
 
-  auto file = fs_->openFileForRead(cpp_file_path);
-  if (!file) {
-    CARBON_DIAGNOSTIC(CppInteropCantReadFile, Error,
-                      "file `{0}` couldn't be opened for reading", std::string);
-    CARBON_DIAGNOSTIC(CppInteropCantReadFileNote, Note, "File read error: {0}",
-                      std::string);
-    emitter_.Build(import.node_id, CppInteropCantReadFile, cpp_file_path.str())
-        .Note(import.node_id, CppInteropCantReadFileNote,
-              file.getError().message())
-        .Emit();
+  // TODO: Pass the import location so that diagnostics would point to it.
+  auto source_buffer = SourceBuffer::MakeFromFile(
+      *fs_, filename, unit_and_imports_->err_tracker);
+  if (!source_buffer) {
     return;
   }
 
-  llvm::vfs::File& file_ref = *file.get();
-  auto buffer = file_ref.getBuffer(cpp_file_path);
-  if (!buffer) {
-    CARBON_DIAGNOSTIC(CppInteropFailedAccessingFileBuffer, Error,
-                      "failed accessing buffer of file `{0}`: {1}", std::string,
-                      std::string);
-    emitter_.Emit(import.node_id, CppInteropFailedAccessingFileBuffer,
-                  cpp_file_path.str(), buffer.getError().message());
-    return;
-  }
-  ImportCppFile(context_, import.node_id, cpp_file_path,
-                buffer.get()->getBuffer());
+  ImportCppFile(context_, import.node_id, source_buffer->filename(),
+                source_buffer->text());
 }
 
 // Loops over all nodes in the tree. On some errors, this may return early,

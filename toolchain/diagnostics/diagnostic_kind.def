@@ -145,9 +145,6 @@ CARBON_DIAGNOSTIC_KIND(InImport)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 
 // Package/import checking diagnostics.
-CARBON_DIAGNOSTIC_KIND(CppInteropCantReadFile)
-CARBON_DIAGNOSTIC_KIND(CppInteropCantReadFileNote)
-CARBON_DIAGNOSTIC_KIND(CppInteropFailedAccessingFileBuffer)
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
 CARBON_DIAGNOSTIC_KIND(CppInteropMultipleImports)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseError)
