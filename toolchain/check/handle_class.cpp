@@ -68,10 +68,10 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
   DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
       RedeclInfo(new_class, new_loc, new_is_definition),
-      RedeclInfo(prev_class, prev_loc, prev_class.is_defined()),
+      RedeclInfo(prev_class, prev_loc, prev_class.has_definition_started()),
       prev_import_ir_id);
 
-  if (new_is_definition && prev_class.is_defined()) {
+  if (new_is_definition && prev_class.has_definition_started()) {
     // Don't attempt to merge multiple definitions.
     return false;
   }
@@ -280,11 +280,10 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
-  if (!class_info.is_defined()) {
-    class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.name_scopes().Add(
-        class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
-  }
+  CARBON_CHECK(!class_info.has_definition_started());
+  class_info.definition_id = class_decl_id;
+  class_info.scope_id = context.name_scopes().Add(
+      class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
 
   // Enter the class scope.
   context.scope_stack().Push(

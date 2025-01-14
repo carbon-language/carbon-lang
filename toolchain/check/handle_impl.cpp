@@ -453,10 +453,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context);
-
-  if (!impl_info.is_defined()) {
-    ImplWitnessStartDefinition(context, impl_info);
-  }
+  ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -479,11 +476,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
 
   auto& impl_info = context.impls().Get(impl_id);
-  if (!impl_info.is_defined()) {
-    FinishImplWitness(context, impl_info);
-    impl_info.defined = true;
-  }
-
+  CARBON_CHECK(!impl_info.is_defined());
+  FinishImplWitness(context, impl_info);
+  impl_info.defined = true;
   FinishGenericDefinition(context, impl_info.generic_id);
 
   context.inst_block_stack().Pop();

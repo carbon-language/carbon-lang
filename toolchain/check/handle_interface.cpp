@@ -83,11 +83,11 @@ static auto BuildInterfaceDecl(Context& context,
             context, Lex::TokenKind::Interface, existing_interface.name_id,
             RedeclInfo(interface_info, node_id, is_definition),
             RedeclInfo(existing_interface, existing_interface.latest_decl_id(),
-                       existing_interface.is_defined()),
+                       existing_interface.has_definition_started()),
             /*prev_import_ir_id=*/SemIR::ImportIRId::Invalid);
 
         // Can't merge interface definitions due to the generic requirements.
-        if (!is_definition || !existing_interface.is_defined()) {
+        if (!is_definition || !existing_interface.has_definition_started()) {
           // This is a redeclaration of an existing interface.
           interface_decl.interface_id = existing_interface_decl->interface_id;
           interface_decl.type_id = existing_interface_decl->type_id;
@@ -139,7 +139,7 @@ auto HandleParseNode(Context& context,
   auto& interface_info = context.interfaces().Get(interface_id);
 
   // Track that this declaration is the definition.
-  CARBON_CHECK(!interface_info.is_defined(),
+  CARBON_CHECK(!interface_info.has_definition_started(),
                "Can't merge with defined interfaces.");
   interface_info.definition_id = interface_decl_id;
   interface_info.scope_id =
@@ -158,29 +158,27 @@ auto HandleParseNode(Context& context,
   context.args_type_info_stack().Push();
 
   // Declare and introduce `Self`.
-  if (!interface_info.is_defined()) {
-    SemIR::FacetType facet_type =
-        context.FacetTypeFromInterface(interface_id, self_specific_id);
-    SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
-        TryEvalInst(context, SemIR::InstId::Invalid, facet_type));
+  SemIR::FacetType facet_type =
+      context.FacetTypeFromInterface(interface_id, self_specific_id);
+  SemIR::TypeId self_type_id = context.GetTypeIdForTypeConstant(
+      TryEvalInst(context, SemIR::InstId::Invalid, facet_type));
 
-    // We model `Self` as a symbolic binding whose type is the interface.
-    // Because there is no equivalent non-symbolic value, we use `Invalid` as
-    // the `value_id` on the `BindSymbolicName`.
-    auto entity_name_id = context.entity_names().Add(
-        {.name_id = SemIR::NameId::SelfType,
-         .parent_scope_id = interface_info.scope_id,
-         .bind_index = context.scope_stack().AddCompileTimeBinding()});
-    interface_info.self_param_id =
-        context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
-            {.type_id = self_type_id,
-             .entity_name_id = entity_name_id,
-             .value_id = SemIR::InstId::Invalid}));
-    context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
-    context.name_scopes().AddRequiredName(interface_info.scope_id,
-                                          SemIR::NameId::SelfType,
-                                          interface_info.self_param_id);
-  }
+  // We model `Self` as a symbolic binding whose type is the interface.
+  // Because there is no equivalent non-symbolic value, we use `Invalid` as
+  // the `value_id` on the `BindSymbolicName`.
+  auto entity_name_id = context.entity_names().Add(
+      {.name_id = SemIR::NameId::SelfType,
+       .parent_scope_id = interface_info.scope_id,
+       .bind_index = context.scope_stack().AddCompileTimeBinding()});
+  interface_info.self_param_id =
+      context.AddInst(SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+          {.type_id = self_type_id,
+           .entity_name_id = entity_name_id,
+           .value_id = SemIR::InstId::Invalid}));
+  context.scope_stack().PushCompileTimeBinding(interface_info.self_param_id);
+  context.name_scopes().AddRequiredName(interface_info.scope_id,
+                                        SemIR::NameId::SelfType,
+                                        interface_info.self_param_id);
 
   // Enter the interface scope.
   context.scope_stack().Push(interface_decl_id, interface_info.scope_id,
