@@ -724,7 +724,7 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
 
     for (auto inst_id : context.vtable_stack().PeekCurrentBlockContents()) {
       auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
-      auto fn = context.functions().Get(fn_decl.function_id);
+      const auto& fn = context.functions().Get(fn_decl.function_id);
       if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
         vtable.push_back(inst_id);
       }
