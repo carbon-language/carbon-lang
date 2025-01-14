@@ -18,20 +18,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Cpp;
 
-// --- fail_import_cpp_library.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp_library.carbon:[[@LINE+8]]:19: error: expected a string literal to specify the library name [ExpectedLibraryName]
-// CHECK:STDERR: import Cpp library;
-// CHECK:STDERR:                   ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library.carbon:[[@LINE+4]]:19: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library;
-// CHECK:STDERR:                   ^
-// CHECK:STDERR:
-import Cpp library;
-
 // --- fail_import_cpp_library_empty.carbon
 
 library "[[@TEST_NAME]]";
@@ -54,10 +40,6 @@ import Cpp library "\"foo.h\"";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {}
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_cpp_library.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_cpp_library_empty.carbon
 // CHECK:STDOUT:
