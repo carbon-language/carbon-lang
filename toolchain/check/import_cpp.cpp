@@ -41,14 +41,14 @@ auto ImportCppFile(Context& context, SemIRLoc loc, llvm::StringRef file_path,
     // TODO: Remove the warnings part when there are no warnings.
     CARBON_DIAGNOSTIC(
         CppInteropParseError, Error,
-        "{0} error{0:s} and {1} warning{1:s} in C++ file `{2}`:\n{3}",
+        "{0} error{0:s} and {1} warning{1:s} in `Cpp` import `{2}`:\n{3}",
         IntAsSelect, IntAsSelect, std::string, std::string);
     context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
                            file_path.str(), diagnostics_str);
   } else if (num_warnings > 0) {
     CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
-                      "{0} warning{0:s} in C++ file `{1}`:\n{2}", IntAsSelect,
-                      std::string, std::string);
+                      "{0} warning{0:s} in `Cpp` import `{1}`:\n{2}",
+                      IntAsSelect, std::string, std::string);
     context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
                            file_path.str(), diagnostics_str);
   }
