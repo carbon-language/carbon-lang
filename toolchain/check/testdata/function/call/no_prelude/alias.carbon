@@ -65,9 +65,9 @@ fn Main() {
 // CHECK:STDOUT:   %B.ref: %A.type = name_ref B, file.%B [template = constants.%A]
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %b.var, %A.call
-// CHECK:STDOUT:   %.loc16_11.3: type = splice_block %.loc16_11.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc16_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc16_11.2: type = converted %.loc16_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc16_11.1: type = splice_block %.loc16_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc16_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc16_11.3: type = converted %.loc16_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   return

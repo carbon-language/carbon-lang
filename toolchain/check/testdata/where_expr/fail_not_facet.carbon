@@ -51,8 +51,8 @@ var v: e where .x = 3;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .Bool = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Bool = %import_ref.783
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -69,13 +69,13 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %T.param_patt: <error> = value_param_pattern %T.patt.loc8_6.1, runtime_param<invalid> [symbolic = %T.patt.loc8_6.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_14.2: type = splice_block %.loc8_14.1 [template = <error>] {
+// CHECK:STDOUT:     %.loc8_14.1: type = splice_block %.loc8_14.2 [template = <error>] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:       %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:       %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc8_14.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       %.loc8_14.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -122,12 +122,12 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %U.param_patt: <error> = value_param_pattern %U.patt.loc8_6.1, runtime_param<invalid> [symbolic = %U.patt.loc8_6.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: <error> = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc8_23.2: type = splice_block %.loc8_23.1 [template = <error>] {
+// CHECK:STDOUT:     %.loc8_23.1: type = splice_block %.loc8_23.2 [template = <error>] {
 // CHECK:STDOUT:       %NOT_DECLARED.ref: <error> = name_ref NOT_DECLARED, <error> [template = <error>]
 // CHECK:STDOUT:       %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:       %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc8_23.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:       %.loc8_23.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %bool.make_type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -169,13 +169,13 @@ var v: e where .x = 3;
 // CHECK:STDOUT:     %.loc7_1: <error> = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var v
-// CHECK:STDOUT:   %.loc7_10.2: type = splice_block %.loc7_10.1 [template = <error>] {
+// CHECK:STDOUT:   %.loc7_10.1: type = splice_block %.loc7_10.2 [template = <error>] {
 // CHECK:STDOUT:     %e.ref: <error> = name_ref e, <error> [template = <error>]
 // CHECK:STDOUT:     %.Self: <error> = bind_symbolic_name .Self [template = <error>]
 // CHECK:STDOUT:     %.Self.ref: <error> = name_ref .Self, %.Self [template = <error>]
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:     %.loc7_10.1: type = where_expr %.Self [template = <error>] {
+// CHECK:STDOUT:     %.loc7_10.2: type = where_expr %.Self [template = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %x.ref, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

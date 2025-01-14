@@ -387,6 +387,14 @@ class Hasher {
     return data;
   }
 
+  // As above, but for small offsets, we can use aligned loads, which are
+  // faster. The offset must be in the range [0, 8).
+  static auto SampleAlignedRandomData(ssize_t offset) -> uint64_t {
+    CARBON_DCHECK(static_cast<size_t>(offset) <
+                  sizeof(StaticRandomData) / sizeof(uint64_t));
+    return StaticRandomData[offset];
+  }
+
   // Random data taken from the hexadecimal digits of Pi's fractional component,
   // written in lexical order for convenience of reading. The resulting
   // byte-stream will be different due to little-endian integers. These can be
@@ -408,7 +416,7 @@ class Hasher {
   //  | sed -e "s/.\{4\}/&'/g" \
   //  | sed -e "s/\(.\{4\}'.\{4\}'.\{4\}'.\{4\}\)'/0x\1,\n/g"
   // ```
-  static constexpr std::array<uint64_t, 8> StaticRandomData = {
+  alignas(64) static constexpr std::array<uint64_t, 8> StaticRandomData = {
       0x243f'6a88'85a3'08d3, 0x1319'8a2e'0370'7344, 0xa409'3822'299f'31d0,
       0x082e'fa98'ec4e'6c89, 0x4528'21e6'38d0'1377, 0xbe54'66cf'34e9'0c6c,
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
@@ -703,7 +711,7 @@ inline auto Hasher::Read1To3(const std::byte* data, ssize_t size) -> uint64_t {
   uint64_t byte0 = static_cast<uint8_t>(data[0]);
   uint64_t byte1 = static_cast<uint8_t>(data[size - 1]);
   uint64_t byte2 = static_cast<uint8_t>(data[size >> 1]);
-  return byte0 | (byte1 << 16) | (byte2 << 8);
+  return (byte0 << 8) | (byte1 << 16) | byte2;
 }
 
 inline auto Hasher::Read4To8(const std::byte* data, ssize_t size) -> uint64_t {
@@ -711,7 +719,7 @@ inline auto Hasher::Read4To8(const std::byte* data, ssize_t size) -> uint64_t {
   std::memcpy(&low, data, sizeof(low));
   uint32_t high;
   std::memcpy(&high, data + size - sizeof(high), sizeof(high));
-  return low | (static_cast<uint64_t>(high) << 32);
+  return (static_cast<uint64_t>(low) << 32) | high;
 }
 
 inline auto Hasher::Read8To16(const std::byte* data, ssize_t size)
@@ -950,7 +958,7 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
       // Note that we don't drop to the `WeakMix` routine here because we want
       // to use sampled random data to encode the size, which may not be as
       // effective without the full 128-bit folded result.
-      buffer = Mix(data ^ buffer, SampleRandomData(size));
+      buffer = Mix(data ^ buffer, SampleAlignedRandomData(size - 1));
       CARBON_MCA_END("dynamic-8b");
       return;
     }

@@ -49,17 +49,17 @@ class Class {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [template]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [template]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [template]
-// CHECK:STDOUT:   %complete_type.3: <witness> = complete_type_witness %struct_type.n [template]
+// CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -87,20 +87,20 @@ class Class {
 // CHECK:STDOUT:     %return.loc11: ref %i32 = return_slot %return.param.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: %ptr.e71 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.e71 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc15_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc15: %ptr.1 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc15_27: type = splice_block %ptr.loc15 [template = constants.%ptr.1] {
+// CHECK:STDOUT:     %self.param.loc15: %ptr.e71 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc15_27: type = splice_block %ptr.loc15 [template = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc15: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:       %ptr.loc15: type = ptr_type %Class [template = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc15: %ptr.1 = bind_name self, %self.param.loc15
+// CHECK:STDOUT:     %self.loc15: %ptr.e71 = bind_name self, %self.param.loc15
 // CHECK:STDOUT:     %return.param.loc15: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return.loc15: ref %i32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
@@ -122,20 +122,20 @@ class Class {
 // CHECK:STDOUT:     %return.loc5: ref %i32 = return_slot %return.param.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [template = constants.%G] {
-// CHECK:STDOUT:     %self.patt: %ptr.1 = binding_pattern self
-// CHECK:STDOUT:     %self.param_patt: %ptr.1 = value_param_pattern %self.patt, runtime_param0
+// CHECK:STDOUT:     %self.patt: %ptr.e71 = binding_pattern self
+// CHECK:STDOUT:     %self.param_patt: %ptr.e71 = value_param_pattern %self.patt, runtime_param0
 // CHECK:STDOUT:     %.loc15_12: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:     %return.patt: %i32 = return_slot_pattern
 // CHECK:STDOUT:     %return.param_patt: %i32 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc6: %ptr.1 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [template = constants.%ptr.1] {
+// CHECK:STDOUT:     %self.param.loc6: %ptr.e71 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [template = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Self.ref.loc6: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:       %ptr.loc6: type = ptr_type %Class [template = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc6: %ptr.1 = bind_name self, %self.param.loc6
+// CHECK:STDOUT:     %self.loc6: %ptr.e71 = bind_name self, %self.param.loc6
 // CHECK:STDOUT:     %return.param.loc6: ref %i32 = out_param runtime_param1
 // CHECK:STDOUT:     %return.loc6: ref %i32 = return_slot %return.param.loc6
 // CHECK:STDOUT:   }
@@ -144,7 +144,7 @@ class Class {
 // CHECK:STDOUT:     %.loc8_3: %Class.elem = var_pattern %.loc8_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Class.elem = var <invalid>
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.3]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -163,9 +163,9 @@ class Class {
 // CHECK:STDOUT:   return %.loc12_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.1]() -> %i32 {
+// CHECK:STDOUT: fn @G[addr %self.param_patt: %ptr.e71]() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %ptr.1 = name_ref self, %self.loc15
+// CHECK:STDOUT:   %self.ref: %ptr.e71 = name_ref self, %self.loc15
 // CHECK:STDOUT:   %.loc16_11: ref %Class = deref %self.ref
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8_8 [template = @Class.%.loc8_8]
 // CHECK:STDOUT:   %.loc16_17.1: ref %i32 = class_element_access %.loc16_11, element0
@@ -185,7 +185,7 @@ class Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.1
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }

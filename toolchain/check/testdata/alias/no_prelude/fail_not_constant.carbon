@@ -45,9 +45,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_16.2: init %empty_tuple.type = tuple_init () to %a.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_3.2: init %empty_tuple.type = converted %.loc12_16.1, %.loc12_16.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc12_3.2
-// CHECK:STDOUT:   %.loc12_11.3: type = splice_block %.loc12_11.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc12_11.2: type = converted %.loc12_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_11.1: type = splice_block %.loc12_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_11.3: type = converted %.loc12_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -58,9 +58,9 @@ fn F() {
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
 // CHECK:STDOUT:   %addr: %ptr = addr_of %a.ref
 // CHECK:STDOUT:   assign %b.var, %addr
-// CHECK:STDOUT:   %.loc13_12.2: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:   %.loc13_12.1: type = splice_block %ptr [template = constants.%ptr] {
 // CHECK:STDOUT:     %.loc13_11: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc13_12.1: type = converted %.loc13_11, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_11, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %empty_tuple.type [template = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var

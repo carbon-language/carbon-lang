@@ -31,13 +31,13 @@ fn A {
 
 // TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR:      ^~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fn A => 0;
+// CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR:
 fn A => 0;
 
@@ -118,9 +118,9 @@ fn A {
 // CHECK:STDOUT:     %.loc8_1: %empty_tuple.type = var_pattern %x.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %empty_tuple.type = var <invalid>
-// CHECK:STDOUT:   %.loc8_10.3: type = splice_block %.loc8_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc8_10.2: type = converted %.loc8_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_symbolic_name x, %.var [symbolic = constants.%x]
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [template = constants.%A] {} {}

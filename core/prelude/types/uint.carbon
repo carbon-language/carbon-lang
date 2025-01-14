@@ -5,6 +5,7 @@
 package Core library "prelude/types/uint";
 
 import library "prelude/types/int_literal";
+import library "prelude/types/int";
 import library "prelude/operators";
 
 private fn MakeUInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
@@ -15,21 +16,36 @@ class UInt(N:! IntLiteral()) {
 
 // Conversions.
 
-impl forall [N:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] UInt(N) as ImplicitAs(IntLiteral()) {
+impl forall [From:! IntLiteral()] UInt(From) as ImplicitAs(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl forall [N:! IntLiteral()] IntLiteral() as As(UInt(N)) {
-  fn Convert[self: Self]() -> UInt(N) = "int.convert_checked";
+impl forall [To:! IntLiteral()] IntLiteral() as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 
-impl forall [N:! IntLiteral()] UInt(N) as As(IntLiteral()) {
+impl forall [From:! IntLiteral()] UInt(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
+
+// TODO: Allow as an implicit conversion if To > From.
+impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert";
+}
+
+// TODO: Allow as an implicit conversion if To > From.
+impl forall [From:! IntLiteral(), To:! IntLiteral()] UInt(From) as As(Int(To)) {
+  fn Convert[self: Self]() -> Int(To) = "int.convert";
+}
+
+// Never implicit.
+impl forall [From:! IntLiteral(), To:! IntLiteral()] Int(From) as As(UInt(To)) {
+  fn Convert[self: Self]() -> UInt(To) = "int.convert";
 }
 
 // Comparisons.
@@ -50,27 +66,27 @@ impl forall [N:! IntLiteral()] UInt(N) as Ordered {
 // Arithmetic.
 
 impl forall [N:! IntLiteral()] UInt(N) as Add {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+  fn Op[self: Self](other: Self) -> Self = "int.uadd";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Div {
-  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+  fn Op[self: Self](other: Self) -> Self = "int.udiv";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mod {
-  fn Op[self: Self](other: Self) -> Self = "int.smod";
+  fn Op[self: Self](other: Self) -> Self = "int.umod";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Mul {
-  fn Op[self: Self](other: Self) -> Self = "int.smul";
+  fn Op[self: Self](other: Self) -> Self = "int.umul";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Negate {
-  fn Op[self: Self]() -> Self = "int.snegate";
+  fn Op[self: Self]() -> Self = "int.unegate";
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Sub {
-  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+  fn Op[self: Self](other: Self) -> Self = "int.usub";
 }
 
 // Bitwise operators.

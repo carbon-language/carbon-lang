@@ -71,7 +71,7 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},
@@ -85,7 +85,7 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'X'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'X'},
 // CHECK:STDOUT:         {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:       {kind: 'TuplePattern', text: ')', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'ArrayExprStart', text: '['},
@@ -101,7 +101,7 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'y'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
 // CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: '`', has_error: yes},
 // CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: '`', has_error: yes, subtree_size: 3},
@@ -116,7 +116,7 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: '[', has_error: yes},
 // CHECK:STDOUT:         {kind: 'BindingPattern', text: ':', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
@@ -128,7 +128,7 @@ var x: [i32];
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierName', text: 'x'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
 // CHECK:STDOUT:               {kind: 'ArrayExprStart', text: '['},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'ArrayExprSemi', text: ']', has_error: yes, subtree_size: 3},

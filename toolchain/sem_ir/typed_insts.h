@@ -132,9 +132,9 @@ struct ArrayIndex {
 // Common representation for aggregate access nodes, which access a fixed
 // element of an aggregate.
 struct AnyAggregateAccess {
-  static constexpr InstKind Kinds[] = {
-      InstKind::StructAccess, InstKind::TupleAccess,
-      InstKind::ClassElementAccess, InstKind::InterfaceWitnessAccess};
+  static constexpr InstKind Kinds[] = {InstKind::ClassElementAccess,
+                                       InstKind::StructAccess,
+                                       InstKind::TupleAccess};
 
   InstKind kind;
   TypeId type_id;
@@ -156,8 +156,8 @@ struct AnyAggregateInit {
 
 // Common representation for all kinds of aggregate value.
 struct AnyAggregateValue {
-  static constexpr InstKind Kinds[] = {
-      InstKind::StructValue, InstKind::TupleValue, InstKind::InterfaceWitness};
+  static constexpr InstKind Kinds[] = {InstKind::StructValue,
+                                       InstKind::TupleValue};
 
   InstKind kind;
   TypeId type_id;
@@ -372,7 +372,7 @@ struct BlockArg {
       InstKind::BlockArg.Define<Parse::NodeId>({.ir_name = "block_arg"});
 
   TypeId type_id;
-  InstBlockId block_id;
+  LabelId block_id;
 };
 
 // A literal bool value, `true` or `false`.
@@ -385,8 +385,9 @@ struct BoolLiteral {
   BoolValue value;
 };
 
-// A bound method, that combines a function with the value to use for its
-// `self` parameter, such as `object.MethodName`.
+// For member access such as `object.MethodName`, combines a member function
+// with the value to use for `self`. This is a callable structure; `Call` will
+// handle the argument assignment.
 struct BoundMethod {
   static constexpr auto Kind = InstKind::BoundMethod.Define<Parse::NodeId>(
       {.ir_name = "bound_method",
@@ -397,7 +398,8 @@ struct BoundMethod {
   // `self`, or whose address will be used to initialize `self` for an `addr
   // self` parameter.
   InstId object_id;
-  InstId function_id;
+  // The function being bound, whose type_id is always a `FunctionType`.
+  InstId function_decl_id;
 };
 
 // The type of bound method values.
@@ -421,7 +423,7 @@ struct AnyBranch {
 
   InstKind kind;
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   // Kind-specific data.
   AnyRawId arg1;
 };
@@ -433,7 +435,7 @@ struct Branch {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
 };
 
 // Control flow to branch to the target block if `cond_id` is true.
@@ -443,7 +445,7 @@ struct BranchIf {
       {.ir_name = "br", .terminator_kind = TerminatorKind::TerminatorSequence});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId cond_id;
 };
 
@@ -455,7 +457,7 @@ struct BranchWithArg {
       {.ir_name = "br", .terminator_kind = TerminatorKind::Terminator});
 
   // Branches don't produce a value, so have no type.
-  InstBlockId target_id;
+  LabelId target_id;
   InstId arg_id;
 };
 
@@ -487,7 +489,7 @@ struct ClassDecl {
   ClassId class_id;
   // The declaration block, containing the class name's qualifiers and the
   // class's generic parameters.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // Access to a member of a class, such as `base.index`. This provides a
@@ -662,7 +664,7 @@ struct FacetValue {
   TypeId type_id;
   // The type that you will get if you cast this value to `type`.
   InstId type_inst_id;
-  // An `InterfaceWitness` instruction (TODO: `FacetTypeWitness`).
+  // An `ImplWitness` instruction (TODO: `FacetTypeWitness`).
   InstId witness_inst_id;
 };
 
@@ -729,7 +731,7 @@ struct FunctionDecl {
   FunctionId function_id;
   // The declaration block, containing the function declaration's parameters and
   // their types.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // The type of a function.
@@ -786,7 +788,36 @@ struct ImplDecl {
   ImplId impl_id;
   // The declaration block, containing the impl's deduced parameters and its
   // self type and interface type.
-  InstBlockId decl_block_id;
+  DeclInstBlockId decl_block_id;
+};
+
+// A witness that a type implements an interface.
+struct ImplWitness {
+  static constexpr auto Kind = InstKind::ImplWitness.Define<Parse::NodeId>(
+      {.ir_name = "impl_witness",
+       .constant_kind = InstConstantKind::Conditional,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // Always the builtin witness type.
+  TypeId type_id;
+  AbsoluteInstBlockId elements_id;
+  SpecificId specific_id;
+};
+
+// Accesses an element of an impl witness by index.
+struct ImplWitnessAccess {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAccess.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_access",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId witness_id;
+  ElementIndex index;
 };
 
 // An `import` declaration. This is mainly for `import` diagnostics, and a 1:1
@@ -857,35 +888,7 @@ struct InterfaceDecl {
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
   // interface's generic parameters.
-  InstBlockId decl_block_id;
-};
-
-// A witness that a type implements an interface.
-struct InterfaceWitness {
-  static constexpr auto Kind = InstKind::InterfaceWitness.Define<Parse::NodeId>(
-      {.ir_name = "interface_witness",
-       .constant_kind = InstConstantKind::Conditional,
-       // TODO: For dynamic dispatch, we might want to lower witness tables as
-       // constants.
-       .is_lowered = false});
-
-  // Always the builtin witness type.
-  TypeId type_id;
-  InstBlockId elements_id;
-};
-
-// Accesses an element of an interface witness by index.
-struct InterfaceWitnessAccess {
-  static constexpr auto Kind =
-      InstKind::InterfaceWitnessAccess.Define<Parse::NodeId>(
-          {.ir_name = "interface_witness_access",
-           .is_type = InstIsType::Maybe,
-           .constant_kind = InstConstantKind::SymbolicOnly,
-           .is_lowered = false});
-
-  TypeId type_id;
-  InstId witness_id;
-  ElementIndex index;
+  DeclInstBlockId decl_block_id;
 };
 
 // A literal integer value.

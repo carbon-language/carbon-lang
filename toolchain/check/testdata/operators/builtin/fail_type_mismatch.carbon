@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Bool = %import_ref.1
-// CHECK:STDOUT:     .ImplicitAs = %import_ref.2
+// CHECK:STDOUT:     .Bool = %import_ref.783
+// CHECK:STDOUT:     .ImplicitAs = %import_ref.d44
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -57,10 +57,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc18_17.1: bool = converted %int_12, <error> [template = <error>]
 // CHECK:STDOUT:   %.loc18_17.2: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc18_10.3: type = splice_block %.loc18_10.2 [template = bool] {
+// CHECK:STDOUT:   %.loc18_10.1: type = splice_block %.loc18_10.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc18_10.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc18_10.2: type = converted %bool.make_type, %.loc18_10.1 [template = bool]
+// CHECK:STDOUT:     %.loc18_10.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc18_10.3: type = converted %bool.make_type, %.loc18_10.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   return

@@ -66,10 +66,10 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:       %.loc14_3: @F.%T.as_type.loc14_10.2 (%T.as_type) = var_pattern %x.patt
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = var x
-// CHECK:STDOUT:     %.loc14_10.2: type = splice_block %.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)] {
+// CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.2 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc13_6.1 [symbolic = %T.loc13_6.2 (constants.%T)]
 // CHECK:STDOUT:       %T.as_type.loc14_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc14_10.1: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref, %T.as_type.loc14_10.1 [symbolic = %T.as_type.loc14_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: ref @F.%T.as_type.loc14_10.2 (%T.as_type) = bind_name x, %x.var
 // CHECK:STDOUT:     return

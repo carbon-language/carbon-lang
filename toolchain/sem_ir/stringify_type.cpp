@@ -37,7 +37,6 @@ class StepStack {
     enum Kind : uint8_t {
       Inst,
       FixedString,
-      ArrayBound,
       Name,
     };
 
@@ -48,8 +47,6 @@ class StepStack {
       InstId inst_id;
       // The fixed string to print, when kind is FixedString.
       const char* fixed_string;
-      // The array bound to print, when kind is ArrayBound.
-      InstId bound_id;
       // The name to print, when kind is Name.
       NameId name_id;
     };
@@ -68,9 +65,6 @@ class StepStack {
   }
   auto PushString(const char* string) -> void {
     steps_.push_back({.kind = Step::FixedString, .fixed_string = string});
-  }
-  auto PushArrayBound(InstId bound_id) -> void {
-    steps_.push_back({.kind = Step::ArrayBound, .bound_id = bound_id});
   }
   auto PushNameId(NameId name_id) -> void {
     steps_.push_back({.kind = Step::Name, .name_id = name_id});
@@ -167,9 +161,6 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case StepStack::Step::FixedString:
         out << step.fixed_string;
         continue;
-      case StepStack::Step::ArrayBound:
-        out << sem_ir.GetArrayBoundValue(step.bound_id);
-        continue;
       case StepStack::Step::Name:
         out << sem_ir.names().GetFormatted(step.name_id);
         continue;
@@ -202,7 +193,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case CARBON_KIND(ArrayType inst): {
         out << "[";
         step_stack.PushString("]");
-        step_stack.PushArrayBound(inst.bound_id);
+        step_stack.PushInstId(inst.bound_id);
         step_stack.PushString("; ");
         step_stack.PushTypeId(inst.element_type_id);
         break;
@@ -339,29 +330,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
             << ">";
         break;
       }
-      case CARBON_KIND(ImportRefUnloaded inst): {
-        if (inst.entity_name_id.is_valid()) {
-          step_stack.PushEntityName(inst.entity_name_id);
-        } else {
-          out << "<import ref unloaded invalid entity name>";
-        }
-        break;
-      }
-      case CARBON_KIND(IntType inst): {
-        out << "<builtin ";
-        step_stack.PushString(">");
-        if (auto width_value =
-                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
-          out << (inst.int_kind.is_signed() ? "i" : "u");
-          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
-        } else {
-          out << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
-          step_stack.PushString(")");
-          step_stack.PushInstId(inst.bit_width_id);
-        }
-        break;
-      }
-      case CARBON_KIND(InterfaceWitnessAccess inst): {
+      case CARBON_KIND(ImplWitnessAccess inst): {
         auto witness_inst_id =
             sem_ir.constant_values().GetConstantInstId(inst.witness_id);
         auto witness =
@@ -410,6 +379,28 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
         }
         if (!period_self) {
           step_stack.PushInstId(witness.facet_value_inst_id);
+        }
+        break;
+      }
+      case CARBON_KIND(ImportRefUnloaded inst): {
+        if (inst.entity_name_id.is_valid()) {
+          step_stack.PushEntityName(inst.entity_name_id);
+        } else {
+          out << "<import ref unloaded invalid entity name>";
+        }
+        break;
+      }
+      case CARBON_KIND(IntType inst): {
+        out << "<builtin ";
+        step_stack.PushString(">");
+        if (auto width_value =
+                sem_ir.insts().TryGetAs<IntValue>(inst.bit_width_id)) {
+          out << (inst.int_kind.is_signed() ? "i" : "u");
+          sem_ir.ints().Get(width_value->int_id).print(out, /*isSigned=*/false);
+        } else {
+          out << (inst.int_kind.is_signed() ? "Int(" : "UInt(");
+          step_stack.PushString(")");
+          step_stack.PushInstId(inst.bit_width_id);
         }
         break;
       }
@@ -571,11 +562,11 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
       case FloatLiteral::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
+      case ImplWitness::Kind:
       case ImportDecl::Kind:
       case ImportRefLoaded::Kind:
       case InitializeFrom::Kind:
       case InterfaceDecl::Kind:
-      case InterfaceWitness::Kind:
       case NameBindingDecl::Kind:
       case OutParam::Kind:
       case OutParamPattern::Kind:

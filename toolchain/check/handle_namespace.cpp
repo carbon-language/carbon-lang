@@ -10,6 +10,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -18,13 +19,13 @@ auto HandleParseNode(Context& context, Parse::NamespaceStartId /*node_id*/)
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Namespace>();
   context.decl_name_stack().PushScopeAndStartName();
-
-  // Push a pattern block to handle parameters of the namespace declaration.
-  // TODO: Disallow these in parse, instead of check, so we don't have to do
-  // this.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
   return true;
+}
+
+static auto IsNamespaceScope(Context& context, SemIR::NameScopeId name_scope_id)
+    -> bool {
+  auto [_, inst] = context.name_scopes().GetInstIfValid(name_scope_id);
+  return inst && inst->Is<SemIR::Namespace>();
 }
 
 auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
@@ -41,13 +42,14 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
   auto namespace_id =
       context.AddPlaceholderInst(SemIR::LocIdAndInst(node_id, namespace_inst));
 
-  auto existing_inst_id = context.decl_name_stack().LookupOrAddName(
-      name_context, namespace_id, SemIR::AccessKind::Public);
-  if (existing_inst_id.is_valid()) {
-    if (existing_inst_id.is_poisoned()) {
-      context.DiagnosePoisonedName(namespace_id);
-    } else if (auto existing = context.insts().TryGetAs<SemIR::Namespace>(
-                   existing_inst_id)) {
+  auto [existing_inst_id, is_poisoned] =
+      context.decl_name_stack().LookupOrAddName(name_context, namespace_id,
+                                                SemIR::AccessKind::Public);
+  if (is_poisoned) {
+    context.DiagnosePoisonedName(namespace_id);
+  } else if (existing_inst_id.is_valid()) {
+    if (auto existing =
+            context.insts().TryGetAs<SemIR::Namespace>(existing_inst_id)) {
       // If there's a name conflict with a namespace, "merge" by using the
       // previous declaration. Otherwise, diagnose the issue.
 
@@ -83,6 +85,11 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
     namespace_inst.name_scope_id = context.name_scopes().Add(
         namespace_id, name_context.name_id_for_new_inst(),
         name_context.parent_scope_id);
+    if (!IsNamespaceScope(context, name_context.parent_scope_id)) {
+      CARBON_DIAGNOSTIC(NamespaceDeclNotAtTopLevel, Error,
+                        "`namespace` declaration not at top level");
+      context.emitter().Emit(node_id, NamespaceDeclNotAtTopLevel);
+    }
   }
 
   context.ReplaceInstBeforeConstantUse(namespace_id, namespace_inst);

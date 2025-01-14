@@ -17,6 +17,7 @@
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
+#include "toolchain/check/scope_index.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
@@ -45,7 +46,11 @@ struct LookupResult {
   // was not found in a specific.
   SemIR::SpecificId specific_id;
   // The declaration that was found by name lookup.
+  // Invalid for poisoned items.
+  // TODO: Make this point to the poisoning declaration.
   SemIR::InstId inst_id;
+  // Whether the lookup found a poisoned name.
+  bool is_poisoned = false;
 };
 
 // Information about an access.
@@ -68,6 +73,17 @@ class Context {
   // add contextual notes as appropriate.
   using BuildDiagnosticFn =
       llvm::function_ref<auto()->Context::DiagnosticBuilder>;
+
+  struct LookupNameInExactScopeResult {
+    // The matching entity if found, or invalid if poisoned or not found.
+    SemIR::InstId inst_id;
+
+    // The access level required to use inst_id, if it's valid.
+    SemIR::AccessKind access_kind;
+
+    // Whether a poisoned entry was found.
+    bool is_poisoned = false;
+  };
 
   // Stores references for work.
   explicit Context(DiagnosticEmitter* emitter,
@@ -205,14 +221,21 @@ class Context {
     sem_ir().insts().SetLocId(inst_id, SemIR::LocId(node_id));
   }
 
-  // Adds a name to name lookup. Prints a diagnostic for name conflicts.
-  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id) -> void;
+  // Adds a name to name lookup. Prints a diagnostic for name conflicts. If
+  // specified, `scope_index` specifies which lexical scope the name is inserted
+  // into, otherwise the name is inserted into the current scope.
+  auto AddNameToLookup(SemIR::NameId name_id, SemIR::InstId target_id,
+                       ScopeIndex scope_index = ScopeIndex::Invalid) -> void;
 
   // Performs name lookup in a specified scope for a name appearing in a
-  // declaration, returning the referenced instruction. If scope_id is invalid,
-  // uses the current contextual scope.
+  // declaration. If scope_id is invalid, performs lookup into the lexical scope
+  // specified by scope_index instead. If found, returns the referenced
+  // instruction and false. If poisoned, returns an invalid instruction and
+  // true.
+  // TODO: For poisoned names, return the poisoning instruction.
   auto LookupNameInDecl(SemIR::LocId loc_id, SemIR::NameId name_id,
-                        SemIR::NameScopeId scope_id) -> SemIR::InstId;
+                        SemIR::NameScopeId scope_id, ScopeIndex scope_index)
+      -> std::pair<SemIR::InstId, bool>;
 
   // Performs an unqualified name lookup, returning the referenced instruction.
   auto LookupUnqualifiedName(Parse::NodeId node_id, SemIR::NameId name_id,
@@ -221,10 +244,17 @@ class Context {
   // Performs a name lookup in a specified scope, returning the referenced
   // instruction. Does not look into extended scopes. Returns an invalid
   // instruction if the name is not found.
+  //
+  // If `is_being_declared` is false, then this is a regular name lookup, and
+  // the name will be poisoned if not found so that later lookups will fail; a
+  // poisoned name will be treated as if it is not declared. Otherwise, this is
+  // a lookup for a name being declared, so the name will not be poisoned, but
+  // poison will be returned if it's already been looked up.
   auto LookupNameInExactScope(SemIRLoc loc, SemIR::NameId name_id,
                               SemIR::NameScopeId scope_id,
-                              const SemIR::NameScope& scope)
-      -> std::pair<SemIR::InstId, SemIR::AccessKind>;
+                              SemIR::NameScope& scope,
+                              bool is_being_declared = false)
+      -> LookupNameInExactScopeResult;
 
   // Appends the lookup scopes corresponding to `base_const_id` to `*scopes`.
   // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
@@ -639,7 +669,10 @@ class Context {
   auto global_init() -> GlobalInit& { return global_init_; }
 
   // Marks the start of a region of insts in a pattern context that might
-  // represent an expression or a pattern.
+  // represent an expression or a pattern. Typically this is called when
+  // handling a parse node that can immediately precede a subpattern (such
+  // as `let` or a `,` in a pattern list), and the handler for the subpattern
+  // node makes the matching `EndSubpatternAs*` call.
   auto BeginSubpattern() -> void;
 
   // Ends a region started by BeginSubpattern (in stack order), treating it as
@@ -674,7 +707,7 @@ class Context {
     // The corresponding AnyBindName inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
-    SemIR::ExprRegionId type_expr_id;
+    SemIR::ExprRegionId type_expr_region_id;
   };
   auto bind_name_map() -> Map<SemIR::InstId, BindingPatternInfo>& {
     return bind_name_map_;

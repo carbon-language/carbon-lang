@@ -24,6 +24,7 @@
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/dump.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/file.h"
 
 namespace Carbon::Check {
@@ -67,10 +68,91 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, Parse::NodeId node_id)
   Parse::Dump(context.parse_tree(), node_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ClassId class_id) -> void {
+  SemIR::Dump(context.sem_ir(), class_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ConstantId const_id) -> void {
+  SemIR::Dump(context.sem_ir(), const_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::EntityNameId entity_name_id) -> void {
+  SemIR::Dump(context.sem_ir(), entity_name_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::FacetTypeId facet_type_id) -> void {
+  SemIR::Dump(context.sem_ir(), facet_type_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::FunctionId function_id) -> void {
+  SemIR::Dump(context.sem_ir(), function_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::GenericId generic_id) -> void {
+  SemIR::Dump(context.sem_ir(), generic_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), impl_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::InstBlockId inst_block_id) -> void {
+  SemIR::Dump(context.sem_ir(), inst_block_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), inst_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::InterfaceId interface_id) -> void {
+  SemIR::Dump(context.sem_ir(), interface_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> void {
   DumpNoNewline(context, loc_id);
   llvm::errs() << '\n';
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::NameId name_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), name_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::NameScopeId name_scope_id) -> void {
+  SemIR::Dump(context.sem_ir(), name_scope_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::SpecificId specific_id) -> void {
+  SemIR::Dump(context.sem_ir(), specific_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::StructTypeFieldsId struct_type_fields_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), struct_type_fields_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::TypeBlockId type_block_id) -> void {
+  SemIR::Dump(context.sem_ir(), type_block_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
+    -> void {
+  SemIR::Dump(context.sem_ir(), type_id);
 }
 
 }  // namespace Carbon::Check

@@ -4,6 +4,8 @@
 
 load("@bazel_skylib//lib:selects.bzl", "selects")
 
+package(default_visibility = ["//visibility:public"])
+
 # For use by rules.bzl.
 # Matches when asan is enabled on a macOS platform.
 selects.config_setting_group(

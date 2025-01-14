@@ -47,18 +47,6 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
         lambda x: re.sub(":", "/", re.sub("^(.*:(lib|include))/", "", x)),
         "...",
     ),
-    # :src/google/protobuf/descriptor.h -> google/protobuf/descriptor.h
-    # - protobuf_headers is specified because there are multiple overlapping
-    #   targets.
-    "@protobuf": ExternalRepo(
-        lambda x: re.sub("^(.*:src)/", "", x),
-        ":protobuf_headers",
-        use_system_include=True,
-    ),
-    # :src/libfuzzer/libfuzzer_macro.h -> libfuzzer/libfuzzer_macro.h
-    "@com_google_libprotobuf_mutator": ExternalRepo(
-        lambda x: re.sub("^(.*:src)/", "", x), "...", use_system_include=True
-    ),
     # tools/cpp/runfiles:runfiles.h -> tools/cpp/runfiles/runfiles.h
     "@bazel_tools": ExternalRepo(lambda x: re.sub(":", "/", x), "..."),
     # absl/flags:flag.h -> absl/flags/flag.h
@@ -79,11 +67,6 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
     ),
 }
 
-# TODO: proto rules and template expansions are aspect-based and their generated
-# files don't show up in `bazel query` output.
-# Try using `bazel cquery --output=starlark` to print `target.files`.
-# For protobuf, need to add support for `alias` rule kind.
-IGNORE_HEADER_REGEX = re.compile("^(.*\\.pb\\.h)$")
 IGNORE_SOURCE_FILE_REGEX = re.compile(
     "^(third_party/clangd.*|common/version.*\\.cpp)$"
 )
@@ -247,9 +230,6 @@ def get_missing_deps(
             if header not in header_to_rule_map:
                 if is_system_include:
                     # Don't error for unexpected system includes.
-                    continue
-                if IGNORE_HEADER_REGEX.match(header):
-                    # Don't print anything for explicitly ignored files.
                     continue
                 exit(
                     f"Missing rule for " f"'{full_include}' in '{source_file}'"

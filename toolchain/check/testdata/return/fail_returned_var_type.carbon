@@ -34,8 +34,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
-// CHECK:STDOUT:     .Float = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     .Float = %import_ref.1d6
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -67,11 +67,11 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %v.var: ref f64 = var v
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [template = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
-// CHECK:STDOUT:   %.loc18_19.3: type = splice_block %.loc18_19.2 [template = f64] {
+// CHECK:STDOUT:   %.loc18_19.1: type = splice_block %.loc18_19.3 [template = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:     %.loc18_19.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc18_19.2: type = converted %float.make_type, %.loc18_19.1 [template = f64]
+// CHECK:STDOUT:     %.loc18_19.2: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc18_19.3: type = converted %float.make_type, %.loc18_19.2 [template = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc18_16: f64 = bind_value %v

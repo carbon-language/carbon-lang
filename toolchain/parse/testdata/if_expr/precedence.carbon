@@ -16,9 +16,9 @@ fn F(b: bool) -> bool {
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierName', text: 'F'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierName', text: 'b'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
 // CHECK:STDOUT:           {kind: 'BindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 5},

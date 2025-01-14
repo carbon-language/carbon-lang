@@ -10,6 +10,15 @@
 
 namespace Carbon {
 
+// The result of `DiagnosticConvert::ConvertLoc`. This is non-templated to allow
+// sharing across converters.
+struct ConvertedDiagnosticLoc {
+  // Becomes DiagnosticMessage::loc.
+  DiagnosticLoc loc;
+  // Becomes Diagnostic::last_byte_offset.
+  int32_t last_byte_offset;
+};
+
 // An interface that can convert some representation of a location into a
 // diagnostic location.
 template <typename LocT>
@@ -23,10 +32,11 @@ class DiagnosticConverter {
 
   virtual ~DiagnosticConverter() = default;
 
-  // Converts a LocT to a DiagnosticLoc. ConvertLoc may invoke
-  // context_fn to provide context messages.
+  // Converts a LocT to a DiagnosticLoc and its `last_byte_offset` (see
+  // `DiagnosticMessage`). ConvertLoc may invoke context_fn to provide context
+  // messages.
   virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
-      -> DiagnosticLoc = 0;
+      -> ConvertedDiagnosticLoc = 0;
 
   // Converts arg types as needed. Not all uses require conversion, so the
   // default returns the argument unchanged.

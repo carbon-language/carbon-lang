@@ -15,7 +15,8 @@
 
 namespace Carbon::Lex {
 
-auto NumericLiteral::Lex(llvm::StringRef source_text)
+auto NumericLiteral::Lex(llvm::StringRef source_text,
+                         bool can_form_real_literal)
     -> std::optional<NumericLiteral> {
   NumericLiteral result;
 
@@ -46,8 +47,8 @@ auto NumericLiteral::Lex(llvm::StringRef source_text)
 
     // Exactly one `.` can be part of the literal, but only if it's followed by
     // an alphanumeric character.
-    if (c == '.' && i + 1 != n && IsAlnum(source_text[i + 1]) &&
-        !seen_radix_point) {
+    if (c == '.' && can_form_real_literal && i + 1 != n &&
+        IsAlnum(source_text[i + 1]) && !seen_radix_point) {
       result.radix_point_ = i;
       seen_radix_point = true;
       continue;

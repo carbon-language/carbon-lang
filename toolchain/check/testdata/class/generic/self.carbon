@@ -183,9 +183,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %.loc18_5.2: ref @F.%Class.loc17_19.2 (%Class) = splice_block %s.var {}
 // CHECK:STDOUT:     %MakeClass.call: init @F.%Class.loc17_19.2 (%Class) = call %MakeClass.specific_fn.loc18_19.1() to %.loc18_5.2
 // CHECK:STDOUT:     assign %s.var, %MakeClass.call
-// CHECK:STDOUT:     %.loc18_12.2: type = splice_block %Self.ref [symbolic = %Class.loc17_19.2 (constants.%Class)] {
-// CHECK:STDOUT:       %.loc18_12.1: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_12.1 [symbolic = %Class.loc17_19.2 (constants.%Class)]
+// CHECK:STDOUT:     %.loc18_12.1: type = splice_block %Self.ref [symbolic = %Class.loc17_19.2 (constants.%Class)] {
+// CHECK:STDOUT:       %.loc18_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc17_19.2 (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_12.2 [symbolic = %Class.loc17_19.2 (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: ref @F.%Class.loc17_19.2 (%Class) = bind_name s, %s.var
 // CHECK:STDOUT:     return
@@ -205,8 +205,6 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %F => constants.%F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@MakeSelf.%T) {}
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeSelf(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
@@ -216,7 +214,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class(@MakeClass.%T) {}
+// CHECK:STDOUT: specific @Class(@MakeSelf.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
@@ -226,6 +224,8 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %Class.val => constants.%Class.val
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Class(@MakeClass.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {}
 // CHECK:STDOUT:

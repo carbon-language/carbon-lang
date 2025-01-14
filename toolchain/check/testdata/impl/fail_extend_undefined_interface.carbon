@@ -11,7 +11,7 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: `extend impl` requires a definition for facet type `I` [ExtendUndefinedInterface]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: implementation of undefined interface I [ImplOfUndefinedInterface]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -33,7 +33,7 @@ fn F(c: C) {
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+9]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+13]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-28]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -42,6 +42,10 @@ fn F(c: C) {
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-21]]:18: note: declared as an extended scope here [FromExtendHere]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:                  ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-25]]:3: error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR:   extend impl as I;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   c.F();
 }
 
@@ -106,7 +110,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc35: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc45: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %F.ref.loc49: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

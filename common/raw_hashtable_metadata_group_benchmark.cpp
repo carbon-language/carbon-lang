@@ -29,10 +29,12 @@ class BenchmarkPortableMetadataGroup : public MetadataGroup {
 
   auto ClearDeleted() -> void { PortableClearDeleted(); }
 
-  auto Match(uint8_t present_byte) const -> MatchRange {
+  auto Match(uint8_t present_byte) const -> PortableMatchRange {
     return PortableMatch(present_byte);
   }
-  auto MatchPresent() const -> MatchRange { return PortableMatchPresent(); }
+  auto MatchPresent() const -> PortableMatchRange {
+    return PortableMatchPresent();
+  }
 
   auto MatchEmpty() const -> MatchIndex { return PortableMatchEmpty(); }
   auto MatchDeleted() const -> MatchIndex { return PortableMatchDeleted(); }
@@ -53,10 +55,12 @@ class BenchmarkSIMDMetadataGroup : public MetadataGroup {
 
   auto ClearDeleted() -> void { SIMDClearDeleted(); }
 
-  auto Match(uint8_t present_byte) const -> MatchRange {
+  auto Match(uint8_t present_byte) const -> SIMDMatchRange {
     return SIMDMatch(present_byte);
   }
-  auto MatchPresent() const -> MatchRange { return SIMDMatchPresent(); }
+  auto MatchPresent() const -> SIMDMatchPresentRange {
+    return SIMDMatchPresent();
+  }
 
   auto MatchEmpty() const -> MatchIndex { return SIMDMatchEmpty(); }
   auto MatchDeleted() const -> MatchIndex { return SIMDMatchDeleted(); }

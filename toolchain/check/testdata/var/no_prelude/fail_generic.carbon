@@ -44,9 +44,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_17.2: init %empty_tuple.type = tuple_init () to %.var [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_3.2: init %empty_tuple.type = converted %.loc15_17.1, %.loc15_17.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.var, %.loc15_3.2
-// CHECK:STDOUT:   %.loc15_12.3: type = splice_block %.loc15_12.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc15_12.1: type = splice_block %.loc15_12.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc15_12.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_12.3: type = converted %.loc15_12.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_symbolic_name x, %.var [symbolic = constants.%x]
 // CHECK:STDOUT:   return

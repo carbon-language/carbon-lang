@@ -23,14 +23,14 @@ protected var b: ();
 // CHECK:STDERR:
 private protected var c: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: protected protected var d: ();
+// CHECK:STDERR:           ^~~~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `protected` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:11: error: `protected` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: protected protected var d: ();
-// CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected protected var d: ();
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
@@ -59,9 +59,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc15_11: %empty_tuple.type = var_pattern %b.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var b
-// CHECK:STDOUT:   %.loc15_19.3: type = splice_block %.loc15_19.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_19.2: type = converted %.loc15_19.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc15_19.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_19.3: type = converted %.loc15_19.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -69,9 +69,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc24_19: %empty_tuple.type = var_pattern %c.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var c
-// CHECK:STDOUT:   %.loc24_27.3: type = splice_block %.loc24_27.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc24_27.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc24_27.2: type = converted %.loc24_27.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc24_27.1: type = splice_block %.loc24_27.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc24_27.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc24_27.3: type = converted %.loc24_27.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -79,9 +79,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc37_21: %empty_tuple.type = var_pattern %d.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var d
-// CHECK:STDOUT:   %.loc37_29.3: type = splice_block %.loc37_29.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc37_29.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc37_29.2: type = converted %.loc37_29.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc37_29.1: type = splice_block %.loc37_29.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc37_29.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc37_29.3: type = converted %.loc37_29.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -89,9 +89,9 @@ abstract var e: ();
 // CHECK:STDOUT:     %.loc42_10: %empty_tuple.type = var_pattern %e.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var e
-// CHECK:STDOUT:   %.loc42_18.3: type = splice_block %.loc42_18.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc42_18.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc42_18.2: type = converted %.loc42_18.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc42_18.1: type = splice_block %.loc42_18.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc42_18.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc42_18.3: type = converted %.loc42_18.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = bind_name e, %e.var
 // CHECK:STDOUT: }

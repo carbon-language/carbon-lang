@@ -50,8 +50,8 @@ auto HandleChoiceAlternative(Context& context) -> void {
 
   context.PushState(State::ChoiceAlternativeFinish);
 
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::IdentifierName)) {
+  auto token = context.ConsumeIf(Lex::TokenKind::Identifier);
+  if (!token) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceAlternativeName, Error,
                         "expected choice alternative name");
@@ -67,7 +67,10 @@ auto HandleChoiceAlternative(Context& context) -> void {
   }
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {
+    context.AddLeafNode(NodeKind::IdentifierNameBeforeParams, *token);
     context.PushState(State::PatternListAsTuple);
+  } else {
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *token);
   }
 }
 

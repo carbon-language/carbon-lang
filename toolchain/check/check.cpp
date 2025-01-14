@@ -61,16 +61,36 @@ static auto RenderImportKey(ImportKey import_key) -> std::string {
 static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         Map<ImportKey, Parse::NodeId>* explicit_import_map,
                         UnitAndImports& unit_info,
-                        Parse::Tree::PackagingNames import) -> void {
+                        Parse::Tree::PackagingNames import, bool fuzzing)
+    -> void {
   const auto& packaging = unit_info.parse_tree().packaging_decl();
 
   IdentifierId file_package_id =
       packaging ? packaging->names.package_id : IdentifierId::Invalid;
-  auto import_key = GetImportKey(unit_info, file_package_id, import);
+  const auto import_key = GetImportKey(unit_info, file_package_id, import);
+  const auto& [import_package_name, import_library_name] = import_key;
+
+  if (import_package_name == CppPackageName) {
+    if (import_library_name.empty()) {
+      CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
+                        "`Cpp` import missing library");
+      unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
+      return;
+    }
+    if (fuzzing) {
+      // Clang is not crash-resilient.
+      CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
+                        "`Cpp` import found during fuzzing");
+      unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
+      return;
+    }
+    unit_info.cpp_imports.push_back(import);
+    return;
+  }
 
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_key.first == MainPackageName;
+  bool is_explicit_main = import_package_name == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
@@ -185,7 +205,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   } else {
     // The imported api is missing.
     package_imports.has_load_error = true;
-    if (!explicit_import_map && import_key.first == CppPackageName) {
+    if (!explicit_import_map && import_package_name == CppPackageName) {
       // Don't diagnose the implicit import in `impl package Cpp`, because we'll
       // have diagnosed the use of `Cpp` in the declaration.
       return;
@@ -295,7 +315,8 @@ static auto BuildApiMapAndDiagnosePackaging(
 }
 
 auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
-                     llvm::raw_ostream* vlog_stream) -> void {
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                     llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos;
@@ -316,7 +337,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
       implicit_names.package_id = IdentifierId::Invalid;
-      TrackImport(api_map, nullptr, unit_info, implicit_names);
+      TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
     }
 
     Map<ImportKey, Parse::NodeId> explicit_import_map;
@@ -332,11 +353,12 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::InvalidNodeId(),
                    .package_id = core_ident_id,
-                   .library_id = prelude_id});
+                   .library_id = prelude_id},
+                  fuzzing);
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
-      TrackImport(api_map, &explicit_import_map, unit_info, import);
+      TrackImport(api_map, &explicit_import_map, unit_info, import, fuzzing);
     }
 
     // If there were no imports, mark the file as ready to check for below.
@@ -350,7 +372,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, units.size(), vlog_stream).Run();
+    CheckUnit(unit_info, units.size(), fs, vlog_stream).Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -397,7 +419,7 @@ auto CheckParseTrees(llvm::MutableArrayRef<Unit> units, bool prelude_import,
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, units.size(), vlog_stream).Run();
+        CheckUnit(&unit_info, units.size(), fs, vlog_stream).Run();
       }
     }
   }

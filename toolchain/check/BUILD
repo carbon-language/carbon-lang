@@ -26,6 +26,7 @@ cc_library(
         "global_init.cpp",
         "impl_lookup.cpp",
         "import.cpp",
+        "import_cpp.cpp",
         "import_ref.cpp",
         "inst_block_stack.cpp",
         "literal.cpp",
@@ -52,6 +53,7 @@ cc_library(
         "global_init.h",
         "impl_lookup.h",
         "import.h",
+        "import_cpp.h",
         "import_ref.h",
         "inst_block_stack.h",
         "keyword_modifier_set.h",
@@ -89,6 +91,8 @@ cc_library(
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:inst",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:frontend",
+        "@llvm-project//clang:tooling",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -104,6 +108,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:dump",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
     ],
     # Always link dump methods.
@@ -277,6 +282,7 @@ cc_library(
     deps = [
         ":context",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/lex:token_index",
         "//toolchain/parse:tree_node_diagnostic_converter",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:stringify_type",

@@ -15,3 +15,9 @@ style and idioms. Instead, the purpose of these examples are to test the current
 state of the toolchain against larger code examples than those that are present
 in the toolchain's own tests, to find bugs in the toolchain, and to drive
 feature development in the toolchain by presenting somewhat realistic testcases.
+
+If one of these examples stops building after a change to the toolchain, please:
+
+-   Make sure that the build break is an expected consequence of the change.
+-   Update the `BUILD` file to exclude that example.
+-   File an issue and assign it to @zygoloid.

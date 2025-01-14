@@ -67,9 +67,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc4_9: %empty_tuple.type = var_pattern %v.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var v
-// CHECK:STDOUT:   %.loc4_17.3: type = splice_block %.loc4_17.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_17.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_17.2: type = converted %.loc4_17.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_17.1: type = splice_block %.loc4_17.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_17.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
 // CHECK:STDOUT: }
@@ -106,9 +106,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
-// CHECK:STDOUT:   %.loc4_10.3: type = splice_block %.loc4_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_10.2: type = converted %.loc4_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_10.1: type = splice_block %.loc4_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }
@@ -138,9 +138,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
-// CHECK:STDOUT:   %.loc10_10.3: type = splice_block %.loc10_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_10.2: type = converted %.loc10_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }
@@ -175,9 +175,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:     %.loc9_1: %empty_tuple.type = var_pattern %v2.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var v2
-// CHECK:STDOUT:   %.loc9_10.3: type = splice_block %.loc9_10.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_10.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc9_10.2: type = converted %.loc9_10.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc9_10.1: type = splice_block %.loc9_10.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc9_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc9_10.3: type = converted %.loc9_10.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = bind_name v2, %v2.var
 // CHECK:STDOUT: }

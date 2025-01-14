@@ -4,11 +4,18 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <string>
+
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/node_id_traversal.h"
 
@@ -28,9 +35,11 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 }
 
 CheckUnit::CheckUnit(UnitAndImports* unit_and_imports, int total_ir_count,
+                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                      llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       total_ir_count_(total_ir_count),
+      fs_(std::move(fs)),
       vlog_stream_(vlog_stream),
       emitter_(*unit_and_imports_->unit->sem_ir_converter,
                unit_and_imports_->err_tracker),
@@ -129,6 +138,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   ImportCurrentPackage(package_inst_id, namespace_type_id);
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
+  ImportCppPackages();
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -324,6 +334,34 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
   }
 }
 
+auto CheckUnit::ImportCppPackages() -> void {
+  const auto& imports = unit_and_imports_->cpp_imports;
+  if (imports.empty()) {
+    return;
+  }
+
+  if (imports.size() >= 2) {
+    context_.TODO(imports[1].node_id,
+                  "multiple Cpp imports are not yet supported");
+    return;
+  }
+
+  const auto& import = imports.front();
+  llvm::StringRef filename =
+      unit_and_imports_->unit->value_stores->string_literal_values().Get(
+          import.library_id);
+
+  // TODO: Pass the import location so that diagnostics would point to it.
+  auto source_buffer = SourceBuffer::MakeFromFile(
+      *fs_, filename, unit_and_imports_->err_tracker);
+  if (!source_buffer) {
+    return;
+  }
+
+  ImportCppFile(context_, import.node_id, source_buffer->filename(),
+                source_buffer->text());
+}
+
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
@@ -334,17 +372,19 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
-    auto loc = unit_and_imports_->unit->node_converter->ConvertLoc(
+    auto converted = unit_and_imports_->unit->node_converter->ConvertLoc(
         node_id, [](DiagnosticLoc, const DiagnosticBase<>&) {});
-    loc.FormatLocation(output);
+    converted.loc.FormatLocation(output);
     output << ": checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    loc.FormatSnippet(output, /*indent=*/10);
+    converted.loc.FormatSnippet(output, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
     node_id = *maybe_node_id;
-    auto parse_kind = context_.parse_tree().node_kind(node_id);
+
+    unit_and_imports_->unit->sem_ir_converter->AdvanceToken(
+        context_.parse_tree().node_token(node_id));
 
     if (context_.parse_tree().node_has_error(node_id)) {
       context_.TODO(node_id, "handle invalid parse trees in `check`");
@@ -352,6 +392,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     }
 
     bool result;
+    auto parse_kind = context_.parse_tree().node_kind(node_id);
     switch (parse_kind) {
 #define CARBON_PARSE_NODE_KIND(Name)                              \
   case Parse::NodeKind::Name: {                                   \
@@ -395,8 +436,12 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         break;
       }
       case CARBON_KIND(SemIR::ImplDecl impl_decl): {
-        if (!context_.impls().Get(impl_decl.impl_id).is_defined()) {
-          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        auto& impl = context_.impls().Get(impl_decl.impl_id);
+        if (!impl.is_defined()) {
+          FillImplWitnessWithErrors(context_, impl);
+          CARBON_DIAGNOSTIC(ImplMissingDefinition, Error,
+                            "impl declared but not defined");
+          emitter_.Emit(decl_inst_id, ImplMissingDefinition);
         }
         break;
       }

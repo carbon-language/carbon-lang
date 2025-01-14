@@ -114,7 +114,7 @@ export import library "lib";
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierName', text: 'C'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'C'},
 // CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
 // CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},

@@ -25,17 +25,21 @@ class NumericLiteralTest : public ::testing::Test {
  public:
   NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
 
-  auto Lex(llvm::StringRef text) -> NumericLiteral {
-    std::optional<NumericLiteral> result = NumericLiteral::Lex(text);
+  auto Lex(llvm::StringRef text, bool can_form_real_literal) -> NumericLiteral {
+    std::optional<NumericLiteral> result =
+        NumericLiteral::Lex(text, can_form_real_literal);
     CARBON_CHECK(result);
-    EXPECT_EQ(result->text(), text);
+    if (can_form_real_literal) {
+      EXPECT_EQ(result->text(), text);
+    }
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> NumericLiteral::Value {
+  auto Parse(llvm::StringRef text, bool can_form_real_literal = true)
+      -> NumericLiteral::Value {
     Testing::SingleTokenDiagnosticConverter converter(text);
     DiagnosticEmitter<const char*> emitter(converter, error_tracker);
-    return Lex(text).ComputeValue(emitter);
+    return Lex(text, can_form_real_literal).ComputeValue(emitter);
   }
 
   ErrorTrackingDiagnosticConsumer error_tracker;
@@ -91,12 +95,14 @@ TEST_F(NumericLiteralTest, HandlesIntLiteral) {
       {.token = "0b10_10_11", .value = 0b10'10'11, .radix = 2},
       {.token = "1_234_567", .value = 1'234'567, .radix = 10},
   };
-  for (Testcase testcase : testcases) {
-    error_tracker.Reset();
-    EXPECT_THAT(Parse(testcase.token),
-                HasIntValue(IsUnsignedInt(testcase.value)))
-        << testcase.token;
-    EXPECT_FALSE(error_tracker.seen_error()) << testcase.token;
+  for (bool can_form_real_literal : {false, true}) {
+    for (Testcase testcase : testcases) {
+      error_tracker.Reset();
+      EXPECT_THAT(Parse(testcase.token, can_form_real_literal),
+                  HasIntValue(IsUnsignedInt(testcase.value)))
+          << testcase.token;
+      EXPECT_FALSE(error_tracker.seen_error()) << testcase.token;
+    }
   }
 }
 
@@ -190,46 +196,85 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
     uint64_t mantissa;
     int64_t exponent;
     unsigned radix;
+    uint64_t int_value;
   };
   Testcase testcases[] = {
       // Decimal real literals.
-      {.token = "0.0", .mantissa = 0, .exponent = -1, .radix = 10},
-      {.token = "12.345", .mantissa = 12345, .exponent = -3, .radix = 10},
-      {.token = "12.345e6", .mantissa = 12345, .exponent = 3, .radix = 10},
-      {.token = "12.345e+6", .mantissa = 12345, .exponent = 3, .radix = 10},
-      {.token = "1_234.5e-2", .mantissa = 12345, .exponent = -3, .radix = 10},
+      {.token = "0.0",
+       .mantissa = 0,
+       .exponent = -1,
+       .radix = 10,
+       .int_value = 0},
+      {.token = "12.345",
+       .mantissa = 12345,
+       .exponent = -3,
+       .radix = 10,
+       .int_value = 12},
+      {.token = "12.345e6",
+       .mantissa = 12345,
+       .exponent = 3,
+       .radix = 10,
+       .int_value = 12},
+      {.token = "12.345e+6",
+       .mantissa = 12345,
+       .exponent = 3,
+       .radix = 10,
+       .int_value = 12},
+      {.token = "1_234.5e-2",
+       .mantissa = 12345,
+       .exponent = -3,
+       .radix = 10,
+       .int_value = 1234},
       {.token = "1.0e-2_000_000",
        .mantissa = 10,
        .exponent = -2'000'001,
-       .radix = 10},
+       .radix = 10,
+       .int_value = 1},
 
       // Hexadecimal real literals.
       {.token = "0x1_2345_6789.CDEF",
        .mantissa = 0x1'2345'6789'CDEF,
        .exponent = -16,
-       .radix = 16},
-      {.token = "0x0.0001p4", .mantissa = 1, .exponent = -12, .radix = 16},
-      {.token = "0x0.0001p+4", .mantissa = 1, .exponent = -12, .radix = 16},
-      {.token = "0x0.0001p-4", .mantissa = 1, .exponent = -20, .radix = 16},
+       .radix = 16,
+       .int_value = 0x1'2345'6789},
+      {.token = "0x0.0001p4",
+       .mantissa = 1,
+       .exponent = -12,
+       .radix = 16,
+       .int_value = 0},
+      {.token = "0x0.0001p+4",
+       .mantissa = 1,
+       .exponent = -12,
+       .radix = 16,
+       .int_value = 0},
+      {.token = "0x0.0001p-4",
+       .mantissa = 1,
+       .exponent = -20,
+       .radix = 16,
+       .int_value = 0},
       // The exponent here works out as exactly INT64_MIN.
       {.token = "0x1.01p-9223372036854775800",
        .mantissa = 0x101,
        .exponent = -9223372036854775807L - 1L,
-       .radix = 16},
+       .radix = 16,
+       .int_value = 1},
       // The exponent here doesn't fit in a signed 64-bit integer until we
       // adjust for the radix point.
       {.token = "0x1.01p9223372036854775809",
        .mantissa = 0x101,
        .exponent = 9223372036854775801L,
-       .radix = 16},
+       .radix = 16,
+       .int_value = 1},
 
       // Binary real literals. These are invalid, but we accept them for error
       // recovery.
       {.token = "0b10_11_01.01",
        .mantissa = 0b10110101,
        .exponent = -2,
-       .radix = 2},
+       .radix = 2,
+       .int_value = 0b101101},
   };
+  // Check we get the right real value.
   for (Testcase testcase : testcases) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(testcase.token),
@@ -239,6 +284,15 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
         << testcase.token;
     EXPECT_EQ(error_tracker.seen_error(), testcase.radix == 2)
         << testcase.token;
+  }
+  // If we are required to stop at the `.` character, check we get the right int
+  // value instead.
+  for (Testcase testcase : testcases) {
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(testcase.token, false),
+                HasIntValue(IsUnsignedInt(testcase.int_value)))
+        << testcase.token;
+    EXPECT_FALSE(error_tracker.seen_error());
   }
 }
 

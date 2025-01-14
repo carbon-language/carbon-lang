@@ -24,7 +24,9 @@ class NameScope : public Printable<NameScope> {
     NameId name_id;
     InstId inst_id;
     AccessKind access_kind;
+    bool is_poisoned = false;
   };
+  static_assert(sizeof(Entry) == 12);
 
   struct EntryId : public IdBase<EntryId> {
     static constexpr llvm::StringLiteral Label = "name_scope_entry";
@@ -60,19 +62,22 @@ class NameScope : public Printable<NameScope> {
     return lookup.value();
   }
 
-  // Adds a new name known to not exist. Must not be poisoned.
+  // Adds a new name that is known to not exist. The new entry is not allowed to
+  // be poisoned. An existing poisoned entry can be overwritten.
   auto AddRequired(Entry name_entry) -> void;
 
-  // If the given name already exists, return true with the EntryId; the entry
-  // might be poisoned. Otherwise, adds the name using inst_id and access_kind
-  // and returns false with the new EntryId.
+  // Searches for the given name. If found, including if a poisoned entry is
+  // found, returns true with the existing EntryId. Otherwise, adds the name
+  // using inst_id and access_kind and returns false with the new EntryId.
   //
-  // This cannot be used to add poisoned entries; use AddPoison instead.
+  // This cannot be used to add poisoned entries; use LookupOrPoison instead.
   auto LookupOrAdd(SemIR::NameId name_id, InstId inst_id,
                    AccessKind access_kind) -> std::pair<bool, EntryId>;
 
-  // Adds a new poisoned name.
-  auto AddPoison(NameId name_id) -> void;
+  // Searches for the given name. If found, including if a poisoned entry is
+  // found, returns the corresponding EntryId. Otherwise, returns nullopt and
+  // poisons the name so it can't be declared later.
+  auto LookupOrPoison(NameId name_id) -> std::optional<EntryId>;
 
   auto extended_scopes() const -> llvm::ArrayRef<InstId> {
     return extended_scopes_;

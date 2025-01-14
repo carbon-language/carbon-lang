@@ -40,7 +40,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(argc + 1);
-  if (busybox_info.mode && busybox_info.mode != "carbon") {
+  if (busybox_info.mode) {
     args.append({*busybox_info.mode, "--"});
   }
   args.append(argv + 1, argv + argc);

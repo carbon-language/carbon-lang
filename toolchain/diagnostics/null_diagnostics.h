@@ -14,8 +14,8 @@ inline auto NullDiagnosticConverter() -> DiagnosticConverter<LocT>& {
   struct Converter : public DiagnosticConverter<LocT> {
     auto ConvertLoc(LocT /*loc*/,
                     DiagnosticConverter<LocT>::ContextFnT /*context_fn*/) const
-        -> DiagnosticLoc override {
-      return {};
+        -> ConvertedDiagnosticLoc override {
+      return {.loc = {}, .last_byte_offset = -1};
     }
   };
   static auto* converter = new Converter;

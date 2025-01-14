@@ -49,9 +49,9 @@ fn Main() {
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: %MakeImplicitEmptyTuple.type = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [template = constants.%MakeImplicitEmptyTuple]
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init %empty_tuple.type = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
-// CHECK:STDOUT:   %.loc15_11.3: type = splice_block %.loc15_11.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc15_11.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc15_11.2: type = converted %.loc15_11.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc15_11.1: type = splice_block %.loc15_11.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc15_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_11.3: type = converted %.loc15_11.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
 // CHECK:STDOUT:   return

@@ -163,27 +163,27 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [template]
-// CHECK:STDOUT:   %Self.1: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %Self.f0c: %HasF.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %F.type.b7b: type = fn_type @F.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %HasF.type, %F.type.1 [template]
-// CHECK:STDOUT:   %assoc0.1: %F.assoc_type = assoc_entity element0, @HasF.%F.decl [template]
+// CHECK:STDOUT:   %F.f50: %F.type.b7b = struct_value () [template]
+// CHECK:STDOUT:   %F.assoc_type: type = assoc_entity_type %HasF.type, %F.type.b7b [template]
+// CHECK:STDOUT:   %assoc0.fe8: %F.assoc_type = assoc_entity element0, @HasF.%F.decl [template]
 // CHECK:STDOUT:   %HasG.type: type = facet_type <@HasG> [template]
-// CHECK:STDOUT:   %Self.2: %HasG.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %G.type.1: type = fn_type @G.1 [template]
-// CHECK:STDOUT:   %G.1: %G.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %HasG.type, %G.type.1 [template]
-// CHECK:STDOUT:   %assoc0.2: %G.assoc_type = assoc_entity element0, @HasG.%G.decl [template]
+// CHECK:STDOUT:   %Self.d42: %HasG.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %G.type.d27: type = fn_type @G.1 [template]
+// CHECK:STDOUT:   %G.688: %G.type.d27 = struct_value () [template]
+// CHECK:STDOUT:   %G.assoc_type: type = assoc_entity_type %HasG.type, %G.type.d27 [template]
+// CHECK:STDOUT:   %assoc0.27f: %G.assoc_type = assoc_entity element0, @HasG.%G.decl [template]
 // CHECK:STDOUT:   %C: type = class_type @C [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %C [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%F.2) [template]
-// CHECK:STDOUT:   %G.type.2: type = fn_type @G.2 [template]
-// CHECK:STDOUT:   %G.2: %G.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %HasG.facet: %HasG.type = facet_value %C, %C [template]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%G.2) [template]
+// CHECK:STDOUT:   %impl_witness.329: <witness> = impl_witness (@impl.1.%F.decl) [template]
+// CHECK:STDOUT:   %F.type.a65: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.ad8: %F.type.a65 = struct_value () [template]
+// CHECK:STDOUT:   %HasF.facet: %HasF.type = facet_value %C, %impl_witness.329 [template]
+// CHECK:STDOUT:   %impl_witness.42a: <witness> = impl_witness (@impl.2.%G.decl) [template]
+// CHECK:STDOUT:   %G.type.cf6: type = fn_type @G.2 [template]
+// CHECK:STDOUT:   %G.957: %G.type.cf6 = struct_value () [template]
+// CHECK:STDOUT:   %HasG.facet: %HasG.type = facet_value %C, %impl_witness.42a [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
@@ -220,9 +220,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF {
-// CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
-// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.1]
+// CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.f0c]
+// CHECK:STDOUT:   %F.decl: %F.type.b7b = fn_decl @F.1 [template = constants.%F.f50] {} {}
+// CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0.fe8]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -231,9 +231,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
-// CHECK:STDOUT:   %Self: %HasG.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %G.decl: %G.type.1 = fn_decl @G.1 [template = constants.%G.1] {} {}
-// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %Self: %HasG.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.d42]
+// CHECK:STDOUT:   %G.decl: %G.type.d27 = fn_decl @G.1 [template = constants.%G.688] {} {}
+// CHECK:STDOUT:   %assoc0: %G.assoc_type = assoc_entity element0, %G.decl [template = constants.%assoc0.27f]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -242,21 +242,19 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasF.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%F.decl) [template = constants.%interface.1]
+// CHECK:STDOUT:   %F.decl: %F.type.a65 = fn_decl @F.2 [template = constants.%F.ad8] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @C.%impl_witness.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasG.ref {
-// CHECK:STDOUT:   %G.decl: %G.type.2 = fn_decl @G.2 [template = constants.%G.2] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%G.decl) [template = constants.%interface.2]
+// CHECK:STDOUT:   %G.decl: %G.type.cf6 = fn_decl @G.2 [template = constants.%G.957] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @C.%impl_witness.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -264,10 +262,12 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [template = constants.%HasF.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (@impl.1.%F.decl) [template = constants.%impl_witness.329]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [template = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [template = constants.%HasG.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.2.%G.decl) [template = constants.%impl_witness.42a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -300,27 +300,27 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @H(%c.param_patt: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref.loc22: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc22: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref.loc22: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.fe8]
+// CHECK:STDOUT:   %impl.elem0.loc22: %F.type.b7b = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc22: init %empty_tuple.type = call %impl.elem0.loc22()
 // CHECK:STDOUT:   %c.ref.loc23: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc23: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.1]
-// CHECK:STDOUT:   %impl.elem0.loc23: %F.type.1 = interface_witness_access constants.%interface.1, element0 [template = constants.%F.2]
+// CHECK:STDOUT:   %F.ref.loc23: %F.assoc_type = name_ref F, @HasF.%assoc0 [template = constants.%assoc0.fe8]
+// CHECK:STDOUT:   %impl.elem0.loc23: %F.type.b7b = impl_witness_access constants.%impl_witness.329, element0 [template = constants.%F.ad8]
 // CHECK:STDOUT:   %F.call.loc23: init %empty_tuple.type = call %impl.elem0.loc23()
 // CHECK:STDOUT:   %C.ref.loc24: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %G.ref.loc24: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %impl.elem0.loc24: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.ref.loc24: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.27f]
+// CHECK:STDOUT:   %impl.elem0.loc24: %G.type.d27 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %c.ref.loc25: %C = name_ref c, %c
-// CHECK:STDOUT:   %G.ref.loc25: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.2]
-// CHECK:STDOUT:   %impl.elem0.loc25: %G.type.1 = interface_witness_access constants.%interface.2, element0 [template = constants.%G.2]
+// CHECK:STDOUT:   %G.ref.loc25: %G.assoc_type = name_ref G, @HasG.%assoc0 [template = constants.%assoc0.27f]
+// CHECK:STDOUT:   %impl.elem0.loc25: %G.type.d27 = impl_witness_access constants.%impl_witness.42a, element0 [template = constants.%G.957]
 // CHECK:STDOUT:   %G.call.loc25: init %empty_tuple.type = call %impl.elem0.loc25()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self.1) {}
+// CHECK:STDOUT: specific @F.1(constants.%Self.f0c) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self.2) {}
+// CHECK:STDOUT: specific @G.1(constants.%Self.d42) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%HasF.facet) {}
 // CHECK:STDOUT:
@@ -330,26 +330,26 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasA1.type: type = facet_type <@HasA1> [template]
-// CHECK:STDOUT:   %Self.1: %HasA1.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %A.type.1: type = fn_type @A.1 [template]
-// CHECK:STDOUT:   %A.1: %A.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %A.assoc_type.1: type = assoc_entity_type %HasA1.type, %A.type.1 [template]
-// CHECK:STDOUT:   %assoc0.1: %A.assoc_type.1 = assoc_entity element0, @HasA1.%A.decl [template]
+// CHECK:STDOUT:   %Self.90d: %HasA1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %A.type.9c4: type = fn_type @A.1 [template]
+// CHECK:STDOUT:   %A.c3c: %A.type.9c4 = struct_value () [template]
+// CHECK:STDOUT:   %A.assoc_type.668: type = assoc_entity_type %HasA1.type, %A.type.9c4 [template]
+// CHECK:STDOUT:   %assoc0.41e: %A.assoc_type.668 = assoc_entity element0, @HasA1.%A.decl [template]
 // CHECK:STDOUT:   %HasA2.type: type = facet_type <@HasA2> [template]
-// CHECK:STDOUT:   %Self.2: %HasA2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %A.type.2: type = fn_type @A.2 [template]
-// CHECK:STDOUT:   %A.2: %A.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %A.assoc_type.2: type = assoc_entity_type %HasA2.type, %A.type.2 [template]
-// CHECK:STDOUT:   %assoc0.2: %A.assoc_type.2 = assoc_entity element0, @HasA2.%A.decl [template]
+// CHECK:STDOUT:   %Self.bdc: %HasA2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %A.type.f71: type = fn_type @A.2 [template]
+// CHECK:STDOUT:   %A.0eb: %A.type.f71 = struct_value () [template]
+// CHECK:STDOUT:   %A.assoc_type.bac: type = assoc_entity_type %HasA2.type, %A.type.f71 [template]
+// CHECK:STDOUT:   %assoc0.c44: %A.assoc_type.bac = assoc_entity element0, @HasA2.%A.decl [template]
 // CHECK:STDOUT:   %D: type = class_type @D [template]
-// CHECK:STDOUT:   %A.type.3: type = fn_type @A.3 [template]
-// CHECK:STDOUT:   %A.3: %A.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %HasA1.facet: %HasA1.type = facet_value %D, %D [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%A.3) [template]
-// CHECK:STDOUT:   %A.type.4: type = fn_type @A.4 [template]
-// CHECK:STDOUT:   %A.4: %A.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %HasA2.facet: %HasA2.type = facet_value %D, %D [template]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%A.4) [template]
+// CHECK:STDOUT:   %impl_witness.73a: <witness> = impl_witness (@impl.1.%A.decl) [template]
+// CHECK:STDOUT:   %A.type.468: type = fn_type @A.3 [template]
+// CHECK:STDOUT:   %A.efc: %A.type.468 = struct_value () [template]
+// CHECK:STDOUT:   %HasA1.facet: %HasA1.type = facet_value %D, %impl_witness.73a [template]
+// CHECK:STDOUT:   %impl_witness.baf: <witness> = impl_witness (@impl.2.%A.decl) [template]
+// CHECK:STDOUT:   %A.type.938: type = fn_type @A.4 [template]
+// CHECK:STDOUT:   %A.890: %A.type.938 = struct_value () [template]
+// CHECK:STDOUT:   %HasA2.facet: %HasA2.type = facet_value %D, %impl_witness.baf [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [template]
@@ -386,9 +386,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasA1 {
-// CHECK:STDOUT:   %Self: %HasA1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
-// CHECK:STDOUT:   %A.decl: %A.type.1 = fn_decl @A.1 [template = constants.%A.1] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type.1 = assoc_entity element0, %A.decl [template = constants.%assoc0.1]
+// CHECK:STDOUT:   %Self: %HasA1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.90d]
+// CHECK:STDOUT:   %A.decl: %A.type.9c4 = fn_decl @A.1 [template = constants.%A.c3c] {} {}
+// CHECK:STDOUT:   %assoc0: %A.assoc_type.668 = assoc_entity element0, %A.decl [template = constants.%assoc0.41e]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -397,9 +397,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasA2 {
-// CHECK:STDOUT:   %Self: %HasA2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %A.decl: %A.type.2 = fn_decl @A.2 [template = constants.%A.2] {} {}
-// CHECK:STDOUT:   %assoc0: %A.assoc_type.2 = assoc_entity element0, %A.decl [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %Self: %HasA2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.bdc]
+// CHECK:STDOUT:   %A.decl: %A.type.f71 = fn_decl @A.2 [template = constants.%A.0eb] {} {}
+// CHECK:STDOUT:   %assoc0: %A.assoc_type.bac = assoc_entity element0, %A.decl [template = constants.%assoc0.c44]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -408,21 +408,19 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasA1.ref {
-// CHECK:STDOUT:   %A.decl: %A.type.3 = fn_decl @A.3 [template = constants.%A.3] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%A.decl) [template = constants.%interface.1]
+// CHECK:STDOUT:   %A.decl: %A.type.468 = fn_decl @A.3 [template = constants.%A.efc] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @D.%impl_witness.loc13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasA2.ref {
-// CHECK:STDOUT:   %A.decl: %A.type.4 = fn_decl @A.4 [template = constants.%A.4] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%A.decl) [template = constants.%interface.2]
+// CHECK:STDOUT:   %A.decl: %A.type.938 = fn_decl @A.4 [template = constants.%A.890] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = %A.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @D.%impl_witness.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -430,10 +428,12 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %HasA1.ref: type = name_ref HasA1, file.%HasA1.decl [template = constants.%HasA1.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness (@impl.1.%A.decl) [template = constants.%impl_witness.73a]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [template = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [template = constants.%HasA2.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.2.%A.decl) [template = constants.%impl_witness.baf]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -472,9 +472,9 @@ fn P(o: O) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.1(constants.%Self.1) {}
+// CHECK:STDOUT: specific @A.1(constants.%Self.90d) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @A.2(constants.%Self.2) {}
+// CHECK:STDOUT: specific @A.2(constants.%Self.bdc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%HasA1.facet) {}
 // CHECK:STDOUT:
@@ -485,24 +485,24 @@ fn P(o: O) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasI.type: type = facet_type <@HasI> [template]
 // CHECK:STDOUT:   %Self: %HasI.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type.1: type = fn_type @I.1 [template]
+// CHECK:STDOUT:   %I.type.9bd: type = fn_type @I.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %I.1: %I.type.1 = struct_value () [template]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %HasI.type, %I.type.1 [template]
+// CHECK:STDOUT:   %I.0a6: %I.type.9bd = struct_value () [template]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type %HasI.type, %I.type.9bd [template]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @HasI.%I.decl [template]
 // CHECK:STDOUT:   %B: type = class_type @B [template]
 // CHECK:STDOUT:   %J.type: type = fn_type @J [template]
 // CHECK:STDOUT:   %J: %J.type = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %E: type = class_type @E [template]
 // CHECK:STDOUT:   %E.elem: type = unbound_element_type %E, %B [template]
-// CHECK:STDOUT:   %I.type.2: type = fn_type @I.2 [template]
-// CHECK:STDOUT:   %I.2: %I.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %HasI.facet: %HasI.type = facet_value %E, %E [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%I.2) [template]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %B} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%I.decl) [template]
+// CHECK:STDOUT:   %I.type.395: type = fn_type @I.2 [template]
+// CHECK:STDOUT:   %I.e74: %I.type.395 = struct_value () [template]
+// CHECK:STDOUT:   %HasI.facet: %HasI.type = facet_value %E, %impl_witness [template]
+// CHECK:STDOUT:   %struct_type.base.0ff: type = struct_type {.base: %B} [template]
+// CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [template]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [template]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -538,7 +538,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasI {
 // CHECK:STDOUT:   %Self: %HasI.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.decl: %I.type.1 = fn_decl @I.1 [template = constants.%I.1] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.9bd = fn_decl @I.1 [template = constants.%I.0a6] {} {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -548,17 +548,16 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasI.ref {
-// CHECK:STDOUT:   %I.decl: %I.type.2 = fn_decl @I.2 [template = constants.%I.2] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%I.decl) [template = constants.%interface]
+// CHECK:STDOUT:   %I.decl: %I.type.395 = fn_decl @I.2 [template = constants.%I.e74] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .I = %I.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @E.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B
@@ -573,7 +572,8 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [template = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [template = constants.%HasI.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%I.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [template = constants.%complete_type.98e]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
@@ -602,11 +602,11 @@ fn P(o: O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %E.ref.loc20: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %I.ref.loc20: %I.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc20: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %impl.elem0.loc20: %I.type.9bd = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc20: init %empty_tuple.type = call %impl.elem0.loc20()
 // CHECK:STDOUT:   %e.ref.loc21: %E = name_ref e, %e
 // CHECK:STDOUT:   %I.ref.loc21: %I.assoc_type = name_ref I, @HasI.%assoc0 [template = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0.loc21: %I.type.1 = interface_witness_access constants.%interface, element0 [template = constants.%I.2]
+// CHECK:STDOUT:   %impl.elem0.loc21: %I.type.9bd = impl_witness_access constants.%impl_witness, element0 [template = constants.%I.e74]
 // CHECK:STDOUT:   %I.call.loc21: init %empty_tuple.type = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %E.ref.loc22: type = name_ref E, file.%E.decl [template = constants.%E]
 // CHECK:STDOUT:   %J.ref.loc22: %J.type = name_ref J, @B.%J.decl [template = constants.%J]
@@ -625,24 +625,24 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [template]
-// CHECK:STDOUT:   %K.type.1: type = fn_type @K.1 [template]
-// CHECK:STDOUT:   %K.1: %K.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %K.type.5a4: type = fn_type @K.1 [template]
+// CHECK:STDOUT:   %K.801: %K.type.5a4 = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %HasK.type: type = facet_type <@HasK> [template]
 // CHECK:STDOUT:   %Self: %HasK.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %K.type.2: type = fn_type @K.2 [template]
-// CHECK:STDOUT:   %K.2: %K.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %HasK.type, %K.type.2 [template]
+// CHECK:STDOUT:   %K.type.76f: type = fn_type @K.2 [template]
+// CHECK:STDOUT:   %K.c0e: %K.type.76f = struct_value () [template]
+// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type %HasK.type, %K.type.76f [template]
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @HasK.%K.decl [template]
 // CHECK:STDOUT:   %L: type = class_type @L [template]
 // CHECK:STDOUT:   %L.elem: type = unbound_element_type %L, %Base [template]
-// CHECK:STDOUT:   %K.type.3: type = fn_type @K.3 [template]
-// CHECK:STDOUT:   %K.3: %K.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %HasK.facet: %HasK.type = facet_value %L, %L [template]
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%K.3) [template]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %Base} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%K.decl) [template]
+// CHECK:STDOUT:   %K.type.bc2: type = fn_type @K.3 [template]
+// CHECK:STDOUT:   %K.bd6: %K.type.bc2 = struct_value () [template]
+// CHECK:STDOUT:   %HasK.facet: %HasK.type = facet_value %L, %impl_witness [template]
+// CHECK:STDOUT:   %struct_type.base.b1e: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base.b1e [template]
 // CHECK:STDOUT:   %M.type: type = fn_type @M [template]
 // CHECK:STDOUT:   %M: %M.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -678,7 +678,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasK {
 // CHECK:STDOUT:   %Self: %HasK.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %K.decl: %K.type.2 = fn_decl @K.2 [template = constants.%K.2] {} {}
+// CHECK:STDOUT:   %K.decl: %K.type.76f = fn_decl @K.2 [template = constants.%K.c0e] {} {}
 // CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, %K.decl [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -688,17 +688,16 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %Self.ref as %HasK.ref {
-// CHECK:STDOUT:   %K.decl: %K.type.3 = fn_decl @K.3 [template = constants.%K.3] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%K.decl) [template = constants.%interface]
+// CHECK:STDOUT:   %K.decl: %K.type.bc2 = fn_decl @K.3 [template = constants.%K.bd6] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .K = %K.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @L.%impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %K.decl: %K.type.1 = fn_decl @K.1 [template = constants.%K.1] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %K.decl: %K.type.5a4 = fn_decl @K.1 [template = constants.%K.801] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -713,7 +712,8 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [template = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [template = constants.%HasK.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%K.decl) [template = constants.%impl_witness]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b1e [template = constants.%complete_type.15c]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%L
@@ -755,37 +755,37 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NBase: type = class_type @NBase [template]
-// CHECK:STDOUT:   %N.type.1: type = fn_type @N.1 [template]
+// CHECK:STDOUT:   %N.type.fbf: type = fn_type @N.1 [template]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %N.1: %N.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %N.897: %N.type.fbf = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT:   %complete_type.1: <witness> = complete_type_witness %empty_struct_type [template]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %HasN1.type: type = facet_type <@HasN1> [template]
-// CHECK:STDOUT:   %Self.1: %HasN1.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %N.type.2: type = fn_type @N.2 [template]
-// CHECK:STDOUT:   %N.2: %N.type.2 = struct_value () [template]
-// CHECK:STDOUT:   %N.assoc_type.1: type = assoc_entity_type %HasN1.type, %N.type.2 [template]
-// CHECK:STDOUT:   %assoc0.1: %N.assoc_type.1 = assoc_entity element0, @HasN1.%N.decl [template]
+// CHECK:STDOUT:   %Self.e0b: %HasN1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %N.type.3da: type = fn_type @N.2 [template]
+// CHECK:STDOUT:   %N.a51: %N.type.3da = struct_value () [template]
+// CHECK:STDOUT:   %N.assoc_type.d5e: type = assoc_entity_type %HasN1.type, %N.type.3da [template]
+// CHECK:STDOUT:   %assoc0.25b: %N.assoc_type.d5e = assoc_entity element0, @HasN1.%N.decl [template]
 // CHECK:STDOUT:   %HasN2.type: type = facet_type <@HasN2> [template]
-// CHECK:STDOUT:   %Self.2: %HasN2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %N.type.3: type = fn_type @N.3 [template]
-// CHECK:STDOUT:   %N.3: %N.type.3 = struct_value () [template]
-// CHECK:STDOUT:   %N.assoc_type.2: type = assoc_entity_type %HasN2.type, %N.type.3 [template]
-// CHECK:STDOUT:   %assoc0.2: %N.assoc_type.2 = assoc_entity element0, @HasN2.%N.decl [template]
+// CHECK:STDOUT:   %Self.e6e: %HasN2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %N.type.0aa: type = fn_type @N.3 [template]
+// CHECK:STDOUT:   %N.1a4: %N.type.0aa = struct_value () [template]
+// CHECK:STDOUT:   %N.assoc_type.385: type = assoc_entity_type %HasN2.type, %N.type.0aa [template]
+// CHECK:STDOUT:   %assoc0.196: %N.assoc_type.385 = assoc_entity element0, @HasN2.%N.decl [template]
 // CHECK:STDOUT:   %O: type = class_type @O [template]
 // CHECK:STDOUT:   %O.elem: type = unbound_element_type %O, %NBase [template]
-// CHECK:STDOUT:   %N.type.4: type = fn_type @N.4 [template]
-// CHECK:STDOUT:   %N.4: %N.type.4 = struct_value () [template]
-// CHECK:STDOUT:   %HasN1.facet: %HasN1.type = facet_value %O, %O [template]
-// CHECK:STDOUT:   %interface.1: <witness> = interface_witness (%N.4) [template]
-// CHECK:STDOUT:   %N.type.5: type = fn_type @N.5 [template]
-// CHECK:STDOUT:   %N.5: %N.type.5 = struct_value () [template]
-// CHECK:STDOUT:   %HasN2.facet: %HasN2.type = facet_value %O, %O [template]
-// CHECK:STDOUT:   %interface.2: <witness> = interface_witness (%N.5) [template]
-// CHECK:STDOUT:   %N.type.6: type = fn_type @N.6 [template]
-// CHECK:STDOUT:   %N.6: %N.type.6 = struct_value () [template]
-// CHECK:STDOUT:   %struct_type.base.1: type = struct_type {.base: %NBase} [template]
-// CHECK:STDOUT:   %complete_type.2: <witness> = complete_type_witness %struct_type.base.1 [template]
+// CHECK:STDOUT:   %impl_witness.982: <witness> = impl_witness (@impl.1.%N.decl) [template]
+// CHECK:STDOUT:   %N.type.ffc: type = fn_type @N.4 [template]
+// CHECK:STDOUT:   %N.4f5: %N.type.ffc = struct_value () [template]
+// CHECK:STDOUT:   %HasN1.facet: %HasN1.type = facet_value %O, %impl_witness.982 [template]
+// CHECK:STDOUT:   %impl_witness.599: <witness> = impl_witness (@impl.2.%N.decl) [template]
+// CHECK:STDOUT:   %N.type.8af: type = fn_type @N.5 [template]
+// CHECK:STDOUT:   %N.308: %N.type.8af = struct_value () [template]
+// CHECK:STDOUT:   %HasN2.facet: %HasN2.type = facet_value %O, %impl_witness.599 [template]
+// CHECK:STDOUT:   %N.type.8b4: type = fn_type @N.6 [template]
+// CHECK:STDOUT:   %N.cc3: %N.type.8b4 = struct_value () [template]
+// CHECK:STDOUT:   %struct_type.base.9c6: type = struct_type {.base: %NBase} [template]
+// CHECK:STDOUT:   %complete_type.121: <witness> = complete_type_witness %struct_type.base.9c6 [template]
 // CHECK:STDOUT:   %P.type: type = fn_type @P [template]
 // CHECK:STDOUT:   %P: %P.type = struct_value () [template]
 // CHECK:STDOUT: }
@@ -822,9 +822,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasN1 {
-// CHECK:STDOUT:   %Self: %HasN1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1]
-// CHECK:STDOUT:   %N.decl: %N.type.2 = fn_decl @N.2 [template = constants.%N.2] {} {}
-// CHECK:STDOUT:   %assoc0: %N.assoc_type.1 = assoc_entity element0, %N.decl [template = constants.%assoc0.1]
+// CHECK:STDOUT:   %Self: %HasN1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.e0b]
+// CHECK:STDOUT:   %N.decl: %N.type.3da = fn_decl @N.2 [template = constants.%N.a51] {} {}
+// CHECK:STDOUT:   %assoc0: %N.assoc_type.d5e = assoc_entity element0, %N.decl [template = constants.%assoc0.25b]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -833,9 +833,9 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasN2 {
-// CHECK:STDOUT:   %Self: %HasN2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.2]
-// CHECK:STDOUT:   %N.decl: %N.type.3 = fn_decl @N.3 [template = constants.%N.3] {} {}
-// CHECK:STDOUT:   %assoc0: %N.assoc_type.2 = assoc_entity element0, %N.decl [template = constants.%assoc0.2]
+// CHECK:STDOUT:   %Self: %HasN2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.e6e]
+// CHECK:STDOUT:   %N.decl: %N.type.0aa = fn_decl @N.3 [template = constants.%N.1a4] {} {}
+// CHECK:STDOUT:   %assoc0: %N.assoc_type.385 = assoc_entity element0, %N.decl [template = constants.%assoc0.196]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -844,26 +844,24 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.1: %Self.ref as %HasN1.ref {
-// CHECK:STDOUT:   %N.decl: %N.type.4 = fn_decl @N.4 [template = constants.%N.4] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%N.decl) [template = constants.%interface.1]
+// CHECK:STDOUT:   %N.decl: %N.type.ffc = fn_decl @N.4 [template = constants.%N.4f5] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @O.%impl_witness.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %Self.ref as %HasN2.ref {
-// CHECK:STDOUT:   %N.decl: %N.type.5 = fn_decl @N.5 [template = constants.%N.5] {} {}
-// CHECK:STDOUT:   %interface: <witness> = interface_witness (%N.decl) [template = constants.%interface.2]
+// CHECK:STDOUT:   %N.decl: %N.type.8af = fn_decl @N.5 [template = constants.%N.308] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   witness = %interface
+// CHECK:STDOUT:   witness = @O.%impl_witness.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NBase {
-// CHECK:STDOUT:   %N.decl: %N.type.1 = fn_decl @N.1 [template = constants.%N.1] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.1]
+// CHECK:STDOUT:   %N.decl: %N.type.fbf = fn_decl @N.1 [template = constants.%N.897] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NBase
@@ -878,12 +876,14 @@ fn P(o: O) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [template = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [template = constants.%HasN1.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl_witness.loc18: <witness> = impl_witness (@impl.1.%N.decl) [template = constants.%impl_witness.982]
 // CHECK:STDOUT:   impl_decl @impl.2 [template] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [template = constants.%O]
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [template = constants.%HasN2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %N.decl: %N.type.6 = fn_decl @N.6 [template = constants.%N.6] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.1 [template = constants.%complete_type.2]
+// CHECK:STDOUT:   %impl_witness.loc21: <witness> = impl_witness (@impl.2.%N.decl) [template = constants.%impl_witness.599]
+// CHECK:STDOUT:   %N.decl: %N.type.8b4 = fn_decl @N.6 [template = constants.%N.cc3] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.9c6 [template = constants.%complete_type.121]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%O
@@ -925,17 +925,17 @@ fn P(o: O) {
 // CHECK:STDOUT: fn @P(%o.param_patt: %O) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %O.ref.loc28: type = name_ref O, file.%O.decl [template = constants.%O]
-// CHECK:STDOUT:   %N.ref.loc28: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
+// CHECK:STDOUT:   %N.ref.loc28: %N.type.8b4 = name_ref N, @O.%N.decl [template = constants.%N.cc3]
 // CHECK:STDOUT:   %N.call.loc28: init %empty_tuple.type = call %N.ref.loc28()
 // CHECK:STDOUT:   %o.ref: %O = name_ref o, %o
-// CHECK:STDOUT:   %N.ref.loc29: %N.type.6 = name_ref N, @O.%N.decl [template = constants.%N.6]
+// CHECK:STDOUT:   %N.ref.loc29: %N.type.8b4 = name_ref N, @O.%N.decl [template = constants.%N.cc3]
 // CHECK:STDOUT:   %N.call.loc29: init %empty_tuple.type = call %N.ref.loc29()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.2(constants.%Self.1) {}
+// CHECK:STDOUT: specific @N.2(constants.%Self.e0b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.3(constants.%Self.2) {}
+// CHECK:STDOUT: specific @N.3(constants.%Self.e6e) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.2(constants.%HasN1.facet) {}
 // CHECK:STDOUT:

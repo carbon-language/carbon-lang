@@ -46,9 +46,9 @@ let b: () = Other.a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [template = constants.%empty_tuple]
@@ -81,9 +81,9 @@ let b: () = Other.a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, @__global_init.%a.ref
 // CHECK:STDOUT: }
@@ -108,9 +108,9 @@ let b: () = Other.a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %empty_tuple.type = binding_pattern a
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [template = constants.%empty_tuple]
@@ -146,9 +146,9 @@ let b: () = Other.a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %empty_tuple.type = binding_pattern b
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %empty_tuple.type = bind_name b, @__global_init.%a.ref
 // CHECK:STDOUT: }

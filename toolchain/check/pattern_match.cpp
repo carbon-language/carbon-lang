@@ -143,9 +143,13 @@ auto MatchContext::EmitPatternMatch(Context& context,
     case SemIR::BindingPattern::Kind:
     case SemIR::SymbolicBindingPattern::Kind: {
       auto binding_pattern = pattern.inst.As<SemIR::AnyBindingPattern>();
-      auto [bind_name_id, type_expr_id] =
-          context.bind_name_map().Lookup(entry.pattern_id).value();
-      context.InsertHere(type_expr_id);
+      // We're logically consuming this map entry, so we invalidate it in order
+      // to avoid accidentally consuming it twice.
+      auto [bind_name_id, type_expr_region_id] = std::exchange(
+          context.bind_name_map().Lookup(entry.pattern_id).value(),
+          {.bind_name_id = SemIR::InstId::Invalid,
+           .type_expr_region_id = SemIR::ExprRegionId::Invalid});
+      context.InsertHere(type_expr_region_id);
       auto value_id = entry.scrutinee_id;
       switch (kind_) {
         case MatchKind::Local: {

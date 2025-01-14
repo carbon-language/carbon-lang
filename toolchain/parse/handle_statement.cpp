@@ -11,11 +11,6 @@ auto HandleStatement(Context& context) -> void {
   context.PopAndDiscardState();
 
   switch (context.PositionKind()) {
-    case Lex::TokenKind::Alias: {
-      context.PushState(State::Alias);
-      context.AddLeafNode(NodeKind::AliasIntroducer, context.Consume());
-      break;
-    }
     case Lex::TokenKind::Break: {
       context.PushState(State::StatementBreakFinish);
       context.AddLeafNode(NodeKind::BreakStatementStart, context.Consume());
@@ -36,22 +31,13 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(State::StatementIf);
       break;
     }
-    case Lex::TokenKind::Let: {
-      context.PushState(State::Let);
-      context.AddLeafNode(NodeKind::LetIntroducer, context.Consume());
-      break;
-    }
     case Lex::TokenKind::Return: {
       context.PushState(State::StatementReturn);
       break;
     }
     case Lex::TokenKind::Returned: {
+      // TODO: Consider handling this as a modifier.
       context.PushState(State::VarAsReturned);
-      break;
-    }
-    case Lex::TokenKind::Var: {
-      context.PushState(State::VarAsDecl);
-      context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
       break;
     }
     case Lex::TokenKind::While: {
@@ -60,6 +46,27 @@ auto HandleStatement(Context& context) -> void {
     }
     case Lex::TokenKind::Match: {
       context.PushState(State::MatchIntroducer);
+      break;
+    }
+#define CARBON_PARSE_NODE_KIND(...)
+#define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name, ...) \
+  case Lex::TokenKind::Name:
+#include "toolchain/parse/node_kind.def"
+    case Lex::TokenKind::Adapt:
+    case Lex::TokenKind::Alias:
+    case Lex::TokenKind::Choice:
+    case Lex::TokenKind::Class:
+    case Lex::TokenKind::Constraint:
+    case Lex::TokenKind::Fn:
+    case Lex::TokenKind::Import:
+    case Lex::TokenKind::Interface:
+    case Lex::TokenKind::Let:
+    case Lex::TokenKind::Library:
+    case Lex::TokenKind::Namespace:
+    // We intentionally don't handle Package here, because `package.` can be
+    // used at the start of an expression, and it's not worth disambiguating it.
+    case Lex::TokenKind::Var: {
+      context.PushState(State::Decl);
       break;
     }
     default: {

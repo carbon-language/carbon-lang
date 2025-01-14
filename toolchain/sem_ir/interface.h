@@ -43,7 +43,7 @@ struct Interface : public EntityWithParamsBase,
   // Determines whether we're currently defining the interface. This is true
   // between the braces of the interface.
   auto is_being_defined() const -> bool {
-    return definition_id.is_valid() && !is_defined();
+    return has_definition_started() && !is_defined();
   }
 };
 

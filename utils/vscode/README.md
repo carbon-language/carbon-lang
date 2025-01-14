@@ -24,8 +24,8 @@ This extension is currently experimental, and being developed alongside Carbon.
 
 ## Configuration
 
-The configuration is under `carbon-vscode.*`. At present, the only configuration
-is the path to the `carbon` binary. This looks like:
+The configuration is under `carbon.*`. At present, the only configuration is the
+path to the `carbon` binary. This looks like:
 
 ```
 "carbon.carbonPath": "/path/to/carbon"

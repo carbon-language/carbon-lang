@@ -42,10 +42,10 @@ let a_test: bool = a;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: bool = binding_pattern a_test
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_13.3: type = splice_block %.loc15_13.2 [template = bool] {
+// CHECK:STDOUT:   %.loc15_13.1: type = splice_block %.loc15_13.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc15_13.1: type = value_of_initializer %bool.make_type [template = bool]
-// CHECK:STDOUT:     %.loc15_13.2: type = converted %bool.make_type, %.loc15_13.1 [template = bool]
+// CHECK:STDOUT:     %.loc15_13.2: type = value_of_initializer %bool.make_type [template = bool]
+// CHECK:STDOUT:     %.loc15_13.3: type = converted %bool.make_type, %.loc15_13.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_test: bool = bind_name a_test, <error>
 // CHECK:STDOUT: }

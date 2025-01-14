@@ -25,7 +25,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id) -> CalleeFunction {
 
   if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
     result.self_id = bound_method->object_id;
-    callee_id = bound_method->function_id;
+    callee_id = bound_method->function_decl_id;
   }
 
   // Identify the function we're calling.

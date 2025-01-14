@@ -142,7 +142,8 @@ using IdKind = TypeEnum<
     InstId, AbsoluteInstId, AnyRawId, ConstantId, EntityNameId,
     CompileTimeBindIndex, RuntimeParamIndex, FacetTypeId, FunctionId, ClassId,
     InterfaceId, ImplId, GenericId, SpecificId, ImportIRId, ImportIRInstId,
-    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId, ExprRegionId,
+    LocId, BoolValue, IntKind, NameId, NameScopeId, InstBlockId,
+    AbsoluteInstBlockId, DeclInstBlockId, LabelId, ExprRegionId,
     StructTypeFieldsId, TypeId, TypeBlockId, ElementIndex, LibraryNameId,
     FloatKind>;
 

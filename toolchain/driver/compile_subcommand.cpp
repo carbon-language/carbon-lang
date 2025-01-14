@@ -369,14 +369,17 @@ class CompilationUnit {
       source_ = SourceBuffer::MakeFromFileOrStdin(*driver_env_->fs,
                                                   input_filename_, *consumer_);
     });
-    if (mem_usage_) {
-      mem_usage_->Add("source_", source_->text().size(),
-                      source_->text().size());
-    }
+
     if (!source_) {
       success_ = false;
       return;
     }
+
+    if (mem_usage_) {
+      mem_usage_->Add("source_", source_->text().size(),
+                      source_->text().size());
+    }
+
     CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
     LogCall("Lex::Lex", "lex",
@@ -838,8 +841,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Execute the actual checking.
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
-  Check::CheckParseTrees(check_units, options_.prelude_import,
-                         driver_env.vlog_stream);
+  Check::CheckParseTrees(check_units, options_.prelude_import, driver_env.fs,
+                         driver_env.vlog_stream, driver_env.fuzzing);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units) {
@@ -854,7 +857,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Unlike previous steps, errors block further progress.
   if (llvm::any_of(units, [&](const auto& unit) { return !unit->success(); })) {
     CARBON_VLOG_TO(driver_env.vlog_stream,
-                   "*** Stopping before lowering due to errors ***");
+                   "*** Stopping before lowering due to errors ***\n");
     return make_result();
   }
 

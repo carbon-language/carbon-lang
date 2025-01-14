@@ -16,7 +16,7 @@ fn ReadChar() -> i32 = "read.char";
 fn Main() {
   Core.Print(1);
 
-  let EOF: i32 = -(1 as i32);
+  let EOF: i32 = -1;
   while (ReadChar() != EOF) {
     // "Hi"
     if (PrintChar(0x48) != EOF) {
@@ -33,31 +33,27 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
-// CHECK:STDOUT:   %.loc19_18.1.temp = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   store i32 -1, ptr %.loc19_18.1.temp, align 4, !dbg !8
-// CHECK:STDOUT:   br label %while.cond, !dbg !9
+// CHECK:STDOUT:   br label %while.cond, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %if.else, %entry
-// CHECK:STDOUT:   %read.char = call i32 @getchar(), !dbg !10
-// CHECK:STDOUT:   %.loc20_24 = load i32, ptr %.loc19_18.1.temp, align 4, !dbg !11
-// CHECK:STDOUT:   %int.neq.loc20 = icmp ne i32 %read.char, %.loc20_24, !dbg !10
-// CHECK:STDOUT:   br i1 %int.neq.loc20, label %while.body, label %while.done, !dbg !9
+// CHECK:STDOUT:   %read.char = call i32 @getchar(), !dbg !9
+// CHECK:STDOUT:   %int.neq.loc20 = icmp ne i32 %read.char, -1, !dbg !9
+// CHECK:STDOUT:   br i1 %int.neq.loc20, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %print.char.loc22 = call i32 @putchar(i32 72), !dbg !12
-// CHECK:STDOUT:   %.loc22_28 = load i32, ptr %.loc19_18.1.temp, align 4, !dbg !13
-// CHECK:STDOUT:   %int.neq.loc22 = icmp ne i32 %print.char.loc22, %.loc22_28, !dbg !12
-// CHECK:STDOUT:   br i1 %int.neq.loc22, label %if.then, label %if.else, !dbg !14
+// CHECK:STDOUT:   %print.char.loc22 = call i32 @putchar(i32 72), !dbg !10
+// CHECK:STDOUT:   %int.neq.loc22 = icmp ne i32 %print.char.loc22, -1, !dbg !10
+// CHECK:STDOUT:   br i1 %int.neq.loc22, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %while.body
-// CHECK:STDOUT:   %print.char.loc23 = call i32 @putchar(i32 105), !dbg !15
-// CHECK:STDOUT:   br label %if.else, !dbg !16
+// CHECK:STDOUT:   %print.char.loc23 = call i32 @putchar(i32 105), !dbg !12
+// CHECK:STDOUT:   br label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %while.body
-// CHECK:STDOUT:   br label %while.cond, !dbg !17
+// CHECK:STDOUT:   br label %while.cond, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
@@ -80,14 +76,11 @@ fn Main() {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 18, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 9, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 10, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 20, column: 24, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 9, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 28, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 8, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 23, column: 7, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 22, column: 5, scope: !4)
-// CHECK:STDOUT: !17 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !18 = !DILocation(line: 16, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 9, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 9, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 8, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 7, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 5, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 1, scope: !4)

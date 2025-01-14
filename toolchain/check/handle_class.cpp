@@ -42,11 +42,6 @@ auto HandleParseNode(Context& context, Parse::ClassIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // This class is potentially generic.
   StartGenericDecl(context);
-  // Push a pattern block for the signature (if any) of the first NameComponent.
-  // TODO: Instead use a separate parse node kind for an identifier that's
-  // followed by a pattern, and push a pattern block when handling it.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 
@@ -70,13 +65,13 @@ static auto MergeClassRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(
+  DiagnoseIfInvalidRedecl(
       context, Lex::TokenKind::Class, prev_class.name_id,
       RedeclInfo(new_class, new_loc, new_is_definition),
-      RedeclInfo(prev_class, prev_loc, prev_class.is_defined()),
+      RedeclInfo(prev_class, prev_loc, prev_class.has_definition_started()),
       prev_import_ir_id);
 
-  if (new_is_definition && prev_class.is_defined()) {
+  if (new_is_definition && prev_class.has_definition_started()) {
     // Don't attempt to merge multiple definitions.
     return false;
   }
@@ -108,15 +103,15 @@ static auto MergeOrAddName(Context& context, Parse::AnyClassDeclId node_id,
                            SemIR::ClassDecl& class_decl,
                            SemIR::Class& class_info, bool is_definition,
                            SemIR::AccessKind access_kind) -> void {
-  auto prev_id = context.decl_name_stack().LookupOrAddName(
+  auto [prev_id, is_poisoned] = context.decl_name_stack().LookupOrAddName(
       name_context, class_decl_id, access_kind);
-  if (!prev_id.is_valid()) {
+  if (is_poisoned) {
+    // This is a declaration of a poisoned name.
+    context.DiagnosePoisonedName(class_decl_id);
     return;
   }
 
-  if (prev_id.is_poisoned()) {
-    // This is a declaration of a poisoned name.
-    context.DiagnosePoisonedName(class_decl_id);
+  if (!prev_id.is_valid()) {
     return;
   }
 
@@ -238,7 +233,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     // TODO: If this is an invalid redeclaration of a non-class entity or there
     // was an error in the qualifier, we will have lost track of the class name
     // here. We should keep track of it even if the name is invalid.
-    class_info.generic_id = FinishGenericDecl(context, class_decl_id);
+    class_info.generic_id = BuildGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
       class_decl.type_id = context.GetGenericClassType(
@@ -285,11 +280,10 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionStartId node_id)
   auto& class_info = context.classes().Get(class_id);
 
   // Track that this declaration is the definition.
-  if (!class_info.is_defined()) {
-    class_info.definition_id = class_decl_id;
-    class_info.scope_id = context.name_scopes().Add(
-        class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
-  }
+  CARBON_CHECK(!class_info.has_definition_started());
+  class_info.definition_id = class_decl_id;
+  class_info.scope_id = context.name_scopes().Add(
+      class_decl_id, SemIR::NameId::Invalid, class_info.parent_scope_id);
 
   // Enter the class scope.
   context.scope_stack().Push(

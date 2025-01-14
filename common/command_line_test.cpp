@@ -188,6 +188,10 @@ TEST(ArgParserTest, ShortArgs) {
   EXPECT_THAT(integer_option, Eq(123));
 
   TestRawOstream os;
+
+  EXPECT_THAT(parse({"-v"}, os), IsError(StrEq("unknown short option `-v`")));
+  EXPECT_THAT(parse({"-xvx"}, os), IsError(StrEq("unknown short option `-v`")));
+
   EXPECT_THAT(
       parse({"-xzf"}, os),
       IsError(StrEq("option `-z` (short for `--option2`) requires a value to "

@@ -62,10 +62,10 @@ fn Constant() {
 // CHECK:STDOUT:     %.loc11_20.1: type = value_of_initializer %bool.make_type.loc11_20 [template = bool]
 // CHECK:STDOUT:     %.loc11_20.2: type = converted %bool.make_type.loc11_20, %.loc11_20.1 [template = bool]
 // CHECK:STDOUT:     %b.param: bool = value_param runtime_param0
-// CHECK:STDOUT:     %.loc11_11.3: type = splice_block %.loc11_11.2 [template = bool] {
+// CHECK:STDOUT:     %.loc11_11.1: type = splice_block %.loc11_11.3 [template = bool] {
 // CHECK:STDOUT:       %bool.make_type.loc11_11: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:       %.loc11_11.1: type = value_of_initializer %bool.make_type.loc11_11 [template = bool]
-// CHECK:STDOUT:       %.loc11_11.2: type = converted %bool.make_type.loc11_11, %.loc11_11.1 [template = bool]
+// CHECK:STDOUT:       %.loc11_11.2: type = value_of_initializer %bool.make_type.loc11_11 [template = bool]
+// CHECK:STDOUT:       %.loc11_11.3: type = converted %bool.make_type.loc11_11, %.loc11_11.2 [template = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param runtime_param1
@@ -74,19 +74,19 @@ fn Constant() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_true.patt: bool = binding_pattern not_true
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_15.3: type = splice_block %.loc15_15.2 [template = bool] {
+// CHECK:STDOUT:   %.loc15_15.1: type = splice_block %.loc15_15.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type.loc15: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc15_15.1: type = value_of_initializer %bool.make_type.loc15 [template = bool]
-// CHECK:STDOUT:     %.loc15_15.2: type = converted %bool.make_type.loc15, %.loc15_15.1 [template = bool]
+// CHECK:STDOUT:     %.loc15_15.2: type = value_of_initializer %bool.make_type.loc15 [template = bool]
+// CHECK:STDOUT:     %.loc15_15.3: type = converted %bool.make_type.loc15, %.loc15_15.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %not_true: bool = bind_name not_true, @__global_init.%.loc15
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_false.patt: bool = binding_pattern not_false
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_16.3: type = splice_block %.loc16_16.2 [template = bool] {
+// CHECK:STDOUT:   %.loc16_16.1: type = splice_block %.loc16_16.3 [template = bool] {
 // CHECK:STDOUT:     %bool.make_type.loc16: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:     %.loc16_16.1: type = value_of_initializer %bool.make_type.loc16 [template = bool]
-// CHECK:STDOUT:     %.loc16_16.2: type = converted %bool.make_type.loc16, %.loc16_16.1 [template = bool]
+// CHECK:STDOUT:     %.loc16_16.2: type = value_of_initializer %bool.make_type.loc16 [template = bool]
+// CHECK:STDOUT:     %.loc16_16.3: type = converted %bool.make_type.loc16, %.loc16_16.2 [template = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %not_false: bool = bind_name not_false, @__global_init.%.loc16
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [template = constants.%Constant] {} {}

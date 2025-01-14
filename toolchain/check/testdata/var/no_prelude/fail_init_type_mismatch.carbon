@@ -44,9 +44,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc15_16.2: %empty_tuple.type = converted %.loc15_16.1, %empty_tuple [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_3.2: %empty_struct_type = converted %.loc15_16.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc15_11.3: type = splice_block %.loc15_11.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc15_11.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc15_11.2: type = converted %.loc15_11.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc15_11.1: type = splice_block %.loc15_11.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc15_11.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_11.3: type = converted %.loc15_11.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
 // CHECK:STDOUT:   return

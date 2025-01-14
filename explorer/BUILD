@@ -95,19 +95,12 @@ file_test(
 )
 
 filegroup(
-    name = "carbon_files",
-    srcs = glob(["testdata/**/*.carbon"]),
-    # Files are used for validating fuzzer completeness.
-    visibility = ["//explorer/fuzzing:__pkg__"],
-)
-
-filegroup(
-    name = "treesitter_testdata",
+    name = "tree_sitter_testdata",
     srcs = glob(
         ["testdata/**/*.carbon"],
         exclude = [
             "testdata/**/fail_*",
         ],
     ),
-    visibility = ["//utils/treesitter:__pkg__"],
+    visibility = ["//utils/tree_sitter:__pkg__"],
 )

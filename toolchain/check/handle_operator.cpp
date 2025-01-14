@@ -404,7 +404,7 @@ static auto HandleShortCircuitOperator(Context& context, Parse::NodeId node_id)
   context.AddInst<SemIR::BranchWithArg>(
       node_id, {.target_id = resume_block_id, .arg_id = rhs_id});
   context.inst_block_stack().Pop();
-  context.AddToRegion(context.inst_block_stack().PeekOrAdd(), node_id);
+  context.AddToRegion(resume_block_id, node_id);
 
   // Collect the result from either the first or second operand.
   auto result_id = context.AddInst<SemIR::BlockArg>(

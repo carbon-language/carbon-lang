@@ -16,7 +16,7 @@ namespace Carbon::Check {
 auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIRLoc loc)
     -> void;
 
-// Information on new and previous declarations for CheckIsAllowedRedecl.
+// Information on new and previous declarations for DiagnoseIfInvalidRedecl.
 struct RedeclInfo {
   explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIRLoc loc,
                       bool is_definition)
@@ -35,18 +35,19 @@ struct RedeclInfo {
   SemIR::LibraryNameId extern_library_id;
 };
 
-// Checks if a redeclaration is allowed prior to merging. This may emit a
-// diagnostic, but diagnostics do not prevent merging.
+// Checks for various invalid redeclarations. This can emit diagnostics.
+// However, merging is still often appropriate for error recovery, so this
+// doesn't return whether a diagnostic occurred.
 //
 // The kinds of things this verifies are:
 // - A declaration is not redundant.
 // - A definition doesn't redefine a prior definition.
 // - The use of `extern` is consistent within a library.
 // - Multiple libraries do not declare non-`extern`.
-auto CheckIsAllowedRedecl(Context& context, Lex::TokenKind decl_kind,
-                          SemIR::NameId name_id, RedeclInfo new_decl,
-                          RedeclInfo prev_decl,
-                          SemIR::ImportIRId prev_import_ir_id) -> void;
+auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
+                             SemIR::NameId name_id, RedeclInfo new_decl,
+                             RedeclInfo prev_decl,
+                             SemIR::ImportIRId prev_import_ir_id) -> void;
 
 // When the prior name lookup result is an import and we are successfully
 // merging, replace the name lookup result with the reference in the current

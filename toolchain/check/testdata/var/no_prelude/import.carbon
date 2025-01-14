@@ -36,9 +36,9 @@ var a: () = a_ref;
 // CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %a_ref.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref.var: ref %empty_tuple.type = var a_ref
-// CHECK:STDOUT:   %.loc4_13.3: type = splice_block %.loc4_13.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_13.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_13.2: type = converted %.loc4_13.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_13.1: type = splice_block %.loc4_13.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_13.3: type = converted %.loc4_13.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_ref: ref %empty_tuple.type = bind_name a_ref, %a_ref.var
 // CHECK:STDOUT: }
@@ -75,9 +75,9 @@ var a: () = a_ref;
 // CHECK:STDOUT:     %.loc4_1: %empty_tuple.type = var_pattern %a.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var a
-// CHECK:STDOUT:   %.loc4_9.3: type = splice_block %.loc4_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc4_9.2: type = converted %.loc4_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT: }

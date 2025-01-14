@@ -6,7 +6,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = [
     "//explorer:__pkg__",
-    "//explorer/fuzzing:__pkg__",
 ])
 
 cc_library(

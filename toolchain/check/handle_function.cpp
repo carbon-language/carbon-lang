@@ -36,9 +36,6 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   context.decl_name_stack().PushScopeAndStartName();
   // The function is potentially generic.
   StartGenericDecl(context);
-  // Start a new pattern block for the signature.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern();
   return true;
 }
 
@@ -91,11 +88,15 @@ static auto MergeFunctionRedecl(Context& context, SemIRLoc new_loc,
     return false;
   }
 
-  CheckIsAllowedRedecl(context, Lex::TokenKind::Fn, prev_function.name_id,
-                       RedeclInfo(new_function, new_loc, new_is_definition),
-                       RedeclInfo(prev_function, prev_function.latest_decl_id(),
-                                  prev_function.definition_id.is_valid()),
-                       prev_import_ir_id);
+  DiagnoseIfInvalidRedecl(
+      context, Lex::TokenKind::Fn, prev_function.name_id,
+      RedeclInfo(new_function, new_loc, new_is_definition),
+      RedeclInfo(prev_function, prev_function.latest_decl_id(),
+                 prev_function.has_definition_started()),
+      prev_import_ir_id);
+  if (new_is_definition && prev_function.has_definition_started()) {
+    return false;
+  }
 
   if (!prev_function.first_owning_decl_id.is_valid()) {
     prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
@@ -121,11 +122,6 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
                            SemIR::Function& function_info, bool is_definition)
     -> void {
   if (!prev_id.is_valid()) {
-    return;
-  }
-
-  if (prev_id.is_poisoned()) {
-    context.DiagnosePoisonedName(function_info.latest_decl_id());
     return;
   }
 
@@ -254,15 +250,19 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
-                 function_info, is_definition);
+  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
+    context.DiagnosePoisonedName(function_info.latest_decl_id());
+  } else {
+    TryMergeRedecl(context, node_id, name_context.prev_inst_id(), function_decl,
+                   function_info, is_definition);
+  }
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.is_valid()) {
     if (function_info.is_extern && context.IsImplFile()) {
       DiagnoseExternRequiresDeclInApiFile(context, node_id);
     }
-    function_info.generic_id = FinishGenericDecl(context, decl_id);
+    function_info.generic_id = BuildGenericDecl(context, decl_id);
     function_decl.function_id = context.functions().Add(function_info);
   } else {
     FinishGenericRedecl(context, decl_id, function_info.generic_id);
@@ -286,7 +286,8 @@ static auto BuildFunctionDecl(Context& context,
 
   // Check if we need to add this to name lookup, now that the function decl is
   // done.
-  if (!name_context.prev_inst_id().is_valid()) {
+  if (name_context.state != DeclNameStack::NameContext::State::Poisoned &&
+      !name_context.prev_inst_id().is_valid()) {
     // At interface scope, a function declaration introduces an associated
     // function.
     auto lookup_result_id = decl_id;

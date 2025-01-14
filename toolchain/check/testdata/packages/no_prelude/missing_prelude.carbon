@@ -208,7 +208,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %N.patt.2: %T = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %N.patt.51ccc0.2: %T = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,9 +230,9 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc6_1: %empty_struct_type = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc6_9.3: type = splice_block %.loc6_9.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc6_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc6_9.2: type = converted %.loc6_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc6_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -241,7 +241,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
-// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.2)]
+// CHECK:STDOUT:   %N.patt: %T = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.51ccc0.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -316,9 +316,9 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc10_1: %empty_tuple.type = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_tuple.type = var n
-// CHECK:STDOUT:   %.loc10_9.3: type = splice_block %.loc10_9.2 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_9.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc10_9.2: type = converted %.loc10_9.1, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_tuple.type = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -411,9 +411,9 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc9_1: %empty_struct_type = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc9_9.3: type = splice_block %.loc9_9.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc9_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc9_9.2: type = converted %.loc9_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc9_9.1: type = splice_block %.loc9_9.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc9_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc9_9.3: type = converted %.loc9_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }
@@ -487,9 +487,9 @@ var n: {} = i32;
 // CHECK:STDOUT:     %.loc12_1: %empty_struct_type = var_pattern %n.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var n
-// CHECK:STDOUT:   %.loc12_9.3: type = splice_block %.loc12_9.2 [template = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc12_9.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc12_9.2: type = converted %.loc12_9.1, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [template = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc12_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = bind_name n, %n.var
 // CHECK:STDOUT: }

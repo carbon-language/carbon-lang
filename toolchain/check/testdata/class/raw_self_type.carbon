@@ -27,15 +27,15 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [template]
-// CHECK:STDOUT:   %F.type.1: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.1: %F.type.1 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.1f2: %F.type.f1b = struct_value () [template]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template]
-// CHECK:STDOUT:   %ptr.1: type = ptr_type %Class [template]
+// CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [template]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [template]
 // CHECK:STDOUT:   %Self: type = class_type @Self [template]
-// CHECK:STDOUT:   %F.type.2: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.2: %F.type.2 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.648: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.e97: %F.type.648 = struct_value () [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -54,7 +54,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [template = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [template = constants.%MemberNamedSelf] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [template = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
@@ -70,7 +70,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type.1 = fn_decl @F.1 [template = constants.%F.1] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [template = constants.%F.1f2] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -81,7 +81,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [template = constants.%Self] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.2 = fn_decl @F.2 [template = constants.%F.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [template = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %MemberNamedSelf = binding_pattern x
 // CHECK:STDOUT:     %x.param_patt: %MemberNamedSelf = value_param_pattern %x.patt, runtime_param0
 // CHECK:STDOUT:     %y.patt: %Self = binding_pattern y
@@ -114,28 +114,28 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: fn @F.1() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Self.patt: %ptr.1 = binding_pattern r#Self
-// CHECK:STDOUT:     %.loc13_5: %ptr.1 = var_pattern %Self.patt
+// CHECK:STDOUT:     %Self.patt: %ptr.e71 = binding_pattern r#Self
+// CHECK:STDOUT:     %.loc13_5: %ptr.e71 = var_pattern %Self.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.var: ref %ptr.1 = var r#Self
-// CHECK:STDOUT:   %.loc13_21: type = splice_block %ptr.loc13 [template = constants.%ptr.1] {
+// CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var r#Self
+// CHECK:STDOUT:   %.loc13_21: type = splice_block %ptr.loc13 [template = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc13: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     %ptr.loc13: type = ptr_type %Class [template = constants.%ptr.e71]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self: ref %ptr.1 = bind_name r#Self, %Self.var
+// CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_name r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %ptr.1 = binding_pattern p
-// CHECK:STDOUT:     %.loc14_5: %ptr.1 = var_pattern %p.patt
+// CHECK:STDOUT:     %p.patt: %ptr.e71 = binding_pattern p
+// CHECK:STDOUT:     %.loc14_5: %ptr.e71 = var_pattern %p.patt
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p.var: ref %ptr.1 = var p
-// CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.1 = name_ref r#Self, %Self
-// CHECK:STDOUT:   %.loc14_20: %ptr.1 = bind_value %Self.ref.loc14_20
+// CHECK:STDOUT:   %p.var: ref %ptr.e71 = var p
+// CHECK:STDOUT:   %Self.ref.loc14_20: ref %ptr.e71 = name_ref r#Self, %Self
+// CHECK:STDOUT:   %.loc14_20: %ptr.e71 = bind_value %Self.ref.loc14_20
 // CHECK:STDOUT:   assign %p.var, %.loc14_20
-// CHECK:STDOUT:   %.loc14_16: type = splice_block %ptr.loc14 [template = constants.%ptr.1] {
+// CHECK:STDOUT:   %.loc14_16: type = splice_block %ptr.loc14 [template = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc14_12: type = name_ref Self, constants.%Class [template = constants.%Class]
-// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Class [template = constants.%ptr.1]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Class [template = constants.%ptr.e71]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.1 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -108,12 +108,12 @@ var d: i32 = d_ref;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %import_ref.1: <error> = import_ref Implicit//default, a_ref, loaded
-// CHECK:STDOUT:   %import_ref.2: <error> = import_ref Implicit//default, b_ref, loaded
-// CHECK:STDOUT:   %import_ref.3: <error> = import_ref Implicit//default, c_ref, loaded
-// CHECK:STDOUT:   %import_ref.4: <error> = import_ref Implicit//default, d_ref, loaded
+// CHECK:STDOUT:   %import_ref.6d1: <error> = import_ref Implicit//default, a_ref, loaded
+// CHECK:STDOUT:   %import_ref.6de: <error> = import_ref Implicit//default, b_ref, loaded
+// CHECK:STDOUT:   %import_ref.6cd: <error> = import_ref Implicit//default, c_ref, loaded
+// CHECK:STDOUT:   %import_ref.a1f: <error> = import_ref Implicit//default, d_ref, loaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.5
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -121,10 +121,10 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .a_ref = imports.%import_ref.1
-// CHECK:STDOUT:     .b_ref = imports.%import_ref.2
-// CHECK:STDOUT:     .c_ref = imports.%import_ref.3
-// CHECK:STDOUT:     .d_ref = imports.%import_ref.4
+// CHECK:STDOUT:     .a_ref = imports.%import_ref.6d1
+// CHECK:STDOUT:     .b_ref = imports.%import_ref.6de
+// CHECK:STDOUT:     .c_ref = imports.%import_ref.6cd
+// CHECK:STDOUT:     .d_ref = imports.%import_ref.a1f
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .a = %a
 // CHECK:STDOUT:     .b = %b
@@ -178,13 +178,13 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a_ref.ref: <error> = name_ref a_ref, imports.%import_ref.1
+// CHECK:STDOUT:   %a_ref.ref: <error> = name_ref a_ref, imports.%import_ref.6d1
 // CHECK:STDOUT:   assign file.%a.var, <error>
-// CHECK:STDOUT:   %b_ref.ref: <error> = name_ref b_ref, imports.%import_ref.2
+// CHECK:STDOUT:   %b_ref.ref: <error> = name_ref b_ref, imports.%import_ref.6de
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %c_ref.ref: <error> = name_ref c_ref, imports.%import_ref.3
+// CHECK:STDOUT:   %c_ref.ref: <error> = name_ref c_ref, imports.%import_ref.6cd
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, imports.%import_ref.4
+// CHECK:STDOUT:   %d_ref.ref: <error> = name_ref d_ref, imports.%import_ref.a1f
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

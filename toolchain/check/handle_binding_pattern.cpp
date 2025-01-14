@@ -89,11 +89,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         name_context, bind_id, introducer.modifier_set.GetAccessKind());
     context.full_pattern_stack().AddBindName(name_id);
 
-    bool inserted =
-        context.bind_name_map()
-            .Insert(binding_pattern_id, {.bind_name_id = bind_id,
-                                         .type_expr_id = type_expr_region_id})
-            .is_inserted();
+    bool inserted = context.bind_name_map()
+                        .Insert(binding_pattern_id,
+                                {.bind_name_id = bind_id,
+                                 .type_expr_region_id = type_expr_region_id})
+                        .is_inserted();
     CARBON_CHECK(inserted);
     return binding_pattern_id;
   };

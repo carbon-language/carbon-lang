@@ -4,68 +4,6 @@
 
 """Rules for symlinking in ways that assist install_filegroups."""
 
-_SYMLINK_BUSYBOX_TMPL = """#!/usr/bin/env python3
-
-from pathlib import Path
-import os
-import sys
-
-_RELATIVE_PATH = "{0}"
-_BUSYBOX_ARGS = {1}
-
-# Run the tool using the absolute path, forwarding arguments.
-tool_path = Path(__file__).parent / _RELATIVE_PATH
-os.execv(tool_path, [tool_path] + _BUSYBOX_ARGS + sys.argv[1:])
-"""
-
-def _busybox_wrapper_impl(ctx):
-    """Symlinking busybox things needs special logic.
-
-    This is because Bazel doesn't cache the actual symlink, resulting in
-    essentially resolved symlinks being produced in place of the expected tool.
-    As a consequence, we can't rely on the symlink name when dealing with
-    busybox entries.
-
-    An example repro of this using a local build cache is:
-        bazel build //toolchain
-        bazel clean
-        bazel build //toolchain
-
-    We could in theory get reasonable behavior with
-    `ctx.actions.declare_symlink`, but that's disallowed in our `.bazelrc` for
-    cross-environment compatibility.
-
-    The particular approach here uses the Python script as a launching pad so
-    that the busybox still receives an appropriate location in argv[0], allowing
-    it to find other files in the lib directory. Arguments are inserted to get
-    equivalent behavior as if symlink resolution had occurred.
-
-    The underlying bug is noted at:
-    https://github.com/bazelbuild/bazel/issues/23620
-    """
-    content = _SYMLINK_BUSYBOX_TMPL.format(
-        ctx.attr.symlink,
-        ctx.attr.busybox_args,
-    )
-    ctx.actions.write(
-        output = ctx.outputs.executable,
-        is_executable = True,
-        content = content,
-    )
-    return []
-
-busybox_wrapper = rule(
-    doc = "Helper for running a busybox with symlink-like characteristics.",
-    implementation = _busybox_wrapper_impl,
-    attrs = {
-        "busybox_args": attr.string_list(
-            doc = "Optional arguments to pass for equivalent behavior to a symlink.",
-        ),
-        "symlink": attr.string(mandatory = True),
-    },
-    executable = True,
-)
-
 def _symlink_file_impl(ctx):
     executable = None
     if ctx.attr.symlink_binary:

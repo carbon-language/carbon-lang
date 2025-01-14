@@ -26,15 +26,15 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
-// CHECK:STDOUT:   %tuple.type.1: type = tuple_type (type, type) [template]
-// CHECK:STDOUT:   %tuple.type.2: type = tuple_type (%i32, %Incomplete) [template]
+// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
+// CHECK:STDOUT:   %tuple.type.8a4: type = tuple_type (%i32, %Incomplete) [template]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Incomplete [template]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     .Int = %import_ref.1
+// CHECK:STDOUT:     .Int = %import_ref.485
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -54,12 +54,12 @@ var p: Incomplete* = &t[1];
 // CHECK:STDOUT:     %.loc19_1: <error> = var_pattern %t.patt
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref <error> = var t
-// CHECK:STDOUT:   %.loc19_24.3: type = splice_block %.loc19_24.2 [template = constants.%tuple.type.2] {
+// CHECK:STDOUT:   %.loc19_24.1: type = splice_block %.loc19_24.3 [template = constants.%tuple.type.8a4] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %Incomplete.ref.loc19: type = name_ref Incomplete, %Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:     %.loc19_24.1: %tuple.type.1 = tuple_literal (%i32, %Incomplete.ref.loc19)
-// CHECK:STDOUT:     %.loc19_24.2: type = converted %.loc19_24.1, constants.%tuple.type.2 [template = constants.%tuple.type.2]
+// CHECK:STDOUT:     %.loc19_24.2: %tuple.type.24b = tuple_literal (%i32, %Incomplete.ref.loc19)
+// CHECK:STDOUT:     %.loc19_24.3: type = converted %.loc19_24.2, constants.%tuple.type.8a4 [template = constants.%tuple.type.8a4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: <error> = bind_name t, <error>
 // CHECK:STDOUT:   name_binding_decl {
