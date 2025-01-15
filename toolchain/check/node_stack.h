@@ -152,11 +152,10 @@ class NodeStack {
   // This doesn't have the breadth of support versus other Peek functions
   // because it's expected to be used in narrow circumstances when determining
   // how to treat the *current* top of the stack.
-  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
-  auto PeekNextIs() const -> bool {
+  auto PeekNextIs(Parse::NodeCategory category) const -> bool {
     CARBON_CHECK(stack_.size() >= 2);
     auto next_kind = parse_tree_->node_kind(stack_[stack_.size() - 2].node_id);
-    return next_kind.category().HasAnyOf(RequiredParseCategory);
+    return next_kind.category().HasAnyOf(category);
   }
 
   // Pops the top of the stack without any verification.

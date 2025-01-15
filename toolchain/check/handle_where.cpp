@@ -128,7 +128,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   // In most expressions, pop the `WhereOperand` node. In the `impl ... as ...
   // where ...` case, leave the `WhereOperand` node on the stack so that part
   // can be trimmed off by impl's syntactic decl matching.
-  if (!context.node_stack().PeekNextIs<Parse::NodeCategory::ImplAs>()) {
+  if (!context.node_stack().PeekNextIs(Parse::NodeCategory::ImplAs)) {
     context.node_stack().Pop<Parse::NodeKind::WhereOperand>();
   }
   SemIR::InstBlockId requirements_id = context.args_type_info_stack().Pop();
