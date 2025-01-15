@@ -787,7 +787,8 @@ class Context {
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
 
-  // Contains a vtable block for each `class` scope which is currently being defined, regardless of whether the class can have virtual functions.
+  // Contains a vtable block for each `class` scope which is currently being
+  // defined, regardless of whether the class can have virtual functions.
   InstBlockStack vtable_stack_;
 
   // Cache of reverse mapping from type constants to types.
