@@ -10,7 +10,6 @@ import dataclasses
 import os
 from pathlib import Path
 import re
-import shutil
 from typing import Optional
 
 __copyright__ = """
@@ -89,8 +88,13 @@ def label_subdir(
     readme_titles = [readme_title]
     if parent_title:
         readme_titles.insert(0, parent_title)
-    children = [x for x in subdir.glob("**/*.md")
-                    if x != readme and '/node_modules/' not in str(x) and '/dist/' not in str(x)]
+    children = [
+        x
+        for x in subdir.glob("**/*.md")
+        if x != readme
+        and "/node_modules/" not in str(x)
+        and "/dist/" not in str(x)
+    ]
     add_frontmatter(
         readme, readme_content, readme_titles, top_nav_order, bool(children)
     )
@@ -156,7 +160,7 @@ def main() -> None:
 
     # Move files to the repo root.
     for f in Path("website").iterdir():
-        if f.name in ["README.md", '.jekyll-cache', '_site']:
+        if f.name in ["README.md", ".jekyll-cache", "_site"]:
             continue
         f.rename(f.name)
 
