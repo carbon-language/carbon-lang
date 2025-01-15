@@ -110,12 +110,12 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc12: %Class.elem.c91 = field_decl n, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Class.elem.0c0 = field_decl next, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n.next [template = constants.%complete_type.78f]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .n = %.loc12
 // CHECK:STDOUT:   .next = %.loc13
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%n.param_patt: %i32, %next.param_patt: %ptr.e71) -> %return.param_patt: %Class {

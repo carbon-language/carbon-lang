@@ -131,11 +131,11 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %.loc12: %Base.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [template = constants.%complete_type.fd7]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc12
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -168,6 +168,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:     %self.loc19: %ptr.11f = bind_name self, %self.param.loc19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b1e [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -175,7 +176,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   .SelfBase = %SelfBase.decl
 // CHECK:STDOUT:   .AddrSelfBase = %AddrSelfBase.decl
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfBase[%self.param_patt: %Base]() -> %i32 {

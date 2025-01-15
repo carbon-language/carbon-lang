@@ -141,10 +141,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %.loc7_21.2: type = converted %int_literal.make_type, %.loc7_21.1 [template = Core.IntLiteral]
 // CHECK:STDOUT:   adapt_decl %.loc7_21.2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness Core.IntLiteral [template = constants.%complete_type.972]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyIntLiteral
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyInt32 {
@@ -171,11 +171,11 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %return.loc15: ref %MyInt32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %i32.builtin [template = constants.%complete_type.f8a]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyInt32
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
@@ -247,10 +247,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   %.loc5_11: type = converted %.loc5_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc5_11 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%MyIntLiteral
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int(%N.param_patt: %MyIntLiteral) -> type;

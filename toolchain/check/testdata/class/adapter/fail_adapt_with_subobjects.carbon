@@ -107,10 +107,10 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBase {
@@ -119,12 +119,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   adapt_decl %i32 [template]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc15: %AdaptWithBase.elem = base_decl %Base.ref, element<invalid> [template]
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBase
 // CHECK:STDOUT:   .base = %.loc15
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_fields.carbon
@@ -162,11 +162,11 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   adapt_decl %i32 [template]
 // CHECK:STDOUT:   %.loc13: %AdaptWithField.elem = field_decl n, element<invalid> [template]
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithField
 // CHECK:STDOUT:   .n = %.loc13
-// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithFields {
@@ -176,13 +176,13 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc25: %AdaptWithFields.elem = field_decl a, element<invalid> [template]
 // CHECK:STDOUT:   %.loc26: %AdaptWithFields.elem = field_decl b, element<invalid> [template]
 // CHECK:STDOUT:   %.loc27: %AdaptWithFields.elem = field_decl c, element<invalid> [template]
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithFields
 // CHECK:STDOUT:   .a = %.loc25
 // CHECK:STDOUT:   .b = %.loc26
 // CHECK:STDOUT:   .c = %.loc27
-// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon
@@ -219,10 +219,10 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
@@ -232,12 +232,12 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc15_11 [template]
+// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AdaptWithBaseAndFields
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

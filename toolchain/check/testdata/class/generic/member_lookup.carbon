@@ -220,11 +220,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.f69 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
 // CHECK:STDOUT:     .b = %.loc5
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,13 +249,13 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [template]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
 // CHECK:STDOUT:     .base = %.loc9
 // CHECK:STDOUT:     .d = %.loc10
 // CHECK:STDOUT:     extend %Base.loc9_22.1
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -543,11 +543,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.f69 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
 // CHECK:STDOUT:     .b = %.loc5
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -572,13 +572,13 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [template]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [template]
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived.85c
 // CHECK:STDOUT:     .base = %.loc9
 // CHECK:STDOUT:     .d = %.loc10
 // CHECK:STDOUT:     extend %Base.loc9_22.1
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

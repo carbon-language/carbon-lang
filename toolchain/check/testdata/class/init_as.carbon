@@ -76,12 +76,12 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl a, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Class.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.501 [template = constants.%complete_type.705]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT:   .b = %.loc13
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {

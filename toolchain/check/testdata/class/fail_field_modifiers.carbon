@@ -95,6 +95,7 @@ class Class {
 // CHECK:STDOUT:   %.loc34_23.2: %i32 = converted %int_1, %.loc34_23.1 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc34_23.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.cf7]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -102,6 +103,5 @@ class Class {
 // CHECK:STDOUT:   .k = %.loc23
 // CHECK:STDOUT:   .l = %l
 // CHECK:STDOUT:   .m = %m
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

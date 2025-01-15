@@ -187,12 +187,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%CompleteClass.f97
 // CHECK:STDOUT:     .n = %.loc7
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -337,11 +337,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc5: @Class.%Class.elem (%Class.elem) = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .x = %.loc5
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,11 +356,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.3c0
 // CHECK:STDOUT:     .n = imports.%import_ref.051
 // CHECK:STDOUT:     .F = imports.%import_ref.570
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -504,11 +505,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.3c0
 // CHECK:STDOUT:     .n = imports.%import_ref.e76
 // CHECK:STDOUT:     .F = imports.%import_ref.a52
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -653,11 +655,12 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %F: @CompleteClass.%F.type (%F.type.14f) = struct_value () [symbolic = %F (constants.%F.874)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%import_ref.3c0
 // CHECK:STDOUT:     .n = imports.%import_ref.051
 // CHECK:STDOUT:     .F = imports.%import_ref.570
-// CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -777,11 +780,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc16: <error> = field_decl x, element0 [template]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%.e41
 // CHECK:STDOUT:     .x = %.loc16
-// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

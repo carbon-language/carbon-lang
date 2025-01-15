@@ -94,6 +94,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc8: %Base.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %.loc9: %Base.elem = field_decl unused, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x.unused [template = constants.%complete_type.20c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -101,19 +102,18 @@ fn Run() {
 // CHECK:STDOUT:   .Unused = %Unused.decl
 // CHECK:STDOUT:   .x = %.loc8
 // CHECK:STDOUT:   .unused = %.loc9
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc13: %Child.elem = base_decl %Base.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Child
 // CHECK:STDOUT:   .base = %.loc13
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F[%self.param_patt: %Base]();
@@ -192,21 +192,23 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Child [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.c5f
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.9a9
 // CHECK:STDOUT:   .base = imports.%import_ref.7e5
 // CHECK:STDOUT:   extend imports.%import_ref.a21640.2
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.c5f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.239
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.1f3
 // CHECK:STDOUT:   .F = imports.%import_ref.e8f
 // CHECK:STDOUT:   .Unused = imports.%import_ref.8bf
 // CHECK:STDOUT:   .x = imports.%import_ref.e67
 // CHECK:STDOUT:   .unused = imports.%import_ref.2e4
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.239
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

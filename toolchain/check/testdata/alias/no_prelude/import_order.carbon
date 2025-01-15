@@ -62,11 +62,11 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc4: %C.elem = field_decl v, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .v = %.loc4
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -116,10 +116,11 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.146
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .v = imports.%import_ref.f99
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.146
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

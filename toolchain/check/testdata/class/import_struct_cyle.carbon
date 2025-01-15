@@ -65,11 +65,11 @@ fn Run() {
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Cycle
 // CHECK:STDOUT:   .c = %.loc10
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -110,10 +110,11 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.b93
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.3a6
 // CHECK:STDOUT:   .c = imports.%import_ref.455
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.b93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

@@ -155,13 +155,13 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc13: %Base.elem = field_decl b, element1 [template]
 // CHECK:STDOUT:   %.loc14: %Base.elem = field_decl c, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b.c [template = constants.%complete_type.ebc]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc12
 // CHECK:STDOUT:   .b = %.loc13
 // CHECK:STDOUT:   .c = %.loc14
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -170,6 +170,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %.loc20: %Derived.elem.344 = field_decl d, element1 [template]
 // CHECK:STDOUT:   %.loc21: %Derived.elem.344 = field_decl e, element2 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.d.e.6a7 [template = constants.%complete_type.401]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -177,7 +178,6 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
 // CHECK:STDOUT:   .d = %.loc20
 // CHECK:STDOUT:   .e = %.loc21
 // CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDerived(%d.param_patt: %Derived) -> %i32 {

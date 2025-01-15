@@ -277,11 +277,11 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %.loc3: @A.%A.elem (%A.elem.1ceb36.1) = field_decl n, element0 [template]
 // CHECK:STDOUT:     %complete_type.loc4_1.1: <witness> = complete_type_witness %struct_type.n.848971.1 [symbolic = %complete_type.loc4_1.2 (constants.%complete_type.84bb3d.1)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc4_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.13025a.1
 // CHECK:STDOUT:     .n = %.loc3
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc4_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

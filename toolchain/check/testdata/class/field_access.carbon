@@ -70,12 +70,12 @@ fn Run() {
 // CHECK:STDOUT:   %.loc12: %Class.elem = field_decl j, element0 [template]
 // CHECK:STDOUT:   %.loc13: %Class.elem = field_decl k, element1 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.cf7]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .j = %.loc12
 // CHECK:STDOUT:   .k = %.loc13
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

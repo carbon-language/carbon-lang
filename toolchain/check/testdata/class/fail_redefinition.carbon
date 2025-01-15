@@ -93,6 +93,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   %H.decl: %H.type.91d = fn_decl @H.1 [template = constants.%H.d38] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type.2b6 = fn_decl @I.1 [template = constants.%I.c9a] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
@@ -100,7 +101,6 @@ fn Class.I() {}
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .I = %I.decl
 // CHECK:STDOUT:   .G = file.%G.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @.2 {
@@ -108,13 +108,13 @@ fn Class.I() {}
 // CHECK:STDOUT:   %H.decl: %H.type.e2f = fn_decl @H.2 [template = constants.%H.382] {} {}
 // CHECK:STDOUT:   %I.decl: %I.type.b27 = fn_decl @I.2 [template = constants.%I.a7f] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%.a95
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   .H = %H.decl
 // CHECK:STDOUT:   .I = %I.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

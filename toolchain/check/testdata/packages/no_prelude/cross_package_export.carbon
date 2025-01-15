@@ -211,11 +211,11 @@ alias C = Other.C;
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .x = %.loc5
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- conflict.carbon
@@ -301,10 +301,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_copy.carbon
@@ -332,10 +333,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_indirect.carbon
@@ -363,10 +365,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export_import.carbon
@@ -402,10 +405,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -455,10 +459,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -508,10 +513,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -559,10 +565,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -611,10 +618,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -662,10 +670,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name_indirect.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.328
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.db8
 // CHECK:STDOUT:   .x = imports.%import_ref.3ef
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.328
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -719,10 +728,11 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -834,9 +844,10 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

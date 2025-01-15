@@ -104,12 +104,12 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:       %n.loc13: @F.%T.loc13 (%T) = bind_name n, %n.param.loc13
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .a = %.loc12
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
