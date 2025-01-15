@@ -10,6 +10,7 @@ import dataclasses
 import os
 from pathlib import Path
 import re
+import shutil
 from typing import Optional
 
 __copyright__ = """
@@ -88,7 +89,8 @@ def label_subdir(
     readme_titles = [readme_title]
     if parent_title:
         readme_titles.insert(0, parent_title)
-    children = [x for x in subdir.glob("**/*.md") if x != readme]
+    children = [x for x in subdir.glob("**/*.md")
+                    if x != readme and '/node_modules/' not in str(x) and '/dist/' not in str(x)]
     add_frontmatter(
         readme, readme_content, readme_titles, top_nav_order, bool(children)
     )
@@ -142,36 +144,9 @@ def label_root_file(
     add_frontmatter(f, f.read_text(), [title], top_nav_order, has_children)
 
 
-def unlink_dir(path: Path) -> None:
-    # TODO: Use path.walk once we require Python 3.12.
-    for root, dirs, files in os.walk(path, topdown=False):
-        root_path = Path(root)
-        for name in files:
-            (root_path / name).unlink()
-        for name in dirs:
-            (root_path / name).rmdir()
-
-
 def main() -> None:
     # Ensure this runs from the repo root.
     os.chdir(Path(__file__).parents[1])
-
-    # bazel-generated symlinks interfere with jekyll because they may contain
-    # broken symlinks.
-    Path("bazel-out").unlink(missing_ok=True)
-    Path("bazel-bin").unlink(missing_ok=True)
-    Path("bazel-genfiles").unlink(missing_ok=True)
-    # bazel-execroot interferes with jekyll because it's a broken symlink.
-    Path("bazel-execroot").unlink()
-    # This is a symlink to website/favicon.png, which is moved below.
-    # TODO: Consider moving the icon to a location which won't break.
-    Path("utils/vscode/images/icon.png").unlink()
-    # This may contain a README.md file that jekyll can't parse and that
-    # shouldn't appear in the navigation tree.
-    unlink_dir(Path("utils/vscode/node_modules"))
-    # This can cause a failure if jekyll has already been run prior to
-    # prebuild.
-    unlink_dir(Path("website/.jekyll-cache"))
 
     # The external symlink is created by scripts/create_compdb.py, and can
     # interfere with local execution.
@@ -181,7 +156,7 @@ def main() -> None:
 
     # Move files to the repo root.
     for f in Path("website").iterdir():
-        if f.name == "README.md":
+        if f.name in ["README.md", '.jekyll-cache', '_site']:
             continue
         f.rename(f.name)
 
