@@ -362,6 +362,10 @@ Learn more about the Carbon project:
 
 Carbon focused talks from the community:
 
+### 2025
+
+-   Very soon.
+
 ### 2024
 
 -   Generic implementation strategies in Carbon and Clang, LLVM Developers'
