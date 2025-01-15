@@ -364,7 +364,7 @@ Carbon focused talks from the community:
 
 ### 2025
 
--   Very soon.
+-   It will happen very soon.
 
 ### 2024
 
