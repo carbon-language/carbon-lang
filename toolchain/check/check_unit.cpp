@@ -358,7 +358,7 @@ auto CheckUnit::ImportCppPackages() -> void {
     return;
   }
 
-  ImportCppFile(context_, import.node_id, source_buffer->filename(),
+  ImportCppFile(context_, import.node_id, fs_, source_buffer->filename(),
                 source_buffer->text());
 }
 
