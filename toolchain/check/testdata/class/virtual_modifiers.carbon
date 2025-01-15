@@ -759,10 +759,10 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractBase: type = class_type @AbstractBase [template]
-// CHECK:STDOUT:   %F.type.abb: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.b77: %F.type.abb = struct_value () [template]
+// CHECK:STDOUT:   %F.type.85b: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.6e9: %F.type.85b = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.c77: <vtable> = vtable (%F.b77) [template]
+// CHECK:STDOUT:   %.6ec: <vtable> = vtable (%F.6e9) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %AbstractIntermediate: type = class_type @AbstractIntermediate [template]
@@ -771,9 +771,9 @@ class Derived {
 // CHECK:STDOUT:   %complete_type.2d3: <witness> = complete_type_witness %struct_type.base.efd [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %AbstractIntermediate [template]
-// CHECK:STDOUT:   %F.type.55a: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.8d5: %F.type.55a = struct_value () [template]
-// CHECK:STDOUT:   %.8cc: <vtable> = vtable (%F.8d5) [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
 // CHECK:STDOUT:   %struct_type.base.da5: type = struct_type {.base: %AbstractIntermediate} [template]
 // CHECK:STDOUT:   %complete_type.f8c: <witness> = complete_type_witness %struct_type.base.da5 [template]
 // CHECK:STDOUT: }
@@ -799,8 +799,8 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AbstractBase {
-// CHECK:STDOUT:   %F.decl: %F.type.abb = fn_decl @F.1 [template = constants.%F.b77] {} {}
-// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.c77]
+// CHECK:STDOUT:   %F.decl: %F.type.85b = fn_decl @F.1 [template = constants.%F.6e9] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.6ec]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -812,7 +812,7 @@ class Derived {
 // CHECK:STDOUT: class @AbstractIntermediate {
 // CHECK:STDOUT:   %AbstractBase.ref: type = name_ref AbstractBase, file.%AbstractBase.decl [template = constants.%AbstractBase]
 // CHECK:STDOUT:   %.loc9: %AbstractIntermediate.elem = base_decl %AbstractBase.ref, element0 [template]
-// CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.b77) [template = constants.%.c77]
+// CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.6e9) [template = constants.%.6ec]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.efd [template = constants.%complete_type.2d3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -825,8 +825,8 @@ class Derived {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %AbstractIntermediate.ref: type = name_ref AbstractIntermediate, file.%AbstractIntermediate.decl [template = constants.%AbstractIntermediate]
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %AbstractIntermediate.ref, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.55a = fn_decl @F.2 [template = constants.%F.8d5] {} {}
-// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [template = constants.%.8cc]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {} {}
+// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [template = constants.%.88d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.da5 [template = constants.%complete_type.f8c]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -845,10 +845,10 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %VirtualBase: type = class_type @VirtualBase [template]
-// CHECK:STDOUT:   %F.type.c71: type = fn_type @F.1 [template]
-// CHECK:STDOUT:   %F.9ce: %F.type.c71 = struct_value () [template]
+// CHECK:STDOUT:   %F.type.e62: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.3e7: %F.type.e62 = struct_value () [template]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
-// CHECK:STDOUT:   %.8db: <vtable> = vtable (%F.9ce) [template]
+// CHECK:STDOUT:   %.def: <vtable> = vtable (%F.3e7) [template]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
 // CHECK:STDOUT:   %VirtualIntermediate: type = class_type @VirtualIntermediate [template]
@@ -857,9 +857,9 @@ class Derived {
 // CHECK:STDOUT:   %complete_type.f09: <witness> = complete_type_witness %struct_type.base.61e [template]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %VirtualIntermediate [template]
-// CHECK:STDOUT:   %F.type.55a: type = fn_type @F.2 [template]
-// CHECK:STDOUT:   %F.8d5: %F.type.55a = struct_value () [template]
-// CHECK:STDOUT:   %.8cc: <vtable> = vtable (%F.8d5) [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
 // CHECK:STDOUT:   %struct_type.base.43c: type = struct_type {.base: %VirtualIntermediate} [template]
 // CHECK:STDOUT:   %complete_type.fa6: <witness> = complete_type_witness %struct_type.base.43c [template]
 // CHECK:STDOUT: }
@@ -885,8 +885,8 @@ class Derived {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @VirtualBase {
-// CHECK:STDOUT:   %F.decl: %F.type.c71 = fn_decl @F.1 [template = constants.%F.9ce] {} {}
-// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.8db]
+// CHECK:STDOUT:   %F.decl: %F.type.e62 = fn_decl @F.1 [template = constants.%F.3e7] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.def]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -898,7 +898,7 @@ class Derived {
 // CHECK:STDOUT: class @VirtualIntermediate {
 // CHECK:STDOUT:   %VirtualBase.ref: type = name_ref VirtualBase, file.%VirtualBase.decl [template = constants.%VirtualBase]
 // CHECK:STDOUT:   %.loc9: %VirtualIntermediate.elem = base_decl %VirtualBase.ref, element0 [template]
-// CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.9ce) [template = constants.%.8db]
+// CHECK:STDOUT:   %.loc10: <vtable> = vtable (constants.%F.3e7) [template = constants.%.def]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.61e [template = constants.%complete_type.f09]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -911,8 +911,8 @@ class Derived {
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %VirtualIntermediate.ref: type = name_ref VirtualIntermediate, file.%VirtualIntermediate.decl [template = constants.%VirtualIntermediate]
 // CHECK:STDOUT:   %.loc13: %Derived.elem = base_decl %VirtualIntermediate.ref, element0 [template]
-// CHECK:STDOUT:   %F.decl: %F.type.55a = fn_decl @F.2 [template = constants.%F.8d5] {} {}
-// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [template = constants.%.8cc]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {} {}
+// CHECK:STDOUT:   %.loc15: <vtable> = vtable (%F.decl) [template = constants.%.88d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.43c [template = constants.%complete_type.fa6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
