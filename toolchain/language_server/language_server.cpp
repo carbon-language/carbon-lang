@@ -13,14 +13,17 @@
 
 namespace Carbon::LanguageServer {
 
-auto Run(std::FILE* input_stream, llvm::raw_ostream& output_stream)
-    -> ErrorOr<Success> {
+auto Run(std::FILE* input_stream, llvm::raw_ostream* output_stream,
+         llvm::raw_ostream* error_stream) -> ErrorOr<Success> {
+  CARBON_CHECK(input_stream && output_stream && error_stream);
+
   // Set up the connection.
   std::unique_ptr<clang::clangd::Transport> transport(
-      clang::clangd::newJSONTransport(input_stream, output_stream,
+      clang::clangd::newJSONTransport(input_stream, *output_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
   Context context;
+  // TODO: Use error_stream in IncomingMessages to report dropped errors.
   IncomingMessages incoming(transport.get(), &context);
   OutgoingMessages outgoing(transport.get());
 

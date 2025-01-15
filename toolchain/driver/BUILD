@@ -114,6 +114,7 @@ cc_library(
     deps = [
         ":clang_runner",
         "//common:command_line",
+        "//common:error",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:version",

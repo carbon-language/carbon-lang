@@ -84,19 +84,19 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   if (driver_env_.installation->error()) {
-    driver_env_.error_stream << "error: " << *driver_env_.installation->error()
-                             << "\n";
+    *driver_env_.error_stream << "error: " << *driver_env_.installation->error()
+                              << "\n";
     return {.success = false};
   }
 
   Options options;
 
   ErrorOr<CommandLine::ParseResult> result = CommandLine::Parse(
-      args, driver_env_.output_stream, Options::Info,
+      args, *driver_env_.output_stream, Options::Info,
       [&](CommandLine::CommandBuilder& b) { options.Build(b); });
 
   if (!result.ok()) {
-    driver_env_.error_stream << "error: " << result.error() << "\n";
+    *driver_env_.error_stream << "error: " << result.error() << "\n";
     return {.success = false};
   } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
@@ -104,16 +104,14 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
 
   if (options.verbose) {
     // Note this implies streamed output in order to interleave.
-    driver_env_.vlog_stream = &driver_env_.error_stream;
+    driver_env_.vlog_stream = driver_env_.error_stream;
   }
   if (options.fuzzing) {
-    SetFuzzing();
+    driver_env_.fuzzing = true;
   }
 
   CARBON_CHECK(options.selected_subcommand != nullptr);
   return options.selected_subcommand->Run(driver_env_);
 }
-
-auto Driver::SetFuzzing() -> void { driver_env_.fuzzing = true; }
 
 }  // namespace Carbon

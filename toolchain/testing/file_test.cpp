@@ -44,7 +44,11 @@ class ToolchainFileTest : public FileTestBase {
       }
     }
 
-    Driver driver(fs, &installation_, stdout, stderr);
+    Driver driver({.fs = fs,
+                   .installation = &installation_,
+                   .input_stream = nullptr,
+                   .output_stream = &stdout,
+                   .error_stream = &stderr});
     auto driver_result = driver.RunCommand(test_args);
     // If any diagnostics have been produced, add a trailing newline to make the
     // last diagnostic match intermediate diagnostics (that have a newline

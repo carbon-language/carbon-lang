@@ -43,7 +43,11 @@ class DriverTest : public testing::Test {
   DriverTest()
       : installation_(
             InstallPaths::MakeForBazelRunfiles(Testing::GetExePath())),
-        driver_(fs_, &installation_, test_output_stream_, test_error_stream_) {
+        driver_({.fs = fs_,
+                 .installation = &installation_,
+                 .input_stream = nullptr,
+                 .output_stream = &test_output_stream_,
+                 .error_stream = &test_error_stream_}) {
     char* tmpdir_env = getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir_env != nullptr);
     test_tmpdir_ = tmpdir_env;

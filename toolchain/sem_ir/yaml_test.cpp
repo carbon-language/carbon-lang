@@ -38,10 +38,14 @@ TEST(SemIRTest, YAML) {
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   RawStringOstream print_stream;
-  Driver d(fs, &install_paths, print_stream, llvm::errs());
+  Driver driver({.fs = fs,
+                 .installation = &install_paths,
+                 .input_stream = nullptr,
+                 .output_stream = &print_stream,
+                 .error_stream = &llvm::errs()});
   auto run_result =
-      d.RunCommand({"compile", "--no-prelude-import", "--phase=check",
-                    "--dump-raw-sem-ir", "test.carbon"});
+      driver.RunCommand({"compile", "--no-prelude-import", "--phase=check",
+                         "--dump-raw-sem-ir", "test.carbon"});
   EXPECT_TRUE(run_result.success);
 
   // Matches the ID of an instruction. Instruction counts may change as various

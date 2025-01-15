@@ -296,34 +296,30 @@ can be written to standard output as these phases progress.
 
 CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
 
-auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
+// Returns an error for trying to dump a non-executed phase's output.
+static auto DumpPhaseError(llvm::StringLiteral requested_dump,
+                           CompileOptions::Phase phase) -> Error {
+  return Error(llvm::formatv(
+      "requested dumping {0} but compile phase is limited to `{1}`",
+      requested_dump, phase));
+}
+
+auto CompileSubcommand::ValidateOptions() const -> ErrorOr<Success> {
   using Phase = CompileOptions::Phase;
   switch (options_.phase) {
     case Phase::Lex:
       if (options_.dump_parse_tree) {
-        driver_env.error_stream
-            << "error: requested dumping the parse tree but compile "
-               "phase is limited to '"
-            << options_.phase << "'\n";
-        return false;
+        return DumpPhaseError("parse tree", options_.phase);
       }
       [[fallthrough]];
     case Phase::Parse:
       if (options_.dump_sem_ir) {
-        driver_env.error_stream
-            << "error: requested dumping the SemIR but compile phase "
-               "is limited to '"
-            << options_.phase << "'\n";
-        return false;
+        return DumpPhaseError("SemIR", options_.phase);
       }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
-        driver_env.error_stream
-            << "error: requested dumping the LLVM IR but compile "
-               "phase is limited to '"
-            << options_.phase << "'\n";
-        return false;
+        return DumpPhaseError("LLVM IR", options_.phase);
       }
       [[fallthrough]];
     case Phase::Lower:
@@ -331,7 +327,7 @@ auto CompileSubcommand::ValidateOptions(DriverEnv& driver_env) const -> bool {
       // Everything can be dumped in these phases.
       break;
   }
-  return true;
+  return Success();
 }
 
 namespace {
@@ -478,7 +474,7 @@ auto CompilationUnit::RunLex() -> void {
           [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
   if (options_.dump_tokens && IncludeInDumps()) {
     consumer_->Flush();
-    tokens_->Print(driver_env_->output_stream,
+    tokens_->Print(*driver_env_->output_stream,
                    options_.omit_file_boundary_tokens);
   }
   if (mem_usage_) {
@@ -491,9 +487,6 @@ auto CompilationUnit::RunLex() -> void {
 }
 
 auto CompilationUnit::RunParse() -> void {
-  CARBON_CHECK(tokens_, "Must call RunLex first");
-  CARBON_CHECK(!parse_tree_, "Called RunParse twice");
-
   LogCall("Parse::Parse", "parse", [&] {
     parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
   });
@@ -501,9 +494,9 @@ auto CompilationUnit::RunParse() -> void {
     consumer_->Flush();
     const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
     if (options_.preorder_parse_tree) {
-      tree_and_subtrees.PrintPreorder(driver_env_->output_stream);
+      tree_and_subtrees.PrintPreorder(*driver_env_->output_stream);
     } else {
-      tree_and_subtrees.Print(driver_env_->output_stream);
+      tree_and_subtrees.Print(*driver_env_->output_stream);
     }
   }
   if (mem_usage_) {
@@ -559,9 +552,9 @@ auto CompilationUnit::PostCheck() -> void {
 
   if (options_.dump_raw_sem_ir && IncludeInDumps()) {
     CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
-    sem_ir_->Print(driver_env_->output_stream, options_.builtin_sem_ir);
+    sem_ir_->Print(*driver_env_->output_stream, options_.builtin_sem_ir);
     if (options_.dump_sem_ir) {
-      driver_env_->output_stream << "\n";
+      *driver_env_->output_stream << "\n";
     }
   }
 
@@ -596,7 +589,7 @@ auto CompilationUnit::PostCheck() -> void {
       formatter.Print(*vlog_stream_);
     }
     if (print) {
-      formatter.Print(driver_env_->output_stream);
+      formatter.Print(*driver_env_->output_stream);
     }
   }
   if (sem_ir_->has_errors()) {
@@ -605,9 +598,6 @@ auto CompilationUnit::PostCheck() -> void {
 }
 
 auto CompilationUnit::RunLower() -> void {
-  CARBON_CHECK(sem_ir_converter_, "Must call PostCheck first");
-  CARBON_CHECK(!module_, "Called RunLower twice");
-
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
     // TODO: Consider disabling instruction naming by default if we're not
@@ -624,7 +614,7 @@ auto CompilationUnit::RunLower() -> void {
                    /*IsForDebug=*/true);
   }
   if (options_.dump_llvm_ir && IncludeInDumps()) {
-    module_->print(driver_env_->output_stream, /*AAW=*/nullptr,
+    module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
   }
 }
@@ -636,16 +626,16 @@ auto CompilationUnit::RunCodeGen() -> void {
 
 auto CompilationUnit::PostCompile() -> void {
   if (options_.dump_shared_values && IncludeInDumps()) {
-    Yaml::Print(driver_env_->output_stream,
+    Yaml::Print(*driver_env_->output_stream,
                 value_stores_.OutputYaml(input_filename_));
   }
   if (mem_usage_) {
     mem_usage_->Collect("value_stores_", value_stores_);
-    Yaml::Print(driver_env_->output_stream,
+    Yaml::Print(*driver_env_->output_stream,
                 mem_usage_->OutputYaml(input_filename_));
   }
   if (timings_) {
-    Yaml::Print(driver_env_->output_stream,
+    Yaml::Print(*driver_env_->output_stream,
                 timings_->OutputYaml(input_filename_));
   }
 
@@ -656,7 +646,7 @@ auto CompilationUnit::PostCompile() -> void {
 
 auto CompilationUnit::RunCodeGenHelper() -> bool {
   std::optional<CodeGen> codegen = CodeGen::Make(
-      *module_, options_.codegen_options.target, driver_env_->error_stream);
+      *module_, options_.codegen_options.target, *driver_env_->error_stream);
   if (!codegen) {
     return false;
   }
@@ -670,11 +660,11 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     // textual assembly output are all somewhat linked flags. We should add
     // some validation that they are used correctly.
     if (options_.force_obj_output) {
-      if (!codegen->EmitObject(driver_env_->output_stream)) {
+      if (!codegen->EmitObject(*driver_env_->output_stream)) {
         return false;
       }
     } else {
-      if (!codegen->EmitAssembly(driver_env_->output_stream)) {
+      if (!codegen->EmitAssembly(*driver_env_->output_stream)) {
         return false;
       }
     }
@@ -683,7 +673,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     if (output_filename.empty()) {
       if (!source_->is_regular_file()) {
         // Don't invent file names like `-.o` or `/dev/stdin.o`.
-        driver_env_->error_stream
+        *driver_env_->error_stream
             << "error: output file name must be specified for input `"
             << input_filename_ << "` that is not a regular file\n";
         return false;
@@ -704,9 +694,9 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     llvm::raw_fd_ostream output_file(output_filename, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
-      driver_env_->error_stream << "error: could not open output file '"
-                                << output_filename << "': " << ec.message()
-                                << "\n";
+      *driver_env_->error_stream << "error: could not open output file '"
+                                 << output_filename << "': " << ec.message()
+                                 << "\n";
       return false;
     }
     if (options_.asm_output) {
@@ -755,7 +745,8 @@ auto CompilationUnit::IncludeInDumps(llvm::StringRef filename) const -> bool {
 }  // namespace
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  if (!ValidateOptions(driver_env)) {
+  if (auto validate = ValidateOptions(); !validate.ok()) {
+    *driver_env.error_stream << "error: " << validate.error() << "\n";
     return {.success = false};
   }
 
@@ -768,13 +759,13 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (auto find = driver_env.installation->ReadPreludeManifest(); find.ok()) {
       prelude = std::move(*find);
     } else {
-      driver_env.error_stream << "error: " << find.error() << "\n";
+      *driver_env.error_stream << "error: " << find.error() << "\n";
       return {.success = false};
     }
   }
 
   // Prepare CompilationUnits before building scope exit handlers.
-  StreamDiagnosticConsumer stream_consumer(driver_env.error_stream,
+  StreamDiagnosticConsumer stream_consumer(*driver_env.error_stream,
                                            options_.include_diagnostic_kind);
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   units.reserve(prelude.size() + options_.input_filenames.size());
@@ -817,7 +808,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       unit->FlushForStackTrace();
     }
     stream_consumer.Flush();
-    stream_consumer.set_stream(&driver_env.error_stream);
+    stream_consumer.set_stream(driver_env.error_stream);
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.

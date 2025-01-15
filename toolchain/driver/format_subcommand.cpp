@@ -56,8 +56,9 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   DriverResult result = {.success = true};
   if (options_.input_filenames.size() > 1 &&
       !options_.output_filename.empty()) {
-    driver_env.error_stream << "error: cannot format multiple input files when "
-                               "--output is set\n";
+    *driver_env.error_stream
+        << "error: cannot format multiple input files when "
+           "--output is set\n";
     result.success = false;
     return result;
   }
@@ -67,7 +68,7 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     result.per_file_success.back().second = false;
   };
 
-  StreamDiagnosticConsumer consumer(driver_env.error_stream,
+  StreamDiagnosticConsumer consumer(*driver_env.error_stream,
                                     /*include_diagnostic_kind=*/false);
   for (auto& f : options_.input_filenames) {
     // Push a result, which we'll update on failure.
@@ -89,11 +90,11 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       // TODO: Figure out a multi-file output setup that supports good
       // multi-file testing.
       // TODO: Use --output values (and default to overwrite).
-      driver_env.output_stream << buffer.TakeStr();
+      *driver_env.output_stream << buffer.TakeStr();
     } else {
       buffer.clear();
       mark_per_file_error();
-      driver_env.output_stream << source->text();
+      *driver_env.output_stream << source->text();
     }
   }
 

@@ -81,14 +81,16 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   RawStringOstream error_stream;
-  llvm::raw_null_ostream dest;
-  Driver d(fs, install_paths, dest, error_stream);
-  d.SetFuzzing();
-  if (!d.RunCommand(args).success) {
+  llvm::raw_null_ostream null_ostream;
+  Driver driver({.fs = fs,
+                 .installation = install_paths,
+                 .input_stream = nullptr,
+                 .output_stream = &null_ostream,
+                 .error_stream = &error_stream,
+                 .fuzzing = true});
+  if (!driver.RunCommand(args).success) {
     auto str = error_stream.TakeStr();
-    // TODO: Fix command_line to use `error`, switch back to `find`.
-    if (llvm::StringRef(str).find_insensitive("error:") ==
-        llvm::StringRef::npos) {
+    if (llvm::StringRef(str).find("error:") == llvm::StringRef::npos) {
       llvm::errs() << "No error message on a failure!\n";
       return 1;
     }
