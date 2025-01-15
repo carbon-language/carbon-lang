@@ -77,7 +77,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   // A `self` binding can only appear in an implicit parameter list.
   if (name_id == SemIR::NameId::SelfValue &&
-      !context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
+      !context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
     CARBON_DIAGNOSTIC(
         SelfOutsideImplicitParamList, Error,
         "`self` can only be declared in an implicit parameter list");

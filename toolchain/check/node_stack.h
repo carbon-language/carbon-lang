@@ -105,25 +105,10 @@ class NodeStack {
     return !stack_.empty() && PeekNodeKind() == kind;
   }
 
-  // Returns whether there is a node of the specified kind on top of the stack.
-  // Templated for consistency with other functions taking a parse node kind.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PeekIs() const -> bool {
-    return PeekIs(RequiredParseKind);
-  }
-
   // Returns whether the node on the top of the stack has an overlapping
   // category.
   auto PeekIs(Parse::NodeCategory category) const -> bool {
     return !stack_.empty() && PeekNodeKind().category().HasAnyOf(category);
-  }
-
-  // Returns whether the node on the top of the stack has an overlapping
-  // category. Templated for consistency with other functions taking a parse
-  // node category.
-  template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
-  auto PeekIs() const -> bool {
-    return PeekIs(RequiredParseCategory);
   }
 
   // Returns whether there is a node with the corresponding ID on top of the
@@ -138,11 +123,9 @@ class NodeStack {
   // have the breadth of support versus other Peek functions because it's
   // expected to be used in narrow circumstances when determining how to treat
   // the *current* top of the stack.
-  template <const Parse::NodeKind& RequiredParseKind>
-  auto PeekNextIs() const -> bool {
+  auto PeekNextIs(Parse::NodeKind kind) const -> bool {
     CARBON_CHECK(stack_.size() >= 2);
-    return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) ==
-           RequiredParseKind;
+    return parse_tree_->node_kind(stack_[stack_.size() - 2].node_id) == kind;
   }
 
   // Pops the top of the stack without any verification.
@@ -166,7 +149,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopForSoloNodeIdIf()
       -> std::optional<Parse::NodeIdForKind<RequiredParseKind>> {
-    if (PeekIs<RequiredParseKind>()) {
+    if (PeekIs(RequiredParseKind)) {
       return PopForSoloNodeId<RequiredParseKind>();
     }
     return std::nullopt;
@@ -182,7 +165,7 @@ class NodeStack {
   // was popped.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopAndDiscardSoloNodeIdIf() -> bool {
-    if (!PeekIs<RequiredParseKind>()) {
+    if (!PeekIs(RequiredParseKind)) {
       return false;
     }
     PopForSoloNodeId<RequiredParseKind>();
@@ -256,7 +239,7 @@ class NodeStack {
   // Otherwise returns std::nullopt.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseKind>())> {
-    if (PeekIs<RequiredParseKind>()) {
+    if (PeekIs(RequiredParseKind)) {
       return Pop<RequiredParseKind>();
     }
     return std::nullopt;
@@ -266,7 +249,7 @@ class NodeStack {
   // Otherwise returns std::nullopt.
   template <Parse::NodeCategory::RawEnumType RequiredParseCategory>
   auto PopIf() -> std::optional<decltype(Pop<RequiredParseCategory>())> {
-    if (PeekIs<RequiredParseCategory>()) {
+    if (PeekIs(RequiredParseCategory)) {
       return Pop<RequiredParseCategory>();
     }
     return std::nullopt;
@@ -287,7 +270,7 @@ class NodeStack {
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithNodeIdIf() -> std::pair<Parse::NodeIdForKind<RequiredParseKind>,
                                       decltype(PopIf<RequiredParseKind>())> {
-    if (!PeekIs<RequiredParseKind>()) {
+    if (!PeekIs(RequiredParseKind)) {
       return {Parse::NodeId::Invalid, std::nullopt};
     }
     return PopWithNodeId<RequiredParseKind>();
@@ -299,7 +282,7 @@ class NodeStack {
   auto PopWithNodeIdIf()
       -> std::pair<Parse::NodeIdInCategory<RequiredParseCategory>,
                    decltype(PopIf<RequiredParseCategory>())> {
-    if (!PeekIs<RequiredParseCategory>()) {
+    if (!PeekIs(RequiredParseCategory)) {
       return {Parse::NodeId::Invalid, std::nullopt};
     }
     return PopWithNodeId<RequiredParseCategory>();

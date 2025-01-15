@@ -153,12 +153,12 @@ static auto HandleDecl(Context& context, NodeT node_id)
   context.pattern_block_stack().PopAndDiscard();
 
   // Handle the optional initializer.
-  if (context.node_stack().PeekNextIs<InitializerNodeKind>()) {
+  if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
     decl_info->init_id = context.node_stack().PopExpr();
     context.node_stack().PopAndDiscardSoloNodeId<InitializerNodeKind>();
   }
 
-  if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
+  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     if (decl_info->init_id &&
         context.scope_stack().PeekIndex() == ScopeIndex::Package) {
       context.global_init().Suspend();
