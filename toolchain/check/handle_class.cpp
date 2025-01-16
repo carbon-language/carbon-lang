@@ -726,7 +726,8 @@ static auto CheckCompleteClassType(Context& context, Parse::NodeId node_id,
             // one. The functions should be allowed to have different signatures
             // as long as we can synthesize a suitable thunk.
             CheckFunctionTypeMatches(context, override_fn, fn,
-                                     SemIR::SpecificId::Invalid, /*check_syntax=*/false);
+                                     SemIR::SpecificId::Invalid,
+                                     /*check_syntax=*/false);
             fn_decl_id = override_fn_decl_id;
           }
         }
