@@ -1494,10 +1494,16 @@ static auto ResolveFacetTypeImpl(
         CARBON_CHECK(access.index.index <
                      static_cast<int32_t>(rewrite_values.size()));
         auto& rewrite_value = rewrite_values[access.index.index];
-        if (rewrite_value.is_valid() &&
-            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+        if (rewrite_value == SemIR::ErrorInst::SingletonConstantId) {
+          // Don't overwrite an error value. This prioritizes not generating
+          // multiple errors for one associated constant over picking a value
+          // for it to use to attempt recovery.
+          break;
+        }
+        if (rewrite_value.is_valid()) {
           if (rewrite_value != rewrite.rhs_const_id &&
               rewrite.rhs_const_id != SemIR::ErrorInst::SingletonConstantId) {
+            rewrite_value = SemIR::ErrorInst::SingletonConstantId;
             // TODO: Figure out how to print the two different values
             // `rewrite_value` & `rewrite.rhs_const_id` in the diagnostic
             // message.
@@ -1510,14 +1516,20 @@ static auto ResolveFacetTypeImpl(
             auto assoc_entities =
                 context.inst_blocks().Get(interface.associated_entities_id);
             auto decl_id = assoc_entities[access.index.index];
-            decl_id = context.constant_values().GetInstId(
-                SemIR::GetConstantValueInSpecific(
-                    context.sem_ir(), required_interface.specific_id, decl_id));
-            CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
-            auto decl =
-                context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
+            SemIR::NameId name_id = SemIR::NameId::Invalid;
+            if (auto decl =
+                    context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(
+                        decl_id)) {
+              name_id = decl->name_id;
+            } else {
+              auto import_ref =
+                  context.insts().GetAs<SemIR::AnyImportRef>(decl_id);
+              const auto& entity_name =
+                  context.entity_names().Get(import_ref.entity_name_id);
+              name_id = entity_name.name_id;
+            }
             context.emitter().Emit(
-                loc_id, AssociatedConstantWithDifferentValues, decl.name_id);
+                loc_id, AssociatedConstantWithDifferentValues, name_id);
           }
         } else {
           rewrite_value = rewrite.rhs_const_id;
@@ -1537,16 +1549,10 @@ auto Context::ResolveFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
                                const SemIR::FacetType& facet_type,
                                ResolveFacetTypeContext context_for_diagnostics)
     -> SemIR::ResolvedFacetTypeId {
-  if (!RequireCompleteType(type_id, loc_id, [&] {
-        // CARBON_FATAL("Unreachable, facet types are always complete.");
-        CARBON_DIAGNOSTIC(
-            ResolveIncompleteFacetType, Error,
-            "{0:=0:member access into|=1:impl of} incomplete facet type {1}",
-            IntAsSelect, SemIR::TypeId);
-        return emitter().Build(loc_id, ResolveIncompleteFacetType,
-                               static_cast<int>(context_for_diagnostics),
-                               type_id);
-      })) {
+  if (!RequireCompleteType(
+          type_id, loc_id, [&]() -> Context::DiagnosticBuilder {
+            CARBON_FATAL("Unreachable, facet types are always complete.");
+          })) {
     return SemIR::ResolvedFacetTypeId::Invalid;
   }
 

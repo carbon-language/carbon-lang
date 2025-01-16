@@ -463,6 +463,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     UpdatePhaseIgnorePeriodSelf(eval_context, rewrite.rhs_const_id, phase);
   }
   // TODO: Process other requirements.
+  info.resolved_id = SemIR::ResolvedFacetTypeId::Invalid;
   return info;
 }
 
@@ -1963,6 +1964,7 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
       if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
         info = GetConstantFacetTypeInfo(eval_context, facet_type->facet_type_id,
                                         &phase);
+        info.resolved_id = SemIR::ResolvedFacetTypeId::Invalid;
       } else if (base_facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
         return SemIR::ErrorInst::SingletonConstantId;
       } else {

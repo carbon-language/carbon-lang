@@ -11,9 +11,9 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:3: error: impl of undefined interface I [ResolveFacetTypeWithUndefinedInterface]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+7]]:18: error: impl of undefined interface I [ResolveFacetTypeWithUndefinedInterface]
   // CHECK:STDERR:   extend impl as I;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:                  ^
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface I;
   // CHECK:STDERR: ^~~~~~~~~~~~

@@ -319,6 +319,40 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
+// On error, issues a diagnostic and returns nullptr.
+static auto ResolveFacetTypeToInterface(Context& context,
+                                        const SemIR::Impl& impl)
+    -> const SemIR::ResolvedFacetType::RequiredInterface* {
+  auto facet_type_id = context.GetTypeIdForTypeInst(impl.constraint_id);
+  if (facet_type_id == SemIR::ErrorInst::SingletonTypeId) {
+    return nullptr;
+  }
+  auto facet_type = context.types().TryGetAs<SemIR::FacetType>(facet_type_id);
+  if (!facet_type) {
+    CARBON_DIAGNOSTIC(ImplAsNonFacetType, Error, "impl as non-facet type {0}",
+                      InstIdAsType);
+    context.emitter().Emit(impl.latest_decl_id(), ImplAsNonFacetType,
+                           impl.constraint_id);
+    return nullptr;
+  }
+
+  auto resolved_id = context.ResolveFacetType(
+      facet_type_id, context.insts().GetLocId(impl.constraint_id), *facet_type,
+      Context::FacetTypeImpl);
+  if (!resolved_id.is_valid()) {
+    return nullptr;
+  }
+  const auto& resolved = context.resolved_facet_types().Get(resolved_id);
+  if (resolved.num_to_impl != 1) {
+    CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
+                      "impl as {0} interfaces, expected 1", int);
+    context.emitter().Emit(impl.latest_decl_id(), ImplOfNotOneInterface,
+                           resolved.num_to_impl);
+    return nullptr;
+  }
+  return &resolved.required_interfaces.front();
+}
+
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
@@ -334,15 +368,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Convert the constraint expression to a type.
-  // TODO: Check that its constant value is a constraint.
   auto [constraint_inst_id, constraint_type_id] =
       ExprAsType(context, constraint_node, constraint_id);
-  // TODO: Do facet type resolution here, and enforce that the constraint
-  // extends a single interface.
-  // TODO: Determine `interface_id` and `specific_id` once and save it in the
-  // resolved facet type, instead of in multiple functions called below.
-  // TODO: Skip work below if facet type resolution fails, so we don't have a
-  // valid/non-error `interface_id` at all.
 
   // Process modifiers.
   // TODO: Should we somehow permit access specifiers on `impl`s?
@@ -370,6 +397,11 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                                             SemIR::LibraryNameId::Invalid),
       {.self_id = self_inst_id, .constraint_id = constraint_inst_id}};
 
+  const SemIR::ResolvedFacetType::RequiredInterface* required_interface =
+      ResolveFacetTypeToInterface(context, impl_info);
+  // TODO: Skip work below if facet type resolution fails, so we don't have a
+  // valid/non-error `interface_id` at all.
+
   // Add the impl declaration.
   bool invalid_redeclaration = false;
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl_info);
@@ -389,16 +421,25 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_decl.impl_id.is_valid()) {
     impl_info.generic_id = BuildGeneric(context, impl_decl_id);
-    impl_info.witness_id = ImplWitnessForDeclaration(context, impl_info);
-    AddConstantsToImplWitnessFromConstraint(
-        context, impl_info, impl_info.witness_id, impl_decl.impl_id);
+    if (required_interface) {
+      impl_info.witness_id =
+          ImplWitnessForDeclaration(context, impl_info, *required_interface);
+      AddConstantsToImplWitnessFromConstraint(
+          context, impl_info, *required_interface, impl_info.witness_id,
+          impl_decl.impl_id);
+    } else {
+      impl_info.witness_id = SemIR::ErrorInst::SingletonInstId;
+    }
     FinishGenericDecl(context, impl_decl_id, impl_info.generic_id);
     impl_decl.impl_id = context.impls().Add(impl_info);
     lookup_bucket_ref.push_back(impl_decl.impl_id);
   } else {
     const auto& first_impl = context.impls().Get(impl_decl.impl_id);
-    AddConstantsToImplWitnessFromConstraint(
-        context, impl_info, first_impl.witness_id, impl_decl.impl_id);
+    if (required_interface) {
+      AddConstantsToImplWitnessFromConstraint(
+          context, impl_info, *required_interface, first_impl.witness_id,
+          impl_decl.impl_id);
+    }
     FinishGenericRedecl(context, impl_decl_id, first_impl.generic_id);
   }
 

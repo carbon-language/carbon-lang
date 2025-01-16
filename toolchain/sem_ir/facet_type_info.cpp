@@ -13,6 +13,7 @@ static auto SortAndDeduplicate(VecT& vec) -> void {
 }
 
 auto FacetTypeInfo::Canonicalize() -> void {
+  CARBON_CHECK(!resolved_id.is_valid());
   SortAndDeduplicate(impls_constraints);
   SortAndDeduplicate(rewrite_constraints);
 }
