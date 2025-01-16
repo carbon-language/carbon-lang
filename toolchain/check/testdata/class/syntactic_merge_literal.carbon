@@ -39,7 +39,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %a.patt: %i32 = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.506: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1000.ff9: Core.IntLiteral = int_value 1000 [template]
@@ -55,7 +54,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %b.patt: %C.262 = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [template]
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [template]
-// CHECK:STDOUT:   %D: type = class_type @D, @D(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -132,9 +130,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.506
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -147,9 +142,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%D
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,7 +169,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %a.patt: %i32 = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.506: type = class_type @C, @C(%a) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1000.ff9: Core.IntLiteral = int_value 1000 [template]
@@ -195,7 +186,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [template]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.3d2: type = class_type @.1, @.1(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -272,9 +262,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.506
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,9 +281,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.3d2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

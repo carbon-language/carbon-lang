@@ -50,9 +50,6 @@ class C {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -60,9 +57,5 @@ class C {
 // CHECK:STDOUT:   %.loc17: %C.elem = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .base = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

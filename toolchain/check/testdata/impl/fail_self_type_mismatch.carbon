@@ -33,7 +33,6 @@ impl i32 as I {
 // CHECK:STDOUT:   %X.patt: %T = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.b36: type = class_type @C, @C(%T, %X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [template]
@@ -142,9 +141,6 @@ impl i32 as I {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.b36
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

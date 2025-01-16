@@ -97,9 +97,6 @@ class C5 {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 {
@@ -107,9 +104,6 @@ class C5 {
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C2 {
@@ -117,9 +111,6 @@ class C5 {
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C3 {
@@ -127,9 +118,6 @@ class C5 {
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
@@ -137,10 +125,6 @@ class C5 {
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C4
-// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C5 {
@@ -148,9 +132,5 @@ class C5 {
 // CHECK:STDOUT:   adapt_decl %B.ref [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C5
-// CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

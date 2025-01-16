@@ -59,6 +59,10 @@ struct ClassFields {
   // class is defined. For an adapter, the object representation is the
   // non-adapter type that this class directly or transitively adapts.
   InstId complete_type_witness_id = InstId::Invalid;
+
+  // The virtual function table. Invalid if the class has no (direct or
+  // inherited) virtual functions.
+  InstId vtable_id = InstId::Invalid;
 };
 
 // A class. See EntityWithParamsBase regarding the inheritance here.

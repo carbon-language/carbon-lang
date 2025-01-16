@@ -155,9 +155,6 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @D {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnCUnused() -> %C;
@@ -205,7 +202,6 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %import_ref.e1f: %ReturnDUsed.type = import_ref Main//incomplete_return, ReturnDUsed, loaded [template = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %import_ref.2ce = import_ref Main//incomplete_return, Call, unloaded
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.cab = import_ref Main//incomplete_return, inst16 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -227,9 +223,6 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "fail_incomplete_return.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.cab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFAndGIncomplete() {

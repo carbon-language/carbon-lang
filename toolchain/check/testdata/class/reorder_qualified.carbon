@@ -137,12 +137,6 @@ class A {
 // CHECK:STDOUT:   %.var: ref %A.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.ba9 [template = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .B = %B.decl
-// CHECK:STDOUT:   .AF = %AF.decl
-// CHECK:STDOUT:   .a = %.loc46_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -155,12 +149,6 @@ class A {
 // CHECK:STDOUT:   %.var: ref %B.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.b.0a3 [template = constants.%complete_type.ba8]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .C = %C.decl
-// CHECK:STDOUT:   .BF = %BF.decl
-// CHECK:STDOUT:   .b = %.loc16_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -174,12 +162,6 @@ class A {
 // CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.b66 [template = constants.%complete_type.836]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .D = %D.decl
-// CHECK:STDOUT:   .CF = %CF.decl
-// CHECK:STDOUT:   .c = %.loc42_10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -192,12 +174,6 @@ class A {
 // CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.d.b7b [template = constants.%complete_type.860]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .DF = %DF.decl
-// CHECK:STDOUT:   .d = %.loc24_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @BF();

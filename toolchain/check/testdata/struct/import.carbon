@@ -82,7 +82,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S.patt: %struct_type.a.b.501 = symbolic_binding_pattern S, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.775: type = class_type @C, @C(%S) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [template]
@@ -198,9 +197,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.775
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -314,7 +310,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -397,9 +392,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.b8b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -488,7 +480,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -525,9 +516,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.b8b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -600,7 +588,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.b8b = import_ref Implicit//default, inst1073 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -652,9 +639,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.b8b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

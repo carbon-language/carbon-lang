@@ -149,9 +149,6 @@ fn Call() {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(constants.%Self: %I.type) [from "i.carbon"] {
@@ -185,7 +182,6 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Main//c, loc6_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//c, inst18 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -208,9 +204,6 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "c.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get() -> %C;
@@ -244,7 +237,6 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8db: <witness> = import_ref Main//get, inst21 [indirect], loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.6a9 = import_ref Main//get, inst22 [indirect], unloaded
 // CHECK:STDOUT:   %import_ref.e5d = import_ref Main//i, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.b5b: %F.assoc_type = import_ref Main//i, loc4_21, loaded [template = constants.%assoc0]
 // CHECK:STDOUT:   %import_ref.8b9 = import_ref Main//i, F, unloaded
@@ -279,9 +271,6 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "get.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8db
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {

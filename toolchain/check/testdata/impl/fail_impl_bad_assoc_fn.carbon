@@ -825,9 +825,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.1]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%NoF
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FNotFunction {
@@ -838,9 +835,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FNotFunction
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @F.16;
@@ -853,9 +847,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.3]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FAlias
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraParam {
@@ -866,9 +857,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.4]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FExtraParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraImplicitParam {
@@ -879,9 +867,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.5]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FExtraImplicitParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraReturnType {
@@ -892,9 +877,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.6]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FExtraReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingParam {
@@ -905,9 +887,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.7]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FMissingParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingImplicitParam {
@@ -918,9 +897,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.8]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FMissingImplicitParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingReturnType {
@@ -931,9 +907,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.9]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FMissingReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentParamType {
@@ -944,9 +917,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.10]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FDifferentParamType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentImplicitParamType {
@@ -957,9 +927,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.11]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FDifferentImplicitParamType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentReturnType {
@@ -970,9 +937,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.12]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FDifferentReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentParamName {
@@ -983,9 +947,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.13]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%FDifferentParamName
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadParam {
@@ -996,9 +957,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.14]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%SelfNestedBadParam
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadReturnType {
@@ -1009,9 +967,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (<error>) [template = constants.%impl_witness.85bcb7.15]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%SelfNestedBadReturnType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {

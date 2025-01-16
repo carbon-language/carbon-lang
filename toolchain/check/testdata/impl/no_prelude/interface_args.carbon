@@ -180,25 +180,16 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.1(@Action.%T.loc4_18.1: type, @Action.%Self.1: @Action.%Action.type (%Action.type.cca)) {
@@ -287,12 +278,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.bde = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %import_ref.71c: <witness> = import_ref Main//action, loc12_21, loaded [template = constants.%impl_witness]
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.54a = import_ref Main//action, inst46 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.f86: @Action.%Op.assoc_type (%Op.assoc_type.2ba) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.9b9b19.2)]
 // CHECK:STDOUT:   %import_ref.ae2 = import_ref Main//action, Op, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.984: type = import_ref Main//action, loc12_6, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.bb2: type = import_ref Main//action, loc12_19, loaded [template = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %import_ref.7b5 = import_ref Main//action, loc13_11, unloaded
@@ -348,16 +337,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "action.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.54a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "action.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op.1(constants.%T: type, constants.%Self: %Action.type.cca) [from "action.carbon"] {
@@ -443,18 +426,15 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.bde = import_ref Main//action, F, unloaded
 // CHECK:STDOUT:   %import_ref.7a1 = import_ref Main//action, loc12_21, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//action, loc9_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.54a = import_ref Main//action, inst46 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.ddc = import_ref Main//action, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.f86: @Action.%Op.assoc_type (%Op.assoc_type.2ba) = import_ref Main//action, loc5_10, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.9b9b19.2)]
 // CHECK:STDOUT:   %import_ref.ae2 = import_ref Main//action, Op, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//action, loc8_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.da3 = import_ref Main//action, inst41 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.984: type = import_ref Main//action, loc12_6, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.bb2: type = import_ref Main//action, loc12_19, loaded [template = constants.%Action.type.cb0]
 // CHECK:STDOUT:   %import_ref.7b5 = import_ref Main//action, loc13_11, unloaded
 // CHECK:STDOUT:   %import_ref.0e3753.1 = import_ref Main//action, loc5_10, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Main//action, inst49 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -506,23 +486,14 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "action.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.54a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "action.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "action.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.3
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Op(constants.%T: type, constants.%Self: %Action.type.cca) [from "action.carbon"] {
@@ -677,17 +648,11 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make.1(@Factory.%T.loc4_19.1: type, @Factory.%Self.1: @Factory.%Factory.type (%Factory.type.c96)) {
@@ -762,12 +727,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.dd8: type = import_ref Main//factory, B, loaded [template = constants.%B]
 // CHECK:STDOUT:   %import_ref.72b: <witness> = import_ref Main//factory, loc11_22, loaded [template = constants.%impl_witness]
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc9_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.54a = import_ref Main//factory, inst52 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.b0a: @Factory.%Make.assoc_type (%Make.assoc_type.4d9) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.9270f3.2)]
 // CHECK:STDOUT:   %import_ref.c20 = import_ref Main//factory, Make, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.984: type = import_ref Main//factory, loc11_6, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.bd2: type = import_ref Main//factory, loc11_20, loaded [template = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %import_ref.a27 = import_ref Main//factory, loc12_17, unloaded
@@ -826,16 +789,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "factory.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.54a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "factory.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make.1(constants.%T: type, constants.%Self: %Factory.type.c96) [from "factory.carbon"] {
@@ -923,12 +880,10 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:   %import_ref.81b = import_ref Main//factory, B, unloaded
 // CHECK:STDOUT:   %import_ref.3e9 = import_ref Main//factory, loc11_22, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc9_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.54a = import_ref Main//factory, inst52 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.fbb = import_ref Main//factory, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.b0a: @Factory.%Make.assoc_type (%Make.assoc_type.4d9) = import_ref Main//factory, loc5_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.9270f3.2)]
 // CHECK:STDOUT:   %import_ref.c20 = import_ref Main//factory, Make, unloaded
 // CHECK:STDOUT:   %import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc8_10, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.da3 = import_ref Main//factory, inst47 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.984: type = import_ref Main//factory, loc11_6, loaded [template = constants.%A]
 // CHECK:STDOUT:   %import_ref.bd2: type = import_ref Main//factory, loc11_20, loaded [template = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   %import_ref.a27 = import_ref Main//factory, loc12_17, unloaded
@@ -989,24 +944,15 @@ fn MakeC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B [from "factory.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.54a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "factory.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.da3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Make(constants.%T: type, constants.%Self: %Factory.type.c96) [from "factory.carbon"] {

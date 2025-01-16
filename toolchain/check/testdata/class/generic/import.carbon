@@ -192,11 +192,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type.54b]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%CompleteClass.f97
-// CHECK:STDOUT:     .n = %.loc7_8
-// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -292,9 +287,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.a68]
-// CHECK:STDOUT:   %import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.051 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.570 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -346,10 +338,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class
-// CHECK:STDOUT:     .x = %.loc5_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,11 +353,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.3c0
-// CHECK:STDOUT:     .n = imports.%import_ref.051
-// CHECK:STDOUT:     .F = imports.%import_ref.570
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -466,7 +449,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.54b]
-// CHECK:STDOUT:   %import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
 // CHECK:STDOUT:   %import_ref.e76: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.28a) = import_ref Main//foo, loc7_8, loaded [template = %.364]
 // CHECK:STDOUT:   %import_ref.a52: @CompleteClass.%F.type (%F.type.14f) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%F (constants.%F.874)]
 // CHECK:STDOUT: }
@@ -514,11 +496,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.3c0
-// CHECK:STDOUT:     .n = imports.%import_ref.e76
-// CHECK:STDOUT:     .F = imports.%import_ref.a52
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -654,9 +631,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [template = constants.%complete_type.a68]
-// CHECK:STDOUT:   %import_ref.3c0 = import_ref Main//foo, inst37 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.051 = import_ref Main//foo, loc7_8, unloaded
-// CHECK:STDOUT:   %import_ref.570 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -684,11 +658,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.eb1
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.3c0
-// CHECK:STDOUT:     .n = imports.%import_ref.051
-// CHECK:STDOUT:     .F = imports.%import_ref.570
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -771,7 +740,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %.type: type = generic_class_type @.1 [template]
 // CHECK:STDOUT:   %.generic: %.type = struct_value () [template]
-// CHECK:STDOUT:   %.e41: type = class_type @.1, @.1(%U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -824,10 +792,6 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %.var: ref <error> = var <invalid>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%.e41
-// CHECK:STDOUT:     .x = %.loc16_8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

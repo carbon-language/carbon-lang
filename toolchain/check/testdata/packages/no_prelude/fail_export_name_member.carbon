@@ -58,10 +58,6 @@ export C.n;
 // CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .n = %.loc5_8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_b.carbon
@@ -76,8 +72,6 @@ export C.n;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %import_ref.3b0: type = import_ref Foo//a, C, loaded [template = constants.%C]
 // CHECK:STDOUT:   %import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [template = constants.%complete_type]
-// CHECK:STDOUT:   %import_ref.2c4 = import_ref Foo//a, inst14 [no loc], unloaded
-// CHECK:STDOUT:   %import_ref.4cb = import_ref Foo//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,9 +83,5 @@ export C.n;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%import_ref.9fc
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%import_ref.2c4
-// CHECK:STDOUT:   .n = imports.%import_ref.4cb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

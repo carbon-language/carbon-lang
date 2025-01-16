@@ -1518,6 +1518,16 @@ struct VtablePtr {
   TypeId type_id;
 };
 
+// Definition of ABI-neutral vtable information for a dynamic class.
+struct Vtable {
+  static constexpr auto Kind = InstKind::Vtable.Define<Parse::NodeId>(
+      {.ir_name = "vtable",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  TypeId type_id;
+  InstBlockId virtual_functions_id;
+};
+
 // An `expr where requirements` expression.
 struct WhereExpr {
   static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(

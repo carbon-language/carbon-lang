@@ -1664,6 +1664,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
     case SemIR::TupleInit::Kind:
       return RebuildInitAsValue(eval_context, inst, SemIR::TupleValue::Kind);
 
+    case SemIR::Vtable::Kind:
+      return RebuildIfFieldsAreConstant(eval_context, inst,
+                                        &SemIR::Vtable::virtual_functions_id);
     case SemIR::AutoType::Kind:
     case SemIR::BoolType::Kind:
     case SemIR::BoundMethodType::Kind:

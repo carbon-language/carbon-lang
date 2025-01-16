@@ -98,7 +98,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   %X.patt: %tuple.type.d07 = symbolic_binding_pattern X, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [template]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [template]
-// CHECK:STDOUT:   %C.54f: type = class_type @C, @C(%X) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [template]
 // CHECK:STDOUT:   %tuple.21c: %tuple.type.d07 = tuple_value (%int_1.5d2, %int_2.ef8) [template]
@@ -213,9 +212,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.54f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,7 +339,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.964 = import_ref Implicit//default, inst1108 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -433,9 +428,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.964
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -533,7 +525,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.964 = import_ref Implicit//default, inst1108 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -571,9 +562,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.964
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,7 +634,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %import_ref.8f2: <witness> = import_ref Implicit//default, loc7_26, loaded [template = constants.%complete_type.357]
-// CHECK:STDOUT:   %import_ref.964 = import_ref Implicit//default, inst1108 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -698,9 +685,6 @@ var c_bad: C((3, 4)) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%import_ref.8f2
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%import_ref.964
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -175,9 +175,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(constants.%T: type, constants.%Self: %AddWith.type.bc7) [from "a.carbon"] {

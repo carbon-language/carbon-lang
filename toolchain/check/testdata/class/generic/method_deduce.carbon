@@ -35,7 +35,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %T.patt: type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [template]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [template]
-// CHECK:STDOUT:   %Class.fe1: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
 // CHECK:STDOUT:   %U.patt: type = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [template]
@@ -136,17 +135,11 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT: class @A {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc14_13.1: type) {
@@ -197,11 +190,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Class.fe1
-// CHECK:STDOUT:     .Get = %Get.decl
-// CHECK:STDOUT:     .GetNoDeduce = %GetNoDeduce.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

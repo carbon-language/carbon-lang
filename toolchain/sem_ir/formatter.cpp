@@ -281,7 +281,6 @@ class FormatterImpl {
       FormatName(class_info.complete_type_witness_id);
       out_ << "\n";
 
-      FormatNameScope(class_info.scope_id, "!members:\n");
       CloseBrace();
     } else {
       Semicolon();

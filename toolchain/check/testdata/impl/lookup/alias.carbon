@@ -103,10 +103,6 @@ fn G(c: C) {
 // CHECK:STDOUT:   %G: %F.assoc_type = bind_alias G, @HasF.%assoc0 [template = constants.%assoc0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .G = %G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %HasF.type) {

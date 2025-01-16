@@ -143,10 +143,6 @@ class C {
 // CHECK:STDOUT:   %.loc19: type = specific_constant @impl.%GenericInterface.type.loc19_54.1, @impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@GenericInterface.%T.loc11_28.1: type, @GenericInterface.%Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.3fe)) {

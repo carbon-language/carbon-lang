@@ -270,11 +270,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.2.%G.decl) [template = constants.%impl_witness.42a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   extend @impl.1.%HasF.ref
-// CHECK:STDOUT:   extend @impl.2.%HasG.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@HasF.%Self: %HasF.type) {
@@ -436,11 +431,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness (@impl.2.%A.decl) [template = constants.%impl_witness.baf]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   extend @impl.1.%HasA1.ref
-// CHECK:STDOUT:   extend @impl.2.%HasA2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.1(@HasA1.%Self: %HasA1.type) {
@@ -559,10 +549,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [template = constants.%J] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
-// CHECK:STDOUT:   .J = %J.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
@@ -575,12 +561,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%I.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.0ff [template = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%E
-// CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend %B.ref
-// CHECK:STDOUT:   extend @impl.%HasI.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.1(@HasI.%Self: %HasI.type) {
@@ -699,10 +679,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %K.decl: %K.type.5a4 = fn_decl @K.1 [template = constants.%K.801] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
-// CHECK:STDOUT:   .K = %K.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @L {
@@ -715,12 +691,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %impl_witness: <witness> = impl_witness (@impl.%K.decl) [template = constants.%impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.b1e [template = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%L
-// CHECK:STDOUT:   .base = %.loc13
-// CHECK:STDOUT:   extend %Base.ref
-// CHECK:STDOUT:   extend @impl.%HasK.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @K.1() {
@@ -863,10 +833,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.decl: %N.type.fbf = fn_decl @N.1 [template = constants.%N.897] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%NBase
-// CHECK:STDOUT:   .N = %N.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O {
@@ -885,14 +851,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   %N.decl: %N.type.8b4 = fn_decl @N.6 [template = constants.%N.cc3] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base.9c6 [template = constants.%complete_type.121]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%O
-// CHECK:STDOUT:   .base = %.loc17
-// CHECK:STDOUT:   .N = %N.decl
-// CHECK:STDOUT:   extend %NBase.ref
-// CHECK:STDOUT:   extend @impl.1.%HasN1.ref
-// CHECK:STDOUT:   extend @impl.2.%HasN2.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @N.1() {

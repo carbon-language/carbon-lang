@@ -54,6 +54,7 @@ Context::Context(DiagnosticEmitter* emitter,
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_->identifiers()),
+      vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       global_init_(this) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);

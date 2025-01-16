@@ -73,10 +73,6 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [template = constants.%F.1f2] {} {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
@@ -96,19 +92,11 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%MemberNamedSelf
-// CHECK:STDOUT:   .r#Self = %Self.decl
-// CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Self {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Self
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1() {
