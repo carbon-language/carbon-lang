@@ -35,6 +35,10 @@ constexpr DiagnosticKind UntestedDiagnosticKinds[] = {
     DiagnosticKind::UnsupportedCRLineEnding,
     DiagnosticKind::UnsupportedLFCRLineEnding,
 
+    // This diagnostic is currently unreachable since facet types are always
+    // complete.
+    DiagnosticKind::ResolveIncompleteFacetType,
+
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     DiagnosticKind::TooManyDigits,
 };

@@ -43,6 +43,10 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
   if (other_requirements) {
     out << outer_sep << "+ TODO requirements";
   }
+
+  if (resolved_id.is_valid()) {
+    out << outer_sep << "resolved: " << resolved_id;
+  }
   out << "}";
 }
 

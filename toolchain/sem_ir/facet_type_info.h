@@ -60,7 +60,10 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // TODO: Add same-type constraints.
   // TODO: Remove once all requirements are supported.
   bool other_requirements;
-  // TODO: Add optional resolved facet type.
+
+  // Optional resolved facet type. For facet types used in contexts that require
+  // them to be fully defined.
+  ResolvedFacetTypeId resolved_id;
 
   // Sorts and deduplicates constraints.
   auto Canonicalize() -> void;
@@ -85,6 +88,24 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   }
 };
 
+struct ResolvedFacetType {
+  struct RequiredInterface {
+    InterfaceId interface_id;
+    SpecificId specific_id;
+    // One per member of the interface designated by `interface_id`.
+    llvm::SmallVector<ConstantId> associated_consts;
+  };
+
+  // Interfaces mentioned explicitly in the facet type expression, or
+  // transitively through a named constraint.
+  llvm::SmallVector<RequiredInterface> required_interfaces;
+
+  // Number of interfaces from `interfaces` to implement if this is the facet
+  // type to the right of an `impl`...`as`. Invalid to use in that position
+  // unless this value is 1.
+  int num_to_impl;
+};
+
 // See common/hashing.h.
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
@@ -92,6 +113,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   hasher.HashSizedBytes(llvm::ArrayRef(value.impls_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
   hasher.HashRaw(value.other_requirements);
+  // `resolved_id` is not part of the state to hash.
   return static_cast<HashCode>(hasher);
 }
 

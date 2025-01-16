@@ -23,6 +23,7 @@ struct Class;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
+struct ResolvedFacetType;
 struct Specific;
 struct ImportIR;
 struct ImportIRInst;
@@ -265,6 +266,20 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 };
 
 constexpr FacetTypeId FacetTypeId::Invalid = FacetTypeId(InvalidIndex);
+
+// The ID of an resolved faceet type value.
+struct ResolvedFacetTypeId : public IdBase<ResolvedFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "resolved_facet_type";
+  using ValueType = ResolvedFacetType;
+
+  // An explicitly invalid ID.
+  static const ResolvedFacetTypeId Invalid;
+
+  using IdBase::IdBase;
+};
+
+constexpr ResolvedFacetTypeId ResolvedFacetTypeId::Invalid =
+    ResolvedFacetTypeId(InvalidIndex);
 
 // The ID of an impl.
 struct ImplId : public IdBase<ImplId> {

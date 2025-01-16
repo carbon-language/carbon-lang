@@ -2278,7 +2278,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_facet_types().Add(SemIR::FacetTypeInfo{
           .impls_constraints = impls_constraints,
           .rewrite_constraints = rewrite_constraints,
-          .other_requirements = facet_type_info.other_requirements});
+          .other_requirements = facet_type_info.other_requirements,
+          .resolved_id = SemIR::ResolvedFacetTypeId::Invalid});
   return ResolveAs<SemIR::FacetType>(
       resolver, {.type_id = SemIR::TypeType::SingletonTypeId,
                  .facet_type_id = facet_type_id});

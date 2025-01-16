@@ -529,7 +529,7 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
-    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
+    RequireCompleteType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
       CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                         "member access into incomplete class {0}",
                         InstIdAsType);
@@ -542,19 +542,16 @@ auto Context::AppendLookupScopesForConstant(
     return true;
   }
   if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
-    RequireDefinedType(GetTypeIdForTypeConstant(base_const_id), loc_id, [&] {
-      CARBON_DIAGNOSTIC(QualifiedExprInUndefinedInterfaceScope, Error,
-                        "member access into undefined interface {0}",
-                        InstIdAsType);
-      return emitter().Build(loc_id, QualifiedExprInUndefinedInterfaceScope,
-                             base_id);
-    });
-    const auto& facet_type_info =
-        facet_types().Get(base_as_facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls_constraints) {
-      auto& interface_info = interfaces().Get(interface.interface_id);
-      scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
-                                    .specific_id = interface.specific_id});
+    auto resolved_id =
+        ResolveFacetType(GetTypeIdForTypeConstant(base_const_id), loc_id,
+                         *base_as_facet_type, FacetTypeMemberAccess);
+    if (resolved_id.is_valid()) {
+      const auto& resolved = resolved_facet_types().Get(resolved_id);
+      for (const auto& interface : resolved.required_interfaces) {
+        auto& interface_info = interfaces().Get(interface.interface_id);
+        scopes->push_back(LookupScope{.name_scope_id = interface_info.scope_id,
+                                      .specific_id = interface.specific_id});
+      }
     }
     return true;
   }
@@ -1429,31 +1426,137 @@ auto Context::RequireConcreteType(SemIR::TypeId type_id, SemIR::LocId loc_id,
   return true;
 }
 
-auto Context::RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                                 BuildDiagnosticFn diagnoser) -> bool {
-  if (!RequireCompleteType(type_id, loc_id, diagnoser)) {
-    return false;
+// Returns `true` if the `FacetAccessWitness` of `witness_id` matches
+// `interface`.
+static auto WitnessAccessMatchesInterface(
+    Context& context, SemIR::InstId witness_id,
+    const SemIR::ResolvedFacetType::RequiredInterface& interface) -> bool {
+  auto access = context.insts().GetAs<SemIR::FacetAccessWitness>(witness_id);
+  auto type_id = context.insts().Get(access.facet_value_inst_id).type_id();
+  auto facet_type = context.types().GetAs<SemIR::FacetType>(type_id);
+  const auto& facet_info = context.facet_types().Get(facet_type.facet_type_id);
+  if (auto impls = facet_info.TryAsSingleInterface()) {
+    return impls->interface_id == interface.interface_id &&
+           impls->specific_id == interface.specific_id;
   }
+  return false;
+}
 
-  if (auto facet_type = types().TryGetAs<SemIR::FacetType>(type_id)) {
-    const auto& facet_type_info = facet_types().Get(facet_type->facet_type_id);
-    for (auto interface : facet_type_info.impls_constraints) {
-      auto interface_id = interface.interface_id;
-      if (!interfaces().Get(interface_id).is_defined()) {
-        auto builder = diagnoser();
-        NoteUndefinedInterface(interface_id, builder);
-        builder.Emit();
-        return false;
-      }
+static auto ResolveFacetTypeImpl(
+    Context& context, SemIR::LocId loc_id,
+    const SemIR::FacetTypeInfo& facet_type_info,
+    Context::ResolveFacetTypeContext context_for_diagnostics)
+    -> SemIR::ResolvedFacetTypeId {
+  SemIR::ResolvedFacetType result;
+  result.required_interfaces.reserve(facet_type_info.impls_constraints.size());
+  // Every mentioned interface needs to be defined.
+  for (auto impl_interface : facet_type_info.impls_constraints) {
+    // TODO: expand named constraints
+    auto interface_id = impl_interface.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_defined()) {
+      CARBON_DIAGNOSTIC(
+          ResolveFacetTypeWithUndefinedInterface, Error,
+          "{0:=0:member access into|=1:impl of} undefined interface {1}",
+          IntAsSelect, SemIR::NameId);
+      auto builder = context.emitter().Build(
+          loc_id, ResolveFacetTypeWithUndefinedInterface,
+          static_cast<int>(context_for_diagnostics), interface.name_id);
+      context.NoteUndefinedInterface(interface_id, builder);
+      builder.Emit();
+      return SemIR::ResolvedFacetTypeId::Invalid;
+    }
 
-      if (interface.specific_id.is_valid()) {
-        ResolveSpecificDefinition(*this, loc_id, interface.specific_id);
+    if (impl_interface.specific_id.is_valid()) {
+      ResolveSpecificDefinition(context, loc_id, impl_interface.specific_id);
+    }
+    result.required_interfaces.push_back(
+        {.interface_id = interface_id,
+         .specific_id = impl_interface.specific_id});
+    auto num_assoc_entities =
+        context.inst_blocks().Get(interface.associated_entities_id).size();
+    result.required_interfaces.back().associated_consts.resize(
+        num_assoc_entities, SemIR::ConstantId::Invalid);
+  }
+  // TODO: Sort and deduplicate result.required_interfaces. For now, we have at
+  // most one.
+
+  for (auto rewrite : facet_type_info.rewrite_constraints) {
+    auto inst_id = context.constant_values().GetInstId(rewrite.lhs_const_id);
+    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(inst_id);
+    // TODO: Should do something more efficient than a linear scan when there
+    // are many required interfaces. For now, we have at most one.
+    for (auto& required_interface : result.required_interfaces) {
+      if (WitnessAccessMatchesInterface(context, access.witness_id,
+                                        required_interface)) {
+        auto& rewrite_values = required_interface.associated_consts;
+        CARBON_CHECK(access.index.index >= 0);
+        CARBON_CHECK(access.index.index <
+                     static_cast<int32_t>(rewrite_values.size()));
+        auto& rewrite_value = rewrite_values[access.index.index];
+        if (rewrite_value.is_valid() &&
+            rewrite_value != SemIR::ErrorInst::SingletonConstantId) {
+          if (rewrite_value != rewrite.rhs_const_id &&
+              rewrite.rhs_const_id != SemIR::ErrorInst::SingletonConstantId) {
+            // TODO: Figure out how to print the two different values
+            // `rewrite_value` & `rewrite.rhs_const_id` in the diagnostic
+            // message.
+            CARBON_DIAGNOSTIC(
+                AssociatedConstantWithDifferentValues, Error,
+                "associated constant {0} given two different values",
+                SemIR::NameId);
+            const auto& interface =
+                context.interfaces().Get(required_interface.interface_id);
+            auto assoc_entities =
+                context.inst_blocks().Get(interface.associated_entities_id);
+            auto decl_id = assoc_entities[access.index.index];
+            decl_id = context.constant_values().GetInstId(
+                SemIR::GetConstantValueInSpecific(
+                    context.sem_ir(), required_interface.specific_id, decl_id));
+            CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
+            auto decl =
+                context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
+            context.emitter().Emit(
+                loc_id, AssociatedConstantWithDifferentValues, decl.name_id);
+          }
+        } else {
+          rewrite_value = rewrite.rhs_const_id;
+        }
+        break;
       }
     }
-    // TODO: Finish facet type resolution.
   }
 
-  return true;
+  // TODO: Distinguish interfaces that are required but would not be
+  // implemented, such as those from `where .Self impls I`.
+  result.num_to_impl = result.required_interfaces.size();
+  return context.resolved_facet_types().Add(result);
+}
+
+auto Context::ResolveFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                               const SemIR::FacetType& facet_type,
+                               ResolveFacetTypeContext context_for_diagnostics)
+    -> SemIR::ResolvedFacetTypeId {
+  if (!RequireCompleteType(type_id, loc_id, [&] {
+        // CARBON_FATAL("Unreachable, facet types are always complete.");
+        CARBON_DIAGNOSTIC(
+            ResolveIncompleteFacetType, Error,
+            "{0:=0:member access into|=1:impl of} incomplete facet type {1}",
+            IntAsSelect, SemIR::TypeId);
+        return emitter().Build(loc_id, ResolveIncompleteFacetType,
+                               static_cast<int>(context_for_diagnostics),
+                               type_id);
+      })) {
+    return SemIR::ResolvedFacetTypeId::Invalid;
+  }
+
+  auto& facet_type_info = facet_types().GetMutable(facet_type.facet_type_id);
+  if (facet_type_info.resolved_id.is_valid()) {
+    return facet_type_info.resolved_id;
+  }
+  facet_type_info.resolved_id = ResolveFacetTypeImpl(
+      *this, loc_id, facet_type_info, context_for_diagnostics);
+  return facet_type_info.resolved_id;
 }
 
 auto Context::GetTypeIdForTypeConstant(SemIR::ConstantId constant_id)
@@ -1476,7 +1579,8 @@ auto Context::FacetTypeFromInterface(SemIR::InterfaceId interface_id,
     -> SemIR::FacetType {
   SemIR::FacetTypeId facet_type_id = facet_types().Add(
       SemIR::FacetTypeInfo{.impls_constraints = {{interface_id, specific_id}},
-                           .other_requirements = false});
+                           .other_requirements = false,
+                           .resolved_id = SemIR::ResolvedFacetTypeId::Invalid});
   return {.type_id = SemIR::TypeType::SingletonTypeId,
           .facet_type_id = facet_type_id};
 }

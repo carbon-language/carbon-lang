@@ -270,7 +270,7 @@ CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDeclHere)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
-CARBON_DIAGNOSTIC_KIND(ImplOfUndefinedInterface)
+// FIXME: CARBON_FIXME_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
@@ -382,7 +382,6 @@ CARBON_DIAGNOSTIC_KIND(UnexpectedDeclNameParams)
 CARBON_DIAGNOSTIC_KIND(QualifiedNameInNonScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedNameNonScopeEntity)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprInIncompleteClassScope)
-CARBON_DIAGNOSTIC_KIND(QualifiedExprInUndefinedInterfaceScope)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprUnsupported)
 CARBON_DIAGNOSTIC_KIND(QualifiedExprNameNotFound)
 CARBON_DIAGNOSTIC_KIND(UseOfNonExprAsValue)
@@ -413,9 +412,13 @@ CARBON_DIAGNOSTIC_KIND(ClassInvalidMemberAccess)
 CARBON_DIAGNOSTIC_KIND(AliasRequiresNameRef)
 
 // Where operator and its requirements.
-CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(ImplsOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
+
+// Facet type resolution
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
+CARBON_DIAGNOSTIC_KIND(ResolveFacetTypeWithUndefinedInterface)
+CARBON_DIAGNOSTIC_KIND(ResolveIncompleteFacetType)
 
 // ============================================================================
 // Other diagnostics

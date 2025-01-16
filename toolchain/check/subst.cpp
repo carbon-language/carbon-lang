@@ -206,6 +206,7 @@ static auto PopOperand(Context& context, Worklist& worklist, SemIR::IdKind kind,
       const auto& old_facet_type_info =
           context.facet_types().Get(SemIR::FacetTypeId(arg));
       SemIR::FacetTypeInfo new_facet_type_info = old_facet_type_info;
+      new_facet_type_info.resolved_id = SemIR::ResolvedFacetTypeId::Invalid;
       // Since these were added to a stack, we get them back in reverse order.
       for (auto i : llvm::reverse(
                llvm::seq(old_facet_type_info.rewrite_constraints.size()))) {

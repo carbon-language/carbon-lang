@@ -20,25 +20,29 @@ interface Undefined;
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into undefined interface `Undefined` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:3: error: member access into undefined interface Undefined [ResolveFacetTypeWithUndefinedInterface]
   // CHECK:STDERR:   Undefined.G();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
   // CHECK:STDERR: interface Undefined;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:3: error: member name `G` not found [MemberNameNotFound]
+  // CHECK:STDERR:   Undefined.G();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   Undefined.G();
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface `BeingDefined` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+11]]:13: error: member access into undefined interface BeingDefined [ResolveFacetTypeWithUndefinedInterface]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceUndefinedWithinDefinition]
   // CHECK:STDERR: interface BeingDefined {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: member name `T` not found in `BeingDefined` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:13: error: member name `T` not found [MemberNameNotFound]
   // CHECK:STDERR:   fn H() -> BeingDefined.T;
   // CHECK:STDERR:             ^~~~~~~~~~~~~~
   // CHECK:STDERR:

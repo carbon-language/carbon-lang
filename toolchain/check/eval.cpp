@@ -1955,7 +1955,9 @@ static auto TryEvalInstInContext(EvalContext& eval_context,
           eval_context.insts().Get(typed_inst.period_self_id).type_id();
       SemIR::Inst base_facet_inst =
           eval_context.GetConstantValueAsInst(base_facet_type_id);
-      SemIR::FacetTypeInfo info = {.other_requirements = false};
+      SemIR::FacetTypeInfo info = {
+          .other_requirements = false,
+          .resolved_id = SemIR::ResolvedFacetTypeId::Invalid};
       // `where` provides that the base facet is an error, `type`, or a facet
       // type.
       if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {

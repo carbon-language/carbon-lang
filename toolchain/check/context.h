@@ -418,14 +418,14 @@ class Context {
                            BuildDiagnosticFn diagnoser,
                            BuildDiagnosticFn abstract_diagnoser) -> bool;
 
-  // Like `RequireCompleteType`, but also require the type to be defined. A
-  // defined type has known members. If the type is not defined, `diagnoser` is
-  // used to diagnose the problem, and this function returns false.
-  //
-  // This is the same as `RequireCompleteType` except for facet types, which are
-  // complete before they are fully defined.
-  auto RequireDefinedType(SemIR::TypeId type_id, SemIR::LocId loc_id,
-                          BuildDiagnosticFn diagnoser) -> bool;
+  // Like `RequireCompleteType`, but also require the facet type to be fully
+  // defined with known members. If it uses some incomplete interface, diagnoses
+  // the problem and returns Invalid.
+  enum ResolveFacetTypeContext { FacetTypeMemberAccess, FacetTypeImpl };
+  auto ResolveFacetType(SemIR::TypeId type_id, SemIR::LocId loc_id,
+                        const SemIR::FacetType& facet_type,
+                        ResolveFacetTypeContext context_for_diagnostics)
+      -> SemIR::ResolvedFacetTypeId;
 
   // Returns the type `type_id` if it is a complete type, or produces an
   // incomplete type error and returns an error type. This is a convenience
@@ -623,6 +623,9 @@ class Context {
   }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
+  }
+  auto resolved_facet_types() -> ValueStore<SemIR::ResolvedFacetTypeId>& {
+    return sem_ir().resolved_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
