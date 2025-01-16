@@ -91,11 +91,11 @@ var b: i32 = a.(-10);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %impl.elem0.loc15: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc15 [template = constants.%Op.bound]
+// CHECK:STDOUT:   %impl.elem0.loc16: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc16 [template = constants.%Op.bound]
 // CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound(%int_10) [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
-// CHECK:STDOUT:   %.loc15_17.2: Core.IntLiteral = converted %int.snegate, %.loc15_17.1 [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10]
+// CHECK:STDOUT:   %.loc16_17.2: Core.IntLiteral = converted %int.snegate, %.loc16_17.1 [template = constants.%int_-10]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -58,7 +58,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
-// CHECK:STDOUT:   %.loc18: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

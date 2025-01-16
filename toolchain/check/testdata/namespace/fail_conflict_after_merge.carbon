@@ -94,7 +94,7 @@ fn NS();
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [template] {}
 // CHECK:STDOUT:   %.decl.loc18: %.type.b6a92a.1 = fn_decl @.1 [template = constants.%.d852be.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [template] {}
-// CHECK:STDOUT:   %.decl.loc31: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %.decl.loc32: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @.1();

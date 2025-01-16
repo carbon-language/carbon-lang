@@ -86,10 +86,10 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_29
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc15_28.1: %struct_type.index = struct_literal (%int_2)
+// CHECK:STDOUT:   %.loc16_28.1: %struct_type.index = struct_literal (%int_2)
 // CHECK:STDOUT:   %struct: %struct_type.index = struct_value (%int_2) [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_28.2: %struct_type.index = converted %.loc15_28.1, %struct [template = constants.%struct]
-// CHECK:STDOUT:   %.loc15_29: Core.IntLiteral = struct_access %.loc15_28.2, element0 [template = constants.%int_2]
+// CHECK:STDOUT:   %.loc16_28.2: %struct_type.index = converted %.loc16_28.1, %struct [template = constants.%struct]
+// CHECK:STDOUT:   %.loc16_29: Core.IntLiteral = struct_access %.loc16_28.2, element0 [template = constants.%int_2]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

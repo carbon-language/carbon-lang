@@ -833,7 +833,7 @@ fn AccessMemberWithInvalidBaseFinal_NoMember(p: DeriveFromFinal*) -> i32 {
 // CHECK:STDOUT: fn @AccessMemberWithInvalidBaseFinal_NoMember(%p.param_patt: %ptr.160) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.160 = name_ref p, %p
-// CHECK:STDOUT:   %.loc29: ref %DeriveFromFinal = deref %p.ref
+// CHECK:STDOUT:   %.loc30: ref %DeriveFromFinal = deref %p.ref
 // CHECK:STDOUT:   %b.ref: <error> = name_ref b, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

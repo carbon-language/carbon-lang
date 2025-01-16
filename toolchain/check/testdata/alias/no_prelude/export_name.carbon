@@ -205,7 +205,7 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

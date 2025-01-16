@@ -77,8 +77,8 @@ interface I {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc20_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc20_27.2: %i32 = converted %int_42, %.loc20_27.1 [template = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc21_27.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc21_27.2: %i32 = converted %int_42, %.loc21_27.1 [template = constants.%int_42.c68]
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
 // CHECK:STDOUT:   %assoc1: %assoc_type.4fb = assoc_entity element1, %N [template = constants.%assoc1]
 // CHECK:STDOUT:

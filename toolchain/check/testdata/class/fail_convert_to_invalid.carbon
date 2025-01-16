@@ -56,7 +56,7 @@ fn Make() -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc15: <error> = field_decl a, element0 [template]
+// CHECK:STDOUT:   %.loc16: <error> = field_decl a, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
@@ -64,7 +64,7 @@ fn Make() -> C {
 // CHECK:STDOUT: fn @Make() -> %return.param_patt: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [template = constants.%int_123]
-// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_123)
+// CHECK:STDOUT:   %.loc20: %struct_type.a = struct_literal (%int_123)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

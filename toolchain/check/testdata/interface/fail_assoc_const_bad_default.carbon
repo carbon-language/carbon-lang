@@ -49,7 +49,7 @@ interface I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
-// CHECK:STDOUT:   %.loc18: type = converted %int_42, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: type = converted %int_42, <error> [template = <error>]
 // CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T [template = constants.%assoc0.790]
 // CHECK:STDOUT:

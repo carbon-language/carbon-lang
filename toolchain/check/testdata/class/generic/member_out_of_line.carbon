@@ -720,11 +720,11 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.d85] {} {
 // CHECK:STDOUT:     %T.param: %empty_tuple.type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.3 [template = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc14_17.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc14_17.3: type = converted %.loc14_17.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc15_17.1: type = splice_block %.loc15_17.3 [template = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc15_17.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc15_17.3: type = converted %.loc15_17.2, constants.%empty_tuple.type [template = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc14_12.1: %empty_tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc14_12.2 (constants.%T.7a6)]
+// CHECK:STDOUT:     %T.loc15_12.1: %empty_tuple.type = bind_symbolic_name T, 0, %T.param [symbolic = %T.loc15_12.2 (constants.%T.7a6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -748,8 +748,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%T.loc14_12.1: %empty_tuple.type) {
-// CHECK:STDOUT:   %T.loc14_12.2: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc14_12.2 (constants.%T.7a6)]
+// CHECK:STDOUT: generic fn @.1(%T.loc15_12.1: %empty_tuple.type) {
+// CHECK:STDOUT:   %T.loc15_12.2: %empty_tuple.type = bind_symbolic_name T, 0 [symbolic = %T.loc15_12.2 (constants.%T.7a6)]
 // CHECK:STDOUT:   %T.patt: %empty_tuple.type = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.e60)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -770,7 +770,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific @Generic(%T.loc4_15.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%T.7a6) {
-// CHECK:STDOUT:   %T.loc14_12.2 => constants.%T.7a6
+// CHECK:STDOUT:   %T.loc15_12.2 => constants.%T.7a6
 // CHECK:STDOUT:   %T.patt => constants.%T.7a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

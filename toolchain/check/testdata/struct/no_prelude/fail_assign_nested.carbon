@@ -32,8 +32,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14_27: %struct_type.b = struct_literal (%.loc14_26)
+// CHECK:STDOUT:   %.loc15_26: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc15_27: %struct_type.b = struct_literal (%.loc15_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

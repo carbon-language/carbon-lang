@@ -247,9 +247,9 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%import_ref.692 [template = <error>]
-// CHECK:STDOUT:   %.loc10_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc10_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%c.var, %.loc10_26
+// CHECK:STDOUT:   %.loc11_13: init %empty_tuple.type = tuple_init () to file.%c.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_26: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc11_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%c.var, %.loc11_26
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

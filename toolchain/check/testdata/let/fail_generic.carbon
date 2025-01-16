@@ -83,7 +83,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc21: %T = converted %int_5, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %T = bind_name x, <error>
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x
-// CHECK:STDOUT:   %.loc28: %i32 = converted %x.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc29: %i32 = converted %x.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

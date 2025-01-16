@@ -1803,7 +1803,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Test(%c.param_patt: %C.42e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.42e = name_ref c, %c
-// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc11: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [template = imports.%HasExtraInterfaces]
+// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc12: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [template = imports.%HasExtraInterfaces]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%import_ref.df2 [template = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %F.assoc_type = name_ref F, imports.%import_ref.fd4 [template = constants.%assoc0]
 // CHECK:STDOUT:   return

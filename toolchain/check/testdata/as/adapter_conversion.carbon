@@ -862,9 +862,9 @@ var b: B = {.x = 1} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc21_19: %struct_type.x.c96 = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc22_19: %struct_type.x.c96 = struct_literal (%int_1)
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc21_21: %B = converted %.loc21_19, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc22_21: %B = converted %.loc22_19, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

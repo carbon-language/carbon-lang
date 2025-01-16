@@ -37,10 +37,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var x
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var
-// CHECK:STDOUT:   %.loc15_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_16.2: %empty_tuple.type = converted %.loc15_16.1, %empty_tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_17: %empty_struct_type = converted %.loc15_16.1, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc16_16.2: %empty_tuple.type = converted %.loc16_16.1, %empty_tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_17: %empty_struct_type = converted %.loc16_16.1, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

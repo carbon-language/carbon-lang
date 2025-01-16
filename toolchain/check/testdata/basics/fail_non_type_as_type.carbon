@@ -44,7 +44,7 @@ var x: type = 42;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
-// CHECK:STDOUT:   %.loc17: type = converted %int_42, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: type = converted %int_42, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

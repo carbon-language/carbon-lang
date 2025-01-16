@@ -680,7 +680,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %EmptyStruct.ref: %EmptyStruct.type = name_ref EmptyStruct, file.%EmptyStruct.decl [template = constants.%EmptyStruct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [template = constants.%C]
-// CHECK:STDOUT:   %.loc39: %J_where.type = converted %C.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc40: %J_where.type = converted %C.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

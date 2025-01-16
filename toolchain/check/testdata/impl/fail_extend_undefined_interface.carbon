@@ -106,7 +106,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, file.%C.decl [template = constants.%C]
 // CHECK:STDOUT:   %F.ref.loc35: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc49: <error> = name_ref F, <error> [template = <error>]
+// CHECK:STDOUT:   %F.ref.loc50: <error> = name_ref F, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

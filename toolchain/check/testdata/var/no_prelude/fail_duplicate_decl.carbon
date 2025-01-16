@@ -45,12 +45,12 @@ fn Main() {
 // CHECK:STDOUT:   %.loc13_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc13 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc13_17: init %empty_tuple.type = converted %.loc13_16.1, %.loc13_16.2 [template = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %x.var.loc13, %.loc13_17
-// CHECK:STDOUT:   %x.var.loc20: ref %empty_tuple.type = var x
-// CHECK:STDOUT:   %x.loc20: ref %empty_tuple.type = bind_name x, %x.var.loc20
-// CHECK:STDOUT:   %.loc20_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc20_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc20 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc20_17: init %empty_tuple.type = converted %.loc20_16.1, %.loc20_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc20, %.loc20_17
+// CHECK:STDOUT:   %x.var.loc21: ref %empty_tuple.type = var x
+// CHECK:STDOUT:   %x.loc21: ref %empty_tuple.type = bind_name x, %x.var.loc21
+// CHECK:STDOUT:   %.loc21_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc21_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc21 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc21_17: init %empty_tuple.type = converted %.loc21_16.1, %.loc21_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc21, %.loc21_17
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -69,7 +69,7 @@ fn Main() {
 // CHECK:STDOUT:   assign %a.var, %.loc12
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %float: f64 = float_literal 5.6000000000000005 [template = constants.%float]
-// CHECK:STDOUT:   %.loc19: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc20: %i32 = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

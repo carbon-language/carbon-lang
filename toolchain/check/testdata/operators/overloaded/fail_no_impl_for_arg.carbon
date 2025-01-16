@@ -226,7 +226,7 @@ fn TestAssign(b: D) {
 // CHECK:STDOUT:   %impl.elem0: %Op.type.421 = impl_witness_access constants.%impl_witness.95d, element0 [template = constants.%Op.d8e]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc48: %C = converted %b.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc49: %C = converted %b.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %Op.bound(%addr, <error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

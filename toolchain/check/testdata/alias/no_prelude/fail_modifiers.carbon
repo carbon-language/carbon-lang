@@ -69,7 +69,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %A: type = bind_alias A, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %Class.ref.loc44: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %B: type = bind_alias B, %Class.decl [template = constants.%Class]
-// CHECK:STDOUT:   %Class.ref.loc49: type = name_ref Class, %Class.decl [template = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc50: type = name_ref Class, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT:   %C: type = bind_alias C, %Class.decl [template = constants.%Class]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

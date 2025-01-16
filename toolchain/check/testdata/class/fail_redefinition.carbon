@@ -86,7 +86,7 @@ fn Class.I() {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type.621 = fn_decl @G.2 [template = constants.%G.f0c] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type.91d = fn_decl @H.1 [template = constants.%H.d38] {} {}
-// CHECK:STDOUT:   %.decl.loc43: %.type = fn_decl @.1 [template = constants.%.d22] {} {}
+// CHECK:STDOUT:   %.decl.loc44: %.type = fn_decl @.1 [template = constants.%.d22] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {

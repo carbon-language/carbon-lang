@@ -371,9 +371,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc46_24: %AdaptC = converted %MakeC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [template = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc54_23: ref %AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc54_23
-// CHECK:STDOUT:   %.loc54_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc55_23: ref %AdaptC = temporary_storage
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC = call %MakeAdaptC.ref() to %.loc55_23
+// CHECK:STDOUT:   %.loc55_24: %C = converted %MakeAdaptC.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -127,7 +127,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %w.var: ref <error> = var w
 // CHECK:STDOUT:   %w: ref <error> = bind_name w, %w.var
-// CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [template = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -470,7 +470,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.param_patt: <error> = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param runtime_param0
-// CHECK:STDOUT:     %.loc9: type = splice_block %ptr [template = <error>] {
+// CHECK:STDOUT:     %.loc10: type = splice_block %ptr [template = <error>] {
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [template = imports.%Test]
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [template = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [template = <error>]

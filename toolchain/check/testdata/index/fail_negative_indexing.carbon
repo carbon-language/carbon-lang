@@ -96,22 +96,22 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_27
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [template = constants.%int_10]
-// CHECK:STDOUT:   %impl.elem0.loc15_16.1: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc15_16.1 [template = constants.%Op.bound]
+// CHECK:STDOUT:   %impl.elem0.loc16_16.1: %Op.type.e42 = impl_witness_access constants.%impl_witness.0f6, element0 [template = constants.%Op.bba]
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %int_10, %impl.elem0.loc16_16.1 [template = constants.%Op.bound]
 // CHECK:STDOUT:   %int.snegate: init Core.IntLiteral = call %Op.bound(%int_10) [template = constants.%int_-10.06d]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc15_16.2: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc15: <bound method> = bound_method %int.snegate, %impl.elem0.loc15_16.2 [template = constants.%Convert.bound.1ca]
-// CHECK:STDOUT:   %Convert.specific_fn.loc15: <specific function> = specific_function %Convert.bound.loc15, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4be]
-// CHECK:STDOUT:   %.loc15_16.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10.06d]
-// CHECK:STDOUT:   %.loc15_16.2: Core.IntLiteral = converted %int.snegate, %.loc15_16.1 [template = constants.%int_-10.06d]
-// CHECK:STDOUT:   %int.convert_checked.loc15: init %i32 = call %Convert.specific_fn.loc15(%.loc15_16.2) [template = constants.%int_-10.c17]
-// CHECK:STDOUT:   %.loc15_16.3: %i32 = value_of_initializer %int.convert_checked.loc15 [template = constants.%int_-10.c17]
-// CHECK:STDOUT:   %.loc15_16.4: %i32 = converted %int.snegate, %.loc15_16.3 [template = constants.%int_-10.c17]
-// CHECK:STDOUT:   %.loc15_19.1: ref %i32 = array_index %c.ref, %.loc15_16.4 [template = <error>]
-// CHECK:STDOUT:   %.loc15_19.2: %i32 = bind_value %.loc15_19.1
-// CHECK:STDOUT:   assign file.%d.var, %.loc15_19.2
+// CHECK:STDOUT:   %impl.elem0.loc16_16.2: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc16: <bound method> = bound_method %int.snegate, %impl.elem0.loc16_16.2 [template = constants.%Convert.bound.1ca]
+// CHECK:STDOUT:   %Convert.specific_fn.loc16: <specific function> = specific_function %Convert.bound.loc16, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.4be]
+// CHECK:STDOUT:   %.loc16_16.1: Core.IntLiteral = value_of_initializer %int.snegate [template = constants.%int_-10.06d]
+// CHECK:STDOUT:   %.loc16_16.2: Core.IntLiteral = converted %int.snegate, %.loc16_16.1 [template = constants.%int_-10.06d]
+// CHECK:STDOUT:   %int.convert_checked.loc16: init %i32 = call %Convert.specific_fn.loc16(%.loc16_16.2) [template = constants.%int_-10.c17]
+// CHECK:STDOUT:   %.loc16_16.3: %i32 = value_of_initializer %int.convert_checked.loc16 [template = constants.%int_-10.c17]
+// CHECK:STDOUT:   %.loc16_16.4: %i32 = converted %int.snegate, %.loc16_16.3 [template = constants.%int_-10.c17]
+// CHECK:STDOUT:   %.loc16_19.1: ref %i32 = array_index %c.ref, %.loc16_16.4 [template = <error>]
+// CHECK:STDOUT:   %.loc16_19.2: %i32 = bind_value %.loc16_19.1
+// CHECK:STDOUT:   assign file.%d.var, %.loc16_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

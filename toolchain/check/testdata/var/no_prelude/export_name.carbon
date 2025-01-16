@@ -100,9 +100,9 @@ var w: () = v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%import_ref [template = <error>]
-// CHECK:STDOUT:   %.loc11_13: init %empty_tuple.type = tuple_init () to file.%w.var [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_14: init %empty_tuple.type = converted %v.ref, %.loc11_13 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%w.var, %.loc11_14
+// CHECK:STDOUT:   %.loc12_13: init %empty_tuple.type = tuple_init () to file.%w.var [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_14: init %empty_tuple.type = converted %v.ref, %.loc12_13 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%w.var, %.loc12_14
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

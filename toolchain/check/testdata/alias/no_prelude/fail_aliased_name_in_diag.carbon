@@ -63,7 +63,7 @@ let c_var: c = d;
 // CHECK:STDOUT:   %.loc15_14: init %D = converted %.loc15_13.1, %.loc15_13.2 [template = constants.%D.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc15_14
 // CHECK:STDOUT:   %d.ref: ref %D = name_ref d, file.%d
-// CHECK:STDOUT:   %.loc20: %C = converted %d.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: %C = converted %d.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %c_var: %C = bind_name c_var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

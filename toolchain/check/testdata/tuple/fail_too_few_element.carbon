@@ -45,7 +45,7 @@ var x: (i32, i32) = (2, );
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc14: %tuple.type.985 = tuple_literal (%int_2)
+// CHECK:STDOUT:   %.loc15: %tuple.type.985 = tuple_literal (%int_2)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

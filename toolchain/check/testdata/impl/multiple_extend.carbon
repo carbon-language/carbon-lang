@@ -714,7 +714,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %L.ref.loc24: type = name_ref L, file.%L.decl [template = constants.%L]
 // CHECK:STDOUT:   %K.ref.loc24: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
-// CHECK:STDOUT:   %K.ref.loc28: <error> = name_ref K, <error> [template = <error>]
+// CHECK:STDOUT:   %K.ref.loc29: <error> = name_ref K, <error> [template = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

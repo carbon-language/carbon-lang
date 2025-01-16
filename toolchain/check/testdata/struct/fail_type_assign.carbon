@@ -49,7 +49,7 @@ var x: {.a: i32} = {.a: i32};
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [template = constants.%struct_type.a]
-// CHECK:STDOUT:   %.loc17: %struct_type.a = converted %struct_type.a, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: %struct_type.a = converted %struct_type.a, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

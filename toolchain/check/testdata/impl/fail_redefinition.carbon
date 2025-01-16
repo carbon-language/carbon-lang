@@ -57,7 +57,7 @@ impl i32 as I {}
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc21: <witness> = impl_witness () [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -75,6 +75,6 @@ impl i32 as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc21
+// CHECK:STDOUT:   witness = file.%impl_witness.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

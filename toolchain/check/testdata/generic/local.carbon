@@ -187,9 +187,9 @@ class C(C:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @.1(%C.loc12_11.1: type) {
-// CHECK:STDOUT:   %C.loc12_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc12_11.2 (constants.%C)]
-// CHECK:STDOUT:   %C.patt.loc12_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
+// CHECK:STDOUT: generic class @.1(%C.loc13_11.1: type) {
+// CHECK:STDOUT:   %C.loc13_11.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc13_11.2 (constants.%C)]
+// CHECK:STDOUT:   %C.patt.loc13_11.2: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -202,18 +202,18 @@ class C(C:! type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.decl: %.type = class_decl @.1 [template = constants.%.generic] {
-// CHECK:STDOUT:     %C.patt.loc12_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
-// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc12_11.1, runtime_param<invalid> [symbolic = %C.patt.loc12_11.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.patt.loc13_11.1: type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.param_patt: type = value_param_pattern %C.patt.loc13_11.1, runtime_param<invalid> [symbolic = %C.patt.loc13_11.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.param: type = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %C.loc12_11.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc12_11.2 (constants.%C)]
+// CHECK:STDOUT:     %C.loc13_11.1: type = bind_symbolic_name C, 0, %C.param [symbolic = %C.loc13_11.2 (constants.%C)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%C) {
-// CHECK:STDOUT:   %C.loc12_11.2 => constants.%C
-// CHECK:STDOUT:   %C.patt.loc12_11.2 => constants.%C
+// CHECK:STDOUT:   %C.loc13_11.2 => constants.%C
+// CHECK:STDOUT:   %C.patt.loc13_11.2 => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

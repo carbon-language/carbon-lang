@@ -50,7 +50,7 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.cond:
 // CHECK:STDOUT:   %str: String = string_literal "Hello" [template = constants.%str]
-// CHECK:STDOUT:   %.loc18: bool = converted %str, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: bool = converted %str, <error> [template = <error>]
 // CHECK:STDOUT:   if <error> br !while.body else br !while.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !while.body:

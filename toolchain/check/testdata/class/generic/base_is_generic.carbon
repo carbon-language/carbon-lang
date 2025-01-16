@@ -402,7 +402,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.1 [symbolic = %T.loc4_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc8: <error> = base_decl <error>, element0 [template]
+// CHECK:STDOUT:     %.loc9: <error> = base_decl <error>, element0 [template]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }

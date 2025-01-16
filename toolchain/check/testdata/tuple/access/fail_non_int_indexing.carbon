@@ -87,7 +87,7 @@ var b: i32 = a.(2.6);
 // CHECK:STDOUT:   assign file.%a.var, %.loc11_28
 // CHECK:STDOUT:   %a.ref: ref %tuple.type.d07 = name_ref a, file.%a
 // CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template = constants.%float]
-// CHECK:STDOUT:   %.loc18: Core.IntLiteral = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19: Core.IntLiteral = converted %float, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -58,7 +58,7 @@ impl AC as AI {}
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [template = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [template = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl_witness.loc25: <witness> = impl_witness () [template = constants.%impl_witness]
+// CHECK:STDOUT:   %impl_witness.loc26: <witness> = impl_witness () [template = constants.%impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -76,7 +76,7 @@ impl AC as AI {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.2: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%impl_witness.loc25
+// CHECK:STDOUT:   witness = file.%impl_witness.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

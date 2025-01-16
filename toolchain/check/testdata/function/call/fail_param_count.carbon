@@ -160,8 +160,8 @@ fn Main() {
 // CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %Run2.ref.loc57: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %Run2.ref.loc64: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
-// CHECK:STDOUT:   %int_0.loc64: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %Run2.ref.loc65: %Run2.type = name_ref Run2, file.%Run2.decl [template = constants.%Run2]
+// CHECK:STDOUT:   %int_0.loc65: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,7 +77,7 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C.6b4 [symbolic = %C (constants.%C.6b4)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [template = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc23: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
+// CHECK:STDOUT:     %.loc24: type = specific_constant @impl.%I.ref, @impl(constants.%Self) [template = constants.%I.type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }

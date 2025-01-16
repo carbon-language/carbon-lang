@@ -126,11 +126,11 @@ fn F(s: {.a: A}, b: B) {
 // CHECK:STDOUT:   %F.call.loc28: init %empty_tuple.type = call %F.bound.loc28(<error>)
 // CHECK:STDOUT:   %b.ref: %B = name_ref b, %b
 // CHECK:STDOUT:   %a.ref: %B.elem = name_ref a, @B.%.loc16 [template = @B.%.loc16]
-// CHECK:STDOUT:   %.loc38_4.1: ref %A = class_element_access %b.ref, element0
-// CHECK:STDOUT:   %.loc38_4.2: %A = bind_value %.loc38_4.1
-// CHECK:STDOUT:   %F.ref.loc38: %F.type.649 = name_ref F, @A.%F.decl [template = constants.%F.485]
-// CHECK:STDOUT:   %F.bound.loc38: <bound method> = bound_method %.loc38_4.2, %F.ref.loc38
-// CHECK:STDOUT:   %F.call.loc38: init %empty_tuple.type = call %F.bound.loc38(<error>)
+// CHECK:STDOUT:   %.loc39_4.1: ref %A = class_element_access %b.ref, element0
+// CHECK:STDOUT:   %.loc39_4.2: %A = bind_value %.loc39_4.1
+// CHECK:STDOUT:   %F.ref.loc39: %F.type.649 = name_ref F, @A.%F.decl [template = constants.%F.485]
+// CHECK:STDOUT:   %F.bound.loc39: <bound method> = bound_method %.loc39_4.2, %F.ref.loc39
+// CHECK:STDOUT:   %F.call.loc39: init %empty_tuple.type = call %F.bound.loc39(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

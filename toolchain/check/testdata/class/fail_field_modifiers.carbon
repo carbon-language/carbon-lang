@@ -88,13 +88,13 @@ class Class {
 // CHECK:STDOUT:   %.loc29_25.2: %i32 = converted %int_0, %.loc29_25.1 [template = constants.%int_0.6a9]
 // CHECK:STDOUT:   %l: %i32 = bind_name l, %.loc29_25.2
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc34: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc34: <bound method> = bound_method %int_1, %impl.elem0.loc34 [template = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %Convert.specific_fn.loc34: <specific function> = specific_function %Convert.bound.loc34, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
-// CHECK:STDOUT:   %int.convert_checked.loc34: init %i32 = call %Convert.specific_fn.loc34(%int_1) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc34_23.1: %i32 = value_of_initializer %int.convert_checked.loc34 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc34_23.2: %i32 = converted %int_1, %.loc34_23.1 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc34_23.2
+// CHECK:STDOUT:   %impl.elem0.loc35: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc35: <bound method> = bound_method %int_1, %impl.elem0.loc35 [template = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %Convert.specific_fn.loc35: <specific function> = specific_function %Convert.bound.loc35, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.70c]
+// CHECK:STDOUT:   %int.convert_checked.loc35: init %i32 = call %Convert.specific_fn.loc35(%int_1) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc35_23.1: %i32 = value_of_initializer %int.convert_checked.loc35 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc35_23.2: %i32 = converted %int_1, %.loc35_23.1 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc35_23.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.j.k [template = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

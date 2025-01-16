@@ -209,9 +209,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.767 = base_decl %Base.ref, element<invalid> [template]
 // CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.ddf = field_decl n, element<invalid> [template]
-// CHECK:STDOUT:   %.loc15_10: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc15_11: type = converted %.loc15_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
-// CHECK:STDOUT:   adapt_decl %.loc15_11 [template]
+// CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [template = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc16_11 [template]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

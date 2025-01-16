@@ -80,10 +80,10 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %float: f64 = float_literal 2.6000000000000001 [template = constants.%float]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_16: %i32 = converted %float, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_19.2: %i32 = bind_value %.loc18_19.1
-// CHECK:STDOUT:   assign file.%b.var, %.loc18_19.2
+// CHECK:STDOUT:   %.loc19_16: %i32 = converted %float, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_19.1: ref %i32 = array_index %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_19.2: %i32 = bind_value %.loc19_19.1
+// CHECK:STDOUT:   assign file.%b.var, %.loc19_19.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

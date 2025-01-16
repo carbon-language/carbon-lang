@@ -61,7 +61,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %U: <error> = bind_name U, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

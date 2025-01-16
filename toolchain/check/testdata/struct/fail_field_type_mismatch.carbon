@@ -45,7 +45,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 1 [template = constants.%float]
-// CHECK:STDOUT:   %.loc14: %struct_type.b = struct_literal (%float)
+// CHECK:STDOUT:   %.loc15: %struct_type.b = struct_literal (%float)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

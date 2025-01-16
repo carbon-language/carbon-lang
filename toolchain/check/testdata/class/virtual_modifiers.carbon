@@ -556,7 +556,7 @@ class Derived {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT:   %.loc9: <vtable> = vtable () [template = constants.%.f2b]
+// CHECK:STDOUT:   %.loc10: <vtable> = vtable () [template = constants.%.f2b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

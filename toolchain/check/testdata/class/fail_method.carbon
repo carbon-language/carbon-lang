@@ -128,7 +128,7 @@ fn F(c: Class) {
 // CHECK:STDOUT:   %WithSelf.ref.loc38: %WithSelf.type = name_ref WithSelf, @Class.%WithSelf.decl [template = constants.%WithSelf]
 // CHECK:STDOUT:   %c.ref.loc38: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %WithSelf.type = name_ref A, file.%A [template = constants.%WithSelf]
-// CHECK:STDOUT:   %WithSelf.call.loc46: init %empty_tuple.type = call %A.ref(<error>)
+// CHECK:STDOUT:   %WithSelf.call.loc47: init %empty_tuple.type = call %A.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

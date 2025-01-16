@@ -1055,10 +1055,10 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.decl: %.type = fn_decl @.1 [template = constants.%.ad0] {
 // CHECK:STDOUT:     %self.patt: %ptr.11f = binding_pattern self
 // CHECK:STDOUT:     %self.param_patt: %ptr.11f = value_param_pattern %self.patt, runtime_param0
-// CHECK:STDOUT:     %.loc16_11: auto = addr_pattern %self.param_patt
+// CHECK:STDOUT:     %.loc17_11: auto = addr_pattern %self.param_patt
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.11f = value_param runtime_param0
-// CHECK:STDOUT:     %.loc16_26: type = splice_block %ptr [template = constants.%ptr.11f] {
+// CHECK:STDOUT:     %.loc17_26: type = splice_block %ptr [template = constants.%ptr.11f] {
 // CHECK:STDOUT:       %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Base [template = constants.%ptr.11f]
 // CHECK:STDOUT:     }
@@ -1089,13 +1089,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: fn @.1[addr %self.param_patt: %ptr.11f]() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self
-// CHECK:STDOUT:   %.loc17_4: ref %Base = deref %self.ref
+// CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5 [template = @Base.%.loc5]
-// CHECK:STDOUT:   %.loc17_10: ref %empty_tuple.type = class_element_access %.loc17_4, element0
-// CHECK:STDOUT:   %.loc17_16.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = tuple_init () to %.loc17_10 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_13: init %empty_tuple.type = converted %.loc17_16.1, %.loc17_16.2 [template = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %.loc17_10, %.loc17_13
+// CHECK:STDOUT:   %.loc18_10: ref %empty_tuple.type = class_element_access %.loc18_4, element0
+// CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_16.2: init %empty_tuple.type = tuple_init () to %.loc18_10 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_13: init %empty_tuple.type = converted %.loc18_16.1, %.loc18_16.2 [template = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %.loc18_10, %.loc18_13
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

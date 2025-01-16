@@ -93,7 +93,7 @@ var b: T = *a;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: ref <error> = name_ref a, file.%a
-// CHECK:STDOUT:   %.loc12: ref <error> = deref <error>
+// CHECK:STDOUT:   %.loc13: ref <error> = deref <error>
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

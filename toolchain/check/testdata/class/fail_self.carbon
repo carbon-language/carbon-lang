@@ -173,7 +173,7 @@ fn CallWrongSelf(ws: WrongSelf) {
 // CHECK:STDOUT:   %ws.ref: %WrongSelf = name_ref ws, %ws
 // CHECK:STDOUT:   %F.ref: %F.type.25f = name_ref F, @WrongSelf.%F.decl [template = constants.%F.3a3]
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %ws.ref, %F.ref
-// CHECK:STDOUT:   %.loc55: %Class = converted %ws.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc56: %Class = converted %ws.ref, <error> [template = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

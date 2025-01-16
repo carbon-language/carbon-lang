@@ -242,7 +242,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @C.%F.type (%F.type) = fn_decl @F [symbolic = @C.%F (constants.%F)] {} {}
-// CHECK:STDOUT:     %.loc11: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
+// CHECK:STDOUT:     %.loc12: @C.%C.elem (%C.elem) = field_decl data, element0 [template]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
@@ -256,7 +256,7 @@ class C(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc11 [template = @C.%.loc11]
+// CHECK:STDOUT:     %data.ref: @F.%C.elem (%C.elem) = name_ref data, @C.%.loc12 [template = @C.%.loc12]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

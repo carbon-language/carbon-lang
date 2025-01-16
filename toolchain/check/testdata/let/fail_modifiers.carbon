@@ -181,14 +181,14 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %.loc72_33.1: %i32 = value_of_initializer %int.convert_checked.loc72 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc72_33.2: %i32 = converted %int_1.loc72, %.loc72_33.1 [template = constants.%int_1.5d2]
 // CHECK:STDOUT:   %h: %i32 = bind_name h, %.loc72_33.2
-// CHECK:STDOUT:   %int_1.loc84: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc84: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc84: <bound method> = bound_method %int_1.loc84, %impl.elem0.loc84 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn.loc84: <specific function> = specific_function %Convert.bound.loc84, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc84: init %i32 = call %Convert.specific_fn.loc84(%int_1.loc84) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc84_35.1: %i32 = value_of_initializer %int.convert_checked.loc84 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc84_35.2: %i32 = converted %int_1.loc84, %.loc84_35.1 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc84_35.2
+// CHECK:STDOUT:   %int_1.loc85: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc85: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc85: <bound method> = bound_method %int_1.loc85, %impl.elem0.loc85 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn.loc85: <specific function> = specific_function %Convert.bound.loc85, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked.loc85: init %i32 = call %Convert.specific_fn.loc85(%int_1.loc85) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc85_35.1: %i32 = value_of_initializer %int.convert_checked.loc85 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc85_35.2: %i32 = converted %int_1.loc85, %.loc85_35.1 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc85_35.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

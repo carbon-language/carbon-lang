@@ -102,19 +102,19 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %.loc17_17.1: ref %i32 = array_index %a.ref.loc17, %.loc17_16.2 [template = <error>]
 // CHECK:STDOUT:   %.loc17_17.2: %i32 = bind_value %.loc17_17.1
 // CHECK:STDOUT:   assign file.%b.var, %.loc17_17.2
-// CHECK:STDOUT:   %a.ref.loc22: ref %array_type = name_ref a, file.%a
+// CHECK:STDOUT:   %a.ref.loc23: ref %array_type = name_ref a, file.%a
 // CHECK:STDOUT:   %int_2147483647: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647.d89]
-// CHECK:STDOUT:   %int_32.loc22: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0.loc22: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc22: <bound method> = bound_method %int_2147483647, %impl.elem0.loc22 [template = constants.%Convert.bound.f38]
-// CHECK:STDOUT:   %Convert.specific_fn.loc22: <specific function> = specific_function %Convert.bound.loc22, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.221]
-// CHECK:STDOUT:   %int.convert_checked.loc22: init %i32 = call %Convert.specific_fn.loc22(%int_2147483647) [template = constants.%int_2147483647.a74]
-// CHECK:STDOUT:   %.loc22_16.1: %i32 = value_of_initializer %int.convert_checked.loc22 [template = constants.%int_2147483647.a74]
-// CHECK:STDOUT:   %.loc22_16.2: %i32 = converted %int_2147483647, %.loc22_16.1 [template = constants.%int_2147483647.a74]
-// CHECK:STDOUT:   %.loc22_27.1: ref %i32 = array_index %a.ref.loc22, %.loc22_16.2 [template = <error>]
-// CHECK:STDOUT:   %.loc22_27.2: %i32 = bind_value %.loc22_27.1
-// CHECK:STDOUT:   assign file.%c.var, %.loc22_27.2
+// CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:   %impl.elem0.loc23: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc23: <bound method> = bound_method %int_2147483647, %impl.elem0.loc23 [template = constants.%Convert.bound.f38]
+// CHECK:STDOUT:   %Convert.specific_fn.loc23: <specific function> = specific_function %Convert.bound.loc23, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn.221]
+// CHECK:STDOUT:   %int.convert_checked.loc23: init %i32 = call %Convert.specific_fn.loc23(%int_2147483647) [template = constants.%int_2147483647.a74]
+// CHECK:STDOUT:   %.loc23_16.1: %i32 = value_of_initializer %int.convert_checked.loc23 [template = constants.%int_2147483647.a74]
+// CHECK:STDOUT:   %.loc23_16.2: %i32 = converted %int_2147483647, %.loc23_16.1 [template = constants.%int_2147483647.a74]
+// CHECK:STDOUT:   %.loc23_27.1: ref %i32 = array_index %a.ref.loc23, %.loc23_16.2 [template = <error>]
+// CHECK:STDOUT:   %.loc23_27.2: %i32 = bind_value %.loc23_27.1
+// CHECK:STDOUT:   assign file.%c.var, %.loc23_27.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -116,11 +116,11 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT:     %return.param_patt: %ptr.590 = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A2.ref: type = name_ref A2, file.%A2.decl [template = constants.%A2]
-// CHECK:STDOUT:     %ptr.loc41_43: type = ptr_type %A2 [template = constants.%ptr.590]
+// CHECK:STDOUT:     %ptr.loc42_43: type = ptr_type %A2 [template = constants.%ptr.590]
 // CHECK:STDOUT:     %p.param: %ptr.c62 = value_param runtime_param0
-// CHECK:STDOUT:     %.loc41_35: type = splice_block %ptr.loc41_35 [template = constants.%ptr.c62] {
+// CHECK:STDOUT:     %.loc42_35: type = splice_block %ptr.loc42_35 [template = constants.%ptr.c62] {
 // CHECK:STDOUT:       %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [template = constants.%Incomplete]
-// CHECK:STDOUT:       %ptr.loc41_35: type = ptr_type %Incomplete [template = constants.%ptr.c62]
+// CHECK:STDOUT:       %ptr.loc42_35: type = ptr_type %Incomplete [template = constants.%ptr.c62]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.c62 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.590 = out_param runtime_param1
@@ -160,7 +160,7 @@ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDOUT: fn @ConvertIncomplete(%p.param_patt: %ptr.c62) -> %ptr.590 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.c62 = name_ref p, %p
-// CHECK:STDOUT:   %.loc41_55: %ptr.590 = converted %p.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc42_55: %ptr.590 = converted %p.ref, <error> [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

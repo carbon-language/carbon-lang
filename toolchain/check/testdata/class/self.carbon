@@ -199,7 +199,7 @@ class Class {
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
-// CHECK:STDOUT:     %.loc11: type = converted %self.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc12: type = converted %self.ref, <error> [template = <error>]
 // CHECK:STDOUT:     %self.param: %Class = value_param runtime_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [template = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param

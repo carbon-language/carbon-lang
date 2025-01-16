@@ -31,7 +31,7 @@ var x: ((),) = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

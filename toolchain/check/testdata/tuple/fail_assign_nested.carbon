@@ -54,12 +54,12 @@ var x: ((i32, i32), (i32, i32)) = ((1, 2, 3), (4, 5, 6));
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:   %.loc14_44: %tuple.type.37f = tuple_literal (%int_1, %int_2, %int_3)
+// CHECK:STDOUT:   %.loc15_44: %tuple.type.37f = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [template = constants.%int_4]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [template = constants.%int_5]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [template = constants.%int_6]
-// CHECK:STDOUT:   %.loc14_55: %tuple.type.37f = tuple_literal (%int_4, %int_5, %int_6)
-// CHECK:STDOUT:   %.loc14_56: %tuple.type.e89 = tuple_literal (%.loc14_44, %.loc14_55)
+// CHECK:STDOUT:   %.loc15_55: %tuple.type.37f = tuple_literal (%int_4, %int_5, %int_6)
+// CHECK:STDOUT:   %.loc15_56: %tuple.type.e89 = tuple_literal (%.loc15_44, %.loc15_55)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

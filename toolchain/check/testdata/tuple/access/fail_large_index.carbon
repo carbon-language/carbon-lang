@@ -90,7 +90,7 @@ var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDOUT:   %b.ref.loc17: ref %tuple.type.a1c = name_ref b, file.%b
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %b.ref.loc21: ref %tuple.type.a1c = name_ref b, file.%b
+// CHECK:STDOUT:   %b.ref.loc22: ref %tuple.type.a1c = name_ref b, file.%b
 // CHECK:STDOUT:   %int_2147483647: Core.IntLiteral = int_value 2147483647 [template = constants.%int_2147483647]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return

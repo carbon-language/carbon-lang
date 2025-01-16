@@ -1464,7 +1464,7 @@ fn CallImplicitNotDeducible() {
 // CHECK:STDOUT:   %ImplicitNotDeducible.ref: %ImplicitNotDeducible.type = name_ref ImplicitNotDeducible, file.%ImplicitNotDeducible.decl [template = constants.%ImplicitNotDeducible]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %.loc13: %struct_type.x = struct_literal (%int_12)
+// CHECK:STDOUT:   %.loc14: %struct_type.x = struct_literal (%int_12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

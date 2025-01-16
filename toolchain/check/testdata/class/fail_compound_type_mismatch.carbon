@@ -96,8 +96,8 @@ fn AccessBInA(a: A) -> i32 {
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
 // CHECK:STDOUT:   %b.ref: %B.elem = name_ref b, @B.%.loc16 [template = @B.%.loc16]
-// CHECK:STDOUT:   %.loc26_11.1: %B = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc26_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.1: %B = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc27_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

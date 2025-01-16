@@ -564,7 +564,7 @@ class A {
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [template = <error>]
 // CHECK:STDOUT:   %x: %i32 = bind_name x, <error>
-// CHECK:STDOUT:   %A.ref.loc23: type = name_ref A, file.%A.decl [template = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [template = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [template = <error>]
 // CHECK:STDOUT:   %y: %i32 = bind_name y, <error>
 // CHECK:STDOUT:   return

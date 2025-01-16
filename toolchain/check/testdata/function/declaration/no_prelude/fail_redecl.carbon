@@ -125,7 +125,7 @@ fn E() {}
 // CHECK:STDOUT:   %D.decl.loc41: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %D.decl.loc49: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [template = constants.%E] {} {}
-// CHECK:STDOUT:   %.decl.loc58: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
+// CHECK:STDOUT:   %.decl.loc59: %.type.b6a92a.2 = fn_decl @.2 [template = constants.%.d852be.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();

@@ -122,7 +122,7 @@ class C4 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C4 {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [template = constants.%B]
-// CHECK:STDOUT:   %.loc51: %C4.elem = base_decl %B.ref, element0 [template]
+// CHECK:STDOUT:   %.loc52: %C4.elem = base_decl %B.ref, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

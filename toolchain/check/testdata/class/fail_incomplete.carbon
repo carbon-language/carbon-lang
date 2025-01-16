@@ -482,7 +482,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc11: <error> = field_decl c, element0 [template]
+// CHECK:STDOUT:   %.loc12: <error> = field_decl c, element0 [template]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [template = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }

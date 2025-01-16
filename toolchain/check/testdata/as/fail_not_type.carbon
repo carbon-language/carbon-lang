@@ -47,7 +47,7 @@ let n: i32 = 1 as 2;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
-// CHECK:STDOUT:   %.loc17: type = converted %int_2, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18: type = converted %int_2, <error> [template = <error>]
 // CHECK:STDOUT:   %n: %i32 = bind_name n, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

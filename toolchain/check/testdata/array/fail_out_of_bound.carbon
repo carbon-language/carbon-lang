@@ -49,7 +49,7 @@ var a: [i32; 1] = (1, 2, 3);
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [template = constants.%int_2]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [template = constants.%int_3]
-// CHECK:STDOUT:   %.loc14: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
+// CHECK:STDOUT:   %.loc15: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

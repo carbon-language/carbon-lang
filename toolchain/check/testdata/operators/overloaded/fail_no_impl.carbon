@@ -147,7 +147,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   assign %a.var, %.loc32_16
 // CHECK:STDOUT:   %a.ref.loc37: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc42: ref %C = name_ref a, %a
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

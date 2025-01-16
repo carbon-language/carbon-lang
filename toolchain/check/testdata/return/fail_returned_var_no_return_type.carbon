@@ -100,10 +100,10 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v: %empty_tuple.type = bind_name v, <error>
-// CHECK:STDOUT:   %.loc11_25: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_25: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   assign <error>, <error>
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [template = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_16: %empty_tuple.type = converted %v, %tuple [template = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc11_16
+// CHECK:STDOUT:   %.loc12_16: %empty_tuple.type = converted %v, %tuple [template = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc12_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

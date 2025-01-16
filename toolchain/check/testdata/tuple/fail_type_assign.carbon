@@ -49,8 +49,8 @@ var x: (i32, ) = (i32, );
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc17_24.1: %tuple.type.85c = tuple_literal (%i32)
-// CHECK:STDOUT:   %.loc17_24.2: %i32 = converted %i32, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc18_24.1: %tuple.type.85c = tuple_literal (%i32)
+// CHECK:STDOUT:   %.loc18_24.2: %i32 = converted %i32, <error> [template = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

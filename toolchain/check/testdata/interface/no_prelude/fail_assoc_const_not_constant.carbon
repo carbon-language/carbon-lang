@@ -40,10 +40,10 @@ alias UseOther = I.other;
 // CHECK:STDOUT:     .UseOther = %UseOther
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [template = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.ref.loc23: type = name_ref I, %I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   %I.ref.loc24: type = name_ref I, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [template = <error>]
 // CHECK:STDOUT:   %UseA: <error> = bind_alias UseA, <error> [template = <error>]
-// CHECK:STDOUT:   %I.ref.loc26: type = name_ref I, %I.decl [template = constants.%I.type]
+// CHECK:STDOUT:   %I.ref.loc27: type = name_ref I, %I.decl [template = constants.%I.type]
 // CHECK:STDOUT:   %other.ref: <error> = name_ref other, <error> [template = <error>]
 // CHECK:STDOUT:   %UseOther: <error> = bind_alias UseOther, <error> [template = <error>]
 // CHECK:STDOUT: }

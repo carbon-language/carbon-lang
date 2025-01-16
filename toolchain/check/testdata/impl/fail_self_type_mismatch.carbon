@@ -117,7 +117,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param_patt: %C.6fb = value_param_pattern %c.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.6fb = value_param runtime_param0
-// CHECK:STDOUT:     %.loc24: type = splice_block %C [template = constants.%C.6fb] {
+// CHECK:STDOUT:     %.loc25: type = splice_block %C [template = constants.%C.6fb] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [template = constants.%C.generic]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]

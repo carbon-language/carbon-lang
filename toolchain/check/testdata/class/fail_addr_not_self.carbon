@@ -70,7 +70,7 @@ class Class {
 // CHECK:STDOUT:     %b.param_patt: %ptr = value_param_pattern %b.patt, runtime_param0
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %ptr = value_param runtime_param0
-// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [template = constants.%ptr] {
+// CHECK:STDOUT:     %.loc22: type = splice_block %ptr [template = constants.%ptr] {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [template = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class [template = constants.%ptr]
 // CHECK:STDOUT:     }

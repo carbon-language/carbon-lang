@@ -42,7 +42,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [template = constants.%int_1]
-// CHECK:STDOUT:   %.loc14: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc15: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

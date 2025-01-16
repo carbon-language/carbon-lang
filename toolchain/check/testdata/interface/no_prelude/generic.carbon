@@ -486,7 +486,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.4ce = name_ref T, %T.loc10_6.1 [symbolic = %T.loc10_6.2 (constants.%T.bae)]
-// CHECK:STDOUT:     %.loc18: %Generic.type.c7c = converted %T.ref, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc19: %Generic.type.c7c = converted %T.ref, <error> [template = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

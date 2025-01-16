@@ -1082,27 +1082,27 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, imports.%import_ref.54c [template = constants.%B]
-// CHECK:STDOUT:   %int_1.loc52: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc52: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound.loc52: <bound method> = bound_method %int_1.loc52, %impl.elem0.loc52 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn.loc52: <specific function> = specific_function %Convert.bound.loc52, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked.loc52: init %i32 = call %Convert.specific_fn.loc52(%int_1.loc52) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc52_16.1: %i32 = value_of_initializer %int.convert_checked.loc52 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc52_16.2: %i32 = converted %int_1.loc52, %.loc52_16.1 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc52_16.2)
-// CHECK:STDOUT:   assign file.%b.var, %B.call
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.94c0 [template = constants.%C]
 // CHECK:STDOUT:   %int_1.loc53: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc53_25.1: %tuple.type.985 = tuple_literal (%int_1.loc53)
 // CHECK:STDOUT:   %impl.elem0.loc53: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
 // CHECK:STDOUT:   %Convert.bound.loc53: <bound method> = bound_method %int_1.loc53, %impl.elem0.loc53 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn.loc53: <specific function> = specific_function %Convert.bound.loc53, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked.loc53: init %i32 = call %Convert.specific_fn.loc53(%int_1.loc53) [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc53_25.2: %i32 = value_of_initializer %int.convert_checked.loc53 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc53_25.3: %i32 = converted %int_1.loc53, %.loc53_25.2 [template = constants.%int_1.5d2]
-// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%.loc53_25.3) [template = constants.%tuple]
-// CHECK:STDOUT:   %.loc53_25.4: %tuple.type.a1c = converted %.loc53_25.1, %tuple [template = constants.%tuple]
-// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc53_25.4)
+// CHECK:STDOUT:   %.loc53_16.1: %i32 = value_of_initializer %int.convert_checked.loc53 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc53_16.2: %i32 = converted %int_1.loc53, %.loc53_16.1 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc53_16.2)
+// CHECK:STDOUT:   assign file.%b.var, %B.call
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%import_ref.94c0 [template = constants.%C]
+// CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [template = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc54_25.1: %tuple.type.985 = tuple_literal (%int_1.loc54)
+// CHECK:STDOUT:   %impl.elem0.loc54: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:   %Convert.bound.loc54: <bound method> = bound_method %int_1.loc54, %impl.elem0.loc54 [template = constants.%Convert.bound]
+// CHECK:STDOUT:   %Convert.specific_fn.loc54: <specific function> = specific_function %Convert.bound.loc54, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %int.convert_checked.loc54: init %i32 = call %Convert.specific_fn.loc54(%int_1.loc54) [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc54_25.2: %i32 = value_of_initializer %int.convert_checked.loc54 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc54_25.3: %i32 = converted %int_1.loc54, %.loc54_25.2 [template = constants.%int_1.5d2]
+// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%.loc54_25.3) [template = constants.%tuple]
+// CHECK:STDOUT:   %.loc54_25.4: %tuple.type.a1c = converted %.loc54_25.1, %tuple [template = constants.%tuple]
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc54_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, imports.%import_ref.5f5 [template = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()

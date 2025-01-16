@@ -103,11 +103,11 @@ fn Main() {
 // CHECK:STDOUT:   %a.ref.loc19_10: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc19: %i32 = bind_value %a.ref.loc19_10
 // CHECK:STDOUT:   assign %a.ref.loc19_3, %.loc19
-// CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc24_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc24_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [template = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc23_3, %F.call
+// CHECK:STDOUT:   assign %a.ref.loc24_3, %F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

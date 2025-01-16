@@ -82,11 +82,11 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:     %n.param_patt: <error> = value_param_pattern %n.patt, runtime_param1
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: %i32 = value_param runtime_param<invalid>
-// CHECK:STDOUT:     %.loc32: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:     %.loc33: type = splice_block %i32 [template = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc32_10.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc32_10.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc33_10.1: %i32 = bind_symbolic_name N, 0, %N.param [symbolic = %N.loc33_10.2 (constants.%N.51e)]
 // CHECK:STDOUT:     %self.param: <error> = value_param runtime_param0
 // CHECK:STDOUT:     %Self.ref: <error> = name_ref Self, <error> [template = <error>]
 // CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
@@ -139,8 +139,8 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT:   fn[%self.param_patt: @F.%Class (%Class)](%n.param_patt: @F.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @.1(%N.loc32_10.1: %i32) {
-// CHECK:STDOUT:   %N.loc32_10.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc32_10.2 (constants.%N.51e)]
+// CHECK:STDOUT: generic fn @.1(%N.loc33_10.1: %i32) {
+// CHECK:STDOUT:   %N.loc33_10.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc33_10.2 (constants.%N.51e)]
 // CHECK:STDOUT:   %N.patt: %i32 = symbolic_binding_pattern N, 0 [symbolic = %N.patt (constants.%N.patt.8e2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -166,7 +166,7 @@ fn Class(N:! i32).F[self: Self](n: T) {}
 // CHECK:STDOUT: specific @Class(%T.loc11_13.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @.1(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc32_10.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.loc33_10.2 => constants.%N.51e
 // CHECK:STDOUT:   %N.patt => constants.%N.51e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

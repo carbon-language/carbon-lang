@@ -57,8 +57,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [template = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc17_24.1: type = value_of_initializer %ReturnType.call
-// CHECK:STDOUT:     %.loc17_24.2: type = converted %ReturnType.call, %.loc17_24.1
+// CHECK:STDOUT:     %.loc18_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc18_24.2: type = converted %ReturnType.call, %.loc18_24.1
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

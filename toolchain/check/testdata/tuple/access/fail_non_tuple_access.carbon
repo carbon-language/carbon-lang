@@ -96,7 +96,7 @@ fn Main() {
 // CHECK:STDOUT:   %first.var: ref %i32 = var first
 // CHECK:STDOUT:   %first: ref %i32 = bind_name first, %first.var
 // CHECK:STDOUT:   %non_tuple.ref: ref %array_type = name_ref non_tuple, %non_tuple
-// CHECK:STDOUT:   %int_0.loc22: Core.IntLiteral = int_value 0 [template = constants.%int_0]
+// CHECK:STDOUT:   %int_0.loc23: Core.IntLiteral = int_value 0 [template = constants.%int_0]
 // CHECK:STDOUT:   assign %first.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

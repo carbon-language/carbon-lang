@@ -670,8 +670,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %C.elem.ed6 = name_ref x, imports.%import_ref.262 [template = imports.%.22b]
-// CHECK:STDOUT:   %.loc14_11.1: %C.239 = converted %a.ref, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc14_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
+// CHECK:STDOUT:   %.loc15_11.1: %C.239 = converted %a.ref, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc15_11.2: %i32 = class_element_access <error>, element0 [template = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

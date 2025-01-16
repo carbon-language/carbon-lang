@@ -234,9 +234,9 @@ fn F() -> c.(I.F)() {}
 // CHECK:STDOUT:     %impl.elem0: %F.type.cf0 = impl_witness_access constants.%impl_witness.02b, element0 [template = constants.%F.9e6]
 // CHECK:STDOUT:     %F.specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [template = constants.%F.specific_fn]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn()
-// CHECK:STDOUT:     %.loc15_19.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:     %.loc15_19.2: ref %empty_tuple.type = temporary %.loc15_19.1, %F.call
-// CHECK:STDOUT:     %.loc15_19.3: type = converted %F.call, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc16_19.1: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:     %.loc16_19.2: ref %empty_tuple.type = temporary %.loc16_19.1, %F.call
+// CHECK:STDOUT:     %.loc16_19.3: type = converted %F.call, <error> [template = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param runtime_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

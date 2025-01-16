@@ -57,16 +57,16 @@ fn F(T:! type, U:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ptr: type = ptr_type @F.%T.loc11_6.2 (%T) [symbolic = %ptr (constants.%ptr)]
 // CHECK:STDOUT:   %require_complete.loc12: <witness> = require_complete_type @F.%ptr (%ptr) [symbolic = %require_complete.loc12 (constants.%require_complete.6e5)]
-// CHECK:STDOUT:   %require_complete.loc16: <witness> = require_complete_type @F.%U.loc11_16.2 (%U) [symbolic = %require_complete.loc16 (constants.%require_complete.b54)]
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type @F.%U.loc11_16.2 (%U) [symbolic = %require_complete.loc17 (constants.%require_complete.b54)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%T.param_patt: type, %U.param_patt: type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.var: ref @F.%ptr (%ptr) = var p
 // CHECK:STDOUT:     %p: ref @F.%ptr (%ptr) = bind_name p, %p.var
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr (%ptr) = name_ref p, %p
-// CHECK:STDOUT:     %.loc16_15: @F.%ptr (%ptr) = bind_value %p.ref
-// CHECK:STDOUT:     %.loc16_14: ref @F.%T.loc11_6.2 (%T) = deref %.loc16_15
-// CHECK:STDOUT:     %.loc16_16: @F.%U.loc11_16.2 (%U) = converted %.loc16_14, <error> [template = <error>]
+// CHECK:STDOUT:     %.loc17_15: @F.%ptr (%ptr) = bind_value %p.ref
+// CHECK:STDOUT:     %.loc17_14: ref @F.%T.loc11_6.2 (%T) = deref %.loc17_15
+// CHECK:STDOUT:     %.loc17_16: @F.%U.loc11_16.2 (%U) = converted %.loc17_14, <error> [template = <error>]
 // CHECK:STDOUT:     %n: @F.%U.loc11_16.2 (%U) = bind_name n, <error>
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }

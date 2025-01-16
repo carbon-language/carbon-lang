@@ -76,8 +76,8 @@ fn ns.A() -> i32 { return 0; }
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_28.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_28.2: %i32 = converted %int_0, %.loc22_28.1 [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc22_28.2
+// CHECK:STDOUT:   %.loc23_28.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc23_28.2: %i32 = converted %int_0, %.loc23_28.1 [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc23_28.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

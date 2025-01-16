@@ -79,7 +79,7 @@ fn Run() {
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [template = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
-// CHECK:STDOUT:   %.loc20: %i32 = converted %Foo.call, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc21: %i32 = converted %Foo.call, <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -50,8 +50,8 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref bool = var x
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [template = constants.%int_12]
-// CHECK:STDOUT:   %.loc18_17.1: bool = converted %int_12, <error> [template = <error>]
-// CHECK:STDOUT:   %.loc18_17.2: <error> = not <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_17.1: bool = converted %int_12, <error> [template = <error>]
+// CHECK:STDOUT:   %.loc19_17.2: <error> = not <error> [template = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

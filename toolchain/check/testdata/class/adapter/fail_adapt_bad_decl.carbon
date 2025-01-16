@@ -291,7 +291,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.2 {
 // CHECK:STDOUT:   %Self: %I.type.e30 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6ef]
-// CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc24: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

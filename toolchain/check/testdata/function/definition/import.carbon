@@ -443,13 +443,13 @@ fn D() {}
 // CHECK:STDOUT:     .A = imports.%import_ref.0c3
 // CHECK:STDOUT:     .B = imports.%import_ref.8cc
 // CHECK:STDOUT:     .C = imports.%import_ref.b05
-// CHECK:STDOUT:     .D = %D.decl.loc13
+// CHECK:STDOUT:     .D = %D.decl.loc14
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <invalid>
-// CHECK:STDOUT:   %D.decl.loc13: %D.type = fn_decl @D [template = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc15: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc14: %D.type = fn_decl @D [template = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc16: %D.type = fn_decl @D [template = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() [from "fns.carbon"] {

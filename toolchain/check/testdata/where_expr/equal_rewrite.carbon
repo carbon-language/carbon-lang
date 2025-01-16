@@ -1382,8 +1382,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %bool.make_type.loc27: init type = call constants.%Bool() [template = bool]
 // CHECK:STDOUT:   %.loc27: %E_where.type.bef = converted %bool.make_type.loc27, <error> [template = <error>]
 // CHECK:STDOUT:   %J: %E_where.type.bef = bind_name J, <error>
-// CHECK:STDOUT:   %bool.make_type.loc35: init type = call constants.%Bool() [template = bool]
-// CHECK:STDOUT:   %.loc35: %E_where.type.503 = converted %bool.make_type.loc35, <error> [template = <error>]
+// CHECK:STDOUT:   %bool.make_type.loc36: init type = call constants.%Bool() [template = bool]
+// CHECK:STDOUT:   %.loc36: %E_where.type.503 = converted %bool.make_type.loc36, <error> [template = <error>]
 // CHECK:STDOUT:   %K: %E_where.type.503 = bind_name K, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -137,17 +137,17 @@ impl f64 as type where .Self impls type {}
 // CHECK:STDOUT:   impl_decl @impl [template] {} {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [template = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [template = f64]
-// CHECK:STDOUT:     %.loc10_6.1: type = value_of_initializer %float.make_type [template = f64]
-// CHECK:STDOUT:     %.loc10_6.2: type = converted %float.make_type, %.loc10_6.1 [template = f64]
+// CHECK:STDOUT:     %.loc11_6.1: type = value_of_initializer %float.make_type [template = f64]
+// CHECK:STDOUT:     %.loc11_6.2: type = converted %float.make_type, %.loc11_6.1 [template = f64]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic = constants.%.Self]
-// CHECK:STDOUT:     %.loc10_18: type = where_expr %.Self [template = constants.%type_where] {
+// CHECK:STDOUT:     %.loc11_18: type = where_expr %.Self [template = constants.%type_where] {
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc10_6.2 as %.loc10_18 {
+// CHECK:STDOUT: impl @impl: %.loc11_6.2 as %.loc11_18 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

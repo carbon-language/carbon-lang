@@ -818,9 +818,9 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_0, %impl.elem0 [template = constants.%Convert.bound]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_0) [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc10_21.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc10_21.2: %i32 = converted %int_0, %.loc10_21.1 [template = constants.%int_0.6a9]
-// CHECK:STDOUT:   %Zero: %i32 = bind_name Zero, %.loc10_21.2
+// CHECK:STDOUT:   %.loc11_21.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc11_21.2: %i32 = converted %int_0, %.loc11_21.1 [template = constants.%int_0.6a9]
+// CHECK:STDOUT:   %Zero: %i32 = bind_name Zero, %.loc11_21.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Zero
