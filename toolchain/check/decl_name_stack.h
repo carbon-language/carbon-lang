@@ -193,9 +193,6 @@ class DeclNameStack {
   // name.
   auto FinishName(const NameComponent& name) -> NameContext;
 
-  // Replace a call to FinishName() when there was no name present.
-  auto AbortName() -> void;
-
   // Finishes the current declaration name processing for an `impl`, returning
   // the final context for adding the name to lookup.
   //

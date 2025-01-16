@@ -724,7 +724,6 @@ class Context {
   struct ChoiceDeferredBinding {
     Parse::NodeId node_id;
     NameComponent name_component;
-    DeclNameStack::NameContext name_context;
   };
   auto choice_deferred_bindings() -> llvm::SmallVector<ChoiceDeferredBinding>& {
     return choice_deferred_bindings_;

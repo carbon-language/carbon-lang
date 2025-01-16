@@ -54,6 +54,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
                                               SemIR::AccessKind::Public);
+  context.decl_name_stack().PopScope();
 
   // An inst block for the body of the choice.
   context.inst_block_stack().Push();
@@ -126,7 +127,6 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   // FIXME: Can we skip these if the choice type is empty? Is that allowed?
   // Set up blocks and scopes for the first alternative.
-  context.decl_name_stack().PushScopeAndStartName();
   // context.inst_block_stack().Push();
   // context.pattern_block_stack().Push();
   //  context.param_and_arg_refs_stack().Push();
@@ -137,8 +137,6 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
     -> void {
   auto name_component = PopNameComponent(context);
 
-  auto name_context = context.decl_name_stack().FinishName(name_component);
-  context.decl_name_stack().PopScope();
   // Note, there is nothing like a ChoiceAlternativeIntroducer node, so no parse
   // node to pop here.
 
@@ -147,11 +145,9 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
                  "Make this an error: Empty () found, should be omitted");
   }
 
-  context.choice_deferred_bindings().push_back(
-      {node_id, name_component, name_context});
+  context.choice_deferred_bindings().push_back({node_id, name_component});
 
   // FIXME: Avoid opening a scope if this is the last alternative?
-  context.decl_name_stack().PushScopeAndStartName();
   // context.inst_block_stack().Push();
   // context.pattern_block_stack().Push();
   //  context.param_and_arg_refs_stack().Push();
@@ -214,6 +210,7 @@ static auto MakeStorageTuple(Context& context, llvm::ArrayRef<Alternative> alts)
 }
 
 static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
+                           SemIR::NameScopeId choice_name_scope_id,
                            std::optional<SemIR::TypeId> discriminant_type_id,
                            SemIR::TypeId storage_type_id, int index,
                            int num_alternatives,
@@ -334,7 +331,7 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .parent_scope_id = choice_name_scope_id,
        .bind_index = SemIR::CompileTimeBindIndex::Invalid});
   auto bind_name_id = context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
       binding.node_id, SemIR::BindName{
@@ -342,18 +339,23 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
                            .entity_name_id = entity_name_id,
                            .value_id = self_value_id,
                        }));
-  context.decl_name_stack().AddNameOrDiagnose(
-      binding.name_context, bind_name_id, SemIR::AccessKind::Public);
+  context.name_scopes()
+      .Get(choice_name_scope_id)
+      .AddRequired({.name_id = binding.name_component.name_id,
+                    .inst_id = bind_name_id,
+                    .access_kind = SemIR::AccessKind::Public});
 }
 
 static auto MakeFunctionBinding(
     Context& context, SemIR::TypeId self_type_id,
+    SemIR::NameScopeId choice_name_scope_id,
     std::optional<SemIR::TypeId> discriminant_type_id,
     SemIR::TypeId storage_type_id, int index,
     const Context::ChoiceDeferredBinding& binding, const Alternative& alt)
     -> void {
   (void)context;
   (void)self_type_id;
+  (void)choice_name_scope_id;
   (void)discriminant_type_id;
   (void)storage_type_id;
   (void)index;
@@ -414,8 +416,9 @@ static auto MakeFunctionBinding(
 
   // auto params_block_id = context.param_and_arg_refs_stack().Pop();
 
-  context.decl_name_stack().AddNameOrDiagnose(binding.name_context, decl_id,
-                                              SemIR::AccessKind::Public);
+  // Use the choice_name_scope_id instead:
+  //context.decl_name_stack().AddNameOrDiagnose(binding.name_context, decl_id,
+  //                                            SemIR::AccessKind::Public);
 #endif
 }
 
@@ -429,8 +432,6 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   // Cleanup/abandon scopes set up for the next alternative, as there are no
   // more.
-  context.decl_name_stack().AbortName();
-  context.decl_name_stack().PopScope();
   // context.inst_block_stack().Pop();
   // context.pattern_block_stack().Pop();
   //  context.param_and_arg_refs_stack().Pop();
@@ -486,6 +487,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   context.classes().Get(class_id).complete_type_witness_id = choice_witness_id;
 
   auto self_type_id = context.classes().Get(class_id).self_type_id;
+  auto name_scope_id = context.classes().Get(class_id).scope_id;
 
   for (auto [index, pair] : llvm::enumerate(
            llvm::zip(context.choice_deferred_bindings(), alternatives))) {
@@ -493,18 +495,19 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     // If there's no params, then we make a let binding with the name of the
     // alternative. Otherwise, we make a function.
     if (alt.params.empty()) {
-      MakeLetBinding(context, self_type_id, discriminant_type_id,
+      MakeLetBinding(context, self_type_id, name_scope_id, discriminant_type_id,
                      storage_type_inst_id, index, num_alternatives, binding,
                      alt);
     } else {
-      MakeFunctionBinding(context, self_type_id, discriminant_type_id,
-                          storage_type_inst_id, index, binding, alt);
+      MakeFunctionBinding(context, self_type_id, name_scope_id,
+                          discriminant_type_id, storage_type_inst_id, index,
+                          binding, alt);
     }
   }
 
   // The scopes and blocks for the choice itself.
   context.inst_block_stack().Pop();
-  context.decl_name_stack().PopScope();
+  context.scope_stack().Pop();
 
   FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
 
