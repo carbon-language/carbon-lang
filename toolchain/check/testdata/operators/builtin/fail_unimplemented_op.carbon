@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Core.Add` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Add` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return {} + 34;
   // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR:
   return {} + 34;
 }
 

@@ -22,9 +22,10 @@ fn F(c: C) {
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+3]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   c.F();
 }
 

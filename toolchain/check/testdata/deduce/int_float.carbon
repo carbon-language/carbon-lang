@@ -25,9 +25,10 @@ fn G(a: i64) -> Core.IntLiteral() {
 library "[[@TEST_NAME]]";
 
 // TODO: This should pass once we accept symbolic widths for Core.Float.
-// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+3]]:32: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_todo_float.carbon:[[@LINE+4]]:32: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn F[N:! Core.IntLiteral()](n: Core.Float(N)) -> Core.IntLiteral() {
 // CHECK:STDERR:                                ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F[N:! Core.IntLiteral()](n: Core.Float(N)) -> Core.IntLiteral() {
   return N;
 }

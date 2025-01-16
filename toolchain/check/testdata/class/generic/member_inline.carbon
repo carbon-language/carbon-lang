@@ -30,9 +30,10 @@ library "fail_member_inline.carbon";
 
 class C(T:! type) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+3]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
+    // CHECK:STDERR: fail_member_inline.carbon:[[@LINE+4]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:     data;
     // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
     data;
   }
   var data: {};

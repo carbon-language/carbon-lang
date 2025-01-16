@@ -65,12 +65,13 @@ base class Base {}
 class AdaptWithBaseAndFields {
   extend base: Base;
   var n: i32;
-  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+6]]:3: error: adapter with base class [AdaptWithBase]
+  // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE+7]]:3: error: adapter with base class [AdaptWithBase]
   // CHECK:STDERR:   adapt {};
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_adapt_with_base_and_fields.carbon:[[@LINE-5]]:3: note: `base` declaration is here [AdaptWithBaseHere]
   // CHECK:STDERR:   extend base: Base;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   adapt {};
 }
 

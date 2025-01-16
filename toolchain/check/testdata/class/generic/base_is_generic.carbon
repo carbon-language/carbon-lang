@@ -43,9 +43,10 @@ fn ImportedDoubleFieldAccess(d: Derived) -> i32 {
 library "[[@TEST_NAME]]";
 
 class C(T:! type) {
-  // CHECK:STDERR: fail_todo_extend_symbolic_base.carbon:[[@LINE+3]]:16: error: deriving from final type `T`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR: fail_todo_extend_symbolic_base.carbon:[[@LINE+4]]:16: error: deriving from final type `T`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:   extend base: T;
   // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   extend base: T;
 }
 

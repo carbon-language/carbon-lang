@@ -91,9 +91,10 @@ impl forall [T:! type] D as J(T) {}
 // CHECK:STDERR:
 impl forall [T:! type] D as J(T*);
 
-// CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+3]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: fail_import_generic_decl.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
 // CHECK:STDERR: impl forall [T:! type] D as J(T*) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] D as J(T*) {}
 
 // CHECK:STDOUT: --- import_generic.carbon

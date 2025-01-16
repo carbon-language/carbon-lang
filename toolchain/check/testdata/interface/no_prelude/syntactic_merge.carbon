@@ -173,16 +173,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a:! const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:19: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:19: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:25: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: interface Foo(a:! const (const C)) {}
 // CHECK:STDERR:                         ^
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:25: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: interface Foo(a:! const C);
 // CHECK:STDERR:                         ^
+// CHECK:STDERR:
 interface Foo(a:! const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon

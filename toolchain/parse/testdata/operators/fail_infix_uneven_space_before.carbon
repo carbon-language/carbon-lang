@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_infix_uneven_space_before.carbon
 
-// CHECK:STDERR: fail_infix_uneven_space_before.carbon:[[@LINE+3]]:15: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: fail_infix_uneven_space_before.carbon:[[@LINE+4]]:15: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
 // CHECK:STDERR: var n: i8 = n *n;
 // CHECK:STDERR:               ^
+// CHECK:STDERR:
 var n: i8 = n *n;
 
 // CHECK:STDOUT: - filename: fail_infix_uneven_space_before.carbon

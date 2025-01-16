@@ -49,12 +49,13 @@ fn D() {}
 fn D();
 
 fn E() {}
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+6]]:1: error: redefinition of `fn E` [RedeclRedef]
+// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redefinition of `fn E` [RedeclRedef]
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn E() {}
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 fn E() {}
 
 // CHECK:STDOUT: --- fail_redecl.carbon

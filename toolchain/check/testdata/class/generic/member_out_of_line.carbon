@@ -97,12 +97,13 @@ class Generic(T:! type) {
   fn WrongType();
 }
 
-// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+6]]:12: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE+7]]:12: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: fn Generic(T:! ()).WrongType() {}
 // CHECK:STDERR:            ^~~~~~
 // CHECK:STDERR: fail_mismatched_wrong_arg_type.carbon:[[@LINE-7]]:15: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class Generic(T:! type) {
 // CHECK:STDERR:               ^~~~~~~~
+// CHECK:STDERR:
 fn Generic(T:! ()).WrongType() {}
 
 // CHECK:STDOUT: --- basic.carbon

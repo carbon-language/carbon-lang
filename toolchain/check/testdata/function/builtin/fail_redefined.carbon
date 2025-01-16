@@ -29,12 +29,13 @@ fn B(n: i32, m: i32) -> i32 { return n; }
 fn B(n: i32, m: i32) -> i32 = "int.sadd";
 
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_redefined.carbon:[[@LINE+6]]:1: error: redefinition of `fn C` [RedeclRedef]
+// CHECK:STDERR: fail_redefined.carbon:[[@LINE+7]]:1: error: redefinition of `fn C` [RedeclRedef]
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefined.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR: fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
 
 // CHECK:STDOUT: --- fail_redefined.carbon

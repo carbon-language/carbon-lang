@@ -27,9 +27,10 @@ var b_ref: {.a = x};
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 var c_ref: (x,);
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+3]]:12: error: name `x` not found [NameNotFound]
+// CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:12: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var d_ref: x*;
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var d_ref: x*;
 
 // --- implicit.impl.carbon

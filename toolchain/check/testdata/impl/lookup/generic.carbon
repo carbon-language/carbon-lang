@@ -115,9 +115,10 @@ class B {}
 fn G(x: A) {
   // TODO: It'd be nice to include a note here saying that deduction failed because
   // we deduced two different values for `T`.
-  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+3]]:3: error: cannot access member of interface `HasF(B)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_inconsistent_deduction.carbon:[[@LINE+4]]:3: error: cannot access member of interface `HasF(B)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   x.(HasF(B).F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   x.(HasF(B).F)();
 }
 

@@ -43,9 +43,10 @@ abstract base default final alias A = Class;
 // CHECK:STDERR:
 impl alias B = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `extern` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `extern` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: extern alias C = Class;
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 extern alias C = Class;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon

@@ -18,9 +18,10 @@
 // CHECK:STDERR:
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+16]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+17]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_paren_match_regression.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

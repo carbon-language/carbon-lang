@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_postfix_space_surrounding.carbon
 
-// CHECK:STDERR: fail_postfix_space_surrounding.carbon:[[@LINE+3]]:18: error: whitespace is not allowed before this unary operator [UnaryOperatorHasWhitespace]
+// CHECK:STDERR: fail_postfix_space_surrounding.carbon:[[@LINE+4]]:18: error: whitespace is not allowed before this unary operator [UnaryOperatorHasWhitespace]
 // CHECK:STDERR: var v: type = i8 * ;
 // CHECK:STDERR:                  ^
+// CHECK:STDERR:
 var v: type = i8 * ;
 
 // CHECK:STDOUT: - filename: fail_postfix_space_surrounding.carbon

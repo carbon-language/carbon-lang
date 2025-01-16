@@ -28,9 +28,10 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 package FailBadDecl;
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
 // CHECK:STDOUT: --- float_eq.carbon

@@ -30,13 +30,14 @@ import library "import_generic";
 
 var c: C({}) = {};
 // We're just checking that this doesn't crash. It's not expected to compile.
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+7]]:11: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+8]]:11: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn F() -> c.(I.F)() {}
 // CHECK:STDERR:           ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+3]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR: fn F() -> c.(I.F)() {}
 // CHECK:STDERR:                      ^
+// CHECK:STDERR:
 fn F() -> c.(I.F)() {}
 
 // CHECK:STDOUT: --- import_generic.carbon

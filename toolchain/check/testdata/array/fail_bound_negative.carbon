@@ -10,9 +10,10 @@
 
 fn Negate(n: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_bound_negative.carbon:[[@LINE+3]]:14: error: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR: fail_bound_negative.carbon:[[@LINE+4]]:14: error: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR: var a: [i32; Negate(1)];
 // CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR:
 var a: [i32; Negate(1)];
 
 // CHECK:STDOUT: --- fail_bound_negative.carbon

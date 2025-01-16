@@ -33,7 +33,7 @@ fn F(c: C) {
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+13]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
+  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+14]]:3: error: member access into undefined interface `I` [QualifiedExprInUndefinedInterfaceScope]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-28]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
@@ -46,6 +46,7 @@ fn F(c: C) {
   // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-25]]:3: error: impl declared but not defined [ImplMissingDefinition]
   // CHECK:STDERR:   extend impl as I;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   c.F();
 }
 

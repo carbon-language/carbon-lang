@@ -22,9 +22,10 @@ fn f() -> i32 {
     // CHECK:STDERR:     ^~~~~~~
     // CHECK:STDERR:
     default => { return 3; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+3]]:5: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
+    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+4]]:5: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
     // CHECK:STDERR:     case (a: i32) if (a == 4) => { return 4; }
     // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR:
     case (a: i32) if (a == 4) => { return 4; }
   }
   return 0;

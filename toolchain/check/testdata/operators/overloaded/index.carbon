@@ -70,9 +70,10 @@ library "[[@TEST_NAME]]";
 class C { }
 
 let c: C = {};
-// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+3]]:14: error: type `C` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+4]]:14: error: type `C` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: let x: i32 = c[0];
 // CHECK:STDERR:              ^~~~
+// CHECK:STDERR:
 let x: i32 = c[0];
 
 

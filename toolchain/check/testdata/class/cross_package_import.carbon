@@ -94,9 +94,10 @@ library "[[@TEST_NAME]]";
 import Other library "other_define";
 import Other library "other_conflict";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:8: note: in name lookup for `C` [InNameLookup]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:8: note: in name lookup for `C` [InNameLookup]
 // CHECK:STDERR: var c: Other.C = {};
 // CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:
 var c: Other.C = {};
 
 // CHECK:STDOUT: --- other_define.carbon

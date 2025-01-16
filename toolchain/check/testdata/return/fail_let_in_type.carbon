@@ -28,13 +28,14 @@ let y:! type = i32;
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+7]]:14: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+8]]:14: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:              ^~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+3]]:5: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
+// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: `HandleTemplate` [SemanticsTodo]
 // CHECK:STDERR: let template z:! type = i32;
 // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let template z:! type = i32;
 fn FirstPerfectNumber() -> z { return 6; }
 

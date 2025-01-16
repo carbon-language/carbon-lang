@@ -15,9 +15,10 @@
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+3]]:13: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:13: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let n: i32;
   // CHECK:STDERR:             ^
+  // CHECK:STDERR:
   let n: i32;
 }
 

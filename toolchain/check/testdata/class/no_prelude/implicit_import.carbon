@@ -71,13 +71,14 @@ alias B = C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: class B {}
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:6: in import [InImport]
 // CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: alias B = C;
 // CHECK:STDERR:       ^
+// CHECK:STDERR:
 class B {}
 
 // CHECK:STDOUT: --- basic.carbon

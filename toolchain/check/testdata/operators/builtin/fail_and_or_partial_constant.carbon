@@ -37,9 +37,10 @@ fn KnownValueButNonConstantCondition(x: bool) {
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var c: if x and false then bool else ();
-  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR: fail_despite_known_result.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:   var d: if x or true then bool else ();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   var d: if x or true then bool else ();
 }
 

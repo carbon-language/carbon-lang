@@ -72,12 +72,13 @@ impl forall [T:! type] T as I {
   fn A() {}
 }
 
-// CHECK:STDERR: fail_redefinition_generic_regions.carbon:[[@LINE+6]]:1: error: redefinition of `impl T as I` [ImplRedefinition]
+// CHECK:STDERR: fail_redefinition_generic_regions.carbon:[[@LINE+7]]:1: error: redefinition of `impl T as I` [ImplRedefinition]
 // CHECK:STDERR: impl forall [T:! type] T as I {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefinition_generic_regions.carbon:[[@LINE-7]]:1: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR: impl forall [T:! type] T as I {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] T as I {
   // Although not referenced, B has the same generic region index of A, and
   // makes C a different index. We used to merge, and this was a crash.

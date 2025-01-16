@@ -13,9 +13,10 @@ interface GenericInterface(T:! type) {
 }
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+3]]:3: error: cannot `extend` a parameterized `impl` [ExtendImplForall]
+  // CHECK:STDERR: fail_extend_impl_forall.carbon:[[@LINE+4]]:3: error: cannot `extend` a parameterized `impl` [ExtendImplForall]
   // CHECK:STDERR:   extend impl forall [T:! type] as GenericInterface(T) {
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extend impl forall [T:! type] as GenericInterface(T) {
     fn F(x: T) {}
   }

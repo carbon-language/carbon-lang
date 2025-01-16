@@ -16,9 +16,10 @@ fn F() {
   // CHECK:STDERR:    ^
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+3]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   A->foo;
   // CHECK:STDERR:   ^
+  // CHECK:STDERR:
   A->foo;
 }
 

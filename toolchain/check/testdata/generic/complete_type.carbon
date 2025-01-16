@@ -70,9 +70,10 @@ fn F(T:! type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+3]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_incomplete_in_function_at_eof.carbon:[[@LINE+4]]:10: note: in `F(B)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: fn G() { F(B); }
 // CHECK:STDERR:          ^
+// CHECK:STDERR:
 fn G() { F(B); }
 
 // CHECK:STDOUT: --- fail_incomplete_in_class.carbon

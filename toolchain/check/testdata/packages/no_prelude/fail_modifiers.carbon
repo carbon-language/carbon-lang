@@ -90,13 +90,14 @@ virtual import VirtualImport;
 // CHECK:STDERR:
 base import BaseImport;
 
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+7]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+8]]:9: error: imported API 'PrivateImport' not found [ImportNotFound]
 // CHECK:STDERR: private import PrivateImport;
 // CHECK:STDERR:         ^~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_import_modifiers.carbon:[[@LINE+4]]:1: error: `private` not allowed on `import` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private import PrivateImport;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 private import PrivateImport;
 
 // CHECK:STDOUT: --- fail_export_package.carbon

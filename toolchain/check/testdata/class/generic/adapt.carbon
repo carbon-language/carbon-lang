@@ -81,12 +81,13 @@ import library "extend_adapt_specific_type_library";
 
 fn ImportedAccess(a: Adapter) -> i32 {
   // TODO: This should presumably work, but the design doesn't say how yet.
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Adapter` to `C(i32)` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `Adapter` to `C(i32)` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+3]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_extend_adapt_specific_type.carbon:[[@LINE+4]]:10: note: type `Adapter` does not implement interface `Core.ImplicitAs(C(i32))` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return a.x;
   // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
   return a.x;
 }
 

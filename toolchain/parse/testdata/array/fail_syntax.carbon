@@ -62,9 +62,10 @@ var x: [i32;;
 
 // --- fail_no_semi.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+3]]:12: error: expected `;` in array type [ExpectedArraySemi]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:12: error: expected `;` in array type [ExpectedArraySemi]
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var x: [i32];
 
 // CHECK:STDOUT: - filename: fail_type.carbon

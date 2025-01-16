@@ -30,12 +30,13 @@ namespace B(n: i32);
 namespace C[T:! type](x: T);
 
 namespace D;
-// CHECK:STDERR: fail_params.carbon:[[@LINE+6]]:4: error: redeclaration differs because of parameter list [RedeclParamListDiffers]
+// CHECK:STDERR: fail_params.carbon:[[@LINE+7]]:4: error: redeclaration differs because of parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: fn D(T:! type).F() {}
 // CHECK:STDERR:    ^
 // CHECK:STDERR: fail_params.carbon:[[@LINE-4]]:1: note: previously declared without parameter list [RedeclParamListPrevious]
 // CHECK:STDERR: namespace D;
 // CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
 fn D(T:! type).F() {}
 
 // CHECK:STDOUT: --- fail_params.carbon

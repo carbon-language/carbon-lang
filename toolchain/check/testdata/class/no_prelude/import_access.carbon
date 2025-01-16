@@ -122,9 +122,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInScope]
 // CHECK:STDERR: fn F(c: Test.Forward*) {}
 // CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(c: Test.Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon

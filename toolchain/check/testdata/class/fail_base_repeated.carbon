@@ -26,12 +26,13 @@ class C {
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+6]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
+  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+7]]:3: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-4]]:3: note: previous `base` declaration is here [ClassSpecificDeclPrevious]
   // CHECK:STDERR:   extend base: B1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   extend base: B1;
 }
 

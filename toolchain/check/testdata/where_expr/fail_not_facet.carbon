@@ -32,9 +32,10 @@ fn G(U:! NOT_DECLARED where .Self == bool);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:8: error: name `e` not found [NameNotFound]
+// CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:8: error: name `e` not found [NameNotFound]
 // CHECK:STDERR: var v: e where .x = 3;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var v: e where .x = 3;
 
 // CHECK:STDOUT: --- fail_left_where_not_facet.carbon

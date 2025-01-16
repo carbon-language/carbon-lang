@@ -15,12 +15,13 @@ interface I {
 }
 
 impl i32 as I {
-  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+6]]:8: error: type `C(i32)` of parameter 1 in redeclaration differs from previous parameter type `C(i32 as I)` [RedeclParamDiffersType]
+  // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE+7]]:8: error: type `C(i32)` of parameter 1 in redeclaration differs from previous parameter type `C(i32 as I)` [RedeclParamDiffersType]
   // CHECK:STDERR:   fn F(c: C(i32));
   // CHECK:STDERR:        ^~~~~~~~~
   // CHECK:STDERR: fail_self_type_mismatch.carbon:[[@LINE-7]]:8: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   fn F(c: C(Self));
   // CHECK:STDERR:        ^~~~~~~~~~
+  // CHECK:STDERR:
   fn F(c: C(i32));
 }
 

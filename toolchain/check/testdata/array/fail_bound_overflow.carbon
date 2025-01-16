@@ -14,12 +14,13 @@
 // CHECK:STDERR:
 var a: [i32; 39999999999999999993];
 
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+6]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+7]]:9: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
-// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+3]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_bound_overflow.carbon:[[@LINE+4]]:9: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: [1; 39999999999999999993];
 // CHECK:STDERR:         ^
+// CHECK:STDERR:
 var b: [1; 39999999999999999993];
 
 // CHECK:STDOUT: --- fail_bound_overflow.carbon

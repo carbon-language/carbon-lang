@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_init_with_self.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+3]]:15: error: name `x` not found [NameNotFound]
+  // CHECK:STDERR: fail_init_with_self.carbon:[[@LINE+4]]:15: error: name `x` not found [NameNotFound]
   // CHECK:STDERR:   var x: () = x;
   // CHECK:STDERR:               ^
+  // CHECK:STDERR:
   var x: () = x;
 }
 

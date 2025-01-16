@@ -18,12 +18,13 @@ class Class {
 }
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+6]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
+  // CHECK:STDERR: fail_addr_self.carbon:[[@LINE+7]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
   // CHECK:STDERR:   c.F();
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_addr_self.carbon:[[@LINE-12]]:8: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   fn F[addr self: Class*]();
   // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   c.F();
 
   c.G();

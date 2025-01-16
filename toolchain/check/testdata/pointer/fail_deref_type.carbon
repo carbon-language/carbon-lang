@@ -16,9 +16,10 @@
 // CHECK:STDERR:        ^
 // CHECK:STDERR:
 var p: *i32;
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+3]]:12: error: cannot apply `->` operator to non-pointer type `type` [ArrowOperatorOfNonPointer]
+// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+4]]:12: error: cannot apply `->` operator to non-pointer type `type` [ArrowOperatorOfNonPointer]
 // CHECK:STDERR: var p2: i32->foo;
 // CHECK:STDERR:            ^~
+// CHECK:STDERR:
 var p2: i32->foo;
 
 // CHECK:STDOUT: --- fail_deref_type.carbon

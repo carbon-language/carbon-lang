@@ -164,12 +164,13 @@ fn CallIncompleteAddrSelf(p: Class*) {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+6]]:10: error: field has incomplete type `C` [IncompleteTypeInVarDecl]
+  // CHECK:STDERR: fail_in_definition.carbon:[[@LINE+7]]:10: error: field has incomplete type `C` [IncompleteTypeInVarDecl]
   // CHECK:STDERR:   var c: C;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_in_definition.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]
   // CHECK:STDERR: class C {
   // CHECK:STDERR: ^~~~~~~~~
+  // CHECK:STDERR:
   var c: C;
 }
 

@@ -132,9 +132,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+3]]:9: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR: fn F(i: Forward*) {}
 // CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:
 fn F(i: Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon

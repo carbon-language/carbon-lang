@@ -14,9 +14,10 @@ interface Modifiers {
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:
   final fn Final() { }
-  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_modifiers.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default fn Default() { }
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn Default() { }
 }
 

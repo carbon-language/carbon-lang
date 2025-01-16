@@ -26,8 +26,9 @@
 // CHECK:STDOUT:   - { index: 3, kind:      'Error', line: {{ *}}[[@LINE-2]], column:   3, indent: 1, spelling: '}', has_leading_space: true }
 // CHECK:STDOUT:   - { index: 4, kind: 'CloseParen', line: {{ *}}[[@LINE-3]], column:   5, indent: 1, spelling: ')', opening_token: 2, has_leading_space: true }
 
-// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+3]]:1: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR: fail_mismatched_brackets.carbon:[[@LINE+4]]:1: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
 // CHECK:STDERR: [
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 [
 // CHECK:STDOUT:   - { index: 5, kind:      'Error', line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: '[', has_leading_space: true }

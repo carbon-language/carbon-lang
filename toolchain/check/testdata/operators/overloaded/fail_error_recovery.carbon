@@ -20,9 +20,10 @@ fn F() {
 }
 
 fn G(n: i32) {
-  // CHECK:STDERR: fail_error_recovery.carbon:[[@LINE+3]]:7: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_error_recovery.carbon:[[@LINE+4]]:7: error: name `undeclared` not found [NameNotFound]
   // CHECK:STDERR:   n + undeclared;
   // CHECK:STDERR:       ^~~~~~~~~~
+  // CHECK:STDERR:
   n + undeclared;
 }
 

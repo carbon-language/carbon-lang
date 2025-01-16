@@ -12,9 +12,10 @@ fn Main() {
   var x: ();
 }
 
-// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+3]]:13: error: name `x` not found [NameNotFound]
+// CHECK:STDERR: fail_lookup_outside_scope.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR: var y: () = x;
 // CHECK:STDERR:             ^
+// CHECK:STDERR:
 var y: () = x;
 
 // CHECK:STDOUT: --- fail_lookup_outside_scope.carbon

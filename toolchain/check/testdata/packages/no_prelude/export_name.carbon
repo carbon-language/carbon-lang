@@ -195,9 +195,10 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: private export C;
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 private export C;
 
 // CHECK:STDOUT: --- base.carbon

@@ -21,9 +21,10 @@ fn F(x: X) {
   var s: String = "hello";
 
   // TODO: Decide on rules for when classes are copyable.
-  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+3]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_not_copyable.carbon:[[@LINE+4]]:14: error: cannot copy value of type `X` [CopyOfUncopyableType]
   // CHECK:STDERR:   var y: X = x;
   // CHECK:STDERR:              ^
+  // CHECK:STDERR:
   var y: X = x;
 }
 

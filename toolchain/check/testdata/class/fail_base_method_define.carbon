@@ -26,9 +26,10 @@ class D {
 // CHECK:STDERR:
 fn D.F() {}
 
-// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+3]]:6: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fail_base_method_define.carbon:[[@LINE+4]]:6: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: fn D.C.F() {}
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn D.C.F() {}
 
 // CHECK:STDOUT: --- fail_base_method_define.carbon

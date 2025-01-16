@@ -15,9 +15,10 @@ interface Interface {
   // CHECK:STDERR:
   default fn F() {}
 
-  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+3]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_define_default_fn_inline.carbon:[[@LINE+4]]:3: error: semantics TODO: `interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
   // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   default fn G(a: i32, b: i32) -> i32 = "int.sadd";
 }
 

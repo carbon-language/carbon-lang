@@ -34,12 +34,13 @@ fn Class.F() {}
 // CHECK:STDERR:
 fn Class.G() {}
 fn Class.H() {}
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+6]]:1: error: redefinition of `fn I` [RedeclRedef]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: error: redefinition of `fn I` [RedeclRedef]
 // CHECK:STDERR: fn Class.I() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE-26]]:3: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:   fn I() {}
 // CHECK:STDERR:   ^~~~~~~~
+// CHECK:STDERR:
 fn Class.I() {}
 
 // CHECK:STDOUT: --- fail_redefinition.carbon

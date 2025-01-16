@@ -51,9 +51,10 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var x:! () = ();
 
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+3]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR: fn A {
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 fn A {
   A();
 }

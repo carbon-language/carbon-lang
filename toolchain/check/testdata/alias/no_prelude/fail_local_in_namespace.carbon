@@ -20,9 +20,10 @@ fn F() -> {} {
   // CHECK:STDERR:                ^~
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInScope]
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInScope]
   // CHECK:STDERR:   return NS.a;
   // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR:
   return NS.a;
 }
 

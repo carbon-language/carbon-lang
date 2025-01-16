@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_alternative_with_implicit_params.carbon
 
 choice X {
-  // CHECK:STDERR: fail_alternative_with_implicit_params.carbon:[[@LINE+3]]:4: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR: fail_alternative_with_implicit_params.carbon:[[@LINE+4]]:4: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
   // CHECK:STDERR:   A[T:! type](value: T)
   // CHECK:STDERR:    ^
+  // CHECK:STDERR:
   A[T:! type](value: T)
 }
 

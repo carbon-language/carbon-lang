@@ -30,9 +30,10 @@ fn F() {
 
 interface Different {}
 
-// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:24: error: cannot access member of interface `Interface` in type `Different` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:24: error: cannot access member of interface `Interface` in type `Different` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(U:! Different) -> U.(Interface.T);
 
 // CHECK:STDOUT: --- fail_member_lookup.carbon

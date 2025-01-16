@@ -72,9 +72,10 @@ impl library "[[@TEST_NAME]]";
 class C {}
 
 fn MakeC(a: A) -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+3]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Factory(C)` in type `A` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return a.(Factory(C).Make)();
 }
 

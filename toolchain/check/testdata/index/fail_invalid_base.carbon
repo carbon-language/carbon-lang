@@ -28,9 +28,10 @@ var b: i32 = F[1];
 // CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+3]]:14: error: type `type` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type `type` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var d: i32 = {.a: i32, .b: i32}[0];
 
 // CHECK:STDOUT: --- fail_invalid_base.carbon

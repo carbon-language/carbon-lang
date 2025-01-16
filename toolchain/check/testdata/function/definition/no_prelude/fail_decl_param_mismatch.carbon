@@ -56,12 +56,13 @@ fn J() -> ();
 fn J() {}
 
 fn K() -> ();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+6]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+7]]:1: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fn K() -> {} { return {}; }
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-4]]:1: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR: fn K() -> ();
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn K() -> {} { return {}; }
 
 // CHECK:STDOUT: --- fail_decl_param_mismatch.carbon

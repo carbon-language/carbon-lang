@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/alias/fail_bool_value.carbon
 
-// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_bool_value.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias a = false;
 // CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:
 alias a = false;
 let a_test: bool = a;
 

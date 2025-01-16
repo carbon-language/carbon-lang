@@ -176,7 +176,7 @@ abstract class Abstract {
 fn ReturnAbstract() -> Abstract;
 
 fn CallReturnAbstract() {
-  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+9]]:3: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE+10]]:3: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnAbstract();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:1: note: class was declared abstract here [ClassAbstractHere]
@@ -185,6 +185,7 @@ fn CallReturnAbstract() {
   // CHECK:STDERR: fail_call_abstract_return.carbon:[[@LINE-9]]:21: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnAbstract() -> Abstract;
   // CHECK:STDERR:                     ^~~~~~~~~~~
+  // CHECK:STDERR:
   ReturnAbstract();
 }
 

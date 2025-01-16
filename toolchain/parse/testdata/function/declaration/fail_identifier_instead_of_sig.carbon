@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_identifier_instead_of_sig.carbon
 
-// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+3]]:8: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+4]]:8: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR: fn foo bar;
 // CHECK:STDERR:        ^~~
+// CHECK:STDERR:
 fn foo bar;
 
 // CHECK:STDOUT: - filename: fail_identifier_instead_of_sig.carbon

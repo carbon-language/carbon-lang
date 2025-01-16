@@ -15,9 +15,10 @@ fn F() {
   // CHECK:STDERR:     ^
   // CHECK:STDERR:
   a.;
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+3]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:   a.fn;
   // CHECK:STDERR:     ^~
+  // CHECK:STDERR:
   a.fn;
 }
 

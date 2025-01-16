@@ -8,13 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/no_prelude/fail_pattern_in_signature.carbon
 
-// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+7]]:6: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+8]]:6: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: fn F((a: {}, b: {}), c: {});
 // CHECK:STDERR:      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+3]]:6: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_pattern_in_signature.carbon:[[@LINE+4]]:6: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F((a: {}, b: {}), c: {});
 // CHECK:STDERR:      ^
+// CHECK:STDERR:
 fn F((a: {}, b: {}), c: {});
 
 // CHECK:STDOUT: --- fail_pattern_in_signature.carbon

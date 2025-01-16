@@ -10,12 +10,13 @@
 
 class Incomplete;
 
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+6]]:8: error: variable has incomplete type `[Incomplete; 1]` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8: error: variable has incomplete type `[Incomplete; 1]` [IncompleteTypeInVarDecl]
 // CHECK:STDERR: var a: [Incomplete; 1];
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var a: [Incomplete; 1];
 
 var p: Incomplete* = &a[0];

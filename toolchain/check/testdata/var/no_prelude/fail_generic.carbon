@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_generic.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+3]]:11: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:11: error: `var` declaration cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
   // CHECK:STDERR:   var x:! () = ();
   // CHECK:STDERR:           ^~
+  // CHECK:STDERR:
   var x:! () = ();
 }
 

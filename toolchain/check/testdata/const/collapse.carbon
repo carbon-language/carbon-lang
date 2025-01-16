@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/const/collapse.carbon
 
 // OK, `const (const i32)` is the same type as `const i32`.
-// CHECK:STDERR: collapse.carbon:[[@LINE+3]]:25: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: collapse.carbon:[[@LINE+4]]:25: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: fn F(p: const i32**) -> const (const i32)** {
 // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(p: const i32**) -> const (const i32)** {
   return p;
 }

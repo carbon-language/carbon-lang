@@ -16,9 +16,10 @@ var a: [i32; 1] = (12,);
 // CHECK:STDERR:
 var b: i32 = a[1];
 
-// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+3]]:16: error: array index `2147483647` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
+// CHECK:STDERR: fail_array_large_index.carbon:[[@LINE+4]]:16: error: array index `2147483647` is past the end of type `[i32; 1]` [ArrayIndexOutOfBounds]
 // CHECK:STDERR: var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDERR:                ^~~~~~~~~~~
+// CHECK:STDERR:
 var c: i32 = a[0x7FFF_FFFF];
 
 // CHECK:STDOUT: --- fail_array_large_index.carbon

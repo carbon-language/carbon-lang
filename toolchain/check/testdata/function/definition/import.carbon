@@ -98,13 +98,14 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern fn D();
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
 // CHECK:STDERR: fns.carbon:7:1: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR: fn D();
 // CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:
 extern fn D();
 
 fn D() {}

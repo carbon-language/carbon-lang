@@ -78,9 +78,10 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR:
 class Class(U:! type) {
-  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+3]]:10: error: name `T` not found [NameNotFound]
+  // CHECK:STDERR: fail_foo.impl.carbon:[[@LINE+4]]:10: error: name `T` not found [NameNotFound]
   // CHECK:STDERR:   var x: T;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var x: T;
 }
 

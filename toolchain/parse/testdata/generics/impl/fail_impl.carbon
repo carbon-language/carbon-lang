@@ -96,9 +96,10 @@ impl;
 
 impl
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+88]]:21: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+89]]:21: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_impl.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

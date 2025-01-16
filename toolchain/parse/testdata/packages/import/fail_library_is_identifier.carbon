@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_library_is_identifier.carbon
 
-// CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+3]]:25: error: expected a string literal to specify the library name [ExpectedLibraryName]
+// CHECK:STDERR: fail_library_is_identifier.carbon:[[@LINE+4]]:25: error: expected a string literal to specify the library name [ExpectedLibraryName]
 // CHECK:STDERR: import Geometry library Shapes;
 // CHECK:STDERR:                         ^~~~~~
+// CHECK:STDERR:
 import Geometry library Shapes;
 
 // CHECK:STDOUT: - filename: fail_library_is_identifier.carbon

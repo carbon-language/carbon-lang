@@ -22,11 +22,12 @@ import Cpp;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+5]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
+// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+6]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp library "";
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: "foo.h": error: error opening file for read: No such file or directory [ErrorOpeningFile]
+// CHECK:STDERR:
 import Cpp library "";
 
 // --- fail_import_cpp_library_file_with_quotes.carbon

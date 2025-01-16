@@ -50,9 +50,10 @@ fn Main() {
 
   // Under #911, if expressions are never reference expressions.
   var a: i32;
-  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+3]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR: fail_assignment_to_non_assignable.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   (if true then a else a) = 10;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   (if true then a else a) = 10;
 }
 

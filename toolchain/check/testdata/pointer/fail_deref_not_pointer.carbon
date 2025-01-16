@@ -34,9 +34,10 @@ fn Deref(n: i32) {
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   *{};
-  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+3]]:5: error: cannot apply `->` operator to non-pointer type `{}` [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR: fail_deref_not_pointer.carbon:[[@LINE+4]]:5: error: cannot apply `->` operator to non-pointer type `{}` [ArrowOperatorOfNonPointer]
   // CHECK:STDERR:   {}->foo;
   // CHECK:STDERR:     ^~
+  // CHECK:STDERR:
   {}->foo;
 }
 

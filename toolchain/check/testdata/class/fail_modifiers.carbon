@@ -90,9 +90,10 @@ abstract class AbstractWithDefinition {
   abstract fn F() {}
   abstract fn G();
 }
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:31: error: definition of `abstract` function [DefinedAbstractFunction]
 // CHECK:STDERR: fn AbstractWithDefinition.G() {
 // CHECK:STDERR:                               ^
+// CHECK:STDERR:
 fn AbstractWithDefinition.G() {
 }
 

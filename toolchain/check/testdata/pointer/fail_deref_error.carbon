@@ -13,9 +13,10 @@
 // CHECK:STDERR:               ^~~~~~~~~~
 // CHECK:STDERR:
 let n: i32 = *undeclared;
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+3]]:15: error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+4]]:15: error: name `undeclared` not found [NameNotFound]
 // CHECK:STDERR: let n2: i32 = undeclared->foo;
 // CHECK:STDERR:               ^~~~~~~~~~
+// CHECK:STDERR:
 let n2: i32 = undeclared->foo;
 
 // CHECK:STDOUT: --- fail_deref_error.carbon

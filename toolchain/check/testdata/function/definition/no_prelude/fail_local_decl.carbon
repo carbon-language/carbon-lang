@@ -40,9 +40,10 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   private var v: {};
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+3]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
   // CHECK:STDERR:   protected var w: {};
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected var w: {};
 }
 

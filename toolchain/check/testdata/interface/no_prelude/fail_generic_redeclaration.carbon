@@ -29,12 +29,13 @@ interface Generic(T:! type);
 interface Generic {}
 
 interface DifferentParams(T:! type);
-// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+6]]:27: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE+7]]:27: error: type `()` of parameter 1 in redeclaration differs from previous parameter type `type` [RedeclParamDiffersType]
 // CHECK:STDERR: interface DifferentParams(T:! ()) {}
 // CHECK:STDERR:                           ^~~~~~
 // CHECK:STDERR: fail_generic_redeclaration.carbon:[[@LINE-4]]:27: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: interface DifferentParams(T:! type);
 // CHECK:STDERR:                           ^~~~~~~~
+// CHECK:STDERR:
 interface DifferentParams(T:! ()) {}
 
 // CHECK:STDOUT: --- fail_generic_redeclaration.carbon

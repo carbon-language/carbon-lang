@@ -34,13 +34,14 @@ import library "a";
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+7]]:8: error: variable has incomplete type `Incomplete` [IncompleteTypeInVarDecl]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:8: error: variable has incomplete type `Incomplete` [IncompleteTypeInVarDecl]
 // CHECK:STDERR: var a: Incomplete;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
 // CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Incomplete;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var a: Incomplete;
 
 // CHECK:STDOUT: --- a.carbon

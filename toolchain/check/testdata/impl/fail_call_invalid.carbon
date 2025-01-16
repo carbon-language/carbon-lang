@@ -13,9 +13,10 @@ interface Simple {
 }
 
 impl i32 as Simple {
-  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+3]]:14: error: name `Undeclared` not found [NameNotFound]
+  // CHECK:STDERR: fail_call_invalid.carbon:[[@LINE+4]]:14: error: name `Undeclared` not found [NameNotFound]
   // CHECK:STDERR:   fn G[self: Undeclared]();
   // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:
   fn G[self: Undeclared]();
 }
 

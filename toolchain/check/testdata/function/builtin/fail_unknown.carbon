@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/builtin/fail_unknown.carbon
 
-// CHECK:STDERR: fail_unknown.carbon:[[@LINE+3]]:23: error: unknown builtin function name "unknown.builtin.name" [UnknownBuiltinFunctionName]
+// CHECK:STDERR: fail_unknown.carbon:[[@LINE+4]]:23: error: unknown builtin function name "unknown.builtin.name" [UnknownBuiltinFunctionName]
 // CHECK:STDERR: fn UnknownBuiltin() = "unknown.builtin.name";
 // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn UnknownBuiltin() = "unknown.builtin.name";
 
 // CHECK:STDOUT: --- fail_unknown.carbon

@@ -169,12 +169,13 @@ base class Base {
   fn F[addr self: Self*]();
 }
 
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE+6]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Base.F[addr self: Base*]() {
 // CHECK:STDERR:                      ^~~~
 // CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:19: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F[addr self: Self*]();
 // CHECK:STDERR:                   ^~~~
+// CHECK:STDERR:
 fn Base.F[addr self: Base*]() {
   (*self).a = ();
 }

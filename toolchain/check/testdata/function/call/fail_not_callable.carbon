@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/fail_not_callable.carbon
 
 fn Run() {
-  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+3]]:16: error: value of type `String` is not callable [CallToNonCallable]
+  // CHECK:STDERR: fail_not_callable.carbon:[[@LINE+4]]:16: error: value of type `String` is not callable [CallToNonCallable]
   // CHECK:STDERR:   var x: i32 = "hello"();
   // CHECK:STDERR:                ^~~~~~~~~
+  // CHECK:STDERR:
   var x: i32 = "hello"();
 }
 

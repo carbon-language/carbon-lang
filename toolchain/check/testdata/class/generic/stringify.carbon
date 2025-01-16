@@ -72,19 +72,20 @@ class D {
 
 class E(F:! D) {}
 
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+13]]:8: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+14]]:8: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
 // CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE-5]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
 // CHECK:STDERR: class E(F:! D) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+6]]:36: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+7]]:36: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
 // CHECK:STDERR: var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE-12]]:9: note: initializing generic parameter `F` declared here [InitializingGenericParam]
 // CHECK:STDERR: class E(F:! D) {}
 // CHECK:STDERR:         ^
+// CHECK:STDERR:
 var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 
 // CHECK:STDOUT: --- fail_empty_params.carbon

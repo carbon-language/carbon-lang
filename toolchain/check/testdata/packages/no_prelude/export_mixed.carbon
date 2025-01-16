@@ -88,9 +88,10 @@ library "[[@TEST_NAME]]";
 import library "export_import_then_name";
 import library "export_name_then_import";
 
-// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+3]]:8: error: name `D` not found [NameNotFound]
+// CHECK:STDERR: fail_nonexport_use_both.carbon:[[@LINE+4]]:8: error: name `D` not found [NameNotFound]
 // CHECK:STDERR: var d: D = {.y = ()};
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var d: D = {.y = ()};
 
 // --- use_both_reversed.carbon

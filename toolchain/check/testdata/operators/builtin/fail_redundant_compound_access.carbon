@@ -17,9 +17,10 @@ fn Main() {
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+3]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+4]]:7: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   a = a.(F)();
   // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:
   a = a.(F)();
 }
 

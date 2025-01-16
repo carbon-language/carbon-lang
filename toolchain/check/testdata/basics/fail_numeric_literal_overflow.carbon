@@ -32,9 +32,10 @@ let c: i32 = 0x8000_0000;
 // CHECK:STDERR:
 let d: f64 = 39999999999999999993.0e3;
 
-// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+3]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
+// CHECK:STDERR: fail_numeric_literal_overflow.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let e: f64 = 5.0e39999999999999999993;
 
 // CHECK:STDOUT: --- fail_numeric_literal_overflow.carbon

@@ -21,9 +21,10 @@ void foo1();
 library "[[@TEST_NAME]]";
 
 import Cpp library "file1.h";
-// CHECK:STDERR: fail_multiple_imports.carbon:[[@LINE+3]]:1: error: semantics TODO: `multiple Cpp imports are not yet supported` [SemanticsTodo]
+// CHECK:STDERR: fail_multiple_imports.carbon:[[@LINE+4]]:1: error: semantics TODO: `multiple Cpp imports are not yet supported` [SemanticsTodo]
 // CHECK:STDERR: import Cpp library "file2.h";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 import Cpp library "file2.h";
 
 // CHECK:STDOUT: --- fail_multiple_imports.carbon

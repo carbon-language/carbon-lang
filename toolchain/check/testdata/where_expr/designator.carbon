@@ -80,9 +80,10 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+3]]:13: error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+4]]:13: error: name `.Self` not found [NameNotFound]
   // CHECK:STDERR:   fn G() -> .Self { return Self; }
   // CHECK:STDERR:             ^~~~~
+  // CHECK:STDERR:
   fn G() -> .Self { return Self; }
 }
 

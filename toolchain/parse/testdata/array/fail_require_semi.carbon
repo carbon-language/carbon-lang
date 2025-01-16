@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/array/fail_require_semi.carbon
 
-// CHECK:STDERR: fail_require_semi.carbon:[[@LINE+3]]:12: error: expected `;` in array type [ExpectedArraySemi]
+// CHECK:STDERR: fail_require_semi.carbon:[[@LINE+4]]:12: error: expected `;` in array type [ExpectedArraySemi]
 // CHECK:STDERR: var x: [i32];
 // CHECK:STDERR:            ^
+// CHECK:STDERR:
 var x: [i32];
 
 // CHECK:STDOUT: - filename: fail_require_semi.carbon

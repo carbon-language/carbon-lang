@@ -59,13 +59,14 @@ fn FailStar() {
 
 var x: i32 = .
 
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+93]]:21: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+94]]:21: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+89]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+90]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR: // CHECK:STDOUT:   ]
 // CHECK:STDERR:                     ^
+// CHECK:STDERR:
 // CHECK:STDOUT: - filename: designator.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},

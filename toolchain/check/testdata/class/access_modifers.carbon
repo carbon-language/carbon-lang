@@ -128,12 +128,13 @@ class A {
 // CHECK:STDERR:                 ^
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+6]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
+// CHECK:STDERR: fail_global_access.carbon:[[@LINE+7]]:14: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
 // CHECK:STDERR: let y: i32 = A.y;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR: fail_global_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
 // CHECK:STDERR:   private let y: i32 = 5;
 // CHECK:STDERR:               ^
+// CHECK:STDERR:
 let y: i32 = A.y;
 
 // --- self_access.carbon

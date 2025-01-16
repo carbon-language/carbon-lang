@@ -35,9 +35,10 @@ fn TestRef(b: C) {
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   a += b;
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:3: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
   ++a;
 }
 

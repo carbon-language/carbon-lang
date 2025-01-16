@@ -132,13 +132,14 @@ library "[[@TEST_NAME]]";
 
 interface L4 { let W4:! type; }
 
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+7]]:27: error: name `BAD7` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:27: error: name `BAD7` not found [NameNotFound]
 // CHECK:STDERR: impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
 // CHECK:STDERR:                           ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+3]]:42: error: name `BAD8` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+4]]:42: error: name `BAD8` not found [NameNotFound]
 // CHECK:STDERR: impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
 // CHECK:STDERR:                                          ^~~~
+// CHECK:STDERR:
 impl () as L4 where .W4 = BAD7 and .W4 = BAD8 {}
 
 // --- repeated.carbon

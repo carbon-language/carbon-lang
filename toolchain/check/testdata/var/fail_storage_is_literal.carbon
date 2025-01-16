@@ -9,12 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+6]]:10: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+7]]:10: error: cannot implicitly convert from `Core.IntLiteral` to `type` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:10: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+4]]:10: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var x: 1 = 1;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var x: 1 = 1;
 }
 

@@ -29,12 +29,13 @@ fn Procedure() {
 library "[[@TEST_NAME]]";
 
 fn ForgotReturnType() {
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+6]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
   // CHECK:STDERR:   returned var v: () = ();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR: fn ForgotReturnType() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   returned var v: () = ();
   return var;
 }

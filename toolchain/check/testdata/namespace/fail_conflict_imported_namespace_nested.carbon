@@ -24,13 +24,14 @@ import Other;
 // CHECK:STDERR: ^~~~~~
 // CHECK:STDERR:
 namespace Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
 // CHECK:STDERR: fn Other.Nested.F();
 // CHECK:STDERR:          ^~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1: in import [InImport]
 // CHECK:STDERR: fn.carbon:3:1: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR: namespace Nested;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Other.Nested.F();
 
 // CHECK:STDOUT: --- fn.carbon

@@ -34,9 +34,10 @@ var b: [i32; 3] = t1;
 var c: [i32; 3] = (1, 2);
 
 var t2: (i32, i32);
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:19: error: cannot initialize array of 3 elements from tuple with 2 elements [ArrayInitFromExprArgCountMismatch]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:19: error: cannot initialize array of 3 elements from tuple with 2 elements [ArrayInitFromExprArgCountMismatch]
 // CHECK:STDERR: var d: [i32; 3] = t2;
 // CHECK:STDERR:                   ^~
+// CHECK:STDERR:
 var d: [i32; 3] = t2;
 
 // CHECK:STDOUT: --- fail_type_mismatch.carbon

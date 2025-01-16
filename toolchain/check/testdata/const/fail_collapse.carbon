@@ -13,12 +13,13 @@
 // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: const (const i32)**) -> i32** {
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+6]]:3: error: cannot implicitly convert from `const i32**` to `i32**` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+7]]:3: error: cannot implicitly convert from `const i32**` to `i32**` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+3]]:3: note: type `const i32**` does not implement interface `Core.ImplicitAs(i32**)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_collapse.carbon:[[@LINE+4]]:3: note: type `const i32**` does not implement interface `Core.ImplicitAs(i32**)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   return p;
 }
 

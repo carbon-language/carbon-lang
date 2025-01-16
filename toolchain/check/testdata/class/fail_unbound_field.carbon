@@ -20,9 +20,10 @@ class Class {
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+3]]:10: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+4]]:10: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   return Class.field;
   // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR:
   return Class.field;
 }
 

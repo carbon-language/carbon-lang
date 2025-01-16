@@ -10,9 +10,10 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+3]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
     // CHECK:STDERR:     case => { return 2; }
     // CHECK:STDERR:          ^~
+    // CHECK:STDERR:
     case => { return 2; }
   }
   return 0;

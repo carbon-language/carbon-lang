@@ -15,9 +15,10 @@ class Class {
   // CHECK:STDERR:
   fn F[addr a:! Class*]();
 
-  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+3]]:8: error: `addr` can only be applied to a `self` parameter [AddrOnNonSelfParam]
+  // CHECK:STDERR: fail_addr_not_self.carbon:[[@LINE+4]]:8: error: `addr` can only be applied to a `self` parameter [AddrOnNonSelfParam]
   // CHECK:STDERR:   fn G(addr b: Class*);
   // CHECK:STDERR:        ^~~~
+  // CHECK:STDERR:
   fn G(addr b: Class*);
 }
 

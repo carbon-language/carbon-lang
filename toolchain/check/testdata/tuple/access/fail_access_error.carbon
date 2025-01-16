@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/tuple/access/fail_access_error.carbon
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_access_error.carbon:[[@LINE+3]]:17: error: name `oops` not found [NameNotFound]
+// CHECK:STDERR: fail_access_error.carbon:[[@LINE+4]]:17: error: name `oops` not found [NameNotFound]
 // CHECK:STDERR: var b: i32 = a.(oops);
 // CHECK:STDERR:                 ^~~~
+// CHECK:STDERR:
 var b: i32 = a.(oops);
 
 // CHECK:STDOUT: --- fail_access_error.carbon

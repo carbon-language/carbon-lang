@@ -24,13 +24,14 @@ fn F() { 0[1]; }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+7]]:10: error: `Core.IndexWith` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+8]]:10: error: `Core.IndexWith` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+3]]:10: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+4]]:10: error: type `Core.IntLiteral` does not support indexing [TypeNotIndexable]
 // CHECK:STDERR: fn F() { 0[1]; }
 // CHECK:STDERR:          ^~~~
+// CHECK:STDERR:
 fn F() { 0[1]; }
 
 // --- wrong_arg_count.carbon

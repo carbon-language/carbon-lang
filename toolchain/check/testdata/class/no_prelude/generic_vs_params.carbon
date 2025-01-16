@@ -43,9 +43,10 @@ class A[T: type]() {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+3]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
+// CHECK:STDERR: fail_non_generic_params.carbon:[[@LINE+4]]:9: error: parameters of generic types must be constant [GenericParamMustBeConstant]
 // CHECK:STDERR: class A(T: type) {}
 // CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:
 class A(T: type) {}
 
 // This is testing a use of the invalid type.

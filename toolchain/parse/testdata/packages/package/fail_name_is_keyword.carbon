@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_name_is_keyword.carbon
 
-// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+3]]:9: error: expected identifier after `package` [ExpectedIdentifierAfterPackage]
+// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+4]]:9: error: expected identifier after `package` [ExpectedIdentifierAfterPackage]
 // CHECK:STDERR: package fn;
 // CHECK:STDERR:         ^~
+// CHECK:STDERR:
 package fn;
 
 // CHECK:STDOUT: - filename: fail_name_is_keyword.carbon

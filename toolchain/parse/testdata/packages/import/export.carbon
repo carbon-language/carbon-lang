@@ -59,9 +59,10 @@ export import library "lib";
 
 impl package Pkg;
 
-// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+3]]:1: error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
 // CHECK:STDERR: export import library "lib";
 // CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
 export import library "lib";
 
 // CHECK:STDOUT: - filename: fail_package.carbon

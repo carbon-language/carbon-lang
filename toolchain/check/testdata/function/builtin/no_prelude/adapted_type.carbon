@@ -40,9 +40,10 @@ class MyIntLiteral {
   adapt {};
 }
 
-// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_adapt.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 
 // CHECK:STDOUT: --- adapt.carbon

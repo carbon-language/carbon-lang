@@ -14,9 +14,10 @@
 // CHECK:STDERR:
 alias a = i32;
 
-// CHECK:STDERR: fail_builtins.carbon:[[@LINE+3]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
+// CHECK:STDERR: fail_builtins.carbon:[[@LINE+4]]:11: error: alias initializer must be a name reference [AliasRequiresNameRef]
 // CHECK:STDERR: alias b = bool;
 // CHECK:STDERR:           ^~~~
+// CHECK:STDERR:
 alias b = bool;
 
 // CHECK:STDOUT: --- fail_builtins.carbon

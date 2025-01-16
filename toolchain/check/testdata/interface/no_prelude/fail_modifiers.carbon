@@ -67,9 +67,10 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_protected_member.carbon:[[@LINE+3]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+  // CHECK:STDERR: fail_protected_member.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
   // CHECK:STDERR:   protected fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   protected fn F[self: Self]();
 }
 

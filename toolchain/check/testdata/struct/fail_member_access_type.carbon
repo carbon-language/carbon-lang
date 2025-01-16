@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_member_access_type.carbon
 
 var x: {.a: f64} = {.a = 4.0};
-// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+3]]:14: error: type `{.a: f64}` does not have a member `b` [QualifiedExprNameNotFound]
+// CHECK:STDERR: fail_member_access_type.carbon:[[@LINE+4]]:14: error: type `{.a: f64}` does not have a member `b` [QualifiedExprNameNotFound]
 // CHECK:STDERR: var y: i32 = x.b;
 // CHECK:STDERR:              ^~~
+// CHECK:STDERR:
 var y: i32 = x.b;
 
 // CHECK:STDOUT: --- fail_member_access_type.carbon

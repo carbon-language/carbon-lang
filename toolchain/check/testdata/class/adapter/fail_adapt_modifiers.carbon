@@ -46,12 +46,13 @@ class C4 {
 }
 
 class C5 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+6]]:10: error: `base` not allowed on declaration with `extend` [ModifierNotAllowedWith]
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: error: `base` not allowed on declaration with `extend` [ModifierNotAllowedWith]
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:3: note: `extend` previously appeared here [ModifierPrevious]
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here [ModifierPrevious]
   // CHECK:STDERR:   extend base adapt B;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extend base adapt B;
 }
 

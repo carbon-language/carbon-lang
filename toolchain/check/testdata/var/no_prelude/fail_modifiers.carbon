@@ -36,9 +36,10 @@ private protected var c: ();
 // CHECK:STDERR:
 protected protected var d: ();
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `abstract` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR: abstract var e: ();
 // CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:
 abstract var e: ();
 
 // CHECK:STDOUT: --- fail_modifiers.carbon

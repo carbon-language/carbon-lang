@@ -50,8 +50,9 @@ library "[[@TEST_NAME]]";
 
 interface L {}
 
-// CHECK:STDERR: fail_other_nesting.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_other_nesting.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as (L where .Self impls type) where .Self impls type;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as (L where .Self impls type) where .Self impls type;
 impl () as L {}

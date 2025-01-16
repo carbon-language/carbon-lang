@@ -19,9 +19,10 @@ fn NotString() = banana;
 // CHECK:STDERR:
 fn JunkAfterString() = "hello" "world";
 
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+3]]:23: error: expected builtin function name after `=` [ExpectedBuiltinName]
+// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:23: error: expected builtin function name after `=` [ExpectedBuiltinName]
 // CHECK:STDERR: fn SpuriousEquals() = { }
 // CHECK:STDERR:                       ^
+// CHECK:STDERR:
 fn SpuriousEquals() = { }
 fn TestRecoveryFromSpuriousEquals();
 

@@ -32,9 +32,10 @@ fn TooFew(a: f64) -> f64 = "float.add";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
 fn JustRight(a: f64, b: f64) -> f64 = "float.add";
 

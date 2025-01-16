@@ -34,9 +34,10 @@ fn If3(b: bool) -> i32 {
   if (b) {
     return 1;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+3]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: --- fail_reachable_fallthrough.carbon

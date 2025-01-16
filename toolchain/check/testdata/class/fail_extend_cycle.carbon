@@ -25,9 +25,10 @@ base class B {
 // CHECK:STDERR:
 base class A {
   extend base: A;
-  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+3]]:10: error: name `C` not found [NameNotFound]
+  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+4]]:10: error: name `C` not found [NameNotFound]
   // CHECK:STDERR:   var c: C;
   // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   var c: C;
 }
 

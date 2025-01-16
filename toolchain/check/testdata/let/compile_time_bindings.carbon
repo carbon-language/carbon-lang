@@ -156,9 +156,10 @@ library "[[@TEST_NAME]]";
 interface Empty {}
 
 impl i32 as Empty {
-  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+3]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+  // CHECK:STDERR: fail_use_in_impl.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
+  // CHECK:STDERR:
   let Zero:! i32 = 0;
 }
 

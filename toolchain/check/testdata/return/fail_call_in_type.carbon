@@ -11,9 +11,10 @@
 // TODO: Some variant of this should work, once compile-time function calls are
 // supported.
 fn ReturnType() -> type { return i32; }
-// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+3]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_call_in_type.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn Six() -> ReturnType() { return 6; }
 // CHECK:STDERR:             ^~~~~~~~~~~~
+// CHECK:STDERR:
 fn Six() -> ReturnType() { return 6; }
 
 // CHECK:STDOUT: --- fail_call_in_type.carbon

@@ -78,12 +78,13 @@ class D(T:! i32) {}
 library "[[@TEST_NAME]]";
 
 class E(T:! type);
-// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+6]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
+// CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE+7]]:9: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
 // CHECK:STDERR: class E(U:! type) {}
 // CHECK:STDERR:         ^~~~~~~~
 // CHECK:STDERR: fail_mismatch_param_name.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class E(T:! type);
 // CHECK:STDERR:         ^~~~~~~~
+// CHECK:STDERR:
 class E(U:! type) {}
 
 // CHECK:STDOUT: --- valid.carbon

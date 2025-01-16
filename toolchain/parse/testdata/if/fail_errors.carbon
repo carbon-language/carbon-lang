@@ -25,13 +25,14 @@ fn F() {
   // CHECK:STDERR:
   if (b c) {}
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+7]]:1: error: expected braced code block [ExpectedCodeBlock]
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+8]]:1: error: expected braced code block [ExpectedCodeBlock]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR: }
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: fail_errors.carbon

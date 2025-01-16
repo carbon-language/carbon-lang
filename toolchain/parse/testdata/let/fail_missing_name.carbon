@@ -18,9 +18,10 @@ let : i32 = 4;
 
 // --- fail_complietime_binding.carbon
 
-// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+3]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+4]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: let :! bool = true;
 // CHECK:STDERR:     ^~
+// CHECK:STDERR:
 let :! bool = true;
 
 // CHECK:STDOUT: - filename: fail_runtime_binding.carbon

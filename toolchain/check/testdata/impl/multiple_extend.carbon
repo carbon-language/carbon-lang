@@ -121,9 +121,10 @@ fn M(l: L) {
    // CHECK:STDERR:    ^~~
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+3]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+4]]:4: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
    // CHECK:STDERR:    l.K();
    // CHECK:STDERR:    ^~~
+   // CHECK:STDERR:
    l.K();
 }
 

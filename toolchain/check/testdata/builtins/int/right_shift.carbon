@@ -122,7 +122,8 @@ let negative_zero: i32 = RightShift(0, -1);
 // CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 let negative_lit: Core.IntLiteral() = RightShiftLit(1, -1);
-// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+3]]:44: error: shift distance negative in `0 >> -1` [CompileTimeShiftNegative]
+// CHECK:STDERR: fail_bad_shift.carbon:[[@LINE+4]]:44: error: shift distance negative in `0 >> -1` [CompileTimeShiftNegative]
 // CHECK:STDERR: let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDERR:                                            ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);

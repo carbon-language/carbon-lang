@@ -80,12 +80,13 @@ fn F(T:! type, U:! type) -> T*;
 // CHECK:STDERR:      ^~~~~~~~
 // CHECK:STDERR:
 fn F(U:! type, T:! type) -> U* {
-  // CHECK:STDERR: fail_rename.carbon:[[@LINE+6]]:10: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_rename.carbon:[[@LINE+7]]:10: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   return F(T);
   // CHECK:STDERR:          ^~~~
   // CHECK:STDERR: fail_rename.carbon:[[@LINE-13]]:1: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR: fn F(T:! type, U:! type) -> T*;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return F(T);
 }
 

@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/no_prelude/fail_init_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
   // CHECK:STDERR:   var x: {} = ();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   var x: {} = ();
 }
 

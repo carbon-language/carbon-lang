@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/declaration/fail_param_in_type.carbon
 
-// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+3]]:23: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR: fail_param_in_type.carbon:[[@LINE+4]]:23: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR: fn F(n: i32, a: [i32; n]*);
 // CHECK:STDERR:                       ^
+// CHECK:STDERR:
 fn F(n: i32, a: [i32; n]*);
 
 // CHECK:STDOUT: --- fail_param_in_type.carbon

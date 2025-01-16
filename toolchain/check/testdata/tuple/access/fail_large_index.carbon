@@ -15,9 +15,10 @@ var b: (i32,) = a;
 // CHECK:STDERR:              ^~~
 // CHECK:STDERR:
 var c: i32 = b.1;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+3]]:14: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
+// CHECK:STDERR: fail_large_index.carbon:[[@LINE+4]]:14: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
 // CHECK:STDERR: var d: i32 = b.(0x7FFF_FFFF);
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var d: i32 = b.(0x7FFF_FFFF);
 
 // CHECK:STDOUT: --- fail_large_index.carbon

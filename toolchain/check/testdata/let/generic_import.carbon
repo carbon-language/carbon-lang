@@ -27,9 +27,10 @@ impl package Implicit;
 // CHECK:STDERR:        ^~
 // CHECK:STDERR:
 var a: T*;
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var b: T = *a;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 var b: T = *a;
 
 // CHECK:STDOUT: --- fail_implicit.carbon

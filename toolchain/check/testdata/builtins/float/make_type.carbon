@@ -39,9 +39,10 @@ import library "types";
 var invalid_float: Float(32);
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+3]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: var dyn: Float(dyn_size);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var dyn: Float(dyn_size);
 
 // CHECK:STDOUT: --- types.carbon

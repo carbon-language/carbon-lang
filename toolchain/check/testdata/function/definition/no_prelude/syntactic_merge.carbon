@@ -156,16 +156,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+10]]:11: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:11: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+6]]:17: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:17: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Foo(a: const (const C)) {}
 // CHECK:STDERR:                 ^
 // CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:17: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR: fn Foo(a: const C);
 // CHECK:STDERR:                 ^
+// CHECK:STDERR:
 fn Foo(a: const (const C)) {}
 
 // CHECK:STDOUT: --- basic.carbon

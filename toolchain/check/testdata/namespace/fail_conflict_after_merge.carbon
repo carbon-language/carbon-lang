@@ -38,13 +38,14 @@ fn NS();
 // we don't move it.
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:1: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn NS();
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-23]]:1: in import [InImport]
 // CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: namespace NS;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 fn NS();
 
 // CHECK:STDOUT: --- namespace.carbon

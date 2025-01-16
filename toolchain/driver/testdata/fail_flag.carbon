@@ -10,3 +10,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/fail_flag.carbon
 // CHECK:STDERR: error: unknown option `--non-existent-flag`
+// CHECK:STDERR:

@@ -33,9 +33,10 @@ interface Simple {
 }
 
 fn Function() {
-  // CHECK:STDERR: fail_function.carbon:[[@LINE+3]]:8: error: `impl as` can only be used in a class [ImplAsOutsideClass]
+  // CHECK:STDERR: fail_function.carbon:[[@LINE+4]]:8: error: `impl as` can only be used in a class [ImplAsOutsideClass]
   // CHECK:STDERR:   impl as Simple {
   // CHECK:STDERR:        ^~
+  // CHECK:STDERR:
   impl as Simple {
     fn F() {}
   }

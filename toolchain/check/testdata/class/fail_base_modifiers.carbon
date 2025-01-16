@@ -42,12 +42,13 @@ class C3 {
 }
 
 class C4 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+6]]:10: error: `extend` repeated on declaration [ModifierRepeated]
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration [ModifierRepeated]
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:3: note: `extend` previously appeared here [ModifierPrevious]
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here [ModifierPrevious]
   // CHECK:STDERR:   extend extend base: B;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   extend extend base: B;
 }
 

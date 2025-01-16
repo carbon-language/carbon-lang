@@ -80,9 +80,10 @@ class Core {
   fn Int[T:! type](N:! T) -> {} { return {}; }
 }
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+3]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:13: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: var n: {} = i32;
 // CHECK:STDERR:             ^~~
+// CHECK:STDERR:
 var n: {} = i32;
 
 // CHECK:STDOUT: --- fail_missing_prelude.carbon

@@ -48,17 +48,18 @@ var and_val: bool = true and true;
 // CHECK:STDERR:
 var or_: F(true or true);
 
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+11]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+12]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+7]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+8]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+3]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR: fail_and_or_not_in_function.carbon:[[@LINE+4]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
 // CHECK:STDERR: var or_val: bool = true or true;
 // CHECK:STDERR:                    ^~~~~~~~~~~~
+// CHECK:STDERR:
 var or_val: bool = true or true;
 
 // CHECK:STDOUT: --- fail_and_or_not_in_function.carbon

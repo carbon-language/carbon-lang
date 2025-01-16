@@ -148,9 +148,10 @@ library "[[@TEST_NAME]]";
 
 import library "non_export";
 
-// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+3]]:15: error: name `C` not found [NameNotFound]
+// CHECK:STDERR: fail_use_non_export.carbon:[[@LINE+4]]:15: error: name `C` not found [NameNotFound]
 // CHECK:STDERR: alias Local = C;
 // CHECK:STDERR:               ^
+// CHECK:STDERR:
 alias Local = C;
 
 // --- use_non_export_then_base.carbon

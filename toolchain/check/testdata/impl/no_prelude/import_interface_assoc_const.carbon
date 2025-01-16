@@ -148,13 +148,14 @@ import library "interface";
 
 class CA { }
 
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+7]]:25: error: name `BAD7` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+8]]:25: error: name `BAD7` not found [NameNotFound]
 // CHECK:STDERR: impl CA as I where .T = BAD7 and .T = BAD8 { }
 // CHECK:STDERR:                         ^~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+3]]:39: error: name `BAD8` not found [NameNotFound]
+// CHECK:STDERR: fail_two_different_both_bad.carbon:[[@LINE+4]]:39: error: name `BAD8` not found [NameNotFound]
 // CHECK:STDERR: impl CA as I where .T = BAD7 and .T = BAD8 { }
 // CHECK:STDERR:                                       ^~~~
+// CHECK:STDERR:
 impl CA as I where .T = BAD7 and .T = BAD8 { }
 
 // --- repeated.carbon

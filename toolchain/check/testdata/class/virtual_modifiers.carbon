@@ -90,9 +90,10 @@ class C {
 package FailModifiers;
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
   // CHECK:STDERR:   impl fn F();
   // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
   impl fn F();
 }
 

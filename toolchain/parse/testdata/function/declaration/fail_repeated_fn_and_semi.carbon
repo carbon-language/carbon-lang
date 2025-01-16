@@ -8,9 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/declaration/fail_repeated_fn_and_semi.carbon
 
-// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+3]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: fn fn;
 // CHECK:STDERR:    ^~
+// CHECK:STDERR:
 fn fn;
 
 // CHECK:STDOUT: - filename: fail_repeated_fn_and_semi.carbon

@@ -30,9 +30,10 @@ fn G(b: [i32; 3]) {
   // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   var pf: i32* = &F()[0];
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   F()[0] = 4;
   // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   F()[0] = 4;
 }
 

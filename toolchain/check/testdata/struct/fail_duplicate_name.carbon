@@ -44,12 +44,13 @@ let w: i32 = {.def = 1, .def = 2}.def;
 // CHECK:STDERR:
 var x: {.a: i32} = {.a = 1, .a = 2};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+6]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:31: note: field with the same name here [StructNamePrevious]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:31: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDERR:                               ^
+// CHECK:STDERR:
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
 // CHECK:STDOUT: --- fail_duplicate_name.carbon

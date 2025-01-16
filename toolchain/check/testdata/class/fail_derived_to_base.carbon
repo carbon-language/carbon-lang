@@ -32,12 +32,13 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+6]]:47: error: cannot implicitly convert from `Incomplete*` to `A2*` [ImplicitAsConversionFailure]
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+7]]:47: error: cannot implicitly convert from `Incomplete*` to `A2*` [ImplicitAsConversionFailure]
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:47: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 // CHECK:STDERR:                                               ^~~~~~~~~
+// CHECK:STDERR:
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
 
 // CHECK:STDOUT: --- fail_derived_to_base.carbon

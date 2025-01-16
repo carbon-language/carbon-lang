@@ -94,9 +94,10 @@ impl library "[[@TEST_NAME]]";
 
 interface D {}
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+3]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR: impl () as D;
 // CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as D;
 
 // CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.carbon

@@ -71,16 +71,17 @@ default default let g: i32 = 1;
 // CHECK:STDERR:
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:11: error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:11: error: `protected` repeated on declaration [ModifierRepeated]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR:           ^~~~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:1: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:1: note: `protected` previously appeared here [ModifierPrevious]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+3]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
 // CHECK:STDERR: protected protected let i: i32 = 1;
 // CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:
 protected protected let i: i32 = 1;
 
 // CHECK:STDOUT: --- fail_modifiers.carbon

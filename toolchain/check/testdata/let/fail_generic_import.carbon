@@ -23,9 +23,10 @@ let T:! type = i32;
 impl package Implicit;
 
 // TODO: Should this be valid?
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+3]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: let a: T = 0;
 // CHECK:STDERR:        ^
+// CHECK:STDERR:
 let a: T = 0;
 
 // CHECK:STDOUT: --- fail_implicit.carbon

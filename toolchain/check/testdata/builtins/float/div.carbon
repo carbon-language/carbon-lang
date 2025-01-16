@@ -34,9 +34,10 @@ fn TooFew(a: f64) -> f64 = "float.div";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.div";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+3]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.div";
 fn JustRight(a: f64, b: f64) -> f64 = "float.div";
 

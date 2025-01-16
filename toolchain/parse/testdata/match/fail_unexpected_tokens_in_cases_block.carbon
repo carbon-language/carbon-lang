@@ -43,9 +43,10 @@ fn f() -> i32 {
     // CHECK:STDERR:     ^~~~~~
     // CHECK:STDERR:
     return 1;
-    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+3]]:5: error: unexpected `(`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
+    // CHECK:STDERR: fail_unexpected_tokens_in_cases_block.carbon:[[@LINE+4]]:5: error: unexpected `(`; expected `case`, `default` or `}` [UnexpectedTokenInMatchCasesBlock]
     // CHECK:STDERR:     ((), (), ())
     // CHECK:STDERR:     ^
+    // CHECK:STDERR:
     ((), (), ())
   }
   return 0;

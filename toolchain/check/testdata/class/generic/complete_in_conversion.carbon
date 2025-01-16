@@ -24,9 +24,10 @@ class A(N:! i32) {
 }
 
 fn F(a: A(0)*) {
-  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:3: note: in `A(0)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   let b: B* = a;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let b: B* = a;
 }
 

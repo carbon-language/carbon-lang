@@ -9,9 +9,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
 
 fn Procedure() -> i32 {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+3]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
   // CHECK:STDERR:   return var;
   // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   return var;
 }
 

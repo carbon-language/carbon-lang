@@ -67,7 +67,7 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:                    ^~~~
   // CHECK:STDERR:
   ReturnCUnused();
-  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+11]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_use_imported.carbon:[[@LINE+12]]:3: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnCUsed();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_imported.carbon:[[@LINE-19]]:1: in import [InImport]
@@ -78,6 +78,7 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR: fail_incomplete_return.carbon:8:18: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR: fn ReturnCUsed() -> C;
   // CHECK:STDERR:                  ^~~~
+  // CHECK:STDERR:
   ReturnCUsed();
   ReturnDUnused();
   ReturnDUsed();

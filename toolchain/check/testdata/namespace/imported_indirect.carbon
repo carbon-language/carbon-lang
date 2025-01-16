@@ -73,7 +73,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Same library "b";
 
-// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+12]]:10: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+13]]:10: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn G() { Same.F(); }
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-5]]:1: in import [InImport]
@@ -85,6 +85,7 @@ import Same library "b";
 // CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
 // CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:
 fn G() { Same.F(); }
 
 // CHECK:STDOUT: --- a.carbon

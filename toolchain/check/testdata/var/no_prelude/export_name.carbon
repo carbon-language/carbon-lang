@@ -34,11 +34,12 @@ export v;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_export.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: fail_todo_use_export.carbon:[[@LINE+6]]:1: in import [InImport]
 // CHECK:STDERR: export.carbon:4:1: in import [InImport]
 // CHECK:STDERR: base.carbon:4:5: error: semantics TODO: `Non-constant ImportRefLoaded (comes up with var)` [SemanticsTodo]
 // CHECK:STDERR: var v: ();
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 import library "export";
 
 var w: () = v;

@@ -23,9 +23,10 @@ import library "a";
 
 export C1;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:10: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR: fail_b.carbon:[[@LINE+4]]:10: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
 // CHECK:STDERR: export C2(T:! type);
 // CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR:
 export C2(T:! type);
 
 // CHECK:STDOUT: --- a.carbon

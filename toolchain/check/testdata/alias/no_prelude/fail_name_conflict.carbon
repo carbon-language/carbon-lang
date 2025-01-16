@@ -21,12 +21,13 @@ alias a = C;
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+6]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:7: error: duplicate name being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: alias b = C;
 // CHECK:STDERR:       ^
 // CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-4]]:5: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR: var b: C = {};
 // CHECK:STDERR:     ^
+// CHECK:STDERR:
 alias b = C;
 
 // CHECK:STDOUT: --- fail_name_conflict.carbon

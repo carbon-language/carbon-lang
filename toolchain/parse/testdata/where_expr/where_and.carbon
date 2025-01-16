@@ -32,9 +32,10 @@ fn AndSuffix(Y:! I where .J impls K and);
 
 // --- fail_and_early.carbon
 
-// CHECK:STDERR: fail_and_early.carbon:[[@LINE+3]]:28: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+4]]:28: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
 // CHECK:STDERR: fn AndEarly(Z:! L where .M and N);
 // CHECK:STDERR:                            ^~~
+// CHECK:STDERR:
 fn AndEarly(Z:! L where .M and N);
 
 // CHECK:STDOUT: - filename: success.carbon

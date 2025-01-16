@@ -86,7 +86,8 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_oversized.carbon:[[@LINE+3]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: fail_oversized.carbon:[[@LINE+4]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR: var m: Int(1000000000);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 var m: Int(1000000000);

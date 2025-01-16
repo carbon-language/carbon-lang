@@ -37,12 +37,13 @@ fn F(c: Class) {
   // CHECK:STDERR:
   Class.WithSelf(c);
 
-  // CHECK:STDERR: fail_method.carbon:[[@LINE+6]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_method.carbon:[[@LINE+7]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   A();
   // CHECK:STDERR:   ^~~
   // CHECK:STDERR: fail_method.carbon:[[@LINE-30]]:3: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:   fn WithSelf[self: Class]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   A();
 }
 

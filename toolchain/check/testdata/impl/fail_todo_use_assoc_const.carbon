@@ -69,12 +69,13 @@ library "[[@TEST_NAME]]";
 
 interface I {
   let N:! i32;
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+6]]:32: error: cannot implicitly convert from `<associated i32 in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+7]]:32: error: cannot implicitly convert from `<associated i32 in I>` to `Core.IntLiteral` [ImplicitAsConversionFailure]
   // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
   // CHECK:STDERR:                                ^
-  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+3]]:32: note: type `<associated i32 in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_associated_int_in_array.carbon:[[@LINE+4]]:32: note: type `<associated i32 in I>` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F[self: Self]() -> [bool; N];
   // CHECK:STDERR:                                ^
+  // CHECK:STDERR:
   fn F[self: Self]() -> [bool; N];
 }
 

@@ -95,9 +95,10 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+3]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
+    // CHECK:STDERR: fail_bad_scope.carbon:[[@LINE+4]]:5: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
     // CHECK:STDERR:     adapt {};
     // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR:
     adapt {};
   }
 }

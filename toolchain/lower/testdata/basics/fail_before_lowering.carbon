@@ -9,11 +9,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/basics/fail_before_lowering.carbon
 
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+7]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+8]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+3]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: a;
 // CHECK:STDERR: ^
+// CHECK:STDERR:
 a;
