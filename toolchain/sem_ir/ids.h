@@ -464,7 +464,7 @@ struct NameId : public IdBase<NameId> {
   static const NameId Vptr;
   // The name of the discriminant field (if any) in a choice.
   static const NameId ChoiceDiscriminant;
-  // The name of `vptr`.
+  // The name of the storage field in a choice.
   static const NameId ChoiceStorage;
 
   // The number of non-index (<0) that exist, and will need storage in name
