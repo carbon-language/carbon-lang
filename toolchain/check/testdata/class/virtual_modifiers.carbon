@@ -164,6 +164,25 @@ class Derived {
   impl fn F();
 }
 
+// --- fail_impl_mismatch.carbon
+
+package FailImplMismatch;
+
+base class Base {
+  virtual fn F();
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+6]]:3: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
+  // CHECK:STDERR:   impl fn F(v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
+  // CHECK:STDERR:   virtual fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  impl fn F(v: i32);
+}
+
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1035,4 +1054,74 @@ class Derived {
 // CHECK:STDOUT: virtual fn @F.1();
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.2();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_impl_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [template]
+// CHECK:STDOUT:   %F.type.7c6: type = fn_type @F.1 [template]
+// CHECK:STDOUT:   %F.d17: %F.type.7c6 = struct_value () [template]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [template]
+// CHECK:STDOUT:   %.5ee: <vtable> = vtable (%F.d17) [template]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [template]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [template]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [template]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [template]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [template]
+// CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [template]
+// CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [template]
+// CHECK:STDOUT:   %.88d: <vtable> = vtable (%F.fa3) [template]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [template]
+// CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [template]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
+// CHECK:STDOUT:     .Int = %import_ref.485
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [template] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [template = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [template = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6 = fn_decl @F.1 [template = constants.%F.d17] {} {}
+// CHECK:STDOUT:   %.loc6: <vtable> = vtable (%F.decl) [template = constants.%.5ee]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [template = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [template = constants.%Base]
+// CHECK:STDOUT:   %.loc9: %Derived.elem = base_decl %Base.ref, element0 [template]
+// CHECK:STDOUT:   %F.decl: %F.type.5da = fn_decl @F.2 [template = constants.%F.fa3] {
+// CHECK:STDOUT:     %v.patt: %i32 = binding_pattern v
+// CHECK:STDOUT:     %v.param_patt: %i32 = value_param_pattern %v.patt, runtime_param0
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %v.param: %i32 = value_param runtime_param0
+// CHECK:STDOUT:     %.loc16: type = splice_block %i32 [template = constants.%i32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %v: %i32 = bind_name v, %v.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc17: <vtable> = vtable (%F.decl) [template = constants.%.88d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [template = constants.%complete_type.15c]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F.1();
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F.2(%v.param_patt: %i32);
 // CHECK:STDOUT:
