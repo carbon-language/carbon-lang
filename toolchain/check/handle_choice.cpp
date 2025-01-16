@@ -423,7 +423,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     -> bool {
   // The last alternative may optionally not have a comma after it, in which
   // case we get here after the last alternative.
-  if (!context.node_stack().PeekIs<Parse::NodeKind::ChoiceDefinitionStart>()) {
+  if (!context.node_stack().PeekIs(Parse::NodeKind::ChoiceDefinitionStart)) {
     AddChoiceAlternative(context, node_id);
   }
 
