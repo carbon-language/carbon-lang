@@ -124,38 +124,26 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   CARBON_CHECK(context.choice_deferred_bindings().empty(),
                "Alternatives left behind in choice_deferred_bindings: {0}",
                context.choice_deferred_bindings().size());
-
-  // FIXME: Can we skip these if the choice type is empty? Is that allowed?
-  // Set up blocks and scopes for the first alternative.
-  // context.inst_block_stack().Push();
-  // context.pattern_block_stack().Push();
-  //  context.param_and_arg_refs_stack().Push();
   return true;
 }
 
 static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
     -> void {
-  auto name_component = PopNameComponent(context);
-
   // Note, there is nothing like a ChoiceAlternativeIntroducer node, so no parse
   // node to pop here.
 
+  auto name_component = PopNameComponent(context);
   if (name_component.param_patterns_id == SemIR::InstBlockId::Empty) {
     context.TODO(name_component.params_loc_id,
                  "Make this an error: Empty () found, should be omitted");
   }
-
   context.choice_deferred_bindings().push_back({node_id, name_component});
-
-  // FIXME: Avoid opening a scope if this is the last alternative?
-  // context.inst_block_stack().Push();
-  // context.pattern_block_stack().Push();
-  //  context.param_and_arg_refs_stack().Push();
 }
 
 struct Alternative {
-  SemIR::TypeId struct_type_id;
-  llvm::SmallVector</* FIXME: What type? */ int> params;
+  // FIXME: Do we need this here? We can get them from context.type_blocks().
+  SemIR::TypeId tuple_type_id;
+  llvm::SmallVector<SemIR::TypeId> field_types;
 };
 
 static auto MakeAlternatives(
@@ -165,28 +153,16 @@ static auto MakeAlternatives(
   llvm::SmallVector<Alternative> alternatives;
 
   for (auto binding : deferred_bindings) {
-    llvm::SmallVector<SemIR::StructTypeField> struct_type_fields;
-
-    if (binding.name_component.param_patterns_id.is_valid()) {
-      // FIXME: Add the alternative's params to `struct_type_fields`.
-      context.TODO(binding.node_id,
-                   "Alternative with parameters not yet handled");
-    }
-
-    context.struct_type_fields_stack().PushArray();
+    llvm::SmallVector<SemIR::TypeId> alt_field_types;
 
     if (binding.name_component.param_patterns_id.is_valid()) {
       context.TODO(binding.node_id, "params for alternative not yet supported");
-      // TODO: context.struct_type_fields_stack().AppendToTop({.name_id =
-      // name_id, .type_id = value_type_id})
+      // Add types from the param_patterns_id instructions to `alt_field_types`.
     }
 
-    auto struct_type_id =
-        context.GetStructType(context.struct_type_fields().AddCanonical(
-            context.struct_type_fields_stack().PeekArray()));
-    context.struct_type_fields_stack().PopArray();
-
-    alternatives.push_back({.struct_type_id = struct_type_id, .params = {}});
+    auto tuple_type_id = context.GetTupleType(alt_field_types);
+    alternatives.push_back({.tuple_type_id = tuple_type_id,
+                            .field_types = std::move(alt_field_types)});
   }
 
   return alternatives;
@@ -204,7 +180,7 @@ static auto MakeStorageTuple(Context& context, llvm::ArrayRef<Alternative> alts)
     -> SemIR::TypeId {
   llvm::SmallVector<SemIR::TypeId> tuple_element_types;
   for (const auto& alt : alts) {
-    tuple_element_types.push_back(alt.struct_type_id);
+    tuple_element_types.push_back(alt.tuple_type_id);
   }
   return context.GetTupleType(tuple_element_types);
 }
@@ -219,19 +195,10 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
   // ===== Types =====
 
   // An empty struct for inactive alternatives.
-  auto empty_struct_value = SemIR::StructLiteral{
-      .type_id = context.GetStructType(SemIR::StructTypeFieldsId::Empty),
+  auto empty_tuple_value = SemIR::TupleLiteral{
+      .type_id = context.GetTupleType({}),
       .elements_id = SemIR::InstBlockId::Empty,
   };
-
-  // The alternative value struct.
-  llvm::SmallVector<SemIR::StructTypeField> alt_fields;
-  if (!alt.params.empty()) {
-    // TODO: add alt.params types to `alt_fields`.
-    context.TODO(SemIR::LocId::Invalid, "no support for parameters yet");
-  }
-  auto alt_fields_id = context.struct_type_fields().AddCanonical(alt_fields);
-  auto alt_struct_type_id = context.GetStructType(alt_fields_id);
 
   // Struct literal type to hold the fields of Self for initialization.
   llvm::SmallVector<SemIR::StructTypeField, 2> self_fields;
@@ -263,32 +230,32 @@ static auto MakeLetBinding(Context& context, SemIR::TypeId self_type_id,
   for (int i = 0; i < num_alternatives; ++i) {
     if (i == index) {
       llvm::SmallVector<SemIR::InstId> alt_fields_values;
-      if (!alt.params.empty()) {
+      if (!alt.field_types.empty()) {
         // TODO: Construct alt.params values and add to `alt_fields_values`.
         context.TODO(binding.node_id, "TODO: alt.params values here");
       }
 
-      auto alt_struct_elements_id = [&] {
-        context.inst_block_stack().Push();
-        for (auto id : alt_fields_values) {
-          context.inst_block_stack().AddInstId(id);
-        }
-        return context.inst_block_stack().Pop();
-      }();
-      auto alt_struct_value_id = ConvertToValueOfType(
+      auto alt_value_id = ConvertToValueOfType(
           context, binding.node_id,
           context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
               binding.node_id,
-              SemIR::StructLiteral{
-                  .type_id = alt_struct_type_id,
-                  .elements_id = alt_struct_elements_id,
+              SemIR::TupleLiteral{
+                  .type_id = alt.tuple_type_id,
+                  .elements_id =
+                      [&] {
+                        context.inst_block_stack().Push();
+                        for (auto id : alt_fields_values) {
+                          context.inst_block_stack().AddInstId(id);
+                        }
+                        return context.inst_block_stack().Pop();
+                      }(),
               })),
-          alt_struct_type_id);
-      storage_tuple_value_ids.push_back(alt_struct_value_id);
+          alt.tuple_type_id);
+      storage_tuple_value_ids.push_back(alt_value_id);
     } else {
       auto alt_struct_value_id =
-          context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(
-              binding.node_id, empty_struct_value));
+          context.AddInst(SemIR::LocIdAndInst::UncheckedLoc(binding.node_id,
+                                                            empty_tuple_value));
       storage_tuple_value_ids.push_back(alt_struct_value_id);
     }
   }
@@ -430,12 +397,6 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     AddChoiceAlternative(context, node_id);
   }
 
-  // Cleanup/abandon scopes set up for the next alternative, as there are no
-  // more.
-  // context.inst_block_stack().Pop();
-  // context.pattern_block_stack().Pop();
-  //  context.param_and_arg_refs_stack().Pop();
-
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ChoiceDefinitionStart>();
 
@@ -494,7 +455,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     auto [binding, alt] = pair;
     // If there's no params, then we make a let binding with the name of the
     // alternative. Otherwise, we make a function.
-    if (alt.params.empty()) {
+    if (alt.field_types.empty()) {
       MakeLetBinding(context, self_type_id, name_scope_id, discriminant_type_id,
                      storage_type_inst_id, index, num_alternatives, binding,
                      alt);
