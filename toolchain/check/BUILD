@@ -74,6 +74,7 @@ cc_library(
         "//common:array_stack",
         "//common:check",
         "//common:map",
+        "//common:raw_string_ostream",
         "//common:set",
         "//common:vlog",
         "//toolchain/base:index_base",
@@ -281,6 +282,7 @@ cc_library(
     hdrs = ["sem_ir_diagnostic_converter.h"],
     deps = [
         ":context",
+        "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_index",
         "//toolchain/parse:tree_node_diagnostic_converter",

@@ -6,7 +6,7 @@
 
 #include <gtest/gtest.h>
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 
 namespace Carbon {
 namespace {
@@ -45,7 +45,7 @@ TEST(EnumBaseTest, NamesAndConstants) {
 }
 
 TEST(EnumBaseTest, Printing) {
-  Testing::TestRawOstream stream;
+  RawStringOstream stream;
 
   TestKind kind = TestKind::Beep;
   stream << kind << " " << TestKind::Beep;

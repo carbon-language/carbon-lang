@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -550,12 +551,11 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   *out_ << command.info.name;
 
   // Buffer the options rendering so we can limit its length.
-  std::string buffer_str;
-  llvm::raw_string_ostream buffer_out(buffer_str);
+  RawStringOstream buffer_out;
   MetaPrinter buffer_printer(&buffer_out);
   bool have_short_flags = false;
   for (const auto& arg : command.options) {
-    if (static_cast<int>(buffer_str.size()) > max_option_width) {
+    if (static_cast<int>(buffer_out.size()) > max_option_width) {
       break;
     }
     // We can summarize positive boolean flags with a short name using a
@@ -571,7 +571,7 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
   }
   llvm::StringRef space = have_short_flags ? " " : "";
   for (const auto& option : command.options) {
-    if (static_cast<int>(buffer_str.size()) > max_option_width) {
+    if (static_cast<int>(buffer_out.size()) > max_option_width) {
       break;
     }
     if (option->is_help_hidden || option->meta_action) {
@@ -587,10 +587,11 @@ void MetaPrinter::PrintRawUsageCommandAndOptions(const Command& command,
     buffer_printer.PrintOptionUsage(*option);
     space = " ";
   }
-  if (!buffer_str.empty()) {
-    if (static_cast<int>(buffer_str.size()) <= max_option_width) {
-      *out_ << " [" << buffer_str << "]";
+  if (!buffer_out.empty()) {
+    if (static_cast<int>(buffer_out.size()) <= max_option_width) {
+      *out_ << " [" << buffer_out.TakeStr() << "]";
     } else {
+      buffer_out.clear();
       *out_ << " [OPTIONS]";
     }
   }
@@ -911,8 +912,7 @@ auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     -> ErrorOr<Success> {
   CARBON_CHECK(arg.kind == Arg::Kind::OneOf, "Incorrect kind: {0}", arg.kind);
   if (!arg.value_action(arg, value)) {
-    std::string error_str;
-    llvm::raw_string_ostream error(error_str);
+    RawStringOstream error;
     error << "option `--" << arg.info.name << "=";
     llvm::printEscapedString(value, error);
     error << "` has an invalid value `";
@@ -920,7 +920,7 @@ auto Parser::ParseOneOfArgValue(const Arg& arg, llvm::StringRef value)
     error << "`; valid values are: ";
     PrintListOfAlternatives(error, arg.value_strings,
                             [](llvm::StringRef x) { return x; });
-    return Error(error_str);
+    return Error(error.TakeStr());
   }
   return Success();
 }
@@ -1079,14 +1079,14 @@ auto Parser::FinalizeParsedOptions() -> ErrorOr<Success> {
     return lhs->info.name < rhs->info.name;
   });
 
-  std::string error_str = "required options not provided: ";
-  llvm::raw_string_ostream error(error_str);
+  RawStringOstream error;
+  error << "required options not provided: ";
   llvm::ListSeparator sep;
   for (const Arg* option : missing_options) {
     error << sep << "--" << option->info.name;
   }
 
-  return Error(error_str);
+  return Error(error.TakeStr());
 }
 
 auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
@@ -1117,12 +1117,11 @@ auto Parser::ParsePositionalArg(llvm::StringRef unparsed_arg)
 auto Parser::ParseSubcommand(llvm::StringRef unparsed_arg) -> ErrorOr<Success> {
   auto subcommand_it = subcommand_map_.find(unparsed_arg);
   if (subcommand_it == subcommand_map_.end()) {
-    std::string error_str;
-    llvm::raw_string_ostream error(error_str);
+    RawStringOstream error;
     error << "invalid subcommand `" << unparsed_arg
           << "`; available subcommands: ";
     MetaPrinter(&error).PrintSubcommands(*command_);
-    return Error(error_str);
+    return Error(error.TakeStr());
   }
 
   // Before we recurse into the subcommand, verify that all the required
@@ -1179,11 +1178,10 @@ auto Parser::FinalizeParse() -> ErrorOr<ParseResult> {
     case Command::Kind::Invalid:
       CARBON_FATAL("Should never have a parser with an invalid command!");
     case Command::Kind::RequiresSubcommand: {
-      std::string error_str;
-      llvm::raw_string_ostream error(error_str);
+      RawStringOstream error;
       error << "no subcommand specified; available subcommands: ";
       MetaPrinter(&error).PrintSubcommands(*command_);
-      return Error(error_str);
+      return Error(error.TakeStr());
     }
     case Command::Kind::Action:
       // All arguments have been successfully parsed, run any action for the

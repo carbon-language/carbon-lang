@@ -6,17 +6,16 @@
 #include <gtest/gtest.h>
 
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon::SemIR {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::AllOf;
 using ::testing::Contains;
@@ -38,7 +37,7 @@ TEST(SemIRTest, YAML) {
       llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   Driver d(fs, &install_paths, print_stream, llvm::errs());
   auto run_result =
       d.RunCommand({"compile", "--no-prelude-import", "--phase=check",

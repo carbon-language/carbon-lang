@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "testing/base/test_raw_ostream.h"
+#include "common/raw_string_ostream.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -13,8 +13,8 @@ namespace {
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-TEST(TestRawOstreamTest, Basics) {
-  TestRawOstream os;
+TEST(RawStringOstreamTest, Basics) {
+  RawStringOstream os;
 
   os << "test 1";
   EXPECT_THAT(os.TakeStr(), StrEq("test 1"));
@@ -30,9 +30,9 @@ TEST(TestRawOstreamTest, Basics) {
   EXPECT_THAT(os.TakeStr(), StrEq("test 3"));
 }
 
-TEST(TestRawOstreamTest, MultipleStreams) {
-  TestRawOstream os1;
-  TestRawOstream os2;
+TEST(RawStringOstreamTest, MultipleStreams) {
+  RawStringOstream os1;
+  RawStringOstream os2;
 
   os1 << "test ";
   os2 << "test stream 2";
@@ -41,8 +41,8 @@ TEST(TestRawOstreamTest, MultipleStreams) {
   EXPECT_THAT(os2.TakeStr(), StrEq("test stream 2"));
 }
 
-TEST(TestRawOstreamTest, MultipleLines) {
-  TestRawOstream os;
+TEST(RawStringOstreamTest, MultipleLines) {
+  RawStringOstream os;
 
   os << "test line 1\n";
   os << "test line 2\n";
@@ -50,13 +50,21 @@ TEST(TestRawOstreamTest, MultipleLines) {
   EXPECT_THAT(os.TakeStr(), StrEq("test line 1\ntest line 2\ntest line 3\n"));
 }
 
-TEST(TestRawOstreamTest, Substring) {
-  TestRawOstream os;
+TEST(RawStringOstreamTest, Substring) {
+  RawStringOstream os;
 
   os << "test line 1\n";
   os << "test line 2\n";
   os << "test line 3\n";
   EXPECT_THAT(os.TakeStr(), HasSubstr("test line 2"));
+}
+
+TEST(RawStringOstreamTest, Pwrite) {
+  RawStringOstream os;
+  os << "test line 1\n";
+  os.pwrite("splat", 5, 1);
+  os << "test line 2\n";
+  EXPECT_THAT(os.TakeStr(), HasSubstr("tsplatine 1\ntest line 2\n"));
 }
 
 }  // namespace

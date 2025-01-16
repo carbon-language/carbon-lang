@@ -6,8 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include "common/raw_string_ostream.h"
 #include "explorer/base/source_location.h"
-#include "testing/base/test_raw_ostream.h"
 
 namespace Carbon {
 namespace {
@@ -17,7 +17,7 @@ TEST(ErrorBuildersTest, ProgramError) {
   EXPECT_EQ(err.location(), "x:1");
   EXPECT_EQ(err.message(), "test");
 
-  Testing::TestRawOstream out;
+  RawStringOstream out;
   out << err;
   EXPECT_EQ(out.TakeStr(), "x:1: test");
 }

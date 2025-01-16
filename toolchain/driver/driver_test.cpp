@@ -11,17 +11,16 @@
 #include <fstream>
 #include <utility>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/global_exe_path.h"
-#include "testing/base/test_raw_ostream.h"
 #include "toolchain/testing/yaml_test_helpers.h"
 
 namespace Carbon {
 namespace {
 
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ContainsRegex;
 using ::testing::HasSubstr;
@@ -94,8 +93,8 @@ class DriverTest : public testing::Test {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs_ =
       new llvm::vfs::InMemoryFileSystem;
   const InstallPaths installation_;
-  TestRawOstream test_output_stream_;
-  TestRawOstream test_error_stream_;
+  RawStringOstream test_output_stream_;
+  RawStringOstream test_error_stream_;
 
   // Some tests work directly with files in the test temporary directory.
   std::filesystem::path test_tmpdir_;

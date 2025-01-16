@@ -18,6 +18,7 @@
 #include "common/error.h"
 #include "common/exe_path.h"
 #include "common/init_llvm.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -108,8 +109,7 @@ enum class BazelMode : uint8_t {
 // Returns the requested bazel command string for the given execution mode.
 static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
     -> std::string {
-  std::string args_str;
-  llvm::raw_string_ostream args(args_str);
+  RawStringOstream args;
 
   const char* target = getenv("TEST_TARGET");
   args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
@@ -131,7 +131,7 @@ static auto GetBazelCommand(BazelMode mode, llvm::StringRef test_name)
 
   args << "--file_tests=";
   args << test_name;
-  return args_str;
+  return args.TakeStr();
 }
 
 // Runs a test and compares output. This keeps output split by line so that

@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/stringify_type.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -147,8 +148,7 @@ class StepStack {
 
 auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     -> std::string {
-  std::string str;
-  llvm::raw_string_ostream out(str);
+  RawStringOstream out;
 
   // Note: Since this is a stack, work is resolved in the reverse order from the
   // order pushed.
@@ -617,7 +617,7 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
     }
   }
 
-  return str;
+  return out.TakeStr();
 }
 
 }  // namespace Carbon::SemIR

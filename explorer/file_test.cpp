@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "absl/flags/flag.h"
+#include "common/raw_string_ostream.h"
 #include "explorer/main.h"
 #include "re2/re2.h"
-#include "testing/base/test_raw_ostream.h"
 #include "testing/file_test/file_test_base.h"
 
 ABSL_FLAG(bool, trace, false,
@@ -103,7 +103,7 @@ class ExplorerFileTest : public FileTestBase {
     return test_name().find("/trace/") != std::string::npos;
   }
 
-  TestRawOstream trace_stream_;
+  RawStringOstream trace_stream_;
   RE2 prelude_line_re_;
   RE2 timing_re_;
 };

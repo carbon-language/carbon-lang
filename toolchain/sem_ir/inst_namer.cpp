@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/inst_namer.h"
 
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
@@ -152,18 +153,17 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   const auto& [inst_scope, inst_name] = insts_[inst_id.index];
   if (!inst_name) {
     // This should not happen in valid IR.
-    std::string str;
-    llvm::raw_string_ostream str_stream(str);
-    str_stream << "<unexpected>." << inst_id;
+    RawStringOstream out;
+    out << "<unexpected>." << inst_id;
     auto loc_id = sem_ir_->insts().GetLocId(inst_id);
     // TODO: Consider handling inst_id cases.
     if (loc_id.is_node_id()) {
       const auto& tree = sem_ir_->parse_tree();
       auto token = tree.node_token(loc_id.node_id());
-      str_stream << ".loc" << tree.tokens().GetLineNumber(token) << "_"
-                 << tree.tokens().GetColumnNumber(token);
+      out << ".loc" << tree.tokens().GetLineNumber(token) << "_"
+          << tree.tokens().GetColumnNumber(token);
     }
-    return str;
+    return out.TakeStr();
   }
   if (inst_scope == scope_id) {
     return ("%" + inst_name.str()).str();
@@ -190,10 +190,9 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
   const auto& [label_scope, label_name] = labels_[block_id.index];
   if (!label_name) {
     // This should not happen in valid IR.
-    std::string str;
-    llvm::raw_string_ostream(str)
-        << "<unexpected instblockref " << block_id << ">";
-    return str;
+    RawStringOstream out;
+    out << "<unexpected instblockref " << block_id << ">";
+    return out.TakeStr();
   }
   if (label_scope == scope_id) {
     return ("!" + label_name.str()).str();
@@ -443,8 +442,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
     auto add_int_or_float_type_name = [&](char type_literal_prefix,
                                           SemIR::InstId bit_width_id,
                                           llvm::StringRef suffix = "") {
-      std::string name;
-      llvm::raw_string_ostream out(name);
+      RawStringOstream out;
       out << type_literal_prefix;
       if (auto bit_width = sem_ir_->insts().TryGetAs<IntValue>(bit_width_id)) {
         out << sem_ir_->ints().Get(bit_width->int_id);
@@ -452,7 +450,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         out << "N";
       }
       out << suffix;
-      add_inst_name(std::move(name));
+      add_inst_name(out.TakeStr());
     };
     auto facet_access_name_id = [&](InstId facet_value_inst_id) -> NameId {
       if (auto name = sem_ir_->insts().TryGetAs<NameRef>(facet_value_inst_id)) {
@@ -483,10 +481,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedEntity inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "assoc" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(AssociatedEntityType inst): {
@@ -679,10 +676,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
       }
       case CARBON_KIND(ImplWitnessAccess inst): {
         // TODO: Include information about the impl?
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "impl.elem" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(ImportDecl inst): {
@@ -724,10 +720,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(IntValue inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "int_" << sem_ir_->ints().Get(inst.int_id);
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(NameBindingDecl inst): {
@@ -840,10 +835,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(TupleAccess inst): {
-        std::string name;
-        llvm::raw_string_ostream out(name);
+        RawStringOstream out;
         out << "tuple.elem" << inst.index.index;
-        add_inst_name(std::move(name));
+        add_inst_name(out.TakeStr());
         continue;
       }
       case CARBON_KIND(TupleType inst): {

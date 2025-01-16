@@ -6,6 +6,7 @@
 
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "clang-tools-extra/clangd/Transport.h"
+#include "common/raw_string_ostream.h"
 #include "toolchain/language_server/context.h"
 #include "toolchain/language_server/incoming_messages.h"
 #include "toolchain/language_server/outgoing_messages.h"
@@ -26,10 +27,9 @@ auto Run(std::FILE* input_stream, llvm::raw_ostream& output_stream)
   // Run the server loop.
   llvm::Error err = transport->loop(incoming);
   if (err) {
-    std::string str;
-    llvm::raw_string_ostream out(str);
+    RawStringOstream out;
     out << err;
-    return Error(str);
+    return Error(out.TakeStr());
   } else {
     return Success();
   }

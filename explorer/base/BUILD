@@ -79,8 +79,8 @@ cc_test(
     deps = [
         ":error_builders",
         ":source_location",
+        "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
     ],
 )

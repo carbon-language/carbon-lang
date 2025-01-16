@@ -6,10 +6,10 @@
 #include <string>
 
 #include "common/exe_path.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
-#include "testing/base/test_raw_ostream.h"
 #include "testing/fuzzing/libfuzzer.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/install_paths.h"
@@ -80,7 +80,7 @@ extern "C" auto LLVMFuzzerTestOneInput(const unsigned char* data, size_t size)
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
-  TestRawOstream error_stream;
+  RawStringOstream error_stream;
   llvm::raw_null_ostream dest;
   Driver d(fs, install_paths, dest, error_stream);
   d.SetFuzzing();

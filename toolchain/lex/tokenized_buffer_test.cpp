@@ -11,9 +11,9 @@
 #include <forward_list>
 #include <iterator>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "testing/base/test_raw_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
@@ -27,7 +27,6 @@ namespace {
 
 using ::Carbon::Testing::ExpectedToken;
 using ::Carbon::Testing::IsSingleDiagnostic;
-using ::Carbon::Testing::TestRawOstream;
 using ::testing::_;
 using ::testing::ElementsAre;
 using ::testing::Eq;
@@ -1168,10 +1167,9 @@ TEST_F(LexerTest, DiagnosticFileTooLarge) {
   compile_helper_.GetTokenizedBuffer(input, &consumer);
 }
 
-// Appends comment lines to the string, to create a comment block.
-static auto AppendCommentLines(std::string& str, int count, llvm::StringRef tag)
-    -> void {
-  llvm::raw_string_ostream out(str);
+// Outputs comments to the stream to create a comment block.
+static auto AppendCommentLines(RawStringOstream& out, int count,
+                               llvm::StringRef tag) -> void {
   for (int i : llvm::seq(count)) {
     out << "// " << tag << i << "\n";
   }
@@ -1179,13 +1177,15 @@ static auto AppendCommentLines(std::string& str, int count, llvm::StringRef tag)
 
 TEST_F(LexerTest, CommentBlock) {
   for (int comments_before = 0; comments_before < 5; ++comments_before) {
-    std::string prefix;
+    RawStringOstream prefix;
     AppendCommentLines(prefix, comments_before, "B");
+    std::string prefix_out = prefix.TakeStr();
 
     for (int comments_after = 1; comments_after < 5; ++comments_after) {
-      std::string source = prefix;
+      RawStringOstream source;
+      source << prefix_out;
       if (comments_before > 0) {
-        source += "//\n";
+        source << "//\n";
       }
       AppendCommentLines(source, comments_after, "C");
 
@@ -1193,7 +1193,7 @@ TEST_F(LexerTest, CommentBlock) {
           "{0} comment lines before the empty comment line, {1} after",
           comments_before, comments_after));
 
-      auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+      auto& buffer = compile_helper_.GetTokenizedBuffer(source.TakeStr());
       ASSERT_FALSE(buffer.has_errors());
 
       EXPECT_THAT(buffer.comments_size(), Eq(1));
@@ -1205,17 +1205,17 @@ TEST_F(LexerTest, IndentedComments) {
   for (int indent = 0; indent < 40; ++indent) {
     SCOPED_TRACE(llvm::formatv("Indent: {0}", indent));
 
-    std::string source;
-    llvm::raw_string_ostream source_stream(source);
-    source_stream.indent(indent);
-    source_stream << "// Comment\n";
+    RawStringOstream source;
+    source.indent(indent);
+    source << "// Comment\n";
+    std::string source_str = source.TakeStr();
 
-    auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+    auto& buffer = compile_helper_.GetTokenizedBuffer(source_str);
     ASSERT_FALSE(buffer.has_errors());
     EXPECT_THAT(buffer.comments_size(), Eq(1));
 
     std::string simd_source =
-        source +
+        source_str +
         "\"Add a bunch of padding so that SIMD logic shouldn't hit EOF\"";
     auto& simd_buffer = compile_helper_.GetTokenizedBuffer(simd_source);
     ASSERT_FALSE(simd_buffer.has_errors());
@@ -1282,7 +1282,7 @@ TEST_F(LexerTest, PrintingOutputYaml) {
   auto& buffer =
       compile_helper_.GetTokenizedBuffer("\n ;\n\n\n; ;\n\n\n\n\n\n\n\n\n\n\n");
   ASSERT_FALSE(buffer.has_errors());
-  TestRawOstream print_stream;
+  RawStringOstream print_stream;
   buffer.Print(print_stream);
 
   EXPECT_THAT(

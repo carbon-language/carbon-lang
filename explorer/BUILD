@@ -57,7 +57,7 @@ cc_binary(
     deps = [
         ":main",
         "//common:check",
-        "//testing/base:test_raw_ostream",
+        "//common:raw_string_ostream",
         "//testing/file_test:file_test_base",
         "@abseil-cpp//absl/flags:flag",
         "@re2",

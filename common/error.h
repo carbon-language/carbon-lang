@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/Twine.h"
 
 namespace Carbon {
@@ -137,38 +138,35 @@ class [[nodiscard]] ErrorOr {
 class ErrorBuilder {
  public:
   explicit ErrorBuilder(std::string location = "")
-      : location_(std::move(location)),
-        out_(std::make_unique<llvm::raw_string_ostream>(message_)) {}
+      : location_(std::move(location)) {}
 
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
   auto operator<<(T&& message) && -> ErrorBuilder&& {
-    *out_ << message;
+    out_ << message;
     return std::move(*this);
   }
 
   // Accumulates string message for an lvalue error builder.
   template <typename T>
   auto operator<<(T&& message) & -> ErrorBuilder& {
-    *out_ << message;
+    out_ << message;
     return *this;
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(location_, message_); }
+  operator Error() { return Error(location_, out_.TakeStr()); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(location_, message_);
+    return Error(location_, out_.TakeStr());
   }
 
  private:
   std::string location_;
-  std::string message_;
-  // Use a pointer to allow move construction.
-  std::unique_ptr<llvm::raw_string_ostream> out_;
+  RawStringOstream out_;
 };
 
 }  // namespace Carbon

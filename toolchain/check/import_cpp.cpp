@@ -9,6 +9,7 @@
 
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Tooling/Tooling.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,8 +23,7 @@ namespace Carbon::Check {
 auto ImportCppFile(Context& context, SemIRLoc loc,
                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                    llvm::StringRef file_path, llvm::StringRef code) -> void {
-  std::string diagnostics_str;
-  llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
+  RawStringOstream diagnostics_stream;
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options(
       new clang::DiagnosticOptions());
@@ -45,13 +45,13 @@ auto ImportCppFile(Context& context, SemIRLoc loc,
         "{0} error{0:s} and {1} warning{1:s} in `Cpp` import `{2}`:\n{3}",
         IntAsSelect, IntAsSelect, std::string, std::string);
     context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
-                           file_path.str(), diagnostics_str);
+                           file_path.str(), diagnostics_stream.TakeStr());
   } else if (num_warnings > 0) {
     CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
                       "{0} warning{0:s} in `Cpp` import `{1}`:\n{2}",
                       IntAsSelect, std::string, std::string);
     context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
-                           file_path.str(), diagnostics_str);
+                           file_path.str(), diagnostics_stream.TakeStr());
   }
 }
 

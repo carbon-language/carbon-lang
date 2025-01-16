@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -41,14 +42,15 @@ cc_test(
     name = "clang_runner_test",
     size = "small",
     srcs = ["clang_runner_test.cpp"],
+    env = cc_env(),
     deps = [
         ":clang_runner",
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "@googletest//:gtest",
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
@@ -113,6 +115,7 @@ cc_library(
         ":clang_runner",
         "//common:command_line",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//common:version",
         "//common:vlog",
         "//toolchain/base:pretty_stack_trace_function",
@@ -144,12 +147,13 @@ cc_test(
     name = "driver_test",
     size = "small",
     srcs = ["driver_test.cpp"],
+    env = cc_env(),
     deps = [
         ":driver",
         "//common:all_llvm_targets",
+        "//common:raw_string_ostream",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
-        "//testing/base:test_raw_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/install:install_paths",
         "//toolchain/lex:tokenized_buffer_test_helpers",
@@ -168,7 +172,7 @@ cc_fuzz_test(
     deps = [
         ":driver",
         "//common:exe_path",
-        "//testing/base:test_raw_ostream",
+        "//common:raw_string_ostream",
         "//testing/fuzzing:libfuzzer_header",
         "//toolchain/install:install_paths",
         "@llvm-project//llvm:Support",

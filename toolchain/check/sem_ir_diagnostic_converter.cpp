@@ -4,7 +4,9 @@
 
 #include "toolchain/check/sem_ir_diagnostic_converter.h"
 
+#include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/stringify_type.h"
+
 namespace Carbon::Check {
 
 auto SemIRDiagnosticConverter::ConvertLoc(SemIRLoc loc,
@@ -146,11 +148,12 @@ auto SemIRDiagnosticConverter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     } else if (!library_name_id->is_valid()) {
       library_name = "library <invalid>";
     } else {
-      llvm::raw_string_ostream stream(library_name);
-      stream << "library \"";
-      stream << sem_ir_->string_literal_values().Get(
-          library_name_id->AsStringLiteralValueId());
-      stream << "\"";
+      RawStringOstream stream;
+      stream << "library \""
+             << sem_ir_->string_literal_values().Get(
+                    library_name_id->AsStringLiteralValueId())
+             << "\"";
+      library_name = stream.TakeStr();
     }
     return library_name;
   }
