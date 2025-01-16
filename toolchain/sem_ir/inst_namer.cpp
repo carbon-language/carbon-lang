@@ -731,7 +731,7 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(NameBindingDecl inst): {
-        CollectNamesInBlock(scope_id, inst.pattern_block_id);
+        queue_block_id(scope_id, inst.pattern_block_id);
         continue;
       }
       case CARBON_KIND(NameRef inst): {
