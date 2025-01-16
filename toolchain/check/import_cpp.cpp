@@ -19,19 +19,55 @@
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
+namespace {
 
-auto ImportCppFile(Context& context, SemIRLoc loc,
-                   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                   llvm::StringRef file_path, llvm::StringRef code) -> void {
-  RawStringOstream diagnostics_stream;
+auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
+    -> std::string {
+  return importing_file_path.str() + ".generated.cpp_imports.h";
+}
+
+auto GenerateCppIncludesHeaderCode(
+    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
+    -> std::string {
+  constexpr llvm::StringLiteral include_prefix(R"(#include ")");
+  constexpr llvm::StringLiteral include_suffix(R"("
+)");
+
+  std::string code;
+  for (const auto& [path, _] : imports) {
+    code.append(
+        llvm::Twine(include_prefix).concat(path).concat(include_suffix).str());
+  }
+  return code;
+}
+
+}  // namespace
+
+auto ImportCppFiles(
+    Context& context, llvm::StringRef importing_file_path,
+    llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) -> void {
+  size_t num_imports = imports.size();
+  if (num_imports == 0) {
+    return;
+  }
+
+  // TODO: Use all import locations by referring each Clang diagnostic to the
+  // relevant import.
+  SemIRLoc loc = imports.back().second;
+
+  std::string diagnostics_str;
+  llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagnostic_options(
       new clang::DiagnosticOptions());
   clang::TextDiagnosticPrinter diagnostics_consumer(diagnostics_stream,
                                                     diagnostic_options.get());
+
   // TODO: Share compilation flags with ClangRunner.
   auto ast = clang::tooling::buildASTFromCodeWithArgs(
-      code, {}, file_path, "clang-tool",
+      GenerateCppIncludesHeaderCode(imports), {},
+      GenerateCppIncludesHeaderFilename(importing_file_path), "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
       clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
@@ -42,16 +78,16 @@ auto ImportCppFile(Context& context, SemIRLoc loc,
     // TODO: Remove the warnings part when there are no warnings.
     CARBON_DIAGNOSTIC(
         CppInteropParseError, Error,
-        "{0} error{0:s} and {1} warning{1:s} in `Cpp` import `{2}`:\n{3}",
-        IntAsSelect, IntAsSelect, std::string, std::string);
+        "{0} error{0:s} and {1} warning{1:s} in {2} `Cpp` import{2:s}:\n{3}",
+        IntAsSelect, IntAsSelect, IntAsSelect, std::string);
     context.emitter().Emit(loc, CppInteropParseError, num_errors, num_warnings,
-                           file_path.str(), diagnostics_stream.TakeStr());
+                           num_imports, diagnostics_str);
   } else if (num_warnings > 0) {
     CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning,
-                      "{0} warning{0:s} in `Cpp` import `{1}`:\n{2}",
-                      IntAsSelect, std::string, std::string);
+                      "{0} warning{0:s} in `Cpp` {1} import{1:s}:\n{2}",
+                      IntAsSelect, IntAsSelect, std::string);
     context.emitter().Emit(loc, CppInteropParseWarning, num_warnings,
-                           file_path.str(), diagnostics_stream.TakeStr());
+                           num_imports, diagnostics_str);
   }
 }
 
