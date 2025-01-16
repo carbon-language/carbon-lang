@@ -84,17 +84,25 @@ def label_subdir(
     readme = subdir / "README.md"
     readme_content = readme.read_text()
 
+    def include_child(md_file: Path) -> bool:
+        """Determines whether a markdown file should be included in the
+        navigation tree as a child of this label.
+        """
+        # The top-level README.md isn't a child.
+        if md_file == readme:
+            return False
+        # Skip directories that aren't part of the repository.
+        if "/node_modules/" in str(md_file):
+            return False
+        if "/dist/" in str(md_file):
+            return False
+        return True
+
     readme_title = get_title(readme, readme_content)
     readme_titles = [readme_title]
     if parent_title:
         readme_titles.insert(0, parent_title)
-    children = [
-        x
-        for x in subdir.glob("**/*.md")
-        if x != readme
-        and "/node_modules/" not in str(x)
-        and "/dist/" not in str(x)
-    ]
+    children = [x for x in subdir.glob("**/*.md") if include_child(x)]
     add_frontmatter(
         readme, readme_content, readme_titles, top_nav_order, bool(children)
     )
