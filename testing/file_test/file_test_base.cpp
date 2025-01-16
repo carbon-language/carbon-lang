@@ -58,6 +58,8 @@ using ::testing::Matcher;
 using ::testing::MatchesRegex;
 using ::testing::StrEq;
 
+static constexpr llvm::StringLiteral StdinFilename = "STDIN";
+
 // Reads a file to string.
 static auto ReadFile(std::string_view path) -> ErrorOr<std::string> {
   std::ifstream proto_file{std::string(path)};
@@ -186,15 +188,15 @@ auto FileTestBase::TestBody() -> void {
   }
   SCOPED_TRACE(update_message);
   if (context.check_subset) {
-    EXPECT_THAT(SplitOutput(context.stdout),
+    EXPECT_THAT(SplitOutput(context.actual_stdout),
                 IsSupersetOf(context.expected_stdout));
-    EXPECT_THAT(SplitOutput(context.stderr),
+    EXPECT_THAT(SplitOutput(context.actual_stderr),
                 IsSupersetOf(context.expected_stderr));
 
   } else {
-    EXPECT_THAT(SplitOutput(context.stdout),
+    EXPECT_THAT(SplitOutput(context.actual_stdout),
                 ElementsAreArray(context.expected_stdout));
-    EXPECT_THAT(SplitOutput(context.stderr),
+    EXPECT_THAT(SplitOutput(context.actual_stderr),
                 ElementsAreArray(context.expected_stderr));
   }
 
@@ -232,8 +234,9 @@ auto FileTestBase::RunAutoupdater(const TestContext& context, bool dry_run)
              GetBazelCommand(BazelMode::Test, test_name_),
              GetBazelCommand(BazelMode::Dump, test_name_),
              context.input_content, filenames, *context.autoupdate_line_number,
-             context.autoupdate_split, context.non_check_lines, context.stdout,
-             context.stderr, GetDefaultFileRE(expected_filenames),
+             context.autoupdate_split, context.non_check_lines,
+             context.actual_stdout, context.actual_stderr,
+             GetDefaultFileRE(expected_filenames),
              GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) { DoExtraCheckReplacements(line); })
       .Run(dry_run);
@@ -266,7 +269,8 @@ auto FileTestBase::DumpOutput() -> ErrorOr<Success> {
     return ErrorBuilder() << "Error updating " << test_name_ << ": "
                           << run_result.error();
   }
-  llvm::errs() << banner << context.stdout << banner << "= Exit with success: "
+  llvm::errs() << banner << context.actual_stdout << banner
+               << "= Exit with success: "
                << (context.run_result.success ? "true" : "false") << "\n"
                << banner;
   return Success();
@@ -297,18 +301,32 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
   CARBON_RETURN_IF_ERROR(
       DoArgReplacements(context.test_args, context.test_files));
 
+  // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
+  FILE* input_stream = nullptr;
+  auto erase_input_on_exit = llvm::make_scope_exit([&input_stream]() {
+    if (input_stream) {
+      // fclose should delete the tmpfile.
+      fclose(input_stream);
+      input_stream = nullptr;
+    }
+  });
+
   // Create the files in-memory.
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   for (const auto& test_file : context.test_files) {
-    if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
-                     llvm::MemoryBuffer::getMemBuffer(
-                         test_file.content, test_file.filename,
-                         /*RequiresNullTerminator=*/false))) {
+    if (test_file.filename == StdinFilename) {
+      input_stream = tmpfile();
+      fwrite(test_file.content.c_str(), sizeof(char), test_file.content.size(),
+             input_stream);
+      rewind(input_stream);
+    } else if (!fs->addFile(test_file.filename, /*ModificationTime=*/0,
+                            llvm::MemoryBuffer::getMemBuffer(
+                                test_file.content, test_file.filename,
+                                /*RequiresNullTerminator=*/false))) {
       return ErrorBuilder() << "File is repeated: " << test_file.filename;
     }
   }
-
   // Convert the arguments to StringRef and const char* to match the
   // expectations of PrettyStackTraceProgram and Run.
   llvm::SmallVector<llvm::StringRef> test_args_ref;
@@ -340,20 +358,21 @@ auto FileTestBase::ProcessTestFileAndRun(TestContext& context)
     if (context.capture_console_output) {
       // No need to flush stderr.
       llvm::outs().flush();
-      context.stdout += GetCapturedStdout();
-      context.stderr += GetCapturedStderr();
+      context.actual_stdout += GetCapturedStdout();
+      context.actual_stderr += GetCapturedStderr();
     }
   });
 
   // Prepare string streams to capture output. In order to address casting
   // constraints, we split calls to Run as a ternary based on whether we want to
   // capture output.
-  llvm::raw_svector_ostream stdout(context.stdout);
-  llvm::raw_svector_ostream stderr(context.stderr);
+  llvm::raw_svector_ostream output_stream(context.actual_stdout);
+  llvm::raw_svector_ostream error_stream(context.actual_stderr);
   CARBON_ASSIGN_OR_RETURN(
       context.run_result,
-      context.dump_output ? Run(test_args_ref, fs, llvm::outs(), llvm::errs())
-                          : Run(test_args_ref, fs, stdout, stderr));
+      context.dump_output
+          ? Run(test_args_ref, fs, input_stream, llvm::outs(), llvm::errs())
+          : Run(test_args_ref, fs, input_stream, output_stream, error_stream));
 
   return Success();
 }
@@ -380,10 +399,11 @@ auto FileTestBase::DoArgReplacements(
         it = test_args.erase(it);
         for (const auto& file : test_files) {
           const std::string& filename = file.filename;
-          if (!filename.ends_with(".h")) {
-            it = test_args.insert(it, filename);
-            ++it;
+          if (filename == StdinFilename || filename.ends_with(".h")) {
+            continue;
           }
+          it = test_args.insert(it, filename);
+          ++it;
         }
         // Back up once because the for loop will advance.
         --it;
@@ -546,7 +566,6 @@ static auto AddTestFile(llvm::StringRef filename, std::string* content,
                         llvm::SmallVector<FileTestBase::TestFile>* test_files)
     -> ErrorOr<Success> {
   CARBON_RETURN_IF_ERROR(ReplaceContentKeywords(filename, content));
-
   test_files->push_back(
       {.filename = filename.str(), .content = std::move(*content)});
   content->clear();

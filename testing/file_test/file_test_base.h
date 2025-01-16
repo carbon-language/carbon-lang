@@ -68,9 +68,13 @@ class FileTestBase : public testing::Test {
   explicit FileTestBase(std::mutex* output_mutex, llvm::StringRef test_name)
       : output_mutex_(output_mutex), test_name_(test_name) {}
 
-  // Implemented by children to run the test. For example, TestBody validates
-  // stdout and stderr. Children should use fs for file content, and may add
-  // more files.
+  // Implemented by children to run the test. The framework will validate the
+  // content written to `output_stream` and `error_stream`. Children should use
+  // `fs` for file content, and may add more files.
+  //
+  // If there is a split test file named "STDIN", then its contents will be
+  // provided at `input_stream` instead of `fs`. Otherwise, `input_stream` will
+  // be null.
   //
   // Any test expectations should be called from ValidateRun, not Run.
   //
@@ -78,8 +82,9 @@ class FileTestBase : public testing::Test {
   // RunResult otherwise.
   virtual auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
                    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
-                   llvm::raw_pwrite_stream& stdout,
-                   llvm::raw_pwrite_stream& stderr) -> ErrorOr<RunResult> = 0;
+                   FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
+                   llvm::raw_pwrite_stream& error_stream)
+      -> ErrorOr<RunResult> = 0;
 
   // Implemented by children to do post-Run test expectations. Only called when
   // testing. Does not need to be provided if only CHECK test expectations are
@@ -174,8 +179,8 @@ class FileTestBase : public testing::Test {
     llvm::SmallVector<testing::Matcher<std::string>> expected_stderr;
 
     // stdout and stderr from Run. 16 is arbitrary but a required value.
-    llvm::SmallString<16> stdout;
-    llvm::SmallString<16> stderr;
+    llvm::SmallString<16> actual_stdout;
+    llvm::SmallString<16> actual_stderr;
 
     RunResult run_result = {.success = false};
   };

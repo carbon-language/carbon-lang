@@ -29,7 +29,8 @@ class ExplorerFileTest : public FileTestBase {
 
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
            llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
-           llvm::raw_pwrite_stream& stdout, llvm::raw_pwrite_stream& stderr)
+           FILE* /*input_stream*/, llvm::raw_pwrite_stream& output_stream,
+           llvm::raw_pwrite_stream& error_stream)
       -> ErrorOr<RunResult> override {
     // Add the prelude.
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> prelude =
@@ -52,9 +53,10 @@ class ExplorerFileTest : public FileTestBase {
       args.push_back(arg.data());
     }
 
-    int exit_code = ExplorerMain(
-        args.size(), args.data(), /*install_path=*/"", PreludePath, stdout,
-        stderr, check_trace_output() ? stdout : trace_stream_, *fs);
+    int exit_code =
+        ExplorerMain(args.size(), args.data(), /*install_path=*/"", PreludePath,
+                     output_stream, error_stream,
+                     check_trace_output() ? output_stream : trace_stream_, *fs);
 
     return {{.success = exit_code == EXIT_SUCCESS}};
   }
