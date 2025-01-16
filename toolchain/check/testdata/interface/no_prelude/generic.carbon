@@ -277,7 +277,6 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@WithAssocFn.%T.loc8_23.1: type, @WithAssocFn.%Self.1: @WithAssocFn.%WithAssocFn.type (%WithAssocFn.type.ce6)) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %X;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

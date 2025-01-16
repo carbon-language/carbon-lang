@@ -353,7 +353,9 @@ auto StringifyTypeExpr(const SemIR::File& sem_ir, InstId outer_inst_id)
           if (auto associated_const =
                   sem_ir.insts().TryGetAs<AssociatedConstantDecl>(
                       entity_inst_id)) {
-            step_stack.PushNameId(associated_const->name_id);
+            step_stack.PushNameId(sem_ir.associated_constants()
+                                      .Get(associated_const->assoc_const_id)
+                                      .name_id);
           } else if (auto function_decl = sem_ir.insts().TryGetAs<FunctionDecl>(
                          entity_inst_id)) {
             const auto& function =

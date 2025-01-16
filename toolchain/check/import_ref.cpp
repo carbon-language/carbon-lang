@@ -243,6 +243,9 @@ class ImportContext {
   auto import_ir() -> const SemIR::File& { return import_ir_; }
 
   // Accessors into value stores of the file we are importing from.
+  auto import_associated_constants() -> decltype(auto) {
+    return import_ir().associated_constants();
+  }
   auto import_classes() -> decltype(auto) { return import_ir().classes(); }
   auto import_constant_values() -> decltype(auto) {
     return import_ir().constant_values();
@@ -299,6 +302,9 @@ class ImportContext {
   auto local_context() -> Context& { return context_; }
 
   // Accessors into value stores of the file we are importing into.
+  auto local_associated_constants() -> decltype(auto) {
+    return local_ir().associated_constants();
+  }
   auto local_classes() -> decltype(auto) { return local_ir().classes(); }
   auto local_constant_values() -> decltype(auto) {
     return local_ir().constant_values();
@@ -1236,14 +1242,16 @@ static auto AddAssociatedEntities(ImportContext& context,
   for (auto inst_id : associated_entities) {
     // Determine the name of the associated entity, by switching on its kind.
     SemIR::NameId import_name_id = SemIR::NameId::Invalid;
-    if (auto associated_const =
+    if (auto assoc_const_decl =
             context.import_insts().TryGetAs<SemIR::AssociatedConstantDecl>(
                 inst_id)) {
-      import_name_id = associated_const->name_id;
+      const auto& assoc_const = context.import_associated_constants().Get(
+          assoc_const_decl->assoc_const_id);
+      import_name_id = assoc_const.name_id;
     } else if (auto function_decl =
                    context.import_insts().TryGetAs<SemIR::FunctionDecl>(
                        inst_id)) {
-      auto function =
+      const auto& function =
           context.import_functions().Get(function_decl->function_id);
       import_name_id = function.name_id;
     } else if (auto import_ref =
@@ -1336,26 +1344,86 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .element_type_id = element_type_id});
 }
 
+static auto MakeAssociatedConstant(
+    ImportContext& context, const SemIR::AssociatedConstant& import_assoc_const,
+    SemIR::TypeId type_id)
+    -> std::pair<SemIR::AssociatedConstantId, SemIR::ConstantId> {
+  SemIR::AssociatedConstantDecl assoc_const_decl = {
+      .type_id = type_id,
+      .assoc_const_id = SemIR::AssociatedConstantId::Invalid,
+      .decl_block_id = SemIR::InstBlockId::Empty};
+  auto assoc_const_decl_id =
+      context.local_context().AddPlaceholderInstInNoBlock(
+          context.local_context().MakeImportedLocAndInst(
+              AddImportIRInst(context, import_assoc_const.decl_id),
+              assoc_const_decl));
+  assoc_const_decl.assoc_const_id = context.local_associated_constants().Add({
+      .name_id = GetLocalNameId(context, import_assoc_const.name_id),
+      .parent_scope_id = SemIR::NameScopeId::Invalid,
+      .generic_id = MakeIncompleteGeneric(context, import_assoc_const.decl_id,
+                                          import_assoc_const.generic_id),
+      .decl_id = assoc_const_decl_id,
+      .default_value_id =
+          import_assoc_const.default_value_id.is_valid()
+              ? AddImportRef(context, import_assoc_const.default_value_id)
+              : SemIR::InstId::Invalid,
+  });
+
+  // Write the associated constant ID into the AssociatedConstantDecl.
+  context.local_context().ReplaceInstBeforeConstantUse(assoc_const_decl_id,
+                                                       assoc_const_decl);
+  auto const_id = context.local_constant_values().Get(assoc_const_decl_id);
+  return {assoc_const_decl.assoc_const_id, const_id};
+}
+
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AssociatedConstantDecl inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
-  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
+                                SemIR::ConstantId const_id)
+    -> ResolveResult {
+  const auto& import_assoc_const =
+      resolver.import_associated_constants().Get(inst.assoc_const_id);
+
+  SemIR::AssociatedConstantId assoc_const_id =
+      SemIR::AssociatedConstantId::Invalid;
+  if (!const_id.is_valid()) {
+    // In the first phase, import the type of the associated constant.
+    auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+    if (resolver.HasNewWork()) {
+      return ResolveResult::Retry();
+    }
+
+    // In the second phase, create the associated constant and its declaration.
+    auto type_id =
+        resolver.local_context().GetTypeIdForTypeConstant(type_const_id);
+    std::tie(assoc_const_id, const_id) =
+        MakeAssociatedConstant(resolver, import_assoc_const, type_id);
+  } else {
+    // In the third phase, compute the associated constant ID from the constant
+    // value of the declaration.
+    assoc_const_id =
+        resolver.local_insts()
+            .GetAs<SemIR::AssociatedConstantDecl>(
+                resolver.local_constant_values().GetInstId(const_id))
+            .assoc_const_id;
   }
 
-  auto type_id =
-      resolver.local_context().GetTypeIdForTypeConstant(type_const_id);
+  // Load the values to populate the entity with.
+  auto parent_scope_id =
+      GetLocalNameScopeId(resolver, import_assoc_const.parent_scope_id);
+  auto generic_data =
+      GetLocalGenericData(resolver, import_assoc_const.generic_id);
+  auto& new_assoc_const =
+      resolver.local_associated_constants().Get(assoc_const_id);
 
-  // Create a corresponding instruction to represent the declaration.
-  auto inst_id = resolver.local_context().AddInstInNoBlock(
-      resolver.local_context()
-          .MakeImportedLocAndInst<SemIR::AssociatedConstantDecl>(
-              AddImportIRInst(resolver, import_inst_id),
-              {.type_id = type_id,
-               .name_id = GetLocalNameId(resolver, inst.name_id)}));
-  return ResolveResult::Done(resolver.local_constant_values().Get(inst_id),
-                             inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry(const_id, new_assoc_const.decl_id);
+  }
+
+  // Populate the entity.
+  new_assoc_const.parent_scope_id = parent_scope_id;
+  SetGenericData(resolver, import_assoc_const.generic_id,
+                 new_assoc_const.generic_id, generic_data);
+  return ResolveResult::Done(const_id, new_assoc_const.decl_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2597,7 +2665,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::AssociatedConstantDecl inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::AssociatedEntity inst): {
       return TryResolveTypedInst(resolver, inst);

@@ -218,7 +218,8 @@ struct AssociatedConstantDecl {
           {.ir_name = "assoc_const_decl", .is_lowered = false});
 
   TypeId type_id;
-  NameId name_id;
+  AssociatedConstantId assoc_const_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // An associated entity declared in an interface. This is either an associated

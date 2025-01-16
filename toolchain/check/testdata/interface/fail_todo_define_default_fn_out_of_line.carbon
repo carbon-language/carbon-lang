@@ -166,12 +166,10 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(@Interface.%Self: %Interface.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param_patt: %i32, %b.param_patt: %i32) -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

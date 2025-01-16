@@ -87,7 +87,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.719]
 // CHECK:STDOUT:   %F.decl: %F.type.1ad = fn_decl @F.1 [template = constants.%F.5d3] {} {}
 // CHECK:STDOUT:   %assoc0: %F.assoc_type = assoc_entity element0, %F.decl [template = constants.%assoc0]
-// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {}
 // CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, %T [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -105,8 +105,11 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic assoc_const @T(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT:   assoc_const T:! type;
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,6 +130,8 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%Self.719) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T(constants.%Self.719) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.loc36_6.2 => constants.%U

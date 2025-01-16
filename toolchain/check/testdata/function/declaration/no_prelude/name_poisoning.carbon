@@ -970,7 +970,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@D2.%Self: %D2.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param_patt: %C);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1179,7 +1178,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @B(@A.%Self: %A.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

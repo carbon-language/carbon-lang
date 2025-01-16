@@ -185,13 +185,17 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Member [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Member = %assoc0
 // CHECK:STDOUT:   witness = (%Member)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Member(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const Member:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodSelf(%T.loc8_15.1: %I_where.type) {
@@ -214,6 +218,8 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%V.param_patt: %type_where);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Member(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.2 => constants.%T
@@ -280,7 +286,7 @@ class D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Member [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -289,11 +295,17 @@ class D {
 // CHECK:STDOUT:   witness = (%Member)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Member(@J.%Self: %J.type) {
+// CHECK:STDOUT:   assoc_const Member:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @PeriodMismatch(%W: <error>) {
 // CHECK:STDOUT:   %W.patt.loc12_19.2: <error> = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc12_19.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: <error>);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Member(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMismatch(<error>) {
 // CHECK:STDOUT:   %W.patt.loc12_19.2 => <error>

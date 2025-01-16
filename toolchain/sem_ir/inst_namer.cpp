@@ -92,6 +92,18 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     CollectNamesInGeneric(interface_scope, interface_info.generic_id);
   }
 
+  // Build each associated constant scope.
+  for (auto [i, assoc_const_info] :
+       llvm::enumerate(sem_ir->associated_constants().array_ref())) {
+    AssociatedConstantId assoc_const_id(i);
+    auto assoc_const_scope = GetScopeFor(assoc_const_id);
+    auto assoc_const_loc = sem_ir->insts().GetLocId(assoc_const_info.decl_id);
+    GetScopeInfo(assoc_const_scope).name = globals_.AllocateName(
+        *this, assoc_const_loc,
+        sem_ir->names().GetIRBaseName(assoc_const_info.name_id).str());
+    CollectNamesInGeneric(assoc_const_scope, assoc_const_info.generic_id);
+  }
+
   // Build each impl scope.
   for (auto [i, impl_info] : llvm::enumerate(sem_ir->impls().array_ref())) {
     ImplId impl_id(i);
@@ -475,7 +487,9 @@ auto InstNamer::CollectNamesInBlock(ScopeId top_scope_id,
         continue;
       }
       case CARBON_KIND(AssociatedConstantDecl inst): {
-        add_inst_name_id(inst.name_id);
+        add_inst_name_id(
+            sem_ir_->associated_constants().Get(inst.assoc_const_id).name_id);
+        queue_block_id(GetScopeFor(inst.assoc_const_id), inst.decl_block_id);
         continue;
       }
       case CARBON_KIND(AssociatedEntity inst): {

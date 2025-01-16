@@ -98,22 +98,24 @@ interface I {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %G.assoc_type = assoc_entity element1, %G.decl [template = constants.%assoc1]
-// CHECK:STDOUT:   %int_32.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %int_32.loc18_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
-// CHECK:STDOUT:   %.loc18_27: %tuple.type.24b = tuple_literal (%i32.loc18_19, %i32.loc18_24)
-// CHECK:STDOUT:   %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
-// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {
+// CHECK:STDOUT:     %int_32.loc18_19: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_19: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %int_32.loc18_24: Core.IntLiteral = int_value 32 [template = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [template = constants.%i32]
+// CHECK:STDOUT:     %.loc18_27: %tuple.type.24b = tuple_literal (%i32.loc18_19, %i32.loc18_24)
+// CHECK:STDOUT:     %.loc18_28: type = converted %.loc18_27, constants.%tuple.type.d07 [template = constants.%tuple.type.d07]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc2: %assoc_type.579 = assoc_entity element2, %T [template = constants.%assoc2]
-// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.20e]
-// CHECK:STDOUT:   %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc19_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc19_19.2: %i32 = converted %int_42, %.loc19_19.1 [template = constants.%int_42.c68]
-// CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
+// CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [template] {
+// CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [template = constants.%int_42.20e]
+// CHECK:STDOUT:     %impl.elem0: %Convert.type.1b6 = impl_witness_access constants.%impl_witness.d39, element0 [template = constants.%Convert.956]
+// CHECK:STDOUT:     %Convert.bound: <bound method> = bound_method %int_42, %impl.elem0 [template = constants.%Convert.bound]
+// CHECK:STDOUT:     %Convert.specific_fn: <specific function> = specific_function %Convert.bound, @Convert.2(constants.%int_32) [template = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %int.convert_checked: init %i32 = call %Convert.specific_fn(%int_42) [template = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc19_19.1: %i32 = value_of_initializer %int.convert_checked [template = constants.%int_42.c68]
+// CHECK:STDOUT:     %.loc19_19.2: %i32 = converted %int_42, %.loc19_19.1 [template = constants.%int_42.c68]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc3: %assoc_type.4fb = assoc_entity element3, %N [template = constants.%assoc3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -123,6 +125,18 @@ interface I {
 // CHECK:STDOUT:   .T = %assoc2
 // CHECK:STDOUT:   .N = %assoc3
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl, %T, %N)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   assoc_const T:! type = %.loc18_28;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   assoc_const N:! %i32 = %.loc19_19.2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@I.%Self: %I.type) {
@@ -143,4 +157,8 @@ interface I {
 // CHECK:STDOUT: specific @F(constants.%Self.826) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%Self.826) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T(constants.%Self.826) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%Self.826) {}
 // CHECK:STDOUT:

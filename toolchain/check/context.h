@@ -627,6 +627,9 @@ class Context {
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }
+  auto associated_constants() -> ValueStore<SemIR::AssociatedConstantId>& {
+    return sem_ir().associated_constants();
+  }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
     return sem_ir().facet_types();
   }

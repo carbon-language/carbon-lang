@@ -89,11 +89,18 @@ class NodeStack {
   // Pushes a parse tree node onto the stack with an ID.
   template <typename IdT>
   auto Push(Parse::NodeId node_id, IdT id) -> void {
+    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}",
+                 parse_tree_->node_kind(node_id));
+    PushOptional<IdT>(node_id, id);
+  }
+
+  // Pushes a parse tree node onto the stack with an ID that is allowed to be
+  // invalid.
+  template <typename IdT>
+  auto PushOptional(Parse::NodeId node_id, IdT id) -> void {
     auto kind = parse_tree_->node_kind(node_id);
     CARBON_CHECK(NodeKindToIdKind(kind) == Id::KindFor<IdT>(),
                  "Parse kind expected a different IdT: {0} -> {1}\n", kind, id);
-    CARBON_CHECK(id.is_valid(), "Push called with invalid id: {0}",
-                 parse_tree_->node_kind(node_id));
     CARBON_VLOG("Node Push {0}: {1} -> {2}\n", stack_.size(), kind, id);
     CARBON_CHECK(stack_.size() < (1 << 20),
                  "Excessive stack size: likely infinite loop");
@@ -212,6 +219,8 @@ class NodeStack {
 
   // Pops a pattern from the top of the stack and returns the ID.
   // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
   auto PopPattern() -> SemIR::InstId { return PopPatternWithNodeId().second; }
 
   // Pops a name from the top of the stack and returns the ID.
@@ -315,6 +324,12 @@ class NodeStack {
     static_assert(RequiredIdKind.has_value());
     return Peek<*RequiredIdKind>();
   }
+
+  // Peeks at the ID associated with the pattern at the top of the stack.
+  // Patterns map multiple Parse::NodeKinds to SemIR::InstId always.
+  // TODO: TuplePatterns store an InstBlockId instead and must be dealt with as
+  // a special case before calling this function.
+  auto PeekPattern() const -> SemIR::InstId;
 
   // Prints the stack for a stack dump.
   auto PrintForStackDump(int indent, llvm::raw_ostream& output) const -> void;
@@ -425,6 +440,9 @@ class NodeStack {
           return Id::KindFor<SemIR::InterfaceId>();
         case Parse::NodeKind::ImplDefinitionStart:
           return Id::KindFor<SemIR::ImplId>();
+        case Parse::NodeKind::LetInitializer:
+        case Parse::NodeKind::VariableInitializer:
+          return Id::KindFor<SemIR::GenericId>();
         case Parse::NodeKind::SelfTypeName:
         case Parse::NodeKind::SelfValueName:
           return Id::KindFor<SemIR::NameId>();
@@ -440,7 +458,6 @@ class NodeStack {
         case Parse::NodeKind::ImplicitParamListStart:
         case Parse::NodeKind::ImplIntroducer:
         case Parse::NodeKind::InterfaceIntroducer:
-        case Parse::NodeKind::LetInitializer:
         case Parse::NodeKind::LetIntroducer:
         case Parse::NodeKind::ReturnedModifier:
         case Parse::NodeKind::ReturnStatementStart:
@@ -450,7 +467,6 @@ class NodeStack {
         case Parse::NodeKind::StructTypeLiteralStart:
         case Parse::NodeKind::TupleLiteralStart:
         case Parse::NodeKind::TuplePatternStart:
-        case Parse::NodeKind::VariableInitializer:
         case Parse::NodeKind::VariableIntroducer:
           return Id::Kind::None;
         case Parse::NodeKind::AbstractModifier:
@@ -715,6 +731,10 @@ constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
 inline auto NodeStack::PopExprWithNodeId()
     -> std::pair<Parse::AnyExprId, SemIR::InstId> {
   return PopWithNodeId<Parse::NodeCategory::Expr>();
+}
+
+inline auto NodeStack::PeekPattern() const -> SemIR::InstId {
+  return Peek<Id::KindFor<SemIR::InstId>()>();
 }
 
 }  // namespace Carbon::Check

@@ -1015,7 +1015,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1028,7 +1027,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: fn @F.4() -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.5(@J.%Self: %J.type) {
-// CHECK:STDOUT:
 // CHECK:STDOUT:   fn[%self.param_patt: bool](%b.param_patt: bool) -> bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

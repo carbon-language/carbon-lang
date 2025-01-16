@@ -239,9 +239,9 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
-// CHECK:STDOUT:   %Member: type = assoc_const_decl Member [template]
+// CHECK:STDOUT:   %Member: type = assoc_const_decl @Member [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type.579 = assoc_entity element0, %Member [template = constants.%assoc0]
-// CHECK:STDOUT:   %Second: %J.type = assoc_const_decl Second [template]
+// CHECK:STDOUT:   %Second: %J.type = assoc_const_decl @Second [template] {}
 // CHECK:STDOUT:   %assoc1: %assoc_type.4dd = assoc_entity element1, %Second [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -249,6 +249,14 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   .Member = %assoc0
 // CHECK:STDOUT:   .Second = %assoc1
 // CHECK:STDOUT:   witness = (%Member, %Second)
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Member(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const Member:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Second(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const Second:! %J.type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EqualEqual(%U.loc11_15.1: %I_where.type) {
@@ -271,6 +279,10 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: %I_where.type);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Member(constants.%Self.826) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Second(constants.%Self.826) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
 // CHECK:STDOUT:   %U.loc11_15.2 => constants.%U
@@ -369,7 +381,7 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
 // CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.09f]
-// CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl Associated [template]
+// CHECK:STDOUT:   %Associated: %L.type = assoc_const_decl @Associated [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Associated [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -378,12 +390,18 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   witness = (%Associated)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Associated(@K.%Self: %K.type) {
+// CHECK:STDOUT:   assoc_const Associated:! %L.type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc11_24.1: %K_where.type) {
 // CHECK:STDOUT:   %W.loc11_24.2: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc11_24.2 (constants.%W)]
 // CHECK:STDOUT:   %W.patt.loc11_24.2: %K_where.type = symbolic_binding_pattern W, 0 [symbolic = %W.patt.loc11_24.2 (constants.%W.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%W.param_patt: %K_where.type);
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Associated(constants.%Self.09f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
 // CHECK:STDOUT:   %W.loc11_24.2 => constants.%W

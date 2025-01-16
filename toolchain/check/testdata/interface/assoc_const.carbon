@@ -45,9 +45,9 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type.579 = assoc_entity element0, %T [template = constants.%assoc0]
-// CHECK:STDOUT:   %N: %i32 = assoc_const_decl N [template]
+// CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [template] {}
 // CHECK:STDOUT:   %assoc1: %assoc_type.4fb = assoc_entity element1, %N [template = constants.%assoc1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -56,4 +56,16 @@ interface I {
 // CHECK:STDOUT:   .N = %assoc1
 // CHECK:STDOUT:   witness = (%T, %N)
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const T:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const N:! %i32;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%Self) {}
 // CHECK:STDOUT:

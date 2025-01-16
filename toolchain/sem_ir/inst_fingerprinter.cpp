@@ -163,7 +163,8 @@ struct Worklist {
     }
   }
 
-  auto AddEntity(const EntityWithParamsBase& entity) -> void {
+  template<typename EntityT>
+  auto AddEntity(const EntityT& entity) -> void {
     Add(entity.name_id);
     if (entity.parent_scope_id.is_valid()) {
       Add(sem_ir->name_scopes().Get(entity.parent_scope_id).inst_id());
@@ -180,6 +181,10 @@ struct Worklist {
 
   auto Add(InterfaceId interface_id) -> void {
     AddEntity(sem_ir->interfaces().Get(interface_id));
+  }
+
+  auto Add(AssociatedConstantId assoc_const_id) -> void {
+    AddEntity(sem_ir->associated_constants().Get(assoc_const_id));
   }
 
   auto Add(ImplId impl_id) -> void {

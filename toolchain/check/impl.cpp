@@ -277,9 +277,9 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
         CARBON_CHECK(decl_id.is_valid(), "Non-constant associated entity");
         auto decl =
             context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
-        context.emitter().Emit(impl.constraint_id,
-                               AssociatedConstantWithDifferentValues,
-                               decl.name_id);
+        context.emitter().Emit(
+            impl.constraint_id, AssociatedConstantWithDifferentValues,
+            context.associated_constants().Get(decl.assoc_const_id).name_id);
       }
     } else {
       rewrite_value = rewrite.rhs_const_id;
@@ -308,7 +308,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
                             SemIR::NameId);
           auto builder = context.emitter().Build(
               impl.latest_decl_id(), AssociatedConstantMissingInRedecl,
-              decl->name_id);
+              context.associated_constants().Get(decl->assoc_const_id).name_id);
           NotePreviousDecl(context, builder, prev_decl_id);
           builder.Emit();
           continue;
@@ -323,7 +323,7 @@ auto AddConstantsToImplWitnessFromConstraint(Context& context,
               SemIR::NameId);
           auto builder = context.emitter().Build(
               impl.latest_decl_id(), AssociatedConstantDifferentInRedecl,
-              decl->name_id);
+              context.associated_constants().Get(decl->assoc_const_id).name_id);
           NotePreviousDecl(context, builder, prev_decl_id);
           builder.Emit();
           continue;
@@ -376,12 +376,14 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
                           "of interface {1}",
                           SemIR::NameId, SemIR::NameId);
         CARBON_DIAGNOSTIC(AssociatedConstantHere, Note,
-                          "associated constant {0} declared here",
-                          SemIR::NameId);
+                          "associated constant declared here");
         context.emitter()
             .Build(impl.constraint_id, ImplAssociatedConstantNeedsValue,
-                   decl->name_id, interface.name_id)
-            .Note(assoc_entities[index], AssociatedConstantHere, decl->name_id)
+                   context.associated_constants()
+                       .Get(decl->assoc_const_id)
+                       .name_id,
+                   interface.name_id)
+            .Note(assoc_entities[index], AssociatedConstantHere)
             .Emit();
 
         witness_value = SemIR::ErrorInst::SingletonInstId;

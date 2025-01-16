@@ -198,7 +198,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -207,10 +207,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const T:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl.carbon
 // CHECK:STDOUT:
@@ -268,7 +274,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I2 {
 // CHECK:STDOUT:   %Self: %I2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T2: type = assoc_const_decl T2 [template]
+// CHECK:STDOUT:   %T2: type = assoc_const_decl @T2 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T2 [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -277,10 +283,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%T2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T2(@I2.%Self: %I2.type) {
+// CHECK:STDOUT:   assoc_const T2:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T2(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- redecl_adds_rewrites.carbon
 // CHECK:STDOUT:
@@ -328,7 +340,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 {
 // CHECK:STDOUT:   %Self: %I3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T3: type = assoc_const_decl T3 [template]
+// CHECK:STDOUT:   %T3: type = assoc_const_decl @T3 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T3 [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -337,10 +349,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%T3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T3(@I3.%Self: %I3.type) {
+// CHECK:STDOUT:   assoc_const T3:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %I3.ref.loc5 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T3(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch.carbon
 // CHECK:STDOUT:
@@ -399,7 +417,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %U: type = assoc_const_decl U [template]
+// CHECK:STDOUT:   %U: type = assoc_const_decl @U [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %U [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -408,10 +426,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%U)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
+// CHECK:STDOUT:   assoc_const U:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @U(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_bad_value.carbon
 // CHECK:STDOUT:
@@ -498,11 +522,11 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I4 {
 // CHECK:STDOUT:   %Self: %I4.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T4: type = assoc_const_decl T4 [template]
+// CHECK:STDOUT:   %T4: type = assoc_const_decl @T4 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T4 [template = constants.%assoc0]
-// CHECK:STDOUT:   %T5: type = assoc_const_decl T5 [template]
+// CHECK:STDOUT:   %T5: type = assoc_const_decl @T5 [template] {}
 // CHECK:STDOUT:   %assoc1: %assoc_type = assoc_entity element1, %T5 [template = constants.%assoc1]
-// CHECK:STDOUT:   %T6: type = assoc_const_decl T6 [template]
+// CHECK:STDOUT:   %T6: type = assoc_const_decl @T6 [template] {}
 // CHECK:STDOUT:   %assoc2: %assoc_type = assoc_entity element2, %T6 [template = constants.%assoc2]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -513,10 +537,28 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%T4, %T5, %T6)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T4(@I4.%Self: %I4.type) {
+// CHECK:STDOUT:   assoc_const T4:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T5(@I4.%Self: %I4.type) {
+// CHECK:STDOUT:   assoc_const T5:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T6(@I4.%Self: %I4.type) {
+// CHECK:STDOUT:   assoc_const T6:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc21_7.2 as %.loc21_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T4(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T5(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T6(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_missing_on_definition.carbon
 // CHECK:STDOUT:
@@ -564,7 +606,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @K {
 // CHECK:STDOUT:   %Self: %K.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %V: type = assoc_const_decl V [template]
+// CHECK:STDOUT:   %V: type = assoc_const_decl @V [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %V [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -573,10 +615,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%V)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @V(@K.%Self: %K.type) {
+// CHECK:STDOUT:   assoc_const V:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @V(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different.carbon
 // CHECK:STDOUT:
@@ -626,7 +674,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L {
 // CHECK:STDOUT:   %Self: %L.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %W: type = assoc_const_decl W [template]
+// CHECK:STDOUT:   %W: type = assoc_const_decl @W [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %W [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -635,10 +683,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%W)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @W(@L.%Self: %L.type) {
+// CHECK:STDOUT:   assoc_const W:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc9_7.2 as %.loc9_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @W(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_first_bad.carbon
 // CHECK:STDOUT:
@@ -683,7 +737,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L2 {
 // CHECK:STDOUT:   %Self: %L2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %W2: type = assoc_const_decl W2 [template]
+// CHECK:STDOUT:   %W2: type = assoc_const_decl @W2 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %W2 [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -692,10 +746,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%W2)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @W2(@L2.%Self: %L2.type) {
+// CHECK:STDOUT:   assoc_const W2:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc9_7.2 as %.loc9_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @W2(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_second_bad.carbon
 // CHECK:STDOUT:
@@ -741,7 +801,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L3 {
 // CHECK:STDOUT:   %Self: %L3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %W3: type = assoc_const_decl W3 [template]
+// CHECK:STDOUT:   %W3: type = assoc_const_decl @W3 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %W3 [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -750,10 +810,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%W3)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @W3(@L3.%Self: %L3.type) {
+// CHECK:STDOUT:   assoc_const W3:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc9_7.2 as %.loc9_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @W3(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_both_bad.carbon
 // CHECK:STDOUT:
@@ -797,7 +863,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @L4 {
 // CHECK:STDOUT:   %Self: %L4.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %W4: type = assoc_const_decl W4 [template]
+// CHECK:STDOUT:   %W4: type = assoc_const_decl @W4 [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %W4 [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -806,10 +872,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%W4)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @W4(@L4.%Self: %L4.type) {
+// CHECK:STDOUT:   assoc_const W4:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc12_7.2 as %.loc12_15 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @W4(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeated.carbon
 // CHECK:STDOUT:
@@ -859,7 +931,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @M {
 // CHECK:STDOUT:   %Self: %M.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %X: type = assoc_const_decl X [template]
+// CHECK:STDOUT:   %X: type = assoc_const_decl @X [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %X [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -868,10 +940,16 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%X)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @X(@M.%Self: %M.type) {
+// CHECK:STDOUT:   assoc_const X:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc5_7.2 as %.loc5_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non-type.carbon
 // CHECK:STDOUT:
@@ -921,7 +999,7 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @N {
 // CHECK:STDOUT:   %Self: %N.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl Y [template]
+// CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %Y [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -930,8 +1008,14 @@ impl () as N where .Y = {.a = {}} { }
 // CHECK:STDOUT:   witness = (%Y)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Y(@N.%Self: %N.type) {
+// CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc7_7.2 as %.loc7_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y(constants.%Self) {}
 // CHECK:STDOUT:

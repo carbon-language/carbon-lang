@@ -24,9 +24,6 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
         << "}";
   }
 
-  // The following members always have values, and do not change throughout the
-  // lifetime of the entity.
-
   // The entity's name.
   NameId name_id;
 
@@ -36,7 +33,8 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
   // If this is a generic entity, information about the generic.
   GenericId generic_id;
 
-  // The following members are set at the end of the declaration.
+  // The declaration of this associated constant.
+  InstId decl_id;
 
   // The default value of the constant.
   InstId default_value_id = InstId::Invalid;

@@ -13,7 +13,7 @@ interface I { let T:! type; }
 // CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE+6]]:12: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl () as I {}
 // CHECK:STDERR:            ^
-// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:15: note: associated constant T declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_impl_bad_assoc_const.carbon:[[@LINE-5]]:15: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR: interface I { let T:! type; }
 // CHECK:STDERR:               ^~~~~~~~~~~~~
 impl () as I {}
@@ -44,7 +44,7 @@ impl () as I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %T: type = assoc_const_decl T [template]
+// CHECK:STDOUT:   %T: type = assoc_const_decl @T [template] {}
 // CHECK:STDOUT:   %assoc0: %assoc_type = assoc_entity element0, %T [template = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -53,8 +53,14 @@ impl () as I {}
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const T:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc19_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%impl_witness
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
