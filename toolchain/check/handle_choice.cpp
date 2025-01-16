@@ -98,9 +98,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // type below. But it needs to be written back to the `Class` in the
   // ValueStore, not the local variable. This gives a mutable reference to the
   // `Class` in the ValueStore.
-  SemIR::Class& mut_class_info = context.classes().Get(class_decl.class_id);
+  SemIR::Class& mut_class = context.classes().Get(class_decl.class_id);
   // Build the `Self` type using the resulting type constant.
-  mut_class_info.self_type_id = context.GetTypeIdForTypeConstant(
+  mut_class.self_type_id = context.GetTypeIdForTypeConstant(
       TryEvalInst(context, SemIR::InstId::Invalid,
                   SemIR::ClassType{.type_id = SemIR::TypeType::SingletonTypeId,
                                    .class_id = class_decl.class_id,
@@ -114,7 +114,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // TODO: Do Choice types have a `Self` name they can use in the alternatives?
   // It's unsized/recursive but it could be used in pointers like Box<Self>.
   // context.name_scopes().AddRequiredName(
-  //     class_info.scope_id, SemIR::NameId::SelfTFype,
+  //     class_info.scope_id, SemIR::NameId::SelfType,
   //     context.types().GetInstId(class_info.self_type_id));
 
   // Mark the beginning of the choice body.
@@ -481,7 +481,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
       node_id,
       {.type_id = context.GetSingletonType(SemIR::WitnessType::SingletonInstId),
        .object_repr_id = context.GetStructType(fields_id)});
-  // Note: avoid storing a reference to the returned ClassInfo, it may be
+  // Note: avoid storing a reference to the returned Class, since it may be
   // invalidated by other type constructions.
   context.classes().Get(class_id).complete_type_witness_id = choice_witness_id;
 
