@@ -85,8 +85,7 @@ def label_subdir(
     readme_content = readme.read_text()
 
     def include_child(md_file: Path) -> bool:
-        """Determines whether a markdown file should be included in the
-        navigation tree as a child of this label.
+        """Returns whether md_file is a child of this label.
         """
         # The top-level README.md isn't a child.
         if md_file == readme:
