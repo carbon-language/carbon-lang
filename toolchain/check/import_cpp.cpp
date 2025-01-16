@@ -23,7 +23,9 @@ namespace {
 
 auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
     -> std::string {
-  return importing_file_path.str() + ".generated.cpp_imports.h";
+  return llvm::Twine(importing_file_path)
+      .concat(".generated.cpp_imports.h")
+      .str();
 }
 
 auto GenerateCppIncludesHeaderCode(
