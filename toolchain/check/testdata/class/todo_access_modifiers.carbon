@@ -65,6 +65,7 @@ class Access {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc19: ref %Access.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [template = constants.%complete_type.48a]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Access
@@ -72,7 +73,6 @@ class Access {
 // CHECK:STDOUT:   .G [protected] = %G.decl
 // CHECK:STDOUT:   .k [private] = %.loc17_16
 // CHECK:STDOUT:   .l [protected] = %.loc19_18
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

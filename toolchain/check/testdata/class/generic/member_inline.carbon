@@ -130,13 +130,13 @@ class C(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @Class.%Class.elem (%Class.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .G = %G.decl
 // CHECK:STDOUT:     .n = %.loc13_8
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -257,12 +257,12 @@ class C(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.var: ref @C.%C.elem (%C.elem) = var <invalid>
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [template = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:     .data = %.loc11_11
-// CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

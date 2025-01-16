@@ -23,3 +23,6 @@ mermaid:
 readme_index:
   remove_originals: true
   with_frontmatter: true
+
+kramdown:
+  parse_block_html: true

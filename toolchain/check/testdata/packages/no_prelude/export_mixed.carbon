@@ -143,11 +143,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %C.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.9be]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .x = %.loc5_8
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
@@ -157,11 +157,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %D.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [template = constants.%complete_type.9f4]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .y = %.loc9_8
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import.carbon
@@ -206,10 +206,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name.carbon
@@ -239,10 +240,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.2c4
 // CHECK:STDOUT:   .x = imports.%import_ref.276
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.56d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_then_import.carbon
@@ -292,10 +294,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -345,10 +348,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -398,10 +402,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -485,10 +490,11 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -555,17 +561,19 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "export_import_then_name.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.6a9
 // CHECK:STDOUT:   .x = imports.%import_ref.f67
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.ad3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "base.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5ab
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.cab
 // CHECK:STDOUT:   .y = imports.%import_ref.950
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.5ab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

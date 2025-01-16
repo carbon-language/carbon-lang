@@ -92,12 +92,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc13: ref %Inner.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [template = constants.%complete_type.705]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
 // CHECK:STDOUT:   .a = %.loc12_8
 // CHECK:STDOUT:   .b = %.loc13_8
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
@@ -112,12 +112,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc20: ref %Outer.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d.dce [template = constants.%complete_type.8b6]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .c = %.loc19_8
 // CHECK:STDOUT:   .d = %.loc20_8
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> %Inner;

@@ -19,8 +19,9 @@
 
 namespace Carbon::Check {
 
-auto ImportCppFile(Context& context, SemIRLoc loc, llvm::StringRef file_path,
-                   llvm::StringRef code) -> void {
+auto ImportCppFile(Context& context, SemIRLoc loc,
+                   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                   llvm::StringRef file_path, llvm::StringRef code) -> void {
   std::string diagnostics_str;
   llvm::raw_string_ostream diagnostics_stream(diagnostics_str);
 
@@ -33,7 +34,7 @@ auto ImportCppFile(Context& context, SemIRLoc loc, llvm::StringRef file_path,
       code, {}, file_path, "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       clang::tooling::getClangStripDependencyFileAdjuster(),
-      clang::tooling::FileContentMappings(), &diagnostics_consumer);
+      clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
   // TODO: Implement and use a DynamicRecursiveASTVisitor to traverse the AST.
   int num_errors = diagnostics_consumer.getNumErrors();
   int num_warnings = diagnostics_consumer.getNumWarnings();

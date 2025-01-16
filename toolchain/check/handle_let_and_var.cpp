@@ -70,10 +70,10 @@ static auto GetOrAddStorage(Context& context, SemIR::InstId pattern_id)
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = SemIR::InstId::Invalid;
-  if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
+  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     context.node_stack().PopAndIgnore();
     CARBON_CHECK(
-        context.node_stack().PeekIs<Parse::NodeKind::TuplePatternStart>());
+        context.node_stack().PeekIs(Parse::NodeKind::TuplePatternStart));
     context.node_stack().PopAndIgnore();
     context.inst_block_stack().PopAndDiscard();
     context.TODO(node_id, "tuple pattern in let/var");
@@ -158,7 +158,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
   std::optional<DeclInfo> decl_info = DeclInfo();
 
   // Handle the optional initializer.
-  if (context.node_stack().PeekNextIs<InitializerNodeKind>()) {
+  if (context.node_stack().PeekNextIs(InitializerNodeKind)) {
     decl_info->init_id = context.node_stack().PopExpr();
     context.node_stack().PopAndDiscardSoloNodeId<InitializerNodeKind>();
     if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
@@ -170,7 +170,7 @@ static auto HandleDecl(Context& context, NodeT node_id)
   }
   context.full_pattern_stack().PopFullPattern();
 
-  if (context.node_stack().PeekIs<Parse::NodeKind::TuplePattern>()) {
+  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
     if (decl_info->init_id &&
         context.scope_stack().PeekIndex() == ScopeIndex::Package) {
       context.global_init().Suspend();

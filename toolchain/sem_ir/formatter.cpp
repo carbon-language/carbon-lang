@@ -276,13 +276,12 @@ class FormatterImpl {
       out_ << ' ';
       OpenBrace();
       FormatCodeBlock(class_info.body_block_id);
-      FormatNameScope(class_info.scope_id, "!members:\n");
-
       Indent();
       out_ << "complete_type_witness = ";
       FormatName(class_info.complete_type_witness_id);
       out_ << "\n";
 
+      FormatNameScope(class_info.scope_id, "!members:\n");
       CloseBrace();
     } else {
       Semicolon();

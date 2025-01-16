@@ -22,7 +22,7 @@ auto NamedElement::name() const -> std::string_view {
   if (const auto* decl = element_.dyn_cast<const Declaration*>()) {
     return GetName(*decl).value();
   } else {
-    const auto* named_value = element_.get<const NamedValue*>();
+    const auto* named_value = cast<const NamedValue*>(element_);
     return named_value->name;
   }
 }
@@ -31,7 +31,7 @@ auto NamedElement::type() const -> const Value& {
   if (const auto* decl = element_.dyn_cast<const Declaration*>()) {
     return decl->static_type();
   } else {
-    const auto* named_value = element_.get<const NamedValue*>();
+    const auto* named_value = cast<const NamedValue*>(element_);
     return *named_value->value;
   }
 }

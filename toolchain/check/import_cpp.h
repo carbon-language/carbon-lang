@@ -12,8 +12,9 @@
 namespace Carbon::Check {
 
 // Parses the C++ code and report errors and warnings.
-auto ImportCppFile(Context& context, SemIRLoc loc, llvm::StringRef file_path,
-                   llvm::StringRef code) -> void;
+auto ImportCppFile(Context& context, SemIRLoc loc,
+                   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                   llvm::StringRef file_path, llvm::StringRef code) -> void;
 
 }  // namespace Carbon::Check
 

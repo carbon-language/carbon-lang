@@ -96,10 +96,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Empty
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field {
@@ -109,11 +109,11 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %Field.elem = var <invalid>
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [template = constants.%complete_type.1ec]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Field
 // CHECK:STDOUT:   .x = %.loc8_8
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared {
@@ -138,12 +138,12 @@ fn Run() {
 // CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [template = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%ForwardDeclared
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .G = %G.decl
-// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
@@ -233,32 +233,36 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.fd7
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Field [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.709
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.845
 // CHECK:STDOUT:   .x = imports.%import_ref.4d2
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.709
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.1 [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.39e731.1
 // CHECK:STDOUT:   .F = imports.%import_ref.760
 // CHECK:STDOUT:   .G = imports.%import_ref.26e
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDeclared.2 [from "a.carbon"] {
+// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.3
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%import_ref.39e731.2
 // CHECK:STDOUT:   .F = imports.%import_ref.42a
 // CHECK:STDOUT:   .G = imports.%import_ref.67a
-// CHECK:STDOUT:   complete_type_witness = imports.%import_ref.8f24d3.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete [from "a.carbon"];

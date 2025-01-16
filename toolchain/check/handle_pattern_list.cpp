@@ -17,7 +17,7 @@ auto HandleParseNode(Context& context, Parse::ImplicitParamListStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::ImplicitParamListId node_id)
     -> bool {
-  if (context.node_stack().PeekIs<Parse::NodeKind::ImplicitParamListStart>()) {
+  if (context.node_stack().PeekIs(Parse::NodeKind::ImplicitParamListStart)) {
     // End the subpattern started by a trailing comma, or the opening delimiter
     // of an empty list.
     context.EndSubpatternAsEmpty();
