@@ -31,14 +31,14 @@ auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
 auto GenerateCppIncludesHeaderCode(
     llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
     -> std::string {
-  constexpr llvm::StringLiteral include_prefix(R"(#include ")");
-  constexpr llvm::StringLiteral include_suffix(R"("
+  constexpr llvm::StringLiteral IncludePrefix(R"(#include ")");
+  constexpr llvm::StringLiteral IncludeSuffix(R"("
 )");
 
   std::string code;
   for (const auto& [path, _] : imports) {
     code.append(
-        llvm::Twine(include_prefix).concat(path).concat(include_suffix).str());
+        llvm::Twine(IncludePrefix).concat(path).concat(IncludeSuffix).str());
   }
   return code;
 }
