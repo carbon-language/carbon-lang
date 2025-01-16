@@ -18,8 +18,10 @@ namespace Carbon::SemIR {
 class File;
 class Inst;
 class NameScope;
-struct EntityName;
+struct AssociatedConstant;
 struct Class;
+struct EntityName;
+struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
@@ -29,7 +31,6 @@ struct ImportIRInst;
 struct Impl;
 struct Interface;
 struct StructTypeField;
-struct ExprRegion;
 struct TypeInfo;
 
 // The ID of an instruction.
@@ -252,6 +253,20 @@ struct InterfaceId : public IdBase<InterfaceId> {
 };
 
 constexpr InterfaceId InterfaceId::Invalid = InterfaceId(InvalidIndex);
+
+// The ID of an associated constant.
+struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
+  static constexpr llvm::StringLiteral Label = "assoc_const";
+  using ValueType = AssociatedConstant;
+
+  // An explicitly invalid ID.
+  static const AssociatedConstantId Invalid;
+
+  using IdBase::IdBase;
+};
+
+constexpr AssociatedConstantId AssociatedConstantId::Invalid =
+    AssociatedConstantId(InvalidIndex);
 
 // The ID of an faceet type value.
 struct FacetTypeId : public IdBase<FacetTypeId> {
