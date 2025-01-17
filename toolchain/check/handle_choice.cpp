@@ -28,6 +28,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceIntroducerId node_id)
   context.node_stack().Push(node_id);
   // The choice's name follows.
   context.decl_name_stack().PushScopeAndStartName();
+  // There's no modifiers on a choice, but this informs how to typecheck any
+  // generic binding pattern.
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   // This choice is potentially generic.
   StartGenericDefinition(context);
   return true;
@@ -39,6 +42,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ChoiceIntroducer>();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Choice>();
 
   auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -54,7 +58,6 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
 
   context.decl_name_stack().AddNameOrDiagnose(name_context, class_decl_id,
                                               SemIR::AccessKind::Public);
-  context.decl_name_stack().PopScope();
 
   // An inst block for the body of the choice.
   context.inst_block_stack().Push();
@@ -110,10 +113,15 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
   // Enter the choice scope.
   context.scope_stack().Push(class_decl_id, class_info.scope_id,
                              self_specific_id);
+  // Checking the binding pattern for an alternative requires a non-empty stack.
+  // FIXME: Choice is incorrect as we're not parsing the pattern for a choice
+  // name, but there's no Lex token that's a decl introducer that we could
+  // safely use here. Is there a better way to communicate to
+  // `HandleAnyBindingPattern` that we're checking a choice alternative?
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Choice>();
   StartGenericDefinition(context);
 
   // TODO: Do Choice types have a `Self` name they can use in the alternatives?
-  // It's unsized/recursive but it could be used in pointers like Box<Self>.
   // context.name_scopes().AddRequiredName(
   //     class_info.scope_id, SemIR::NameId::SelfType,
   //     context.types().GetInstId(class_info.self_type_id));
@@ -131,11 +139,22 @@ static auto AddChoiceAlternative(Context& context, Parse::NodeId node_id)
     -> void {
   // Note, there is nothing like a ChoiceAlternativeIntroducer node, so no parse
   // node to pop here.
-
   auto name_component = PopNameComponent(context);
   if (name_component.param_patterns_id == SemIR::InstBlockId::Empty) {
+    CARBON_DIAGNOSTIC(ChoiceAlternativeEmptyParams, Error,
+                      "choice alternative has empty parameter list");
+    CARBON_DIAGNOSTIC(ChoiceAlternativeEmptyParamsNote, Note,
+                      "remove the empty `()`");
+    context.emitter()
+        .Build(name_component.params_loc_id, ChoiceAlternativeEmptyParams)
+        .Note(name_component.params_loc_id, ChoiceAlternativeEmptyParamsNote)
+        .Emit();
+    return;
+  }
+  if (name_component.param_patterns_id.is_valid()) {
     context.TODO(name_component.params_loc_id,
-                 "Make this an error: Empty () found, should be omitted");
+                 "choice alternatives with parameters are not yet supported");
+    return;
   }
   context.choice_deferred_bindings().push_back({node_id, name_component});
 }
@@ -261,7 +280,9 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   // The scopes and blocks for the choice itself.
   context.inst_block_stack().Pop();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Choice>();
   context.scope_stack().Pop();
+  context.decl_name_stack().PopScope();
 
   FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
 

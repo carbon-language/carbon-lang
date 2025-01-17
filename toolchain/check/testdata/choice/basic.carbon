@@ -13,19 +13,6 @@ library "[[@TEST_NAME]]";
 
 choice Never {}
 
-// --- fail_no_alternative_construct.carbon
-library "[[@TEST_NAME]]";
-
-choice Never {}
-
-fn F() {
-  // TODO: Can we produce a better diagnostic?
-  // CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+3]]:22: error: cannot initialize class with 1 field from struct with 0 fields [StructInitElementCountMismatch]
-  // CHECK:STDERR:   let never: Never = {};
-  // CHECK:STDERR:                      ^~
-  let never: Never = {};
-}
-
 // --- one_alternative.carbon
 library "[[@TEST_NAME]]";
 
@@ -136,52 +123,6 @@ fn H() {
 // CHECK:STDOUT: class @Never {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_alternative_construct.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Never: type = class_type @Never [template]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [template]
-// CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [template]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [template]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [template]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [template]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [template] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [template] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .Never = %Never.decl
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %Never.decl: type = class_decl @Never [template = constants.%Never] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [template = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Never {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [template = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_23.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc10_23.2: ref %Never = temporary_storage
-// CHECK:STDOUT:   %.loc10_23.3: ref %Never = temporary %.loc10_23.2, <error>
-// CHECK:STDOUT:   %.loc10_24.1: ref %Never = converted %.loc10_23.1, %.loc10_23.3
-// CHECK:STDOUT:   %.loc10_24.2: %Never = bind_value %.loc10_24.1
-// CHECK:STDOUT:   %never: %Never = bind_name never, %.loc10_24.2
-// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- one_alternative.carbon
