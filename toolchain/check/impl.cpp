@@ -129,9 +129,6 @@ static auto CheckAssociatedFunctionImplementation(
               .generic_id,
           self_type_id, witness_inst_id);
 
-  // TODO: This should be a semantic check rather than a syntactic one. The
-  // functions should be allowed to have different signatures as long as we can
-  // synthesize a suitable thunk.
   if (!CheckFunctionTypeMatches(
           context, context.functions().Get(impl_function_decl->function_id),
           context.functions().Get(interface_function_type.function_id),
