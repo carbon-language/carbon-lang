@@ -248,7 +248,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
             // type itself.
             if (context_node_kind == Parse::NodeKind::ImplicitParamListStart) {
               CARBON_DIAGNOSTIC(ChoiceAlternativeImplicitParams, Error,
-                                "choice alterantive with implicit parameters");
+                                "choice alternative with implicit parameters");
               context.emitter().Emit(node_id, ChoiceAlternativeImplicitParams);
               had_error = true;
             }
