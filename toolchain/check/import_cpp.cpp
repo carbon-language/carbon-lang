@@ -19,19 +19,18 @@
 #include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
-namespace {
 
 // Generates a .generated.cpp_imports.h filename from the importing .carbon
 // filename.
-auto GenerateCppIncludesHeaderFilename(llvm::StringRef importing_file_path)
-    -> std::string {
+static auto GenerateCppIncludesHeaderFilename(
+    llvm::StringRef importing_file_path) -> std::string {
   return llvm::Twine(importing_file_path)
       .concat(".generated.cpp_imports.h")
       .str();
 }
 
 // Generates C++ file contents to #include all requested imports.
-auto GenerateCppIncludesHeaderCode(
+static auto GenerateCppIncludesHeaderCode(
     llvm::ArrayRef<std::pair<llvm::StringRef, SemIRLoc>> imports)
     -> std::string {
   std::string code;
@@ -41,8 +40,6 @@ auto GenerateCppIncludesHeaderCode(
   }
   return code;
 }
-
-}  // namespace
 
 auto ImportCppFiles(
     Context& context, llvm::StringRef importing_file_path,
