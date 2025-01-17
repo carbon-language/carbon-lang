@@ -32,14 +32,10 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+11]]:1: error: 1 error and 1 warning in 1 `Cpp` import:
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:12: warning: extra tokens at end of #include directive
-// CHECK:STDERR:     1 | #include ""foo.h""
-// CHECK:STDERR:       |            ^
-// CHECK:STDERR:       |            //
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: error: empty filename
-// CHECK:STDERR:     1 | #include ""foo.h""
-// CHECK:STDERR:       |          ^
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+7]]:1: error: 1 error and 0 warnings in 1 `Cpp` import:
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
+// CHECK:STDERR:     1 | #include "\"foo.h\""
+// CHECK:STDERR:       |          ^~~~~~~~~~~
 // CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR: import Cpp library "\"foo.h\"";
 // CHECK:STDERR: ^~~~~~
