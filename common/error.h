@@ -141,6 +141,9 @@ class ErrorBuilder {
       : location_(std::move(location)),
         out_(std::make_unique<RawStringOstream>()) {}
 
+  ErrorBuilder(ErrorBuilder&&) = default;
+  ErrorBuilder& operator=(ErrorBuilder&&) = default;
+
   // Accumulates string message to a temporary `ErrorBuilder`. After streaming,
   // the builder must be converted to an `Error` or `ErrorOr`.
   template <typename T>
