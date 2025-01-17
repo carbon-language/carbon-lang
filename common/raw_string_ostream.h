@@ -20,6 +20,11 @@ class RawStringOstream : public llvm::raw_pwrite_stream {
  public:
   explicit RawStringOstream() : llvm::raw_pwrite_stream(/*Unbuffered=*/true) {}
 
+  // Move constructor.
+  RawStringOstream(RawStringOstream&& other) noexcept {
+    str_ = std::exchange(other.str_, "");
+  }
+
   ~RawStringOstream() override {
     CARBON_CHECK(str_.empty(), "Expected to be emptied by TakeStr, have: {0}",
                  str_);
